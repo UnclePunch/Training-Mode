@@ -59,7 +59,6 @@ fsubs    \reg2,\reg2,f16
 .set player,31
 .set playerdata,31
 
-#041BFA20 38600001
 #Spoof current (soon to be previous) screen
 li	r3,0x2b
 load	r4,0x80479d30
