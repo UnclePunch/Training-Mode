@@ -14,7 +14,7 @@ echo.
 
 cd /d %~dp0
 
-xdelta.exe -d -f -s %1 "StartdolTMPatch.xdelta" "Additional ISO Files\Start.dol"
+xdelta.exe -d -f -s %1 "StartdolTMPatch.xdelta" "..\Additional ISO Files\Start.dol"
 
 echo.
 echo Done!

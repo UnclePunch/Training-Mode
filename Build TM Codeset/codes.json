@@ -1,6 +1,6 @@
 {
   "outputFiles": [
-    "Additional ISO Files\\codes.gct"
+    "..\\Additional ISO Files\\codes.gct"
   ],
   "codes": [
     {
@@ -14,31 +14,31 @@
       "build": [
         {
           "type": "injectFolder",
-          "sourceFolder": "ASM",
+          "sourceFolder": "..\\ASM",
           "isRecursive": true
         },
         {
           "type": "replaceCodeBlock",
           "address": "8042ABD8",
-          "sourceFile": "ASM\\Misc\\Edit Hyphen Texture.asm",
+          "sourceFile": "..\\ASM\\Misc\\Edit Hyphen Texture.asm",
           "annotation": "Edit Hyphen Texture"
         },
         {
           "type": "replaceCodeBlock",
           "address": "80228a28",
-          "sourceFile": "ASM\\Misc\\Store Version Number.asm",
+          "sourceFile": "..\\ASM\\Misc\\Store Version Number.asm",
           "annotation": "Version Number"
         },
         {
           "type": "replaceCodeBlock",
           "address": "803ea6c8",
-          "sourceFile": "ASM\\Misc\\Overwrite Compile Date.asm",
+          "sourceFile": "..\\ASM\\Misc\\Overwrite Compile Date.asm",
           "annotation": "Overwrite Compile Date"
         },
         {
           "type": "replaceCodeBlock",
           "address": "803edc1c",
-          "sourceFile": "ASM\\Misc\\QWERTY Keyboard.asm",
+          "sourceFile": "..\\ASM\\Misc\\QWERTY Keyboard.asm",
           "annotation": "QWERTY Keyboard"
         }
       ]
