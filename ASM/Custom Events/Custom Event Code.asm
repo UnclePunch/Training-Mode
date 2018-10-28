@@ -1,5 +1,6 @@
 #To be inserted at 801bb128
-.macro branchl reg, address                                                                                                                                                                                                                                                                                                                                            
+#To be inserted at 801bb128
+.macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
 mtctr \reg
@@ -129,7 +130,7 @@ bgt	exit
 	#STORE UNLIM STOCKS
 	li	r3,0xFF
 	stb	r3,0x62(r26)		#p1 stocks
-	
+
 	#SET FALL FLAG
 	li	r3,0x0
 	stb	r3,0x6C(r26)
@@ -241,11 +242,11 @@ b	exit
 
 	b	LCancelLoadExit
 
-	
-	
+
+
 		#########################
 		## L Cancel THINK FUNCT ##
-		#########################	
+		#########################
 
 		LCancelThink:
 		blrl
@@ -262,7 +263,7 @@ b	exit
 		branchl	r12,0x80034110	 #get player block
 		mr	r28,r3		#backup p1
 		lwz	r27,0x2C(r28)
-		
+
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
 		beq	LCancelNotFirstFrame
@@ -272,13 +273,13 @@ b	exit
 			lis	r3,0x3f80
 			stw	r3,0x2C(r27)
 			lis	r3,0xbf80
-			stw	r3,0x2C(r29)	
-		
+			stw	r3,0x2C(r29)
+
 			#Init Positions
 			bl	ComboTraining_Floats
 			mflr	r3
 			bl	InitializePositions
-		
+
 			#Check P2-P4 Is Using the Event
 			lbz	r3, -0x5108 (r13)
 			cmpwi	r3,0x0
@@ -289,7 +290,7 @@ b	exit
 
 		LCancelNotFirstFrame:
 
-		
+
 		#Check For P2 Dpad Down Press
 		lwz	r3,0x668(r29)		#Inputs
 		rlwinm.	r0,r3,0,29,29
@@ -309,7 +310,7 @@ b	exit
 		mr	r3,r30
 		li	r4,0x2
 		bl	GiveInvincibility
-	
+
 
 
 
@@ -321,8 +322,8 @@ b	exit
 		bl	MoveCPU
 		bl	GiveFullShields
 		bl	UpdateAllGFX
-		
-		
+
+
 	LCancelLoadExit:
 	restore
 	blr
@@ -406,23 +407,23 @@ b	exit
 
 	b	LedgedashLoadExit
 
-	
+
 		#########################
 		## Ledgedash THINK FUNCT ##
 		#########################
 
-	
+
 		LedgedashThink:
 		blrl
 		backup
-	
+
 		#INIT FUNCTION VARIABLES
 		lwz		r31,0x2c(r3)			#backup data pointer in r31
 		li		r3,0x0
 		branchl	r12,0x80034110				#get player block
 		mr		r30,r3			#player block in r30
 		lwz		r29,0x2c(r30)			#player data in r29
-		
+
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
@@ -442,8 +443,8 @@ b	exit
 			#Set Frame 1 As Over
 			li		r3,0x1
 			stb		r3,0x0(r31)
-			
-			
+
+
 		LedgedashThinkMain:
 
 		#Update HUD Score
@@ -459,9 +460,9 @@ b	exit
 		fabs	f1,f1
 		stfs	f1,0xB0(r3)			#X Pos
 		lfs	f1,0x2C(r3)			#Facing
-		fabs	f1,f1	
+		fabs	f1,f1
 		fneg	f1,f1			#Negate Always
-		stfs	f1,0x2C(r3)			#Facing	
+		stfs	f1,0x2C(r3)			#Facing
 		b	Ledgedash_LoadState
 		Ledgedash_CheckLeft:
 		rlwinm.	r0,r3,0,31,31
@@ -470,12 +471,12 @@ b	exit
 		lfs	f1,0xB0(r3)			#X Pos
 		fabs	f1,f1
 		fneg	f1,f1			#Negate Always
-		stfs	f1,0xB0(r3)			#X Pos	
+		stfs	f1,0xB0(r3)			#X Pos
 		lfs	f1,0x2C(r3)			#Facing
 		fabs	f1,f1			#Always Positive
-		stfs	f1,0x2C(r3)			#Facing				
+		stfs	f1,0x2C(r3)			#Facing
 		b	Ledgedash_LoadState
-			
+
 		GetProgressAndAS:
 		#Check If Timer Is Set
 		lbz	r3,0x4(r31)
@@ -483,7 +484,7 @@ b	exit
 		bgt	Ledgedash_CheckToReset
 		#Get Progress + AS
 		lbz	r3,0x1(r31)		#Progress Byte
-		
+
 		bl	LedgedashSkipJumpTable
 		bl	LedgedashProg0
 		bl	LedgedashProg1
@@ -500,11 +501,11 @@ b	exit
 		rlwinm	r3,r3,0,6,29		#Mask Bits 6-29 (the offset)
 		add	r3,r4,r3		#Gets Address in r3
 		add	r3,r3,r5		#Offset From Start Of Jump Table
-		
+
 		#Init Loop
-		subi	r3,r3,0x2	
+		subi	r3,r3,0x2
 		lwz	r6,0x10(r29)		#AS
-		
+
 		#Check For BlackListed AS
 		## Terminator = FFFF
 		## Jump to    = 7FXX
@@ -524,16 +525,16 @@ b	exit
 		stb	r5,0x1(r31)		#Progress Byte
 		b	LedgedashThinkEnd
 
-		
+
 		LedgedashThinkEnd:
 		restore
 		blr
-		
-		
+
+
 		####################
 		## Reset Progress ##
 		####################
-		
+
 		Ledgedash_ResetProg:
 		#Check If On Ground
 		lwz	r3,0xE0(r29)
@@ -559,9 +560,9 @@ b	exit
 
 		lwz	r3,CurrentAS(r29)
 		cmpwi	r3,0x2A			#If Aerial Interrupt, Check If Can IASA Yet
-		beq	Ledgedash_AerialInterruptCheck		
+		beq	Ledgedash_AerialInterruptCheck
 		cmpwi	r3,0xE			#If No Impact Land, Success
-		beq	Ledgedash_PlaySuccess	
+		beq	Ledgedash_PlaySuccess
 
 		b	Ledgedash_PlayFailure
 
@@ -571,7 +572,7 @@ b	exit
 		cmpwi	r3,0x41
 		blt	Ledgedash_PlayFailure
 		cmpwi	r3,0x45
-		bgt	Ledgedash_PlayFailure		
+		bgt	Ledgedash_PlayFailure
 
 		#Check If Interruptable Yet
 		lfs	f2,0x1F4(r29)			#Check Which Frame Landing is Interruptable
@@ -590,11 +591,11 @@ b	exit
 		#Check To Make New High Score
 			lhz	r3,-0x4ea8(r13)
 			lhz	r4,-0x4ea6(r13)
-			cmpw	r3,r4	
+			cmpw	r3,r4
 			ble	Ledgedash_PlaySuccess_PlaySound
 		#Copy To High Score
-			sth	r3,-0x4ea6(r13)			
-		Ledgedash_PlaySuccess_PlaySound:		
+			sth	r3,-0x4ea6(r13)
+		Ledgedash_PlaySuccess_PlaySound:
 		#Play Sound
 			li		r3,0x1
 			branchl		r12,0x80024030			#play success sound
@@ -618,7 +619,7 @@ b	exit
 		lbz	r3,0x4(r31)				#Check If Timer is Set
 		cmpwi	r3,0x0
 		ble	LedgedashThinkEnd
-		
+
 		Ledgedash_CheckForInvincibleMove:
 		lbz	r3,0x2(r31)				#Check If Hitbox Was Already Found
 		cmpwi	r3,0x1
@@ -634,12 +635,12 @@ b	exit
 		branchl	r12,0x801c53ec
 		li	r3,1				#Mark As Found
 		stb	r3,0x2(r31)
-									
-		Ledgedash_DecrementTimer:							
+
+		Ledgedash_DecrementTimer:
 		lbz	r3,0x4(r31)
 		subi	r3,r3,0x1			#Decrement
-		stb	r3,0x4(r31)	
-		cmpwi	r3,0x0				
+		stb	r3,0x4(r31)
+		cmpwi	r3,0x0
 		bgt	LedgedashThinkEnd
 		#Reset
 		Ledgedash_LoadState:
@@ -653,32 +654,32 @@ b	exit
 		mr	r3,r30
 		branchl	r12,0x80081b38
 		b		LedgedashThinkEnd
-		
-		
+
+
 		#####################
 		## PlaceAboveLedge ##
 		#####################
 		Ledgedash_PlaceAboveLedge:
 		backup
-		
+
 		#RESET PROGRESS
 		li		r3,0x0
 		stb		r3,0x1(r31)
-		
+
 		#MOVE TO ABOVE THE LEDGE
-			
+
 			lwz		r3,-0x6CB8 (r13)			#External Stage ID
 			cmpwi		r3,0x1C
 			beq		Ledgedash_Ledge3
 			cmpwi		r3,0x2
-			beq		Ledgedash_Ledge3	
+			beq		Ledgedash_Ledge3
 			cmpwi		r3,0x8
-			beq		Ledgedash_Ledge1				
+			beq		Ledgedash_Ledge1
 			li		r3,0x0			#FD,BF,PS
 			b		Ledgedash_MoveAboveLedge
 			Ledgedash_Ledge1:
 			li		r3,0x1
-			b		Ledgedash_MoveAboveLedge		
+			b		Ledgedash_MoveAboveLedge
 			Ledgedash_Ledge3:
 			li		r3,0x3
 
@@ -693,7 +694,7 @@ b	exit
 			stfs		f1,0xB0(r29)			#X Pos
 			lis		r3,0xC080
 			stw		r3,0xB4(r29)			#Y Pos
-			lis		r3,0x3f80		
+			lis		r3,0x3f80
 			stw		r3,0x2c(r29)			#Facing Direction
 			li		r3,0x0
 			stw		r3,0x80(r29)			#velocity
@@ -703,11 +704,11 @@ b	exit
 			#Update Position
 			mr	r3,r30
 			branchl	r12,0x80081b38
-		
+
 		restore
 		blr
-		
-	
+
+
 ####################################
 #Fall -> GliffGrab
 LedgedashProg0:
@@ -777,7 +778,7 @@ LedgedashProg6:
 
 ####################################
 
-	
+
 LedgedashLoadExit:
 restore
 blr
@@ -844,13 +845,13 @@ b	exit
 
 	b	EggsLoadExit
 
-	
+
 		#########################
 		## Eggs-ercise THINK FUNCT ##
 		#########################
 
 		.set	DamageThreshold,0xA
-	
+
 		EggsThink:
 		blrl
 		backup
@@ -858,7 +859,7 @@ b	exit
 		#Get and Backup Event Data
 		mr	r30,r3			#r30 = think entity
 		lwz	r31,0x2c(r3)			#backup data pointer in r31
-		
+
 		#Get Player Data
 		li	r3,0x0
 		branchl	r12,0x80034110	 #get player block
@@ -899,7 +900,7 @@ b	exit
 			li	r3,0x0
 			branchl	r12,0x80034110	 #get player block
 			lwz	r3,0x2c(r3)		#player data in r29
-		
+
 			lbz	r3,0x221D(r3)
 			rlwinm.	r3,r3,0,28,28
 			bne	EggsThinkExit
@@ -934,7 +935,7 @@ b	exit
 		stb	r0,0x24C8(r3)
 		#Play Sound To Indicate
 		li	r3,0x82
-		branchl	r12,0x801c53ec				
+		branchl	r12,0x801c53ec
 
 		#Check If Target is Spawned
 		EggsTargetCheck:
@@ -950,19 +951,19 @@ b	exit
 			li	r3,55
 			branchl	r12,0x80380580
 			mr	r20,r3			#r20 = X
-			
+
 			#Get Random Y (1-50)
 			li	r3,50
 			branchl	r12,0x80380580
 			addi	r3,r3,0x1
-			mr	r21,r3			#r21 = Y	
+			mr	r21,r3			#r21 = Y
 
 			#Get Random Y Velocity
 			li	r22,0x2			#r22 = Y vel int
 
 			#Get Y Velocity Decimal
 			branchl	r12,0x80380528
-			fmr	f8,f1			#f8 = Y Vel Decimal 
+			fmr	f8,f1			#f8 = Y Vel Decimal
 
 			#Chance to Negate X
 			li	r3,0x2
@@ -991,15 +992,15 @@ b	exit
 			fsubs	f3,f3,f5
 			#Add Decimal to Y Vel
 			fadds	f20,f3,f8
-			
+
 			#Check To Negate X Coord
 			cmpwi	r23,0x0
 			bne	SpawnEgg
 			fneg	f1,f1
-	
+
 			SpawnEgg:
 			addi	r3,sp,0x80
-			li	r4,0x0	
+			li	r4,0x0
 			stw	r4,0x0(r3)	#Player Pointer
 			stw	r4,0x4(r3)	#Player Pointer
 			li	r4,0x03
@@ -1036,8 +1037,8 @@ b	exit
 			#Store OnCollision
 			bl	OnCollision
 			mflr	r3
-			stw	r3,0x1C(r4)		
-			
+			stw	r3,0x1C(r4)
+
 			#Create Camera Box
 			li	r3,0x0
 			branchl	r12,0x80029044
@@ -1097,14 +1098,14 @@ b	exit
 			lwz	r3,0xCA0(r31)
 			cmpwi	r3,11
 			blt	Egg_OnCollisionExit
-			
+
 			Eggs_OnCollisionBreakEgg:
 			#Increment Score
 			li	r3,0
 			li	r4,0
 			li	r5,5
-			branchl	r12,0x80034fa8	
-			
+			branchl	r12,0x80034fa8
+
 			#Display Effect
 			li	r3,1232
 			mr	r4,r30
@@ -1116,13 +1117,13 @@ b	exit
 			mr	r3,r31
 			li	r4,244
 			li	r5,127
-			li	r6,64	
+			li	r6,64
 			branchl	r12,0x8026ae84
 
 			#Explode
 			mr	r3,r30
 			branchl	r12,0x80289158
-			
+
 			#Spawn New Egg
 			lwz	r3,0xDDC(r31)			#Get Event Think
 			li	r4,0x0			#Get 0
@@ -1168,8 +1169,8 @@ b	exit
 		EggsThinkExit:
 		restore
 		blr
-		
-		
+
+
 EggsLoadExit:
 restore
 blr
@@ -1284,12 +1285,12 @@ b	exit
 
 	b	SDITrainingLoadExit
 
-	
+
 		#########################
 		## SDI Training THINK FUNCT ##
 		#########################
 
-	
+
 		SDITrainingThink:
 		blrl
 		backup
@@ -1312,7 +1313,7 @@ b	exit
 		li	r3,0xF
 		stw	r3,0x1A94(r29)
 		bl	StoreCPUTypeAndZeroInputs
-		
+
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
@@ -1342,7 +1343,7 @@ b	exit
 			branchl	r12,0x80380580
 			li	r4,0
 			sub	r3,r4,r3
-			stw	r3,0x4(r31)		#Reset Timer	
+			stw	r3,0x4(r31)		#Reset Timer
 
 
 		SDITrainingThinkMain:
@@ -1356,7 +1357,7 @@ b	exit
 		#Check If Already Incremented
 			lbz	r3,0xA(r31)
 			cmpwi	r3,0x1
-			beq	SDITraining_SkipSDICheck	
+			beq	SDITraining_SkipSDICheck
 		#Check AS
 			lwz	r3,0x10(r27)
 			cmpwi	r3,0x55
@@ -1367,10 +1368,10 @@ b	exit
 			bne	SDITraining_SkipSDICheck
 		#Set Flag
 			li	r3,0x1
-			stb	r3,0xA(r31)	
+			stb	r3,0xA(r31)
 		#Play Sound
 			li		r3,0x1
-			branchl		r12,0x80024030			#play success sound		
+			branchl		r12,0x80024030			#play success sound
 		#Increment Score
 			lhz	r3,-0x4ea8(r13)
 			addi	r3,r3,0x1
@@ -1378,10 +1379,10 @@ b	exit
 		#Check To Make New High Score
 			lhz	r3,-0x4ea8(r13)
 			lhz	r4,-0x4ea6(r13)
-			cmpw	r3,r4	
+			cmpw	r3,r4
 			ble	SDITraining_SkipSDICheck
 		#Copy To High Score
-			sth	r3,-0x4ea6(r13)		
+			sth	r3,-0x4ea6(r13)
 		SDITraining_SkipSDICheck:
 
 		#Check If Missed SDI	(Fox in UpAir + P1 in Damage Heavy State)
@@ -1391,17 +1392,17 @@ b	exit
 			bne	SDITraining_SkipMissedSDICheck
 		#Check If P1 is in Hitlag
 			lbz	r3,0x221A(r27)			#Check If in Hitlag
-			rlwinm.	r3,r3,0,26,26		
-			beq	SDITraining_SkipMissedSDICheck	
+			rlwinm.	r3,r3,0,26,26
+			beq	SDITraining_SkipMissedSDICheck
 		#Check If Fox is Past Frame 11
 			li	r3,11
 			bl	IntToFloat
 			lfs	f2,0x894(r29)
 			fcmpo	cr0,f2,f1
-			blt	SDITraining_SkipMissedSDICheck	
+			blt	SDITraining_SkipMissedSDICheck
 		#Reset Score
 			li	r3,0
-			sth	r3,-0x4ea8(r13)				
+			sth	r3,-0x4ea8(r13)
 		SDITraining_SkipMissedSDICheck:
 
 		#Update Score
@@ -1437,15 +1438,15 @@ b	exit
 			#Advance to Next State
 				li	r3,0x1
 				stb	r3,0x8(r31)
-				b	SDITrainingFollowOpponentThink	
+				b	SDITrainingFollowOpponentThink
 
 		SDITrainingUpThrowThink_InputUpThrow:
 		#UpThrow
 			li	r3,127
 			stb	r3,0x1A8D(r29)
 			b	SDITrainingThinkExit
-			
-#******************************************************#	
+
+#******************************************************#
 
 		SDITrainingFollowOpponentThink:
 
@@ -1454,8 +1455,8 @@ b	exit
 			cmpwi	r3,0x1
 			bne	SDITrainingFollowOpponentThink_CheckDistance
 			li	r3,0x2
-			stb	r3,0x8(r31)	
-			b	SDITrainingJumpThink	
+			stb	r3,0x8(r31)
+			b	SDITrainingJumpThink
 
 		SDITrainingFollowOpponentThink_CheckDistance:
 			#Determine Which Distance Value
@@ -1472,7 +1473,7 @@ b	exit
 			beq	SDITrainingFollowOpponentThink_CheckIfJumping
 			cmpwi	r3,0x1			#Checks If In Range of Opponent
 			bne	SDITrainingThinkExit
-		
+
 		#Check If Jumping
 		SDITrainingFollowOpponentThink_CheckIfJumping:
 			lwz	r3,0x10(r29)
@@ -1486,15 +1487,15 @@ b	exit
 			bl	IntToFloat
 			fabs	f2,f3
 			fcmpo	cr0,f2,f1
-			blt	SDITrainingThinkExit	
-					
+			blt	SDITrainingThinkExit
+
 		#Input Jump
-		SDITrainingFollowOpponentThink_InputJump:		
+		SDITrainingFollowOpponentThink_InputJump:
 			li	r3,0x800
 			stw	r3,0x1A88(r29)
 			b	SDITrainingThinkExit
 
-#******************************************************#	
+#******************************************************#
 
 		SDITrainingJumpThink:
 		#Follow Opponent
@@ -1517,7 +1518,7 @@ b	exit
 			stb	r3,0x9(r31)
 		#Advance State
 			li	r3,0x3
-			stb	r3,0x8(r31)				
+			stb	r3,0x8(r31)
 			b	SDITrainingUpAirThink
 
 		SDITrainingJumpThink_CheckToDJ:
@@ -1539,7 +1540,7 @@ b	exit
 			stw	r3,0x1A88(r29)
 			b	SDITrainingThinkExit
 
-#******************************************************#	
+#******************************************************#
 
 		SDITrainingUpAirThink:
 		#Check If UpAir Hitboxes Are Over
@@ -1550,14 +1551,14 @@ b	exit
 			bge	SDITrainingCheckForReset
 		#Follow Opponent
 			li	r3,5
-			bl	SDITrainingInputTowardsOpponent		
+			bl	SDITrainingInputTowardsOpponent
 		#Check If Back On Ground
 			lwz	r3,0xE0(r29)
 			cmpwi	r3,0x0
 			bne	SDITrainingCheckForReset
 		#Advance State
 			li	r3,0x4
-			stb	r3,0x8(r31)	
+			stb	r3,0x8(r31)
 			b	SDITrainingCheckForReset
 
 #******************************************************#
@@ -1595,7 +1596,7 @@ SDITrainingInputTowardsOpponent_Exit:
 	restore
 	blr
 
-#******************************************************#	
+#******************************************************#
 
 
 		SDITrainingCheckForReset:
@@ -1607,9 +1608,9 @@ SDITrainingInputTowardsOpponent_Exit:
 			cmpwi	r3,0x0
 			bne	SDITrainingThinkExit
 		#Load State
-			mr	r3,r31	
+			mr	r3,r31
 			bl	SaveState_Load
-			mr	r3,r31		
+			mr	r3,r31
 			bl	SaveState_Load
 		#Random Timer
 			li	r3,60
@@ -1626,7 +1627,7 @@ SDITrainingInputTowardsOpponent_Exit:
 		SDITrainingThinkExit:
 		restore
 		blr
-		
+
 ##############
 
 Event_EnterGrab:
@@ -1677,17 +1678,17 @@ Event_EnterGrab_EnterGrabAS:
 stw	r28,0x1A58(r29)
 
 #Enter P2 Into Grab
-mr	r3,r30			#P2 Enters Grab	
+mr	r3,r30			#P2 Enters Grab
 branchl	r12,0x800d9ce8
 
 #Enter P1 Into Grabbed
 mr	r3,r28			#P1 Grabbed
 mr	r4,r30			#P2 = Grabber
-branchl	r12,0x800daadc		
+branchl	r12,0x800daadc
 
 #Enter P2 Into GrabWait
-mr	r3,r30			#P2 Enters GrabWait	
-branchl	r12,0x800da1d8	
+mr	r3,r30			#P2 Enters GrabWait
+branchl	r12,0x800da1d8
 
 #Enter P2 Into Grounded
 mr	r3,r29
@@ -1700,7 +1701,7 @@ stw	r3,0x60C(r29)
 restore
 blr
 
-##############		
+##############
 
 SDITrainingStartingPercents:
 blrl
@@ -1790,15 +1791,19 @@ b	exit
 
 	b	ReversalLoadExit
 
-	
+
 		#########################
 		## Reversal THINK FUNCT ##
 		#########################
 
-		.set CPUAttack,0xA
-		.set P1FacingDirection,0xB
-		.set CPUFacingDirection,0xC
-	
+		.set firstFrameFlag,0x0
+		.set timer,0x4
+		.set OptionWindowMemory,0x8
+		.set CPUAttack,OptionWindowMemory+(0x2)
+		.set P1FacingDirection,OptionWindowMemory+(0x3)
+		.set CPUFacingDirection,OptionWindowMemory+(0x4)
+		.set AerialThinkStruct,0x20
+
 		ReversalThink:
 		blrl
 		backup
@@ -1817,7 +1822,7 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
+
 		li	r3,0xF
 		stb	r3,0x1A94(r29)
 		bl	StoreCPUTypeAndZeroInputs
@@ -1839,19 +1844,19 @@ b	exit
 			bl	SaveState_Save
 			#Set Frame 1 As Over
 			li		r3,0x1
-			stb		r3,0x0(r31)	
+			stb		r3,0x0(r31)
 			#Set Timer to -60
 			li		r3,-60
-			stw		r3,0x4(r31)		
+			stw		r3,0x4(r31)
 
 
 
 		ReversalThinkMain:
 
 		bl	GiveFullShields
-		
+
 		#Run Option Window Code
-		addi	r3,r31,0x8
+		addi	r3,r31,OptionWindowMemory
 		bl	ReversalWindowInfo
 		mflr	r4
 		bl	ReversalWindowText
@@ -1864,7 +1869,7 @@ b	exit
 		beq	ReversalReset			#Only Run When Hovered Over Facing Direction
 		cmpwi	r3,0x2
 		beq	ReversalReset			#Only Run When Hovered Over Facing Direction
-		ReversalSkipFacingReset:		
+		ReversalSkipFacingReset:
 
 		#Move Players Apart With DPad
 		bl	AdjustResetDistance
@@ -1887,7 +1892,7 @@ b	exit
 		lbz	r3, 0x2218 (r29)
 		rlwinm.	r3, r3, 25, 31, 31
 		bne	ReversalGiveInvincibility
-		b	ReversalCheckToUpsmash
+		b	ReversalCheckToAttack
 
 		ReversalGiveInvincibility:
 		mr	r3,r30
@@ -1895,12 +1900,16 @@ b	exit
 		bl	GiveInvincibility
 
 		#Check To Attack
-		ReversalCheckToUpsmash:
-		cmpwi	r20,45
-		blt	ReversalThinkExit
-		bgt	ReversalCheckToReset
+		ReversalCheckToAttack:
+		#Check Timer
+			cmpwi	r20,45
+			blt	ReversalThinkExit
+		#Check If Attack is Over
+			lbz r3,AerialThinkStruct(r31)
+			cmpwi r3,0x0
+			bne ReversalCheckToReset
 
-		
+
 		ReversalDecideSmashAttack:
 		lbz	r3,CPUAttack(r31)
 		cmpwi	r3,0x0
@@ -1911,118 +1920,165 @@ b	exit
 		beq	ReversalDSmash
 		cmpwi	r3,0x3
 		beq	ReversalUSmash
-		cmpwi	r3,0x4
+		cmpwi r3,0x4
+		beq	ReversalRandomAerial
+		cmpwi r3,0x5
+		beq	ReversalNair
+		cmpwi r3,0x6
+		beq	ReversalFair
+		cmpwi r3,0x7
+		beq	ReversalDair
+		cmpwi	r3,0x8
 		beq	ReversalFTilt
-		cmpwi	r3,0x5
+		cmpwi	r3,0x9
 		beq	ReversalDTilt
-		cmpwi	r3,0x6
-		beq	ReversalUTilt				
-		
+		cmpwi	r3,0xA
+		beq	ReversalUTilt
+
 		ReversalRandomSmashAttack:
-		li	r3,3
-		branchl	r12,0x80380580
-		mr	r21,r3
+			li	r3,3
+			branchl	r12,0x80380580
+			mr	r21,r3
 		#Check If Move is Blacklisted
-		lwz	r4,0x4(r29)		#Char ID
-		bl	Reversal_Blacklist
-		mflr	r5		#Get Frame Data Table
-		mulli	r4,r4,0x4		#Get Characters Offset
-		add	r4,r4,r5		#Get Characters Table Entry Start
-		lbzx	r4,r21,r4		#Get Moves Entry		
-		cmpwi	r4,0x1		#Is Move BlackListed?
-		beq	ReversalRandomSmashAttack
+			lwz	r4,0x4(r29)		#Char ID
+			bl	Reversal_Blacklist
+			mflr	r5		#Get Frame Data Table
+			mulli	r4,r4,0x4		#Get Characters Offset
+			add	r4,r4,r5		#Get Characters Table Entry Start
+			lbzx	r4,r21,r4		#Get Moves Entry
+			cmpwi	r4,0x1		#Is Move BlackListed?
+			beq	ReversalRandomSmashAttack
+
 		#Perform Move
-		cmpwi	r21,0x0		
-		beq	ReversalFSmash
-		cmpwi	r21,0x1
-		beq	ReversalUSmash
-		cmpwi	r21,0x2
-		beq	ReversalDSmash
+			cmpwi	r21,0x0
+			beq	ReversalFSmash
+			cmpwi	r21,0x1
+			beq	ReversalUSmash
+			cmpwi	r21,0x2
+			beq	ReversalDSmash
 		ReversalFSmash:
-		li	r3,127		#Forward
-		lfs	f1,0x2C(r29)		#Facing Direction
-		fctiwz	f1,f1
-		stfd	f1,0xF0(sp)
-		lwz	r4,0xF4(sp)
-		mullw	r3,r3,r4		#Forward * facing direction
-		stb	r3,0x1A8E(r29)
-		b	ReversalCheckToReset
+		#Input Atack
+			li	r3,127		#Forward
+			lfs	f1,0x2C(r29)		#Facing Direction
+			fctiwz	f1,f1
+			stfd	f1,0xF0(sp)
+			lwz	r4,0xF4(sp)
+			mullw	r3,r3,r4		#Forward * facing direction
+			stb	r3,0x1A8E(r29)
+		#Set Attack as ended
+			li	r3,0x1
+			stb r3,AerialThinkStruct(r31)
+			b	ReversalCheckToReset
 		ReversalUSmash:
-		li	r3,127
-		stb	r3,0x1A8F(r29)		
-		b	ReversalCheckToReset	
+			li	r3,127
+			stb	r3,0x1A8F(r29)
+			b	ReversalCheckToReset
+		#Set Attack as ended
+			li	r3,0x1
+			stb r3,AerialThinkStruct(r31)
 		ReversalDSmash:
-		li	r3,-127
-		stb	r3,0x1A8F(r29)		
-		b	ReversalCheckToReset		
+			li	r3,-127
+			stb	r3,0x1A8F(r29)
+		#Set Attack as ended
+			li	r3,0x1
+			stb r3,AerialThinkStruct(r31)
+			b		ReversalCheckToReset
+		ReversalRandomAerial:
+		#Perform Aerial
+			mr		r3,r30
+			addi	r4,r31,AerialThinkStruct
+			li		r5,0		#Random Aerial
+			bl		PerformAerialThink
+			b		ReversalCheckToReset
+		ReversalNair:
+		ReversalFair:
+		ReversalDair:
+		#Perform Aerial
+			subi	r5,r3,0x4
+			mr		r3,r30
+			addi	r4,r31,AerialThinkStruct
+			bl		PerformAerialThink
+			b		ReversalCheckToReset
 		ReversalFTilt:
-		li	r3,45
-		lfs	f1,0x2C(r29)		#Facing Direction
-		fctiwz	f1,f1
-		stfd	f1,0xF0(sp)
-		lwz	r4,0xF4(sp)
-		mullw	r3,r3,r4		#Forward * facing direction
-		stb	r3,0x1A8C(r29)	
-		li	r3,0x100
-		stw	r3,0x1A88(r29)
-		b	ReversalCheckToReset	
+			li	r3,45
+			lfs	f1,0x2C(r29)		#Facing Direction
+			fctiwz	f1,f1
+			stfd	f1,0xF0(sp)
+			lwz	r4,0xF4(sp)
+			mullw	r3,r3,r4		#Forward * facing direction
+			stb	r3,0x1A8C(r29)
+			li	r3,0x100
+			stw	r3,0x1A88(r29)
+		#Set Attack as ended
+			li	r3,0x1
+			stb r3,AerialThinkStruct(r31)
+			b	ReversalCheckToReset
 		ReversalUTilt:
-		li	r3,45
-		stb	r3,0x1A8D(r29)
-		li	r3,0x100
-		stw	r3,0x1A88(r29)
-		b	ReversalCheckToReset	
+			li	r3,45
+			stb	r3,0x1A8D(r29)
+			li	r3,0x100
+			stw	r3,0x1A88(r29)
+		#Set Attack as ended
+			li	r3,0x1
+			stb r3,AerialThinkStruct(r31)
+			b	ReversalCheckToReset
 		ReversalDTilt:
-		li	r3,-45
-		stb	r3,0x1A8D(r29)
-		li	r3,0x100
-		stw	r3,0x1A88(r29)
-		b	ReversalCheckToReset	
+			li	r3,-45
+			stb	r3,0x1A8D(r29)
+			li	r3,0x100
+			stw	r3,0x1A88(r29)
+		#Set Attack as ended
+			li	r3,0x1
+			stb r3,AerialThinkStruct(r31)
+			b	ReversalCheckToReset
 
 
 		ReversalCheckToReset:
-		cmpwi	r20,150		#Restore After 120 Frames
-		blt	ReversalThinkExit
+			cmpwi	r20,150		#Restore After 120 Frames
+			blt	ReversalThinkExit
 		ReversalReset:
 		#Randomize Position
-		li	r3,0x1			#Opposing Sides of Stage
-		bl	Randomize_LeftorRightSide
+			li	r3,0x1			#Opposing Sides of Stage
+			bl	Randomize_LeftorRightSide
 		ReversalReset_NoRandomization:
 		#Adjust P1 Facing Direction Based on Preference
-		lbz	r3,P1FacingDirection(r31)
-		cmpwi	r3,0x1
-		bne	ReversalAdjustCPUDirection
+			lbz	r3,P1FacingDirection(r31)
+			cmpwi	r3,0x1
+			bne	ReversalAdjustCPUDirection
 		#Invert P1 Facing Direction
-		lwz	r3,0x10(r31)
-		lfs	f1,0x2C(r3)
-		fneg	f1,f1
-		stfs	f1,0x2C(r3)
+			lwz	r3,0x10(r31)
+			lfs	f1,0x2C(r3)
+			fneg	f1,f1
+			stfs	f1,0x2C(r3)
 		#Adjust CPU Facing Direction Based on Preference
 		ReversalAdjustCPUDirection:
-		lbz	r3,CPUFacingDirection(r31)
-		cmpwi	r3,0x1
-		bne	ReversalLoadState
+			lbz	r3,CPUFacingDirection(r31)
+			cmpwi	r3,0x1
+			bne	ReversalLoadState
 		#Invert P1 Facing Direction
-		lwz	r3,0x18(r31)
-		lfs	f1,0x2C(r3)
-		fneg	f1,f1
-		stfs	f1,0x2C(r3)
+			lwz	r3,0x18(r31)
+			lfs	f1,0x2C(r3)
+			fneg	f1,f1
+			stfs	f1,0x2C(r3)
 		#Restore
 		ReversalLoadState:
-		mr	r3,r31
-		bl	SaveState_Load
+			mr	r3,r31
+			bl	SaveState_Load
 		#Reset Timer
-		li	r3,30
-		branchl	r12,0x80380580
-		li	r4,0
-		sub	r3,r4,r3
-		stw	r3,0x4(r31)
+			li	r3,30
+			branchl	r12,0x80380580
+			li	r4,0
+			sub	r3,r4,r3
+			stw	r3,0x4(r31)
+		#Reset AerialThinkStruct
+			li	r3,0x0
+			stw r3,AerialThinkStruct(r31)
 
 		ReversalThinkExit:
-		bl	UpdateAllGFX
-		restore
-		blr
-		
+			bl	UpdateAllGFX
+			restore
+			blr
+
 
 #################################
 
@@ -2124,7 +2180,7 @@ ReversalWindowInfo:
 blrl
 #amount of options, amount of options in each window
 
-.long 0x02060101  #3 window, Smash Attack has 7 options, Facing Direction Has 2
+.long 0x020A0101  #3 window, Smash Attack has 11 options, Facing Direction Has 2
 
 ####################################################
 
@@ -2139,8 +2195,6 @@ blrl
 .long 0x43505520
 .long 0x41747461
 .long 0x636b0000
-.long 0x
-.long 0x
 
 #Option 1 = Random Smash Attack
 .long 0x52616e64
@@ -2154,42 +2208,46 @@ blrl
 .long 0x61726420
 .long 0x536d6173
 .long 0x68000000
-.long 0x
 
 #Option 3 = Down Smash
 .long 0x446f776e
 .long 0x20536d61
 .long 0x73680000
-.long 0x
-.long 0x
 
 #Option 4 = Up Smash
 .long 0x55702053
 .long 0x6d617368
 .long 0x
-.long 0x
+
+#Option 5 = Random Aerial
+.long 0x52616e64
+.long 0x6f6d2041
+.long 0x65726961
+.long 0x6c000000
+
+#Option 6 = Fair
+.long 0x46616972
 .long 0x
 
-#Option 5 = FTilt
+#Option 7 = Nair
+.long 0x4e616972
+.long 0x
+
+#Option 8 = Dair
+.long 0x44616972
+.long 0x
+
+#Option 9 = FTilt
 .long 0x4654696c
 .long 0x74000000
-.long 0x
-.long 0x
-.long 0x
 
-#Option 6 = DTilt
+#Option 10 = DTilt
 .long 0x4454696c
 .long 0x74000000
-.long 0x
-.long 0x
-.long 0x
 
-#Option 7 = UTilt
+#Option 11 = UTilt
 .long 0x5554696c
 .long 0x74000000
-.long 0x
-.long 0x
-.long 0x
 
 #########$$$#############
 ## P1 Facing Direction ##
@@ -2243,7 +2301,7 @@ blrl
 .long 0x
 
 ####################################################
-	
+
 ReversalLoadExit:
 restore
 blr
@@ -2309,13 +2367,13 @@ b	exit
 
 	b	PowershieldLoadExit
 
-	
+
 		#########################
 		## Powershield THINK FUNCT ##
 		#########################
 
 		.set FireSpeed,0xE
-	
+
 		PowershieldThink:
 		blrl
 		backup
@@ -2334,9 +2392,9 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
-		
+
+		bl	StoreCPUTypeAndZeroInputs
+
 		#Make P2 A Follower (No Nudge)
 		#li	r3,0x8
 		#stb	r3,0x221F(r29)
@@ -2344,7 +2402,7 @@ b	exit
 		lbz	r0, 0x221D (r29)
 		rlwimi	r0,r3,2,29,29
 		stb	r0, 0x221D (r29)
-		
+
 		#Update GFX
 		mr	r3,r30
 		bl	UpdateAllGFX
@@ -2370,18 +2428,18 @@ b	exit
 		fabs	f1,f1
 		stfs	f1,0xB0(r3)			#X Pos
 		lfs	f1,0x2C(r3)			#Facing
-		fabs	f1,f1	
+		fabs	f1,f1
 		fneg	f1,f1			#Negate Always
-		stfs	f1,0x2C(r3)			#Facing	
+		stfs	f1,0x2C(r3)			#Facing
 
 		lwz	r3,0x18(r31)			#P2's Backup
 		lfs	f1,0xB0(r3)			#X Pos
 		fabs	f1,f1
 		fneg	f1,f1			#Negate Always
-		stfs	f1,0xB0(r3)			#X Pos	
+		stfs	f1,0xB0(r3)			#X Pos
 		lfs	f1,0x2C(r3)			#Facing
 		fabs	f1,f1			#Always Positive
-		stfs	f1,0x2C(r3)			#Facing	
+		stfs	f1,0x2C(r3)			#Facing
 		b	PowershieldRestore
 
 		Powershield_CheckLeft:
@@ -2391,19 +2449,19 @@ b	exit
 		lfs	f1,0xB0(r3)			#X Pos
 		fabs	f1,f1
 		fneg	f1,f1			#Negate Always
-		stfs	f1,0xB0(r3)			#X Pos	
+		stfs	f1,0xB0(r3)			#X Pos
 		lfs	f1,0x2C(r3)			#Facing
 		fabs	f1,f1			#Always Positive
-		stfs	f1,0x2C(r3)			#Facing	
-			
+		stfs	f1,0x2C(r3)			#Facing
+
 		lwz	r3,0x18(r31)			#P2's Backup
 		lfs	f1,0xB0(r3)			#X Pos
 		fabs	f1,f1
 		stfs	f1,0xB0(r3)			#X Pos
 		lfs	f1,0x2C(r3)			#Facing
-		fabs	f1,f1	
+		fabs	f1,f1
 		fneg	f1,f1			#Negate Always
-		stfs	f1,0x2C(r3)			#Facing		
+		stfs	f1,0x2C(r3)			#Facing
 		b	PowershieldRestore
 		Powershield_SkipPositionChange:
 
@@ -2414,7 +2472,7 @@ b	exit
 		bl	PowershieldWindowText
 		mflr	r5
 		bl	OptionWindow
-		
+
 		#Act Out Of Laser Hit
 		bl	ActOutOfLaserHitDisplay
 
@@ -2422,7 +2480,7 @@ b	exit
 		#Check For Shield Action State
 			lwz	r3,0x10(r27)
 			cmpwi	r3,0xB6		#Shield Start
-			bne	Powershield_SkipPowershieldCheck	
+			bne	Powershield_SkipPowershieldCheck
 		#Check For Powershield Bool
 			lwz	r3,0x2368(r27)
 			cmpwi	r3,0x0
@@ -2433,14 +2491,14 @@ b	exit
 		#Increment Score
 			lhz	r3,-0x4ea8(r13)
 			addi	r3,r3,0x1
-			sth	r3,-0x4ea8(r13)	
+			sth	r3,-0x4ea8(r13)
 		#Check To Make New High Score
 			lhz	r3,-0x4ea8(r13)
 			lhz	r4,-0x4ea6(r13)
 			cmpw	r3,r4
 			ble	Powershield_SkipPowershieldCheck
 		#Copy To High Score
-			sth	r3,-0x4ea6(r13)				
+			sth	r3,-0x4ea6(r13)
 		Powershield_SkipPowershieldCheck:
 
 		#Check For Powershield Miss
@@ -2450,8 +2508,8 @@ b	exit
 			beq	Powershield_ResetScore
 		#Check For Hitstun
 			lbz	r3, 0x221C (r27)
-			rlwinm.	r0, r3, 31, 31, 31	
-			bne	Powershield_ResetScore			
+			rlwinm.	r0, r3, 31, 31, 31
+			bne	Powershield_ResetScore
 			b	Powershield_SkipMissedPowershieldCheck
 		Powershield_ResetScore:
 		#Reset Score
@@ -2471,9 +2529,9 @@ b	exit
 
 		#Set Timer to -60
 		li		r3,-60
-		stw		r3,0x4(r31)	
+		stw		r3,0x4(r31)
 		#Fix Inputs
-		bl	CurrentInputsAsLastFramesInputs	
+		bl	CurrentInputsAsLastFramesInputs
 		#SaveState
 		mr	r3,r31
 		bl	SaveState_Save
@@ -2486,8 +2544,8 @@ b	exit
 		#Increment Timer
 		lwz	r20,0x4(r31)		#get timer
 		addi	r20,r20,0x1
-		stw	r20,0x4(r31)		#store timer		
-		
+		stw	r20,0x4(r31)		#store timer
+
 		#KneeBend(shorthop)
 		cmpwi	r20,0
 		blt	PowershieldThinkExit
@@ -2515,7 +2573,7 @@ b	exit
 		li	r3,0x200
 		stw	r3,0x1A88(r29)
 		b	PowershieldThinkExit
-		
+
 		PowershieldSkipLaser:
 		#Check if in Laser Shoot
 		lwz	r3,0x10(r29)
@@ -2526,12 +2584,12 @@ b	exit
 		bl	IntToFloat
 		lfs	f2,0x894(r29)
 		fcmpo	cr0,f1,f2
-		bne	PowershieldCheckForIASA	
+		bne	PowershieldCheckForIASA
 		#Input a FF
 		li	r3,-127
 		stb	r3,0x1A8D(r29)
 		b	PowershieldThinkExit
-		
+
 
 		PowershieldCheckForIASA:
 		#Check if in Landing
@@ -2548,7 +2606,7 @@ b	exit
 		li	r3,14
 		branchl	r12,0x80380580
 		addi	r3,r3,15
-		stb	r3,0xF(r31)	
+		stb	r3,0xF(r31)
 		#Get Interval
 		lbz	r3,FireSpeed(r31)
 		cmpwi	r3,0x0
@@ -2569,38 +2627,38 @@ b	exit
 		fcmpo	cr0,f2,f1
 		blt	PowershieldThinkExit
 		li	r3,-1
-		stw	r3,0x4(r31)					
+		stw	r3,0x4(r31)
 		b	PowershieldThinkExit
 
 		PowershieldSlow:
 		#Reset Timer
 		li	r3,-30
-		stw	r3,0x4(r31)					
+		stw	r3,0x4(r31)
 		b	PowershieldThinkExit
 
 		PowershieldMedium:
 		#Reset Timer
 		li	r3,-15
-		stw	r3,0x4(r31)					
+		stw	r3,0x4(r31)
 		b	PowershieldThinkExit
 
 		PowershieldFast:
 		#Reset Timer
 		li	r3,-8
-		stw	r3,0x4(r31)					
+		stw	r3,0x4(r31)
 		b	PowershieldThinkExit
 
 		PowershieldVeryFast:
 		#Reset Timer
 		li	r3,-1
-		stw	r3,0x4(r31)					
+		stw	r3,0x4(r31)
 		b	PowershieldThinkExit
 
 		PowershieldThinkExit:
 		restore
 		blr
-	
-		
+
+
 PowershieldLoadExit:
 restore
 blr
@@ -2734,13 +2792,13 @@ b	exit
 
 	b	ShieldDropLoadExit
 
-	
+
 		##########################
 		## Shield Drop THINK FUNCT ##
 		##########################
 
 		.set FacingDirection,0xE
-	
+
 		ShieldDropThink:
 		blrl
 		backup
@@ -2759,19 +2817,19 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
 		beq	ShieldDropThinkMain
-			
+
 			#Set Frame 1 As Over
 			li	r3,0x1
 			stb	r3,0x0(r31)
 			bl	ShieldDrop_Floats
-			mflr	r3	
+			mflr	r3
 			bl	InitializePositions
 			#Remove Input Flag That Messes Up Analog Timer Restore
 			lbz	r0, 0x221D (r27)
@@ -2786,11 +2844,13 @@ b	exit
 			bl	SaveState_Save
 			#Set Timer to -60
 			li	r3,-60
-			stw	r3,0x4(r31)		
+			stw	r3,0x4(r31)
 
 
 
 		ShieldDropThinkMain:
+		.set AerialThinkStruct,0x8
+
 		bl	GiveFullShields
 
 		#Run Option Window Code
@@ -2812,128 +2872,36 @@ b	exit
 		#Increment Timer
 		lwz	r20,0x4(r31)		#get timer
 		addi	r20,r20,0x1
-		stw	r20,0x4(r31)		#store timer	
+		stw	r20,0x4(r31)		#store timer
 
-		#Get Floats
-		bl	ShieldDrop_Floats
-		mflr	r21
+		#Check if In Wait
+			lwz	r3,0x10(r29)
+			cmpwi	r3,0xE
+			bne ShieldDropNoIntangibility
+		#Give Intangibility in Wait
+			mr	r3,r30
+			li	r4,0x2
+			bl	GiveInvincibility
+		ShieldDropNoIntangibility:
 
-		#Get Frames as Int
-		lfs	f1,0x894(r29)
-		fctiwz	f1,f1
-		stfd	f1,0xF0(sp)
-		lwz	r22,0xF4(sp)
-
-		#Jump
+		#Check To Start Aerial
 		cmpwi	r20,40
 		blt	ShieldDropThinkExit
-		bne	ShieldDropCheckToAerial
-		li	r3,0x800
-		stw	r3,0x1A88(r29)
-		b	ShieldDropThinkExit
 
-		#CheckToAerial
-		ShieldDropCheckToAerial:
-		lwz	r3,0x10(r29)		
-		cmpwi	r3,0x19		#Check if in JumpF
-		bne	ShieldDropCheckToFF
-
-		#Check If Frame 0 Of JumpF
-		cmpwi	r22,0x0
-		bne	ShieldDropCheckToAttack
-		#Decide Fair, Nair, or Dair
-		ShieldDropDecideAerial:
-		li	r3,3
-		branchl	r12,0x80380580
-		stb	r3,0x8(r31)		#Store Move Choice
-		#Get Frame To Attack On
-		lwz	r4,0x4(r29)		#Char ID
-		bl	ShieldDrop_FrameData
-		mflr	r5		#Get Frame Data Table
-		mulli	r4,r4,0x8		#Get Characters Offset
-		add	r4,r4,r5		#Get Characters Table Entry Start
-		mulli	r3,r3,0x2		#Move Frame Data is 0x2 Long
-		add	r23,r3,r4		#Get Moves Frame Data
-		lbz	r4,0x0(r23)		#First Possible Frame
-		lbz	r5,0x1(r23)		#Last Possible Frame
-		cmpwi	r4,0x0
-		bne	ShieldDropGetRandomFrame
-		cmpwi	r5,0x0
-		bne	ShieldDropGetRandomFrame
-		#Move Disabled For Char, Get a New One
-		b	ShieldDropDecideAerial
-		ShieldDropGetRandomFrame:
-		sub	r3,r5,r4		#Get Amount of Possibilities
-		branchl	r12,0x80380580		#Get Random Frame
-		lbz	r4,0x0(r23)		#First Possible Frame
-		add	r3,r3,r4		#Adjust for First Possible Frame
-		stb	r3,0x9(r31)		#Store Frame to Attack on
-		
-		ShieldDropCheckToAttack:
-		lbz	r3,0x9(r31)		#Get Frame to Attack
-		cmpw	r3,r22		#Check If Time to Attack
-		bne	ShieldDropCheckToFF
-
-		#Perform Attack
-		lbz	r3,0x8(r31)		#Get Attack ID
-		cmpwi	r3,0x0		
-		beq	ShieldDropFair
-		cmpwi	r3,0x1
-		beq	ShieldDropNair
-		cmpwi	r3,0x2
-		beq	ShieldDropDair
-		ShieldDropFair:
-		li	r3,127		#Forward
-		lfs	f1,0x2C(r29)		#Facing Direction
-		fctiwz	f1,f1
-		stfd	f1,0xF0(sp)
-		lwz	r4,0xF4(sp)
-		mullw	r3,r3,r4		#Forward * facing direction
-		stb	r3,0x1A8E(r29)
-		b	ShieldDropCheckToFF
-		ShieldDropNair:
-		li	r3,0x100
-		stw	r3,0x1A88(r29)	
-		b	ShieldDropCheckToFF	
-		ShieldDropDair:
-		li	r3,-127
-		stb	r3,0x1A8F(r29)		
-		b	ShieldDropCheckToFF	
-
-		ShieldDropCheckToFF:
-		#Check If Already FF'ing
-		#lbz	r3,0x221A(r29)
-		#rlwinm.	r3,r3,0,28,28
-		#bne	ShieldDropCheckToLCancel
-		#Check If Falling
-		lfs	f2,0x84(r29)
-		lfs	f0, -0x76B0 (rtoc)
-		fcmpo	cr0,f2,f0
-		bge	ShieldDropCheckToShield
-		#Check If Inputting A For Nair
-		lwz	r3,0x1A88(r29)
-		cmpwi	r3,0x100
-		beq	ShieldDropCheckToLCancel
-		#Input Down to FF
-		li	r3,-127
-		stb	r3,0x1A8D(r29)		#Ananlog Y	
-		ShieldDropCheckToLCancel:
-		#Check If Under 5Mm Above Ground
-		lfs	f2,0xB4(r29)
-		lfs	f0,0x834(r29)		#Last Grounded Y Pos
-		fsubs	f2,f2,f0		#Distance from Platform
-		lfs	f0,0x14(r21)		#5 fp
-		fcmpo	cr0,f2,f0		#If less than 5 Mm away, Input L Cancel
-		bgt	ShieldDropCheckToShield
-		li	r3,0xC0		#Hit L
-		stw	r3,0x1A88(r29)		#Held Buttons	
+		#Perform Aerial
+			mr	r3,r30
+			addi	r4,r31,AerialThinkStruct
+			li		r5,0		#Random Attack
+			bl	PerformAerialThink
 
 		ShieldDropCheckToShield:
-		lwz	r3,0xE0(r29)		#Check If On Ground
-		cmpwi	r3,0x0		
-		bne	ShieldDropCheckToReset
-		li	r3,0xC0		#Hit L
-		stw	r3,0x1A88(r29)		#Hold Shield
+		#Check If CPU is done with Aerial Sequence
+			lbz	r3,AerialThinkStruct(r31)
+			cmpwi	r3,0x0
+			beq	ShieldDropCheckToReset
+		#Hold Shield
+			li	r3,0xC0		#Hit L
+			stw	r3,0x1A88(r29)		#Hold Shield
 
 		ShieldDropCheckToReset:
 		cmpwi	r20,140
@@ -2966,9 +2934,13 @@ b	exit
 		branchl	r12,0x80380580
 		li	r4,0
 		sub	r3,r4,r3
-		stw	r3,0x4(r31)				
+		stw	r3,0x4(r31)
+		#Reset Aerial Move Think Struct
+		li	r3,0
+		stw	r3,AerialThinkStruct(r31)
 
 		ShieldDropThinkExit:
+		bl	UpdateAllGFX
 		restore
 		blr
 
@@ -3018,120 +2990,8 @@ blrl
 .long 0x
 .long 0x
 .long 0x
-.long 0x 
+.long 0x
 
-
-#################################
-
-ShieldDrop_FrameData:
-blrl
-#Mario
-.long 0x00040012		#Fair and Nair
-.long 0x00100005		#Dar and Nothing
-
-#Fox
-.long 0x0009000A		#Fair and Nair
-.long 0x00080005		#Dar and Nothing
-
-#Cptn Falcon
-.long 0x0006000E		#Fair and Nair
-.long 0x00040005		#Dar and Nothing
-
-#DK
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Kirby
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Bowser
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#link
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Sheik
-.long 0x10140018		#Fair and Nair
-.long 0x00000005		#Dar (was 0-A) and Nothing
-
-#Ness
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Peach
-.long 0x000D001A		#Fair and Nair
-.long 0x000E0005		#Dar and Nothing
-
-#Popo
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Nana
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Pikachu
-.long 0x000C000F		#Fair and Nair
-.long 0x00080005		#Dar and Nothing
-
-#Samus
-.long 0x00200020		#Fair and Nair
-.long 0x080D0005		#Dar and Nothing
-
-#Yoshi
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Jiggs
-.long 0x00100010		#Fair and Nair
-.long 0x00100005		#Dar and Nothing
-
-#mewtwo
-.long 0x00050019		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Luigi
-.long 0x0017001B		#Fair and Nair
-.long 0x00110005		#Dar and Nothing
-
-#Marth
-.long 0x00160013		#Fair and Nair
-.long 0x00120005		#Dar and Nothing
-
-#Zelda
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#YLink
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Doc
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Falco
-.long 0x070B000D		#Fair and Nair
-.long 0x000C0005		#Dar and Nothing
-
-#Pichu
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#GaW
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Ganon
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
-
-#Roy
-.long 0x00050005		#Fair and Nair
-.long 0x00050005		#Dar and Nothing
 
 #################################
 
@@ -3202,13 +3062,16 @@ b	exit
 
 	b	AttackOnShieldLoadExit
 
-	
+
 		#########################
 		## Attack On Shield THINK FUNCT ##
 		#########################
 
-		.set OoSOption,0xA
-	
+		.set firstFrameFlag,0x0
+		.set timer,0x4
+		.set OptionWindowMemory,0x8
+		.set OoSOption,OptionWindowMemory+0x2
+
 		AttackOnShieldThink:
 		blrl
 		backup
@@ -3227,8 +3090,8 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
@@ -3236,7 +3099,7 @@ b	exit
 		beq	AttackOnShieldThinkMain
 			#Set Frame 1 As Over
 			li		r3,0x1
-			stb		r3,0x0(r31)	
+			stb		r3,0x0(r31)
 			bl		AttackOnShield_Floats
 			mflr	r3
 			bl		InitializePositions
@@ -3247,7 +3110,7 @@ b	exit
 			stb	r0,0x221D (r27)
 			#Save State
 			mr		r3,r31
-			bl		SaveState_Save	
+			bl		SaveState_Save
 
 
 
@@ -3262,7 +3125,7 @@ b	exit
 		AttackOnShieldThinkSequence:
 
 		#Run Option Window Code
-			addi	r3,r31,0x8
+			addi	r3,r31,OptionWindowMemory
 			bl	AttackOnShieldWindowInfo
 			mflr	r4
 			bl	AttackOnShieldWindowText
@@ -3285,7 +3148,7 @@ b	exit
 		lwz	r22,0xF4(sp)
 
 		#Check If Perfroming OoS Option
-		lwz	r3,0x4(r31)	
+		lwz	r3,0x4(r31)
 		cmpwi	r3,0x0
 		ble	AttackOnShieldShieldWait
 		#Branch To OoSThink
@@ -3326,28 +3189,28 @@ b	exit
 			stb	r3,0x1A8D(r29)
 			li	r3,0x200
 			stw	r3,0x1A88(r29)
-			b	AttackOnShieldCheckToReset			
+			b	AttackOnShieldCheckToReset
 
 		AttackOnShieldShieldWait:
 		#Always Hold L
 		li	r3,0xC0		#Hit L
-		stw	r3,0x1A88(r29)		#Held Buttons			
+		stw	r3,0x1A88(r29)		#Held Buttons
 
 		#Check If Got Shield Poked
 		#Hitlag
 			lbz	r3,0x221A(r29)			#Check If in Hitlag
 			rlwinm.	r3,r3,0,26,26
-			beq	AttackOnShieldCheckForShieldHit	
+			beq	AttackOnShieldCheckForShieldHit
 		#Damage State
 			lwz	r3,0x10(r29)
 			cmpwi	r3,0x4B
 			blt	AttackOnShieldCheckForShieldHit
 			cmpwi	r3,0x5B
-			bgt	AttackOnShieldCheckForShieldHit			
+			bgt	AttackOnShieldCheckForShieldHit
 		#Was Hit, Start Reset Timer
 			li	r3,48		#Init Timer
-			stw	r3,0x4(r31)		
-			b	AttackOnShieldThinkExit			
+			stw	r3,0x4(r31)
+			b	AttackOnShieldThinkExit
 
 		AttackOnShieldCheckForShieldHit:
 		#Check If In ShieldWait (0xb3)
@@ -3386,31 +3249,31 @@ b	exit
 		li	r3,0xCC0
 		stw	r3,0x1A88(r29)		#Press X/Y
 		li	r3,48		#Init Timer
-		stw	r3,0x4(r31)		
+		stw	r3,0x4(r31)
 		b	AttackOnShieldThinkExit
 
 		AttackOnShieldUpB:
 		li	r3,127
 		stb	r3,0x1A8D(r29)		#Press Up
 		li	r3,48		#Init Timer
-		stw	r3,0x4(r31)		
+		stw	r3,0x4(r31)
 		b	AttackOnShieldThinkExit
 
 		AttackOnShieldShine:
 		li	r3,0xCC0
 		stw	r3,0x1A88(r29)		#Press X/Y
 		li	r3,48		#Init Timer
-		stw	r3,0x4(r31)		
+		stw	r3,0x4(r31)
 		b	AttackOnShieldThinkExit
 
 		AttackOnShieldSpotdodge:
 		li	r3,-127
-		stb	r3,0x1A8D(r29)		#Press Down		
+		stb	r3,0x1A8D(r29)		#Press Down
 		li	r3,0xC0
 		stw	r3,0x1A88(r29)		#Press R
 		li	r3,48		#Init Timer
-		stw	r3,0x4(r31)	
-		b	AttackOnShieldThinkExit	
+		stw	r3,0x4(r31)
+		b	AttackOnShieldThinkExit
 
 		AttackOnShieldRoll:
 		li	r3,0xC0
@@ -3421,11 +3284,11 @@ b	exit
 		mullw	r3,r3,r4
 		stb	r3,0x1A8C(r29)		#Press Away
 		li	r3,48		#Init Timer
-		stw	r3,0x4(r31)	
+		stw	r3,0x4(r31)
 		b	AttackOnShieldThinkExit
 
 		AttackOnShieldNone:
-		b	AttackOnShieldThinkExit		
+		b	AttackOnShieldThinkExit
 
 		#Check To Reset
 		AttackOnShieldCheckToReset:
@@ -3434,7 +3297,7 @@ b	exit
 		ble	AttackOnShieldThinkExit
 		#Dec Timer
 		subi	r3,r3,0x1
-		stw	r3,0x4(r31)		#store timer	
+		stw	r3,0x4(r31)		#store timer
 		cmpwi	r3,0x0		#Check if 0 now
 		bne	AttackOnShieldThinkExit	#Exit If Not
 
@@ -3442,7 +3305,7 @@ b	exit
 		#Get Random X Coord
 		lbz	r23,0x10(r21)		#Starting X Coord
 		lbz	r24,0x11(r21)		#Furthest X Coord
-		sub	r3,r24,r23		#Get Range	
+		sub	r3,r24,r23		#Get Range
 		branchl	r12,0x80380580		#Get Random Number in Between
 		add	r3,r3,r23		#Add to Starting Coord
 		#Cast to Float
@@ -3455,14 +3318,14 @@ b	exit
 		fsubs	f1,f1,f2
 		lwz	r3,0x10(r31)		#P1 Backup
 		stfs	f1,0xB0(r3)		#P1 Backup X Pos
-		li	r3,0x1			#Opposing Sides of Stage		
+		li	r3,0x1			#Opposing Sides of Stage
 		bl	Randomize_LeftorRightSide
-		
+
 		AttackOnShieldRestoreState:
 		#Restore State
 		mr	r3,r31
 		bl	SaveState_Load
-		b	AttackOnShieldThinkExit			
+		b	AttackOnShieldThinkExit
 
 		AttackOnShieldThinkExit:
 		restore
@@ -3629,12 +3492,12 @@ b	exit
 
 	b	LedgetechLoadExit
 
-	
+
 		#########################
 		## Ledgetech THINK FUNCT ##
 		#########################
 
-	
+
 		LedgetechThink:
 		blrl
 		backup
@@ -3653,8 +3516,8 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
@@ -3676,7 +3539,7 @@ b	exit
 				mr		r3,r28
 				branchl		r12,0x800d4ff4
 				lis		r3,0xBF80
-				stw		r3,0x2C(r27)			
+				stw		r3,0x2C(r27)
 				mr		r3,r28
 				branchl		r12,0x800d5600
 			#Move P1 Again
@@ -3696,10 +3559,10 @@ b	exit
 			load	r4,0x80453080		#P1 Static Block
 			sth	r3,0x60(r4)		#Store Percent Int To Display Value
 			lis	r3,0x42B4
-			stw	r3,0x1830(r27)			
+			stw	r3,0x1830(r27)
 			#Save State
 			mr		r3,r31
-			bl		SaveState_Save	
+			bl		SaveState_Save
 
 
 
@@ -3719,7 +3582,7 @@ b	exit
 		#D-Pad Left Restores State
 		lwz	r3,0x668(r27)
 		rlwinm.	r0, r3, 0, 31, 31
-		bne	LedgetechRestoreState		
+		bne	LedgetechRestoreState
 
 		#Always Hold Down (Crouch Cancel)
 		li	r3,-127
@@ -3739,12 +3602,12 @@ b	exit
 		li	r3,0x0
 		stw	r3,0x198C(r27)
 		stw	r3,0x1990(r27)
-		stw	r3,0x1994(r27)		
+		stw	r3,0x1994(r27)
 		mr	r3,r28
 		branchl	r12,0x8007db24
 		#Set Timer
 		li	r3,180
-		stw	r3,0x4(r31)		
+		stw	r3,0x4(r31)
 		b	LedgetechSkipTimerStart
 
 		LedgetechIncreaseRespawnPlatTime:
@@ -3770,7 +3633,7 @@ b	exit
 
 		#If Player 1 Ledge Tech's, Set Timer to 2 Seconds
 		#Check Gatekeeper Flag
-			lbz	r3,0xA(r31)	
+			lbz	r3,0xA(r31)
 			cmpwi	r3,0x1
 			beq	Ledgetech_UpdateLedgetechFlags
 
@@ -3790,7 +3653,7 @@ b	exit
 				stb	r3,0x9(r31)
 			#Set Gatekeeper Flag
 				li	r3,1
-				stb	r3,0xA(r31)	
+				stb	r3,0xA(r31)
 
 		Ledgetech_UpdateLedgetechFlags:
 		#Check If Still Ledgeteching
@@ -3820,10 +3683,10 @@ b	exit
 		#Check To Make New High Score
 			lhz	r3,-0x4ea8(r13)
 			lhz	r4,-0x4ea6(r13)
-			cmpw	r3,r4	
+			cmpw	r3,r4
 			ble	LedgetechUpdateScoreHUD
 		#Copy To High Score
-			sth	r3,-0x4ea6(r13)				
+			sth	r3,-0x4ea6(r13)
 
 		LedgetechUpdateScoreHUD:
 		#Update HUD Score
@@ -3843,8 +3706,8 @@ b	exit
 		li	r3,1
 		bl	IntToFloat
 		mr	r3,r30
-		branchl	r12,0x8006f190		
-		LedgetechSkipFalcoUnfreeze:		
+		branchl	r12,0x8006f190
+		LedgetechSkipFalcoUnfreeze:
 
 		LedgetechCheckIfCrouching:
 		#Only Attempt to DSmash in Squat and SquatWait
@@ -3889,10 +3752,10 @@ b	exit
 		ble	LedgetechThinkExit
 		#Dec Timer
 		subi	r3,r3,0x1
-		stw	r3,0x4(r31)		#store timer	
+		stw	r3,0x4(r31)		#store timer
 		cmpwi	r3,0x0		#Check if 0 now
 		bne	LedgetechThinkExit	#Exit If Not
-		
+
 		LedgetechRestoreState:
 		#Randomize Side
 		li	r3,0x0			#Same Sides of Stage
@@ -3910,7 +3773,7 @@ b	exit
 		lwz		r3,0xB0(r4)
 		stw		r3,0xB0(r27)
 		lwz		r3,0xB4(r4)
-		stw		r3,0xB4(r27)				
+		stw		r3,0xB4(r27)
 		mr		r3,r28
 		branchl		r12,0x800d5600
 		bl		Ledgetech_BLR
@@ -3919,7 +3782,7 @@ b	exit
 
 		#Set Timer
 		li	r3,0
-		stw	r3,0x4(r31)			
+		stw	r3,0x4(r31)
 		#Reset Rebirth Plat Fall Flag
 		stb	r3,0x8(r31)
 		#Reset Tech and Gatekeeper Flag
@@ -3928,7 +3791,7 @@ b	exit
 		#Reset Score
 		li	r3,0
 		sth	r3,-0x4ea8(r13)
-		b	LedgetechThinkExit			
+		b	LedgetechThinkExit
 
 		LedgetechThinkExit:
 		restore
@@ -4025,12 +3888,12 @@ b	exit
 
 	b	AmsahTechLoadExit
 
-	
+
 		#########################
 		## Amsah Tech THINK FUNCT ##
 		#########################
 
-	
+
 		AmsahTechThink:
 		blrl
 		backup
@@ -4049,8 +3912,8 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
@@ -4062,10 +3925,10 @@ b	exit
 			load	r4,0x80453080		#P1 Static Block
 			sth	r3,0x60(r4)		#Store Percent Int To Display Value
 			bl	IntToFloat
-			stfs	f1,0x1830(r27)		
+			stfs	f1,0x1830(r27)
 			#Save State
 			mr	r3,r31
-			bl	SaveState_Save				
+			bl	SaveState_Save
 
 
 
@@ -4083,11 +3946,11 @@ b	exit
 		mr	r3,r30
 		li	r4,0x2
 		bl	GiveInvincibility
-		
+
 		#Update GFX
 		mr	r3,r30
 		bl	UpdateAllGFX
-		
+
 		#Reset If Anyone Dies
 		bl	IsAnyoneDead
 		cmpwi	r3,0x0
@@ -4132,9 +3995,9 @@ b	exit
 
 		#Check If UpB Timer is Set
 		AmsahTechIsTaunting:
-		lwz	r3,0x8(r31)	
+		lwz	r3,0x8(r31)
 		cmpwi	r3,0x0		#Timer Already Set
-		bne	AmsahTechCheckUpBTimer	
+		bne	AmsahTechCheckUpBTimer
 		#Check If Marth is In Wait
 		lwz	r3,0x10(r29)
 		cmpwi	r3,0xE
@@ -4152,7 +4015,7 @@ b	exit
 		#Move Marth in Front of P1
 		stfs	f1,0xB0(r29)		#Store X Position to P2
 		lfs	f1,0xB4(r27)		#Get P1 Y
-		stfs	f1,0xB4(r29)		#Store P2 Y	
+		stfs	f1,0xB4(r29)		#Store P2 Y
 		lfs	f1,0x2C(r27)		#P1 Facing
 		fneg	f1,f1
 		stfs	f1,0x2C(r29)		#P2 Facing = Opposite P1's
@@ -4168,16 +4031,16 @@ b	exit
 
 		#Store To Backups as Well
 		lwz	r3,0x18(r31)		#P2 Backup
-		lfs	f1,0xB0(r29)		#Get P2 X	
+		lfs	f1,0xB0(r29)		#Get P2 X
 		stfs	f1,0xB0(r3)		#Store to P2 Backup
 		lfs	f1,0xB4(r29)		#Get P2 Y
 		stfs	f1,0xB4(r3)		#Store to P2 Backup
 		lfs	f1,0x2C(r29)		#Get P2 Facing
 		stfs	f1,0x2C(r3)		#Store to P2 Backup
 		lwz	r3,0x10(r31)		#P1 Backup
-		lfs	f1,0xB0(r27)		#Get P1 X		
+		lfs	f1,0xB0(r27)		#Get P1 X
 		stfs	f1,0xB0(r3)		#Store to P1 Backup
-		lfs	f1,0x2C(r27)		#Get P1 Facing	
+		lfs	f1,0x2C(r27)		#Get P1 Facing
 		stfs	f1,0x2C(r3)		#Store to P1 Backup
 
 		mr	r3,r28
@@ -4185,26 +4048,26 @@ b	exit
 		cmpwi	r3,0x0
 		beq	AmsahTechNoSubchar
 		lwz	r3,0x14(r31)		#P1 Subchar Backup
-		lfs	f1,0xB0(r4)		#Get P1 Subchar X		
+		lfs	f1,0xB0(r4)		#Get P1 Subchar X
 		stfs	f1,0xB0(r3)		#Store to P1 Subchar Backup
-		lfs	f1,0x2C(r4)		#Get P1 Subchar Facing	
+		lfs	f1,0x2C(r4)		#Get P1 Subchar Facing
 		stfs	f1,0x2C(r3)		#Store to P1 Subchar Backup
 		AmsahTechNoSubchar:
 		#Update P2 ECB
 		mr	r3,r30
-		branchl	r12,0x80081b38	
+		branchl	r12,0x80081b38
 
 		AmsahTechCheckUpBTimer:
 		#Check For UpBTimer
 		lwz	r3,0x8(r31)
 		cmpwi	r3,0x0		#No UpB Timer Set Yet
-		ble	AmsahTechCheckToReset		
+		ble	AmsahTechCheckToReset
 		#Dec Timer
 		subi	r3,r3,0x1
-		stw	r3,0x8(r31)		#store timer	
+		stw	r3,0x8(r31)		#store timer
 		cmpwi	r3,0x0		#Check if 0 now
-		bne	AmsahTechCheckToReset	#Exit If Not	
-		#Move Marth in Front of P1 Again (Fox's 
+		bne	AmsahTechCheckToReset	#Exit If Not
+		#Move Marth in Front of P1 Again (Fox's
 		lfs	f1,0xB0(r27)		#Get P1 X
 		lfs	f2,0x2C(r27)		#Get P1 Facing
 		lfs	f3,0x10(r21)		#Get Marth Distance
@@ -4227,14 +4090,14 @@ b	exit
 		ble	AmsahTechThinkExit
 		#Dec Timer
 		subi	r3,r3,0x1
-		stw	r3,0x4(r31)		#store timer	
+		stw	r3,0x4(r31)		#store timer
 		cmpwi	r3,0x0		#Check if 0 now
 		bne	AmsahTechThinkExit	#Exit If Not
-		
+
 		AmsahTechRestoreState:
 		#Restore State
 		mr	r3,r31
-		bl	SaveState_Load	
+		bl	SaveState_Load
 		#Restore Timers Just In Case
 		li	r3,0x0
 		stw	r3,0x4(r31)
@@ -4336,7 +4199,7 @@ b	exit
 
 	b	ComboTrainingLoadExit
 
-	
+
 		#########################
 		## Combo Training THINK FUNCT ##
 		#########################
@@ -4346,8 +4209,8 @@ b	exit
 		.set TechOption,0x34
 		.set PostHitstunAction,0x35
 		.set GrabMashout,0x36
-		
-	
+
+
 		ComboTrainingThink:
 		blrl
 		backup
@@ -4366,9 +4229,9 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
@@ -4379,7 +4242,7 @@ b	exit
 			lis	r3,0x3f80
 			stw	r3,0x2C(r27)
 			lis	r3,0xbf80
-			stw	r3,0x2C(r29)	
+			stw	r3,0x2C(r29)
 			#Initlize Positions
 			bl	ComboTraining_Floats
 			mflr	r3
@@ -4388,12 +4251,12 @@ b	exit
 			lbz	r0, 0x221D (r27)
 			li	r3,0x1
 			rlwimi	r0,r3,4,27,27
-			stb	r0,0x221D (r27)		
+			stb	r0,0x221D (r27)
 			#Save State
 			mr	r3,r31
-			bl	SaveState_Save		
+			bl	SaveState_Save
 			#Init Score Count
-			lhz	r3,-0x4ea8(r13)		
+			lhz	r3,-0x4ea8(r13)
 			branchl	r12,0x802fa2d0
 
 
@@ -4406,7 +4269,7 @@ b	exit
 		#Check To Make New High Score
 			lhz	r3,-0x4ea8(r13)
 			lhz	r4,-0x4ea6(r13)
-			cmpw	r3,r4	
+			cmpw	r3,r4
 			ble	ComboTraining_SkipNewHighscore
 		#Copy To High Score
 			sth	r3,-0x4ea6(r13)
@@ -4430,7 +4293,7 @@ b	exit
 		bne	ComboTraining_SkipCheckForSaveAndLoad
 		#Only Allow a Save If P2 is in Wait
 		lwz	r3,0x10(r29)
-		cmpwi	r3,0xE	
+		cmpwi	r3,0xE
 		bne	ComboTraining_SkipCheckForSaveAndLoad
 		ComboTraining_CheckForSaveAndLoad:
 		mr	r3,r31
@@ -4447,8 +4310,8 @@ b	exit
 		#DPad Down Moves CPU In Front
 		#Only If Event State = 0
 		lbz	r3,0x8(r31)
-		cmpwi	r3,0x0	
-		bne	ComboTrainingSkipMoveCPU	
+		cmpwi	r3,0x0
+		bne	ComboTrainingSkipMoveCPU
 		bl	MoveCPU
 		ComboTrainingSkipMoveCPU:
 
@@ -4458,7 +4321,7 @@ b	exit
 		#R+DPad Changes DI Behavior
 		addi	r3,r31,0x30			#r3 = pointer to option byte in memory
 		bl	ComboTrainingWindowInfo			#r4 = pointer to option info
-		mflr	r4			
+		mflr	r4
 		bl	ComboTrainingWindowText			#r5 = pointer to ASCII struct
 		mflr	r5
 		bl	RAndDPadChangesEventOption
@@ -4469,7 +4332,7 @@ b	exit
 		bl	IsAnyoneDead
 		cmpwi	r3,0x0
 		bne	ComboTrainingRestoreState
-		
+
 
 		#Get Floats
 		bl	ComboTraining_Floats
@@ -4519,11 +4382,11 @@ b	exit
 		ComboTrainingCheckState:
 		lbz	r3,0x8(r31)
 		cmpwi	r3,0x0
-		beq	ComboTrainingStart	
+		beq	ComboTrainingStart
 		cmpwi	r3,0x1
 		beq	ComboTrainingRandomDIAndTech
 		cmpwi	r3,0x2
-		beq	ComboTrainingPostHitstun	
+		beq	ComboTrainingPostHitstun
 
 
 		ComboTrainingStart:
@@ -4558,7 +4421,7 @@ b	exit
 		cmpwi	r3,0x2								#No Mash
 		beq	ComboTrainingCheckToReset
 
-		
+
 		#Random Mash Out
 		ComboTrainingRandomDIAndTech_RandomMash:
 		li	r3,4										#4 Numbers
@@ -4567,31 +4430,31 @@ b	exit
 		ble	ComboTrainingCheckToReset
 		cmpwi	r3,0x2									#2 = Button Only, 3 = Both Analog and Button
 		beq	ComboTrainingRandomDIAndTech_RandomMash_ButtonPress
-		
+
 		ComboTrainingRandomDIAndTech_RandomMash_AnalogInput:
 		li	r3,127
 		stb	r3,0x1A8C(r29)			#Push Analog Stick Forward
 		li	r3,-1
 		stb	r3,0x1A50(r29)			#Spoof Analog Stick as First Frame Pushed
-		
+
 		ComboTrainingRandomDIAndTech_RandomMash_ButtonPress:
 		#Input Button Press
 		li	r3,0x100
 		stw	r3,0x1A88(r29)			#Press A
 		li	r3,0
 		stw	r3,0x65C(r29)			#Spoof Prev Frame Buttons as Nothing Pushed
-		
-		b	ComboTrainingCheckToReset	
-		
+
+		b	ComboTrainingCheckToReset
+
 
 		ComboTrainingChangeStateToPostHitstun:
 		#Change State
 		li	r3,0x2
-		stb	r3,0x8(r31)	
+		stb	r3,0x8(r31)
 		#Initiate Reset Timer
 		#li	r3,30
 		#stw	r3,0x4(r31)
-		b	ComboTrainingPostHitstun	
+		b	ComboTrainingPostHitstun
 
 
 
@@ -4610,12 +4473,12 @@ b	exit
 			lfs	f1,-0x7418(rtoc)		#1fp
 			lfs	f2,0x195C(r29)		  #hitlag frames left
 			fcmpo	cr0,f1,f2
-			bne	ComboTrainingCheckToReset	
+			bne	ComboTrainingCheckToReset
 		#Check If Attack Was Strong
 		#DI Attack
 			lbz	r3,DIBehavior(r31)		#Get DI Behavior
 			cmpwi	r3,0x1		#Check If Slight In
-			bne	0x8	
+			bne	0x8
 			li	r3,0x0		#Override To Never Slight DI In Attacks
 			b	0x8
 			li	r3,0x2
@@ -4625,9 +4488,9 @@ b	exit
 			cmpwi	r3,0x3		#No SDI
 			beq	ComboTrainingNoSDI
 			cmpwi	r3,0x2		#Always SDI
-			beq	ComboTrainingCheckToReset		
+			beq	ComboTrainingCheckToReset
 
-			li	r3,0x3		
+			li	r3,0x3
 			branchl	r12,HSD_Randi
 			lbz	r4,SDIBehavior(r31)		#Get SDI Behavior
 			cmpwi	r4,0x0
@@ -4652,7 +4515,7 @@ b	exit
 			mr	r3,r29
 			branchl	r12,0x800a1874
 			stfs	f1,0x624(r29)
-			b	ComboTrainingGetChanceToTech		
+			b	ComboTrainingGetChanceToTech
 
 
 
@@ -4684,9 +4547,9 @@ b	exit
 		cmpwi	r3,0x26		#Tumble
 		beq	ComboTrainingCheckIfInAir
 		cmpwi	r3,0x4B
-		blt	ComboTrainingCheckToReset		
+		blt	ComboTrainingCheckToReset
 		cmpwi	r3,0x5B
-		bgt	ComboTrainingCheckToReset	
+		bgt	ComboTrainingCheckToReset
 
 		#IN A DAMAGE STATE
 		#Check If In Air
@@ -4694,7 +4557,7 @@ b	exit
 		lwz	r3,0xE0(r29)
 		cmpwi	r3,0x0
 		beq	ComboTrainingDamageGrounded
-			
+
 		#IN THE AIR
 		#Check If Still in Hitstun
 		lbz	r3,0x221C(r29)
@@ -4709,8 +4572,8 @@ b	exit
 		cmpwi	r3,0x1
 		beq	ComboTrainingAirdodge
 		cmpwi	r3,0x2
-		beq	ComboTrainingAerialAttack		
-		
+		beq	ComboTrainingAerialAttack
+
 			ComboTrainingJumpAndInvincible:
 			#Always Jump
 			#li	r3,0
@@ -4726,28 +4589,28 @@ b	exit
 			#Last Frame's Stick Was Centered
 			li	r3,0x0
 			stw	r3,0x628(r29)
-			stw	r3,0x62C(r29)		
+			stw	r3,0x62C(r29)
 			#Stick Frame Timer Reset
 			li	r3,255
 			stb	r3,0x670(r29)
 			#Change State
 			li	r3,0x2
-			stb r3,0x8(r31)	
-			b	ComboTrainingPostHitstun	
+			stb r3,0x8(r31)
+			b	ComboTrainingPostHitstun
 
 			ComboTrainingAerialAttack:
 			#li	r3,0x100
 			#stw	r3,0x1A88(r29)		#Nair
 			#Change State
 			li	r3,0x2
-			stb	r3,0x8(r31)	
-			b	ComboTrainingPostHitstun	
-		
-		
-		
+			stb	r3,0x8(r31)
+			b	ComboTrainingPostHitstun
+
+
+
 		#CHECK TO BECOME INVINCIBLE OUT OF GROUNDED LIGHT DAMAGE STATES
 		ComboTrainingDamageGrounded:
-		#Check For Hitstun (Can Act Out of Certain Light Damage States)	
+		#Check For Hitstun (Can Act Out of Certain Light Damage States)
 		lbz	r3,0x221C(r29)
 		rlwinm.	r3,r3,0,30,30
 		bne	ComboTrainingCheckToReset
@@ -4759,8 +4622,8 @@ b	exit
 			cmpwi	r3,0x1
 			beq	ComboTrainingGroundedSpotdodge
 			cmpwi	r3,0x2
-			beq	ComboTrainingGroundedAttack		
-			
+			beq	ComboTrainingGroundedAttack
+
 			ComboTrainingGroundedInvincibility:
 			b	ComboTrainingChangeStateToPostHitstun
 
@@ -4770,7 +4633,7 @@ b	exit
 			li	r3,-127		#Hold Down
 			stb r3,0x1A8D(r29)		#Stick Y
 			b	ComboTrainingChangeStateToPostHitstun
-			
+
 			ComboTrainingGroundedAttack:
 			#li	r3,0x100		#Hit A
 			#stw	r3,0x1A88(r29)		#Held Buttons
@@ -4787,11 +4650,11 @@ b	exit
 		beq	ComboTrainingRandomTech
 		cmpwi	r3,0x1		#Miss Tech
 		beq	ComboTrainingMissTech
-		cmpwi	r3,0x2		
+		cmpwi	r3,0x2
 		beq	ComboTrainingTechInPlace
 		cmpwi	r3,0x3
 		beq	ComboTrainingTechTowards
-		cmpwi	r3,0x4	
+		cmpwi	r3,0x4
 		beq	ComboTrainingTechAway
 
 		ComboTrainingRandomTech:
@@ -4805,14 +4668,14 @@ b	exit
 		#stw	r3,0x1A88(r29)
 		#Reset Tech Cooldown Window Constantly
 		li	r3,0x1
-		stb	r3,0x680(r29)		#Frames Since Pressed L/R	
+		stb	r3,0x680(r29)		#Frames Since Pressed L/R
 		li	r3,0xFF
 		stb	r3,0x684(r29)		#L/R Lockout Window
-		
+
 		#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
 		lbz	r3,0x221A(r29)
 		rlwinm.	r3,r3,0,26,26
-		bne	ComboTrainingCheckToReset		
+		bne	ComboTrainingCheckToReset
 		#Tech Random Side
 		ComboTrainingRandomTech_GetStickAngle:
 		li	r3,0x0		#0 = random direction
@@ -4829,35 +4692,35 @@ b	exit
 		stw	r3,0x1A88(r29)
 		#Fail Tech Cooldown
 		li	r3,0xFF
-		stb	r3,0x680(r29)		
+		stb	r3,0x680(r29)
 		li	r3,0x00
 		stb	r3,0x684(r29)
 		b	ComboTrainingCheckToReset
-			
+
 		ComboTrainingTechInPlace:
 		#Hold L
 		li	r3,0xC0
 		stw	r3,0x1A88(r29)
 		#Reset Tech Cooldown Window Constantly
 		li	r3,0x0
-		stb	r3,0x680(r29)		
+		stb	r3,0x680(r29)
 		li	r3,0xFF
 		stb	r3,0x684(r29)
 		#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
 		lbz	r3,0x221A(r29)
 		rlwinm.	r3,r3,0,26,26
-		bne	ComboTrainingCheckToReset	
+		bne	ComboTrainingCheckToReset
 		li	r3,0x0
 		stb	r3,0x1A8C(r29)
 		b	ComboTrainingCheckToReset
-		
+
 		ComboTrainingTechTowards:
 		#Hold L
 		li	r3,0xC0
 		stw	r3,0x1A88(r29)
 		#Reset Tech Cooldown Window Constantly
 		li	r3,0x0
-		stb	r3,0x680(r29)		
+		stb	r3,0x680(r29)
 		li	r3,0xFF
 		stb	r3,0x684(r29)
 		#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
@@ -4878,13 +4741,13 @@ b	exit
 		stw	r3,0x1A88(r29)
 		#Reset Tech Cooldown Window Constantly
 		li	r3,0x0
-		stb	r3,0x680(r29)		
+		stb	r3,0x680(r29)
 		li	r3,0xFF
 		stb	r3,0x684(r29)
 		#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
 		lbz	r3,0x221A(r29)
 		rlwinm.	r3,r3,0,26,26
-		bne	ComboTrainingCheckToReset	
+		bne	ComboTrainingCheckToReset
 		bl	GetDirectionInRelationToP1
 		li	r4,127
 		mullw	r3,r3,r4
@@ -4898,7 +4761,7 @@ b	exit
 		cmpwi	r3,0x0
 		bne	ComboTrainingInputDI		#No Getup Attack, Input Random Direction
 		li	r3,0x100		#Press A To Getup Attack
-		stw	r3,0x1A88(r29)	
+		stw	r3,0x1A88(r29)
 		b	ComboTrainingCheckToReset
 
 
@@ -4909,16 +4772,16 @@ b	exit
 
 
 		ComboTrainingPostHitstun:
-		
+
 		#Check Post Hitstun Behavior
 		lbz	r3,PostHitstunAction(r31)
 		cmpwi	r3,0x0
-		beq		ComboTrainingPostHitstun_GiveInvinc	
+		beq		ComboTrainingPostHitstun_GiveInvinc
 		cmpwi	r3,0x1
-		beq		ComboTrainingPostHitstun_AirdodgeSpotdodge	
+		beq		ComboTrainingPostHitstun_AirdodgeSpotdodge
 		cmpwi	r3,0x2
 		beq		ComboTrainingPostHitstun_Attack
-		
+
 			ComboTrainingPostHitstun_GiveInvinc:
 			#Constantly Press Jump If In The Air
 			lwz	r3,0xE0(r29)
@@ -4945,15 +4808,15 @@ b	exit
 			li	r3,30
 			stw	r3,0x4(r31)
 			b	ComboTrainingCheckToReset
-	
+
 		#****************************************************************#
-	
+
 			ComboTrainingPostHitstun_AirdodgeSpotdodge:
 			#Check If In Airdodge
 			#Check If In Gained Invuln From Air/Spotdodge
 			lwz	r3,0x1988(r29)
 			cmpwi	r3,0x0
-			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckToAirdodge	
+			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckToAirdodge
 			b	ComboTrainingPostHitstun_EnteredAirdodgeSpotdodge
 			ComboTrainingPostHitstun_EnteredAirdodgeSpotdodge:
 			#Set Timer if Not Set
@@ -4965,7 +4828,7 @@ b	exit
 			stw	r3,0x4(r31)
 			#Give Invince and Exit
 			b	ComboTrainingCheckToReset
-			
+
 		#****************************************************************#
 
 			ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckToAirdodge:
@@ -4979,10 +4842,10 @@ b	exit
 			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckAirState
 			#Except Landing
 			cmpwi	r3,0x2A
-			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckAirState			
+			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckAirState
 			#Except Wait
 			cmpwi	r3,0xE
-			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckAirState	
+			beq	ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckAirState
 			#Set Timer if Not Set
 			lwz	r3,0x4(r31)
 			cmpwi	r3,0x0
@@ -5021,10 +4884,10 @@ b	exit
 				li	r3,0
 				stb	r3,0x1A8C(r29)
 				li	r3,0xC0
-				stw	r3,0x1A88(r29)		
+				stw	r3,0x1A88(r29)
 			#Clear Buttons From Last Frame
 				li	r3,0x0
-				stw	r3,0x65C(r29)	
+				stw	r3,0x65C(r29)
 				b	ComboTrainingCheckToReset
 			ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckToAirdodge_CheckToSpotdodge:
 			#Check If Grounded and Actionable
@@ -5039,11 +4902,11 @@ b	exit
 					lfs	f1,0x894(r29)
 					lfs	f2,0x1F4(r29)
 					fcmpo	cr0,f1,f2
-					blt	ComboTrainingCheckToReset		
+					blt	ComboTrainingCheckToReset
 			ComboTrainingPostHitstun_AirdodgeSpotdodge_CheckToAirdodge_Spotdodge:
 			#Clear Buttons From Last Frame
 			li	r3,0x0
-			stw	r3,0x65C(r29)	
+			stw	r3,0x65C(r29)
 			#Input Spotdodge
 			li	r3,0xC0
 			stw	r3,0x1A88(r29)
@@ -5051,13 +4914,13 @@ b	exit
 			stb	r3,0x1A8D(r29)
 			b	ComboTrainingCheckToReset
 
-		#****************************************************************#	
-			
+		#****************************************************************#
+
 			ComboTrainingPostHitstun_Attack:
-			
+
 			#Clear Buttons From Last Frame
 			li	r3,0x0
-			stw	r3,0x65C(r29)	
+			stw	r3,0x65C(r29)
 
 			#Get Air or Ground
 			lwz	r3,0xE0(r29)
@@ -5071,14 +4934,14 @@ b	exit
 			lbzx	r3,r4,r5
 			rlwinm	r3,r3,0,28,31		#Get Right Bits
 			b	ComboTrainingPostHitstun_Attack_BranchToAttack
-															
+
 			ComboTrainingPostHitstun_AttackGround:
 			bl	ComboTrainingAttackList
 			mflr	r5
 			lwz	r4,0x4(r29)
 			lbzx	r3,r4,r5
 			rlwinm	r3,r3,28,28,31		#Get Left Bits
-			b	ComboTrainingPostHitstun_Attack_BranchToAttack			
+			b	ComboTrainingPostHitstun_Attack_BranchToAttack
 
 
 			ComboTrainingPostHitstun_Attack_BranchToAttack:
@@ -5101,7 +4964,7 @@ b	exit
 
 				ComboTrainingPostHitstun_Attack_A:
 				li	r3,0x100		#Hit A
-				stw	r3,0x1A88(r29)		#Held Buttons		
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_ForwardA:
@@ -5112,7 +4975,7 @@ b	exit
 				mullw	r3,r3,r4
 				stb	r3,0x1A8C(r29)
 				li	r3,0x100		#Hit A
-				stw	r3,0x1A88(r29)		#Held Buttons		
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_BackA:
@@ -5122,43 +4985,43 @@ b	exit
 				mullw	r3,r3,r4
 				stb	r3,0x1A8C(r29)
 				li	r3,0x100		#Hit A
-				stw	r3,0x1A88(r29)		#Held Buttons			
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_DownA:
 				li	r3,60
 				stb	r3,0x1A8D(r29)
 				li	r3,0x100		#Hit A
-				stw	r3,0x1A88(r29)		#Held Buttons		
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_UpA:
 				li	r3,60
 				stb	r3,0x1A8D(r29)
 				li	r3,0x100		#Hit A
-				stw	r3,0x1A88(r29)		#Held Buttons		
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_DownSmash:
 				li	r3,-127
-				stb	r3,0x1A8F(r29)	
+				stb	r3,0x1A8F(r29)
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_UpB:
 				li	r3,127
 				stb	r3,0x1A8D(r29)
 				li	r3,0x200		#Hit B
-				stw	r3,0x1A88(r29)		#Held Buttons		
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
 				ComboTrainingPostHitstun_Attack_DownB:
 				li	r3,-127
 				stb	r3,0x1A8D(r29)
 				li	r3,0x200		#Hit B
-				stw	r3,0x1A88(r29)		#Held Buttons		
+				stw	r3,0x1A88(r29)		#Held Buttons
 				b	ComboTrainingPostHitstun_Attack_CheckForHitbox
 
-			
+
 
 			#Search For Active Hitbox
 			ComboTrainingPostHitstun_Attack_CheckForHitbox:
@@ -5175,17 +5038,17 @@ b	exit
 			#Hardcoded Puff Rest Check =(
 			cmpwi	r3,0xF
 			beq	ComboTrainingPostHitstun_Attack_CheckForRest
-			b	ComboTrainingCheckToReset			
+			b	ComboTrainingCheckToReset
 			ComboTrainingPostHitstun_Attack_CheckForGroundShine:
 			lwz	r3,0x10(r29)
 			cmpwi	r3,0x168
 			beq	ComboTrainingPostHitstun_GiveInvinc_ApplyInvinc
 			b	ComboTrainingCheckToReset
-			ComboTrainingPostHitstun_Attack_CheckForRest:	
+			ComboTrainingPostHitstun_Attack_CheckForRest:
 			lwz	r3,0x10(r29)
 			cmpwi	r3,0x171
-			beq	ComboTrainingPostHitstun_GiveInvinc_ApplyInvinc	
-			b	ComboTrainingCheckToReset			
+			beq	ComboTrainingPostHitstun_GiveInvinc_ApplyInvinc
+			b	ComboTrainingCheckToReset
 
 
 		#****************************************************************#
@@ -5197,16 +5060,16 @@ b	exit
 		ble	ComboTrainingThinkExit
 		#Dec Timer
 		subi	r3,r3,0x1
-		stw	r3,0x4(r31)		#store timer	
+		stw	r3,0x4(r31)		#store timer
 		cmpwi	r3,0x0		#Check if 0 now
 		bne	ComboTrainingThinkExit	#Exit If Not
-		
+
 		ComboTrainingRestoreState:
 		#Restore State
 		mr	r3,r31
 		bl	SaveState_Load
 		mr	r3,r31
-		bl	SaveState_Load				
+		bl	SaveState_Load
 		#Reset State ID
 		li	r3,0x0
 		stb	r3,0x8(r31)
@@ -5226,7 +5089,7 @@ blrl
 
 #################################
 
-ComboTrainingDecideStickAngle:	
+ComboTrainingDecideStickAngle:
 #Decide Stick Angle
 backup
 
@@ -5274,7 +5137,7 @@ ComboTrainingDecideStickAngle_RandomDI_LeftStick:
 #Get Random Stick X Input 77-127
 li	r3,50
 branchl	r12,0x80380580
-addi	r3,r3,77		#Start at 77		
+addi	r3,r3,77		#Start at 77
 mulli	r3,r3,-1
 stb	r3,0x1A8C(r29)
 b	ComboTrainingDecideStickAngleExit
@@ -5296,12 +5159,12 @@ ComboTrainingDecideStickAngle_SlightDI:
 #Get Random Stick X Input 86-105, 86-95 go in front, 96-105 go behind shiek behind
 li	r3,19
 branchl	r12,0x80380580
-addi	r3,r3,86		#Start at 86	
+addi	r3,r3,86		#Start at 86
 lfs	f1,0x2C(r27)
 fneg	f1,f1
 fctiwz	f1,f1
 stfd	f1,0xF0(sp)
-lwz	r4,0xF4(sp)		#Facing direction as int	
+lwz	r4,0xF4(sp)		#Facing direction as int
 mullw	r3,r3,r4
 stb	r3,0x1A8C(r29)
 b	ComboTrainingDecideStickAngleExit
@@ -5429,7 +5292,7 @@ extsb	r3,r3
 bl	IntToFloat
 fabs	f1,f1
 fneg	f1,f1
-b	ComboTrainingDecideStickAngle_ComboDI_AdjustDirectionInThrow_RightSide_StoreX 
+b	ComboTrainingDecideStickAngle_ComboDI_AdjustDirectionInThrow_RightSide_StoreX
 ComboTrainingDecideStickAngle_ComboDI_AdjustDirectionInThrow_RightSide_Abs:
 lbz	r3,0x1A8C(r29)
 extsb	r3,r3
@@ -5463,7 +5326,7 @@ extsb	r3,r3
 bl	IntToFloat
 fabs	f1,f1
 fneg	f1,f1
-b	ComboTrainingDecideStickAngle_ComboDI_AdjustDirectionInThrow_LeftSide_StoreX 
+b	ComboTrainingDecideStickAngle_ComboDI_AdjustDirectionInThrow_LeftSide_StoreX
 ComboTrainingDecideStickAngle_ComboDI_AdjustDirectionInThrow_LeftSide_StoreX:
 fctiwz	f1,f1
 stfd	f1,0xF0(sp)
@@ -5616,7 +5479,7 @@ ComboTrainingCheckExitStates:
 		bge	ComboTrainingCheckExitStates_ExitState
 
 	ComboTrainingCheckExitStates_CheckJiggsJump:
-	lwz	r4,0x4(r29)	
+	lwz	r4,0x4(r29)
 	cmpwi	r4,0xF		#Check If Jiggs
 	bne	ComboTrainingCheckExitStates_NoExitState
 		cmpwi	r3,0x155
@@ -5986,17 +5849,17 @@ b	exit
   lis r3, 0x43D0
   ori r3, r3, 0x91EC
   ori r4, r5, 0x1FE0
-  stwx r3, r6, r4	
-*/	
+  stwx r3, r6, r4
+*/
 
 	b	WaveshineSDILoadExit
 
-	
+
 		#########################
 		## Waveshine SDI THINK FUNCT ##
 		#########################
 
-	
+
 		WaveshineSDIThink:
 			blrl
 			backup
@@ -6015,22 +5878,22 @@ b	exit
 			branchl		r12,0x80034110			#get player block
 			mr		r28,r3			#player block in r28
 			lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
 		beq	WaveshineSDIThinkMain
-			
+
 				#Set Frame 1 As Over
 					li		r3,0x1
-					stb		r3,0x0(r31)	
+					stb		r3,0x0(r31)
 				#Set Facing Directions
 					lis	r3,0x3f80
 					stw	r3,0x2C(r29)
 					lis	r3,0xBf80
-					stw	r3,0x2C(r27)			
+					stw	r3,0x2C(r27)
 				#Initlize Positions
 					bl	WaveshineSDI_Floats
 					mflr	r3
@@ -6045,19 +5908,19 @@ b	exit
 					stfs	f1, 0x0834 (r29)
 				#Save State
 					mr	r3,r31
-					bl	SaveState_Save		
+					bl	SaveState_Save
 				#Set Timer to -60
 					li		r3,-60
-					stw		r3,0x4(r31)				
+					stw		r3,0x4(r31)
 
 
 
 		WaveshineSDIThinkMain:
 		WaveshineSDIThinkSequence:
 		#Inc Timer
-			lwz	r3,0x4(r31)	
+			lwz	r3,0x4(r31)
 			addi	r3,r3,0x1
-			stw	r3,0x4(r31)	
+			stw	r3,0x4(r31)
 
 		#Get Floats
 			bl	WaveshineSDI_Floats
@@ -6079,11 +5942,11 @@ b	exit
 			li	r3,1
 			rlwimi	r0,r3,2,29,29
 			stb	r0,0x2219(r29)
-			lwz 	r3,0xC(r31)	
+			lwz 	r3,0xC(r31)
 			cmpwi	r3,0x0		#No Reset Timer Set Yet
 			bgt	WaveshineSDICheckToReset
 			li	r3,60		#Set Timer If Not Set Yet
-			stw	r3,0xC(r31)		
+			stw	r3,0xC(r31)
 			b	WaveshineSDICheckToReset
 		WaveshineSDISkipBoundaryCheck:
 
@@ -6096,7 +5959,7 @@ b	exit
 			bgt	WaveshineSDICheckDrillOrWaveshine
 			li	r3,60
 			stw	r3,0xC(r31)
-		
+
 		#Check If Drilling or Waveshining
 			WaveshineSDICheckDrillOrWaveshine:
 			lbz	r3,0x8(r31)
@@ -6114,7 +5977,7 @@ b	exit
 			stw	r3,0x1A88(r29)
 			b	WaveshineSDICheckToReset
 
-		WaveshineSDIDrillThink_CheckToDair:				
+		WaveshineSDIDrillThink_CheckToDair:
 			cmpwi	r3,0x19
 			bne	WaveshineSDI_CheckToFF
 			li	r3,-127
@@ -6131,8 +5994,8 @@ b	exit
 			stfd	f1,0xF0(sp)
 			lwz	r4,0xF4(sp)
 			li	r3,36		#X Stick
-			mullw	r3,r3,r4		
-			stb	r3,0x1A8C(r29)		
+			mullw	r3,r3,r4
+			stb	r3,0x1A8C(r29)
 		#Check If Already FF'ing
 			lbz	r3,0x221A(r29)
 			rlwinm.	r3,r3,0,28,28
@@ -6144,7 +6007,7 @@ b	exit
 			bge	WaveshineSDICheckToReset
 		#Input Down to FF
 			li	r3,-127
-			stb	r3,0x1A8D(r29)		#Ananlog Y	
+			stb	r3,0x1A8D(r29)		#Ananlog Y
 
 		WaveshineSDICheckToLCancel:
 		#Check If Under 5Mm Above Ground
@@ -6167,7 +6030,7 @@ b	exit
 
 
 		#Shine If In Wait
-			cmpwi	r3,0xE	
+			cmpwi	r3,0xE
 			bne	WaveshineSDICheckToJump
 		#Check If First Shine Or FollowUp Shine
 			lbz	r4,0x8(r31)
@@ -6189,8 +6052,8 @@ b	exit
 
 		#Jump If In Shine Loop
 		WaveshineSDICheckToJump:
-		#Check 
-			#Check For Shine Loop	
+		#Check
+			#Check For Shine Loop
 				cmpwi	r3,0x169
 				bne	WaveshineSDICheckToAirdodge
 			#Check For JC Frame
@@ -6218,8 +6081,8 @@ b	exit
 			fctiwz	f1,f1
 			stfd	f1,0xF0(sp)
 			lwz	r5,0xF4(sp)
-			mullw	r3,r3,r5		
-			stb	r3,0x1A8C(r29)		
+			mullw	r3,r3,r5
+			stb	r3,0x1A8C(r29)
 		#Joystick Y = Y Component
 			stb	r4,0x1A8D(r29)
 		#Press L To Wavedash
@@ -6280,7 +6143,7 @@ b	exit
 		WaveshineSDIWaveshine_FollowOpponent_EnterGrab:
 			li	r3,0x1C0
 			stw	r3,0x1A88(r29)
-			b	WaveshineSDICheckToReset			
+			b	WaveshineSDICheckToReset
 		WaveshineSDIWaveshine_FollowOpponent_WalkTowards:
 		#Walk Towards Opponent
 		#Stick Forward
@@ -6289,8 +6152,8 @@ b	exit
 			stfd	f2,0xF0(sp)
 			lwz	r4,0xF4(sp)
 			li	r3,127		#X Stick
-			mullw	r3,r3,r4		
-			stb	r3,0x1A8C(r29)			
+			mullw	r3,r3,r4
+			stb	r3,0x1A8C(r29)
 		#Override Analog Smash Counter So Always Walking (Set Facing As Prev X Input)
 			stfs	f1,0x620(r29)
 			b	WaveshineSDICheckToReset
@@ -6307,7 +6170,7 @@ b	exit
 			ble	WaveshineSDIThinkExit
 		#Dec Timer
 			subi	r3,r3,0x1
-			stw	r3,0xC(r31)		#store timer	
+			stw	r3,0xC(r31)		#store timer
 			cmpwi	r3,0x0		#Check if 0 now
 			bne	WaveshineSDIThinkExit	#Exit If Not
 		WaveshineSDIRestoreState:
@@ -6319,17 +6182,17 @@ b	exit
 			stfs	f1,0x2C(r4)
 			lfs	f1,0x2C(r5)
 			fneg	f1,f1
-			stfs	f1,0x2C(r5)		
+			stfs	f1,0x2C(r5)
 			#Invert X Positions
 			lfs	f1,0xB0(r4)
 			fneg	f1,f1
 			stfs	f1,0xB0(r4)
 			lfs	f1,0xB0(r5)
 			fneg	f1,f1
-			stfs	f1,0xB0(r5)	
+			stfs	f1,0xB0(r5)
 		#Restore State
 			mr	r3,r31
-			bl	SaveState_Load		
+			bl	SaveState_Load
 		#Reset Timer
 			li	r3,60
 			branchl	r12,0x80380580
@@ -6425,12 +6288,12 @@ b	exit
 
 	b	Event16LoadExit
 
-	
+
 		##########################
 		## Event 16 THINK FUNCT ##
 		##########################
 
-	
+
 		Event16Think:
 		blrl
 		backup
@@ -6451,22 +6314,22 @@ b	exit
 			lwz		r27,0x2c(r28)			#player data in r27
 
 		li	r3,0xF
-		stw	r3,0x1A94(r29)		
-		bl	StoreCPUTypeAndZeroInputs	
+		stw	r3,0x1A94(r29)
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
 		beq	Event16ThinkMain
-			
+
 				#Set Frame 1 As Over
 					li		r3,0x1
-					stb		r3,0x0(r31)	
+					stb		r3,0x0(r31)
 				#Set Facing Directions
 					lis	r3,0x3f80
 					stw	r3,0x2C(r29)
 					lis	r3,0xBf80
-					stw	r3,0x2C(r27)			
+					stw	r3,0x2C(r27)
 				#Initlize Positions
 					bl	Event16_Floats
 					mflr	r3
@@ -6481,10 +6344,10 @@ b	exit
 					stfs	f1, 0x0834 (r29)
 				#Save State
 					mr	r3,r31
-					bl	SaveState_Save		
+					bl	SaveState_Save
 
 
-		Event16ThinkMain:	
+		Event16ThinkMain:
 
 
 
@@ -6501,8 +6364,8 @@ blrl
 .long 0xC02CCCCD		#P2 X Position
 .long 0x00000000		#P2 Y Position
 
-#################################################		
-		
+#################################################
+
 Event16LoadExit:
 restore
 blr
@@ -6584,12 +6447,12 @@ b	exit
 
 	b	Event16LoadExit
 
-	
+
 		#########################
 		## Event 16 THINK FUNCT ##
 		#########################
 
-	
+
 		Event16Think:
 			blrl
 			backup
@@ -6608,21 +6471,21 @@ b	exit
 			branchl		r12,0x80034110			#get player block
 			mr		r28,r3			#player block in r28
 			lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
+
+		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
 			lbz	r3,0x0(r31)
 			cmpwi	r3,0x0
 			bne	Event16ThinkMain
-		
+
 				lbz	r3,0x221D(r29)
 				rlwinm.	r3,r3,0,28,28
 				bne	Event16ThinkExit
-			
+
 				#Set Frame 1 As Over
 					li		r3,0x1
-					stb		r3,0x0(r31)			
+					stb		r3,0x0(r31)
 				#Initlize Positions
 					bl	Event16_Floats
 					mflr	r3
@@ -6634,19 +6497,19 @@ b	exit
 					stb	r0,0x221D (r27)
 				#Save State
 					mr	r3,r31
-					bl	SaveState_Save		
+					bl	SaveState_Save
 				#Set Timer to -60
 					li		r3,-60
-					stw		r3,0x4(r31)				
+					stw		r3,0x4(r31)
 
 
 
 		Event16ThinkMain:
 		Event16ThinkSequence:
 		#Inc Timer
-			lwz	r3,0x4(r31)	
+			lwz	r3,0x4(r31)
 			addi	r3,r3,0x1
-			stw	r3,0x4(r31)	
+			stw	r3,0x4(r31)
 
 		#Get Floats
 			bl	Event16_Floats
@@ -6681,7 +6544,7 @@ b	exit
 					cmpwi	r3,0x0
 					bne	Event16StoreRecoveryType
 				#Check If Can Side B Only
-					#Check If Above Ledge	
+					#Check If Above Ledge
 						lfs	f1,0xB4(r29)	#Get Y Coord
 						#lfs	f2,0x10(r21)
 						#fcmpo	cr0,f1,f2
@@ -6693,13 +6556,13 @@ b	exit
 						blt	Event16GetRandomRecovery
 
 				Event16StoreRecoveryType:
-					stb	r3,0x9(r31)	
+					stb	r3,0x9(r31)
 				#Init Recovery Flag
 					li	r3,0x1
-					stb	r3,0x8(r31)		
-					
-			
-		Event16CheckRecoveryFlag:		
+					stb	r3,0x8(r31)
+
+
+		Event16CheckRecoveryFlag:
 		#Check Recovery Flag
 			lbz	r3,0x8(r31)
 			cmpwi	r3,0x0
@@ -6712,7 +6575,7 @@ b	exit
 		#If Timer Is Set, Dont Run Any of This
 		lwz	r3,0xC(r31)		#get timer	#Get Timer
 		cmpwi	r3,0x0		#No Reset Timer Set Yet
-		bgt	Event16GetRecoveryID		
+		bgt	Event16GetRecoveryID
 
 		#Hold Towards Stage
 		li	r3,127
@@ -6732,36 +6595,36 @@ b	exit
 			#Check If In Hitlag
 			#Recover again
 			lbz	r3,0x221A(r29)
-			rlwinm.	r3,r3,0,26,26	
+			rlwinm.	r3,r3,0,26,26
 			bne	Event16RecoverAgain
 
 			#Check If Made It Back
 			#Check Ground Flag
 			lwz	r3,0xE0(r29)
 			cmpwi	r3,0x0
-			beq	Event16SideBThink_Reset		
+			beq	Event16SideBThink_Reset
 			#Check CliffCatch
 			lwz	r3,0x10(r29)
 			cmpwi	r3,0xFC
 			beq	Event16SideBThink_Reset
 
 			b	Event16GetRecoveryID
-		
+
 			Event16RecoverAgain:
 			#Recover Again
 			li	r3,0x0
-			stb	r3,0x8(r31)	
-			stb	r3,0x9(r31)	
-			b	Event16CheckToReset	
-		
+			stb	r3,0x8(r31)
+			stb	r3,0x9(r31)
+			b	Event16CheckToReset
+
 			Event16SideBThink_Reset:
 			#Set Timer
 			lwz	r3,0xC(r31)		#get timer	#Get Timer
 			cmpwi	r3,0x0		#No Reset Timer Set Yet
-			bgt	Event16CheckToReset	#Reset Timer Set	
+			bgt	Event16CheckToReset	#Reset Timer Set
 			li	r3,30
 			stw	r3,0xC(r31)		#Store Reset Timer
-			b	Event16CheckToReset	
+			b	Event16CheckToReset
 
 		#Run Recovery Think
 		#Get Which Recovery To Perform
@@ -6775,9 +6638,9 @@ b	exit
 		beq	Event16SSJumpSideB
 		cmpwi	r3,0x3
 		beq	Event16SideBThink
-	
-	#*************************************************#	
-				
+
+	#*************************************************#
+
 		Event16SideBOnly:
 		#Be in ledge Y range, Check if next frame will be out of Y range
 			bl	Event16CheckIfLineUpWithLedge
@@ -6785,7 +6648,7 @@ b	exit
 			beq	Event16CheckToReset
 			cmpwi	r3,0x0
 			beq	Event16ChanceToInputSideB
-	
+
 		#If OoRange Next Frame + Descending, Side B Immediately
 			lfs	f0, -0x7208 (rtoc)
 			lfs	f1,0xCC(r29)
@@ -6807,9 +6670,9 @@ b	exit
 				lwz	r4,0xF4(sp)
 				li	r3,120		#X Stick
 				mullw	r3,r3,r4
-				stb	r3,0x1A8C(r29)				
+				stb	r3,0x1A8C(r29)
 				li	r3,0x200
-				stw	r3,0x1A88(r29)		
+				stw	r3,0x1A88(r29)
 				#li	r3,0x0
 				#stb	r3,0x8(r31)
 
@@ -6818,7 +6681,7 @@ b	exit
 				stb	r3,0x9(r31)
 				b	Event16CheckToReset
 
-	#*************************************************#	
+	#*************************************************#
 
 		Event16JumpSideB:
 		#Be above bottom most coord, Check if next frame will be out of Y range
@@ -6837,29 +6700,29 @@ b	exit
 		branchl	r12,0x80380580
 		cmpwi	r3,0x0
 		beq	Event16JumpSideB_Jump
-		b	Event16CheckToReset		
-	
+		b	Event16CheckToReset
+
 		Event16JumpSideB_Jump:
 		li	r3,0x800
 		stw	r3,0x1A88(r29)
 		#Advance to Next State
 		li	r3,0x0
 		stb	r3,0x9(r31)
-		b	Event16CheckToReset		
-	
-	#*************************************************#	
+		b	Event16CheckToReset
+
+	#*************************************************#
 
 		Event16SSJumpSideB:
 		#Hold Down B
 		#Be above bottom most coord, Check if next frame will be out of Y range
 		#Be in ledge Y range, Check if next frame will be out of Y range
-					
+
 		#Always Hold Down B
 		li	r3,-127
 		stb	r3,0x1A8D(r29)
 		li	r3,0x200
 		stw	r3,0x1A88(r29)
-		
+
 		#Wait Until in Shine Loop
 		lwz	r3,0x10(r29)
 		cmpwi	r3,0x16E
@@ -6878,7 +6741,7 @@ b	exit
 		branchl	r12,0x80380580
 		cmpwi	r3,0x0
 		beq	Event16SSJumpSideB_Jump
-		b	Event16CheckToReset		
+		b	Event16CheckToReset
 
 		Event16SSJumpSideB_Jump:
 		li	r3,0x800
@@ -6886,15 +6749,15 @@ b	exit
 		#Advance to Next State
 		li	r3,0x0
 		stb	r3,0x9(r31)
-		b	Event16CheckToReset		
+		b	Event16CheckToReset
 
-	#*************************************************#	
+	#*************************************************#
 
 		Event16SideBThink:
 
-		b	Event16CheckToReset		
+		b	Event16CheckToReset
 
-	#*************************************************#	
+	#*************************************************#
 
 		#Check To Reset
 		Event16CheckToReset:
@@ -6903,13 +6766,13 @@ b	exit
 			ble	Event16ThinkExit
 		#Dec Timer
 			subi	r3,r3,0x1
-			stw	r3,0xC(r31)		#store timer	
+			stw	r3,0xC(r31)		#store timer
 			cmpwi	r3,0x0		#Check if 0 now
 			bne	Event16ThinkExit	#Exit If Not
 		Event16RestoreState:
 		#Restore State
 			mr	r3,r31
-			bl	SaveState_Load		
+			bl	SaveState_Load
 		#Reset Timer
 			li	r3,60
 			branchl	r12,0x80380580
@@ -7037,12 +6900,12 @@ b	exit
 
 	b	ShieldDropLoadExit
 
-	
+
 		#########################
 		## Shield Drop THINK FUNCT ##
 		#########################
 
-	
+
 		ShieldDropThink:
 		blrl
 		backup
@@ -7061,22 +6924,22 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-		
-		bl	StoreCPUTypeAndZeroInputs	
-		
+
+		bl	StoreCPUTypeAndZeroInputs
+
 
 		#ON FIRST FRAME
 		lbz	r3,0x0(r31)
 		cmpwi	r3,0x0
 		bne	ShieldDropThinkMain
-		
+
 			lbz	r3,0x221D(r29)
 			rlwinm.	r3,r3,0,28,28
 			bne	ShieldDropThinkExit
-			
+
 			#Set Frame 1 As Over
 			li		r3,0x1
-			stb		r3,0x0(r31)	
+			stb		r3,0x0(r31)
 			bl		ShieldDrop_InitializePositions
 			mr		r3,r31
 			bl		SaveState_Save
@@ -7095,15 +6958,15 @@ b	exit
 		fctiwz	f1,f1
 		stfd	f1,0xF0(sp)
 		lwz	r24,0xF4(sp)		#Frame Number in r24
-	
+
 		#Get Distance and Direction
 		#f1 = distance
 		#r22= towards direction
 		#r23= away direction
 		lfs	f1,0xB0(r27)
-		lfs	f2,0xB0(r29)	
+		lfs	f2,0xB0(r29)
 		fsubs	f1,f1,f2
-		lfs	f0, -0x6768 (rtoc)	
+		lfs	f0, -0x6768 (rtoc)
 		fcmpo	cr0,f1,f0
 		bgt	ShieldDropRight
 		ShieldDropLeft:
@@ -7112,7 +6975,7 @@ b	exit
 		b	ShieldDropCheckState
 		ShieldDropRight:
 		li	r22,127
-		li	r23,-127		
+		li	r23,-127
 
 		ShieldDropCheckState:
 		#When DDing, Move In Facing Direction
@@ -7123,7 +6986,7 @@ b	exit
 		stfd	f2,0xF0(sp)
 		lwz	r3,0xF4(sp)		#Facing direction as int
 		mulli	r3,r3,127
-		stb	r3,0x1A8C(r29)		#Move Towards	
+		stb	r3,0x1A8C(r29)		#Move Towards
 
 		ShieldDrop_SkipHoldForward:
 		fabs	f1,f1		#abs distance
@@ -7142,7 +7005,7 @@ b	exit
 		ShieldDropDashDanceStart:
 			stb	r23,0x1A8C(r29)		#Move Away
 			li	r3,0x1		 #Enter DDThink
-			stw	r3,0x4(r31)		
+			stw	r3,0x4(r31)
 			b	ShieldDropThinkExit
 
 		ShieldDropDashDanceThink:
@@ -7158,7 +7021,7 @@ b	exit
 			fcmpo	cr0,f1,f2
 			blt	ShieldDropDashDanceThink_CheckToAttack
 			stb	r22,0x1A8C(r29)		#Move Towards
-			b	ShieldDropThinkExit		
+			b	ShieldDropThinkExit
 
 			ShieldDropDashDanceThink_CheckToAttack:
 			lfs	f2,0x8(r21)
@@ -7188,7 +7051,7 @@ b	exit
 			beq	ShieldDropDashDanceThink_CheckToChangeDirection
 			#RNG Chance To Attack
 			li	r3,20
-			branchl	r12,0x80380580		
+			branchl	r12,0x80380580
 			cmpwi	r3,0x0
 			bne	ShieldDropDashDanceThink_CheckToChangeDirection
 			li	r3,0x400		#X Button
@@ -7210,7 +7073,7 @@ b	exit
 		bge	ShieldDropDashDanceThink_ChangeDirection
 		#RNG Chance To ChangeDirection
 		li	r3,7
-		branchl	r12,0x80380580		
+		branchl	r12,0x80380580
 		cmpwi	r3,0x0
 		bne	ShieldDropThinkExit
 		ShieldDropDashDanceThink_ChangeDirection:
@@ -7231,9 +7094,9 @@ b	exit
 		stw	r3,0x1A88(r29)		#Held Buttons
 		li	r3,0x3		#LCancelThink
 		stw	r3,0x4(r31)
-		b	ShieldDropThinkExit	
+		b	ShieldDropThinkExit
 
-		ShieldDropLCancelThink:		
+		ShieldDropLCancelThink:
 		ShieldDropLCancelInputFF:
 		lfs	f2,0x84(r29)
 		lfs	f0, -0x76B0 (rtoc)
@@ -7241,14 +7104,14 @@ b	exit
 		bge	ShieldDropThinkExit
 		#Input Down to FF
 		li	r3,-127
-		stb	r3,0x1A8D(r29)		#Ananlog Y	
+		stb	r3,0x1A8D(r29)		#Ananlog Y
 		#Check If Under 5Mm Above Ground
 		lfs	f2,0xB4(r29)
 		lfs	f0,0xC(r21)
 		fcmpo	cr0,f2,f0
 		bgt	ShieldDropThinkExit
 		li	r3,0xC0		#Hit L
-		stw	r3,0x1A88(r29)		#Held Buttons	
+		stw	r3,0x1A88(r29)		#Held Buttons
 		#Enter InvincibleThink + Init Counter
 		li	r3,0x4		#State
 		stw	r3,0x4(r31)
@@ -7289,7 +7152,7 @@ b	exit
 		ShieldDropThinkExit:
 		restore
 		blr
-	
+
 
 ##########################
 
@@ -7448,23 +7311,23 @@ b	exit
 
 	b	EggsLoadExit
 
-	
+
 		#########################
 		## Eggs-ercise THINK FUNCT ##
 		#########################
 
-	
+
 		EggsThink:
 		blrl
 		backup
 
-		
+
 
 		EggsThinkExit:
 		restore
 		blr
-		
-		
+
+
 EggsLoadExit:
 restore
 blr
@@ -7578,25 +7441,25 @@ SaveState_Save:
 
 	#Backup Task Data
 	mr	r31,r3
-	
+
 	#Save Camera Info Here
 
 	#Count Players in Match
 	branchl	r3,0x8016b558
-	
+
 	#Move Player Number to r30
 	mr	r30,r3
-	
+
 	#Init Save Loop
 	li	r29,0x0		#player ID
 	li	r23,0x0		#main/sub char bool
-	
+
 		SaveState_SaveLoop:
 		#Get This Player's Backup Pointer in r28
 		addi		r28,r31,0x10		#get save state pointers start
 		mulli		r4,r29,0x8		#8 bytes per player pointer
 		add		r28,r4,r28		#r28 contains this players block backup
-		
+
 		#Check If Backup Exists
 		cmpwi		r23,0x0
 		beq		SaveState_Save_MainChar
@@ -7608,10 +7471,10 @@ SaveState_Save:
 		SaveState_Save_CheckIfExists:
 		cmpwi		r3,0x0
 		beq		SaveState_SaveStart
-		
+
 		#Remove Old Backup (HSD_Free)
 		branchl		r12,0x8037f1b0
-		
+
 
 
 		SaveState_SaveStart:
@@ -7633,23 +7496,23 @@ SaveState_Save:
 		addi		r3,r3,0x100			#add static block length
 		addi		r3,r3,0x10			#add additional storage
 		branchl		r12,0x8037f1e4			#HSD_MemAlloc
-		
+
 		#Store Pointer To Task Struct
 		cmpwi		r23,0x0
 		bne		Savestate_Save_StoreBackupSubChar
-		stw		r3,0x0(r28)		
+		stw		r3,0x0(r28)
 		b		Savestate_Save_StoreBackupEnd
 		Savestate_Save_StoreBackupSubChar:
-		stw		r3,0x4(r28)	
+		stw		r3,0x4(r28)
 		Savestate_Save_StoreBackupEnd:
 		mr		r27,r3				#r27 contains playerblock backup
-		
+
 		#Copy Player Block to Backup
 		mr		r3,r27			#r3 = destination to copy to
 		mr		r4,r26			#r4 = source
 		mr 		r5,r25			#r5 = playerblock length
 		branchl		r12,0x800031f4			#mempcy
-		
+
 
 		#Copy Static Block to Backup
 		add		r3,r25,r27			#get end of playerblock in r4
@@ -7657,7 +7520,7 @@ SaveState_Save:
 		li		r5,0xE90
 		mullw		r5,r5,r22
 		add		r4,r4,r5
-		li		r5,0x100			#only copying the first 100 bytes 
+		li		r5,0x100			#only copying the first 100 bytes
 		branchl		r12,0x800031f4			#mempcy
 
 		#Save Camera Flag
@@ -7666,7 +7529,7 @@ SaveState_Save:
 		add		r4,r25,r27		#get end of player block in r4
 		addi		r4,r4,0x100		#get end of static block
 		stw		r3,0x0(r4)		#store to end of block
-		
+
 		SaveState_SaveLoopInc:
 		#Check For Subchar Before Looping
 		cmpwi		r23,0x1
@@ -7679,10 +7542,10 @@ SaveState_Save:
 		addi		r29,r29,0x1
 		cmpw		r29,r30
 		blt		SaveState_SaveLoop
-	
+
 	restore
 	blr
-	
+
 SaveState_Load:
 	backup
 
@@ -7690,23 +7553,23 @@ SaveState_Load:
 
 	#Count Players in Match
 	branchl	r3,0x8016b558
-	
+
 	#Move Player Number to r30
 	mr	r30,r3
-	
+
 	#Restore Camera Info Here
-	
+
 
 	#Init Load Loop
 	li	r29,0x0		#player count
 	li	r23,0x0		#main/subchar bool
-	
+
 		SaveState_LoadLoop:
 		#Get This Player's Backup Pointer in r28
 		addi		r28,r31,0x10		#get save state pointers start
 		mulli		r4,r29,0x8		#8 bytes per player pointer
 		add		r28,r4,r28		#r28 contains this players block backup
-		
+
 		#Check If Backup Exists
 		cmpwi		r23,0x0
 		beq		SaveState_Load_MainChar
@@ -7718,10 +7581,10 @@ SaveState_Load:
 		SaveState_Load_CheckIfExists:
 		cmpwi		r3,0x0
 		beq		SaveState_LoadLoopInc
-		
+
 
 		SaveState_LoadStart:
-		
+
 		#Get Proper Player Data
 		mr		r3,r29
 		mr		r4,r23
@@ -7731,12 +7594,12 @@ SaveState_Load:
 		mr		r22,r3				#r22 contains actual player slot
 		mr		r25,r4				#r25 contains external player
 		mr		r26,r5				#r26 contains real player block
-		
+
 		#Get Player Block Length in r24
 		SaveState_Load_GetPlayerBlockLength:
 		load		r24,0x80458fd0
 		lwz    		r24,0x20(r24)		#r24 = length
-		
+
 		#Get Pointer From Task Struct
 		cmpwi		r23,0x0		#check if subcharacter
 		beq		Savestate_Load_GetBackupMainChar
@@ -7745,12 +7608,12 @@ SaveState_Load:
 		b		Savestate_Load_RestoreFacingDirection
 		Savestate_Load_GetBackupMainChar:
 		lwz		r27,0x0(r28)		#r27 contains playerblock backup
-	
+
 		#Restore Facing Direction
 		Savestate_Load_RestoreFacingDirection:
 		lwz		r3,0x2C(r27)		#backed up Facing Direction
 		stw		r3,0x2C(r26)
-	
+
 		#Enter Into Sleep
 		mr		r3,r25
 		li		r4,0x1
@@ -7758,9 +7621,9 @@ SaveState_Load:
 
 		#Remove On Death Function Pointer
 		li		r3,0x0
-		stw		r3,0x21E4(r26)	
-		stw		r3,0x21E8(r26)	
-		
+		stw		r3,0x21E4(r26)
+		stw		r3,0x21E8(r26)
+
 		#Enter Into Backed Up State
 		mr		r3,r25
 		lwz		r4,0x10(r27)		#backed up AS
@@ -7770,7 +7633,7 @@ SaveState_Load:
 		lfs		f2,0x89C(r27)		#backed up Frame Speed
 		lfs		f3,0x8A4(r27)		#backup up Blend Amount
 		branchl		r12,0x800693ac		#ASC
-	
+
 		#Keep Previous Frame Buttons From Current Block
 		lwz		r3,0x620(r26)
 		stw		r3,0xD0(sp)
@@ -7782,7 +7645,7 @@ SaveState_Load:
 		#Keep Collision Bubble Toggles
 		lwz		r3,0x21FC(r26)
 		stw		r3,0xDC(sp)
-	
+
 		#Copy PlayerBlock Backup to Real
 		mr		r3,r26
 		mr		r4,r27
@@ -7797,7 +7660,7 @@ SaveState_Load:
 		add		r4,r24,r27			#get end of block in r4
 		li		r5,0x100			#length is 0x100
 		branchl		r12,0x800031f4			#mempcy
-		
+
 		#Restore Previous Frame Buttons From Current Block
 		lwz		r3,0xD0(sp)
 		stw		r3,0x620(r26)
@@ -7813,11 +7676,11 @@ SaveState_Load:
 		#Restore Collision Bubble Toggles
 		lwz		r3,0xDC(sp)
 		stw		r3,0x21FC(r26)
-		
+
 		#Remove Cached Animation Pointer (This fixes the Fall Animation Bug)
 		li	r3,0x0
 		stw	r3,0x5A8(r26)
-		
+
 		#Update ECB Position
 		mr		r3,r25
 		branchl	r12,0x80081b38
@@ -7830,7 +7693,7 @@ SaveState_Load:
 		li		r3,0x1
 		stw		r3,0x83C(r26)
 		*/
-		
+
 		#Restore Camera Flag
 		Savestate_RestoreCameraFlag:
 		add		r3,r24,r27		#get end of block in r4
@@ -7838,7 +7701,7 @@ SaveState_Load:
 		lwz		r3,0x0(r3)		#get flag
 		lwz		r4,0x890(r26)
 		stw		r3,0x8(r4)
-				
+
 		#Remake HUD For Dead Players (Taken from Achilles' GitHub)
 		cmpwi		r23,0x1		#dont run this on subcharacters
 		beq		SaveState_HUD_End
@@ -7867,9 +7730,9 @@ SaveState_Load:
 				.set 		HUD_PlayerCreate_Prefunction, 0x802f6e1c
 				mr 		r3,r22
 				branchl		r4, HUD_PlayerCreate_Prefunction
-		
-		SaveState_HUD_End:			
-		
+
+		SaveState_HUD_End:
+
 		SaveState_LoadLoopInc:
 		#Check For Subchar Before Looping
 		cmpwi		r23,0x1
@@ -7880,9 +7743,9 @@ SaveState_Load:
 		li		r23,0x0
 		addi		r29,r29,0x1
 		cmpw		r29,r30
-		blt		SaveState_LoadLoop	
-	
-	
+		blt		SaveState_LoadLoop
+
+
 	restore
 	blr
 
@@ -7904,7 +7767,7 @@ subi	sp,sp,0x8
 mr	r11,r3			#move desired player into r11
 mr	r10,r4			#move subchar status into r4
 mr	r9,sp			#move bytefield into r10
-li	r3,-0x1			#zero out new space	
+li	r3,-0x1			#zero out new space
 stw	r3,0x0(r9)
 stw	r3,0x4(r9)
 
@@ -7999,7 +7862,7 @@ CheckForSaveAndLoad_CheckInputs:
 lhz	r3,0x662(r31)
 cmpwi	r3,0x0
 bne	CheckForSaveAndLoad_GetNextPlayer
-lwz	r3,0x668(r31)		
+lwz	r3,0x668(r31)
 rlwinm.	r0,r3,0,30,30
 beq	CheckForSaveAndLoad_NoSave
 mr	r3,r29
@@ -8038,13 +7901,13 @@ GiveFullShields_CheckIfPlayerExists:
 cmpwi	r20,0x0
 beq	GiveFullShields_Exit
 lwz	r21,0x2C(r20)
-		
+
 #Give Full Shield
 lwz	r3, -0x514C (r13)
 lfs	f0, 0x0260 (r3)
 stfs	f0,0x1998(r21)
 b	GiveFullShields_GetNextPlayer
-		
+
 
 GiveFullShields_Exit:
 
@@ -8109,8 +7972,8 @@ StoreCPUTypeAndZeroInputs:
 #Clear Inputs For P2 CPU
 li	r3,0x0
 stw	r3,0x1A88(r29)
-stw	r3,0x1A8C(r29)	
-sth	r3,0x1A90(r29)	
+stw	r3,0x1A8C(r29)
+sth	r3,0x1A90(r29)
 blr
 
 ###########################################
@@ -8125,7 +7988,7 @@ cmpwi	r3,0x0
 beq	ClearNanaInputs_P2
 li	r3,0x0
 stw	r3,0x1A88(r4)
-stw	r3,0x1A8C(r4)	
+stw	r3,0x1A8C(r4)
 
 #Clear Inputs if P2 is Ice Climbers
 ClearNanaInputs_P2:
@@ -8135,7 +7998,7 @@ cmpwi	r3,0x0
 beq	ClearNanaInputs_Exit
 li	r3,0x0
 stw	r3,0x1A88(r4)
-stw	r3,0x1A8C(r4)	
+stw	r3,0x1A8C(r4)
 
 ClearNanaInputs_Exit:
 restore
@@ -8195,7 +8058,7 @@ beq	Multishine_JumpCancelShine
 cmpwi	r4,0x19		#JumpF
 beq	Multishine_StartShine
 b       CPUActions_MultiShine_Exit
-	
+
 Multishine_StartShine:
 li	r3,-127		#Down
 stb	r3,0x1A8D(r29)		#Analog Y
@@ -8242,7 +8105,7 @@ mr	r22,r5		#pointer to ASCII struct
 #Get Number Of Options Onscreen At Once (1,2,or 3)
 lbz	r24,0x0(r21)		#Get Number of Different Windows
 cmpwi	r24,2		#Check If Over 3
-ble	0x8		
+ble	0x8
 li	r24,2		#Make 3
 
 #Check For R Being Held
@@ -8266,7 +8129,7 @@ RAndDPadChangesEventOption_CursorUp:
 	cmpwi	r3,0x0
 	bge	RAndDPadChangesEventOption_DisplayWindow
 #Cursor Stays at the top of the screen
-	li	r3,0		
+	li	r3,0
 	stb	r3,0x0(r20)
 #Check To Scroll Down
 	#Get Current Window ID (cursor + scroll)
@@ -8287,7 +8150,7 @@ RAndDPadChangesEventOption_CursorDown:
 #Update Cursor Position
 	lbz	r3,0x0(r20)		#Get Current Option Byte
 	addi	r3,r3,0x1		#Add 1
-	stb	r3,0x0(r20)		
+	stb	r3,0x0(r20)
 	cmpw	r3,r24
 	ble	RAndDPadChangesEventOption_DisplayWindow
 #Cursor Stays at the Bottom of the Screen
@@ -8358,7 +8221,7 @@ b	RAndDPadChangesEventOption_DisplayWindow
 RAndDPadChangesEventOption_DisplayWindow:
 #Display Text For The New Option Value
 mr	r3,r27			#p1 (no offsetting window)
-li	r4,120			#text timeout		
+li	r4,120			#text timeout
 li	r5,0x2			#window instance #3
 li	r6,0			#window ID #3
 branchl	r12,TextCreateFunction		#create text custom function
@@ -8372,7 +8235,7 @@ mr	text,r3			#backup text pointer
 		#Check How Many Options In The Menu
 		cmpwi	r24,0
 		beq	RAndDPadChangesEventOption_DisplayWindow_LoopInit
-		
+
 		#Change Background Size
 		bl	RAndDPadChangesEventOption_Floats
 		mflr	r5
@@ -8383,7 +8246,7 @@ mr	text,r3			#backup text pointer
 		lfsx	f2,r6,r5
 		li	r4,0
 		branchl	r12,0x803a7548
-		
+
 		#Move Window
 		bl	RAndDPadChangesEventOption_Floats
 		mflr	r5
@@ -8391,7 +8254,7 @@ mr	text,r3			#backup text pointer
 		addi	r5,r5,0xC		#Skip Window X and Window Y's
 		subi	r6,r24,1		#Zero Index
 		mulli	r6,r6,0x4		#Get Y Offset
-		lfsx	f2,r6,r5	
+		lfsx	f2,r6,r5
 		mr	r3,text
 		li	r4,0
 		branchl	r12,0x803a746c
@@ -8400,7 +8263,7 @@ mr	text,r3			#backup text pointer
 	############################
 	## Print Each Option Loop ##
 	############################
-	
+
 	RAndDPadChangesEventOption_DisplayWindow_LoopInit:
 
 		li	r27,0			#Init Loop
@@ -8416,7 +8279,7 @@ mr	text,r3			#backup text pointer
 			bl	RAndDPadChangesEventOption_GetOptionASCII
 			mr	r25,r3
 			mr	r26,r4
-		
+
 		#Create Title Text
 			lfs	f2, -0x37B4 (rtoc)			#default text X/Y
 			li	r3,120
@@ -8520,7 +8383,7 @@ RAndDPadChangesEventOption_GetOptionASCII_OptionIDLoop:
 	###########################
 	## Find Option Selection ##
 	###########################
-			
+
 		RAndDPadChangesEventOption_GetOptionASCII_GetOptionSelection:
 		#Init Loop Count + Backup Window Title
 			li	r26,0		#Init Loop Count
@@ -8535,7 +8398,7 @@ RAndDPadChangesEventOption_GetOptionASCII_OptionIDLoop:
 			beq	RAndDPadChangesEventOption_GetOptionASCII_GetOptionSelection_Done
 		#Get Next Selection
 		#Strlen the entry
-			mr	r3,r31	
+			mr	r3,r31
 			bl	RAndDPadChangesEventOption_GetNextString
 			mr	r31,r3		#Backup New Pointer
 		#Increment Loop Count
@@ -8663,11 +8526,11 @@ DPadCPUPercent_StorePercent:
 mr		r3,r5
 bl		IntToFloat
 #Active Static Playerblock
-sth	r5,0x60(r6)	
+sth	r5,0x60(r6)
 #Active PlayerData
 li	r3,0x1
 branchl	r12,0x80034110		#get player block
-lwz	r3,0x2C(r3)	
+lwz	r3,0x2C(r3)
 stfs	f1,0x1830(r3)
 
 #Backed Up PlayerData
@@ -8677,7 +8540,7 @@ stfs	f1,0x1830(r3)
 load	r4,0x80458fd0			#get player block length
 lwz    	r4,0x20(r4)			#get player block length
 add	r3,r3,r4			#static block start
-sth	r5,0x60(r3)	
+sth	r5,0x60(r3)
 
 
 DPadCPUPercent_Exit:
@@ -8720,8 +8583,8 @@ stfs	f1,0xB0(r25)
 lfs	f1,0x8(r20)
 stfs	f1,0xB4(r25)
 mr	r3,r24
-branchl	r12,0x80081b38	
-	
+branchl	r12,0x80081b38
+
 
 #Move P2
 InitializePositions_MoveP2:
@@ -8747,7 +8610,7 @@ stfs	f1,0xB0(r25)
 lfs	f1,0xC(r20)
 stfs	f1,0xB4(r25)
 mr	r3,r24
-branchl	r12,0x80081b38	
+branchl	r12,0x80081b38
 
 InitializePositions_Exit:
 bl	ClearNanaInputs
@@ -8811,9 +8674,9 @@ mr	r20,r3		#Backup Stage Side Bool
 
 #Get Left or Right Side
 li	r3,2
-branchl	r12,0x80380580		
+branchl	r12,0x80380580
 #Check To Negate
-cmpwi	r3,0x0		#0 = Left, 1 = Right		
+cmpwi	r3,0x0		#0 = Left, 1 = Right
 bne	Randomize_RightSide
 
 Randomize_LeftSide:
@@ -8881,18 +8744,18 @@ Randomize_LeftorRightSide_CheckForFollowers:
 	cmpwi	r20,0x0
 	beq	Randomize_LeftorRightSide_Exit
 	lwz	r21,0x2C(r20)
-	
+
 	#Check If This Fighter is a Main Char
 	lbz	r3,0x221F(r21)
 	rlwinm.	r0, r3, 29, 31, 31
-	bne	Randomize_LeftorRightSide_GetNextPlayer	
+	bne	Randomize_LeftorRightSide_GetNextPlayer
 
 	#Check For Follower, r20 = External. r21 = Internal
 		mr	r3,r20
 		bl	CheckIfPlayerHasAFollower
 		cmpwi	r3,0x0					#No Follower, Go To Next Player
 		beq	Randomize_LeftorRightSide_GetNextPlayer
-		
+
 		#Transfer Info
 		#Get Backups
 		addi	r3,r31,0x10		#Get Backup Start
@@ -8908,7 +8771,7 @@ Randomize_LeftorRightSide_CheckForFollowers:
 		lwz	r3,0x2C(r4)		#Main Char Facing
 		stw	r3,0x2C(r5)		#Into Subchar Facing
 		b	Randomize_LeftorRightSide_GetNextPlayer
-		
+
 
 Randomize_LeftorRightSide_Exit:
 restore
@@ -8962,7 +8825,7 @@ blt	0xC
 li	r3,1
 b	0x8
 li	r3,-1
-blr	
+blr
 
 ############################################
 
@@ -8986,7 +8849,7 @@ b	IsAnyoneDead_Exit
 
 IsAnyoneDead_GetPlayerData:
 lwz	r21,0x2C(r20)
-		
+
 #Check If Follower
 lbz	r3,0x221F(r21)
 rlwinm.	r0,r3,0,28,28
@@ -9072,7 +8935,7 @@ beq	ActOutOfLaserHitDisplay_ExitLoop
 cmpwi	r5,0x4B		#Laser Hit
 beq	ActOutOfLaserHitDisplay_ExitLoop
 cmpwi	r3,0x3
-beq	ActOutOfLaserHitDisplay_NoLaserHit	
+beq	ActOutOfLaserHitDisplay_NoLaserHit
 b	ActOutOfLaserHitDisplay_SearchLoop
 ActOutOfLaserHitDisplay_NoLaserHit:
 li	r3,-1
@@ -9117,17 +8980,17 @@ li	r5,0			#Area to Display (0-2)
 li	r6,21			#Window ID (Unique to This Display)
 branchl	r12,TextCreateFunction			#create text custom function
 mr	text,r3			#backup text pointer
-	
+
 cmpwi	r20,0x1
 beq	ActOutOfLaserHitDisplay_Perfect
-ActOutOfLaserHitDisplay_Late:	
+ActOutOfLaserHitDisplay_Late:
 load	r3,0xffa2baff			#Red
 b	ActOutOfLaserHitDisplay_StoreTextColor
 ActOutOfLaserHitDisplay_Perfect:
-load	r3,0x8dff6eff			#green	
+load	r3,0x8dff6eff			#green
 ActOutOfLaserHitDisplay_StoreTextColor:
 stw	r3,0x30(text)
-	
+
 	#Create Text 1
 	mr 	r3,text			#text pointer
 	bl	ActOutOfLaserHitDisplay_TopText
@@ -9240,7 +9103,7 @@ backup
 MoveCPUExit:
 restore
 blr
-			
+
 ############################################
 
 AdjustResetDistance:
@@ -9433,44 +9296,327 @@ blr
 
 #############################################
 
+PerformAerialThink:
+#in
+#   r3    CPU Player Pointer
+#   r4    Pointer to dedicated memory to use
+#   r5    Attack to Perform (0 = Random, 1 = Fair, 2 = Nair, 3 = Dair)
+
+.set player,31
+.set playerdata,30
+.set variables,29
+.set frame,28
+.set aerialToPerform,27
+.set performAerial,0x00
+.set aerialAttack,0x01
+.set attackFrame,0x02
+
+backup
+
+#Get player pointers and frame count
+  mr  player,r3                     #Get Player
+  lwz playerdata,0x2C(player)       #Get Playerdata
+  mr  variables,r4                  #Get Variable Memory
+  lfs	f1,0x894(playerdata)          #Get Frames as Int
+  fctiwz	f1,f1
+  stfd	f1,0xF0(sp)
+  lwz	frame,0xF4(sp)
+	mr	aerialToPerform,r5						#Aerial to perform
+
+#Check To Aerial
+  lbz r3,performAerial(variables)
+  cmpwi r3,0x0
+  bne PerformAerialThink_Exit
+
+#Check Which Action to Perform
+  lwz r3,0x10(playerdata)   #Get Action State
+
+#Branch To Think Functions
+  #During Wait
+    cmpwi r3,0xE
+    beq PerformAerialThink_DuringWait
+  #During Jump
+    cmpwi r3,0x19
+    beq PerformAerialThink_DuringJump
+    cmpwi r3,0x1A
+    beq PerformAerialThink_DuringJump
+  #During Attack
+    cmpwi r3,0x41
+    blt 0x10
+    cmpwi r3,0x45
+    bgt 0x8
+    b PerformAerialThink_DuringAttack
+  #During Landing
+	  cmpwi r3,0x2A
+		beq	PerformAerialThink_DuringLanding
+    cmpwi r3,0x46
+    blt 0x10
+    cmpwi r3,0x4A
+    bgt 0x8
+    b PerformAerialThink_DuringLanding
+	#None of The Above
+		b PerformAerialThink_Exit
+
+
+
+PerformAerialThink_DuringWait:
+  #Input Jump
+    li	r3,0x800
+    stw	r3,0x1A88(playerdata)
+  #Determine Which Aerial Attack To Do
+	#Check To Randomize
+		cmpwi aerialToPerform,0x0
+		beq PerformAerialThink_GetRandomAttack
+	#Store Attack Chosen
+		subi	r3,aerialToPerform,0x1
+		stb r3,aerialAttack(variables)
+		b	PerformAerialThink_CheckForValidAttack
+	PerformAerialThink_GetRandomAttack:
+    li	r3,3
+  	branchl	r12,0x80380580
+  	stb r3,aerialAttack(variables)
+  #Determine Frame to Attack on
+  PerformAerialThink_CheckForValidAttack:
+    lwz r4,0x4(playerdata)      #get char ID
+    bl  PerformAerial_FrameData
+    mflr  r5
+    mulli	r4,r4,0xC		#Get Characters Offset
+    add	r4,r4,r5		#Get Characters Table Entry Start
+    mulli	r3,r3,0x2		#Move Frame Data is 0x2 Long
+    add	r27,r3,r4		#Get Moves Frame Data
+    lbz	r4,0x0(r27)		#First Possible Frame
+    lbz	r5,0x1(r27)		#Last Possible Frame
+    cmpwi	r4,0x0
+    bne	PerformAerialThink_GetRandomFrame
+    cmpwi	r5,0x0
+    bne	PerformAerialThink_GetRandomFrame
+  #Move Disabled For Char, Get a New One
+    b	PerformAerialThink_GetRandomAttack
+  PerformAerialThink_GetRandomFrame:
+    sub	r3,r5,r4		#Get Amount of Possibilities
+    branchl	r12,0x80380580		#Get Random Frame
+    lbz	r4,0x0(r27)		#First Possible Frame
+    add	r3,r3,r4		#Adjust for First Possible Frame
+    stb	r3,attackFrame(variables)		#Store Frame to Attack on
+  b PerformAerialThink_Exit
+
+PerformAerialThink_DuringJump:
+  #Check To Attack
+    lbz r3,attackFrame(variables)
+    cmpw r3,frame
+    bne PerformAerialThink_InputFastfallAndLCancel
+
+  #Perform Attack
+    lbz	r3,aerialAttack(variables)		#Get Attack ID
+    cmpwi	r3,0x0
+    beq	PerformAerialThink_Fair
+    cmpwi	r3,0x1
+    beq	PerformAerialThink_Nair
+    cmpwi	r3,0x2
+    beq	PerformAerialThink_Dair
+
+    PerformAerialThink_Fair:
+      li	r3,127		            #Forward
+      lfs	f1,0x2C(playerdata)		#Facing Direction
+      fctiwz	f1,f1
+      stfd	f1,0xF0(sp)
+      lwz	r4,0xF4(sp)
+      mullw	r3,r3,r4		         #Forward * facing direction
+      stb	r3,0x1A8E(playerdata)
+      b	PerformAerialThink_InputFastfallAndLCancel
+
+    PerformAerialThink_Nair:
+      li	r3,0x100
+      stw	r3,0x1A88(playerdata)
+      b	PerformAerialThink_InputFastfallAndLCancel
+
+    PerformAerialThink_Dair:
+      li	r3,-127
+      stb	r3,0x1A8F(playerdata)
+      b	PerformAerialThink_InputFastfallAndLCancel
+
+b PerformAerialThink_InputFastfallAndLCancel
+
+PerformAerialThink_DuringAttack:
+b PerformAerialThink_InputFastfallAndLCancel
+
+PerformAerialThink_DuringLanding:
+#Set Sequence as Over
+  li  r3,1
+  stb r3,performAerial(variables)
+  b PerformAerialThink_Exit
+
+PerformAerialThink_InputFastfallAndLCancel:
+#Input Fastfall
+	#Check If Already FastFalling
+		lbz	r3,0x221A(playerdata)
+		rlwinm.	r3,r3,0,28,28
+		bne	PerformAerialThink_InputLCancel
+  #Check If Falling
+    lfs	f2,0x84(playerdata)
+    lfs	f0, -0x76B0 (rtoc)
+    fcmpo	cr0,f2,f0
+    bge	PerformAerialThink_InputLCancel
+  #Check If Inputting A Nair
+    lwz	r3,0x1A88(playerdata)
+    cmpwi	r3,0x100
+    beq	PerformAerialThink_InputLCancel
+  #Input Down to FF
+    li	r3,-127
+    stb	r3,0x1A8D(playerdata)		#Analog Y
+
+  PerformAerialThink_InputLCancel:
+  #Spoof Mash L
+   li r3,0x1
+   stb r3,0x67F(playerdata)
+
+b PerformAerialThink_Exit
+
+#################################
+
+PerformAerial_FrameData:
+blrl
+#Mario
+.long 0x00040012		#Fair and Nair
+.long 0x00100005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Fox
+.long 0x0009000A		#Fair and Nair
+.long 0x00080005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Cptn Falcon
+.long 0x0006000E		#Fair and Nair
+.long 0x00040005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#DK
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Kirby
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Bowser
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#link
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Sheik
+.long 0x10140018		#Fair and Nair
+.long 0x00000005		#Dar (was 0-A) and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Ness
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Peach
+.long 0x000D001A		#Fair and Nair
+.long 0x000E0005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Popo
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Nana
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Pikachu
+.long 0x000C000F		#Fair and Nair
+.long 0x00080005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Samus
+.long 0x00200020		#Fair and Nair
+.long 0x080D0005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Yoshi
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Jiggs
+.long 0x00100010		#Fair and Nair
+.long 0x00100005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#mewtwo
+.long 0x00050019		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Luigi
+.long 0x0017001B		#Fair and Nair
+.long 0x00110005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Marth
+.long 0x00160013		#Fair and Nair
+.long 0x00120005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Zelda
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#YLink
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Doc
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Falco
+.long 0x070B000D		#Fair and Nair
+.long 0x000C0005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Pichu
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#GaW
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Ganon
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+#Roy
+.long 0x00050005		#Fair and Nair
+.long 0x00050005		#Dar and UAir
+.long 0x0005FFFF    #Bair and Nothing
+
+####################################
+
+PerformAerialThink_Exit:
+  restore
+  blr
+
+#####################################
 exit:
 li	r0, 3
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
