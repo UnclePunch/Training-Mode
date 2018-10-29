@@ -4566,9 +4566,9 @@ b	exit
 		#Check Post Hitstun Behavior
 		lbz	r3,PostHitstunAction(r31)
 		cmpwi	r3,0x0
-		beq	ComboTrainingJumpAndInvincible
-		cmpwi	r3,0x1
 		beq	ComboTrainingAirdodge
+		cmpwi	r3,0x1
+		beq	ComboTrainingJumpAndInvincible
 		cmpwi	r3,0x2
 		beq	ComboTrainingAerialAttack
 
@@ -4616,9 +4616,9 @@ b	exit
 			#Check Post Hitstun Behavior
 			lbz	r3,PostHitstunAction(r31)
 			cmpwi	r3,0x0
-			beq	ComboTrainingGroundedInvincibility
-			cmpwi	r3,0x1
 			beq	ComboTrainingGroundedSpotdodge
+			cmpwi	r3,0x1
+			beq	ComboTrainingGroundedInvincibility
 			cmpwi	r3,0x2
 			beq	ComboTrainingGroundedAttack
 
@@ -4780,9 +4780,9 @@ b	exit
 		#Check Post Hitstun Behavior
 		lbz	r3,PostHitstunAction(r31)
 		cmpwi	r3,0x0
-		beq		ComboTrainingPostHitstun_GiveInvinc
-		cmpwi	r3,0x1
 		beq		ComboTrainingPostHitstun_AirdodgeSpotdodge
+		cmpwi	r3,0x1
+		beq		ComboTrainingPostHitstun_GiveInvinc
 		cmpwi	r3,0x2
 		beq		ComboTrainingPostHitstun_Attack
 
@@ -5522,16 +5522,11 @@ blrl
 .long 0x44492042
 .long 0x65686176
 .long 0x696f7200
-.long 0x00000000
-.long 0x00000000
 
 #Option 1 = Random DI
 .long 0x52616e64
 .long 0x6f6d2044
 .long 0x49000000
-.long 0x00000000
-.long 0x00000000
-
 
 #Option 2 = Slight DI Towards
 .long 0x536c6967
@@ -5540,19 +5535,14 @@ blrl
 .long 0x77617264
 .long 0x73000000
 
-
 #Option 3 = Survival DI
 .long 0x53757276
 .long 0x6976616c
 .long 0x20444900
-.long 0x00000000
-.long 0x00000000
 
 #Option 4 = Combo DI
 .long 0x436f6d62
 .long 0x6f204449
-.long 0x00000000
-.long 0x00000000
 .long 0x00000000
 
 #Option 5 = Down and Away DI
@@ -5565,9 +5555,6 @@ blrl
 #Option 6 = No DI
 .long 0x4e6f2044
 .long 0x49000000
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
 
 #########
 ## SDI ##
@@ -5577,7 +5564,6 @@ blrl
 .long 0x53444920
 .long 0x42656861
 .long 0x76696f72
-.long 0x00000000
 .long 0x00000000
 
 #Option 1 = 33% Chance to SDI
@@ -5598,15 +5584,10 @@ blrl
 .long 0x416c7761
 .long 0x79732053
 .long 0x44490000
-.long 0x00000000
-.long 0x00000000
 
 #Option 4 = No SDI
 .long 0x4e6f2053
 .long 0x44490000
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
 
 #################
 ## Tech Option ##
@@ -5616,43 +5597,30 @@ blrl
 .long 0x54656368
 .long 0x204f7074
 .long 0x696f6e00
-.long 0x00000000
-.long 0x00000000
 
 #Option 1 = Random
 .long 0x52616e64
 .long 0x6f6d0000
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
 
 #Option 2 = Missed Tech
 .long 0x4d697373
 .long 0x65642054
 .long 0x65636800
-.long 0x
-.long 0x
 
 #Option 3 = Tech In Place
 .long 0x54656368
 .long 0x20496e20
 .long 0x506c6163
 .long 0x65000000
-.long 0x
 
 #Option 4 = Tech In
 .long 0x54656368
 .long 0x20496e00
-.long 0x
-.long 0x
-.long 0x
 
 #Option 5 = Tech Away
 .long 0x54656368
 .long 0x20417761
 .long 0x79000000
-.long 0x
-.long 0x
 
 
 #################
@@ -5666,13 +5634,6 @@ blrl
 .long 0x20416374
 .long 0x696f6e00
 
-#Invincible
-.long 0x496e7669
-.long 0x6e636962
-.long 0x6c650000
-.long 0x
-.long 0x
-
 #Airdodge/Spotdodge
 .long 0x41697264
 .long 0x6f646765
@@ -5681,11 +5642,13 @@ blrl
 .long 0x64676500
 
 #Invincible
+.long 0x496e7669
+.long 0x6e636962
+.long 0x6c650000
+
+#Attack
 .long 0x41747461
 .long 0x636b0000
-.long 0x
-.long 0x
-.long 0x
 
 
 ###################
