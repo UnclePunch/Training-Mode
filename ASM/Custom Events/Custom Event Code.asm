@@ -1,5 +1,4 @@
 #To be inserted at 801bb128
-#To be inserted at 801bb128
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -4204,11 +4203,13 @@ b	exit
 		## Combo Training THINK FUNCT ##
 		#########################
 
-		.set DIBehavior,0x32
-		.set SDIBehavior,0x33
-		.set TechOption,0x34
-		.set PostHitstunAction,0x35
-		.set GrabMashout,0x36
+		.set EventState,0x8
+		.set OptionWindowMemory,0x30
+		.set DIBehavior,OptionWindowMemory+0x2
+		.set SDIBehavior,OptionWindowMemory+0x3
+		.set TechOption,OptionWindowMemory+0x4
+		.set PostHitstunAction,OptionWindowMemory+0x5
+		.set GrabMashout,OptionWindowMemory+0x6
 
 
 		ComboTrainingThink:
@@ -4288,7 +4289,7 @@ b	exit
 		rlwinm.	r0,r3,0,30,30
 		beq	ComboTraining_CheckForSaveAndLoad
 		#Only Allow a Save If Event State is 0
-		lbz	r3,0x8(r31)
+		lbz	r3,EventState(r31)
 		cmpwi	r3,0x0
 		bne	ComboTraining_SkipCheckForSaveAndLoad
 		#Only Allow a Save If P2 is in Wait
@@ -4303,13 +4304,13 @@ b	exit
 		bne	ComboTraining_SkipCheckForSaveAndLoad
 		#Restore Event State And Timer
 		li	r3,0x0
-		stb	r3,0x8(r31)
+		stb	r3,EventState(r31)
 		stw	r3,0x4(r31)
 		ComboTraining_SkipCheckForSaveAndLoad:
 
 		#DPad Down Moves CPU In Front
 		#Only If Event State = 0
-		lbz	r3,0x8(r31)
+		lbz	r3,EventState(r31)
 		cmpwi	r3,0x0
 		bne	ComboTrainingSkipMoveCPU
 		bl	MoveCPU
@@ -4319,7 +4320,7 @@ b	exit
 		bl	DPadCPUPercent
 
 		#R+DPad Changes DI Behavior
-		addi	r3,r31,0x30			#r3 = pointer to option byte in memory
+		addi	r3,r31,OptionWindowMemory		#r3 = pointer to option byte in memory
 		bl	ComboTrainingWindowInfo			#r4 = pointer to option info
 		mflr	r4
 		bl	ComboTrainingWindowText			#r5 = pointer to ASCII struct
@@ -4375,12 +4376,12 @@ b	exit
 		ComboTrainingChangeToRandomDIandTech:
 		#Change To Random DI and Tech
 		li	r3,0x1
-		stb	r3,0x8(r31)
+		stb	r3,EventState(r31)
 		b	ComboTrainingRandomDIAndTech
 
 		#Get Which State
 		ComboTrainingCheckState:
-		lbz	r3,0x8(r31)
+		lbz	r3,EventState(r31)
 		cmpwi	r3,0x0
 		beq	ComboTrainingStart
 		cmpwi	r3,0x1
@@ -4450,10 +4451,7 @@ b	exit
 		ComboTrainingChangeStateToPostHitstun:
 		#Change State
 		li	r3,0x2
-		stb	r3,0x8(r31)
-		#Initiate Reset Timer
-		#li	r3,30
-		#stw	r3,0x4(r31)
+		stb	r3,EventState(r31)
 		b	ComboTrainingPostHitstun
 
 
@@ -4603,7 +4601,7 @@ b	exit
 			#stw	r3,0x1A88(r29)		#Nair
 			#Change State
 			li	r3,0x2
-			stb	r3,0x8(r31)
+			stb	r3,EventState(r31)
 			b	ComboTrainingPostHitstun
 
 
@@ -4756,13 +4754,19 @@ b	exit
 
 		#INPUT AN ATTACK OR DIRECTION WHEN MISSED A TECH
 		ComboTrainingMissedTechThink:
-		li	r3,4		#1/4 chance to getup attack
-		branchl	r12,0x80380580
-		cmpwi	r3,0x0
-		bne	ComboTrainingInputDI		#No Getup Attack, Input Random Direction
-		li	r3,0x100		#Press A To Getup Attack
-		stw	r3,0x1A88(r29)
-		b	ComboTrainingCheckToReset
+			li	r3,4		#1/4 chance to getup attack
+			branchl	r12,0x80380580
+			cmpwi	r3,0x0
+			beq	ComboTrainingMissedTech_GetupAttack
+		#No Getup Attack, Input Random Direction
+			li r3,0
+			bl	ComboTrainingDecideStickAngle
+			b		ComboTrainingCheckToReset
+		#Input Getup Attack
+		ComboTrainingMissedTech_GetupAttack:
+			li	r3,0x100		#Press A To Getup Attack
+			stw	r3,0x1A88(r29)
+			b	ComboTrainingCheckToReset
 
 
 
@@ -5072,7 +5076,7 @@ b	exit
 		bl	SaveState_Load
 		#Reset State ID
 		li	r3,0x0
-		stb	r3,0x8(r31)
+		stb	r3,EventState(r31)
 		ComboTrainingThinkExit:
 		bl	UpdateAllGFX
 		restore
