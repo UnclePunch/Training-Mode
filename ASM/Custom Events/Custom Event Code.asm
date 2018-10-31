@@ -3156,7 +3156,9 @@ b	exit
 		beq	AttackOnShieldNairThink
 		cmpwi	r3,0x2
 		beq	AttackOnShieldUpBThink
-		cmpwi	r3,0x3
+		cmpwi r3,0x3
+		beq AttackOnShieldUpSmashThink
+		cmpwi	r3,0x4
 		beq	AttackOnShieldShineThink
 		b	AttackOnShieldShieldWait
 
@@ -3177,6 +3179,16 @@ b	exit
 			stb	r3,0x1A8D(r29)			#Press Up
 			li	r3,0x200
 			stw	r3,0x1A88(r29)			#Press B
+			b	AttackOnShieldCheckToReset
+
+			AttackOnShieldUpSmashThink:
+			lwz	r3,0x10(r29)
+			cmpwi	r3,0x18
+			bne	AttackOnShieldCheckToReset
+			li	r3,127
+			stb	r3,0x1A8D(r29)			#Press Up
+			li	r3,0x100
+			stw	r3,0x1A88(r29)			#Press A
 			b	AttackOnShieldCheckToReset
 
 			AttackOnShieldShineThink:
@@ -3228,13 +3240,15 @@ b	exit
 		beq	AttackOnShieldNair
 		cmpwi 	r3,0x2
 		beq	AttackOnShieldUpB
-		cmpwi 	r3,0x3
-		beq	AttackOnShieldShine
+		cmpwi		r3,0x3
+		beq AttackOnShieldUpSmash
 		cmpwi 	r3,0x4
-		beq	AttackOnShieldSpotdodge
+		beq	AttackOnShieldShine
 		cmpwi 	r3,0x5
-		beq	AttackOnShieldRoll
+		beq	AttackOnShieldSpotdodge
 		cmpwi 	r3,0x6
+		beq	AttackOnShieldRoll
+		cmpwi 	r3,0x7
 		beq	AttackOnShieldNone
 
 		AttackOnShieldInputGrab:
@@ -3252,6 +3266,13 @@ b	exit
 		b	AttackOnShieldThinkExit
 
 		AttackOnShieldUpB:
+		li	r3,127
+		stb	r3,0x1A8D(r29)		#Press Up
+		li	r3,48		#Init Timer
+		stw	r3,0x4(r31)
+		b	AttackOnShieldThinkExit
+
+		AttackOnShieldUpSmash:
 		li	r3,127
 		stb	r3,0x1A8D(r29)		#Press Up
 		li	r3,48		#Init Timer
@@ -3347,7 +3368,7 @@ AttackOnShieldWindowInfo:
 blrl
 #amount of options, amount of options in each window
 
-.long 0x0006FFFF  #1 window, OoS Option has 4 options
+.long 0x0007FFFF  #1 window, OoS Option has 4 options
 
 ####################################################
 
@@ -3375,21 +3396,26 @@ blrl
 .long 0x55702042
 .long 0x00000000
 
-#Option 4 = Shine
+#Option 5 = Up Smash
+.long 0x55702d53
+.long 0x6d617368
+.long 0x
+
+#Option 6 = Shine
 .long 0x5368696e
 .long 0x65000000
 
-#Option 5 = Spotdodge
+#Option 7 = Spotdodge
 .long 0x53706f74
 .long 0x646f6467
 .long 0x65000000
 
-#Option 7 = Roll Away
+#Option 8 = Roll Away
 .long 0x526f6c6c
 .long 0x20417761
 .long 0x79000000
 
-#Option 6 = None
+#Option 9 = None
 .long 0x4E6F6E65
 .long 0x00000000
 
