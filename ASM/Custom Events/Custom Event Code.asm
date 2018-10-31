@@ -5498,6 +5498,8 @@ ComboTrainingCheckExitStates:
 	beq	ComboTrainingCheckExitStates_ExitState
 	cmpwi	r3,0xFD		#CliffWait
 	beq	ComboTrainingCheckExitStates_ExitState
+	cmpwi	r3,0xF5		#Teeter
+	beq	ComboTrainingCheckExitStates_ExitState
 	cmpwi	r3,0x1C		#JumpB Aerial
 	beq	ComboTrainingCheckExitStates_ExitState
 	cmpwi	r3,0x2A		#Land
