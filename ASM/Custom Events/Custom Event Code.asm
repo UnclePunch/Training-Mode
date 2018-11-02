@@ -428,7 +428,8 @@ b	exit
 		cmpwi	r3,0x0
 		beq	LedgedashThinkMain
 
-			bl	Ledgedash_PlaceAboveLedge
+			li	r3,0		#Left Ledge
+			bl	Ledgedash_PlaceOnLedge
 			#Set Camera To Be Zoomed Out More
 			load	r4,0x8049e6c8
 			load	r3,0x3FE66666
@@ -451,30 +452,32 @@ b	exit
 		branchl	r12,0x802fa2d0
 
 		#CHECK FOR DPAD TO CHANGE LEDGE
-		lwz	r3,0x668(r29)			#Get DPad
-		rlwinm.	r0,r3,0,30,30
-		beq	Ledgedash_CheckLeft
-		lwz	r3,0x10(r31)			#P1's Backup
-		lfs	f1,0xB0(r3)			#X Pos
-		fabs	f1,f1
-		stfs	f1,0xB0(r3)			#X Pos
-		lfs	f1,0x2C(r3)			#Facing
-		fabs	f1,f1
-		fneg	f1,f1			#Negate Always
-		stfs	f1,0x2C(r3)			#Facing
-		b	Ledgedash_LoadState
+			lwz	r3,0x668(r29)			#Get DPad
+			rlwinm.	r0,r3,0,30,30
+			beq	Ledgedash_CheckLeft
+		#Load Most Recent State
+			mr		r3,r31
+			bl		SaveState_Load
+		#Place on Right Ledge
+			li	r3,1
+			bl	Ledgedash_PlaceOnLedge
+		#Save State
+			mr		r3,r31
+			bl		SaveState_Save
+			b	Ledgedash_LoadState
 		Ledgedash_CheckLeft:
-		rlwinm.	r0,r3,0,31,31
-		beq	GetProgressAndAS
-		lwz	r3,0x10(r31)			#P1's Backup
-		lfs	f1,0xB0(r3)			#X Pos
-		fabs	f1,f1
-		fneg	f1,f1			#Negate Always
-		stfs	f1,0xB0(r3)			#X Pos
-		lfs	f1,0x2C(r3)			#Facing
-		fabs	f1,f1			#Always Positive
-		stfs	f1,0x2C(r3)			#Facing
-		b	Ledgedash_LoadState
+			rlwinm.	r0,r3,0,31,31
+			beq	GetProgressAndAS
+		#Load Most Recent State
+			mr		r3,r31
+			bl		SaveState_Load
+		#Place on Left Ledge
+			li	r3,0
+			bl	Ledgedash_PlaceOnLedge
+		#Save State
+			mr		r3,r31
+			bl		SaveState_Save
+			b	Ledgedash_LoadState
 
 		GetProgressAndAS:
 		#Check If Timer Is Set
@@ -490,8 +493,6 @@ b	exit
 		bl	LedgedashProg2
 		bl	LedgedashProg3
 		bl	LedgedashProg4
-		bl	LedgedashProg5
-		bl	LedgedashProg6
 
 		LedgedashSkipJumpTable:
 		mflr	r4		#Jump Table Start in r4
@@ -658,57 +659,90 @@ b	exit
 		#####################
 		## PlaceAboveLedge ##
 		#####################
-		Ledgedash_PlaceAboveLedge:
+		Ledgedash_PlaceOnLedge:
 		backup
+
+		#Backup Ledge Choice (0 = Left, 1 = Right)
+		mr	r20,r3
 
 		#RESET PROGRESS
 		li		r3,0x0
 		stb		r3,0x1(r31)
 
-		#MOVE TO ABOVE THE LEDGE
-
+		#Get Stage's Ledge IDs
 			lwz		r3,-0x6CB8 (r13)			#External Stage ID
-			cmpwi		r3,0x1C
-			beq		Ledgedash_Ledge3
-			cmpwi		r3,0x2
-			beq		Ledgedash_Ledge3
-			cmpwi		r3,0x8
-			beq		Ledgedash_Ledge1
-			li		r3,0x0			#FD,BF,PS
-			b		Ledgedash_MoveAboveLedge
-			Ledgedash_Ledge1:
-			li		r3,0x1
-			b		Ledgedash_MoveAboveLedge
-			Ledgedash_Ledge3:
-			li		r3,0x3
+			bl		LedgedashCliffIDs
+			mflr  r4
+			mulli	r3,r3,0x2
+			lhzx	r3,r3,r4
+		#Get Requested Ledge
+			cmpwi r20,0x0
+			beq	Ledgedash_PlaceOnLedge_GetLeftLedgeID
 
-			Ledgedash_MoveAboveLedge:
-			addi		r4,sp,0x80			#Space
-			branchl		r12,0x80054158			#Get Left Ledge
-			lfs		f1,0x80(sp)
-			li		r3,5
-			bl		IntToFloat
-			lfs		f2,0x80(sp)
-			fsubs		f1,f2,f1
-			stfs		f1,0xB0(r29)			#X Pos
-			lis		r3,0xC080
-			stw		r3,0xB4(r29)			#Y Pos
-			lis		r3,0x3f80
-			stw		r3,0x2c(r29)			#Facing Direction
-			li		r3,0x0
-			stw		r3,0x80(r29)			#velocity
-			stw		r3,0x84(r29)			#velocity
-			mr		r3,r30
-			branchl		r12,0x800cc730
-			#Update Position
+		Ledgedash_PlaceOnLedge_GetRightLedgeID:
+			rlwinm	r21,r3,0,24,31
+		#Change Facing Direction
+			li	r3,-1
+			bl	IntToFloat
+			stfs	f1,0x2C(r29)
+			b	Ledgedash_PlaceOnLedge_StoreLedgeIDAndPosition
+
+		Ledgedash_PlaceOnLedge_GetLeftLedgeID:
+			rlwinm	r21,r3,24,24,31
+		#Change Facing Direction
+			li	r3,1
+			bl	IntToFloat
+			stfs	f1,0x2C(r29)
+			b	Ledgedash_PlaceOnLedge_StoreLedgeIDAndPosition
+
+		Ledgedash_PlaceOnLedge_StoreLedgeIDAndPosition:
+		#Store Ledge to Player Block
+			stw r21,0x2340(r29)
+		#Enter CliffWait
+			mr	r3,r30
+			branchl r12,0x8009a804
+		#Move Player To Ledge
+			mr	r3,r30
+			branchl r12,0x80081544
+		#Update Position
 			mr	r3,r30
 			branchl	r12,0x80081b38
+		#Kill Velocity
+			li		r3,0x0
+			stw		r3,0x80(r29)			#X Velocity
+			stw		r3,0x84(r29)			#Y Velocity
+
+		#Give Appropriate Amount of Intangibility (30 - Length of CLiffCatch)
 
 		restore
 		blr
 
+####################################
+
+LedgedashCliffIDs:
+blrl
+.long 0xFFFFFFFF #Dummy, TEST
+.long 0x03073336 #FoD, Pokemon Stadium
+.long 0x01010101 #Peach's Castle, Kongo Jungle
+.long 0x01010101 #Brinstar, Corneria
+.long 0x02060101 #Yoshi's Story, Onett
+.long 0x01010101 #Mute City, Rainbow Cruise
+.long 0x01010101 #Jungle Japes, Great Bay
+.long 0x01010101 #Hyrule Temple, Brinstar Depths
+.long 0x01010101 #Yoshi's Island, Green Greens
+.long 0x01010101 #Fourside, MKI
+.long 0x01010101 #MKII, Akaneia
+.long 0x01010101 #Venom, PokeFloats
+.long 0x01010101 #Big Blue, Icicle Mountain
+.long 0x01010101 #Icetop, Flatzone
+.long 0x03050101 #Dream Land, Yoshis Island 64
+.long 0x01010005 #Kongo Jungle 64, Battlefield
+.long 0x00020101 #Final Destination
+
+
 
 ####################################
+/*
 #Fall -> GliffGrab
 LedgedashProg0:
 .long 0x7F00001D
@@ -720,18 +754,19 @@ LedgedashProg1:
 .long 0x7F0100FC
 .long 0x7F0200FD
 .long 0xFFFF0000
+*/
 
 #CliffWait -> Fall
-LedgedashProg2:
-.long 0x7F0200FD
-.long 0x7F03001D
+LedgedashProg0:
+.long 0x7F0000FD
+.long 0x7F01001D
 .long 0xFFFF0000
 
 #Fall -> JumpAerial
-LedgedashProg3:
-.long 0x7F03001D
+LedgedashProg1:
+.long 0x7F01001D
 .long 0x00CB00CB
-.long 0x7F04001B
+.long 0x7F02001B
 .long 0x001C0155
 .long 0x01620166
 .long 0x01670170
@@ -743,8 +778,8 @@ LedgedashProg3:
 .long 0xFFFFFFFF
 
 #JumpAerial -> Airdodge
-LedgedashProg4:
-.long 0x7F04001B
+LedgedashProg2:
+.long 0x7F02001B
 .long 0x00CB00CB
 .long 0x001C0155
 .long 0x01620166
@@ -755,7 +790,7 @@ LedgedashProg4:
 .long 0x0171015C
 .long 0x016D016D
 .long 0x01650165
-.long 0x7F0500EC
+.long 0x7F0300EC
 .long 0x00410042
 .long 0x00430044
 .long 0x00450045
@@ -763,16 +798,16 @@ LedgedashProg4:
 .long 0x00FCFFFF
 
 #Airdodge -> Landing
-LedgedashProg5:
-.long 0x7F0500AA
-.long 0x7F06002B
+LedgedashProg3:
+.long 0x7F0300AA
+.long 0x7F04002B
 .long 0x002AFFFF
 
 #Landing -> Wait
-LedgedashProg6:
-.long 0x7F06002B
+LedgedashProg4:
+.long 0x7F04002B
 #.long 0x002A002A
-.long 0x7F04001D
+.long 0x7F02001D
 .long 0xFFFFFFFF
 
 ####################################
