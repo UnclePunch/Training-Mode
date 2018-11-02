@@ -723,20 +723,20 @@ LedgedashCliffIDs:
 blrl
 .long 0xFFFFFFFF #Dummy, TEST
 .long 0x03073336 #FoD, Pokemon Stadium
-.long 0x01010101 #Peach's Castle, Kongo Jungle
-.long 0x01010101 #Brinstar, Corneria
-.long 0x02060101 #Yoshi's Story, Onett
-.long 0x01010101 #Mute City, Rainbow Cruise
-.long 0x01010101 #Jungle Japes, Great Bay
-.long 0x01010101 #Hyrule Temple, Brinstar Depths
-.long 0x01010101 #Yoshi's Island, Green Greens
-.long 0x01010101 #Fourside, MKI
-.long 0x01010101 #MKII, Akaneia
-.long 0x01010101 #Venom, PokeFloats
-.long 0x01010101 #Big Blue, Icicle Mountain
-.long 0x01010101 #Icetop, Flatzone
-.long 0x03050101 #Dream Land, Yoshis Island 64
-.long 0x01010005 #Kongo Jungle 64, Battlefield
+.long 0x030D2945 #Peach's Castle, Kongo Jungle
+.long 0x0511091A #Brinstar, Corneria
+.long 0x02061517 #Yoshi's Story, Onett
+.long 0x0000434C #Mute City, Rainbow Cruise
+.long 0x00000000 #Jungle Japes, Great Bay
+.long 0x0E0D0000 #Hyrule Temple, Brinstar Depths
+.long 0x00051E2E #Yoshi's Island, Green Greens
+.long 0x0C0E0204 #Fourside, MKI
+.long 0x03050000 #MKII, Akaneia
+.long 0x06120000 #Venom, PokeFloats
+.long 0xD7E20000 #Big Blue, Icicle Mountain
+.long 0x00000000 #Icetop, Flatzone
+.long 0x0305030B #Dream Land, Yoshis Island 64
+.long 0x06100005 #Kongo Jungle 64, Battlefield
 .long 0x00020101 #Final Destination
 
 
