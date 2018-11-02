@@ -411,6 +411,13 @@ b	exit
 		## Ledgedash THINK FUNCT ##
 		#########################
 
+		.set firstFrameFlag,0x0
+		.set eventState,0x1
+		.set hitboxFoundFlag,0x2
+		.set timer,0x4
+		.set OptionWindowMemory,0x8
+		.set StartingLocation,OptionWindowMemory+0x2
+		.set AutoRestore,OptionWindowMemory+0x3
 
 		LedgedashThink:
 		blrl
@@ -422,6 +429,7 @@ b	exit
 		branchl	r12,0x80034110				#get player block
 		mr		r30,r3			#player block in r30
 		lwz		r29,0x2c(r30)			#player data in r29
+		lwz   r27,0x2c(r30)			#Hacky Compatibility for the Option Widnow Code
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
@@ -442,7 +450,7 @@ b	exit
 			bl	SaveState_Save
 			#Set Frame 1 As Over
 			li		r3,0x1
-			stb		r3,0x0(r31)
+			stb		r3,firstFrameFlag(r31)
 
 
 		LedgedashThinkMain:
@@ -451,6 +459,36 @@ b	exit
 		lhz	r3,-0x4ea8(r13)
 		branchl	r12,0x802fa2d0
 
+		#Run Option Window Code
+			addi	r3,r31,OptionWindowMemory
+			bl	LedgedashWindowInfo
+			mflr	r4
+			bl	LedgedashWindowText
+			mflr	r5
+			bl	OptionWindow
+		#Check If Toggled Starting Location
+			cmpwi	r4,0x0
+			bne	Ledgedash_SkipToggledLoadState
+			b		Ledgedash_LoadState
+		Ledgedash_SkipToggledLoadState:
+
+		#Reset If Anyone Dies
+			bl	IsAnyoneDead
+			cmpwi	r3,0x0
+			bne	Ledgedash_LoadState
+
+		#Infinite Time While on Rebirth Platform
+			lwz	r3,0x10(r29)
+			cmpwi	r3,0xD
+			bne	LedgedashSkipRebirthTimer
+			li	r3,0x2
+			stw	r3,0x2340(r29)
+		LedgedashSkipRebirthTimer:
+
+		#Make sure nothing else is held
+			lhz	r3,0x662(r29)
+			cmpwi	r3,0x0
+			bne GetProgressAndAS
 		#CHECK FOR DPAD TO CHANGE LEDGE
 			lwz	r3,0x668(r29)			#Get DPad
 			rlwinm.	r0,r3,0,30,30
@@ -480,12 +518,16 @@ b	exit
 			b	Ledgedash_LoadState
 
 		GetProgressAndAS:
+		#Check If AutoRestore is enabled
+			lbz	r3,AutoRestore(r31)
+			cmpwi r3,0x1
+			beq	LedgedashThinkEnd
 		#Check If Timer Is Set
-		lbz	r3,0x4(r31)
-		cmpwi	r3,0x0
-		bgt	Ledgedash_CheckToReset
+			lbz	r3,timer(r31)
+			cmpwi	r3,0x0
+			bgt	Ledgedash_CheckToReset
 		#Get Progress + AS
-		lbz	r3,0x1(r31)		#Progress Byte
+			lbz	r3,eventState(r31)		#Progress Byte
 
 		bl	LedgedashSkipJumpTable
 		bl	LedgedashProg0
@@ -601,7 +643,7 @@ b	exit
 			branchl		r12,0x80024030			#play success sound
 		#Set Timer
 			li	r3,30
-			stb	r3,0x4(r31)
+			stb	r3,timer(r31)
 			b	LedgedashThinkEnd
 
 		Ledgedash_PlayFailure:
@@ -616,12 +658,12 @@ b	exit
 
 
 		Ledgedash_CheckToReset:
-		lbz	r3,0x4(r31)				#Check If Timer is Set
+		lbz	r3,timer(r31)				#Check If Timer is Set
 		cmpwi	r3,0x0
 		ble	LedgedashThinkEnd
 
 		Ledgedash_CheckForInvincibleMove:
-		lbz	r3,0x2(r31)				#Check If Hitbox Was Already Found
+		lbz	r3,hitboxFoundFlag(r31)				#Check If Hitbox Was Already Found
 		cmpwi	r3,0x1
 		beq	Ledgedash_DecrementTimer
 		lwz	r3,0x1990(r29)				#Check If Char is Invincible
@@ -634,25 +676,97 @@ b	exit
 		li	r3,0xAA				#Play Sound
 		branchl	r12,0x801c53ec
 		li	r3,1				#Mark As Found
-		stb	r3,0x2(r31)
+		stb	r3,hitboxFoundFlag(r31)
 
 		Ledgedash_DecrementTimer:
-		lbz	r3,0x4(r31)
-		subi	r3,r3,0x1			#Decrement
-		stb	r3,0x4(r31)
-		cmpwi	r3,0x0
-		bgt	LedgedashThinkEnd
-		#Reset
+			lbz	r3,timer(r31)
+			subi	r3,r3,0x1			#Decrement
+			stb	r3,timer(r31)
+			cmpwi	r3,0x0
+			bgt	LedgedashThinkEnd
 		Ledgedash_LoadState:
-		li		r3,0x0
-		stb		r3,0x1(r31)			#Progress Byte
-		stb		r3,0x2(r31)			#Invincible Move Bool
-		stb		r3,0x4(r31)			#Timer
-		mr		r3,r31
-		bl		SaveState_Load
+		#Reset all event variables
+			li		r3,0x0
+			stb		r3,eventState(r31)				#Progress Byte
+			stb		r3,hitboxFoundFlag(r31)		#Invincible Move Bool
+			stb		r3,timer(r31)							#Timer
+			mr		r3,r31
+			bl		SaveState_Load
+		#Create Respawn Platform If Enabled
+			lbz		r3,StartingLocation(r31)
+			cmpwi	r3,0x0
+			beq	Ledgedash_LoadState_SkipRespawnPlatform
+		#Remember Facing Direction (Rebirth changes this)
+			lfs	f31,0x2C(r29)
+		#Enter P1 Into Rebirth Again
+			mr		r3,r30
+			branchl		r12,0x800d4ff4
+		#Restore Facing Direction
+			stfs	f31,0x2C(r29)
+		#Randomize Location
+		#Get Stage's Ledges
+			lwz		r3,-0x6CB8 (r13)			#External Stage ID
+			bl		LedgedashCliffIDs
+			mflr  r4
+			mulli	r3,r3,0x2
+			lhzx	r3,r3,r4
+		#Get Correct Ledge From Facing Direction
+			lfs	f1, 0x002C (r29)
+			lfs	f0, -0x7660 (rtoc)
+			fcmpo	cr0,f1,f0
+			ble	Ledgedash_LoadState_GetRightLedge
+		Ledgedash_LoadState_GetLeftLedge:
+		#Get Ledge X and Y Coordinates
+			rlwinm	r3,r3,24,24,31
+			addi	r4,sp,0x80
+			branchl	r12,0x80053ecc
+			b	Ledgedash_LoadState_RandomizePosition
+		Ledgedash_LoadState_GetRightLedge:
+		#Get Ledge X and Y Coordinates
+			rlwinm	r3,r3,0,24,31
+			addi	r4,sp,0x80
+			branchl	r12,0x80053ff4
+		Ledgedash_LoadState_RandomizePosition:
+		#Get Random Distance from this
+			.set RandomDistanceMinX,20
+			.set RandomDistanceMaxX,40
+			.set RandomDistanceMinY,0
+			.set RandomDistanceMaxY,40
+			li	r3,RandomDistanceMinX
+			li	r4,RandomDistanceMaxX
+			bl	RandFloat
+			fmr	f31,f1
+			li	r3,RandomDistanceMinY
+			li	r4,RandomDistanceMaxY
+			bl	RandFloat
+			fmr	f30,f1
+		#Add to Ledge Coordinates
+			lfs	f1,0x2C(r29)	#Facing Direction
+			fneg f1,f1
+			fmuls f31,f1,f31
+			lfs	f0,0x80(sp)		#Ledge X
+			fadds f31,f0,f31
+			lfs	f1,0x84(sp)		#Ledge Y
+			fadds f30,f1,f30
+		#Store to Player Block
+			stfs f31,0xB0(r29)
+			stfs f30,0xB4(r29)
+		#Enter RebirthWait
+			mr		r3,r30
+			branchl		r12,0x800d5600
+		#Store Blr as Physics
+			bl		BlrFunctionPointer
+			mflr		r3
+			stw		r3,0x21A4(r29)
+		#Store Custom RebirthWait Interrupt
+			bl	Custom_InterruptRebirthWait
+			mflr	r3
+			stw		r3,0x219C(r29)
+
+		Ledgedash_LoadState_SkipRespawnPlatform:
 		#Update Position
-		mr	r3,r30
-		branchl	r12,0x80081b38
+			mr	r3,r30
+			branchl	r12,0x80081b38
 		b		LedgedashThinkEnd
 
 
@@ -667,7 +781,7 @@ b	exit
 
 		#RESET PROGRESS
 		li		r3,0x0
-		stb		r3,0x1(r31)
+		stb		r3,eventState(r31)
 
 		#Get Stage's Ledge IDs
 			lwz		r3,-0x6CB8 (r13)			#External Stage ID
@@ -762,8 +876,11 @@ LedgedashProg1:
 
 #CliffWait -> Fall
 LedgedashProg0:
-.long 0x7F0000FD
+.long 0x7F0000FC
+.long 0x00FD000D
 .long 0x7F01001D
+.long 0x7F02001B
+.long 0x001C001C
 .long 0xFFFF0000
 
 #Fall -> JumpAerial
@@ -779,6 +896,8 @@ LedgedashProg1:
 .long 0x0160016B
 .long 0x0171015C
 .long 0x016D0165
+.long 0x016E0168
+.long 0x01610161
 .long 0xFFFFFFFF
 
 #JumpAerial -> Airdodge
@@ -792,13 +911,14 @@ LedgedashProg2:
 .long 0x015e015f
 .long 0x0160016B
 .long 0x0171015C
-.long 0x016D016D
-.long 0x01650165
+.long 0x016D016E
+.long 0x01650168
+.long 0x01610161
 .long 0x7F0300EC
 .long 0x00410042
 .long 0x00430044
 .long 0x00450045
-.long 0x002B7F01
+.long 0x002B7F00
 .long 0x00FCFFFF
 
 #Airdodge -> Landing
@@ -816,6 +936,45 @@ LedgedashProg4:
 
 ####################################
 
+LedgedashWindowInfo:
+blrl
+.long 0x010101FF  #1 window, Respawn Platform has 2 options, AutoRestore has 2 options
+
+LedgedashWindowText:
+blrl
+
+#Option Title = Starting Location
+#.long 0x4c6f636174696f6e
+.long 0x53746172
+.long 0x74696e67
+.long 0x204c6f63
+.long 0x6174696f
+.long 0x6e000000
+
+#Option 1 = Ledge
+.long 0x4c656467
+.long 0x65000000
+
+#Option 2 = Respawn Platform
+.long 0x52657370
+.long 0x61776e20
+.long 0x506c6174
+.long 0x666f726d
+.long 0x00000000
+
+#Option Title = AutoRestore
+.long 0x4175746f
+.long 0x52657374
+.long 0x6f726500
+
+#Option 1 = On
+.long 0x4f6e0000
+
+#Option 2 = Off
+.long 0x4f666600
+
+
+####################################
 
 LedgedashLoadExit:
 restore
@@ -1900,7 +2059,7 @@ b	exit
 		bl	ReversalWindowText
 		mflr	r5
 		bl	OptionWindow
-		cmpwi	r3,-1			#Check If Toggled An Option
+		cmpwi	r3,0			#Check If Toggled An Option
 		beq	ReversalSkipFacingReset
 		lbz	r3,0x8(r31)			#Get Current Window
 		cmpwi	r3,0x1
@@ -2898,7 +3057,7 @@ b	exit
 		bl	ShieldDropWindowText
 		mflr	r5
 		bl	OptionWindow
-		cmpwi	r3,-1			#Check If Toggled An Option
+		cmpwi	r3,0			#Check If Toggled An Option
 		bne	ShieldDropReset
 
 		#Move Players Apart With DPad
@@ -3614,7 +3773,7 @@ b	exit
 				#mr	r3,r28
 				#branchl	r12,0x80081b38
 			#Overwrite Physics Behavior to Stay Still
-				bl		Ledgetech_BLR
+				bl		BlrFunctionPointer
 				mflr		r3
 				stw		r3,0x21A4(r27)
 
@@ -3840,7 +3999,7 @@ b	exit
 		stw		r3,0xB4(r27)
 		mr		r3,r28
 		branchl		r12,0x800d5600
-		bl		Ledgetech_BLR
+		bl		BlrFunctionPointer
 		mflr		r3
 		stw		r3,0x21A4(r27)
 
@@ -3873,7 +4032,7 @@ blrl
 
 #################################
 
-Ledgetech_BLR:
+BlrFunctionPointer:
 blrl
 blr
 
@@ -8119,25 +8278,37 @@ blr
 
 RAndDPadChangesEventOption:
 OptionWindow:
+#in
 #r3 = pointer to option byte in memory
 #r4 = pointer to Window and Option Count
 #r5 = pointer to ASCII struct
 
-#r3 = pointer to option byte in memory
-#r4 = pointer to Window and Option Count
+#out
+#r3 =
 
 .set TextCreateFunction,0x80005928
+.set OptionWindowMemory,20
+.set OptionTextInfo,21
+.set OptionASCII,22
 .set text,23
+.set toggledBool,28
+.set toggledOption,29
+
 
 backup
 
+
 #Backup Parameters
-mr	r20,r3		#pointer to option byte in memory
-mr	r21,r4		#pointer to Window and Option Count
-mr	r22,r5		#pointer to ASCII struct
+mr	OptionWindowMemory,r3		#pointer to option byte in memory
+mr	OptionTextInfo,r4		#pointer to Window and Option Count
+mr	OptionASCII,r5		#pointer to ASCII struct
+
+#Initialize Toggled Bools
+li	toggledBool,0
+li	toggledOption,-1
 
 #Get Number Of Options Onscreen At Once (1,2,or 3)
-lbz	r24,0x0(r21)		#Get Number of Different Windows
+lbz	r24,0x0(OptionTextInfo)		#Get Number of Different Windows
 cmpwi	r24,2		#Check If Over 3
 ble	0x8
 li	r24,2		#Make 3
@@ -8145,7 +8316,7 @@ li	r24,2		#Make 3
 #Check For R Being Held
 lhz	r3,0x662(r27)			#Ignore Top Half of Input Bitmap
 cmpwi	r3,0x20
-bne	RAndDPadChangesEventOption_NoPress
+bne	RAndDPadChangesEventOption_Exit
 
 #Check For DPad Up And Down
 lhz	r3,0x66A(r27)			#Ignore Top Half of Input Bitmap
@@ -8157,52 +8328,52 @@ b	RAndDPadChangesEventOption_CheckDPadLeftAndRight
 
 RAndDPadChangesEventOption_CursorUp:
 #Update Cursor Position
-	lbz	r3,0x0(r20)		#Get Current Cursor Position Byte
+	lbz	r3,0x0(OptionWindowMemory)		#Get Current Cursor Position Byte
 	subi	r3,r3,0x1		#Subtract by 1
-	stb	r3,0x0(r20)
+	stb	r3,0x0(OptionWindowMemory)
 	cmpwi	r3,0x0
 	bge	RAndDPadChangesEventOption_DisplayWindow
 #Cursor Stays at the top of the screen
 	li	r3,0
-	stb	r3,0x0(r20)
+	stb	r3,0x0(OptionWindowMemory)
 #Check To Scroll Down
 	#Get Current Window ID (cursor + scroll)
-		lbz	r3,0x0(r20)
-		lbz	r4,0x1(r20)
+		lbz	r3,0x0(OptionWindowMemory)
+		lbz	r4,0x1(OptionWindowMemory)
 		add	r3,r3,r4
 	#Check If This is the Beginning
 		cmpwi	r3,0
 		ble	RAndDPadChangesEventOption_DisplayWindow
 	#Scroll Down
-		lbz	r4,0x1(r20)
+		lbz	r4,0x1(OptionWindowMemory)
 		subi	r4,r4,1
-		stb	r4,0x1(r20)
+		stb	r4,0x1(OptionWindowMemory)
 
 b	RAndDPadChangesEventOption_DisplayWindow
 
 RAndDPadChangesEventOption_CursorDown:
 #Update Cursor Position
-	lbz	r3,0x0(r20)		#Get Current Option Byte
+	lbz	r3,0x0(OptionWindowMemory)		#Get Current Option Byte
 	addi	r3,r3,0x1		#Add 1
-	stb	r3,0x0(r20)
+	stb	r3,0x0(OptionWindowMemory)
 	cmpw	r3,r24
 	ble	RAndDPadChangesEventOption_DisplayWindow
 #Cursor Stays at the Bottom of the Screen
-	stb	r24,0x0(r20)
+	stb	r24,0x0(OptionWindowMemory)
 #Check To Scroll Down
 	#Get Current Window ID (cursor + scroll)
-		lbz	r3,0x0(r20)
-		lbz	r4,0x1(r20)
+		lbz	r3,0x0(OptionWindowMemory)
+		lbz	r4,0x1(OptionWindowMemory)
 		add	r3,r3,r4
 	#Get Max Number Of Windows
-		lbz	r4,0x0(r21)		#Get Number of Different Windows
+		lbz	r4,0x0(OptionTextInfo)		#Get Number of Different Windows
 	#Check If This is the End
 		cmpw	r3,r4
 		bge	RAndDPadChangesEventOption_DisplayWindow
 	#Scroll Down
-		lbz	r4,0x1(r20)
+		lbz	r4,0x1(OptionWindowMemory)
 		addi	r4,r4,1
-		stb	r4,0x1(r20)
+		stb	r4,0x1(OptionWindowMemory)
 
 b	RAndDPadChangesEventOption_DisplayWindow
 
@@ -8213,41 +8384,49 @@ cmpwi	r3,0x02
 beq	RAndDPadChangesEventOption_Increment
 cmpwi	r3,0x01
 beq	RAndDPadChangesEventOption_Decrement
-b	RAndDPadChangesEventOption_NoPress
+b	RAndDPadChangesEventOption_Exit
 
 RAndDPadChangesEventOption_Increment:
 #Get Current Window ID (cursor + scroll)
-	lbz	r3,0x0(r20)
-	lbz	r4,0x1(r20)
+	lbz	r3,0x0(OptionWindowMemory)
+	lbz	r4,0x1(OptionWindowMemory)
 	add	r3,r3,r4
+#Set as Toggled
+	li toggledBool,1
+	mr	toggledOption,r3
+
 addi	r5,r3,2
-lbzx	r3,r5,r20		#Get Current Option Byte
+lbzx	r3,r5,OptionWindowMemory		#Get Current Option Byte
 addi	r3,r3,0x1
-stbx	r3,r5,r20		#Store New Option Byte Value
+stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 subi	r5,r5,1
-lbzx	r4,r5,r21		#Get Window's Option Byte Max Value
+lbzx	r4,r5,OptionTextInfo		#Get Window's Option Byte Max Value
 cmpw	r3,r4
 ble	RAndDPadChangesEventOption_DisplayWindow
 li	r3,0x0
 addi	r5,r5,1
-stbx	r3,r5,r20		#Get New Option Byte Value
+stbx	r3,r5,OptionWindowMemory		#Get New Option Byte Value
 b	RAndDPadChangesEventOption_DisplayWindow
 
 RAndDPadChangesEventOption_Decrement:
 #Get Current Window ID (cursor + scroll)
-	lbz	r3,0x0(r20)
-	lbz	r4,0x1(r20)
+	lbz	r3,0x0(OptionWindowMemory)
+	lbz	r4,0x1(OptionWindowMemory)
 	add	r3,r3,r4
+#Set as Toggled
+	li toggledBool,1
+	mr toggledOption,r3
+
 addi	r5,r3,0x2
-lbzx	r3,r5,r20		#Get Current Option Byte
+lbzx	r3,r5,OptionWindowMemory		#Get Current Option Byte
 subi	r3,r3,0x1
-stbx	r3,r5,r20		#Store New Option Byte Value
+stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 cmpwi	r3,0x0
 bge	RAndDPadChangesEventOption_DisplayWindow
 subi	r5,r5,1
-lbzx	r3,r5,r21		#Get Window's Option Byte Max Value
+lbzx	r3,r5,OptionTextInfo		#Get Window's Option Byte Max Value
 addi	r5,r5,1
-stbx	r3,r5,r20		#Store New Option Byte Value
+stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 b	RAndDPadChangesEventOption_DisplayWindow
 
 
@@ -8305,10 +8484,10 @@ mr	text,r3			#backup text pointer
 	RAndDPadChangesEventOption_DisplayWindow_Loop:
 
 		#Get Window Title And Option
-			mr	r3,r22			#Option ASCII Start
-			lbz	r4,0x1(r20)			#Get Scroll Position
+			mr	r3,OptionASCII			#Option ASCII Start
+			lbz	r4,0x1(OptionWindowMemory)			#Get Scroll Position
 			add	r4,r4,r27			#Get Loop Count's Window
-			addi	r5,r20,0x2			#Selection ID's
+			addi	r5,OptionWindowMemory,0x2			#Selection ID's
 			lbzx	r5,r4,r5			#Get Current Option This Window is On
 			bl	RAndDPadChangesEventOption_GetOptionASCII
 			mr	r25,r3
@@ -8343,7 +8522,7 @@ mr	text,r3			#backup text pointer
 			mr	r4,r26			#Selection Text
 			branchl r12,0x803a6b98
 		#Check To Outline in Yellow
-			lbz	r4,0x0(r20)			#Get Cursor Position
+			lbz	r4,0x0(OptionWindowMemory)			#Get Cursor Position
 			cmpw	r4,r27			#Compare With Loop Counter
 			bne	RAndDPadChangesEventOption_DisplayWindow_SkipColor
 			load	r4,0xf7ff2700
@@ -8358,7 +8537,7 @@ mr	text,r3			#backup text pointer
 			addi	r27,r27,1
 			blt	RAndDPadChangesEventOption_DisplayWindow_Loop
 
-		b RAndDPadChangesEventOption_Toggled
+		b RAndDPadChangesEventOption_Exit
 
 
 #########################################
@@ -8393,8 +8572,8 @@ RAndDPadChangesEventOption_GetOptionASCII_OptionIDLoop:
 		#Loop Through All The Window's Selections
 			li	r26,0		#Loop Count
 		RAndDPadChangesEventOption_GetOptionASCII_LoopThroughSelections:
-		#Get This Options (r27) Total Number of Selections (Pointer in r21)
-			addi	r3,r21,0x1		#Get to Option Selection Counts
+		#Get This Options (r27) Total Number of Selections (Pointer in OptionTextInfo)
+			addi	r3,OptionTextInfo,0x1		#Get to Option Selection Counts
 			lbzx	r3,r3,r27		#Get This Windows Total Number of Selections
 			addi	r3,r3,0x1		#Add 1 To Ensure We Are at the Start of the Next Window Title
 			cmpw	r3,r26		#Check If This is the Last Selection
@@ -8478,14 +8657,10 @@ blrl
 
 
 #########################################
-RAndDPadChangesEventOption_NoPress:
-li	r3,-1
-b	RAndDPadChangesEventOption_Exit
-
-RAndDPadChangesEventOption_Toggled:
-li	r3,0x1
 
 RAndDPadChangesEventOption_Exit:
+mr	r3,toggledBool
+mr	r4,toggledOption
 restore
 blr
 
@@ -9652,5 +9827,86 @@ PerformAerialThink_Exit:
   blr
 
 #####################################
+RandFloat:
+#in
+#r3 = Rand Float Lower Bound
+#r4 = Rand Float Upper Bound
+
+backup
+stfs	f31,0x80(sp)
+
+mr	r31,r3
+
+#Get Random Upper Bound
+	mr	r3,r4
+	branchl r12,HSD_Randi
+#Add Lower Bound
+	add	r3,r3,r31
+#Convert to Float
+	bl	IntToFloat
+	fmr	f31,f1
+#Get Random Float
+	branchl r12,0x80380528
+	fadds	f1,f1,f31
+
+lfs	f31,0x80(sp)
+restore
+blr
+
+#####################################
+Custom_InterruptRebirthWait:
+blrl
+.set player,31
+.set playdata,30
+
+backup
+
+#Get Pointers
+	mr	player,r3
+	lwz	playerdata,0x2C(player)
+
+#Check For Aerial Jump
+	mr	r3,player
+	branchl r12,0x800cb870
+	cmpwi r3,0x0
+	bne Custom_InterruptRebirthWait_Exit
+
+#Ensure Stick Was Just Moved
+	lbz	r3, 0x0670 (playerdata)
+	cmpwi r3,2
+	bge	Custom_InterruptRebirthWait_CheckJoystickDown
+#Check For Any X Joystick Push
+	lwz	r3, -0x514C (r13)
+	lfs	f0, 0x0024 (r3)
+	lfs	f1, 0x0620 (playerdata)
+	fabs	f1,f1
+	fcmpo	cr0,f1,f0
+	cror	2, 1, 2
+	beq	Custom_InterruptRebirthWait_EnterFall
+Custom_InterruptRebirthWait_CheckJoystickDown:
+#Ensure Stick Was Just Moved
+	lbz	r3, 0x0671 (playerdata)
+	cmpwi r3,2
+	bge	Custom_InterruptRebirthWait_Exit
+#Check For Down Joystick Push
+	lwz	r3, -0x514C (r13)
+	lfs	f0, 0x0090 (r3)
+	fneg f0,f0
+	lfs	f1, 0x0624 (playerdata)
+	fcmpo	cr0,f1,f0
+	blt	Custom_InterruptRebirthWait_EnterFall
+	b	Custom_InterruptRebirthWait_Exit
+
+Custom_InterruptRebirthWait_EnterFall:
+#Enter Fall
+	mr r3,player
+	branchl r12,0x800cc730
+
+Custom_InterruptRebirthWait_Exit:
+	restore
+	blr
+
+#####################################
+
 exit:
 li	r0, 3
