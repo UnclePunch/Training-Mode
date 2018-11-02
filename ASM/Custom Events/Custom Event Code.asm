@@ -712,7 +712,11 @@ b	exit
 			stw		r3,0x80(r29)			#X Velocity
 			stw		r3,0x84(r29)			#Y Velocity
 
-		#Give Appropriate Amount of Intangibility (30 - Length of CLiffCatch)
+		#Give Intangibility (30)
+		mr	r3,r30
+		lwz	r4, -0x514C (r13)
+		lwz	r4, 0x049C (r4)
+		branchl	r12,0x8007b760
 
 		restore
 		blr
