@@ -1,4 +1,4 @@
-#To be inserted at 8007d57c
+#To be inserted at 804df470
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -81,6 +81,8 @@ fsubs    \reg2,\reg2,f16
 ## Store Text Info here                                 ##
 ##########################################################
 
+
+/*
 backup
 
 mr	playerdata,r3
@@ -94,7 +96,7 @@ mr	playerdata,r3
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForFollower:
 	mr	r3,playerdata
@@ -105,10 +107,10 @@ mr	playerdata,r3
 		bl	CreateText
 
 		#Change Text Color
-		
+
 		cmpwi	r3,0x1
 		bgt	RedText
-		
+
 		GreenText:
 		load	r3,0x8dff6eff			#green
 		b	StoreTextColor
@@ -180,6 +182,5 @@ Moonwalk_Exit:
 restore
 li	r0, 1
 
-
-
-
+*/
+blr
