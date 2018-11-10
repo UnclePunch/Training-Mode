@@ -415,7 +415,8 @@ b	exit
 		.set eventState,0x1
 		.set hitboxFoundFlag,0x2
 		.set timer,0x4
-		.set OptionWindowMemory,0x8
+		.set CameraBox,0x8
+		.set OptionWindowMemory,0x20
 		.set StartingLocation,OptionWindowMemory+0x2
 		.set AutoRestore,OptionWindowMemory+0x3
 
@@ -436,21 +437,25 @@ b	exit
 		cmpwi	r3,0x0
 		beq	LedgedashThinkMain
 
-			li	r3,0		#Left Ledge
-			bl	Ledgedash_PlaceOnLedge
+			#Create Camera Box
+				branchl	r12,0x80029020
+				stw r3,CameraBox(r31)
+			#Place on Ledge
+				li	r3,0		#Left Ledge
+				bl	Ledgedash_PlaceOnLedge
 			#Set Camera To Be Zoomed Out More
-			load	r4,0x8049e6c8
-			load	r3,0x3FE66666
-			stw	r3,0x28(r4)
+				load	r4,0x8049e6c8
+				load	r3,0x3FE66666
+				stw	r3,0x28(r4)
 			#Set Tangible Frames High So It Doesn't Constantly Show
-			li	r3,100
-			stw	r3,0x2408(r29)
+				li	r3,100
+				stw	r3,0x2408(r29)
 			#Save State
-			mr	r3,r31
-			bl	SaveState_Save
+				mr	r3,r31
+				bl	SaveState_Save
 			#Set Frame 1 As Over
-			li		r3,0x1
-			stb		r3,firstFrameFlag(r31)
+				li		r3,0x1
+				stb		r3,firstFrameFlag(r31)
 
 
 		LedgedashThinkMain:
@@ -827,10 +832,49 @@ b	exit
 			stw		r3,0x84(r29)			#Y Velocity
 
 		#Give Intangibility (30)
-		mr	r3,r30
-		lwz	r4, -0x514C (r13)
-		lwz	r4, 0x049C (r4)
-		branchl	r12,0x8007b760
+			mr	r3,r30
+			lwz	r4, -0x514C (r13)
+			lwz	r4, 0x049C (r4)
+			branchl	r12,0x8007b760
+
+		#Adjust Ledge Camera Box Accordingly
+		#Get Ledge Coordinates
+			mr	r3,r21
+			addi	r4,sp,0xD0
+			lfs	f1, 0x002C (r29)
+			lfs	f0, -0x7660 (rtoc)
+			fcmpo	cr0,f1,f0
+			ble Ledgedash_PlaceOnLedge_CameraBoxRightLedge
+		Ledgedash_PlaceOnLedge_CameraBoxLeftLedge:
+			branchl	r12,0x80053ecc
+			b	Ledgedash_PlaceOnLedge_UpdateCameraBox
+		Ledgedash_PlaceOnLedge_CameraBoxRightLedge:
+			branchl r12,0x80053da4
+		Ledgedash_PlaceOnLedge_UpdateCameraBox:
+		#Get CameraBox
+			lwz r20,CameraBox(r31)
+		#Position Base of CameraBox at the Ledge
+			lfs f1,0xD0(sp)		#Ledge X
+			stfs f1,0x10(r20)  #Camera X Position
+			lfs f1,0xD4(sp)		#Ledge Y
+			stfs f1,0x14(r20)  #Camera X Position
+		#Make Boundaries around ledge position
+		#Left Bound
+			li	r3,-10
+			bl	IntToFloat
+			stfs	f1,0x40(r20)
+		#Right Bound
+			li	r3,10
+			bl	IntToFloat
+			stfs	f1,0x44(r20)
+		#Top Bound
+			li	r3,10
+			bl	IntToFloat
+			stfs	f1,0x48(r20)
+		#Lower Bound
+			li	r3,-10
+			bl	IntToFloat
+			stfs	f1,0x4C(r20)
 
 		restore
 		blr
@@ -3328,7 +3372,7 @@ b	exit
 			bl	AttackOnShieldWindowText
 			mflr	r5
 			bl	OptionWindow
-			cmpwi	r3,-1
+			cmpwi	r3,0
 			beq	AttackOnShieldNoOptionToggled
 		#Clear Last AS So CPU Doesnt Act Immediately
 			li	r3,0

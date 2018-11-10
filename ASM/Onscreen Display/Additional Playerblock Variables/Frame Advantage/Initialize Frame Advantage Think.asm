@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -83,7 +83,7 @@ fsubs    \reg2,\reg2,f16
 	slw	r0, r3, r0
 	and.	r0, r0, r4
 	beq	InjectionExit
-	
+
 		#Check If Entity That Hit Shield Was a Player
 			lwz	r3, 0x002C (r30)
 			lwz	r3, 0x19A8 (r3)
@@ -156,14 +156,14 @@ lwz	playerdata,0x2c(player)
 		blt	SkipJumpFallCheck
 		cmpwi	r3,0x22
 		bgt	SkipJumpFallCheck
-		b	Actionable	
+		b	Actionable
 		SkipJumpFallCheck:
 	#Check For AS Wait
 		cmpwi	r3,0xE
 		beq	Actionable
 	#Check For AS CrouchWait
 		cmpwi	r3,0x28
-		beq	Actionable	
+		beq	Actionable
 	#Check For Peach Float
 		lwz	r4,0x4(playerdata)
 		cmpwi	r4,0x9
@@ -175,7 +175,7 @@ lwz	playerdata,0x2c(player)
 	###########################
 	## Check For IASA States ##
 	###########################
-	
+
 	#Check Jabs Tilts Aerials Smash Attacks
 		cmpwi	r3,0x2C
 		blt	SkipAttackCheck
@@ -185,14 +185,14 @@ lwz	playerdata,0x2c(player)
 		SkipAttackCheck:
 	#Check Throws
 		cmpwi	r3,0xDB
-		blt	SkipThrowCheck	
+		blt	SkipThrowCheck
 		cmpwi	r3,0xDE
-		bgt	SkipThrowCheck		
+		bgt	SkipThrowCheck
 		b	CheckIASA
 		SkipThrowCheck:
 
 	b	Moonwalk_Exit
-		
+
 
 	#########################
 	## Check for IASA Flag ##
@@ -207,7 +207,7 @@ lwz	playerdata,0x2c(player)
 	##########################
 	## Get Frame Advantages ##
 	##########################
-	
+
 
 	Actionable:
 	#Check If Still in ShieldStun
@@ -224,11 +224,11 @@ lwz	playerdata,0x2c(player)
 		lwz 	r3,0x590(r20)			#get anim data
 		lfs	f1,0x008(r3)			#get anim length (float)
 		lfs	f2,0x89C(r20)			#get anim speed
-		lfs	f3,0x894(r20)			#get current AS	
+		lfs	f3,0x894(r20)			#get current AS
 		fdivs	f4,f1,f2			#get calculated AS length in f4
 		fdivs	f1,f3,f1			#yields percentage of animation finished
 		fmuls	f1,f4,f1			#(DEFINED_LENGTH)*(PERCENTAGE)
-		fsubs	f3,f4,f1			#SUBTRACT FROM DEFINED		
+		fsubs	f3,f4,f1			#SUBTRACT FROM DEFINED
 
 				ConvertASFrameToInt:
 				#ROUND APPROX FRAMES LEFT UP
@@ -255,15 +255,15 @@ lwz	playerdata,0x2c(player)
 				RoundUp:
 				addi	r5,r3,0x1
 				b	SubFrameCount
-					
+
 				RoundDown:
 				mr	r5,r3
-				
+
 				SubFrameCount:
 				subi	r21,r5,0x1			#backup frame number
 
 
-	b	CreateTextGObj	
+	b	CreateTextGObj
 
 
 	########################################
@@ -291,11 +291,11 @@ lwz	playerdata,0x2c(player)
 		subi	r4,r4,0x2		#Adjust for lhzu instruction
 	ShieldStunFrameCountLoop:
 		cmpwi	r5,0		#Check If Done
-		ble	ShieldStunAddCurrentAS	
+		ble	ShieldStunAddCurrentAS
 		lhzu	r3,0x2(r4)		#Get Frame Count
 		add	r21,r21,r3		#Add to Total
 		subi	r5,r5,1
-		b	ShieldStunFrameCountLoop	
+		b	ShieldStunFrameCountLoop
 	ShieldStunAddCurrentAS:
 		lhz	r3,0x23EC(r20)		#Add Current AS's Frame Count as Well
 		add	r21,r21,r3
@@ -382,8 +382,8 @@ blrl
 TopText:
 blrl
 .long 0x4672616D
-.long 0x65204164 
-.long 0x76616E74 
+.long 0x65204164
+.long 0x76616E74
 .long 0x61676500
 
 BottomText:
@@ -407,4 +407,3 @@ blr
 
 InjectionExit:
 lwz	r3, 0x002C (r30)
-
