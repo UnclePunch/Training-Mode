@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -80,7 +80,7 @@ backup
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForFollower:
 	mr	r3,playerdata
@@ -102,9 +102,9 @@ backup
 	lbz	r3,0x221C(playerdata)
 	rlwinm.	r0, r3, 31, 31, 31
 	beq	Moonwalk_Exit
-	
+
 		Hitstun:
-		li	hitbool,0x1		
+		li	hitbool,0x1
 		lwz	r3,0x2340(playerdata)
 		cmpwi	r3,0x0		#check if in hitstun still
 		beq	Moonwalk_Exit		#if not exit
@@ -117,7 +117,7 @@ backup
 	li	r6,16			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
 
-	
+
 
 	mr	text,r3			#backup text pointer
 
@@ -128,12 +128,12 @@ backup
 		#########################
 		## CHECK IF LAST FRAME ##
 		#########################
-		
+
 		CheckIfLastFrame:
 		cmpwi hitbool,0x0
 		beq CheckIfLastFrame_Hitlag
 
-		CheckIfLastFrame_Hitstun:		
+		CheckIfLastFrame_Hitstun:
 		lfs	f1,0x2340(playerdata)
 		b	CheckIfLastFrame_CompareWithZero
 
@@ -144,14 +144,14 @@ backup
 		lfs	f2, -0x757C (rtoc)
 		fcmpo	cr0,f1,f2
 		bgt	InitializeText
-		
+
 			ChangeColor:
 			load	r3,0x00FF00FF
 			stw	r3,0x30(text)
 
 
 
-		
+
 		InitializeText:
 		#INITALIZE TEXT 1
 		mr 	r3,r29			#text pointer
@@ -199,7 +199,7 @@ backup
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 		branchl r12,0x803a6b98
-	
+
 		b Moonwalk_Exit
 
 
@@ -236,7 +236,3 @@ Moonwalk_Exit:
 restore
 mr	r3,player
 lmw	r25, 0x0034 (sp)
-
-
-
-

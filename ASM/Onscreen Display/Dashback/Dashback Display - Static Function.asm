@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -93,7 +93,7 @@ mr	r20,r4				#Dashback Bool
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForFollower:
 	mr	r3,playerdata
@@ -123,10 +123,10 @@ mr	r20,r4				#Dashback Bool
 	li	r6,5			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
 
-	
+
 
 	mr	text,r3			#backup text pointer
-	
+
 
 	#Check If Failed Or Succeeded
 	cmpwi	r20,0x1
@@ -160,7 +160,7 @@ mr	r20,r4				#Dashback Bool
 
 
 		SucceededDB:
-		
+
 		#Change Color
 		load	r3,0x8dff6eff
 		stw	r3,0x30(text)
@@ -197,14 +197,14 @@ mr	r20,r4				#Dashback Bool
 			bl	UCFDBText
 			mflr	r4
 			load	r20,0xFFFF33FF		#Color to store
-			b	InitalizeBottomText		
+			b	InitalizeBottomText
 
 		InitalizeBottomText:
-		
+
 		#Change Text Color
 		stw	r20,0x30(text)
 
-		#Init Function Call	
+		#Init Function Call
 		mr 	r3,r29			#text pointer
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
@@ -332,7 +332,3 @@ blrl
 Moonwalk_Exit:
 restore
 blr
-
-
-
-

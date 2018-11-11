@@ -26,15 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-addi sp,sp,-0x4
 mflr r0
-stw r0,0(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0(sp)
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
+addi	r1,r1,0x100	# release the space
 mtlr r0
-addi sp,sp,0x4
 .endm
 
 .macro intToFloat reg,reg2
@@ -61,7 +63,7 @@ stw r0,64(sp)
 	branchl r14,0x803a6754
 
 #BACKUP STRUCT POINTER
-	mr r31,r3 
+	mr r31,r3
 
 #STORE POINTER
 	stw	r31,-0x4EB4(r13)
@@ -225,5 +227,3 @@ lmw	r20,8(r1)	# pop r20-r31 off the stack
 addi	r1,r1,68	# release the space
 
 lmw	r26, 0x0038 (sp)
-
-

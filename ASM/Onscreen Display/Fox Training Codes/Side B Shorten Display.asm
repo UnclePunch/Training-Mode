@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -82,7 +82,7 @@ fsubs    \reg2,\reg2,f16
 backup
 
 	#General AS's
-	
+
 
 	#Check If Fox or Falco
 	lwz	r3,0x4(playerdata)
@@ -105,7 +105,7 @@ backup
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	#Branch to AS Functions
 	lwz	r3,0x10(playerdata)
@@ -129,7 +129,7 @@ backup
 	cmpwi	r3,0x16E
 	beq	Fox_ShineAirLoop
 
-	
+
 	b	Moonwalk_Exit
 
 #/////////////////////////////////////////////////////////////////////////////
@@ -138,7 +138,7 @@ backup
 	#Check If Pressed B
 	lwz	r3,0x668(playerdata)
 	rlwinm.	r3,r3,0,22,22
-	beq	Fox_SideBStart_NoPress	
+	beq	Fox_SideBStart_NoPress
 
 	#Create Text
 	bl	CreateText
@@ -166,14 +166,14 @@ backup
 	lwz	r4,0xF4(sp)
 	sub	r5,r4,r3
 	subi	r5,r5,0x1
-	
+
 	bl	EarlyPressText
 	mflr	r4
 	mr	r3,text
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 	branchl r12,0x803a6b98
-	
+
 
 	Fox_SideBStart_NoPress:
 	b	Moonwalk_Exit
@@ -184,7 +184,7 @@ backup
 	#Check If Pressed B
 	lwz	r3,0x668(playerdata)
 	rlwinm.	r3,r3,0,22,22
-	beq	Fox_SideB_NoPress	
+	beq	Fox_SideB_NoPress
 
 	#Create Text
 	bl	CreateText
@@ -205,7 +205,7 @@ backup
 	lwz	r3,0xF4(sp)
 	#Get Frames Early
 	addi	r5,r3,0x1
-	
+
 	bl	ShortenTypeText
 	mflr	r4
 	mr	r3,text
@@ -222,7 +222,7 @@ backup
 	#Check If Pressed B
 	lwz	r3,0x668(playerdata)
 	rlwinm.	r3,r3,0,22,22
-	beq	Fox_SideBEnd_NoPress	
+	beq	Fox_SideBEnd_NoPress
 
 	#Create Text
 	bl	CreateText
@@ -243,7 +243,7 @@ backup
 	#lwz	r3,0xF4(sp)
 	lhz	r5,0x23EC(playerdata)
 	#addi	r5,r3,0x1
-	
+
 	bl	LatePressText
 	mflr	r4
 	mr	r3,text
@@ -262,7 +262,7 @@ Fox_ShineGroundLoop:
 	bl	CheckForJumpCancel
 	cmpwi	r3,0x0
 	beq	Moonwalk_Exit
-	
+
 	Fox_ShineGroundLoop_Interrupted:
 	#Create Text
 	bl	CreateText
@@ -282,7 +282,7 @@ Fox_ShineGroundLoop:
 		#Frame Perfect
 		load	r3,0x8dff6eff			#green
 		b	Fox_ShineGroundLoop_StoreColor
-		
+
 		Fox_ShineGroundLoop_RedText:
 		load	r3,0xffa2baff
 
@@ -350,7 +350,7 @@ Fox_ShineAirLoop:
 		#Frame Perfect
 		load	r3,0x8dff6eff			#green
 		b	Fox_ShineAirLoop_StoreColor
-		
+
 		Fox_ShineAirLoop_RedText:
 		load	r3,0xffa2baff
 
@@ -435,15 +435,15 @@ blr
 CreateText:
 mflr	r0
 stw	r0, 0x0004 (sp)
-stwu	sp, -0x0038 (sp)
+stwu	sp, -0x0008 (sp)
 mr	r3,playerdata			#backup playerdata pointer
 li	r4,60			#display for 60 frames
 li	r5,0			#Area to Display (0-2)
 li	r6,8			#Window ID (Unique to This Display)
 branchl	r12,TextCreateFunction			#create text custom function
-lwz	r0, 0x003C (sp)
-addi	sp, sp, 56
-mtlr	r0
+lwz	r0, 0x000C (sp)
+addi	sp, sp, 8
+mtlr r0
 blr
 
 
@@ -493,7 +493,3 @@ blrl
 Moonwalk_Exit:
 restore
 lwz	r12, 0x219C (r31)
-
-
-
-

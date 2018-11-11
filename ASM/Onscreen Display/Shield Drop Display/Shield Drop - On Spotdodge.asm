@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x200(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
+addi	r1,r1,0x100	# release the space
 mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
-addi	r1,r1,0x200	# release the space
 .endm
 
 .macro intToFloat reg,reg2
@@ -84,7 +84,7 @@ lwz	playerdata,0x2C(player)
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForFollower:
 	mr	r3,playerdata
@@ -120,10 +120,10 @@ lwz	playerdata,0x2C(player)
 	li	r6,6			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
 
-	
+
 
 	mr	text,r3			#backup text pointer
-	
+
 
 		InitalizeTopText:
 		#Change Color
@@ -142,13 +142,13 @@ lwz	playerdata,0x2C(player)
 
 		#Initialize Bottom Text
 		InitalizeBottomText:
-		#Init Function Call	
+		#Init Function Call
 		mr 	r3,r29			#text pointer
 		bl	YCoord
 		mflr	r4
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-		lfs	f3, 0x0624 (playerdata)	#Get Y Coord	
+		lfs	f3, 0x0624 (playerdata)	#Get Y Coord
 		crset	6			#Output Float
 		branchl r12,0x803a6b98
 
@@ -182,6 +182,3 @@ blrl
 Moonwalk_Exit:
 restore
 lwz	r0, 0x0004 (r4)
-
-
-

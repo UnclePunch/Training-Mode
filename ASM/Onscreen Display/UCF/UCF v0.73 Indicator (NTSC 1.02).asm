@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -84,7 +84,7 @@ stw r0,64(sp)
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	end	
+	beq	end
 
 
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
@@ -93,14 +93,14 @@ stw r0,64(sp)
 	branchl r14,0x803a6754
 
 #BACKUP STRUCT POINTER
-	mr r31,r3 
+	mr r31,r3
 
 #INITIALIZE PROPERTIES AND TEXT
 
 	#GET PROPERTIES TABLE
 		bl TEXTPROPERTIES
 		mflr r30
-	
+
 		mr r3,r31       #struct pointer
 		lfs f1,0x0(r30) #X offset of text
 		lfs f2,0x4(r30) #Y offset of text
@@ -153,5 +153,3 @@ lmw	r20,8(r1)	# pop r20-r31 off the stack
 addi	r1,r1,68	# release the space
 
 addi	r4, r24, 0
-
-

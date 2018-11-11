@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -86,7 +86,7 @@ mr	playerdata,r3
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForFollower:
 	mr	r3,playerdata
@@ -111,13 +111,13 @@ mr	playerdata,r3
 	lbz	r0, 0x0671 (playerdata)
 	cmpw	r0, r5
 	bge	NoSDI
-	
+
 	SuccessfulSDI:
 	#Increment Successful SDI
 	lhz	r3,0x2350(playerdata)
 	addi	r3,r3,0x1
 	sth	r3,0x2350(playerdata)
-	
+
 	NoSDI:
 	#Increment Total SDI
 	lhz	r3,0x2352(playerdata)
@@ -128,7 +128,7 @@ mr	playerdata,r3
 
 
 		bl	CreateText
-		
+
 		#Change color to Green if SDI'd once
 		lhz	r3,0x2350(playerdata)
 		cmpwi	r3,0x0
@@ -163,9 +163,9 @@ mr	playerdata,r3
 
 
 	CreateText:
-	stwu	r1,-0x100(r1)	# make space for 12 registers
-	mflr r0
-	stw r0,0xFC(sp)
+	mflr	r0
+	stw	r0, 0x0004 (sp)
+	stwu	sp, -0x0008 (sp)
 
 	mr	r3,playerdata			#backup playerdata pointer
 	li	r4,60			#display for 60 frames
@@ -174,9 +174,9 @@ mr	playerdata,r3
 	branchl	r12,TextCreateFunction			#create text custom function
 	mr	text,r3			#backup text pointer
 
-	lwz r0,0xFC(sp)
+	lwz	r0, 0x000C (sp)
+	addi	sp, sp, 8
 	mtlr r0
-	addi	r1,r1,0x100	# release the space
 	blr
 
 
@@ -210,7 +210,3 @@ lfs	f2,0x8C(sp)
 lfs	f3,0x88(sp)
 restore
 fcmpo	cr0,f1,f0
-
-
-
-

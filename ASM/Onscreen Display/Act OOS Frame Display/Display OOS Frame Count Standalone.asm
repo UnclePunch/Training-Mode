@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -97,7 +97,7 @@ lwz	playerdata,0x2C(player)
 	li	r5, 1
 	slw	r0, r5, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForIASA:
 	cmpwi	r3,0x1
@@ -113,7 +113,7 @@ lwz	playerdata,0x2C(player)
 	lwz	r3,0x10(playerdata)
 	cmpwi	r3,0xB4
 	beq	Moonwalk_Exit
-	
+
 	ShieldWaitCheck:
 	#CHECK IF 3RD MOST RECENT AS WAS SHIELD STUN
 	lhz	r3,TwoASAgo(playerdata)
@@ -142,11 +142,11 @@ lwz	playerdata,0x2C(player)
 	lhz	r3,0x23EE(playerdata)			#get shield stun frames left
 	cmpwi	r3,0x0
 	bgt	NotFramePerfect
-	
+
 		#SET TEXT COLOR TO GREEN
 		load	r3,0x8dff6eff
 		stw	r3, 0x0030 (text)
-	
+
 
 		NotFramePerfect:
 		#INITALIZE TEXT 1
@@ -165,12 +165,12 @@ lwz	playerdata,0x2C(player)
 
 		lhz	r5,0x23EE(playerdata)			#get shield stun frames left
 		addi	r5,r5,0x1
-	
+
 
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 		branchl r12,0x803a6b98
-	
+
 		b Moonwalk_Exit
 
 
@@ -196,6 +196,3 @@ blrl
 Moonwalk_Exit:
 restore
 blr
-
-
-

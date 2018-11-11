@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -103,8 +103,8 @@ li	r12,PrevASSlots			#Loop Count
 FrameCountLoop:
 addi	r3,r26,PrevASStart			#Get Start of AS List
 li	r4,PrevASSlots
-mulli	r4,r4,2			
-addi	r4,r4,0x2			
+mulli	r4,r4,2
+addi	r4,r4,0x2
 add	r3,r3,r4			#Get to the Start of the Frame Counts
 mulli	r4,r12,2			#Current AS ID * Length
 add	r4,r3,r4			#Get AS Offset in Playerblock
@@ -119,8 +119,8 @@ bgt	FrameCountLoop
 #Move Current AS Frame To Last AS Frame
 addi	r3,r26,PrevASStart			#Get Start of AS List
 li	r4,PrevASSlots
-mulli	r4,r4,2				
-addi	r4,r4,0x2			
+mulli	r4,r4,2
+addi	r4,r4,0x2
 add	r3,r3,r4			#Get to the Start of the Frame Counts
 lhz	r4,0x23EC(r26)			#Get AS Frame Number we Just Left
 sth	r4,0x0(r3)
@@ -140,6 +140,3 @@ sth	r3,0x23EC(r26)
 
 exit:
 cmplwi	r27, 0
-
-
-

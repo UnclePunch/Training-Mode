@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -103,7 +103,7 @@ CreateText:
 	li 	r4,0x1
 	stb	r3,0x4A(r30)
 	stb	r4,0x48(r30)
-	stb	r4,0x49(Text)	
+	stb	r4,0x49(Text)
 	lfs	f2,0x8(TextProp)
 	stfs	f2,0x24(Text)
 	stfs	f2,0x28(Text)
@@ -211,7 +211,7 @@ branchl	r12,0x803a74f0
 	li 	r4,0x1
 	stb	r3,0x4A(r30)
 	stb	r4,0x48(r30)
-	stb	r4,0x49(Text)	
+	stb	r4,0x49(Text)
 	lfs	f2,0x8(TextProp)
 	stfs	f2,0x24(Text)
 	stfs	f2,0x28(Text)
@@ -255,7 +255,7 @@ WriteText:
 	backup
 	mulli	r6,r5,0x10
 	add	r4,r4,r6		#get text
-	
+
 		#GET Y VALUE
 		xoris	r0, r5, 0x8000
 		stw	r0, 0xF4 (sp)
@@ -267,7 +267,7 @@ WriteText:
 		lfs	f2,0x4(TextProp)		#Y Base
 		lfs	f3,0xC(TextProp)		#Y DIff
 		fmuls	f0,f0,f3
-		fsubs	f2,f2,f0	
+		fsubs	f2,f2,f0
 
 	branchl r12,0x803a6b98
 	restore
@@ -329,7 +329,7 @@ blrl
 .long 0x616e6365
 .long 0x6c000000
 
-#Dashback 
+#Dashback
 .long 0x44617368
 .long 0x6261636b
 .long 0x00000000
@@ -511,8 +511,3 @@ blrl
 original:
 branchl	r4,0x802359c8
 exit:
-
-
-
-
-

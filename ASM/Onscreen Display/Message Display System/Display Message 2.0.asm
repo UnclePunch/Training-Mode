@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -87,7 +87,7 @@ fsubs    \reg2,\reg2,f16
 			#0x0 = Text Pointer
 			#0x4 = Countdown Until Expiration
 			#0x6 = Unique Message ID (which text prompt this is)
-			
+
 
 backup
 
@@ -100,62 +100,62 @@ backup
 	#Load Max Number of Windows Variable From OSD Menu
   	  lwz	r3,-0x77C0(r13)			#Get Memcard Data
 	  lbz	MaxWindows,0x1f28(r3)
-	
+
 	#Get Window's Area in the Message Struct in r3
 	  load	r3,0x804a1f58
 	  lwz	r3,0x4(r3)
 	  mulli	r4,AreaID,messageAreaStructLength
 	  add	r3,r3,r4
-	  
+
 	#Check If Area 3 (No Shift or anything Special)
 	 cmpwi	AreaID,0x2
 	 blt	GetPlayersArea
 	 mr	messageStruct,r3
-	 
+
 	#Remove Old Area 3 Window
 	 lwz	r3,0x0(messageStruct)
 	 branchl	r12,0x803a5cc4
 	 b	CreateText
-	
+
 	GetPlayersArea:
 	#Get to the player's area
 	  lbz	r4,0xC(playerdata)
 	  mulli	r4,r4,messageStructLength
 	  add	messageStruct,r3,r4
-	  
+
 	#Search Queue For This Text ID (Loop)
 	  mr	r3,overlayID
 	  mr	r4,MaxWindows
 	  mr	r5,messageStruct
-	  bl	CheckForDuplicates	
+	  bl	CheckForDuplicates
 
 	#Shift Queue To Make Room For New Message
 	CallShiftFunction:
 	  mr	r3,MaxWindows
 	  bl	ShiftQueue
-	
+
 	CreateText:
 	#CREATE TEXT ABOVE PLAYERS HUD ELEMENT
  	 li 	r3,0x2
 	 load 	r4,0x804a1f58			#get text objects ID?
-	 lwz 	r4,0x0(r4)		
+	 lwz 	r4,0x0(r4)
 	 branchl r12,0x803a6754
 
 	#STORE PLAYERS TEXT POINTER
 	 mr	r29,r3					#backup text pointer
 	 stw	r3,0x0(messageStruct)
-	
+
 	#STORE PLAYERS TEXT TIMEOUT
-	 sth	texttimer,0x4(messageStruct)	
+	 sth	texttimer,0x4(messageStruct)
 
 	#STORE OVERLAY ID
-	sth	overlayID,0x6(messageStruct)	 
+	sth	overlayID,0x6(messageStruct)
 
 	#SET TEXT TO CENTER AROUND X LOCATION AND BE CLOSE
 	li	r3,0x1
 	stb 	r3,0x4A(r29)
 	stb 	r3,0x49(r29)
-	
+
 	#SET X AND Y VALUES
 	#Get Area's Text Properties
 	bl	TextProperties
@@ -169,7 +169,7 @@ backup
 	bne	GetHUDLocation
 	lfs	f1,0x8(textprop)			#base X value
 	b	GetYLocation
-	
+
 	#Get HUD Location
 	GetHUDLocation:
 	lbz	r3,0xC(playerdata)
@@ -181,7 +181,7 @@ backup
 	lfs 	 f2,0x4(textprop)			#players Y value
 	stfs	f1,0x0(text)			#store X value to struct
 	stfs	f2,0x4(text)			#store Y value to struct
-	
+
 
 	#SET TEXT SIZE
 	lfs		f1,0xC(textprop)
@@ -227,13 +227,13 @@ ShiftQueue:
  backup
 
  mr	r31,r3		#Max Windows
- 
+
 #Remove Last Message if Exists
  mulli	r3,r31,0x8
  lwzx	r3,r3,messageStruct
  cmpwi	r3,0x0
  beq	ShiftQueue_CheckForOneWindowOnly
- 
+
 #Remove Message
  branchl	r12,0x803a5cc4
 
@@ -276,13 +276,13 @@ ShiftQueue_Loop:
  lfs	f2,0x4(r4)				#Get Text's Y Value
  fadds	f1,f1,f2
  stfs	f1,0x4(r4)				#Store Text's Y Value
-  
+
 #Next Message
 ShiftQueue_IncLoop:
  subi	r31,r31,0x1
  cmpwi	r31,0x0
  bge	ShiftQueue_Loop
-  
+
 ShiftQueue_Exit:
  restore
  blr
@@ -326,29 +326,29 @@ CheckForDuplicates_MatchingWindowLoop:
 	#Remove This Window
 	 lwz	r3,0x0(r4)
 	 branchl	r12,0x803a5cc4
-	 
+
 	#Zero Out Entry
 	 mulli	r5,r28,0x8			#Get Message's Offset
 	 add	r4,r5,r29			#Get Message's Location in Memory
 	 li	r3,0x0
 	 stw	r3,0x0(r4)
 	 stw	r3,0x4(r4)
-	
+
 	#Init Shift Loop Count
 	 addi	r27,r28,0x1			#Window After Matching Window ID = Shift Loop Count Starting Value
-	
+
 	#Loop - Move All Windows After This Down
 	CheckForDuplicates_MatchingWindowShiftLoop:
 	  mulli	r5,r27,0x8		#Get Message's Offset
 	  add	r4,r5,r29		#Get Message's Location in Memory
 	  lwz	r5,0x0(r4)		#Load Text Pointer
-	  lwz	r6,0x4(r4)		#Load Text Timer and ID	  
+	  lwz	r6,0x4(r4)		#Load Text Timer and ID
 	  stw	r5,-0x8(r4)		#Store Text Pointer
 	  stw	r6,-0x4(r4)		#Store Text Timer and ID
 	  li	r3,0x0
 	  stw	r3,0x0(r4)		#Zero Out
 	  stw	r3,0x4(r4)	 	#Zero Out
-	  
+
 	#Move Message Downwards/Upwards Depending On The Area
 	  lwz	r3,-0x8(r4)		#Get Text Pointer
 	  cmpwi	r3,0x0			#Check If This Entry Is Active
@@ -360,7 +360,7 @@ CheckForDuplicates_MatchingWindowLoop:
 	  lfs	f2,0x4(r3)				#Get Text's Y Value
 	  fadds	f1,f1,f2
 	  stfs	f1,0x4(r3)				#Store Text's Y Value
-	  
+
 	  CheckForDuplicates_MatchingWindowShiftIncLoop:
 	  addi	r27,r27,0x1
 	  cmpw	r27,r30
@@ -436,11 +436,3 @@ Moonwalk_Exit:
 mr	r3,text		#return text pointer
 restore
 blr
-
-
-
-
-
-
-
-

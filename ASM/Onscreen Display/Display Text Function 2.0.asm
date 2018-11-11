@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -71,10 +71,10 @@ fsubs    \reg2,\reg2,f16
 ## Store Text Info here                                 ##
 ##########################################################
 
-#Window ID1 = Above Percent. 
+#Window ID1 = Above Percent.
 
   #Window ID Struct:
-    #0x0 = 
+    #0x0 =
 
 backup
 
@@ -85,8 +85,8 @@ backup
 	mr	textprop,r7
 
 	#Check Window ID (Location onscreen)
-	  
-	
+
+
 	#REMOVE CURRENT TASK
 	lwz 	r3,0x14(windowID)			#get pointer to task
 	cmpwi 	r3,0			#check if it exists
@@ -94,25 +94,25 @@ backup
 
 	Moonwalk_UnAllocateTask:
 	branchl r12,0x80390228				#remove old one
- 
+
 	Moonwalk_AllocateTask:
 	#ALLOCATE HEAP SPACE FOR TASK
 	li	r3,0xE
 	li	r4,0x7
 	li	r5,0x0
 	branchl r12,0x803901f0
-	
+
 	#STORE TEXT INFO TABLE TO UPDATE TASK'S STRUCT
 	#load	r30,0x804a1f5c
 	stw	windowID,0x10(r3)			#store pointer to give to task
 
 	#STORE TASK STRUCT POINTER TO INDEX
 	stw 	r3,0x14(windowID)			#store pointer to task
-	
+
 	#GET TASK FUNCTION ADDRESS
-	bl UpdateText				
+	bl UpdateText
 	mflr 	r4			#get address
-	
+
 	#SCHEDULE TASK
 	li 	r5,0x0
 	branchl r12,0x8038fd54
@@ -140,7 +140,7 @@ backup
 	lbz	r4,0xC(playerdata)
 	mulli	r4,r4,0x4
 	stwx	r3,r4,windowID
-	
+
 	#STORE PLAYERS TEXT TIMEOUT
 	lbz	r4,0xC(playerdata)
 	addi	r5,windowID,0x10
@@ -150,7 +150,7 @@ backup
 	li	r3,0x1
 	stb 	r3,0x4A(r29)
 	stb 	r3,0x49(r29)
-	
+
 
 	#SET X AND Y VALUES
 
@@ -160,7 +160,7 @@ backup
 	bne	GetHUDLocation
 	lfs	f1,0x8(textprop)			#base X value
 	b	GetYLocation
-	
+
 	#Get HUD Location
 	GetHUDLocation:
 	lbz	r3,0xC(playerdata)
@@ -187,7 +187,7 @@ backup
 	lfs 	 f2,0x4(textprop)			#players Y value
 	stfs	f1,0x0(text)			#store X value to struct
 	stfs	f2,0x4(text)			#store Y value to struct
-	
+
 
 	#SET TEXT SIZE
 	lfs	f1,0xC(textprop)
@@ -296,8 +296,3 @@ Moonwalk_Exit:
 mr	r3,text		#return text pointer
 restore
 blr
-
-
-
-
-

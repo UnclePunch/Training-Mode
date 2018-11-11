@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -74,7 +74,7 @@ lfs	f5,0xC(r3)		#Get Hitbox Damage
 bl	Floats
 mflr	r5
 lfs	f6,0x0(r5)		#Min GB Value
-lfs	f7,0x4(r5)		#Damage Value for Lightest Color 
+lfs	f7,0x4(r5)		#Damage Value for Lightest Color
 lfs	f8,0x8(r5)		#Damage Value for Darkest Color
 
 
@@ -88,7 +88,7 @@ CheckMin:
 #Check If Does Under Min Damage Accounted For
 fcmpo	cr0,f5,f7
 bgt	Formula
-lfs	f8,0x0(r5)		#Value for Lightest Color 
+lfs	f8,0x0(r5)		#Value for Lightest Color
 b	ConvertToDecimal
 
 #Formula

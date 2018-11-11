@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -99,7 +99,7 @@ backup
 	mflr	r4
 	subi	r4,r4,0x2
 	lwz	r3,0x10(playerdata)
-	
+
 		DamageCheckLoopStart:
 		lhzu	r5,0x2(r4)
 		cmplwi	r5,0xFFFF
@@ -114,7 +114,7 @@ backup
 	li	r5,1			#Area to Display (0-2)
 	li	r6,18			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
-	
+
 
 	mr	text,r3			#backup text pointer
 
@@ -146,7 +146,7 @@ backup
 			subi	framenumber,framenumber,0x1
 			stw	framenumber,0x2340(playerdata)
 			b 	GetFramesLeft_ExceptionAerialLand
-		
+
 
 
 
@@ -159,7 +159,7 @@ backup
 		GetFramesLeft:
 		lwz 	r5,0x590(playerdata)			#get anim data
 		lfs	f1,0x008(r5)			#get anim length (float)
-		
+
 		GetFramesLeft_ExceptionJumpSquat:
 		lfs	f2,0x89C(playerdata)			#get anim speed
 		lfs	f3,0x894(playerdata)			#get current AS
@@ -170,16 +170,16 @@ backup
 		bne	CheckIfAnimLengthIsZero
 		fsubs	f3,f1,f3
 		b	ConvertASFrameToInt
-		
+
 		CheckIfAnimLengthIsZero:
 		fcmpo	cr0,f1,f4
 		bne	ContinueFrameCalculation
 		lfs	f1, -0x7584 (rtoc)		#0
 		lfs	f2, -0x7584 (rtoc)		#0
 		lfs	f3, -0x6B00 (rtoc)		#1
-		
 
-		
+
+
 		ContinueFrameCalculation:
 		fdivs	f4,f1,f2			#get calculated AS length in f4
 		fdivs	f1,f3,f1			#yields percentage of animation finished
@@ -211,10 +211,10 @@ backup
 				RoundUp:
 				addi	r5,r3,0x1
 				b	SubFrameCount
-					
+
 				RoundDown:
 				mr	r5,r3
-				
+
 				SubFrameCount:
 				subi	framenumber,r5,0x1			#backup frame number
 
@@ -224,14 +224,14 @@ backup
 			####################
 			## CHECK FOR IASA ##
 			####################
-	
+
 			lbz	r3, 0x2218 (playerdata)
 			rlwinm.	r3, r3, 25, 31, 31
 			beq	CheckIfLastFrame
 
 				#CHANGE COLOR TO CYAN
 				load	r3,0x00FFFFFF
-				stw	r3,0x30(text)	
+				stw	r3,0x30(text)
 
 			#########################
 			## CHECK IF LAST FRAME ##
@@ -242,9 +242,9 @@ backup
 
 				#CHANGE COLOR TO GREEN
 				load	r3,0x00FF00FF
-				stw	r3,0x30(text)	
+				stw	r3,0x30(text)
 
-		
+
 		InitializeText:
 		#INITALIZE TEXT 1
 		mr 	r3,r29			#text pointer
@@ -264,7 +264,7 @@ backup
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 		branchl r12,0x803a6b98
-	
+
 		b Moonwalk_Exit
 
 
@@ -301,7 +301,3 @@ blrl
 Moonwalk_Exit:
 restore
 lwz	r4, 0x002C (r3)
-
-
-
-

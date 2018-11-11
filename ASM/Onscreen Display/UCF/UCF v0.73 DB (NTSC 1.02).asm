@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -78,17 +78,17 @@ fsubs    \reg2,\reg2,f16
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	END	
+	beq	END
 
 CHECK_IF_SLOW_TURN:
 lhz r4,0x3E8(r31)  # Check if 2nd frame of turn
-cmpwi r4,0x4000  
+cmpwi r4,0x4000
 bne- END
 
 CHECK_SMASH_TURN_INPUT_CONDITIONS:
 
 lwz r4,-0x514C(r13)
-lfs f1,0x0620(r31)   
+lfs f1,0x0620(r31)
 lfs f2,0x2344(r31)
 fmuls f1,f1,f2
 lfs f2,0x3C(r4)
@@ -106,7 +106,7 @@ beq+ BEGIN_HW_INPUTS
 b END
 
 BEGIN_HW_INPUTS:
-lis r4, 0x804c   
+lis r4, 0x804c
 ori r4, r4, 0x1f78
 lbz r5, 0x0001(r4)    # HSD_PadRenewMasterStatus gets index for which inputs to get from here
 stb r5, -0x0008(sp)
@@ -116,20 +116,20 @@ b LOAD_2_FRAMES_PAST_INPUTS
 FETCH_INPUT:   # Gets hw input according to controller port and frame index in r5
 
 FIX_INDEX_AND_CHECK_IF_LESS_THAN_ZERO:
-subi r5, r5, 1   
+subi r5, r5, 1
 cmpwi r5,0
 bge- GET_INPUT
 
 INDEX_IS_ZERO:
 addi r5, r5, 5
 
-GET_INPUT:  
-lis r4, 0x8046  # Input array location. 
-ori r4, r4, 0xb108  
-mulli r5, r5, 48  
+GET_INPUT:
+lis r4, 0x8046  # Input array location.
+ori r4, r4, 0xb108
+mulli r5, r5, 48
 add r4, r4, r5  # Add index to get inputs from the right frame
 lbz r5, 0x618(r31)   # load controller port
-mulli r5, r5, 0xC   
+mulli r5, r5, 0xC
 add r4, r4, r5
 lbz r5, 0x02(r4)   # load x-input
 extsb r5, r5    # convert to 32-bit signed int
@@ -155,7 +155,7 @@ ble- END
 
 CHANGE_TO_SMASH_TURN:
 li r0, 1
-stw r0, 0x2358(r31)    
+stw r0, 0x2358(r31)
 stw r0, 0x2340(r31)   # Change smash turn and can dash flags
 
 
@@ -176,10 +176,10 @@ STORE_INPUTS_FOR_NANA:
 lwz r4,0x1ECC(r4) # Load address where popos inputs were last stored
 stfs f0,0x18(r4)   # Store popos direction for nana
 lwz r5,0x18(r4)    # Load the direction to get dash direction
-lis r12,0x3F80   
+lis r12,0x3F80
 cmpw r5,r12  # Compare to rightward
 
-beq- POPO_TURNED_RIGHT 
+beq- POPO_TURNED_RIGHT
 li r5,0x80      # This part is run if Popos direction was leftward
 stb r5,0x6(r4)  # Store leftward 1.0 input for Nana.
 b END
@@ -190,9 +190,3 @@ stb r5,0x6(r4) # Store rightward 1.0 input for Nana
 
 END:
 stfs f0, 0x002C(r31)    # Entry point, store new facing direction
-
-
-
-
-
-

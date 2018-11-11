@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -86,7 +86,7 @@ backup
 	slw	r0, r3, r0
 	and.	r0, r0, r4
 	beq	Moonwalk_Exit
-	
+
 	CheckForFollower:
 	mr	r3,playerdata
 	branchl	r12,0x80005510
@@ -95,7 +95,7 @@ backup
 
 	#Check if Timer Started
 	load	r3,0x8046b6a0			#Get Time Passed
-	lwz	r3,0x24(r3)	
+	lwz	r3,0x24(r3)
 	cmpwi	r3,0x0
 	beq	Moonwalk_Exit
 
@@ -105,12 +105,12 @@ backup
 	li	r5,1			#Area to Display (0-2)
 	li	r6,7			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
-	
+
 
 	mr	text,r3			#backup text pointer
 
 
-		
+
 		InitializeText:
 		#INITALIZE TEXT 1
 		mr 	r3,r29			#text pointer
@@ -125,7 +125,7 @@ backup
 		mr	r3,playerdata
 		bl	GetAPM
 		mr	r5,r3
-	
+
 		#Change Color Based on APM
 		cmpwi	r5,400
 		blt	BelowAverage
@@ -135,7 +135,7 @@ backup
 		Average:
 		load	r3,0xFFFFFFFF			#White
 		b	InitalizeText2
-		BelowAverage:	
+		BelowAverage:
 		load	r3,0xffa2baff			#Red
 		b	InitalizeText2
 		AboveAverage:
@@ -149,7 +149,7 @@ backup
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 		branchl r12,0x803a6b98
-	
+
 		b Moonwalk_Exit
 
 #############
@@ -178,7 +178,7 @@ stw	r3,0x0(r8)
 CalculateAPM:
 lwz	r3,0x0(r8)			#Get Total Actions
 load	r4,0x8046b6a0			#Get Time Passed
-lwz	r4,0x24(r4)	
+lwz	r4,0x24(r4)
 li	r5,3600			#1 Minute In Frames
 
 #Get as Floats
@@ -229,7 +229,3 @@ blrl
 Moonwalk_Exit:
 restore
 lbz	r0, 0x221D (r31)
-
-
-
-

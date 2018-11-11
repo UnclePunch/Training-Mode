@@ -26,15 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-addi sp,sp,-0x4
 mflr r0
-stw r0,0(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0(sp)
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
+addi	r1,r1,0x100	# release the space
 mtlr r0
-addi sp,sp,0x4
 .endm
 
 .macro intToFloat reg,reg2
@@ -59,5 +61,3 @@ fsubs    \reg2,\reg2,f16
 
 #Original Line
 lwz	r3, 0x0074 (r31)
-
-

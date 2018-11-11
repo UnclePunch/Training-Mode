@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -155,11 +155,11 @@ OpenCredits:
 	load	r4,0x803dae44		#Main Menu's Minor Table Pointer
 	lwz	r4,0x0(r4)
 	stw	r3,0x8(r4)		#Overwrite MainMenu's SceneDecide Temporarily
-	
+
 	#PLAY SFX
 	li	r3, 1
 	branchl	r4,0x80024030
-	
+
 	#Init Name Count Variable
 	li	r3,0x0
 	stw	r3, -0x4eac (r13)
@@ -169,7 +169,7 @@ OpenCredits:
 PlayMovie:
 
 
-	
+
 		################################################
 		## Get Movie's FileName and Extension Pointer ##
 		################################################
@@ -177,11 +177,11 @@ PlayMovie:
 			#Get Hovered Over Event ID in r23
 			lwz	r5, -0x4A40 (r13)
 			lwz	r5, 0x002C (r5)
-			lwz	r3, 0x0004 (r5)		 #Selection Number		
+			lwz	r3, 0x0004 (r5)		 #Selection Number
 			lbz	r0, 0 (r5)		  #Page Number
 			add	r23,r3,r0
-			subi	r23,r23,0x3	
-			
+			subi	r23,r23,0x3
+
 			#Ensure Number is Bewteen 0 and 14
 			cmpwi	r23,0
 			blt	FileNotFound
@@ -201,30 +201,30 @@ PlayMovie:
 			mflr	r21
 
 		##############################
-		## Play Movie's Audio Track ##	
+		## Play Movie's Audio Track ##
 		##############################
 
 			#Copy To Temp Audio String Space
 			load	r22,0x803bb380		#Temp Audio String Space
-			addi	r3,r22,0x7		#After the /audio/		
+			addi	r3,r22,0x7		#After the /audio/
 			mr	r4,r20		#Movie FileName
 			branchl	r12,0x80325a50		#strcpy
-		
-			#Get Length of This String Now 
+
+			#Get Length of This String Now
 			mr	r3,r22
 			branchl	r12,0x80325b04
-			
+
 			#Copy .hps to the end of it
 			add	r3,r3,r22		#Dest
 			mr	r4,r21		#.hps string
-			branchl	r12,0x80325a50		
+			branchl	r12,0x80325a50
 
 			#Check If File Exists
 			mr	r3,r22
 			branchl	r12,0x8033796c
 			cmpwi	r3,-1
 			beq	FileNotFound
-		
+
 			#Load Song File
 			LoadSongFile:
 			mr	r3,r22		#Full Song File Name
@@ -241,15 +241,15 @@ PlayMovie:
 
 			#Copy File Name To Temp Space
 			load	r22,0x80432058		#Temp File Name Space
-			mr	r3,r22		#Destination		
+			mr	r3,r22		#Destination
 			mr	r4,r20		#Movie FileName
-			branchl	r12,0x80325a50		#strcpy			
-		
-			#Get Length of This String Now
-			mr	r3,r22		#Destination	
-			branchl	r12,0x80325b04				
+			branchl	r12,0x80325a50		#strcpy
 
-			#Copy .mth Suffix		
+			#Get Length of This String Now
+			mr	r3,r22		#Destination
+			branchl	r12,0x80325b04
+
+			#Copy .mth Suffix
 			add	r3,r3,r22		#Dest
 			addi	r4,r21,0x8		#.mth string
 			branchl	r12,0x80325a50
@@ -274,7 +274,7 @@ PlayMovie:
 			lwz	r5, -0x4A14 (r13)
 			li	r5,0
 			load	r6,0x00271000
-			#li	r6,0		#Frame Buffer Heap Size?	
+			#li	r6,0		#Frame Buffer Heap Size?
 			li	r7,0
 			branchl	r12,0x8001f410
 
@@ -290,9 +290,9 @@ PlayMovie:
 			li	r3, 13
 			li	r4,14
 			li	r5,0
-			branchl	r12,0x803901f0	
+			branchl	r12,0x803901f0
 		#Attach Camera Think
-			mr	r31,r3	
+			mr	r31,r3
 			li	r4,640
 			li	r5,480
 			li	r6,8
@@ -301,13 +301,13 @@ PlayMovie:
 			li	r0,0x800
 			stw	r0,0x24(r31)
 			li	r0,0x0
-			stw	r0,0x20(r31)	
+			stw	r0,0x20(r31)
 
-		#Create Movie Display Entity 	
+		#Create Movie Display Entity
 			li	r3, 14
 			li	r4,15
 			li	r5,0
-			branchl	r12,0x803901f0	
+			branchl	r12,0x803901f0
 			mr	r30,r3
 			stw	r3, -0x4E48 (r13)
 			lbz	r4, -0x3D40 (r13)
@@ -318,7 +318,7 @@ PlayMovie:
 			load	r4,0x8001f67c
 			li	r5,11
 			li	r6,0
-			branchl	r12,0x8039069c						
+			branchl	r12,0x8039069c
 
 		#Change Screen Size to Fullscreen
 			mr	r3,r30
@@ -335,14 +335,14 @@ PlayMovie:
 			li	r3, 6
 			li	r4,7
 			li	r5,128
-			branchl	r12,0x803901f0	
-			mr	r29,r3	
+			branchl	r12,0x803901f0
+			mr	r29,r3
 		#Alloc 10 Bytes
 			li	r3,10
 			branchl	r12,0x8037f1e4
 		#Initliaze Entity
 			mr	r6,r3
-			mr	r3,r29	
+			mr	r3,r29
 			li	r4,0x0
 			load	r5,0x8037f1b0
 			branchl	r12,0x80390b68
@@ -360,7 +360,7 @@ PlayMovie:
 		#REMOVE EVENT THINK FUNCTION
 			lwz	r3, -0x3E84 (r13)
 			branchl	r12,0x80390228
-		
+
 	b	exit
 
 
@@ -428,10 +428,10 @@ EndMovie:
 	branchl	r12,0x80390228
 #Remove Display Process Function
 	lwz	r3,0x4(r30)		#Display Entity
-	branchl	r12,0x80390228	
+	branchl	r12,0x80390228
 #Remove This Think Function
 	mr	r3,r31
-	branchl	r12,0x80390228	
+	branchl	r12,0x80390228
 #Unload Movie
 	branchl	r12,0x8001f800
 #Play Menu Music
@@ -523,6 +523,3 @@ blrl
 exit:
 restore
 li	r0, 16
-
-
-

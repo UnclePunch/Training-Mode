@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -93,7 +93,7 @@ backup
 	li	r5,0			#Area to Display (0-2)
 	li	r6,1			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
-	
+
 	mr	text,r3			#backup text pointer
 
 
@@ -105,7 +105,7 @@ backup
 
 	#SET TEXT COLOR TO PINK
 	load	r3,0xffa2baff
-	stw	r3, 0x0030 (text)	
+	stw	r3, 0x0030 (text)
 	mr	r3,playerdata
 	bl	DecLCRate
 	mr	r25,r3
@@ -144,7 +144,7 @@ backup
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 	branchl r12,0x803a6b98
-	
+
 b Moonwalk_Exit
 
 #########################
@@ -251,7 +251,3 @@ Moonwalk_Exit:
 restore
 
 lwz	r0, 0x0034 (sp)
-
-
-
-

@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -98,7 +98,7 @@ backup
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	#Get Playerdata
 	mr	r3,r27
@@ -115,7 +115,7 @@ backup
 	#Check If Combo Count is 2 Hits or Higher
 	cmpwi	ComboCount,2
 	blt	Moonwalk_Exit
-		
+
 		bl	CreateText
 
 	#Create Text
@@ -157,9 +157,9 @@ backup
 
 
 	CreateText:
-	stwu	r1,-0x100(r1)	# make space for 12 registers
-	mflr r0
-	stw r0,0xFC(sp)
+	mflr	r0
+	stw	r0, 0x0004 (sp)
+	stwu	sp, -0x0008 (sp)
 	mr	r3,playerdata			#backup playerdata pointer
 	li	r4,120			#display until terminated
 	li	r5,0			#Area to Display (0-2)
@@ -167,9 +167,9 @@ backup
 	branchl	r12,TextCreateFunction			#create text custom function
 
 	mr	text,r3			#backup text pointer
-	lwz r0,0xFC(sp)
+	lwz	r0, 0x000C (sp)
+	addi	sp, sp, 8
 	mtlr r0
-	addi	r1,r1,0x100	# release the space
 	blr
 
 
@@ -234,8 +234,8 @@ HitstunMonitor_SkipIASALandingCheck:
 	cmpwi	r0,0xB7
 	blt	HitstunMonitor_EndCombo
 	cmpwi	r0,0xC9
-	bgt	HitstunMonitor_CheckGrab	
-	b	HitstunMonitor_ContinueCombo	
+	bgt	HitstunMonitor_CheckGrab
+	b	HitstunMonitor_ContinueCombo
 HitstunMonitor_CheckGrab:
 	cmpwi	r0,0xDF
 	blt	HitstunMonitor_EndCombo
@@ -313,7 +313,3 @@ blr
 Moonwalk_Exit:
 restore
 lmw	r27, 0x0024 (sp)
-
-
-
-

@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r3,0x8(r1)
 .endm
 
 .macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+lmw  r3,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -93,7 +93,7 @@ lwz	playerdata,0x2c(player)
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	Moonwalk_Exit	
+	beq	Moonwalk_Exit
 
 	CheckForFollower:
 	mr	r3,playerdata
@@ -114,7 +114,7 @@ lwz	playerdata,0x2c(player)
 		subi	r3,r3,1
 		cmpwi	r3,0
 		bgt	RedText
-		
+
 		GreenText:
 		load	r3,0x8dff6eff			#green
 		b	StoreTextColor
@@ -146,7 +146,7 @@ lwz	playerdata,0x2c(player)
 		#Show Perfect Ledgestall Text
 		bl	BottomText_PerfectStall
 		mflr	r4
-		
+
 		LateLedgestall:
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
@@ -156,18 +156,18 @@ lwz	playerdata,0x2c(player)
 
 
 	CreateText:
-	stwu	r1,-0x100(r1)	# make space for 12 registers
-	mflr r0
-	stw r0,0xFC(sp)
+	mflr	r0
+	stw	r0, 0x0004 (sp)
+	stwu	sp, -0x0008 (sp)
 	mr	r3,playerdata			#backup playerdata pointer
 	li	r4,60			#display for 60 frames
 	li	r5,0			#Area to Display (0-2)
 	li	r6,14			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
 	mr	text,r3			#backup text pointer
-	lwz r0,0xFC(sp)
+	lwz	r0, 0x000C (sp)
+	addi	sp, sp, 8
 	mtlr r0
-	addi	r1,r1,0x100	# release the space
 	blr
 
 
@@ -202,7 +202,3 @@ blrl
 Moonwalk_Exit:
 restore
 lwz	r0, 0x0034 (sp)
-
-
-
-

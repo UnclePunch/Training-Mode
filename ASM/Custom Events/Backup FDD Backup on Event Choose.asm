@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -60,11 +60,10 @@ fsubs    \reg2,\reg2,f16
 .set playerdata,31
 
 
-#Backup 
+#Backup
 lwz	r6,-0x77C0(r13)
 lwz	r5,0x1F24(r6)
 stw	r5,-0xDA8(rtoc)
 
 Exit:
 lwz	r3, 0x0004 (r28)
-

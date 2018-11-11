@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-68(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,64(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,64(sp)
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
+addi	r1,r1,0x100	# release the space
 mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
-addi	r1,r1,68	# release the space
 .endm
 
 .macro intToFloat reg,reg2
@@ -84,13 +84,13 @@ checkZ:
 
 randomStage:
   branchl r14,0x802599EC #get random stage ID
-  
+
   #convert SSS ID to internal stage ID
     load r4,0x803f06D0   #load stage ID table
     mulli	r3, r3, 28     #stage ID to offset
     add r4,r4,r3         #add to start of table
     lbz r3,0xB(r4)       #get internal stage ID
-    
+
   load r4,0x8045AC64     #load VS match struct
 #  lhz r5,0x2(r4)			 #get current stage
 #  cmpw r3,r5            #check if same stage
@@ -112,6 +112,3 @@ exit:
 mr r3,r30
 mr r5,r28
 restore
-
-
-

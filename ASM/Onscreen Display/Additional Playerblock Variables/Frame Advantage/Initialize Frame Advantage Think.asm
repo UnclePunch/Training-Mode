@@ -32,7 +32,7 @@ stwu	r1,-0x100(r1)	# make space for 12 registers
 stmw  r20,0x8(r1)
 .endm
 
- .macro restore
+.macro restore
 lmw  r20,0x8(r1)
 lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
@@ -344,18 +344,18 @@ lwz	playerdata,0x2c(player)
 
 
 CreateText:
-	stwu	r1,-0x14(r1)
-	mflr r0
-	stw r0,0x4(sp)
+	mflr	r0
+	stw	r0, 0x0004 (sp)
+	stwu	sp, -0x0008 (sp)
 	mr	r3,playerdata
 	li	r4,60			#display for 60 frames
 	li	r5,0			#Area to Display (0-2)
 	li	r6,22			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
 	mr	text,r3			#backup text pointer
-	lwz r0,0x4(sp)
+	lwz	r0, 0x000C (sp)
+	addi	sp, sp, 8
 	mtlr r0
-	addi	r1,r1,0x14
 	blr
 
 #####################

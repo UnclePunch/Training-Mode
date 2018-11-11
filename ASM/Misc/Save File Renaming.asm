@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -70,7 +70,7 @@ lwz	r11,0x0(r11)
 load	r12,0x47544d45		#GTME
 cmpw	r11,r12
 beq	ISO
-b	Memcard	
+b	Memcard
 
 ISO:
 bl	ISOSaveName
@@ -106,7 +106,7 @@ blrl
 .long 0x53757065
 .long 0x7220536D
 .long 0x61736820
-.long 0x42726F73 
+.long 0x42726F73
 .long 0x2E204D65
 .long 0x6C656520
 .long 0x20202020
@@ -127,4 +127,3 @@ blrl
 
 exit:
 branchl	r12,0x80323cf4
-

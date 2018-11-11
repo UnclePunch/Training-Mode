@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -116,7 +116,7 @@ branch	r12,0x8024d84c
 
 Event4:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19203520
 .long 0x24202620
@@ -141,7 +141,7 @@ Event4:
 
 Event5:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19203520
 .long 0x24202620
@@ -169,7 +169,7 @@ Event5:
 
 Event6:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x0b203520
 .long 0x28202420
@@ -210,7 +210,7 @@ Event6:
 
 Event7:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19203520
 .long 0x24202620
@@ -232,7 +232,7 @@ Event7:
 
 Event8:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19203520
 .long 0x24202620
@@ -283,7 +283,7 @@ Event8:
 
 Event9:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19201c1a
 .long 0x20352028
@@ -312,7 +312,7 @@ Event9:
 
 Event10:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x0c203220
 .long 0x38203120
@@ -369,7 +369,7 @@ Event10:
 
 Event11:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19203520
 .long 0x24202620
@@ -414,7 +414,7 @@ Event11:
 
 Event12:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x19203520
 .long 0x24202620
@@ -440,7 +440,7 @@ Event12:
 
 Event13:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x1d202420
 .long 0x38203120
@@ -470,7 +470,7 @@ Event13:
 
 Event14:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x1520fb20
 .long 0x0d201920
@@ -518,7 +518,7 @@ Event14:
 
 Event15:
 .long 0x160CAAAA
-.long 0xAA0E00B3 
+.long 0xAA0E00B3
 .long 0x00B31820
 .long 0x1e203620
 .long 0x281a201c
@@ -545,5 +545,3 @@ Event15:
 Original:
 restore
 mr	r4, r30
-
-
