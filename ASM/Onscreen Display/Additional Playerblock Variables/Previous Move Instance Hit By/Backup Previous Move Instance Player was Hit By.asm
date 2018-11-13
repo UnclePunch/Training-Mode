@@ -63,22 +63,9 @@ fsubs    \reg2,\reg2,f16
 .set textprop,28
 .set hitbool,27
 
-##########################################################
-## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
-## Is 0x80 long and is zero'd at the start              ##
-##  of every VS Match				                        ##
-## Store Text Info here                                 ##
-##########################################################
+#Backup Previous Move Instance ID
+  lhz r3,0x18EC(r25)
+  sth r3,0x2418(r25)
 
-#Check If New Hit
-rlwinm.	r3, r27, 0, 16, 31
-lhz	r0, 0x18EC (r25)
-cmpw	r0,r3
-beq	exit
-
-#New Hit
-li	r0, 0x0
-stw	r0, 0x2350 (r25)
-
-exit:
-rlwinm.	r3, r27, 0, 16, 31
+#Original Line
+  rlwinm.	r3, r27, 0, 16, 31

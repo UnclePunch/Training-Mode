@@ -63,6 +63,9 @@ fsubs    \reg2,\reg2,f16
 .set textprop,28
 .set hitbool,27
 
+.set SuccessfulSDIInputs,0x2350
+.set TotalSDIInputs,0x2352
+
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
 ## Is 0x80 long and is zero'd at the start              ##
@@ -114,15 +117,15 @@ mr	playerdata,r3
 
 	SuccessfulSDI:
 	#Increment Successful SDI
-	lhz	r3,0x2350(playerdata)
+	lhz	r3,SuccessfulSDIInputs(playerdata)
 	addi	r3,r3,0x1
-	sth	r3,0x2350(playerdata)
+	sth	r3,SuccessfulSDIInputs(playerdata)
 
 	NoSDI:
 	#Increment Total SDI
-	lhz	r3,0x2352(playerdata)
+	lhz	r3,TotalSDIInputs(playerdata)
 	addi	r3,r3,0x1
-	sth	r3,0x2352(playerdata)
+	sth	r3,TotalSDIInputs(playerdata)
 
 
 
@@ -130,7 +133,7 @@ mr	playerdata,r3
 		bl	CreateText
 
 		#Change color to Green if SDI'd once
-		lhz	r3,0x2350(playerdata)
+		lhz	r3,SuccessfulSDIInputs(playerdata)
 		cmpwi	r3,0x0
 		beq	RedText
 		load	r3,0x8dff6eff
@@ -153,8 +156,8 @@ mr	playerdata,r3
 		bl	SDI2
 		mr 	r3,r29			#text pointer
 		mflr	r4
-		lhz	r5,0x2350(playerdata)
-		lhz	r6,0x2352(playerdata)
+		lhz	r5,SuccessfulSDIInputs(playerdata)
+		lhz	r6,TotalSDIInputs(playerdata)
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 		branchl r12,0x803a6b98
