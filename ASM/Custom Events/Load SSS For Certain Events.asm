@@ -1,4 +1,4 @@
-#To be inserted at 801baa80
+#To be inserted at 801bab28
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -59,12 +59,14 @@ fsubs    \reg2,\reg2,f16
 .set player,31
 .set playerdata,31
 
+stb	r0, 0x000A (r31)
+
 #Get Current Event Number
 lwz	r4, -0x77C0 (r13)
 lbz	r7, 0x0535 (r4)
 
 #Init Loop
-bl	ChooseCPUEvents
+bl	SSSEvents
 mflr	r5
 subi	r5,r5,0x1
 
@@ -75,18 +77,17 @@ extsb	r0,r6
 cmpwi	r0,-1
 beq	original
 cmpw	r6,r7
-beq	TrainingCSS
+beq	SSS
 b	Loop
 
-ChooseCPUEvents:
+SSSEvents:
 blrl
-.long 0x0307090a
-.long 0x0DFFFFFF
+.long 0x0304050D
+.long 0xFFFFFFFF
 
+SSS:
+#Store SSS as Next Scene
+load	r3,0x80479D30
+li	r4,0x3
+stb	r4,0x5(r3)
 original:
-li	r4,14
-b	exit
-TrainingCSS:
-li	r4,0x17
-exit:
-lbz	r5, 0x0002 (r31)

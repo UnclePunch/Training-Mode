@@ -133,6 +133,10 @@ bgt	exit
 	li	r3,0x0
 	stb	r3,0x6C(r26)
 
+  #Store SSS Stage
+  load	r3,0x80497758
+  lha	r4, 0x001E (r3)
+  sth	r4,0xE(r26)
 
 bl	SkipJumpTable
 bl	LCancel
@@ -173,11 +177,6 @@ LCancel:
 #STORE STAGE
 #li	r3,0x20
 #sth	r3,0xE(r26)
-
-#Store SSS Stage
-load	r3,0x80497758
-lha	r4, 0x001E (r3)
-sth	r4,0xE(r26)
 
 #Create Copy Of Player Struct
 li	r3,0x1C
@@ -352,11 +351,6 @@ Ledgedash:
 #Make HUD Centered For 1P and No Timer
 li	r3,0x0420
 sth	r3,0x0(r26)
-
-#Store SSS Stage
-load	r3,0x80497758
-lha	r4, 0x001E (r3)
-sth	r4,0xE(r26)
 
 #Store Events FDD Toggles
 lwz	r5,-0x77C0(r13)
@@ -729,7 +723,7 @@ b	exit
 		#Get Ledge X and Y Coordinates
 			rlwinm	r3,r3,0,24,31
 			addi	r4,sp,0x80
-			branchl	r12,0x80053ff4
+			branchl	r12,0x80053da4
 		Ledgedash_LoadState_RandomizePosition:
 		#Get Random Distance from this
 			.set RandomDistanceMinX,20
@@ -940,7 +934,7 @@ LedgedashProg1:
 .long 0x0171015C
 .long 0x016D0165
 .long 0x016E0168
-.long 0x01610161
+.long 0x01610176
 .long 0xFFFFFFFF
 
 #JumpAerial -> Airdodge
@@ -956,7 +950,7 @@ LedgedashProg2:
 .long 0x0171015C
 .long 0x016D016E
 .long 0x01650168
-.long 0x01610161
+.long 0x01610176
 .long 0x7F0300EC
 .long 0x00410042
 .long 0x00430044
@@ -1036,10 +1030,6 @@ blr
 #########################
 
 Eggs:
-#STORE STAGE
-li	r3,0x1f
-sth	r3,0xE(r26)
-
 
 #COUNT DOWN TIME
 li	r3,0x6
@@ -1151,92 +1141,125 @@ b	exit
 			EggsNotFirstFrame:
 
 		#Run Option Window Code
-		addi	r3,r31,0x8
-		bl	EggsWindowInfo
-		mflr	r4
-		bl	EggsWindowText
-		mflr	r5
-		bl	OptionWindow
+		  addi	r3,r31,0x8
+		  bl	EggsWindowInfo
+		  mflr	r4
+		  bl	EggsWindowText
+		  mflr	r5
+		  bl	OptionWindow
+
 		#Check If Toggled
-		cmpwi	r3,0x1
-		bne	EggsTargetCheck
+		  cmpwi	r3,0x1
+		  bne	EggsTargetCheck
 		#Check If Already Free Practice
-		lbz	r3,0x5(r31)
-		cmpwi	r3,0x0
-		bne	EggsTargetCheck
+		  lbz	r3,0x5(r31)
+		  cmpwi	r3,0x0
+		  bne	EggsTargetCheck
 		#Make Free Practice
-		li	r3,0x1
-		stb	r3,0x5(r31)
+		  li	r3,0x1
+		  stb	r3,0x5(r31)
 		#Timer Now Counts Up
-		load	r3,0x8046b6a0
-		lbz	r0,0x24C8(r3)
-		li	r4,1
-		rlwimi	r0,r4,0,31,31
-		stb	r0,0x24C8(r3)
+		  load	r3,0x8046b6a0
+		  lbz	r0,0x24C8(r3)
+		  li	r4,1
+		  rlwimi	r0,r4,0,31,31
+		  stb	r0,0x24C8(r3)
 		#Play Sound To Indicate
-		li	r3,0x82
-		branchl	r12,0x801c53ec
+		  li	r3,0x82
+		  branchl	r12,0x801c53ec
 
 		#Check If Target is Spawned
 		EggsTargetCheck:
-		lwz	r3,0x0(r31)
-		cmpwi	r3,0x0
-		bne	EggsThinkSkipSpawn
+    #Check If Pointer is Stored
+		  lwz	r3,0x0(r31)
+		  cmpwi	r3,0x0
+		  beq	EggsThinkSpawn
+    #Check if Item GObj is live
+      lwz r3,0x2C(r3)
+      cmpwi r3,0x0
+      beq EggsThinkSpawn
+      b   EggsThinkSkipSpawn
 
-		#Spawn Target
+    ################
+		# Spawn Target #
+    ################
 
-			#Setup Entity Spawn Struct
+			EggsThinkSpawn:
+			#Get Random X Value that falls between ledges
+        #Get Stage's Ledge IDs
+          lwz		r3,-0x6CB8 (r13)			#External Stage ID
+          bl		LedgedashCliffIDs
+          mflr  r4
+          mulli	r3,r3,0x2
+          lhzx	r20,r3,r4
+        #Get Left Ledge X and Y Coordinates
+          rlwinm	r3,r20,24,24,31
+          addi	r4,sp,0x80
+          branchl	r12,0x80053ecc
+        #Get Right Ledge X and Y Coordinates
+          rlwinm	r3,r20,0,24,31
+          addi	r4,sp,0x90
+          branchl	r12,0x80053da4
+        #Convert Ledge X Values to Int
+          lfs f1,0x80(sp)     #Left Ledge X
+          lfs f2,0x90(sp)     #Right Ledge X
+          fctiwz f1,f1
+          stfd  f1,0x9C(sp)
+          lwz   r20,0xA0(sp)
+          fctiwz f2,f2
+          stfd  f2,0x9C(sp)
+          lwz   r21,0xA0(sp)
+        #Get amount of all possible values between the two
+          sub r3,r21,r20
+          subi  r3,r3,8       #Minus 8, pad by 4 on each side
+        #Get Random Number in Range
+          branchl	r12,0x80380580
+          addi  r3,r3,4       #Shift over by 4 to make it evenly distrubuted again
+        #Get X Value by adding to leftmost coordinate
+          add r20,r20,r3     #r20 = X
 
-			#Get Random X (+/-55)
-			li	r3,55
-			branchl	r12,0x80380580
-			mr	r20,r3			#r20 = X
-
+      #Convert Ledge Y Values to Int
+        lfs f1,0x84(sp)     #Left Ledge Y
+        lfs f2,0x94(sp)     #Right Ledge Y
+        fctiwz f1,f1
+        stfd  f1,0x9C(sp)
+        lwz   r21,0xA0(sp)
+        fctiwz f2,f2
+        stfd  f2,0x9C(sp)
+        lwz   r4,0xA0(sp)
+      #Keep Highest Cliff Y Value
+        cmpw r21,r4
+        bge 0x8
+        mr  r21,r4
 			#Get Random Y (1-50)
-			li	r3,50
-			branchl	r12,0x80380580
-			addi	r3,r3,0x1
-			mr	r21,r3			#r21 = Y
+			   li	r3,50
+			   branchl	r12,0x80380580
+      #Starts at Cliff Y Value + 1
+        add r21,r3,r21
+        addi r21,r21,1
 
 			#Get Random Y Velocity
-			li	r22,0x2			#r22 = Y vel int
+			   li	r22,0x2			#r22 = Y vel int
 
 			#Get Y Velocity Decimal
-			branchl	r12,0x80380528
-			fmr	f8,f1			#f8 = Y Vel Decimal
-
-			#Chance to Negate X
-			li	r3,0x2
-			branchl	r12,0x80380580
-			mr	r23,r3			#r23 = negate X
+			   branchl	r12,0x80380528
+			   fmr	f4,f1			#f4 = Y Vel Decimal
 
 			#Convert To Float
 			#Get as Floats
-			lis	r0, 0x4330
-			lfd	f5, -0x6758 (rtoc)
-			xoris	r3, r20, 0x8000
-			xoris	r4, r21, 0x8000
-			xoris	r5, r22, 0x8000
-			stw	r0,0xF0(sp)
 			#X
-			stw	r3,0xF4(sp)
-			lfd	f1,0xF0(sp)
-			fsubs	f1,f1,f5
+			   mr r3,r20
+         bl  IntToFloat
+         fmr  f5,f1
 			#Y
-			stw	r4,0xF4(sp)
-			lfd	f2,0xF0(sp)
-			fsubs	f2,f2,f5
+        mr r3,r21
+        bl  IntToFloat
+        fmr  f6,f1
 			#Y Vel
-			stw	r5,0xF4(sp)
-			lfd	f3,0xF0(sp)
-			fsubs	f3,f3,f5
+        mr r3,r22
+        bl  IntToFloat
 			#Add Decimal to Y Vel
-			fadds	f20,f3,f8
-
-			#Check To Negate X Coord
-			cmpwi	r23,0x0
-			bne	SpawnEgg
-			fneg	f1,f1
+			fadds	f20,f1,f4
 
 			SpawnEgg:
 			addi	r3,sp,0x80
@@ -1246,11 +1269,11 @@ b	exit
 			li	r4,0x03
 			stw	r4,0x8(r3)	#Item ID
 			lfs	f0, -0x2858 (rtoc)
-			stfs	f1,0x14(r3)	#X Coord
-			stfs	f2,0x18(r3)	#Y Coord
+			stfs	f5,0x14(r3)	#X Coord
+			stfs	f6,0x18(r3)	#Y Coord
 			stfs	f0,0x1C(r3)	#Z Coord
-			stfs	f1,0x20(r3)	#X Coord
-			stfs	f2,0x24(r3)	#Y Coord
+			stfs	f5,0x20(r3)	#X Coord
+			stfs	f6,0x24(r3)	#Y Coord
 			stfs	f0,0x28(r3)	#Z Coord
 			stfs	f0,0x2C(r3)	#Unk
 			stfs	f0,0x30(r3)	#Unk
@@ -1319,7 +1342,41 @@ b	exit
 			li	r4,0x0
 			rlwimi	r3,r4,3,28,28
 			stb	r3, 0x0DCB (r5)
-			b	EggsThinkExit
+
+      EggsThinkSkipSpawn:
+      #Not Grabbable Every Frame
+      lwz	r5,0x0(r31)
+      lwz	r5,0x2c(r5)
+      lbz	r3, 0x0DCA (r5)
+      li	r4,0x0
+      rlwimi	r3,r4,2,29,29
+      stb	r3, 0x0DCA (r5)
+
+      #Update HUD Score
+      li	r3,0
+      li	r4,5
+      branchl	r12,0x80034f24
+      branchl	r12,0x802fa2d0
+
+      #Check If Free Practice
+        lbz	r3,0x5(r31)
+        cmpwi	r3,0x0
+        bne	EggsThinkExit
+      #Check For TimeUp
+        branchl	r12,0x8016aeec		#Seconds Left
+        cmpwi	r3,0x0
+        bne	EggsThinkExit
+        branchl	r12,0x8016aefc		#Sub-Seconds Left
+        cmpwi	r3,59
+        bne	EggsThinkExit
+
+      #On Event End
+        mr	r3,r30
+        branchl	r12,0x801bc4f4			#EventMatch_OnWinCondition
+
+  EggsThinkExit:
+    restore
+    blr
 
 
 			OnCollision:
@@ -1374,42 +1431,6 @@ b	exit
 			Egg_OnCollisionExitSkip:
 			restore
 			blr
-
-		EggsThinkSkipSpawn:
-		#Not Grabbable Every Frame
-		lwz	r5,0x0(r31)
-		lwz	r5,0x2c(r5)
-		lbz	r3, 0x0DCA (r5)
-		li	r4,0x0
-		rlwimi	r3,r4,2,29,29
-		stb	r3, 0x0DCA (r5)
-
-		#Update HUD Score
-		li	r3,0
-		li	r4,5
-		branchl	r12,0x80034f24
-		branchl	r12,0x802fa2d0
-
-		#Check If Free Practice
-		lbz	r3,0x5(r31)
-		cmpwi	r3,0x0
-		bne	EggsThinkExit
-		#Check For TimeUp
-		branchl	r12,0x8016aeec		#Seconds Left
-		cmpwi	r3,0x0
-		bne	EggsThinkExit
-		branchl	r12,0x8016aefc		#Sub-Seconds Left
-		cmpwi	r3,59
-		bne	EggsThinkExit
-
-			#On Event End
-			mr	r3,r30
-			branchl	r12,0x801bc4f4			#EventMatch_OnWinCondition
-
-		EggsThinkExit:
-		restore
-		blr
-
 
 EggsLoadExit:
 restore
@@ -4407,11 +4428,6 @@ ComboTraining:
 #STORE STAGE
 #li	r3,0x20
 #sth	r3,0xE(r26)
-
-#Store SSS Stage
-load	r3,0x80497758
-lha	r4, 0x001E (r3)
-sth	r4,0xE(r26)
 
 #STORE CPU
 lwz	r4,0x0(r29)
