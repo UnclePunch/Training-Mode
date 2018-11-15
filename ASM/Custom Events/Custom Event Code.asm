@@ -3422,6 +3422,8 @@ b	exit
 		beq AttackOnShieldUpSmashThink
 		cmpwi	r3,0x4
 		beq	AttackOnShieldShineThink
+    cmpwi	r3,0x7
+		beq	AttackOnShieldWavedashThink
 		b	AttackOnShieldShieldWait
 
 			AttackOnShieldNairThink:
@@ -3462,6 +3464,27 @@ b	exit
 			stb	r3,0x1A8D(r29)
 			li	r3,0x200
 			stw	r3,0x1A88(r29)
+			b	AttackOnShieldCheckToReset
+
+      AttackOnShieldWavedashThink:
+      lwz	r3,0x10(r29)
+			cmpwi	r3,0x19
+			bne	AttackOnShieldCheckToReset
+      #Get Random Airdodge Angle
+  			li	r3,30		#30 Different Angles
+  			branchl	r12,HSD_Randi
+  			addi	r3,r3,310		#Start at 310°
+  			bl	ComboTrainingDecideStickAngle_ConvertAngle
+        mr  r20,r3
+  		#Joystick X = X Component * (OpponentDirection)
+        bl  GetDirectionInRelationToP1
+  			mullw	r3,r3,r20
+  			stb	r3,0x1A8C(r29)
+  		#Joystick Y = Y Component
+  			stb	r4,0x1A8D(r29)
+  		#Press L To Wavedash
+  			li	r3,0xC0
+  			stw	r3,0x1A88(r29)
 			b	AttackOnShieldCheckToReset
 
 		AttackOnShieldShieldWait:
@@ -3510,7 +3533,9 @@ b	exit
 		beq	AttackOnShieldSpotdodge
 		cmpwi 	r3,0x6
 		beq	AttackOnShieldRoll
-		cmpwi 	r3,0x7
+    cmpwi 	r3,0x7
+		beq	AttackOnShieldWavedash
+		cmpwi 	r3,0x8
 		beq	AttackOnShieldNone
 
 		AttackOnShieldInputGrab:
@@ -3566,6 +3591,13 @@ b	exit
 		mullw	r3,r3,r4
 		stb	r3,0x1A8C(r29)		#Press Away
 		li	r3,48		#Init Timer
+		stw	r3,0x4(r31)
+		b	AttackOnShieldThinkExit
+
+    AttackOnShieldWavedash:
+    li	r3,0xCC0
+		stw	r3,0x1A88(r29)		#Press X/Y
+    li	r3,48		#Init Timer
 		stw	r3,0x4(r31)
 		b	AttackOnShieldThinkExit
 
@@ -3630,7 +3662,7 @@ AttackOnShieldWindowInfo:
 blrl
 #amount of options, amount of options in each window
 
-.long 0x0007FFFF  #1 window, OoS Option has 4 options
+.long 0x0008FFFF  #1 window, OoS Option has 10 options
 
 ####################################################
 
@@ -3677,7 +3709,13 @@ blrl
 .long 0x20417761
 .long 0x79000000
 
-#Option 9 = None
+#Option 9 = Wavedash Away
+.long 0x57617665
+.long 0x64617368
+.long 0x20417761
+.long 0x79000000
+
+#Option 10 = None
 .long 0x4E6F6E65
 .long 0x00000000
 
