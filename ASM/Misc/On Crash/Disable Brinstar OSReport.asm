@@ -1,2 +1,2 @@
-#To be inserted at 80394afc
-cmpwi	r29, 8
+#To be inserted at 801fe738
+nop
