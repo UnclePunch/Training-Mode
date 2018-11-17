@@ -7975,6 +7975,11 @@ SaveState_Load:
 		mr		r3,r25
 		bl  UpdatePosition
 
+    #Remove Respawn Platform JObj Pointer and Think Function
+    li  r3,0
+    stw r3,0x20A0(r26)
+    stw r3,0x21B0(r26)
+
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
 		lwz		r3,0xE0(r26)
