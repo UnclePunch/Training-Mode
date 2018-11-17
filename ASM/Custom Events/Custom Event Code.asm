@@ -762,9 +762,9 @@ b	exit
 			stw		r3,0x219C(r29)
 
 		Ledgedash_LoadState_SkipRespawnPlatform:
-		#Update Position
-			mr	r3,r30
-			branchl	r12,0x80081b38
+    mr  r3,r30
+    bl  UpdatePosition
+
 		b		LedgedashThinkEnd
 
 
@@ -818,7 +818,7 @@ b	exit
 			branchl r12,0x80081544
 		#Update Position
 			mr	r3,r30
-			branchl	r12,0x80081b38
+			bl UpdatePosition
 		#Kill Velocity
 			li		r3,0x0
 			stw		r3,0x80(r29)			#X Velocity
@@ -1902,7 +1902,7 @@ stfs	f1,0xB0(r27)
 lfs	f1,0x4(r20)
 stfs	f1,0xB4(r27)
 mr	r3,r28
-branchl	r12,0x80081b38
+bl  UpdatePosition
 mr	r3,r28
 bl	CheckIfPlayerHasAFollower
 cmpwi	r3,0
@@ -1912,7 +1912,7 @@ lfs	f1,0x0(r20)
 stfs	f1,0xB0(r5)
 lfs	f1,0x4(r20)
 stfs	f1,0xB4(r5)
-branchl	r12,0x80081b38
+bl  UpdatePosition
 
 
 Event_EnterGrab_MoveP2:
@@ -1922,7 +1922,7 @@ stfs	f1,0xB0(r29)
 lfs	f1,0xC(r20)
 stfs	f1,0xB4(r29)
 mr	r3,r30
-branchl	r12,0x80081b38
+bl  UpdatePosition
 mr	r3,r30
 bl	CheckIfPlayerHasAFollower
 cmpwi	r3,0
@@ -1932,7 +1932,7 @@ lfs	f1,0x8(r20)
 stfs	f1,0xB0(r5)
 lfs	f1,0xC(r20)
 stfs	f1,0xB4(r5)
-branchl	r12,0x80081b38
+bl  UpdatePosition
 
 Event_EnterGrab_EnterGrabAS:
 #Store P1 into P2 Grab Pointer
@@ -3873,7 +3873,7 @@ b	exit
 				lwz	r3,0x8(r20)
 				stw	r3,0xB4(r27)
 				#mr	r3,r28
-				#branchl	r12,0x80081b38
+				#bl  UpdatePosition
 			#Overwrite Physics Behavior to Stay Still
 				bl		BlrFunctionPointer
 				mflr		r3
@@ -4380,7 +4380,7 @@ b	exit
 		AmsahTechNoSubchar:
 		#Update P2 ECB
 		mr	r3,r30
-		branchl	r12,0x80081b38
+    bl  UpdatePosition
 
 		AmsahTechCheckUpBTimer:
 		#Check For UpBTimer
@@ -7473,7 +7473,7 @@ branchl	r12,0x8008a2bc		#Enter Wait
 lfs	f1,0x10(r20)
 stfs	f1,0xB0(r27)
 mr	r3,r28
-branchl	r12,0x80081b38
+bl  UpdatePosition
 
 #Move P2
 mr	r3,r30
@@ -7481,7 +7481,7 @@ branchl	r12,0x8008a2bc		#Enter Wait
 lfs	f1,0x14(r20)
 stfs	f1,0xB0(r29)
 mr	r3,r30
-branchl	r12,0x80081b38
+bl  UpdatePosition
 
 restore
 blr
@@ -7971,9 +7971,9 @@ SaveState_Load:
 		li	r3,0x0
 		stw	r3,0x5A8(r26)
 
-		#Update ECB Position
+    #Update ECB Position
 		mr		r3,r25
-		branchl	r12,0x80081b38
+		bl  UpdatePosition
 
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
@@ -8874,7 +8874,7 @@ stfs	f1,0xB0(r27)
 lfs	f1,0x8(r20)
 stfs	f1,0xB4(r27)
 mr	r3,r28
-branchl	r12,0x80081b38
+bl  UpdatePosition
 mr	r3,r28
 bl	CheckIfPlayerHasAFollower
 cmpwi	r3,0x0
@@ -8889,7 +8889,7 @@ stfs	f1,0xB0(r25)
 lfs	f1,0x8(r20)
 stfs	f1,0xB4(r25)
 mr	r3,r24
-branchl	r12,0x80081b38
+bl  UpdatePosition
 
 
 #Move P2
@@ -8901,7 +8901,7 @@ stfs	f1,0xB0(r29)
 lfs	f1,0xC(r20)
 stfs	f1,0xB4(r29)
 mr	r3,r30
-branchl	r12,0x80081b38
+bl  UpdatePosition
 mr	r3,r30
 bl	CheckIfPlayerHasAFollower
 cmpwi	r3,0x0
@@ -8916,7 +8916,7 @@ stfs	f1,0xB0(r25)
 lfs	f1,0xC(r20)
 stfs	f1,0xB4(r25)
 mr	r3,r24
-branchl	r12,0x80081b38
+bl  UpdatePosition
 
 InitializePositions_Exit:
 bl	ClearNanaInputs
@@ -9384,7 +9384,7 @@ backup
 			stfs	f1,0x2C(r29)
 			#Update ECB
 			mr	r3,r30
-			branchl	r12,0x80081b38
+			bl  UpdatePosition
 			#Enter Wait
 			mr	r3,r30
 			branchl	r12,0x8008a348
@@ -9405,7 +9405,7 @@ backup
 			branchl	r12,0x8008a348
 			#Update ECB
 			mr	r3,r21
-			branchl	r12,0x80081b38
+			bl  UpdatePosition
 MoveCPUExit:
 restore
 blr
@@ -10002,6 +10002,28 @@ Custom_InterruptRebirthWait_EnterFall:
 Custom_InterruptRebirthWait_Exit:
 	restore
 	blr
+
+#####################################
+UpdatePosition:
+.set PlayerGObj,31
+
+backup
+
+#Backup Pointer
+  mr  PlayerGObj,r3
+
+#Update Position
+  branchl	r12,0x80081b38
+#Update Static Player Block Coords
+  lwz r5,0x2C(PlayerGObj)
+  lbz r3,0xC(r5)
+  lbz	r4, 0x221F (r5)
+  rlwinm	r4, r4, 29, 31, 31
+  addi  r5,r5,176
+  branchl r12,0x80032828
+
+restore
+blr
 
 #####################################
 

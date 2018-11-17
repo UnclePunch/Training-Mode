@@ -230,7 +230,7 @@ MessageThink_Updater_PlayerAreaShiftMessagesLoop:
  lfsx	f1,r4,r5
  lfs	f2,0x4(r3)				#Get Text's Y Value
  fadds	f1,f1,f2
- stfs	f2,0x4(r3)				#Store Text's Y Value
+ stfs	f1,0x4(r3)				#Store Text's Y Value
 
 #Go To Next Message's Offset
 MessageThink_Updater_PlayerAreaShiftMessagesIncLoop:

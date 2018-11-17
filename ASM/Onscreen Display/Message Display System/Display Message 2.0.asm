@@ -98,7 +98,7 @@ backup
 	mr	textprop,r7
 
 	#Load Max Number of Windows Variable From OSD Menu
-  	  lwz	r3,-0x77C0(r13)			#Get Memcard Data
+  	lwz	r3,-0x77C0(r13)			#Get Memcard Data
 	  lbz	MaxWindows,0x1f28(r3)
 
 	#Get Window's Area in the Message Struct in r3
