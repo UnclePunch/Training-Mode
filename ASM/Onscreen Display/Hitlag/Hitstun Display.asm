@@ -112,7 +112,7 @@ backup
 
 	CreateText:
 	mr	r3,playerdata			#backup playerdata pointer
-	li	r4,60			#display for 60 frames
+	li	r4,1			#display for 60 frames
 	li	r5,1			#Area to Display (0-2)
 	li	r6,16			#Window ID (Unique to This Display)
 	branchl	r12,TextCreateFunction			#create text custom function
