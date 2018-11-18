@@ -63,6 +63,15 @@ fsubs    \reg2,\reg2,f16
 .set textprop,28
 .set hitbool,27
 
+.set PrevASStart,0x23F0
+.set CurrentAS,0x10
+.set OneASAgo,PrevASStart+0x0
+.set TwoASAgo,PrevASStart+0x2
+.set ThreeASAgo,PrevASStart+0x4
+.set FourASAgo,PrevASStart+0x6
+.set FiveASAgo,PrevASStart+0x8
+.set SixASAgo,PrevASStart+0xA
+
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
 ## Is 0x80 long and is zero'd at the start              ##
@@ -93,14 +102,16 @@ mr	playerdata,r6
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
+	#Check if Over 20 Frames
+		lhz	r3,0x23EC(playerdata)
+		cmpwi r3,20
+		bgt Moonwalk_Exit
 
 		bl	CreateText
 
 		#Change Text Color
-		lfs	f1,0x894(playerdata)
-		fctiwz	f1,f1
-		stfd	f1,0xF0(sp)
-		lwz	r3,0xF4(sp)
+		lhz	r3,0x23EC(playerdata)
+		subi r3,r3,1
 		cmpwi	r3,0x1
 		bne	RedText
 
@@ -126,10 +137,8 @@ mr	playerdata,r6
 		bl	BottomText
 		mr 	r3,r29			#text pointer
 		mflr	r4
-		lfs	f1,0x894(playerdata)
-		fctiwz	f1,f1
-		stfd	f1,0xF0(sp)
-		lwz	r5,0xF4(sp)
+		lhz	r5,0x23EC(playerdata)
+		subi r5,r5,1
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
 		branchl r12,0x803a6b98

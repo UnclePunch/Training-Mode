@@ -102,6 +102,10 @@ lwz	playerdata,0x2c(player)
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
+	#Check if Over 20 Frames past GALINT
+		lwz	r3,0x2408(playerdata)
+		cmpwi r3,20
+		bgt Moonwalk_Exit
 
 		bl	CreateText
 
