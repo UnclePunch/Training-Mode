@@ -21,3 +21,5 @@ $RECYCLE.BIN/
 # =========================
 # Operating System Files
 # =========================
+ASM/Misc/Store Version Number.asm
+ASM/Misc/Overwrite Compile Date.asm
