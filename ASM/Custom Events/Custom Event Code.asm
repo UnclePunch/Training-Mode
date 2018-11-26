@@ -9104,10 +9104,11 @@ blr
 ############################################
 
 IntToFloat:
+mflr r0
+stw r0, 0x4(r1)
 stwu	r1,-0x100(r1)	# make space for 12 registers
-stfs	f2,0x8(sp)
-mflr 	r0
-stw 	r0,0xFC(sp)
+stmw  r20,0x8(r1)
+stfs  f2,0x38(r1)
 
 lis	r0, 0x4330
 lfd	f2, -0x6758 (rtoc)
@@ -9117,10 +9118,11 @@ stw	r3,0xF4(sp)
 lfd	f1,0xF0(sp)
 fsubs	f1,f1,f2		#Convert To Float
 
-lwz 	r0,0xFC(sp)
-mtlr 	r0
-lfs	f2,0x8(sp)
+lfs  f2,0x38(r1)
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 blr
 
 ############################################
