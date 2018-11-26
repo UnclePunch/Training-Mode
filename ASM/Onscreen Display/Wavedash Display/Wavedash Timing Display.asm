@@ -62,6 +62,8 @@ fsubs    \reg2,\reg2,f16
 .set textprop,28
 .set TextCreateFunction,0x80005928
 
+.set AirdodgeAngle,0x241C
+
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -105,57 +107,90 @@ backup
 
 	mr	text,r3			#backup text pointer
 
+	#Display Wavedash Frame
+		mr 	r3,r29			#text pointer
+		bl	TextASCII
+		mflr 	r4			#get ASCII to print
+		lfs	f1,0x894(playerdata)
+		fctiwz	f1,f1
+		stfd	f1,0xF0(sp)
+		lwz	r5,0xF4(sp)
+		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+		lfs	f2, -0x37B4 (rtoc)			#default text X/Y
+		branchl r12,0x803a6b98
 
-	#CHECK FOR PERFECT
-	lbz	r3,0x680(playerdata)
-	cmpwi	r3,0x0
-	bne 	NotFramePerfect
-	#SET TEXT COLOR TO GREEN
-	load	r3,0x8dff6eff
-	stw	r3, 0x0030 (text)
-	NotFramePerfect:
+	#Check if frame perfect
+		lbz	r4,0x680(playerdata)
+		cmpwi	r4,0x0
+		bne DisplayWavedashAngle
+	#Change Color
+		mr	r4,r3				#subtext id
+		mr 	r3,r29			#text pointer
+		load	r5,0x8dff6eff
+		stw	r5,0xF0(sp)
+		addi r5,sp,0xF0
+		branchl r12,0x803a74f0
 
+	DisplayWavedashAngle:
+	#Display Wavedash Angle
+		mr 	r3,r29			#text pointer
+		bl	TextASCII2
+		mflr 	r4			#get ASCII to print
+		lfs f3,AirdodgeAngle(playerdata)
+		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
+		branchl r12,0x803a6b98
 
-	#INITALIZE TEXT 1
-	mr 	r3,r29			#text pointer
-	bl	TextASCII
-	mflr 	r4			#get ASCII to print
-	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-	branchl r12,0x803a6b98
-
-
-	#INITALIZE TEXT 2
-	mr 	r3,r29			#text pointer
-	bl	TextASCII2
-	mflr 	r4			#get ASCII to print
-
-	lfs	f1,0x894(playerdata)
-	fctiwz	f1,f1
-	stfd	f1,0xF0(sp)
-	lwz	r5,0xF4(sp)
-
-	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-	lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-	branchl r12,0x803a6b98
-
+	#Check Angle
+		lfs f1,AirdodgeAngle(playerdata)
+		bl	Floats
+		mflr r4
+	#Check For Perfect Angle
+		lfs f2,0x0(r4)
+		fcmpo cr0,f1,f2
+		beq PerfectAngle
+	#Check For OK Angle
+		lfs f2,0x4(r4)
+		fcmpo cr0,f1,f2
+		bgt Moonwalk_Exit
+		lfs f2,0x8(r4)
+		fcmpo cr0,f1,f2
+		blt Moonwalk_Exit
+	OKAngle:
+		load	r5,0xfff000ff
+		stw	r5,0xF0(sp)
+		b ChangeAngleColor
+	PerfectAngle:
+		load	r5,0x8dff6eff
+		stw	r5,0xF0(sp)
+		b ChangeAngleColor
+	ChangeAngleColor:
+	#Change Color
+		mr	r4,r3				#subtext id
+		mr 	r3,r29			#text pointer
+		addi r5,sp,0xF0
+		branchl r12,0x803a74f0
 
 
 b Moonwalk_Exit
 
+#########################
+
 TextASCII:
 blrl
-.long 0x57617665
-.long 0x64617368
-.long 0x00000000
-
-
+.string "Wavedash Frame: %d"
+.align 2
 
 TextASCII2:
 blrl
-.long 0x4672616d
-.long 0x653a2025
-.long 0x64000000
+.string "Angle: %f"
+.align 2
+
+Floats:
+blrl
+.float -0.2875		#Perfect Angle
+.float -0.3000   #Good Angle Max
+.float -0.3375   #Good Angle Min
 
 ##############################
 
