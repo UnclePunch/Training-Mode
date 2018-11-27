@@ -32,7 +32,7 @@ stwu	r1,-0x100(r1)	# make space for 12 registers
 stmw  r20,0x8(r1)
 .endm
 
- .macro restore
+.macro restore
 lmw  r20,0x8(r1)
 lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
@@ -52,10 +52,14 @@ fsubs    \reg2,\reg2,f16
 .set entity,31
 .set player,31
 
-stwu	r1,-68(r1)	# make space for 12 registers
-stmw	r20,8(r1)	# push r20-r31 onto the stack
-mflr r0
-stw r0,64(sp)
+.set text,31
+.set textproperties,30
+
+backup
+
+########################
+## Create Text Object ##
+########################
 
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
@@ -63,26 +67,31 @@ stw r0,64(sp)
 	branchl r14,0x803a6754
 
 #BACKUP STRUCT POINTER
-	mr r31,r3
+	mr text,r3
 
 #STORE POINTER
-	stw	r31,-0x4EB4(r13)
+	stw	text,-0x4EB4(r13)
 
 #SET TEXT SPACING TO TIGHT
 	li r4,0x1
-	stb r4,0x49(r31)
+	stb r4,0x49(text)
 
 #SET TEXT TO CENTER AROUND X LOCATION
 	li r4,0x1
-	stb r4,0x4A(r31)
+	stb r4,0x4A(text)
 
 #GET PROPERTIES TABLE
 	bl TEXTPROPERTIES
-	mflr r30
+	mflr textproperties
 
 #Store Base Z Offset
-	lfs f1,0xC(r30) #Z offset
-	stfs f1,0x8(r31)
+	lfs f1,ZOffset(textproperties) #Z offset
+	stfs f1,0x8(text)
+
+#Scale Canvas Down
+  lfs f1,CanvasScaling(textproperties)
+  stfs f1,0x24(text)
+  stfs f1,0x28(text)
 
 #######################
 ## Version Indicator ##
@@ -90,28 +99,18 @@ stw r0,64(sp)
 
 #SET COLOR TO GREEN
 	load	r3,0x8dff6eff			#green
-	stw	r3,0x30(r31)
+	stw	r3,0x30(text)
 
 #Initialize Subtext
-	lfs 	f1,0x0(r30) 		#X offset of text
-	lfs 	f2,0x4(r30)		#Y offset of text
-	mr 	r3,r31		#struct pointer
+	lfs 	f1,VersionX(textproperties) 		#X offset of text
+	lfs 	f2,VersionY(textproperties)	  	#Y offset of text
+	mr 	r3,text		#struct pointer
 	load	r4,0x80228a28		#pointer to ASCII
 	branchl r14,0x803a6b98
-
-#Set Text Size
-	mr	r4,r3
-	mr	r3,r31
-	lfs	f1,0x08(r30) #get text scaling value from table
-	lfs	f2,0x10(r30)
-	branchl	r12,0x803a7548
-
-
 
 ##################
 ## R = Tutorial ##
 ##################
-
 
 #Check For Training Mode ISO Game ID
 	lis	r5,0x8000
@@ -122,23 +121,15 @@ stw r0,64(sp)
 
 #SET COLOR TO White
 	load	r3,0xFFFFFFFF		#white
-	stw	r3,0x30(r31)
+	stw	r3,0x30(text)
 
 #Initialize Subtext
-	lfs 	f1,0x14(r30) #X offset of text
-	lfs 	f2,0x18(r30) #Y offset of text
-	mr 	r3,r31       #struct pointer
+	lfs 	f1,RX(textproperties) #X offset of text
+	lfs 	f2,RY(textproperties) #Y offset of text
+	mr 	r3,text       #struct pointer
 	bl 	RText
 	mflr 	r4		#pointer to ASCII
 	branchl r14,0x803a6b98
-
-#Set Text Size
-	mr	r4,r3
-	mr	r3,r31
-	lfs	f1,0x1C(r30) #get text scaling value from table
-	lfs	f2,0x20(r30)
-	branchl	r12,0x803a7548
-
 
 ##################
 ## R = Tutorial ##
@@ -148,22 +139,15 @@ SpawnLText:
 
 #SET COLOR TO White
 	load	r3,0xFFFFFFFF		#white
-	stw	r3,0x30(r31)
+	stw	r3,0x30(text)
 
 #Initialize Subtext
-	lfs 	f1,0x24(r30) #X offset of text
-	lfs 	f2,0x28(r30) #Y offset of text
-	mr 	r3,r31       #struct pointer
+	lfs 	f1,LX(textproperties) #X offset of text
+	lfs 	f2,LY(textproperties) #Y offset of text
+	mr 	r3,text       #struct pointer
 	bl 	LText
 	mflr 	r4		#pointer to ASCII
 	branchl r14,0x803a6b98
-
-#Set Text Size
-	mr	r4,r3
-	mr	r3,r31
-	lfs	f1,0x2C(r30) #get text scaling value from table
-	lfs	f2,0x30(r30)
-	branchl	r12,0x803a7548
 
 b end
 
@@ -171,38 +155,29 @@ b end
 #**************************************************#
 TEXTPROPERTIES:
 blrl
+.set VersionX,0x0
+.set VersionY,0x4
+.set ZOffset,0x8
+.set RX,0xC
+.set RY,0x10
+.set LX,0x14
+.set LY,0x18
+.set CanvasScaling,0x1C
 
 #Version
-.long 0x00000000 #text X pos (0)
-.long 0xC21C0000 #text Y pos (-39)
-.long 0x3D23D70A #text scaling X (0.04)
-.long 0x41880000 #Z offset
-.long 0x3D23D70A #text scaling Y (0.04)
+.float 0      #text X pos
+.float -230   #text Y pos
+.float 17     #Z offset
 
 #Press R
-.long 0x41200000 #text X pos
-.long 0xC21C0000 #text Y pos
-.long 0x3D0F5C29 #text scaling X
-.long 0x3D0F5C29 #text scaling Y
+.float 310    #text X pos
+.float -230   #text Y pos
 
 #Press L
-.long 0xC1200000 #text X pos
-.long 0xC21C0000 #text Y pos
-.long 0x3D0F5C29 #text scaling X
-.long 0x3D0F5C29 #text scaling Y
+.float -310   #text X pos
+.float -230   #text Y pos
 
-
-
-/*
-#THIS HAS BEEN MOVED TO 0x80228a28
-VersionText:
-blrl
-.long 0x54726169
-.long 0x6e696e67
-.long 0x204d6f64
-.long 0x65207631
-.long 0x2e303100
-*/
+.float 0.035   #Canvas Scaling
 
 RText:
 blrl
@@ -221,9 +196,6 @@ blrl
 #**************************************************#
 end:
 
-lwz r0,64(sp)
-mtlr r0
-lmw	r20,8(r1)	# pop r20-r31 off the stack
-addi	r1,r1,68	# release the space
+restore
 
 lmw	r26, 0x0038 (sp)
