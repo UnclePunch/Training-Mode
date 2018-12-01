@@ -235,7 +235,8 @@ b	exit
 	bl	LCancelThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  li  r5,0    #No Option Menu
+	bl	CreateEventThinkFunction
 
 	b	LCancelLoadExit
 
@@ -393,7 +394,11 @@ b	exit
 	bl	LedgedashThink
 	mflr	r3
 	li	r4,9		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl  LedgedashWindowInfo
+  mflr r5
+  bl LedgedashWindowText
+  mflr r6
+	bl	CreateEventThinkFunction
 
 	bl	InitializeHighScore
 
@@ -404,14 +409,19 @@ b	exit
 		## Ledgedash THINK FUNCT ##
 		#########################
 
+    #Registers
+    .set MenuData,27
+
+    #Offsets
 		.set firstFrameFlag,0x0
 		.set eventState,0x1
 		.set hitboxFoundFlag,0x2
 		.set timer,0x4
 		.set CameraBox,0x8
-		.set OptionWindowMemory,0x20
-		.set StartingLocation,OptionWindowMemory+0x2
-		.set AutoRestore,OptionWindowMemory+0x3
+		.set StartingLocation,OptionMenuMemory+0x2+0x0
+		.set AutoRestore,OptionMenuMemory+0x2+0x1
+    .set StartingLocationToggled,OptionMenuToggled+0x0
+		.set AutoRestoreToggled,OptionMenuToggled+0x1
 
 		LedgedashThink:
 		blrl
@@ -423,7 +433,8 @@ b	exit
 		branchl	r12,0x80034110				#get player block
 		mr		r30,r3			#player block in r30
 		lwz		r29,0x2c(r30)			#player data in r29
-		lwz   r27,0x2c(r30)			#Hacky Compatibility for the Option Widnow Code
+		lwz   MenuData,MenuDataPointer(r31)
+
 
 		#ON FIRST FRAME
 		bl	CheckIfFirstFrame
@@ -457,16 +468,10 @@ b	exit
 		lhz	r3,-0x4ea8(r13)
 		branchl	r12,0x802fa2d0
 
-		#Run Option Window Code
-			addi	r3,r31,OptionWindowMemory
-			bl	LedgedashWindowInfo
-			mflr	r4
-			bl	LedgedashWindowText
-			mflr	r5
-			bl	OptionWindow
 		#Check If Toggled Starting Location
-			cmpwi	r4,0x0
-			bne	Ledgedash_SkipToggledLoadState
+			lbz r3,StartingLocationToggled(MenuData)
+      cmpwi r3,0x0
+			beq	Ledgedash_SkipToggledLoadState
 			b		Ledgedash_LoadState
 		Ledgedash_SkipToggledLoadState:
 
@@ -517,7 +522,7 @@ b	exit
 
 		GetProgressAndAS:
 		#Check If AutoRestore is enabled
-			lbz	r3,AutoRestore(r31)
+			lbz	r3,AutoRestore(MenuData)
 			cmpwi r3,0x1
 			beq	LedgedashThinkEnd
 		#Check If Timer Is Set
@@ -567,6 +572,8 @@ b	exit
 
 
 		LedgedashThinkEnd:
+    mr  r3,MenuData
+    bl  ClearToggledOptions
 		restore
 		blr
 
@@ -691,7 +698,7 @@ b	exit
 			mr		r3,r31
 			bl		SaveState_Load
 		#Create Respawn Platform If Enabled
-			lbz		r3,StartingLocation(r31)
+			lbz		r3,StartingLocation(MenuData)
 			cmpwi	r3,0x0
 			beq	Ledgedash_LoadState_SkipRespawnPlatform
 		#Remember Facing Direction (Rebirth changes this)
@@ -922,6 +929,7 @@ LedgedashProg0:
 
 #Fall -> JumpAerial
 LedgedashProg1:
+.long 0x7F0000FC
 .long 0x7F01001D
 .long 0x00CB00CB
 .long 0x7F02001B
@@ -935,7 +943,7 @@ LedgedashProg1:
 .long 0x016D0165
 .long 0x016E0168
 .long 0x01610176
-.long 0xFFFFFFFF
+.long 0x015DFFFF
 
 #JumpAerial -> Airdodge
 LedgedashProg2:
@@ -951,6 +959,7 @@ LedgedashProg2:
 .long 0x016D016E
 .long 0x01650168
 .long 0x01610176
+.long 0x015D001D
 .long 0x7F0300EC
 .long 0x00410042
 .long 0x00430044
@@ -981,34 +990,28 @@ LedgedashWindowText:
 blrl
 
 #Option Title = Starting Location
-#.long 0x4c6f636174696f6e
-.long 0x53746172
-.long 0x74696e67
-.long 0x204c6f63
-.long 0x6174696f
-.long 0x6e000000
+.string "Starting Location"
+.align 2
 
 #Option 1 = Ledge
-.long 0x4c656467
-.long 0x65000000
+.string "Ledge"
+.align 2
 
 #Option 2 = Respawn Platform
-.long 0x52657370
-.long 0x61776e20
-.long 0x506c6174
-.long 0x666f726d
-.long 0x00000000
+.string "Respawn Platform"
+.align 2
 
 #Option Title = AutoRestore
-.long 0x4175746f
-.long 0x52657374
-.long 0x6f726500
+.string "AutoRestore"
+.align 2
 
 #Option 1 = On
-.long 0x4f6e0000
+.string "On"
+.align 2
 
 #Option 2 = Off
-.long 0x4f666600
+.string "Off"
+.align 2
 
 
 ####################################
@@ -1069,7 +1072,16 @@ b	exit
 	bl	EggsThink
 	mflr	r3
 	li	r4,9		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl	EggsWindowInfo
+  mflr	r5
+  bl	EggsWindowText
+  mflr	r6
+	bl	CreateEventThinkFunction
+
+  #r3 = function to run each frame
+  #r4 = priority
+  #r5 = pointer to Window and Option Count
+  #r6 = pointer to ASCII struct
 
 	bl	InitializeHighScore
 
@@ -1080,7 +1092,13 @@ b	exit
 		## Eggs-ercise THINK FUNCT ##
 		#########################
 
-		.set	DamageThreshold,0xA
+    #Registers
+    .set EventData,31
+    .set MenuData,26
+
+    #Offsets
+		.set	DamageThreshold,(OptionMenuMemory+0x2) +0x0
+		.set	DamageThresholdToggled,(OptionMenuToggled) +0x0
 
 		EggsThink:
 		blrl
@@ -1095,6 +1113,7 @@ b	exit
 		branchl	r12,0x80034110	 #get player block
 		mr	r28,r3
 		lwz	r27,0x2c(r28)		#player data in r3
+    lwz MenuData,MenuDataPointer(EventData)
 
 		#No Staling
 		bl	ResetStaleMoves
@@ -1140,17 +1159,10 @@ b	exit
 			stb	r3,0x4(r31)
 			EggsNotFirstFrame:
 
-		#Run Option Window Code
-		  addi	r3,r31,0x8
-		  bl	EggsWindowInfo
-		  mflr	r4
-		  bl	EggsWindowText
-		  mflr	r5
-		  bl	OptionWindow
-
 		#Check If Toggled
-		  cmpwi	r3,0x1
-		  bne	EggsTargetCheck
+      lbz r3,DamageThresholdToggled(MenuData)
+		  cmpwi	r3,0x0
+		  beq	EggsTargetCheck
 		#Check If Already Free Practice
 		  lbz	r3,0x5(r31)
 		  cmpwi	r3,0x0
@@ -1374,9 +1386,11 @@ b	exit
         mr	r3,r30
         branchl	r12,0x801bc4f4			#EventMatch_OnWinCondition
 
-  EggsThinkExit:
-    restore
-    blr
+EggsThinkExit:
+  mr  r3,MenuData
+  bl  ClearToggledOptions
+  restore
+  blr
 
 
 			OnCollision:
@@ -1387,7 +1401,8 @@ b	exit
 			lwz	r31,0x2C(r3)			#Get Data
 
 			#Check If Any Attack Should Break
-			lwz	r3,0xDDC(r31)			#Get Event Think
+			lwz	r3,0xDDC(r31)			         #Get Event Data
+      lwz r3,MenuDataPointer(r3)     #Get Menu Data
 			lbz	r3,DamageThreshold(r3)			#Damage Behavior
 			cmpwi	r3,0x1
 			beq	Eggs_OnCollisionBreakEgg
@@ -1542,7 +1557,8 @@ b	exit
 	bl	SDITrainingThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  li  r5,0    #No Option Menu
+	bl	CreateEventThinkFunction
 
 	b	SDITrainingLoadExit
 
@@ -2048,7 +2064,11 @@ b	exit
 	bl	ReversalThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl	ReversalWindowInfo
+  mflr	r5
+  bl	ReversalWindowText
+  mflr	r6
+	bl	CreateEventThinkFunction
 
 	b	ReversalLoadExit
 
@@ -2057,12 +2077,17 @@ b	exit
 		## Reversal THINK FUNCT ##
 		#########################
 
+    .set MenuData,26
+    .set EventData,31
+
 		.set firstFrameFlag,0x0
 		.set timer,0x4
-		.set OptionWindowMemory,0x8
-		.set CPUAttack,OptionWindowMemory+(0x2)
-		.set P1FacingDirection,OptionWindowMemory+(0x3)
-		.set CPUFacingDirection,OptionWindowMemory+(0x4)
+		.set CPUAttack,(OptionMenuMemory+0x2)+(0x0)
+		.set P1FacingDirection,(OptionMenuMemory+0x2)+(0x1)
+		.set CPUFacingDirection,(OptionMenuMemory+0x2)+(0x2)
+    .set CPUAttackToggled,OptionMenuToggled+(0x0)
+    .set P1FacingDirectionToggled,OptionMenuToggled+(0x1)
+    .set CPUFacingDirectionToggled,OptionMenuToggled+(0x2)
 		.set AerialThinkStruct,0x20
 
 		ReversalThink:
@@ -2083,6 +2108,7 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
+    lwz MenuData,MenuDataPointer(EventData)
 
 		li	r3,0xF
 		stb	r3,0x1A94(r29)
@@ -2116,20 +2142,12 @@ b	exit
 
 		bl	GiveFullShields
 
-		#Run Option Window Code
-		addi	r3,r31,OptionWindowMemory
-		bl	ReversalWindowInfo
-		mflr	r4
-		bl	ReversalWindowText
-		mflr	r5
-		bl	OptionWindow
-		cmpwi	r3,0			#Check If Toggled An Option
-		beq	ReversalSkipFacingReset
-		lbz	r3,0x8(r31)			#Get Current Window
-		cmpwi	r3,0x1
-		beq	ReversalReset			#Only Run When Hovered Over Facing Direction
-		cmpwi	r3,0x2
-		beq	ReversalReset			#Only Run When Hovered Over Facing Direction
+    lbz r3,P1FacingDirectionToggled(MenuData)
+		cmpwi	r3,0x0
+		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
+    lbz r3,CPUFacingDirectionToggled(MenuData)
+		cmpwi	r3,0x0
+		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
 		ReversalSkipFacingReset:
 
 		#Move Players Apart With DPad
@@ -2172,7 +2190,7 @@ b	exit
 
 
 		ReversalDecideSmashAttack:
-		lbz	r3,CPUAttack(r31)
+		lbz	r3,CPUAttack(MenuData)
 		cmpwi	r3,0x0
 		beq	ReversalRandomSmashAttack
 		cmpwi	r3,0x1
@@ -2303,7 +2321,7 @@ b	exit
 			bl	Randomize_LeftorRightSide
 		ReversalReset_NoRandomization:
 		#Adjust P1 Facing Direction Based on Preference
-			lbz	r3,P1FacingDirection(r31)
+			lbz	r3,P1FacingDirection(MenuData)
 			cmpwi	r3,0x1
 			bne	ReversalAdjustCPUDirection
 		#Invert P1 Facing Direction
@@ -2313,7 +2331,7 @@ b	exit
 			stfs	f1,0x2C(r3)
 		#Adjust CPU Facing Direction Based on Preference
 		ReversalAdjustCPUDirection:
-			lbz	r3,CPUFacingDirection(r31)
+			lbz	r3,CPUFacingDirection(MenuData)
 			cmpwi	r3,0x1
 			bne	ReversalLoadState
 		#Invert P1 Facing Direction
@@ -2336,6 +2354,8 @@ b	exit
 			stw r3,AerialThinkStruct(r31)
 
 		ReversalThinkExit:
+      mr  r3,MenuData
+      bl  ClearToggledOptions
 			bl	UpdateAllGFX
 			restore
 			blr
@@ -2622,7 +2642,11 @@ b	exit
 	bl	PowershieldThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl	PowershieldWindowInfo
+  mflr	r5
+  bl	PowershieldWindowText
+  mflr	r6
+	bl	CreateEventThinkFunction
 
 	bl	InitializeHighScore
 
@@ -2633,14 +2657,19 @@ b	exit
 		## Powershield THINK FUNCT ##
 		#########################
 
-		.set FireSpeed,0xE
+    #Registers
+    .set MenuData,26
+    .set EventData,31
+
+    #Offsets
+		.set FireSpeed,(OptionMenuMemory+0x2)+0x0
 
 		PowershieldThink:
 		blrl
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
@@ -2653,6 +2682,7 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
+    lwz MenuData,MenuDataPointer(EventData)
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -2725,14 +2755,6 @@ b	exit
 		stfs	f1,0x2C(r3)			#Facing
 		b	PowershieldRestore
 		Powershield_SkipPositionChange:
-
-		#R+DPad Changes Laser Speed
-		addi	r3,r31,0xC
-		bl	PowershieldWindowInfo
-		mflr	r4
-		bl	PowershieldWindowText
-		mflr	r5
-		bl	OptionWindow
 
 		#Act Out Of Laser Hit
 		bl	ActOutOfLaserHitDisplay
@@ -2869,7 +2891,7 @@ b	exit
 		addi	r3,r3,15
 		stb	r3,0xF(r31)
 		#Get Interval
-		lbz	r3,FireSpeed(r31)
+		lbz	r3,FireSpeed(MenuData)
 		cmpwi	r3,0x0
 		beq	PowershieldRandom
 		cmpwi	r3,0x1
@@ -2916,6 +2938,8 @@ b	exit
 		b	PowershieldThinkExit
 
 		PowershieldThinkExit:
+    mr  r3,MenuData
+    bl  ClearToggledOptions
 		restore
 		blr
 
@@ -3049,7 +3073,11 @@ b	exit
 	bl	ShieldDropThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl	ShieldDropWindowInfo
+  mflr	r5
+  bl	ShieldDropWindowText
+  mflr	r6
+	bl	CreateEventThinkFunction
 
 	b	ShieldDropLoadExit
 
@@ -3058,20 +3086,27 @@ b	exit
 		## Shield Drop THINK FUNCT ##
 		##########################
 
-		.set FacingDirection,0xE
+    #Registers
+    .set MenuData,26
+    .set EventData,31
+
+    #Offsets
+		.set FacingDirection,(OptionMenuMemory+0x2)+0x0
+    .set FacingDirectionToggled,(OptionMenuToggled)+0x0
 
 		ShieldDropThink:
 		blrl
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
 		branchl		r12,0x80034110			#get player block
 		mr		r30,r3			#player block in r30
 		lwz		r29,0x2c(r30)			#player data in r29
+    lwz MenuData,MenuDataPointer(EventData)
 
 		#Get P1
 		li		r3,0x0
@@ -3114,13 +3149,10 @@ b	exit
 
 		bl	GiveFullShields
 
-		#Run Option Window Code
-		addi	r3,r31,0xC
-		bl	ShieldDropWindowInfo
-		mflr	r4
-		bl	ShieldDropWindowText
-		mflr	r5
-		bl	OptionWindow
+		lbz r3,FacingDirectionToggled(MenuData)
+		cmpwi	r3,0			#Check If Toggled An Option
+		bne	ShieldDropReset
+    lbz r3,FacingDirectionToggled(MenuData)
 		cmpwi	r3,0			#Check If Toggled An Option
 		bne	ShieldDropReset
 
@@ -3172,7 +3204,7 @@ b	exit
 		li	r3,0x1			#Opposing Sides of Stage
 		bl	Randomize_LeftorRightSide
 		#Adjust Facing Direction Based on Preference
-		lbz	r3,FacingDirection(r31)
+		lbz	r3,FacingDirection(MenuData)
 		cmpwi	r3,0x1
 		bne	ShieldDropLoadState
 		#Invert P1 Facing Direction
@@ -3201,6 +3233,8 @@ b	exit
 		stw	r3,AerialThinkStruct(r31)
 
 		ShieldDropThinkExit:
+    mr  r3,MenuData
+    bl  ClearToggledOptions
 		bl	UpdateAllGFX
 		restore
 		blr
@@ -3319,7 +3353,12 @@ b	exit
 	bl	AttackOnShieldThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl	AttackOnShieldWindowInfo
+  mflr	r5
+  bl	AttackOnShieldWindowText
+  mflr	r6
+	bl	CreateEventThinkFunction
+
 
 	b	AttackOnShieldLoadExit
 
@@ -3328,17 +3367,21 @@ b	exit
 		## Attack On Shield THINK FUNCT ##
 		#########################
 
+    #Registers
+    .set MenuData,26
+    .set EventData,31
+
 		.set firstFrameFlag,0x0
 		.set timer,0x4
-		.set OptionWindowMemory,0x8
-		.set OoSOption,OptionWindowMemory+0x2
+		.set OoSOption,OptionMenuMemory+0x2 + 0x0
+  	.set OoSOptionToggled,OptionMenuToggled + 0x0
 
 		AttackOnShieldThink:
 		blrl
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
@@ -3351,6 +3394,7 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
+    lwz MenuData,MenuDataPointer(EventData)
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -3385,13 +3429,7 @@ b	exit
 
 		AttackOnShieldThinkSequence:
 
-		#Run Option Window Code
-			addi	r3,r31,OptionWindowMemory
-			bl	AttackOnShieldWindowInfo
-			mflr	r4
-			bl	AttackOnShieldWindowText
-			mflr	r5
-			bl	OptionWindow
+      lbz r3,OoSOptionToggled(MenuData)
 			cmpwi	r3,0
 			beq	AttackOnShieldNoOptionToggled
 		#Clear Last AS So CPU Doesnt Act Immediately
@@ -3413,7 +3451,7 @@ b	exit
 		cmpwi	r3,0x0
 		ble	AttackOnShieldShieldWait
 		#Branch To OoSThink
-		lbz	r3,OoSOption(r31)
+		lbz	r3,OoSOption(MenuData)
 		cmpwi	r3,0x1
 		beq	AttackOnShieldNairThink
 		cmpwi	r3,0x2
@@ -3518,7 +3556,7 @@ b	exit
 		cmpwi	r3,0xB5
 		bne	AttackOnShieldCheckToReset
 		#Input OoS Option
-		lbz	r3,OoSOption(r31)
+		lbz	r3,OoSOption(MenuData)
 		cmpwi 	r3,0x0
 		beq	AttackOnShieldInputGrab
 		cmpwi 	r3,0x1
@@ -3623,13 +3661,7 @@ b	exit
 		branchl	r12,0x80380580		#Get Random Number in Between
 		add	r3,r3,r23		#Add to Starting Coord
 		#Cast to Float
-		xoris	r3,r3,0x8000
-		lis	r0, 0x4330
-		lfd	f2, -0x6758 (rtoc)
-		stw	r0,0xF0(sp)
-		stw	r3,0xF4(sp)
-		lfd	f1,0xF0(sp)
-		fsubs	f1,f1,f2
+		bl  IntToFloat
 		lwz	r3,0x10(r31)		#P1 Backup
 		stfs	f1,0xB0(r3)		#P1 Backup X Pos
 		li	r3,0x1			#Opposing Sides of Stage
@@ -3642,6 +3674,8 @@ b	exit
 		b	AttackOnShieldThinkExit
 
 		AttackOnShieldThinkExit:
+    mr  r3,MenuData
+    bl  ClearToggledOptions
 		restore
 		blr
 
@@ -3813,7 +3847,8 @@ b	exit
 	bl	LedgetechThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  li  r5,0    #No Option Menu
+	bl	CreateEventThinkFunction
 
 	b	LedgetechLoadExit
 
@@ -4209,7 +4244,8 @@ b	exit
 	bl	AmsahTechThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  li  r5,0    #No Option Menu
+	bl	CreateEventThinkFunction
 
 	b	AmsahTechLoadExit
 
@@ -4513,7 +4549,11 @@ b	exit
 	bl	ComboTrainingThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  bl	ComboTrainingWindowInfo			#r4 = pointer to option info
+  mflr	r5
+  bl	ComboTrainingWindowText			#r5 = pointer to ASCII struct
+  mflr	r6
+	bl	CreateEventThinkFunction
 
 	bl	InitializeHighScore
 
@@ -4524,14 +4564,22 @@ b	exit
 		## Combo Training THINK FUNCT ##
 		#########################
 
-		.set EventState,0x8
-		.set OptionWindowMemory,0x30
-		.set DIBehavior,OptionWindowMemory+0x2
-		.set SDIBehavior,OptionWindowMemory+0x3
-		.set TechOption,OptionWindowMemory+0x4
-		.set PostHitstunAction,OptionWindowMemory+0x5
-		.set GrabMashout,OptionWindowMemory+0x6
+    #Registers
+    .set MenuData,26
+    .set EventData,31
 
+    #Offsets
+		.set EventState,0x8
+		.set DIBehavior,(OptionMenuMemory+0x2)+0x0
+		.set SDIBehavior,(OptionMenuMemory+0x2)+0x1
+		.set TechOption,(OptionMenuMemory+0x2)+0x2
+		.set PostHitstunAction,(OptionMenuMemory+0x2)+0x3
+		.set GrabMashout,(OptionMenuMemory+0x2)+0x4
+    .set DIBehaviorToggled,(OptionMenuToggled)+0x0
+		.set SDIBehaviorToggled,(OptionMenuToggled)+0x1
+		.set TechOptionToggled,(OptionMenuToggled)+0x2
+		.set PostHitstunActionToggled,(OptionMenuToggled)+0x3
+		.set GrabMashoutToggled,(OptionMenuToggled)+0x4
 
 		ComboTrainingThink:
 		blrl
@@ -4551,7 +4599,7 @@ b	exit
 		branchl		r12,0x80034110			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
-
+    lwz MenuData,MenuDataPointer(EventData)
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -4640,14 +4688,6 @@ b	exit
 		#L+DPad Controls CPU Percent
 		bl	DPadCPUPercent
 
-		#R+DPad Changes DI Behavior
-		addi	r3,r31,OptionWindowMemory		#r3 = pointer to option byte in memory
-		bl	ComboTrainingWindowInfo			#r4 = pointer to option info
-		mflr	r4
-		bl	ComboTrainingWindowText			#r5 = pointer to ASCII struct
-		mflr	r5
-		bl	RAndDPadChangesEventOption
-
 		bl	GiveFullShields
 
 		#Reset If Anyone Dies
@@ -4735,7 +4775,7 @@ b	exit
 
 		#When Grabbed
 		#Check Mash Out Behavior
-		lbz	r3,GrabMashout(r31)
+		lbz	r3,GrabMashout(MenuData)
 		cmpwi	r3,0x0
 		beq	ComboTrainingRandomDIAndTech_RandomMash
 		cmpwi	r3,0x1
@@ -4795,7 +4835,7 @@ b	exit
 			bne	ComboTrainingCheckToReset
 		#Check If Attack Was Strong
 		#DI Attack
-			lbz	r3,DIBehavior(r31)		#Get DI Behavior
+			lbz	r3,DIBehavior(MenuData)		#Get DI Behavior
 			cmpwi	r3,0x1		#Check If Slight In
 			bne	0x8
 			li	r3,0x0		#Override To Never Slight DI In Attacks
@@ -4803,7 +4843,7 @@ b	exit
 			li	r3,0x2
 			bl	ComboTrainingDecideStickAngle
 		#SDI Attack
-			lbz	r3,SDIBehavior(r31)		#Get SDI Behavior
+			lbz	r3,SDIBehavior(MenuData)		#Get SDI Behavior
 			cmpwi	r3,0x3		#No SDI
 			beq	ComboTrainingNoSDI
 			cmpwi	r3,0x2		#Always SDI
@@ -4811,7 +4851,7 @@ b	exit
 
 			li	r3,0x3
 			branchl	r12,HSD_Randi
-			lbz	r4,SDIBehavior(r31)		#Get SDI Behavior
+			lbz	r4,SDIBehavior(MenuData)		#Get SDI Behavior
 			cmpwi	r4,0x0
 			beq	ComboTraining33PercentSDI
 			cmpwi	r4,0x1
@@ -4849,7 +4889,7 @@ b	exit
 			cmpwi	r3,0xF3
 			bgt	ComboTrainingCheckToJumpOutOfHitstun
 		ComboTrainingInputDI:
-			lbz	r3,DIBehavior(r31)
+			lbz	r3,DIBehavior(MenuData)
 			bl	ComboTrainingDecideStickAngle
 			b	ComboTrainingCheckToReset
 
@@ -4885,7 +4925,7 @@ b	exit
 
 		#NOT IN HITSTUN
 		#Check Post Hitstun Behavior
-		lbz	r3,PostHitstunAction(r31)
+		lbz	r3,PostHitstunAction(MenuData)
 		cmpwi	r3,0x0
 		beq	ComboTrainingAirdodge
 		cmpwi	r3,0x1
@@ -4935,7 +4975,7 @@ b	exit
 		bne	ComboTrainingCheckToReset
 		#Grounded, No Hitstun Left, Become Invincible and Spotdodge
 			#Check Post Hitstun Behavior
-			lbz	r3,PostHitstunAction(r31)
+			lbz	r3,PostHitstunAction(MenuData)
 			cmpwi	r3,0x0
 			beq	ComboTrainingGroundedSpotdodge
 			cmpwi	r3,0x1
@@ -4964,7 +5004,7 @@ b	exit
 		ComboTrainingGetChanceToTech:
 
 		#INPUT A TECH WHEN IN AERIAL HITSTUN
-		lbz	r3,TechOption(r31)		#Get Tech Behavior
+		lbz	r3,TechOption(MenuData)		#Get Tech Behavior
 		cmpwi	r3,0x0		#Random Tech (Original Behavior)
 		beq	ComboTrainingRandomTech
 		cmpwi	r3,0x1		#Miss Tech
@@ -5099,7 +5139,7 @@ b	exit
 		ComboTrainingPostHitstun:
 
 		#Check Post Hitstun Behavior
-		lbz	r3,PostHitstunAction(r31)
+		lbz	r3,PostHitstunAction(MenuData)
 		cmpwi	r3,0x0
 		beq		ComboTrainingPostHitstun_AirdodgeSpotdodge
 		cmpwi	r3,0x1
@@ -5399,6 +5439,8 @@ b	exit
 		li	r3,0x0
 		stb	r3,EventState(r31)
 		ComboTrainingThinkExit:
+    mr  r3,MenuData
+    bl  ClearToggledOptions
 		bl	UpdateAllGFX
 		restore
 		blr
@@ -6093,7 +6135,8 @@ b	exit
 	bl	WaveshineSDIThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+  li  r5,0
+	bl	CreateEventThinkFunction
 
 /*
 	#Make Long Destination
@@ -6574,7 +6617,9 @@ b	exit
 	#Schedule Think
 	bl	Event16Think
 	mflr	r3
-	bl	CreateThinkFunction
+  li  r4,3
+  li  r5,0
+	bl	CreateEventThinkFunction
 
 	b	Event16LoadExit
 
@@ -6733,7 +6778,7 @@ b	exit
 	bl	Event16Think
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+	bl	CreateEventThinkFunction
 
 	b	Event16LoadExit
 
@@ -7186,7 +7231,7 @@ b	exit
 	bl	ShieldDropThink
 	mflr	r3
 	li	r4,3		#Priority (After Interrupt)
-	bl	CreateThinkFunction
+	bl	CreateEventThinkFunction
 
 	b	ShieldDropLoadExit
 
@@ -7597,7 +7642,7 @@ b	exit
 	#Schedule Think
 	bl	EggsThink
 	mflr	r3
-	bl	CreateThinkFunction
+	bl	CreateEventThinkFunction
 
 	b	EggsLoadExit
 
@@ -7658,55 +7703,188 @@ blrl
 ###########################
 ## Create Think Function ##
 ###########################
-CreateThinkFunction:
+CreateEventThinkFunction:
 
+#in
 #r3 = function to run each frame
 #r4 = priority
+#r5 = pointer to Window and Option Count
+#r6 = pointer to ASCII struct
+
+.set WindowOptionCount,31
+.set ASCIIStruct,30
+.set EventGObj,29
+.set EventData,28
+.set MenuGObj,27
+.set MenuData,26
+.set Priority,25
+.set Function,24
+
+#Offsets
+.set DataspaceSize,0x50
+.set MenuDataPointer,(DataspaceSize-0x4)
+.set EventDataPointer,(DataspaceSize-0x4)
+.set WindowOptionCountPointer,0x0
+.set ASCIIStructPointer,0x4
+.set OptionMenuMemory,0x8
 
 backup
 
-mr	r31,r3
-mr	r29,r4
+mr	Function,r3
+mr	Priority,r4
+mr  WindowOptionCount,r5
+mr  ASCIIStruct,r6
 
-#Create Entity
-li	r3,6		#Entity Type
-li	r4,7		#On-Pause Function
-li	r5,80
-branchl	r12,0x803901f0
+########################
+## Create Event Think ##
+########################
+
+#Create GObj
+  li	r3,6		#GObj Type
+  li	r4,7		#On-Pause Function
+  li	r5,80
+  branchl	r12,0x803901f0
 
 #Backup Allocation
-mr	r30,r3
+  mr	EventGObj,r3
 
 #Schedule Task
-mr	r4,r31
-mr	r5,r29
-branchl	r12,0x8038fd54
+  mr	r4,Function
+  mr	r5,Priority
+  branchl	r12,0x8038fd54
 
 #Give Task Some Data Space
-li	r3,0x50		#50 bytes of space
-branchl	r12,0x8037f1e4		#HSD_MemAlloc
-mr	r29,r3
+  li	r3,DataspaceSize		#50 bytes of space
+  branchl	r12,0x8037f1e4		#HSD_MemAlloc
+  mr	EventData,r3
 
-#Initalize Entity
-mr	r6,r3
-mr	r3,r30		#task space
-li	r4,0x0		#typedef
-load	r5,0x8037f1b0		#destructor (HSD_Free)
-branchl	r12,0x80390b68		#Create Data Block
+#Initalize GObj
+  mr	r6,r3
+  mr	r3,EventGObj		#task space
+  li	r4,0x0		#typedef
+  load	r5,0x8037f1b0		#destructor (HSD_Free)
+  branchl	r12,0x80390b68		#Create Data Block
 
 #Zero Dataspace
-mr	r3,r29
-li	r4,0x50
-branchl	r12,0x8000c160		#zero length
+  mr	r3,EventData
+  li	r4,DataspaceSize
+  branchl	r12,0x8000c160		#zero length
 
+##############################
+## Create Option Menu Think ##
+##############################
+
+#Check if Option Menu is enabled for this event
+  cmpwi WindowOptionCount,0
+  beq CreateEventThinkFunction_Exit
+
+#Create GObj
+  li	r3,6		#GObj Type
+  li	r4,0		#On-Pause Function
+  li	r5,80
+  branchl	r12,0x803901f0
+
+#Backup Allocation
+  mr	MenuGObj,r3
+
+#Schedule Task
+  bl  OptionMenuThink
+  mflr r4
+  li	r5,22          #Last Function to Run
+  branchl	r12,0x8038fd54
+
+#Give Task Some Data Space
+  li	r3,DataspaceSize		#50 bytes of space
+  branchl	r12,0x8037f1e4		#HSD_MemAlloc
+  mr	MenuData,r3
+
+#Initalize GObj
+  mr	r6,MenuData
+  mr	r3,MenuGObj		#task space
+  li	r4,0x0	    	#typedef
+  load	r5,0x8037f1b0		#destructor (HSD_Free)
+  branchl	r12,0x80390b68		#Create Data Block
+
+#Zero Dataspace
+  mr	r3,MenuData
+  li	r4,DataspaceSize
+  branchl	r12,0x8000c160		#zero length
+
+#Store Option Menu info to Dataspace
+  stw WindowOptionCount,WindowOptionCountPointer(MenuData)
+  stw ASCIIStruct,ASCIIStructPointer(MenuData)
+
+#Store Pointers to Each Other
+  stw MenuData,MenuDataPointer(EventData)
+  stw EventData,EventDataPointer(MenuData)
+
+CreateEventThinkFunction_Exit:
 restore
 blr
 
+####################################
+## Create Option Menu When Paused ##
+####################################
 
+OptionMenuThink:
+blrl
 
+.set MenuData,31
+.set OptionMenuToggled,0x28
 
+backup
 
+#Load Data Pointer
+  lwz MenuData,0x2C(r3)
 
+#Check If Paused
+  li  r3,1
+  branchl r12,0x801a45e8
+  cmpwi r3,0x2
+  bne OptionMenuThink_Exit
+
+#Run OptionThink Code
+OptionMenuThink_CheckInputs:
+  addi r3,MenuData,OptionMenuMemory
+  lwz r4,WindowOptionCountPointer(MenuData)
+  lwz r5,ASCIIStructPointer(MenuData)
+  bl	OptionWindow
+
+#Store Modified Option Bool
+  cmpwi r3,0
+  beq OptionMenuThink_Exit
+  addi r5,MenuData,OptionMenuToggled
+  stbx r3,r4,r5
+
+OptionMenuThink_Exit:
+restore
+blr
+
+##########################
+## Clear Option Toggled ##
+##########################
+
+ClearToggledOptions:
+
+#in
+#r3 = Menu Data
+
+#Get Amount of Options
+  lwz r4,WindowOptionCountPointer(r3)
+  lbz r4,0x0(r4)
+
+#Loop Through All Data
+  addi r3,r3,OptionMenuToggled
+  li  r5,0
+
+ClearToggledOptions_Loop:
+  stbx r5,r3,r4     #Zero Byte
+  subi r4,r4,1
+  cmpwi r4,0
+  bge ClearToggledOptions_Loop
+
+ClearToggledOptions_Exit:
+  blr
 
 ######################
 ## Save States Main ##
@@ -8415,13 +8593,15 @@ cmpwi	r24,2		#Check If Over 3
 ble	0x8
 li	r24,2		#Make 3
 
-#Check For R Being Held
-lhz	r3,0x662(r27)			#Ignore Top Half of Input Bitmap
-cmpwi	r3,0x20
-bne	RAndDPadChangesEventOption_Exit
+#Get Pausing Player's Inputs
+load r3,0x8046b6a0
+lbz r3,0x1(r3)
+load r4,0x804c1fac
+mulli r3,r3,68
+add r3,r3,r4
+lwz r3,0x8(r3)
 
 #Check For DPad Up And Down
-lhz	r3,0x66A(r27)			#Ignore Top Half of Input Bitmap
 cmpwi	r3,0x04
 beq	RAndDPadChangesEventOption_CursorDown
 cmpwi	r3,0x08
@@ -8434,7 +8614,7 @@ RAndDPadChangesEventOption_CursorUp:
 	subi	r3,r3,0x1		#Subtract by 1
 	stb	r3,0x0(OptionWindowMemory)
 	cmpwi	r3,0x0
-	bge	RAndDPadChangesEventOption_DisplayWindow
+	bge	RAndDPadChangesEventOption_PlayScrollSFX
 #Cursor Stays at the top of the screen
 	li	r3,0
 	stb	r3,0x0(OptionWindowMemory)
@@ -8450,6 +8630,7 @@ RAndDPadChangesEventOption_CursorUp:
 		lbz	r4,0x1(OptionWindowMemory)
 		subi	r4,r4,1
 		stb	r4,0x1(OptionWindowMemory)
+    b RAndDPadChangesEventOption_PlayScrollSFX
 
 b	RAndDPadChangesEventOption_DisplayWindow
 
@@ -8459,7 +8640,7 @@ RAndDPadChangesEventOption_CursorDown:
 	addi	r3,r3,0x1		#Add 1
 	stb	r3,0x0(OptionWindowMemory)
 	cmpw	r3,r24
-	ble	RAndDPadChangesEventOption_DisplayWindow
+	ble	RAndDPadChangesEventOption_PlayScrollSFX
 #Cursor Stays at the Bottom of the Screen
 	stb	r24,0x0(OptionWindowMemory)
 #Check To Scroll Down
@@ -8477,16 +8658,15 @@ RAndDPadChangesEventOption_CursorDown:
 		addi	r4,r4,1
 		stb	r4,0x1(OptionWindowMemory)
 
-b	RAndDPadChangesEventOption_DisplayWindow
+b	RAndDPadChangesEventOption_PlayScrollSFX
 
 #Check For DPad Left And Right
 RAndDPadChangesEventOption_CheckDPadLeftAndRight:
-lhz	r3,0x66A(r27)			#Ignore Top Half of Input Bitmap
 cmpwi	r3,0x02
 beq	RAndDPadChangesEventOption_Increment
 cmpwi	r3,0x01
 beq	RAndDPadChangesEventOption_Decrement
-b	RAndDPadChangesEventOption_Exit
+b	RAndDPadChangesEventOption_DisplayWindow
 
 RAndDPadChangesEventOption_Increment:
 #Get Current Window ID (cursor + scroll)
@@ -8504,11 +8684,11 @@ stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 subi	r5,r5,1
 lbzx	r4,r5,OptionTextInfo		#Get Window's Option Byte Max Value
 cmpw	r3,r4
-ble	RAndDPadChangesEventOption_DisplayWindow
+ble	RAndDPadChangesEventOption_PlayScrollSFX
 li	r3,0x0
 addi	r5,r5,1
 stbx	r3,r5,OptionWindowMemory		#Get New Option Byte Value
-b	RAndDPadChangesEventOption_DisplayWindow
+b	RAndDPadChangesEventOption_PlayScrollSFX
 
 RAndDPadChangesEventOption_Decrement:
 #Get Current Window ID (cursor + scroll)
@@ -8524,21 +8704,23 @@ lbzx	r3,r5,OptionWindowMemory		#Get Current Option Byte
 subi	r3,r3,0x1
 stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 cmpwi	r3,0x0
-bge	RAndDPadChangesEventOption_DisplayWindow
+bge	RAndDPadChangesEventOption_PlayScrollSFX
 subi	r5,r5,1
 lbzx	r3,r5,OptionTextInfo		#Get Window's Option Byte Max Value
 addi	r5,r5,1
 stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
-b	RAndDPadChangesEventOption_DisplayWindow
+b	RAndDPadChangesEventOption_PlayScrollSFX
 
-
+RAndDPadChangesEventOption_PlayScrollSFX:
+li  r3,2
+branchl r12,0x80024030
 
 RAndDPadChangesEventOption_DisplayWindow:
 #Display Text For The New Option Value
 mr	r3,r27			#p1 (no offsetting window)
-li	r4,120			#text timeout
+li	r4,1			  #text timeout
 li	r5,0x2			#window instance #3
-li	r6,0			#window ID #3
+li	r6,0			  #window ID #3
 branchl	r12,TextCreateFunction		#create text custom function
 mr	text,r3			#backup text pointer
 

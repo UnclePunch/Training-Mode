@@ -402,12 +402,12 @@ blrl
 
 #Area 3 (Event Popup)
 .long 0x00000000 #Whether to Use HUD Location, 0 = no
-.long 0xc1980000 #Y Value
-.long 0x41980000 #X Value
-.long 0x3D23D70A	#Text Size
-.long 0xC3CD0000 #background Y position
-.long 0x41480000 #background X stretch
-.long 0x41E00000 #background Y stretch
+.float -15 #Y Value
+.float 19 #X Value
+.float 0.04	#Canvas Size
+.float -410 #background Y position
+.float 13.5 #background X stretch
+.float 28 #background Y stretch
 
 
 ##############################
