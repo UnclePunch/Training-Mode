@@ -1140,6 +1140,28 @@ b	exit
 		branchl	r12,0x801c53ec
 		EggsSkipFreePracticeCheck:
 
+    #Check If Toggled
+      lbz r3,DamageThresholdToggled(MenuData)
+		  cmpwi	r3,0x0
+		  beq	EggsSkipToggleCheck
+		#Check If Already Free Practice
+		  lbz	r3,0x5(r31)
+		  cmpwi	r3,0x0
+		  bne	EggsSkipToggleCheck
+		#Make Free Practice
+		  li	r3,0x1
+		  stb	r3,0x5(r31)
+		#Timer Now Counts Up
+		  load	r3,0x8046b6a0
+		  lbz	r0,0x24C8(r3)
+		  li	r4,1
+		  rlwimi	r0,r4,0,31,31
+		  stb	r0,0x24C8(r3)
+		#Play Sound To Indicate
+		  li	r3,0x82
+		  branchl	r12,0x801c53ec
+    EggsSkipToggleCheck:
+
 		#Check For First Frame
 		lbz	r3,0x4(r31)
 		cmpwi	r3,0x0
@@ -1158,27 +1180,6 @@ b	exit
 			li	r3,0x1
 			stb	r3,0x4(r31)
 			EggsNotFirstFrame:
-
-		#Check If Toggled
-      lbz r3,DamageThresholdToggled(MenuData)
-		  cmpwi	r3,0x0
-		  beq	EggsTargetCheck
-		#Check If Already Free Practice
-		  lbz	r3,0x5(r31)
-		  cmpwi	r3,0x0
-		  bne	EggsTargetCheck
-		#Make Free Practice
-		  li	r3,0x1
-		  stb	r3,0x5(r31)
-		#Timer Now Counts Up
-		  load	r3,0x8046b6a0
-		  lbz	r0,0x24C8(r3)
-		  li	r4,1
-		  rlwimi	r0,r4,0,31,31
-		  stb	r0,0x24C8(r3)
-		#Play Sound To Indicate
-		  li	r3,0x82
-		  branchl	r12,0x801c53ec
 
 		#Check If Target is Spawned
 		EggsTargetCheck:
