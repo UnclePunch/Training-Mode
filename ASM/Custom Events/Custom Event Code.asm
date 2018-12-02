@@ -779,7 +779,7 @@ b	exit
 		## PlaceAboveLedge ##
 		#####################
 		Ledgedash_PlaceOnLedge:
-		backup
+    backup
 
 		#Backup Ledge Choice (0 = Left, 1 = Right)
 		mr	r20,r3
@@ -3908,12 +3908,19 @@ b	exit
 				stw	r3,0xB0(r27)
 				lwz	r3,0x8(r20)
 				stw	r3,0xB4(r27)
-				#mr	r3,r28
-				#bl  UpdatePosition
+      #Remove Input Flag That Messes Up Analog Timer Restore
+        lbz	r0, 0x221D (r27)
+        li	r3,0x1
+        rlwimi	r0,r3,4,27,27
+        stb	r0,0x221D (r27)
 			#Overwrite Physics Behavior to Stay Still
 				bl		BlrFunctionPointer
 				mflr		r3
 				stw		r3,0x21A4(r27)
+      #Store Custom RebirthWait Interrupt
+    		bl	Custom_InterruptRebirthWait
+    		mflr	r3
+    		stw		r3,0x219C(r27)
 
 			#P1 Has 90%
 			li	r3,90
@@ -4118,16 +4125,16 @@ b	exit
 		bne	LedgetechThinkExit	#Exit If Not
 
 		LedgetechRestoreState:
-		#Randomize Side
+	#Randomize Side
 		li	r3,0x0			#Same Sides of Stage
 		bl	Randomize_LeftorRightSide
-		#Restore State
+	#Restore State
 		mr	r3,r31
 		bl	SaveState_Load
-		#Enter P1 Into Rebirth Again
+	#Enter P1 Into Rebirth Again
 		mr		r3,r28
 		branchl		r12,0x800d4ff4
-		#Store Facing Direction and Location and Store Blr as Physics
+	#Store Facing Direction and Location and Store Blr as Physics
 		lwz		r4,0x10(r31)
 		lwz		r3,0x2C(r4)
 		stw		r3,0x2C(r27)
@@ -4140,6 +4147,10 @@ b	exit
 		bl		BlrFunctionPointer
 		mflr		r3
 		stw		r3,0x21A4(r27)
+  #Store Custom RebirthWait Interrupt
+		bl	Custom_InterruptRebirthWait
+		mflr	r3
+		stw		r3,0x219C(r27)
 
 		#Set Timer
 		li	r3,0

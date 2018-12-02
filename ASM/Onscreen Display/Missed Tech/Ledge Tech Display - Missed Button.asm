@@ -94,6 +94,7 @@ backup
 	#CHECK IF FAILED A TECH
 	cmpwi	r20,0x0
 	beq	FailedTech
+	b	Moonwalk_Exit
 
 	FailedTech:
 
