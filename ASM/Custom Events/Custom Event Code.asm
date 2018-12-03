@@ -3776,10 +3776,6 @@ blr
 #########################
 
 Ledgetech:
-#STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
-
 #GET RANDOM TOP TIER
 #li	r3,10		#Get Random Top Tier
 #branchl	r12,0x80380580
@@ -3861,22 +3857,29 @@ b	exit
 
 		LedgetechThink:
 		blrl
+
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
+    .set EventData,31
+
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
 		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
+		mr		P2GObj,r3			#player block in r30
+		lwz		P2Data,0x2c(P2GObj)			#player data in r29
 
 		#Get P1
 		li		r3,0x0
 		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
+		mr		P1GObj,r3			#player block in r28
+		lwz		P1Data,0x2c(P1GObj)			#player data in r27
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -3885,50 +3888,25 @@ b	exit
 		cmpwi	r3,0x0
 		beq	LedgetechThinkMain
 
-			#Set Facing Directions (Right Ledge First)
-			lis		r3,0x3F80
-			stw		r3,0x2C(r29)
-			lis		r3,0xBF80
-			stw		r3,0x2C(r27)
-			#Init Positions
-			bl		Ledgetech_Floats
-			mflr		r20
-			mr		r3,r20
-			bl		InitializePositions
-
-			#P1 Enters RebirthWait
-				mr		r3,r28
-				branchl		r12,0x800d4ff4
-				lis		r3,0xBF80
-				stw		r3,0x2C(r27)
-				mr		r3,r28
-				branchl		r12,0x800d5600
-			#Move P1 Again
-				lwz	r3,0x0(r20)
-				stw	r3,0xB0(r27)
-				lwz	r3,0x8(r20)
-				stw	r3,0xB4(r27)
-      #Remove Input Flag That Messes Up Analog Timer Restore
-        lbz	r0, 0x221D (r27)
-        li	r3,0x1
-        rlwimi	r0,r3,4,27,27
-        stb	r0,0x221D (r27)
-			#Overwrite Physics Behavior to Stay Still
-				bl		BlrFunctionPointer
-				mflr		r3
-				stw		r3,0x21A4(r27)
-      #Store Custom RebirthWait Interrupt
-    		bl	Custom_InterruptRebirthWait
-    		mflr	r3
-    		stw		r3,0x219C(r27)
-
-			#P1 Has 90%
+    #Remove Input Flag That Messes Up Analog Timer Restore
+      lbz	r0, 0x221D (r27)
+      li	r3,0x1
+      rlwimi	r0,r3,4,27,27
+      stb	r0,0x221D (r27)
+    #Random Side of Stage
+      li  r3,2
+      branchl r12,HSD_Randi
+      bl  Ledgetech_InitializePositions
+		#P1 Has 90%
 			li	r3,90
 			load	r4,0x80453080		#P1 Static Block
 			sth	r3,0x60(r4)		#Store Percent Int To Display Value
 			lis	r3,0x42B4
 			stw	r3,0x1830(r27)
-			#Save State
+    #Always Hold Down (Crouch Cancel)
+      li	r3,-127
+      stb	r3,0x1A8D(P2Data)
+		#Save State
 			mr		r3,r31
 			bl		SaveState_Save
 
@@ -4014,7 +3992,7 @@ b	exit
 			b	Ledgetech_UpdateLedgetechFlags
 		LedgetechWallTeched:
 			#Extend Timer
-				li	r3,120
+				li	r3,180
 				stw	r3,0x4(r31)
 			#Set Tech Bool
 				li	r3,1
@@ -4125,32 +4103,13 @@ b	exit
 		bne	LedgetechThinkExit	#Exit If Not
 
 		LedgetechRestoreState:
-	#Randomize Side
-		li	r3,0x0			#Same Sides of Stage
-		bl	Randomize_LeftorRightSide
-	#Restore State
-		mr	r3,r31
-		bl	SaveState_Load
-	#Enter P1 Into Rebirth Again
-		mr		r3,r28
-		branchl		r12,0x800d4ff4
-	#Store Facing Direction and Location and Store Blr as Physics
-		lwz		r4,0x10(r31)
-		lwz		r3,0x2C(r4)
-		stw		r3,0x2C(r27)
-		lwz		r3,0xB0(r4)
-		stw		r3,0xB0(r27)
-		lwz		r3,0xB4(r4)
-		stw		r3,0xB4(r27)
-		mr		r3,r28
-		branchl		r12,0x800d5600
-		bl		BlrFunctionPointer
-		mflr		r3
-		stw		r3,0x21A4(r27)
-  #Store Custom RebirthWait Interrupt
-		bl	Custom_InterruptRebirthWait
-		mflr	r3
-		stw		r3,0x219C(r27)
+	  #Restore State
+    	mr	r3,r31
+    	bl	SaveState_Load
+    #Random Side of Stage
+      li  r3,2
+      branchl r12,HSD_Randi
+      bl  Ledgetech_InitializePositions
 
 		#Set Timer
 		li	r3,0
@@ -4183,6 +4142,115 @@ blrl
 
 BlrFunctionPointer:
 blrl
+blr
+
+#################################
+
+Ledgetech_InitializePositions:
+backup
+
+.set LedgeSide,20
+.set LedgeID,21
+
+  #Backup Ledge Choice (0 = Left, 1 = Right)
+    mr	LedgeSide,r3
+
+  #Get Stage's Ledge IDs
+    lwz		r3,-0x6CB8 (r13)			#External Stage ID
+    bl		LedgedashCliffIDs
+    mflr  r4
+    mulli	r3,r3,0x2
+    lhzx	r3,r3,r4
+  #Get Requested Ledge
+  	cmpwi LedgeSide,0x0
+  	beq	Ledgetech_InitializePositions_GetLeftLedgeID
+
+  Ledgetech_InitializePositions_GetRightLedgeID:
+    rlwinm	LedgeID,r3,0,24,31
+   #Change Facing Direction
+  	li	r3,-1
+  	bl	IntToFloat
+  	stfs	f1,0x2C(P1Data)
+    li	r3,1
+    bl	IntToFloat
+    stfs	f1,0x2C(P2Data)
+  #Get Ledge Coords (0x80 = X, 0x84 = Y)
+    mr  r3,LedgeID
+    addi	r4,sp,0x80
+    branchl	r12,0x80053da4
+  	b	Ledgetech_InitializePositions_StorePosition
+
+  Ledgetech_InitializePositions_GetLeftLedgeID:
+  	rlwinm	LedgeID,r3,24,24,31
+  #Change Facing Direction
+  	li	r3,1
+  	bl	IntToFloat
+  	stfs	f1,0x2C(P1Data)
+    li	r3,-1
+    bl	IntToFloat
+    stfs	f1,0x2C(P2Data)
+  #Get Ledge Coords (0x80 = X, 0x84 = Y)
+    mr  r3,LedgeID
+    addi	r4,sp,0x80
+    branchl	r12,0x80053ecc
+  	b	Ledgetech_InitializePositions_StorePosition
+
+  Ledgetech_InitializePositions_StorePosition:
+  #Place P2 a few Mm behind it
+    li  r3,10
+    bl  IntToFloat
+    lfs f2,0x2C(P2Data)
+    fmuls f1,f1,f2
+    lfs f2,0x80(sp)
+    fsubs f1,f2,f1
+    stfs f1,0xB0(P2Data)
+    lfs f1,0x84(sp)
+    stfs f1,0xB4(P2Data)
+  #Check for Ground?
+  #Enter SquatWait
+    mr r3,P2GObj
+    branchl r12,0x800d62c4
+  #Update Position
+    mr  r3,P2GObj
+    bl  UpdatePosition
+  #Check For Ground
+    mr r3,P2GObj
+    branchl r12,0x80082a68
+  #Set Grounded
+    mr r3,P2Data
+    branchl r12,0x8007d7fc
+
+  #Enter Rebirth
+    lwz	r26,0x2C(P1Data)
+    mr		r3,P1GObj
+    branchl		r12,0x800d4ff4
+    stw	r26,0x2C(P1Data)
+  #Place P1 a few Mm in front of it
+    li  r3,60
+    bl  IntToFloat
+    lfs f2,0x2C(P1Data)
+    fmuls f1,f1,f2
+    lfs f2,0x80(sp)
+    fsubs f1,f2,f1
+    stfs f1,0xB0(P1Data)
+    lfs f1,0x84(sp)
+    stfs f1,0xB4(P1Data)
+  #Enter RebirthWait
+    mr		r3,P1GObj
+    branchl		r12,0x800d5600
+  #Update Position
+    mr  r3,P1GObj
+    bl  UpdatePosition
+  #Store Blr as Physics
+		bl		BlrFunctionPointer
+		mflr		r3
+		stw		r3,0x21A4(P1Data)
+	#Store Custom RebirthWait Interrupt
+		bl	Custom_InterruptRebirthWait
+		mflr	r3
+		stw		r3,0x219C(P1Data)
+
+restore
 blr
 
 #################################

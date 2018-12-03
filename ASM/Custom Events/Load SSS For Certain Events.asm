@@ -82,8 +82,8 @@ b	Loop
 
 SSSEvents:
 blrl
-.long 0x0304050D
-.long 0xFFFFFFFF
+.long 0x0304050B
+.long 0x0DFFFFFF
 
 SSS:
 #Store SSS as Next Scene
