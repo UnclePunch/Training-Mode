@@ -248,6 +248,10 @@ b	exit
 
 		LCancelThink:
 		blrl
+
+    .set P1GObj,28
+    .set P2GObj,30
+
 		backup
 
 		lwz	r31,0x2c(r3)
@@ -267,18 +271,10 @@ b	exit
 		beq	LCancelNotFirstFrame
 
 
-			#Init Facing Directions
-			lis	r3,0x3f80
-			stw	r3,0x2C(r27)
-			lis	r3,0xbf80
-			stw	r3,0x2C(r29)
+    #Init Positions
+      bl  PlacePlayersCenterStage
 
-			#Init Positions
-			bl	ComboTraining_Floats
-			mflr	r3
-			bl	InitializePositions
-
-			#Check P2-P4 Is Using the Event
+		#Check if P2-P4 Is Using the Event
 			lbz	r3, -0x5108 (r13)
 			cmpwi	r3,0x0
 			beq	LCancelNotFirstFrame
@@ -288,6 +284,7 @@ b	exit
 
 		LCancelNotFirstFrame:
 
+    bl  StoreCPUTypeAndZeroInputs
 
 		#Check For P2 Dpad Down Press
 		lwz	r3,0x668(r29)		#Inputs
@@ -4688,15 +4685,7 @@ b	exit
 		cmpwi	r3,0x0
 		beq	ComboTrainingThinkMain
 
-			#Init Facing Directions
-			lis	r3,0x3f80
-			stw	r3,0x2C(r27)
-			lis	r3,0xbf80
-			stw	r3,0x2C(r29)
-			#Initlize Positions
-			bl	ComboTraining_Floats
-			mflr	r3
-			bl	InitializePositions
+      bl  PlacePlayersCenterStage
 			#Remove Input Flag That Messes Up Analog Timer Restore
 			lbz	r0, 0x221D (r27)
 			li	r3,0x1
@@ -4774,11 +4763,6 @@ b	exit
 		bl	IsAnyoneDead
 		cmpwi	r3,0x0
 		bne	ComboTrainingRestoreState
-
-
-		#Get Floats
-		bl	ComboTraining_Floats
-		mflr	r21
 
 
 	############################
@@ -5527,13 +5511,26 @@ b	exit
 
 #################################
 
-ComboTraining_Floats:
+ComboTraining_StartingGroundIDs:
 blrl
-.long 0xC0C00000		#P1 X Position
-.long 0x40C00000		#P2 X Position
-.long 0x38d1b717		#FD Floor Y Coord
-.long 0x38d1b717		#FD Floor Y Coord
-
+#Ground IDs to start on
+.long 0xFFFFFFFF #Dummy, TEST
+.long 0x00050022 #FoD, Pokemon Stadium
+.long 0x00050037 #Peach's Castle, Kongo Jungle
+.long 0x000B0012 #Brinstar, Corneria
+.long 0x00030019 #Yoshi's Story, Onett
+.long 0x00000048 #Mute City, Rainbow Cruise
+.long 0x00000024 #Jungle Japes, Great Bay
+.long 0x00190007 #Hyrule Temple, Brinstar Depths
+.long 0x000E0026 #Yoshi's Island, Green Greens
+.long 0x00040003 #Fourside, MKI
+.long 0x00040000 #MKII, Akaneia
+.long 0x00010105 #Venom, PokeFloats
+.long 0x00D9015B #Big Blue, Icicle Mountain
+.long 0x00000064 #Icetop, Flatzone
+.long 0x00040009 #Dream Land, Yoshis Island 64
+.long 0x000b0001 #Kongo Jungle 64, Battlefield
+.long 0x00010000 #Final Destination
 #################################
 
 ComboTrainingDecideStickAngle:
@@ -8233,6 +8230,10 @@ SaveState_Load:
 		mr		r3,r25
 		bl  UpdatePosition
 
+    #Check For Ground
+    mr r3,r25
+    branchl r12,0x80082a68
+
     #Remove Respawn Platform JObj Pointer and Think Function
     li  r3,0
     stw r3,0x20A0(r26)
@@ -10296,5 +10297,162 @@ blr
 
 #####################################
 
+GetGroundCenter:
+
+#in
+#r3 = Ground ID
+
+#Get Corner IDs from Ground ID
+mulli r0,r3,8
+lwz	r5, -0x51E4 (r13)
+lwzx r5,r5,r0
+lhz r3,0x0(r5)
+lhz r4,0x2(r5)
+
+#Get Coordinates
+lwz r5, -0x51E8 (r13)
+mulli r3,r3,24
+addi  r3,r3,8
+add  r3,r3,r5
+lfs f1,0x0(r3)    #Left X
+lfs f2,0x4(r3)    #Left Y
+mulli r4,r4,24
+addi  r4,r4,8
+add  r4,r4,r5
+lfs f3,0x0(r4)    #Right X
+lfs f4,0x4(r4)    #Right Y
+
+#Get Center Value
+lfs f5,-0x4df0(rtoc)    #2f
+fadds f1,f1,f3
+fdivs f1,f1,f5          #Center X
+fadds f2,f2,f4
+fdivs f2,f2,f5          #Center Y
+
+blr
+
+####################################
+
+PlacePlayersCenterStage:
+
+#in
+#none
+
+backup
+
+#Loop through players 1 and 2
+  .set count,27
+  .set player,26
+  .set playerdata,25
+  .set subchar,24
+  .set subchardata,23
+
+  li  count,0
+
+PlacePlayersCenterStage_Loop:
+#Get Player GObj
+  mr  r3,r27
+  branchl r12,0x80034110
+#Check if exists
+  cmpwi r3,0x0
+  beq PlacePlayersCenterStage_IncLoop
+  mr  player,r3
+  lwz playerdata,0x2C(player)
+#Get Subchar Bool
+  bl CheckIfPlayerHasAFollower
+  mr  subchar,r3
+  mr  subchardata,r4
+#Call function to do heavy lifting
+  mr  r3,player
+  bl  PlacePlayersCenterStage_DoStuff
+#Check if subchar exits
+  cmpwi subchar,0
+  beq PlacePlayersCenterStage_IncLoop
+#Call function for this character
+  mr  r3,subchar
+  bl  PlacePlayersCenterStage_DoStuff
+#Next Player
+PlacePlayersCenterStage_IncLoop:
+  addi count,count,1
+  cmpwi count,6
+  blt PlacePlayersCenterStage_Loop
+  b PlacePlayersCenterStage_Exit
+
+#*****************************#
+PlacePlayersCenterStage_DoStuff:
+#in
+#r3 = player
+
+.set player,31
+.set playerdata,30
+.set constants,29
+
+backup
+
+#Get Pointers
+  mr  player,r3
+  lwz playerdata,0x2C(r3)
+
+#Get Constants
+  bl  PlacePlayersCenterStage_Constants
+  mflr constants
+  lbz r3,0xC(playerdata)
+  mulli r3,r3,0x2
+  add constants,constants,r3
+
+#Get Stage's Ground ID
+  lwz		r3,-0x6CB8 (r13)			#External Stage ID
+  bl		ComboTraining_StartingGroundIDs
+  mflr  r4
+  mulli	r3,r3,0x2
+  lhzx	r3,r3,r4
+  bl  GetGroundCenter
+  fmr f30,f1
+  fmr f31,f2
+
+#Facing Directions
+  lbz r3,0x0(constants) #This players facing direction
+  extsb r3,r3
+  bl  IntToFloat
+  stfs f1,0x2C(playerdata)
+
+#Move Players
+  lbz r3,0x1(constants) #This players X offset
+  extsb r3,r3
+  bl  IntToFloat
+  fadds f2,f1,f30   #Player X = X+6
+  stfs f2,0xB0(playerdata)
+  stfs f31,0xB4(playerdata)
+
+#Enter into Wait
+  mr  r3,player
+  branchl r12,0x8008a348
+#Update Position
+  mr  r3,player
+  bl  UpdatePosition
+#Check For Ground
+  mr r3,player
+  branchl r12,0x80082a68
+#Set Grounded
+  mr r3,playerdata
+  branchl r12,0x8007d7fc
+
+PlacePlayersCenterStage_DoStuff_Exit:
+restore
+blr
+
+#*********#
+
+PlacePlayersCenterStage_Constants:
+blrl
+.byte 1,-6,-1,6
+.align 2
+#*********#
+
+PlacePlayersCenterStage_Exit:
+restore
+blr
+
+#####################################
 exit:
 li	r0, 3
