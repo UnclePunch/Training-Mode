@@ -284,8 +284,6 @@ b	exit
 
 		LCancelNotFirstFrame:
 
-    bl  StoreCPUTypeAndZeroInputs
-
 		#Check For P2 Dpad Down Press
 		lwz	r3,0x668(r29)		#Inputs
 		rlwinm.	r0,r3,0,29,29
@@ -10399,6 +10397,10 @@ backup
   lbz r3,0xC(playerdata)
   mulli r3,r3,0x2
   add constants,constants,r3
+
+#Initialize Player Data
+  mr  r3,player
+  branchl r12,0x80068354
 
 #Get Stage's Ground ID
   lwz		r3,-0x6CB8 (r13)			#External Stage ID
