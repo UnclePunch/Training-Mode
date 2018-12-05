@@ -63,6 +63,7 @@ fsubs    \reg2,\reg2,f16
 .set textprop,28
 .set hitbool,27
 
+.set VersionString,0x8040a58c
 
 #############################
 ## OS Report Tweet Message ##
@@ -103,7 +104,7 @@ bctrl
 #OSReport Mod Version
 bl	Version
 mflr	r3
-load	r4,0x80228a28			#Mod Version
+load	r4,VersionString		#Mod Version
 mtctr	r20
 bctrl
 

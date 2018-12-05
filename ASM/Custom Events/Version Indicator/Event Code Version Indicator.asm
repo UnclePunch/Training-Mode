@@ -55,6 +55,8 @@ fsubs    \reg2,\reg2,f16
 .set text,31
 .set textproperties,30
 
+.set VersionString,0x8040a58c
+
 backup
 
 ########################
@@ -105,7 +107,7 @@ backup
 	lfs 	f1,VersionX(textproperties) 		#X offset of text
 	lfs 	f2,VersionY(textproperties)	  	#Y offset of text
 	mr 	r3,text		#struct pointer
-	load	r4,0x80228a28		#pointer to ASCII
+	load	r4,VersionString		#pointer to ASCII
 	branchl r14,0x803a6b98
 
 ##################

@@ -25,7 +25,7 @@
         },
         {
           "type": "replaceCodeBlock",
-          "address": "80228a28",
+          "address": "8040a58c",
           "sourceFile": "..\\ASM\\Misc\\Store Version Number.asm",
           "annotation": "Version Number"
         },
