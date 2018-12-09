@@ -728,10 +728,10 @@ b	exit
 			branchl	r12,0x80053da4
 		Ledgedash_LoadState_RandomizePosition:
 		#Get Random Distance from this
-			.set RandomDistanceMinX,20
-			.set RandomDistanceMaxX,40
-			.set RandomDistanceMinY,0
-			.set RandomDistanceMaxY,40
+			.set RandomDistanceMinX,30
+			.set RandomDistanceMaxX,55
+			.set RandomDistanceMinY,-30
+			.set RandomDistanceMaxY,30
 			li	r3,RandomDistanceMinX
 			li	r4,RandomDistanceMaxX
 			bl	RandFloat
@@ -1965,7 +1965,7 @@ branchl	r12,0x800da1d8
 
 #Enter P2 Into Grounded
 mr	r3,r29
-branchl	r12,0x8007d7fc
+branchl	r12,0x8007d6a4
 
 #Remove P2's GFX Pointer That Is Crashing the Game
 li	r3,0x0
@@ -4201,19 +4201,27 @@ backup
     stfs f1,0xB0(P2Data)
     lfs f1,0x84(sp)
     stfs f1,0xB4(P2Data)
-  #Check for Ground?
+  #Find Ground Below Player
+    mr  r3,P2GObj
+    bl  FindGroundUnderPlayer
+    cmpwi r3,0    #Check if ground was found
+    beq Ledgetech_InitializePositions_SkipGroundCorrection
+    stfs f1,0xB0(P2Data)
+    stfs f2,0xB4(P2Data)
+    stw r4,0x83C(P2Data)
+    Ledgetech_InitializePositions_SkipGroundCorrection:
   #Enter SquatWait
     mr r3,P2GObj
     branchl r12,0x800d62c4
   #Update Position
     mr  r3,P2GObj
     bl  UpdatePosition
-  #Check For Ground
+  #Update ECB Values for the ground ID
     mr r3,P2GObj
-    branchl r12,0x80082a68
+    branchl r12,0x80084280
   #Set Grounded
     mr r3,P2Data
-    branchl r12,0x8007d7fc
+    branchl r12,0x8007d6a4
 
   #Enter Rebirth
     lwz	r26,0x2C(P1Data)
@@ -4267,9 +4275,6 @@ blr
 #########################
 
 AmsahTech:
-#STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
 
 #GET RANDOM TOP TIER
 #li	r3,10		#Get Random Top Tier
@@ -4329,25 +4334,33 @@ b	exit
 		## Amsah Tech THINK FUNCT ##
 		#########################
 
+    .set EventData,31
+    .set P1Gobj,28
+    .set P1Data,27
+    .set P2GObj,30
+    .set P2Data,29
+
+    #Offsets
+    .set Timer,0x8
 
 		AmsahTechThink:
 		blrl
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
 		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
+		mr		P2GObj,r3			#player block in r30
+		lwz		P2Data,0x2c(P2GObj)			#player data in r29
 
 		#Get P1
 		li		r3,0x0
 		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
+		mr		P1Gobj,r3			#player block in r28
+		lwz		P1Data,0x2c(P1Gobj)			#player data in r27
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -4356,14 +4369,16 @@ b	exit
 		cmpwi	r3,0x0
 		beq	AmsahTechThinkMain
 
+      #Move Players
+      bl  PlacePlayersCenterStage
 			#P1 Has 120%
 			li	r3,120
 			load	r4,0x80453080		#P1 Static Block
 			sth	r3,0x60(r4)		#Store Percent Int To Display Value
 			bl	IntToFloat
-			stfs	f1,0x1830(r27)
+			stfs	f1,0x1830(P1Data)
 			#Save State
-			mr	r3,r31
+			mr	r3,EventData
 			bl	SaveState_Save
 
 
@@ -4429,8 +4444,12 @@ b	exit
 		beq	AmsahTechIsTaunting
 		b	AmsahTechCheckUpBTimer
 
-		#Check If UpB Timer is Set
 		AmsahTechIsTaunting:
+  #Check for Frame 1 of Taunt
+    lhz r3,0x23EC(P1Data)
+    cmpwi r3,0x1
+    bne AmsahTechCheckUpBTimer
+  #Check If UpB Timer is Set
 		lwz	r3,0x8(r31)
 		cmpwi	r3,0x0		#Timer Already Set
 		bne	AmsahTechCheckUpBTimer
@@ -4438,60 +4457,74 @@ b	exit
 		lwz	r3,0x10(r29)
 		cmpwi	r3,0xE
 		bne	AmsahTechCheckUpBTimer
-		#Check If P1 is Within Stage X Boundaries
-		lfs	f1,0xB0(r27)		#Get P1 X
-		lfs	f2,0x2C(r27)		#Get P1 Facing
-		lfs	f3,0x10(r21)		#Get Marth Distance
-		lfs	f4,0x14(r21)		#FD Stage Boundary
-		fmuls	f2,f2,f3		#Distance * Facing Direction
-		fadds	f1,f1,f2		#P1.X + (Distance * Facing Direction)
-		fabs	f2,f1
-		fcmpo	cr0,f2,f4
-		bgt	AmsahTechCheckUpBTimer
-		#Move Marth in Front of P1
-		stfs	f1,0xB0(r29)		#Store X Position to P2
-		lfs	f1,0xB4(r27)		#Get P1 Y
-		stfs	f1,0xB4(r29)		#Store P2 Y
-		lfs	f1,0x2C(r27)		#P1 Facing
-		fneg	f1,f1
-		stfs	f1,0x2C(r29)		#P2 Facing = Opposite P1's
-		#Enter Marth in Wait
-		mr	r3,r30
-		branchl	r12,0x8008a348
-		#Set UpB Timer
-		#li	r3,40
-		#branchl	r12,0x80380580
-		#addi	r3,r3,20		#At Least 20 Frames
-		li	r3,30
-		stw	r3,0x8(r31)
 
-		#Store To Backups as Well
-		lwz	r3,0x18(r31)		#P2 Backup
-		lfs	f1,0xB0(r29)		#Get P2 X
-		stfs	f1,0xB0(r3)		#Store to P2 Backup
-		lfs	f1,0xB4(r29)		#Get P2 Y
-		stfs	f1,0xB4(r3)		#Store to P2 Backup
-		lfs	f1,0x2C(r29)		#Get P2 Facing
-		stfs	f1,0x2C(r3)		#Store to P2 Backup
-		lwz	r3,0x10(r31)		#P1 Backup
-		lfs	f1,0xB0(r27)		#Get P1 X
-		stfs	f1,0xB0(r3)		#Store to P1 Backup
-		lfs	f1,0x2C(r27)		#Get P1 Facing
-		stfs	f1,0x2C(r3)		#Store to P1 Backup
-
-		mr	r3,r28
-		bl	CheckIfPlayerHasAFollower
-		cmpwi	r3,0x0
-		beq	AmsahTechNoSubchar
-		lwz	r3,0x14(r31)		#P1 Subchar Backup
-		lfs	f1,0xB0(r4)		#Get P1 Subchar X
-		stfs	f1,0xB0(r3)		#Store to P1 Subchar Backup
-		lfs	f1,0x2C(r4)		#Get P1 Subchar Facing
-		stfs	f1,0x2C(r3)		#Store to P1 Subchar Backup
-		AmsahTechNoSubchar:
-		#Update P2 ECB
-		mr	r3,r30
+  #Move Marth X Mm in front of P1, facing him
+  #Get Position
+    li  r3,10
+    bl  IntToFloat          #Offset from P1
+    lfs f3,0xB0(P1Data)     #P1 X
+    lfs f2,0xB4(P1Data)     #P1 Y
+    lfs f4,0x2C(P1Data)     #Facing Direction
+    fmuls f1,f1,f4
+    fadds f1,f1,f3
+  #Check If P2 Will Be Grounded
+    li  r3,0
+    bl  FindGroundUnderPlayer
+    cmpwi r3,0    #Check if ground was found
+    beq AmsahTech_NoGroundFound
+    stfs f1,0xB0(P2Data)
+    stfs f2,0xB4(P2Data)
+    stw r4,0x83C(P2Data)
+    lfs f1,0x2C(P1Data)
+    fneg f1,f1
+    stfs f1,0x2C(P2Data)
+  #Enter Wait
+    mr  r3,P2GObj
+    branchl r12,0x8008a348
+  #Update Position
+    mr  r3,P2GObj
     bl  UpdatePosition
+  #Update ECB Values for the ground ID
+    mr r3,P2GObj
+    branchl r12,0x80084280
+  #Set Grounded
+    mr r3,P2Data
+    branchl r12,0x8007d6a4
+  #Set UpB Timer
+    li	r3,30
+    stw	r3,Timer(EventData)
+  #Store To Backups as Well
+    lwz	r3,0x18(EventData)		#P2 Backup
+    lfs	f1,0xB0(P2Data)	     	#Get P2 X
+    stfs	f1,0xB0(r3)	       	#Store to P2 Backup
+    lfs	f1,0xB4(P2Data)	     	#Get P2 Y
+    stfs	f1,0xB4(r3)	       	#Store to P2 Backup
+    lfs	f1,0x2C(P2Data)	     	#Get P2 Facing
+    stfs	f1,0x2C(r3)	       	#Store to P2 Backup
+    lwz	r3,0x10(EventData)		#P1 Backup
+    lfs	f1,0xB0(P1Data)	    	#Get P1 X
+    stfs	f1,0xB0(r3)	       	#Store to P1 Backup
+    lfs	f1,0xB4(P1Data)	    	#Get P1 X
+    stfs	f1,0xB4(r3)	       	#Store to P1 Backup
+    lfs	f1,0x2C(P1Data)	     	#Get P1 Facing
+    stfs	f1,0x2C(r3)		      #Store to P1 Backup
+  	mr	r3,P1GObj
+  	bl	CheckIfPlayerHasAFollower
+  	cmpwi	r3,0x0
+  	beq	AmsahTechNoSubchar
+  	lwz	r3,0x14(EventData)		#P1 Subchar Backup
+  	lfs	f1,0xB0(r4)		#Get P1 Subchar X
+  	stfs	f1,0xB0(r3)		#Store to P1 Subchar Backup
+  	lfs	f1,0x2C(r4)		#Get P1 Subchar Facing
+  	stfs	f1,0x2C(r3)		#Store to P1 Subchar Backup
+	AmsahTechNoSubchar:
+    b AmsahTechCheckToReset
+
+  AmsahTech_NoGroundFound:
+  #Play Error SFX
+    li	r3,0x3
+    branchl		r12,0x80024030			#play error noise
+    b AmsahTechCheckToReset
 
 		AmsahTechCheckUpBTimer:
 		#Check For UpBTimer
@@ -8229,8 +8262,8 @@ SaveState_Load:
 		bl  UpdatePosition
 
     #Check For Ground
-    mr r3,r25
-    branchl r12,0x80082a68
+    #mr r3,r25
+    #branchl r12,0x80082a68
 
     #Remove Respawn Platform JObj Pointer and Think Function
     li  r3,0
@@ -10203,7 +10236,7 @@ stfs	f31,0x80(sp)
 mr	r31,r3
 
 #Get Random Upper Bound
-	mr	r3,r4
+	sub	r3,r4,r31
 	branchl r12,HSD_Randi
 #Add Lower Bound
 	add	r3,r3,r31
@@ -10274,20 +10307,32 @@ Custom_InterruptRebirthWait_Exit:
 #####################################
 UpdatePosition:
 .set PlayerGObj,31
+.set PlayerData,30
 
 backup
 
 #Backup Pointer
   mr  PlayerGObj,r3
+  lwz PlayerData,0x2C(PlayerGObj)
 
-#Update Position
-  branchl	r12,0x80081b38
+#Update Position (Copy Physics XYZ into all ECB XYZ)
+  lwz	r3, 0x00B0 (PlayerData)
+  stw	r3, 0x06F4 (PlayerData)
+  stw	r3, 0x070C (PlayerData)
+  lwz	r3, 0x00B4 (PlayerData)
+  stw	r3, 0x06F8 (PlayerData)
+  stw	r3, 0x0710 (PlayerData)
+  lwz	r3, 0x00B8 (PlayerData)
+  stw	r3, 0x06FC (PlayerData)
+  stw	r3, 0x0714 (PlayerData)
+  #branchl	r12,0x80081b38     #Stopped using this because it deletes way too much ECB info
+  #branchl r12,0x80082a68      #Better than the above function, but all i need is to copy current position into the ECB previous values
 #Update Static Player Block Coords
-  lwz r5,0x2C(PlayerGObj)
-  lbz r3,0xC(r5)
-  lbz	r4, 0x221F (r5)
+  lbz r3,0xC(PlayerData)
+  lbz	r4, 0x221F (PlayerData)
   rlwinm	r4, r4, 29, 31, 31
-  addi  r5,r5,176
+  mr  r5,PlayerData
+  addi  PlayerData,PlayerData,176
   branchl r12,0x80032828
 
 restore
@@ -10398,7 +10443,7 @@ backup
   mulli r3,r3,0x2
   add constants,constants,r3
 
-#Initialize Player Data
+#Initialize Player Data (Mainly for ICs so Nana knows where Popo is)
   mr  r3,player
   branchl r12,0x80068354
 
@@ -10429,15 +10474,24 @@ backup
 #Enter into Wait
   mr  r3,player
   branchl r12,0x8008a348
+#Find Ground Below Player
+  mr  r3,player
+  bl  FindGroundUnderPlayer
+  cmpwi r3,0    #Check if ground was found
+  beq PlacePlayersCenterStage_DoStuff_SkipGroundCorrection
+  stfs f1,0xB0(playerdata)
+  stfs f2,0xB4(playerdata)
+  stw r4,0x83C(playerdata)
+  PlacePlayersCenterStage_DoStuff_SkipGroundCorrection:
 #Update Position
   mr  r3,player
   bl  UpdatePosition
-#Check For Ground
+#Update ECB Values for the ground ID
   mr r3,player
-  branchl r12,0x80082a68
+  branchl r12,0x80084280
 #Set Grounded
   mr r3,playerdata
-  branchl r12,0x8007d7fc
+  branchl r12,0x8007d6a4
 
 PlacePlayersCenterStage_DoStuff_Exit:
 restore
@@ -10452,6 +10506,90 @@ blrl
 #*********#
 
 PlacePlayersCenterStage_Exit:
+restore
+blr
+
+#####################################
+
+FindGroundUnderPlayer:
+#in
+#r3 = player GObj (optional)
+#f1 = X value
+#f2 = Y Value
+
+
+.set player,31
+.set playerdata,30
+
+backup
+stfs f30,0x38(sp)
+stfs f31,0x3C(sp)
+
+#Check If Given Player GObj
+  cmpwi r3,0x0
+  bne FindGroundUnderPlayer_GObjPassedIn
+
+FindGroundUnderPlayer_CoordinatesPassedIn:
+#Backup Coords
+  fmr f30,f1
+  fmr f31,f2
+#Get 10f
+  li  r3,10
+  bl  IntToFloat
+#Get Bottom Coord
+  fmr f3,f30       #Bottom X is same as Top X
+  fsubs f4,f31,f1  #Bottom Y is Top Y - 1000
+#Move Top Coords Back
+  fmr f1,f30
+  fmr f2,f31
+  lfs	f0, -0x7188 (rtoc)
+  fadds f2,f2,f0
+  b FindGroundUnderPlayer_Continue
+
+
+FindGroundUnderPlayer_GObjPassedIn:
+#Init Variables
+  mr  player,r3
+  lwz playerdata,0x2C(player)
+#Get Players X and Y+10
+  lfs f1,0xB0(playerdata)
+  lfs f2,0xB4(playerdata)
+  lfs	f0, -0x7188 (rtoc)
+  fadds f2,f2,f0
+#Get Bottom Coord (X and Y-1000)
+  lfs f3,0xB0(playerdata)
+  lfs f4,0xB0(playerdata)
+  lfs	f0,-0x71A8 (rtoc)
+  fsubs f4,f4,f0
+
+FindGroundUnderPlayer_Continue:
+#Get Unk f5 argument
+  lfs	f5, -0x7208 (rtoc)
+#Setup stack for return values
+  addi r3,sp,0x54   #(Returns Ground Coordinates
+  addi r4,sp,0x44   #(Returns Ground ID)
+  addi r5,sp,0x40   #(Returns Ground Type)
+  addi r6,sp,0x48   #(Returns Unk)
+#Unk arguments
+  li  r7,-1
+  li  r8,-1
+  li  r9,-1
+  li  r10,0
+#Call function
+  branchl r12,0x8004f008
+
+#Check if ground exists
+  cmpwi r3,0
+  beq FindGroundUnderPlayer_Exit
+
+#Return Coordinates of ground below player
+  lfs f1,0x54(sp)
+  lfs f2,0x58(sp)
+  lwz r4,0x44(sp)
+
+FindGroundUnderPlayer_Exit:
+lfs f30,0x38(sp)
+lfs f31,0x3C(sp)
 restore
 blr
 
