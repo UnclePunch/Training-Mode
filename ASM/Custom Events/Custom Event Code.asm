@@ -249,6 +249,7 @@ b	exit
 		LCancelThink:
 		blrl
 
+    .set EventData,31
     .set P1GObj,28
     .set P2GObj,30
 
@@ -312,6 +313,9 @@ b	exit
 		mr	r3,r31
 		bl	CheckForSaveAndLoad
 
+    mr  r3,P1GObj
+    mr  r4,P2GObj
+    mr  r5,EventData
 		bl	MoveCPU
 		bl	GiveFullShields
 		bl	UpdateAllGFX
@@ -639,8 +643,8 @@ b	exit
 			sth	r3,-0x4ea6(r13)
 		Ledgedash_PlaySuccess_PlaySound:
 		#Play Sound
-			li		r3,0x1
-			branchl		r12,0x80024030			#play success sound
+			li		r3,0xAD
+			bl PlaySFX
 		#Set Timer
 			li	r3,30
 			stb	r3,timer(r31)
@@ -651,9 +655,9 @@ b	exit
 			li	r3,0
 			sth	r3,-0x4ea8(r13)
 		#Play Sound
-			li	r3,0x3
+			li	r3,0xAF
 			Ledgedash_PlaySound:
-			branchl		r12,0x80024030			#play error noise
+			bl PlaySFX
 			b	Ledgedash_LoadState
 
 
@@ -1643,8 +1647,8 @@ b	exit
 			li	r3,0x1
 			stb	r3,0xA(r31)
 		#Play Sound
-			li		r3,0x1
-			branchl		r12,0x80024030			#play success sound
+			li		r3,0xAD
+			bl PlaySFX
 		#Increment Score
 			lhz	r3,-0x4ea8(r13)
 			addi	r3,r3,0x1
@@ -4501,6 +4505,8 @@ b	exit
     stfs	f1,0xB4(r3)	       	#Store to P2 Backup
     lfs	f1,0x2C(P2Data)	     	#Get P2 Facing
     stfs	f1,0x2C(r3)	       	#Store to P2 Backup
+    lwz r4,0x83C(P2Data)      #Get P2 Ground ID
+    stw r4,0x83C(r3)          #Store to P2 Backup
     lwz	r3,0x10(EventData)		#P1 Backup
     lfs	f1,0xB0(P1Data)	    	#Get P1 X
     stfs	f1,0xB0(r3)	       	#Store to P1 Backup
@@ -4508,6 +4514,8 @@ b	exit
     stfs	f1,0xB4(r3)	       	#Store to P1 Backup
     lfs	f1,0x2C(P1Data)	     	#Get P1 Facing
     stfs	f1,0x2C(r3)		      #Store to P1 Backup
+    lwz r4,0x83C(P1Data)      #Get P1 Ground ID
+    stw r4,0x83C(r3)          #Store to P1 Backup
   	mr	r3,P1GObj
   	bl	CheckIfPlayerHasAFollower
   	cmpwi	r3,0x0
@@ -4522,8 +4530,8 @@ b	exit
 
   AmsahTech_NoGroundFound:
   #Play Error SFX
-    li	r3,0x3
-    branchl		r12,0x80024030			#play error noise
+    li	r3,0xAF
+    bl PlaySFX
     b AmsahTechCheckToReset
 
 		AmsahTechCheckUpBTimer:
@@ -4675,6 +4683,8 @@ b	exit
     #Registers
     .set MenuData,26
     .set EventData,31
+    .set P1GObj,28
+    .set P2GObj,30
 
     #Offsets
 		.set EventState,0x8
@@ -4699,14 +4709,14 @@ b	exit
 		#Get P2
 		li		r3,0x1
 		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
+		mr		P2GObj,r3			#player block in r30
+		lwz		r29,0x2c(P2GObj)			#player data in r29
 
 		#Get P1
 		li		r3,0x0
 		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
+		mr		P1GObj,r3			#player block in r28
+		lwz		r27,0x2c(P1GObj)			#player data in r27
     lwz MenuData,MenuDataPointer(EventData)
 
 		bl	StoreCPUTypeAndZeroInputs
@@ -4782,6 +4792,9 @@ b	exit
 		lbz	r3,EventState(r31)
 		cmpwi	r3,0x0
 		bne	ComboTrainingSkipMoveCPU
+    mr  r3,P1GObj
+    mr  r4,P2GObj
+    mr  r5,EventData
 		bl	MoveCPU
 		ComboTrainingSkipMoveCPU:
 
@@ -8824,8 +8837,8 @@ stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 b	RAndDPadChangesEventOption_PlayScrollSFX
 
 RAndDPadChangesEventOption_PlayScrollSFX:
-li  r3,2
-branchl r12,0x80024030
+li  r3,0xAE
+bl PlaySFX
 
 RAndDPadChangesEventOption_DisplayWindow:
 #Display Text For The New Option Value
@@ -9660,53 +9673,80 @@ blrl
 ############################################
 
 MoveCPU:
+#in
+#r3 = P1 GObj
+#r4 = P2 GObj
+#r5 = SaveState Struct
+
+.set P1GObj,31
+.set P1Data,30
+.set P2GObj,29
+.set P2Data,28
+.set SaveStateStruct,27
+
 backup
-		#Make Sure Nothing Is Held
-		lhz	r3,0x662(r27)
-		cmpwi	r3,0x0
-		bne	MoveCPUExit
-		#Check DPad Down
-		lwz	r3,0x668(r27)
-		rlwinm.	r0,r3,0,29,29
-		beq	MoveCPUExit
-			#Copy Y Position
-			lwz	r3,0xB4(r27)
-			stw	r3,0xB4(r29)
-			#X Position = P1.X + (5*P1.Facing)
-			li	r3,7
-			bl	IntToFloat
-			lfs	f2,0x2C(r27)
-			lfs	f3,0xB0(r27)
-			fmuls	f1,f1,f2
-			fadds	f1,f1,f3
-			stfs	f1,0xB0(r29)
-			#Same Facing Direction
-			lfs	f1,0x2C(r27)
-			stfs	f1,0x2C(r29)
-			#Update ECB
-			mr	r3,r30
-			bl  UpdatePosition
-			#Enter Wait
-			mr	r3,r30
-			branchl	r12,0x8008a348
-			#Check If Theres a Follower
-			mr	r3,r30
-			bl	CheckIfPlayerHasAFollower
-			cmpwi	r3,0x0
-			beq	MoveCPUExit
-			#Copy Into Follower
-			lwz	r5,0xB0(r29)	#X
-			stw	r5,0xB0(r4)
-			lwz	r5,0xB4(r29)	#Y
-			stw	r5,0xB4(r4)
-			lwz	r5,0x2C(r29)	#Facing
-			stw	r5,0x2C(r4)
-			mr	r21,r3
-			mr	r3,r21
-			branchl	r12,0x8008a348
-			#Update ECB
-			mr	r3,r21
-			bl  UpdatePosition
+
+#Get Variables
+  mr  P1GObj,r3
+  lwz P1Data,0x2C(P1GObj)
+  mr  P2GObj,r4
+  lwz P2Data,0x2C(P2GObj)
+  mr  SaveStateStruct,r5
+
+#Make Sure Nothing Is Held
+	lhz	r3,0x662(P1Data)
+	cmpwi	r3,0x0
+	bne	MoveCPUExit
+#Check DPad Down
+	lwz	r3,0x668(P1Data)
+	rlwinm.	r0,r3,0,29,29
+	beq	MoveCPUExit
+
+#Get Position
+  li  r3,10
+  bl  IntToFloat          #Offset from P1
+  lfs f3,0xB0(P1Data)     #P1 X
+  lfs f2,0xB4(P1Data)     #P1 Y
+  lfs f4,0x2C(P1Data)     #Facing Direction
+  fmuls f1,f1,f4
+  fadds f1,f1,f3
+#Check If P2 Will Be Grounded
+  li  r3,0
+  bl  FindGroundUnderPlayer
+  cmpwi r3,0    #Check if ground was found
+  beq MoveCPU_NoGroundFound
+  stfs f1,0xB0(P2Data)
+  stfs f2,0xB4(P2Data)
+  stw r4,0x83C(P2Data)
+  lfs f1,0x2C(P1Data)
+  fneg f1,f1
+  stfs f1,0x2C(P2Data)
+#Enter Wait
+  mr  r3,P2GObj
+  branchl r12,0x8008a348
+#Update Position
+  mr  r3,P2GObj
+  bl  UpdatePosition
+#Update ECB Values for the ground ID
+  mr r3,P2GObj
+  branchl r12,0x80084280
+#Set Grounded
+  mr r3,P2Data
+  branchl r12,0x8007d6a4
+#Savestate
+  mr  r3,SaveStateStruct
+  bl  SaveState_Save
+#Play SFX
+  li r3,0xDD
+  bl  PlaySFX
+  b MoveCPUExit
+
+MoveCPU_NoGroundFound:
+#PLay Error SFX
+  li	r3,0xAF
+  bl  PlaySFX
+
+MoveCPUNoSubchar:
 MoveCPUExit:
 restore
 blr
@@ -10593,6 +10633,23 @@ lfs f31,0x3C(sp)
 restore
 blr
 
+#####################################
+
+PlacePlayerOnGround:
+
+#in
+#r3 = Player GObj
+#f1 = X Position
+#f2 = Y Position
+
+#####################################
+PlaySFX:
+backup
+
+branchl		r12,0x801c53ec
+
+restore
+blr
 #####################################
 exit:
 li	r0, 3
