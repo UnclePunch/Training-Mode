@@ -255,7 +255,7 @@ b	exit
 
 		backup
 
-		lwz	r31,0x2c(r3)
+		lwz	EventData,0x2c(r3)
 
 		li	r3,0x1
 		branchl	r12,0x80034110	 #get player block
@@ -310,12 +310,12 @@ b	exit
 
 		LCancelThink_CheckForSaveState:
 		#Poll For Savestates
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	CheckForSaveAndLoad
 
     mr  r3,P1GObj
     mr  r4,P2GObj
-    mr  r5,EventData
+    addi r5,EventData,0x10
 		bl	MoveCPU
 		bl	GiveFullShields
 		bl	UpdateAllGFX
@@ -409,6 +409,7 @@ b	exit
 		#########################
 
     #Registers
+    .set EventData,31
     .set MenuData,27
 
     #Offsets
@@ -454,7 +455,7 @@ b	exit
 				li	r3,100
 				stw	r3,0x2408(r29)
 			#Save State
-				mr	r3,r31
+				addi r3,EventData,0x10
 				bl	SaveState_Save
 			#Set Frame 1 As Over
 				li		r3,0x1
@@ -496,26 +497,26 @@ b	exit
 			rlwinm.	r0,r3,0,30,30
 			beq	Ledgedash_CheckLeft
 		#Load Most Recent State
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Load
 		#Place on Right Ledge
 			li	r3,1
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Save
 			b	Ledgedash_LoadState
 		Ledgedash_CheckLeft:
 			rlwinm.	r0,r3,0,31,31
 			beq	GetProgressAndAS
 		#Load Most Recent State
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Load
 		#Place on Left Ledge
 			li	r3,0
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Save
 			b	Ledgedash_LoadState
 
@@ -694,7 +695,7 @@ b	exit
 			stb		r3,eventState(r31)				#Progress Byte
 			stb		r3,hitboxFoundFlag(r31)		#Invincible Move Bool
 			stb		r3,timer(r31)							#Timer
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Load
 		#Create Respawn Platform If Enabled
 			lbz		r3,StartingLocation(MenuData)
@@ -1567,13 +1568,14 @@ b	exit
 		## SDI Training THINK FUNCT ##
 		#########################
 
+    .set EventData,31
 
 		SDITrainingThink:
 		blrl
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
@@ -1613,7 +1615,7 @@ b	exit
 			bl	IntToFloat
 			stfs	f1,0x1830(r27)		#Store to Actual Damage Value
 			#Save State
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Save
 			#Random Start Time
 			li	r3,60
@@ -1885,9 +1887,9 @@ SDITrainingInputTowardsOpponent_Exit:
 			cmpwi	r3,0x0
 			bne	SDITrainingThinkExit
 		#Load State
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Load
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Load
 		#Random Timer
 			li	r3,60
@@ -1969,7 +1971,7 @@ branchl	r12,0x800da1d8
 
 #Enter P2 Into Grounded
 mr	r3,r29
-branchl	r12,0x8007d6a4
+branchl	r12,0x8007d7fc
 
 #Remove P2's GFX Pointer That Is Crashing the Game
 li	r3,0x0
@@ -2092,10 +2094,13 @@ b	exit
 
 		ReversalThink:
 		blrl
+
+    .set EventData,31
+
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 		li		r3,0x1
@@ -2127,7 +2132,7 @@ b	exit
 			li	r3,0x1
 			rlwimi	r0,r3,4,27,27
 			stb	r0,0x221D (r27)
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Save
 			#Set Frame 1 As Over
 			li		r3,0x1
@@ -2341,7 +2346,7 @@ b	exit
 			stfs	f1,0x2C(r3)
 		#Restore
 		ReversalLoadState:
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,30
@@ -2816,7 +2821,7 @@ b	exit
 		#Fix Inputs
 		bl	CurrentInputsAsLastFramesInputs
 		#SaveState
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	SaveState_Save
 
 
@@ -2951,9 +2956,9 @@ blr
 ##################################
 
 PowershieldRestore:
-mr	r3,r31
+addi r3,EventData,0x10
 bl	SaveState_Load
-mr	r3,r31
+addi r3,EventData,0x10
 bl	SaveState_Load
 b	PowershieldThinkExit
 
@@ -3136,7 +3141,7 @@ b	exit
 			lfs	f1,0xB4(r29)
 			stfs	f1,0x834(r29)
 			#Save State
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Save
 			#Set Timer to -60
 			li	r3,-60
@@ -3217,7 +3222,7 @@ b	exit
 		lwz	r23,0x620(r27)
 		lwz	r24,0x624(r27)
 		#Restore
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	SaveState_Load
 		#Restore P1 Analog Timers
 		lwz	r23,0x620(r27)
@@ -3414,7 +3419,7 @@ b	exit
 			rlwimi	r0,r3,4,27,27
 			stb	r0,0x221D (r27)
 			#Save State
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Save
 
 
@@ -3669,7 +3674,7 @@ b	exit
 
 		AttackOnShieldRestoreState:
 		#Restore State
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	SaveState_Load
 		b	AttackOnShieldThinkExit
 
@@ -3906,7 +3911,7 @@ b	exit
       li	r3,-127
       stb	r3,0x1A8D(P2Data)
 		#Save State
-			mr		r3,r31
+			addi r3,EventData,0x10
 			bl		SaveState_Save
 
 
@@ -4103,7 +4108,7 @@ b	exit
 
 		LedgetechRestoreState:
 	  #Restore State
-    	mr	r3,r31
+    	addi r3,EventData,0x10
     	bl	SaveState_Load
     #Random Side of Stage
       li  r3,2
@@ -4382,7 +4387,7 @@ b	exit
 			bl	IntToFloat
 			stfs	f1,0x1830(P1Data)
 			#Save State
-			mr	r3,EventData
+			addi r3,EventData,0x10
 			bl	SaveState_Save
 
 
@@ -4573,7 +4578,7 @@ b	exit
 
 		AmsahTechRestoreState:
 		#Restore State
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	SaveState_Load
 		#Restore Timers Just In Case
 		li	r3,0x0
@@ -4733,7 +4738,7 @@ b	exit
 			rlwimi	r0,r3,4,27,27
 			stb	r0,0x221D (r27)
 			#Save State
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Save
 			#Init Score Count
 			lhz	r3,-0x4ea8(r13)
@@ -4776,7 +4781,7 @@ b	exit
 		cmpwi	r3,0xE
 		bne	ComboTraining_SkipCheckForSaveAndLoad
 		ComboTraining_CheckForSaveAndLoad:
-		mr	r3,r31
+		addi	r3,EventData,0x10
 		bl	CheckForSaveAndLoad
 		#Check If Loaded Successfully
 		cmpwi	r3,0x1
@@ -4794,7 +4799,7 @@ b	exit
 		bne	ComboTrainingSkipMoveCPU
     mr  r3,P1GObj
     mr  r4,P2GObj
-    mr  r5,EventData
+    addi r5,EventData,0x10
 		bl	MoveCPU
 		ComboTrainingSkipMoveCPU:
 
@@ -5539,9 +5544,9 @@ b	exit
 
 		ComboTrainingRestoreState:
 		#Restore State
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	SaveState_Load
-		mr	r3,r31
+		addi r3,EventData,0x10
 		bl	SaveState_Load
 		#Reset State ID
 		li	r3,0x0
@@ -6316,10 +6321,12 @@ b	exit
 
 		WaveshineSDIThink:
 			blrl
+
+      .set EventData,31
 			backup
 
 		#INIT FUNCTION VARIABLES
-			lwz		r31,0x2c(r3)			#backup data pointer in r31
+			lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 			li		r3,0x1
@@ -6361,7 +6368,7 @@ b	exit
 					lfs	f1, 0x00B4 (r29)
 					stfs	f1, 0x0834 (r29)
 				#Save State
-					mr	r3,r31
+					addi r3,EventData,0x10
 					bl	SaveState_Save
 				#Set Timer to -60
 					li		r3,-60
@@ -6645,7 +6652,7 @@ b	exit
 			fneg	f1,f1
 			stfs	f1,0xB0(r5)
 		#Restore State
-			mr	r3,r31
+			addi r3,EventData,0x10
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,60
@@ -6752,10 +6759,13 @@ b	exit
 
 		Event16Think:
 		blrl
+
+    .set EventData,31
+
 		backup
 
 		#INIT FUNCTION VARIABLES
-			lwz		r31,0x2c(r3)			#backup data pointer in r31
+			lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get P2
 			li		r3,0x1
@@ -6799,7 +6809,7 @@ b	exit
 					lfs	f1, 0x00B4 (r29)
 					stfs	f1, 0x0834 (r29)
 				#Save State
-					mr	r3,r31
+					addi r3,EventData,0x10
 					bl	SaveState_Save
 
 
@@ -8045,9 +8055,8 @@ SaveState_Save:
 
 		SaveState_SaveLoop:
 		#Get This Player's Backup Pointer in r28
-		addi		r28,r31,0x10		#get save state pointers start
 		mulli		r4,r29,0x8		#8 bytes per player pointer
-		add		r28,r4,r28		#r28 contains this players block backup
+		add		r28,r4,r31		#r28 contains this players block backup
 
 		#Check If Backup Exists
 		cmpwi		r23,0x0
@@ -8155,9 +8164,8 @@ SaveState_Load:
 
 		SaveState_LoadLoop:
 		#Get This Player's Backup Pointer in r28
-		addi		r28,r31,0x10		#get save state pointers start
 		mulli		r4,r29,0x8		#8 bytes per player pointer
-		add		r28,r4,r28		#r28 contains this players block backup
+		add		r28,r4,r31		#r28 contains this players block backup
 
 		#Check If Backup Exists
 		cmpwi		r23,0x0
@@ -8837,8 +8845,8 @@ stbx	r3,r5,OptionWindowMemory		#Store New Option Byte Value
 b	RAndDPadChangesEventOption_PlayScrollSFX
 
 RAndDPadChangesEventOption_PlayScrollSFX:
-li  r3,0xAE
-bl PlaySFX
+li  r3,0x2
+branchl r12,0x80024030
 
 RAndDPadChangesEventOption_DisplayWindow:
 #Display Text For The New Option Value
