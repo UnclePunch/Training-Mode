@@ -1196,7 +1196,7 @@ b	exit
     ################
 		# Spawn Target #
     ################
-
+/*
 			EggsThinkSpawn:
 			#Get Random X Value that falls between ledges
         #Get Stage's Ledge IDs
@@ -1281,6 +1281,68 @@ b	exit
         bl  FindGroundUnderCoordinate
         cmpwi r3,0x0
         beq EggsThinkSpawn
+*/
+
+.set LeftCameraBound,20
+.set RightCameraBound,21
+.set TopCameraBound,22
+.set BottomCameraBound,23
+
+    EggsThinkSpawn:
+    li r24,0
+    EggsThinkSpawnLoop:
+    addi r24,r24,1
+    #Get OnScreen Boundaries
+    #Left Camera
+      branchl r12,0x80224a54
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz LeftCameraBound,0x84(sp)
+    #Right Camera
+      branchl r12,0x80224a68
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz RightCameraBound,0x84(sp)
+    #Top Camera
+      branchl r12,0x80224a80
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz TopCameraBound,0x84(sp)
+    #Bottom Camera
+      branchl r12,0x80224a98
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz BottomCameraBound,0x84(sp)
+
+    #Get Random Velocity
+			branchl	r12,0x80380528
+      fmr f20,f1
+      li  r3,2
+      bl  IntToFloat
+      fadds f20,f20,f1
+
+    #Get Random X Value Between These
+      mr  r3,LeftCameraBound
+      mr  r4,RightCameraBound
+      bl  RandFloat
+      fmr f21,f1
+
+    #Get Random Y Value Between These
+      mr   r3,BottomCameraBound
+      subi  r4,TopCameraBound,70        #Minus 40 so it doesnt fly up offscreen
+      bl  RandFloat
+      fmr f22,f1
+
+    #Check If Egg is Above Ground
+      fmr f1,f21
+      fmr f2,f22
+      bl  FindGroundUnderCoordinate
+      cmpwi r3,0x0
+      beq EggsThinkSpawnLoop
+
+      load r3,0x803ead3c
+      mr r4,r24
+      branchl r12,0x803456a8
 
 			SpawnEgg:
 			addi	r3,sp,0x80
