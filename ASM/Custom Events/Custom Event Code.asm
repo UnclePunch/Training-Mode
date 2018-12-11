@@ -1263,16 +1263,24 @@ b	exit
 			#X
 			   mr r3,r20
          bl  IntToFloat
-         fmr  f5,f1
+         fmr  f21,f1
 			#Y
         mr r3,r21
         bl  IntToFloat
-        fmr  f6,f1
+        fmr  f22,f1
 			#Y Vel
         mr r3,r22
         bl  IntToFloat
 			#Add Decimal to Y Vel
-			fadds	f20,f1,f4
+			  fadds	f20,f1,f4
+
+      #Check If Egg is Above Ground
+        li  r3,0
+        fmr f1,f21
+        fmr f2,f22
+        bl  FindGroundUnderCoordinate
+        cmpwi r3,0x0
+        beq EggsThinkSpawn
 
 			SpawnEgg:
 			addi	r3,sp,0x80
@@ -1282,11 +1290,11 @@ b	exit
 			li	r4,0x03
 			stw	r4,0x8(r3)	#Item ID
 			lfs	f0, -0x2858 (rtoc)
-			stfs	f5,0x14(r3)	#X Coord
-			stfs	f6,0x18(r3)	#Y Coord
+			stfs	f21,0x14(r3)	#X Coord
+			stfs	f22,0x18(r3)	#Y Coord
 			stfs	f0,0x1C(r3)	#Z Coord
-			stfs	f5,0x20(r3)	#X Coord
-			stfs	f6,0x24(r3)	#Y Coord
+			stfs	f21,0x20(r3)	#X Coord
+			stfs	f22,0x24(r3)	#Y Coord
 			stfs	f0,0x28(r3)	#Z Coord
 			stfs	f0,0x2C(r3)	#Unk
 			stfs	f0,0x30(r3)	#Unk
@@ -4212,7 +4220,7 @@ backup
     stfs f1,0xB4(P2Data)
   #Find Ground Below Player
     mr  r3,P2GObj
-    bl  FindGroundUnderPlayer
+    bl  FindGroundNearPlayer
     cmpwi r3,0    #Check if ground was found
     beq Ledgetech_InitializePositions_SkipGroundCorrection
     stfs f1,0xB0(P2Data)
@@ -4478,7 +4486,7 @@ b	exit
     fadds f1,f1,f3
   #Check If P2 Will Be Grounded
     li  r3,0
-    bl  FindGroundUnderPlayer
+    bl  FindGroundNearPlayer
     cmpwi r3,0    #Check if ground was found
     beq AmsahTech_NoGroundFound
     stfs f1,0xB0(P2Data)
@@ -8351,6 +8359,8 @@ SaveState_Load:
 		cmpw		r29,r30
 		blt		SaveState_LoadLoop
 
+  #Correct Camera Position
+    branchl r12,0x8002f3ac
 
 	restore
 	blr
@@ -9720,7 +9730,7 @@ backup
   fadds f1,f1,f3
 #Check If P2 Will Be Grounded
   li  r3,0
-  bl  FindGroundUnderPlayer
+  bl  FindGroundNearPlayer
   cmpwi r3,0    #Check if ground was found
   beq MoveCPU_NoGroundFound
   stfs f1,0xB0(P2Data)
@@ -10524,7 +10534,7 @@ backup
   branchl r12,0x8008a348
 #Find Ground Below Player
   mr  r3,player
-  bl  FindGroundUnderPlayer
+  bl  FindGroundNearPlayer
   cmpwi r3,0    #Check if ground was found
   beq PlacePlayersCenterStage_DoStuff_SkipGroundCorrection
   stfs f1,0xB0(playerdata)
@@ -10559,7 +10569,7 @@ blr
 
 #####################################
 
-FindGroundUnderPlayer:
+FindGroundNearPlayer:
 #in
 #r3 = player GObj (optional)
 #f1 = X value
@@ -10575,9 +10585,9 @@ stfs f31,0x3C(sp)
 
 #Check If Given Player GObj
   cmpwi r3,0x0
-  bne FindGroundUnderPlayer_GObjPassedIn
+  bne FindGroundNearPlayer_GObjPassedIn
 
-FindGroundUnderPlayer_CoordinatesPassedIn:
+FindGroundNearPlayer_CoordinatesPassedIn:
 #Backup Coords
   fmr f30,f1
   fmr f31,f2
@@ -10592,10 +10602,10 @@ FindGroundUnderPlayer_CoordinatesPassedIn:
   fmr f2,f31
   lfs	f0, -0x7188 (rtoc)
   fadds f2,f2,f0
-  b FindGroundUnderPlayer_Continue
+  b FindGroundNearPlayer_Continue
 
 
-FindGroundUnderPlayer_GObjPassedIn:
+FindGroundNearPlayer_GObjPassedIn:
 #Init Variables
   mr  player,r3
   lwz playerdata,0x2C(player)
@@ -10610,7 +10620,7 @@ FindGroundUnderPlayer_GObjPassedIn:
   lfs	f0,-0x71A8 (rtoc)
   fsubs f4,f4,f0
 
-FindGroundUnderPlayer_Continue:
+FindGroundNearPlayer_Continue:
 #Get Unk f5 argument
   lfs	f5, -0x7208 (rtoc)
 #Setup stack for return values
@@ -10628,14 +10638,14 @@ FindGroundUnderPlayer_Continue:
 
 #Check if ground exists
   cmpwi r3,0
-  beq FindGroundUnderPlayer_Exit
+  beq FindGroundNearPlayer_Exit
 
 #Return Coordinates of ground below player
   lfs f1,0x54(sp)
   lfs f2,0x58(sp)
   lwz r4,0x44(sp)
 
-FindGroundUnderPlayer_Exit:
+FindGroundNearPlayer_Exit:
 lfs f30,0x38(sp)
 lfs f31,0x3C(sp)
 restore
@@ -10643,12 +10653,59 @@ blr
 
 #####################################
 
-PlacePlayerOnGround:
-
+FindGroundUnderCoordinate:
 #in
-#r3 = Player GObj
-#f1 = X Position
-#f2 = Y Position
+#f1 = X value
+#f2 = Y Value
+
+backup
+stfs f30,0x38(sp)
+stfs f31,0x3C(sp)
+
+FindGroundUnderCoordinate_CoordinatesPassedIn:
+#Backup Coords
+  fmr f30,f1
+  fmr f31,f2
+#Get 1000f
+  li  r3,1000
+  bl  IntToFloat
+#Get Bottom Coord
+  fmr f3,f30       #Bottom X is same as Top X
+  fsubs f4,f31,f1  #Bottom Y is Top Y - 1000
+#Move Top Coords Back
+  fmr f1,f30
+  fmr f2,f31
+
+FindGroundUnderCoordinate_Continue:
+#Get Unk f5 argument
+  lfs	f5, -0x7208 (rtoc)
+#Setup stack for return values
+  addi r3,sp,0x54   #(Returns Ground Coordinates
+  addi r4,sp,0x44   #(Returns Ground ID)
+  addi r5,sp,0x40   #(Returns Ground Type)
+  addi r6,sp,0x48   #(Returns Unk)
+#Unk arguments
+  li  r7,-1
+  li  r8,-1
+  li  r9,-1
+  li  r10,0
+#Call function
+  branchl r12,0x8004f008
+
+#Check if ground exists
+  cmpwi r3,0
+  beq FindGroundUnderCoordinate_Exit
+
+#Return Coordinates of ground below player
+  lfs f1,0x54(sp)
+  lfs f2,0x58(sp)
+  lwz r4,0x44(sp)
+
+FindGroundUnderCoordinate_Exit:
+lfs f30,0x38(sp)
+lfs f31,0x3C(sp)
+restore
+blr
 
 #####################################
 PlaySFX:
