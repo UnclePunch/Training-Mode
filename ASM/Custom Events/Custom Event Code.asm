@@ -411,11 +411,14 @@ b	exit
     #Registers
     .set EventData,31
     .set MenuData,27
+    .set P1GObj,30
+    .set P1Data,29
 
     #Offsets
 		.set firstFrameFlag,0x0
 		.set eventState,0x1
 		.set hitboxFoundFlag,0x2
+    .set currentLedge,0x3
 		.set timer,0x4
 		.set CameraBox,0x8
 		.set StartingLocation,OptionMenuMemory+0x2+0x0
@@ -428,12 +431,12 @@ b	exit
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		r31,0x2c(r3)			#backup data pointer in r31
+		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 		li		r3,0x0
 		branchl	r12,0x80034110				#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
-		lwz   MenuData,MenuDataPointer(r31)
+		mr		P1GObj,r3			#player block in r30
+		lwz		P1Data,0x2c(P1GObj)			#player data in r29
+		lwz   MenuData,MenuDataPointer(EventData)
 
 
 		#ON FIRST FRAME
@@ -445,7 +448,7 @@ b	exit
 				branchl	r12,0x80029020
 				stw r3,CameraBox(r31)
 			#Place on Ledge
-				li	r3,0		#Left Ledge
+				lbz r3,currentLedge(EventData)		#Left Ledge
 				bl	Ledgedash_PlaceOnLedge
 			#Set Camera To Be Zoomed Out More
 				load	r4,0x8049e6c8
@@ -481,26 +484,36 @@ b	exit
 			bne	Ledgedash_LoadState
 
 		#Infinite Time While on Rebirth Platform
-			lwz	r3,0x10(r29)
+			lwz	r3,0x10(P1Data)
 			cmpwi	r3,0xD
 			bne	LedgedashSkipRebirthTimer
 			li	r3,0x2
-			stw	r3,0x2340(r29)
+			stw	r3,0x2340(P1Data)
 		LedgedashSkipRebirthTimer:
 
+    #Infinite Time While Holding Ledge
+      lwz	r3,0x10(P1Data)
+      cmpwi	r3,0xFD
+      bne	LedgedashSkipCliffTimer
+      li  r3,2
+      bl  IntToFloat
+      stfs f1,0x2344(P1Data)
+    LedgedashSkipCliffTimer:
+
 		#Make sure nothing else is held
-			lhz	r3,0x662(r29)
+			lhz	r3,0x662(P1Data)
 			cmpwi	r3,0x0
 			bne GetProgressAndAS
 		#CHECK FOR DPAD TO CHANGE LEDGE
-			lwz	r3,0x668(r29)			#Get DPad
+			lwz	r3,0x668(P1Data)			#Get DPad
 			rlwinm.	r0,r3,0,30,30
 			beq	Ledgedash_CheckLeft
 		#Load Most Recent State
-			addi r3,EventData,0x10
-			bl		SaveState_Load
+			#addi r3,EventData,0x10
+			#bl		SaveState_Load
 		#Place on Right Ledge
-			li	r3,1
+      li	r3,1
+      stb r3,currentLedge(EventData)
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
 			addi r3,EventData,0x10
@@ -510,10 +523,11 @@ b	exit
 			rlwinm.	r0,r3,0,31,31
 			beq	GetProgressAndAS
 		#Load Most Recent State
-			addi r3,EventData,0x10
-			bl		SaveState_Load
+			#addi r3,EventData,0x10
+			#bl		SaveState_Load
 		#Place on Left Ledge
 			li	r3,0
+      stb r3,currentLedge(EventData)
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
 			addi r3,EventData,0x10
@@ -659,6 +673,7 @@ b	exit
 			li	r3,0xAF
 			Ledgedash_PlaySound:
 			bl PlaySFX
+      bl Ledgedash_PlaceOnLedge
 			b	Ledgedash_LoadState
 
 
@@ -769,8 +784,12 @@ b	exit
 			stw		r3,0x219C(r29)
 
 		Ledgedash_LoadState_SkipRespawnPlatform:
-    mr  r3,r30
-    bl  UpdatePosition
+      mr  r3,r30
+      bl  UpdatePosition
+
+    #Update Camera Box
+      mr  r3,P1GObj
+      bl  UpdateCameraBox
 
 		b		LedgedashThinkEnd
 
@@ -782,7 +801,7 @@ b	exit
     backup
 
 		#Backup Ledge Choice (0 = Left, 1 = Right)
-		mr	r20,r3
+		lbz r20,currentLedge(EventData)
 
 		#RESET PROGRESS
 		li		r3,0x0
@@ -820,6 +839,9 @@ b	exit
 		#Enter CliffWait
 			mr	r3,r30
 			branchl r12,0x8009a804
+    #Get Jump Back
+      mr r3,r29
+      branchl r12,0x8007d5d4
 		#Move Player To Ledge
 			mr	r3,r30
 			branchl r12,0x80081544
@@ -875,6 +897,10 @@ b	exit
 			li	r3,-10
 			bl	IntToFloat
 			stfs	f1,0x4C(r20)
+
+    #Update Camera Box
+      mr  r3,P1GObj
+      bl  UpdateCameraBox
 
 		restore
 		blr
@@ -1289,9 +1315,9 @@ b	exit
 .set BottomCameraBound,23
 
     EggsThinkSpawn:
-    li r24,0
+    #li r24,0
     EggsThinkSpawnLoop:
-    addi r24,r24,1
+    #addi r24,r24,1
     #Get OnScreen Boundaries
     #Left Camera
       branchl r12,0x80224a54
@@ -1340,9 +1366,10 @@ b	exit
       cmpwi r3,0x0
       beq EggsThinkSpawnLoop
 
-      load r3,0x803ead3c
-      mr r4,r24
-      branchl r12,0x803456a8
+    #OSReport Loop Count
+      #load r3,0x803ead3c
+      #mr r4,r24
+      #branchl r12,0x803456a8
 
 			SpawnEgg:
 			addi	r3,sp,0x80
@@ -2223,6 +2250,9 @@ b	exit
     lbz r3,CPUFacingDirectionToggled(MenuData)
 		cmpwi	r3,0x0
 		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
+    lbz r3,CPUAttackToggled(MenuData)
+    cmpwi r3,0x0
+    bne ReversalReset
 		ReversalSkipFacingReset:
 
 		#Move Players Apart With DPad
@@ -4301,6 +4331,9 @@ backup
   #Set Grounded
     mr r3,P2Data
     branchl r12,0x8007d6a4
+  #Update Camera
+    mr r3,P2GObj
+    bl  UpdateCameraBox
 
   #Enter Rebirth
     lwz	r26,0x2C(P1Data)
@@ -4331,6 +4364,9 @@ backup
 		bl	Custom_InterruptRebirthWait
 		mflr	r3
 		stw		r3,0x219C(P1Data)
+  #Update Camera
+    mr r3,P1GObj
+    bl  UpdateCameraBox
 
 restore
 blr
@@ -8361,6 +8397,10 @@ SaveState_Load:
     stw r3,0x20A0(r26)
     stw r3,0x21B0(r26)
 
+    #Update Camera Box Position
+    mr  r3,r25
+    bl  UpdateCameraBox
+
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
 		lwz		r3,0xE0(r26)
@@ -8420,9 +8460,6 @@ SaveState_Load:
 		addi		r29,r29,0x1
 		cmpw		r29,r30
 		blt		SaveState_LoadLoop
-
-  #Correct Camera Position
-    branchl r12,0x8002f3ac
 
 	restore
 	blr
@@ -10612,6 +10649,9 @@ backup
 #Set Grounded
   mr r3,playerdata
   branchl r12,0x8007d6a4
+#Update Camera
+  mr r3,player
+  bl  UpdateCameraBox
 
 PlacePlayersCenterStage_DoStuff_Exit:
 restore
@@ -10694,6 +10734,7 @@ FindGroundNearPlayer_Continue:
   li  r7,-1
   li  r8,-1
   li  r9,-1
+#Additional function pointer
   li  r10,0
 #Call function
   branchl r12,0x8004f008
@@ -10777,6 +10818,42 @@ branchl		r12,0x801c53ec
 
 restore
 blr
+#####################################
+
+UpdateCameraBox:
+#in
+#r3 = player
+
+.set player,31
+.set playerdata,30
+
+backup
+
+#Get Pointer
+  mr  player,r3
+  lwz playerdata,0x2C(player)
+
+#Update Camera Box Position
+  mr  r3,player
+  branchl r12,0x800761c8
+
+#Update Camera Box Direction Tween
+#  lwz r3,0x2C(player)
+#  branchl r12,0x80076064
+
+#Update Camera Box Direction Tween
+  lwz r3,0x890(playerdata)
+  lfs f1,0x40(r3)     #Leftmost Bound
+  stfs f1,0x2C(r3)    #Current Left Box Bound
+  lfs f1,0x44(r3)     #Rightmost Bound
+  stfs f1,0x30(r3)    #Current Right Box Bound
+
+#Correct Camera Position
+  branchl r12,0x8002f3ac
+
+restore
+blr
+
 #####################################
 exit:
 li	r0, 3
