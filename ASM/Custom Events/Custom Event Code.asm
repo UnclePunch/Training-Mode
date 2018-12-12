@@ -10441,7 +10441,7 @@ backup
 Custom_InterruptRebirthWait_CheckJoystickDown:
 #Ensure Stick Was Just Moved
 	lbz	r3, 0x0671 (playerdata)
-	cmpwi r3,2
+	cmpwi r3,4
 	bge	Custom_InterruptRebirthWait_Exit
 #Check For Down Joystick Push
 	lwz	r3, -0x514C (r13)
