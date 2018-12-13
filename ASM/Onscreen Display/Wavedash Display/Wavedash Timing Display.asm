@@ -183,7 +183,7 @@ blrl
 
 TextASCII2:
 blrl
-.string "Angle: %f"
+.string "Angle: %4.4f"
 .align 2
 
 Floats:

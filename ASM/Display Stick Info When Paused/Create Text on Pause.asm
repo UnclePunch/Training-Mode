@@ -204,14 +204,16 @@ blrl
 TextX:
 blrl
 .long 0x583a2025
-.long 0x6620815e
-.long 0x20256400
+.long 0x342e3466
+.long 0x20815e20
+.long 0x25640000
 
 TextY:
 blrl
 .long 0x593a2025
-.long 0x6620815e
-.long 0x20256400
+.long 0x342e3466
+.long 0x20815e20
+.long 0x25640000
 
 #**************************************************#
 
@@ -223,8 +225,8 @@ blrl
 .long 0xC1A80000 #Y VALUE y offset (-21)
 .long 0xC1E80000 #background x offset (-29)
 .long 0xC1000000 #background y offset (-8)
-.long 0x3f0f5c29 #background X text scaling #0.56
-.long 0x3F8A3D71 #background Y text scaling #1.08
+.float 0.50      #background X text scaling #0.56
+.float 1.08      #background Y text scaling #1.08
 
 #***************************************************#
 

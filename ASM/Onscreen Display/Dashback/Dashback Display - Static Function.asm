@@ -296,16 +296,13 @@ blr
 
 SuccessText:
 blrl
-.long 0x53756363
-.long 0x65737366
-.long 0x756c2044
-.long 0x42000000
+.string "Successful DB"
+.align 2
 
 FailedText:
 blrl
-.long 0x4661696c
-.long 0x65642044
-.long 0x42000000
+.string "Failed DB"
+.align 2
 
 VanillaDBText:
 blrl

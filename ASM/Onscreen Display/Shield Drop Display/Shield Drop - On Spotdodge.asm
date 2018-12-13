@@ -171,8 +171,8 @@ blrl
 
 YCoord:
 blrl
-.long 0x59203d20
-.long 0x25660000
+.long 0x59208181
+.long 0x20256600
 
 
 
