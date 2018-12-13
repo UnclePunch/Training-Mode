@@ -1136,6 +1136,7 @@ b	exit
 		#Get and Backup Event Data
 		mr	r30,r3			#r30 = think entity
 		lwz	EventData,0x2c(r3)			#backup data pointer in r31
+    lwz MenuData,MenuDataPointer(EventData)
 
 		#Get Player Data
     bl  GetAllPlayerPointers
@@ -3204,6 +3205,7 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
+    lwz   MenuData,MenuDataPointer(EventData)
 
     bl  GetAllPlayerPointers
     mr P1GObj,r3
@@ -9772,6 +9774,8 @@ MoveCPU:
 .set P2GObj,29
 .set P2Data,28
 .set SaveStateStruct,27
+.set P2Subchar,26
+.set P2SubcharData,25
 
 backup
 
@@ -9822,6 +9826,40 @@ backup
 #Set Grounded
   mr r3,P2Data
   branchl r12,0x8007d6a4
+
+#Check For Follower
+  mr  r3,P2GObj
+  bl  CheckIfPlayerHasAFollower
+  cmpwi r3,0
+  beq MoveCPU_NoFollower
+  mr P2Subchar,r3
+  mr P2SubcharData,r4
+#Init Player Data Values (So CPU Init is called and nana knows where popp is)
+  mr r3,P2Subchar
+  branchl r12,0x80068354
+#Copy Positions
+  lfs f1,0xB0(P2Data)
+  stfs f1,0xB0(P2SubcharData)
+  lfs f1,0xB4(P2Data)
+  stfs f1,0xB4(P2SubcharData)
+  lwz r3,0x83C(P2Data)
+  stw r3,0x83C(P2SubcharData)
+  lfs f1,0x2C(P2Data)
+  stfs f1,0x2C(P2SubcharData)
+#Enter Wait
+  mr  r3,P2Subchar
+  branchl r12,0x8008a348
+#Update Position
+  mr  r3,P2Subchar
+  bl  UpdatePosition
+#Update ECB Values for the ground ID
+  mr r3,P2Subchar
+  branchl r12,0x80084280
+#Set Grounded
+  mr r3,P2SubcharData
+  branchl r12,0x8007d6a4
+
+MoveCPU_NoFollower:
 #Savestate
   mr  r3,SaveStateStruct
   bl  SaveState_Save
