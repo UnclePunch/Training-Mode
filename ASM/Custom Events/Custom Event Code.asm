@@ -250,22 +250,20 @@ b	exit
 		blrl
 
     .set EventData,31
+    .set P1Data,27
     .set P1GObj,28
+    .set P2Data,29
     .set P2GObj,30
 
 		backup
 
 		lwz	EventData,0x2c(r3)
 
-		li	r3,0x1
-		branchl	r12,0x80034110	 #get player block
-		mr	r30,r3		#backup p2
-		lwz	r29,0x2C(r30)
-
-		li	r3,0x0
-		branchl	r12,0x80034110	 #get player block
-		mr	r28,r3		#backup p1
-		lwz	r27,0x2C(r28)
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		bl	CheckIfFirstFrame
 		cmpwi	r3,0x0
@@ -432,11 +430,11 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-		li		r3,0x0
-		branchl	r12,0x80034110				#get player block
-		mr		P1GObj,r3			#player block in r30
-		lwz		P1Data,0x2c(P1GObj)			#player data in r29
 		lwz   MenuData,MenuDataPointer(EventData)
+
+    bl    GetAllPlayerPointers
+		mr		P1GObj,r3			#player block in r30
+		mr		P1Data,r4			#player data in r29
 
 
 		#ON FIRST FRAME
@@ -842,6 +840,9 @@ b	exit
     #Get Jump Back
       mr r3,r29
       branchl r12,0x8007d5d4
+    #Set ECB Update Flag
+      mr  r3,P1Data
+      branchl r12,0x8007d5bc
 		#Move Player To Ledge
 			mr	r3,r30
 			branchl r12,0x80081544
@@ -1121,6 +1122,8 @@ b	exit
     #Registers
     .set EventData,31
     .set MenuData,26
+    .set P1Data,27
+    .set P1GObj,28
 
     #Offsets
 		.set	DamageThreshold,(OptionMenuMemory+0x2) +0x0
@@ -1132,14 +1135,12 @@ b	exit
 
 		#Get and Backup Event Data
 		mr	r30,r3			#r30 = think entity
-		lwz	r31,0x2c(r3)			#backup data pointer in r31
+		lwz	EventData,0x2c(r3)			#backup data pointer in r31
 
 		#Get Player Data
-		li	r3,0x0
-		branchl	r12,0x80034110	 #get player block
-		mr	r28,r3
-		lwz	r27,0x2c(r28)		#player data in r3
-    lwz MenuData,MenuDataPointer(EventData)
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
 
 		#No Staling
 		bl	ResetStaleMoves
@@ -1666,6 +1667,10 @@ b	exit
 		#########################
 
     .set EventData,31
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
 
 		SDITrainingThink:
 		blrl
@@ -1674,17 +1679,11 @@ b	exit
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		li	r3,0xF
 		stw	r3,0x1A94(r29)
@@ -2178,6 +2177,10 @@ b	exit
 
     .set MenuData,26
     .set EventData,31
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
 
 		.set firstFrameFlag,0x0
 		.set timer,0x4
@@ -2198,19 +2201,13 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
     lwz MenuData,MenuDataPointer(EventData)
+
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		li	r3,0xF
 		stb	r3,0x1A94(r29)
@@ -2765,6 +2762,10 @@ b	exit
     #Registers
     .set MenuData,26
     .set EventData,31
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
 
     #Offsets
 		.set FireSpeed,(OptionMenuMemory+0x2)+0x0
@@ -2775,19 +2776,13 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
+    lwz   MenuData,MenuDataPointer(EventData)
 
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
-    lwz MenuData,MenuDataPointer(EventData)
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -3194,6 +3189,10 @@ b	exit
     #Registers
     .set MenuData,26
     .set EventData,31
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
 
     #Offsets
 		.set FacingDirection,(OptionMenuMemory+0x2)+0x0
@@ -3206,18 +3205,11 @@ b	exit
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
-    lwz MenuData,MenuDataPointer(EventData)
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -3475,6 +3467,10 @@ b	exit
     #Registers
     .set MenuData,26
     .set EventData,31
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
 
 		.set firstFrameFlag,0x0
 		.set timer,0x4
@@ -3487,19 +3483,13 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		r30,r3			#player block in r30
-		lwz		r29,0x2c(r30)			#player data in r29
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		r28,r3			#player block in r28
-		lwz		r27,0x2c(r28)			#player data in r27
     lwz MenuData,MenuDataPointer(EventData)
+
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -3973,17 +3963,11 @@ b	exit
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		P2GObj,r3			#player block in r30
-		lwz		P2Data,0x2c(P2GObj)			#player data in r29
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		P1GObj,r3			#player block in r28
-		lwz		P1Data,0x2c(P1GObj)			#player data in r27
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -4465,17 +4449,11 @@ b	exit
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		P2GObj,r3			#player block in r30
-		lwz		P2Data,0x2c(P2GObj)			#player data in r29
-
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		P1Gobj,r3			#player block in r28
-		lwz		P1Data,0x2c(P1Gobj)			#player data in r27
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -4794,7 +4772,9 @@ b	exit
     #Registers
     .set MenuData,26
     .set EventData,31
+    .set P1Data,27
     .set P1GObj,28
+    .set P2Data,29
     .set P2GObj,30
 
     #Offsets
@@ -4817,17 +4797,12 @@ b	exit
 		#INIT FUNCTION VARIABLES
 		lwz		r31,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
-		mr		P2GObj,r3			#player block in r30
-		lwz		r29,0x2c(P2GObj)			#player data in r29
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+    mr P2GObj,r5
+    mr P2Data,r6
 
-		#Get P1
-		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
-		mr		P1GObj,r3			#player block in r28
-		lwz		r27,0x2c(P1GObj)			#player data in r27
     lwz MenuData,MenuDataPointer(EventData)
 
 		bl	StoreCPUTypeAndZeroInputs
@@ -6429,22 +6404,21 @@ b	exit
 			blrl
 
       .set EventData,31
+      .set P1Data,27
+      .set P1GObj,28
+      .set P2Data,29
+      .set P2GObj,30
+
 			backup
 
 		#INIT FUNCTION VARIABLES
 			lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-			li		r3,0x1
-			branchl		r12,0x80034110			#get player block
-			mr		r30,r3			#player block in r30
-			lwz		r29,0x2c(r30)			#player data in r29
-
-		#Get P1
-			li		r3,0x0
-			branchl		r12,0x80034110			#get player block
-			mr		r28,r3			#player block in r28
-			lwz		r27,0x2c(r28)			#player data in r27
+      bl  GetAllPlayerPointers
+      mr P1GObj,r3
+      mr P1Data,r4
+      mr P2GObj,r5
+      mr P2Data,r6
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -6867,23 +6841,21 @@ b	exit
 		blrl
 
     .set EventData,31
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
 
 		backup
 
 		#INIT FUNCTION VARIABLES
 			lwz		EventData,0x2c(r3)			#backup data pointer in r31
 
-		#Get P2
-			li		r3,0x1
-			branchl		r12,0x80034110			#get player block
-			mr		r30,r3			#player block in r30
-			lwz		r29,0x2c(r30)			#player data in r29
-
-		#Get P1
-			li		r3,0x0
-			branchl		r12,0x80034110			#get player block
-			mr		r28,r3			#player block in r28
-			lwz		r27,0x2c(r28)			#player data in r27
+      bl  GetAllPlayerPointers
+      mr P1GObj,r3
+      mr P1Data,r4
+      mr P2GObj,r5
+      mr P2Data,r6
 
 		li	r3,0xF
 		stw	r3,0x1A94(r29)
@@ -8397,10 +8369,6 @@ SaveState_Load:
     stw r3,0x20A0(r26)
     stw r3,0x21B0(r26)
 
-    #Update Camera Box Position
-    mr  r3,r25
-    bl  UpdateCameraBox
-
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
 		lwz		r3,0xE0(r26)
@@ -8417,6 +8385,10 @@ SaveState_Load:
 		lwz		r3,0x0(r3)		#get flag
 		lwz		r4,0x890(r26)
 		stw		r3,0x8(r4)
+
+    #Update Camera Box Position
+    mr  r3,r25
+    bl  UpdateCameraBox
 
 		#Remake HUD For Dead Players (Taken from Achilles' GitHub)
 		cmpwi		r23,0x1		#dont run this on subcharacters
@@ -10482,6 +10454,11 @@ backup
   lwz	r3, 0x00B8 (PlayerData)
   stw	r3, 0x06FC (PlayerData)
   stw	r3, 0x0714 (PlayerData)
+
+#Update Collision Frame ID
+  lwz	r3, -0x51F4 (r13)
+  stw r3, 0x728(PlayerData)
+
   #branchl	r12,0x80081b38     #Stopped using this because it deletes way too much ECB info
   #branchl r12,0x80082a68      #Better than the above function, but all i need is to copy current position into the ECB previous values
 #Update Static Player Block Coords
@@ -10851,6 +10828,66 @@ backup
 #Correct Camera Position
   branchl r12,0x8002f3ac
 
+restore
+blr
+
+#####################################
+
+GetAllPlayerPointers:
+
+#in
+#nothing
+
+#out
+#r3 = P1GObj
+#r4 = P1Data
+#r5 = P2GObj
+#r6 = P2Data
+#r7 = P3GObj
+#r8 = P3Data
+#r9 = P4GObj
+#r10 = P4Data
+
+backup
+
+#Get Space to Store all Pointer to
+  addi r21,sp,0x40
+#Init Loop Count
+  li  r20,0
+
+GetAllPlayerPointers_Loop:
+#Get GObj
+  mr  r3,r20
+  branchl r12,0x80034110
+#Check If Exists
+  cmpwi r3,0x0
+  li    r4,0      #Zero Data pointer just in case it doesnt exist
+  beq GetAllPlayerPointers_StoreToStack
+#Get Data
+  lwz r4,0x2C(r3)
+#Store Both to Stack
+GetAllPlayerPointers_StoreToStack:
+  mulli r5,r20,8
+  add r5,r5,r21
+  stw r3,0x0(r5)
+  stw r4,0x4(r5)
+
+GetAllPlayerPointers_IncLoop:
+  addi r20,r20,1
+  cmpwi r20,4
+  blt GetAllPlayerPointers_Loop
+
+GetAllPlayerPointers_LoadPointers:
+  lwz r3,0x00(r21)
+  lwz r4,0x04(r21)
+  lwz r5,0x08(r21)
+  lwz r6,0x0C(r21)
+  lwz r7,0x10(r21)
+  lwz r8,0x14(r21)
+  lwz r9,0x18(r21)
+  lwz r10,0x1C(r21)
+
+GetAllPlayerPointers_Exit:
 restore
 blr
 
