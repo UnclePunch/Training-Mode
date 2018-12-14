@@ -161,6 +161,7 @@ backup
 
 		#Get How Many Frames Early
 		lbz	r5, 0x680 (playerdata)
+		addi r5,r5,1								#add 1 so earliest value is 21/20 and not 20/20
 
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
