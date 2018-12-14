@@ -780,6 +780,9 @@ b	exit
 			bl	Custom_InterruptRebirthWait
 			mflr	r3
 			stw		r3,0x219C(r29)
+    #Update RebirthPlat Position
+      mr  r3,P1GObj
+      branchl r12,0x800d54a4
 
 		Ledgedash_LoadState_SkipRespawnPlatform:
       mr  r3,r30
@@ -4350,6 +4353,9 @@ backup
 		bl	Custom_InterruptRebirthWait
 		mflr	r3
 		stw		r3,0x219C(P1Data)
+  #Update RebirthPlat Position
+    mr  r3,P1GObj
+    branchl r12,0x800d54a4
   #Update Camera
     mr r3,P1GObj
     bl  UpdateCameraBox
@@ -10503,8 +10509,7 @@ backup
   lbz r3,0xC(PlayerData)
   lbz	r4, 0x221F (PlayerData)
   rlwinm	r4, r4, 29, 31, 31
-  mr  r5,PlayerData
-  addi  PlayerData,PlayerData,176
+  addi  r5,PlayerData,176
   branchl r12,0x80032828
 
 restore
