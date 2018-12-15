@@ -86,10 +86,9 @@ fsubs    \reg2,\reg2,f16
 #all registers free
 
 #CHECK IF CUSTOM EVENT
-cmpwi	r25,3
-blt	exit
-cmpwi	r25,15
-bgt	exit
+  branchl r12,0x80005520
+  cmpwi r3,0x0
+  beq exit
 
 	#1 PLAYER, NO ITEMS, TIME COUNTING UP
 	lwz	r9,0x0(r29)		#get event pointers
@@ -702,6 +701,11 @@ b	exit
 			stb	r3,timer(r31)
 			cmpwi	r3,0x0
 			bgt	LedgedashThinkEnd
+      bl	Ledgedash_PlaceOnLedge
+    #Save State
+      addi r3,EventData,0x10
+      bl		SaveState_Save
+
 		Ledgedash_LoadState:
 		#Reset all event variables
 			li		r3,0x0
