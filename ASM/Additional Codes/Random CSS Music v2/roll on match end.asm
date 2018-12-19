@@ -193,8 +193,7 @@ lwz \reg,\offset(player)
 .set entity,31
 .set player,31
 
-branchl r14,0x8015ecbc
+branchl r12,0x8015ecbc
 
 original:
 lwz	r0, 0x001C (sp)
-

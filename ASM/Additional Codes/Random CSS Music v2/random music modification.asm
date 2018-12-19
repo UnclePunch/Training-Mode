@@ -194,7 +194,7 @@ lwz \reg,\offset(player)
 .set player,31
 
 li r3,0x3
-branchl r14,HSD_Randi
+branchl r12,HSD_Randi
 
 cmpwi r3,0x0
 beq MainMenu1
@@ -218,4 +218,3 @@ b done
 done:
 stb	r0, 0x0001 (r31)
 branch r14, 0x8015ed1c
-

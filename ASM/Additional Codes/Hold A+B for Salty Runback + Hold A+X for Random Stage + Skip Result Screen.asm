@@ -83,7 +83,7 @@ checkZ:
   beq increment
 
 randomStage:
-  branchl r14,0x802599EC #get random stage ID
+  branchl r12,0x802599EC #get random stage ID
 
   #convert SSS ID to internal stage ID
     load r4,0x803f06D0   #load stage ID table
