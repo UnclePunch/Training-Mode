@@ -1,4 +1,4 @@
-#To be inserted at 803a6b04
+#To be inserted at 8024d4a4
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -26,17 +26,17 @@ lfs \regf,-0x4(sp)
 .endm
 
 .macro backup
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw	r3,8(r1)	# push r20-r31 onto the stack
 mflr r0
-stw r0,0xFC(sp)
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
 .endm
 
-.macro restore
-lwz r0,0xFC(sp)
-mtlr r0
-lmw	r3,8(r1)	# pop r20-r31 off the stack
+ .macro restore
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
+mtlr r0
 .endm
 
 .macro intToFloat reg,reg2
@@ -54,29 +54,13 @@ fsubs    \reg2,\reg2,f16
 .set HSD_Randf,0x80380528
 .set Wait,0x8008a348
 .set Fall,0x800cc730
-.set TextCreateFunction,0x80005928
 
 .set entity,31
+.set player,31
 .set playerdata,31
-.set player,30
-.set text,29
-.set textprop,28
-.set hitbool,27
 
-#Runs When the ASCII Value is 0x85 or Greater
-#Katagana Starts at Dictionary Offset 0xB0
+load r3,0xbbbbbbFF
+stw r3,0x30(r24)
 
-cmpwi	r10,0x85
-blt	original
-
-addi	r31,r10,0x2b
-branch	r12,0x803a6b38
-
-original:
-lbzu	r31, 0x0001 (r6)
-
-
-
-
-
-
+#Original
+rlwinm	r3, r27, 0, 24, 31

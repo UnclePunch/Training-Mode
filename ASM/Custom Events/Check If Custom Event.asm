@@ -62,10 +62,6 @@ fsubs    \reg2,\reg2,f16
 .set FirstCustomEvent, (4)    -1
 .set LastCustomEvent, (15)    -1
 
-#Get Current Event Number
-lwz	r3, -0x77C0 (r13)
-lbz	r3, 0x0535 (r3)
-
 #CHECK IF CUSTOM EVENT
   cmpwi	r3,FirstCustomEvent
   blt	Vanilla
