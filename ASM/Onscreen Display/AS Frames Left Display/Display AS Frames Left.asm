@@ -274,18 +274,13 @@ backup
 
 HitstunASCII:
 blrl
-.long 0x41532046
-.long 0x72616d65
-.long 0x73000000
-
+.string "AS Frames"
+.align 2
 
 HitstunASCII2:
 blrl
-.long 0x4c656674
-.long 0x3a202564
-.long 0x66000000
-
-
+.string "Left: %df"
+.align 2
 
 IgnoreStates:
 blrl

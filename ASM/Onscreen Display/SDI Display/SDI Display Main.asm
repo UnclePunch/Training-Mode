@@ -189,14 +189,13 @@ mr	playerdata,r3
 
 SDI1:
 blrl
-.long 0x53444920
-.long 0x496e7075
-.long 0x74730000
+.string "SDI Inputs"
+.align 2
 
 SDI2:
 blrl
-.long 0x2564815e
-.long 0x25640000
+.string "%d/%d"
+.align 2
 
 ############
 ## Floats ##

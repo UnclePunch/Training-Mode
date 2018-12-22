@@ -188,31 +188,23 @@ backup
 
 PowerShieldText:
 blrl
-.long 0x4d697373
-.long 0x65642050
-.long 0x53000000
+.string "Missed Powershield"
+.align 2
 
 LateText:
 blrl
-.long 0x25646620
-.long 0x4561726c
-.long 0x79000000
+.string "%df Early"
+.align 2
 
 ReflectEndedText:
 blrl
-.long 0x5265666c
-.long 0x65637420
-.long 0x456e6465
-.long 0x64202564
-.long 0x66000000
-
+.string "Reflect Ended %df"
+.align 2
 
 NoHardPress:
 blrl
-.long 0x4e6f2048
-.long 0x61726420
-.long 0x50726573
-.long 0x73000000
+.string "No Hard Press"
+.align 2
 
 ##############################
 

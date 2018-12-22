@@ -177,21 +177,13 @@ mr	playerdata,r6
 
 TopText:
 blrl
-.long 0x4672616d
-.long 0x65732069
-.long 0x6e000000
-
-
+.string "Frames in"
+.align 2
 
 BottomText:
 blrl
-.long 0x436c6966
-.long 0x66576169
-.long 0x743a2025
-.long 0x64000000
-
-
-
+.string "Cliffwait: %df"
+.align 2
 
 ##############################
 

@@ -139,6 +139,7 @@ backup
 		lfs f3,AirdodgeAngle(playerdata)
 		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
+		crset 6
 		branchl r12,0x803a6b98
 
 	#Check Angle

@@ -177,24 +177,18 @@ lwz	playerdata,0x2c(player)
 
 TopText:
 blrl
-.long 0x4c656467
-.long 0x65737461
-.long 0x6c6c0000
-
+.string "Ledgestall"
+.align 2
 
 BottomText_FramesLate:
 blrl
-.long 0x4672616d
-.long 0x6573204c
-.long 0x6174653a
-.long 0x20256400
+.string "Frames Late: %d"
+.align 2
 
 BottomText_PerfectStall:
 blrl
-.long 0x50657266
-.long 0x65637400
-
-
+.string "Perfect"
+.align 2
 
 ##############################
 

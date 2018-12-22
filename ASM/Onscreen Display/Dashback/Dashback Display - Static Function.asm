@@ -306,22 +306,18 @@ blrl
 
 VanillaDBText:
 blrl
-.long 0x56616e69
-.long 0x6c6c6120
-.long 0x2d202564
-.long 0x81930000
-
+.string "Vanilla - %d%"
+.align 2
 
 UCFDBText:
 blrl
-.long 0x55434620
-.long 0x2d202564
-.long 0x81930000
+.string "UCF - %d%"
+.align 2
 
 FailedTextPercent:
 blrl
-.long 0x25648193
-.long 0x00000000
+.string "Failed - %d%"
+.align 2
 
 ##############################
 

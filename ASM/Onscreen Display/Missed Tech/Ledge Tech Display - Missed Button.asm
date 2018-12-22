@@ -212,56 +212,33 @@ backup
 
 LateTextASCII:
 blrl
-.long 0x4561726c
-.long 0x79205072
-.long 0x65737300
-
-
+.string "Early Press"
+.align 2
 
 LateTextASCII2:
 blrl
-.long 0x4672616d
-.long 0x65202564
-.long 0x815e3230
-.long 0x00000000
-
-
-
-
+.string "Frame %d/20"
+.align 2
 
 LockoutTextASCII:
 blrl
-.long 0x54656368
-.long 0x204c6f63
-.long 0x6b6f7574
-.long 0x00000000
-
+.string "Tech Lockout"
+.align 2
 
 LockoutTextASCII2:
 blrl
-.long 0x25646620
-.long 0x4561726c
-.long 0x79000000
-
-
+.string "%df Early"
+.align 2
 
 NoPressASCII:
 blrl
-.long 0x4d697373
-.long 0x65642054
-.long 0x65636800
-
+.string "Missed Tech"
+.align 2
 
 NoPressASCII2:
 blrl
-.long 0x4e6f204c
-.long 0x815e5220
-.long 0x50726573
-.long 0x73000000
-
-
-
-
+.string "No L/R Press"
+.align 2
 
 ##############################
 

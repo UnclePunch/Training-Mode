@@ -157,19 +157,13 @@ beq	Moonwalk_Exit
 
 TopText:
 blrl
-.long 0x41657269
-.long 0x616c204f
-.long 0x6f4a756d
-.long 0x70000000
-
-
+.string "Aerial OoJump"
+.align 2
 
 BottomText:
 blrl
-.long 0x4672616d
-.long 0x65202564
-.long 0x00000000
-
+.string "Frame %d"
+.align 2
 
 ##############################
 

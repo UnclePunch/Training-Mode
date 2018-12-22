@@ -228,22 +228,18 @@ TextASCII:
 blrl
 
 #Last L/R/Z
-.long 0x4672616d
-.long 0x65202564
-.long 0x815e3700
+.string "Frame %d/7"
+.align 2
 
 TextASCII2:
 blrl
-.long 0x4c2d4361
-.long 0x6e63656c
-.long 0x203d2025
-.long 0x64819300
+.string "L-Cancel %d%"
+.align 2
 
 TextASCII3:
 blrl
-.long 0x4e6f2050
-.long 0x72657373
-.long 0x
+.string "No Press"
+.align 2
 
 ##############################
 

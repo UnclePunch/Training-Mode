@@ -174,24 +174,13 @@ lwz	playerdata,0x2c(player)
 
 TopText:
 blrl
-.long 0x4c656467
-.long 0x65646173
-.long 0x68204741
-.long 0x4c494e54
-.long 0x00000000
-
-
-
+.string "Ledgedash GALINT"
+.align 2
 
 BottomText:
 blrl
-.long 0x4672616d
-.long 0x65733a20
-.long 0x25640000
-
-
-
-
+.string "Frames: %d"
+.align 2
 
 ##############################
 

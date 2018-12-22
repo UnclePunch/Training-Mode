@@ -146,19 +146,13 @@ stfs	f0,  0x1850 (r31)			#Store New Value
 
 TopText:
 blrl
-.long 0x43726f75
-.long 0x63682043
-.long 0x616e6365
-.long 0x6c000000
-
+.string "Crouch Cancel"
+.align 2
 
 BottomText:
 blrl
-.long 0x2564202d
-.long 0x81842025
-.long 0x64204b42
-.long 0x00000000
-
+.string "%d -> %d KB"
+.align 2
 
 ##############################
 

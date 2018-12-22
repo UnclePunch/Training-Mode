@@ -185,27 +185,23 @@ lwz	playerdata,0x2c(player)
 
 ShieldPokeText:
 blrl
-.long 0x48697420
-.long 0x42790000
-
+.string "Hit By"
+.align 2
 
 ShieldPokeText2:
 blrl
-.long 0x53686965
-.long 0x6c642050
-.long 0x6f6b6500
-
+.string "Shield Poke"
+.align 2
 
 ADTText:
 blrl
-.long 0x48697420
-.long 0x44757269
-.long 0x6e672000
+.string "Hit During"
+.align 2
 
 ADTText2:
 blrl
-.long 0x41445400
-
+.string "ADT"
+.align 2
 
 ##############################
 

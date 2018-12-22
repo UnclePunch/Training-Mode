@@ -358,41 +358,19 @@ CreateText:
 	mtlr r0
 	blr
 
-#####################
-## Text Properties ##
-#####################
-
-TextProperties:
-blrl
-
-.long 0xC1A80000 #X Base
-.long 0x41100000 #Y Value
-.long 0x41600000 #X Difference Between Players
-.long 0x3D23D70A	#Text Size
-
-.long 0xC3CD0000 #background Y position
-.long 0x4129999A #background X stretch
-.long 0x41E00000 #background Y stretch
-
-
 ###################
 ## TEXT CONTENTS ##
 ###################
 
 TopText:
 blrl
-.long 0x4672616D
-.long 0x65204164
-.long 0x76616E74
-.long 0x61676500
+.string "Frame Advantage"
+.align 2
 
 BottomText:
 blrl
-.long 0x25642046
-.long 0x72616D65
-.long 0x73000000
-
-
+.string "%d Frames"
+.align 2
 
 ##############################
 

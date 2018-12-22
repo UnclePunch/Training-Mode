@@ -183,44 +183,23 @@ backup
 
 DuringSSASCII:
 blrl
-.long 0x53686965
-.long 0x6c642053
-.long 0x74756e00
-
+.string "Shield Stun"
+.align 2
 
 DuringSSASCII2:
 blrl
-.long 0x4c656674
-.long 0x3a202564
-.long 0x66000000
-
-
-
-
-
-
-
+.string "Left: %df"
+.align 2
 
 SSOverASCII:
 blrl
-.long 0x53686965
-.long 0x6c642053
-.long 0x74756e00
-
-
+.string "Shield Stun"
+.align 2
 
 SSOverASCII2:
 blrl
-.long 0x4c656674
-.long 0x3a202564
-.long 0x66000000
-
-
-
-
-TextASCII3:
-blrl
-.long 0x2d000000
+.string "Left: %df"
+.align 2
 
 ##############################
 

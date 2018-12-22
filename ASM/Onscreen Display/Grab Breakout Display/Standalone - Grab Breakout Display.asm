@@ -154,15 +154,13 @@ lwz	playerdata,0x2c(r4)
 
 GrabBreoutText:
 blrl
-.long 0x47726162
-.long 0x20427265
-.long 0x616b6f75
-.long 0x74000000
+.string "Grab Breakout"
+.align 2
 
 GrabBreoutText2:
 blrl
-.long 0x2564815e
-.long 0x25640000
+.string "%d/%d"
+.align 2
 
 ##############################
 

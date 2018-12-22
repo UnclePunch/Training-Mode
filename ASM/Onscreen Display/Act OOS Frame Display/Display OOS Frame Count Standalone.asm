@@ -180,16 +180,13 @@ lwz	playerdata,0x2C(player)
 
 DuringSSASCII:
 blrl
-.long 0x41637420
-.long 0x4f4f5300
-
+.string "Act OoS"
+.align 2
 
 DuringSSASCII2:
 blrl
-.long 0x4672616d
-.long 0x653a2025
-.long 0x64000000
-
+.string "Frame %d"
+.align 2
 
 ##############################
 

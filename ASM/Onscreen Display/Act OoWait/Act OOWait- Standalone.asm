@@ -239,26 +239,18 @@ ComingFromWhitelist:
 
 TechText:
 blrl
-.long 0x41637420
-.long 0x4f6f5761
-.long 0x69740000
+.string "Act OoWait"
+.align 2
 
 GetupText:
 blrl
-.long 0x41637420
-.long 0x4f6f4765
-.long 0x74757000
-
-
+.string "Act OoGetup"
+.align 2
 
 BottomText:
 blrl
-.long 0x4672616d
-.long 0x653a2025
-.long 0x64000000
-
-
-
+.string "Frame: %d"
+.align 2
 
 ##############################
 

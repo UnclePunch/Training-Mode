@@ -129,11 +129,8 @@ b	exit
 
 UpdateText_Text:
 blrl
-
-.long 0x4d617820
-.long 0x4f534427
-.long 0x733a2025
-.long 0x64000000
+.string "Max OSD's: %d"
+.align 2
 
 exit:
 restore

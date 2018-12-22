@@ -179,18 +179,19 @@ backup
 
 TopText:
 blrl
-.long 0x436f6d62
-.long 0x6f20436f
-.long 0x756e7400
-
+.string "Combo Count"
+.align 2
 
 BottomText:
 blrl
+.string "%d Hits / %d%"
+.align 2
+/*
 .long 0x25642048
 .long 0x69747320
 .long 0x815e2025
 .long 0x64819300
-
+*/
 
 ##############################
 

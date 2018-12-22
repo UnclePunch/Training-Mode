@@ -452,40 +452,33 @@ blr
 ###################
 ShortenPressText:
 blrl
-.long 0x53686f72
-.long 0x74656e20
-.long 0x50726573
-.long 0x73000000
+.string "Shorten Press"
+.align 2
 
 EarlyPressText:
 blrl
-.long 0x25646620
-.long 0x4561726c
-.long 0x79000000
+.string "%df Early"
+.align 2
 
 ShortenTypeText:
 blrl
-.long 0x4672616d
-.long 0x65202564
-.long 0x815e3400
+.string "Frame %d/4"
+.align 2
 
 LatePressText:
 blrl
-.long 0x25646620
-.long 0x4c617465
-.long 0x00000000
+.string "%df Late"
+.align 2
 
 ActOOShineTop:
 blrl
-.long 0x41637420
-.long 0x4f4f5368
-.long 0x696e6500
+.string "Act OOShine"
+.align 2
 
 ActOOShineBottom:
 blrl
-.long 0x4672616d
-.long 0x65202564
-.long 0x00000000
+.string "Frame %d"
+.align 2
 
 ##############################
 

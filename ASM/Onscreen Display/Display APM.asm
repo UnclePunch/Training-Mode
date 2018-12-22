@@ -216,12 +216,13 @@ blr
 
 APMText:
 blrl
-.long 0x49504d00
+.string "IPM"
+.align 2
 
 Decimal:
 blrl
-.long 0x25640000
-
+.string "%d"
+.align 2
 
 ##############################
 

@@ -169,17 +169,13 @@ mr	playerdata,r3
 
 TopText:
 blrl
-.long 0x46617374
-.long 0x66616c6c
-.long 0x
-
+.string "Fastfall"
+.align 2
 
 BottomText:
 blrl
-.long 0x4672616d
-.long 0x65202564
-.long 0x
-
+.string "Frame %d"
+.align 2
 
 ##############################
 

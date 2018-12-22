@@ -154,24 +154,19 @@ backup
 
 XYLockoutASCII:
 blrl
-.long 0x5859204c
-.long 0x6f636b6f
-.long 0x75740000
+.string "XY Lockout"
+.align 2
 
 TapJumpLockoutASCII:
 blrl
-.long 0x5461704a
-.long 0x6d70204c
-.long 0x6f636b6f
-.long 0x75740000
-
+.string "TapJmp Lockout"
+.align 2
 
 EarlyASCII:
 blrl
 #%df Early
-.long 0x25646620
-.long 0x4561726c
-.long 0x79000000
+.string "%df Early"
+.align 2
 
 ##############################
 

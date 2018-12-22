@@ -164,17 +164,13 @@ lwz	playerdata,0x2C(player)
 
 StickMovedText:
 blrl
-.long 0x4672616d
-.long 0x65202564
-.long 0x815e3500
-
+.string "Frame %d/5"
+.align 2
 
 YCoord:
 blrl
-.long 0x59208181
-.long 0x20256600
-
-
+.string "Y = %f"
+.align 2
 
 ##############################
 

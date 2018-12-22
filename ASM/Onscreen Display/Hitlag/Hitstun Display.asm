@@ -210,24 +210,18 @@ backup
 
 HitstunASCII:
 blrl
-.long 0x48697473
-.long 0x74756e00
+.string "Hitstun"
+.align 2
 
 HitstunASCII2:
 blrl
-.long 0x4c656674
-.long 0x3a202564
-.long 0x66000000
-
-
-
-
+.string "Left: %df"
+.align 2
 
 HitlagASCII:
 blrl
-.long 0x4869746c
-.long 0x61670000
-
+.string "Hitlag"
+.align 2
 
 ##############################
 
