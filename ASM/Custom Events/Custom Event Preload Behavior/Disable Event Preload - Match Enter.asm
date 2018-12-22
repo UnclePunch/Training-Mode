@@ -61,7 +61,7 @@ fsubs    \reg2,\reg2,f16
 
 #CHECK IF CUSTOM EVENT
   lwz	r3, -0x77C0 (r13)
-  lbz	r4, 0x0535 (r3)
+  lbz	r3, 0x0535 (r3)
   branchl r12,0x80005520
   cmpwi r3,0x0
   beq VanillaEvent
