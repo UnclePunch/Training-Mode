@@ -19,7 +19,7 @@ backup
   bge Original
 
 #Get static block
-  mr  PlayerSlot,28
+  mr  r3,PlayerSlot
   branchl r12,Playerblock_LoadStaticBlock
   mr  StaticBlock,r3
 
