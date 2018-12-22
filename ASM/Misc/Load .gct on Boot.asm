@@ -114,7 +114,6 @@ fsubs    \reg2,\reg2,f16
 	addi	r3, r31, 0
 	addi	r4, r30, 0
 
-
 	#Run Codehandler
 	mr	r4,r3
 	branchl	r12,GeckoCodehandler
@@ -127,18 +126,8 @@ fsubs    \reg2,\reg2,f16
 fileName:
 blrl
 
-/*
-#TyChico.dat
-.long 0x54794368
-.long 0x69636f2e
-.long 0x64617400
-*/
-
-#code.gct
-.long 0x636f6465
-.long 0x732e6763
-.long 0x74000000
-
+.string "codes.gct"
+.align 2
 
 #EXIT
 exit:
