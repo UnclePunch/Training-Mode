@@ -31,7 +31,8 @@
 
 OSReportString:
 blrl
-.string "Match loaded in: %dms"
+.string "Match loaded in: %dms
+"
 .align 2
 .endif
 #*************************************************
