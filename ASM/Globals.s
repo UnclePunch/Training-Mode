@@ -1,5 +1,9 @@
 #Debug Flag
-.set debug,0
+.set debug,1
+
+#Codeset Variables
+.set FirstCustomEvent, (4)    -1
+.set LastCustomEvent, (15)    -1
 
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
@@ -75,6 +79,7 @@
 .set MatchInfo_StockModeCheck,0x8016b094
 .set PlayerBlock_LoadStocksLeft,0x80033bd8
 .set PlayerBlock_LoadSlotType,0x8003241c
+.set Playerblock_LoadStaticBlock,0x80031724
 .set Text_CreateTextStruct,0x803a6754
 .set Text_InitializeSubtext,0x803a6b98
 .set Text_UpdateSubtextSize,0x803a7548
