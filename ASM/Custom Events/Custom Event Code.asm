@@ -1,77 +1,5 @@
 #To be inserted at 801bb128
-.macro branchl reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctrl
-.endm
-
-.macro branch reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctr
-.endm
-
-.macro psq_lhw, fD, disp, rA
-# load an hword UINT as a quzntized floating point
-.long 0xE0003000 + \fD<<21 + \rA<<16 + \disp&0xFFF
-.endm
-
-.macro load reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-.endm
-
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
-
-.macro backup
-mflr r0
-stw r0, 0x4(r1)
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw  r20,0x8(r1)
-.endm
-
- .macro restore
-lmw  r20,0x8(r1)
-lwz r0, 0x104(r1)
-addi	r1,r1,0x100	# release the space
-mtlr r0
-.endm
-
-.macro intToFloat reg,reg2
-xoris    \reg,\reg,0x8000
-lis    r18,0x4330
-lfd    f16,-0x7470(rtoc)    # load magic number
-stw    r18,0(r2)
-stw    \reg,4(r2)
-lfd    \reg2,0(r2)
-fsubs    \reg2,\reg2,f16
-.endm
-
-.set ActionStateChange,0x800693ac
-.set HSD_Randi,0x80380580
-.set HSD_Randf,0x80380528
-.set Wait,0x8008a348
-.set Fall,0x800cc730
-
-.set entity,31
-.set player,31
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
-
+.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Misc/Globals.h"
 
 #r25 = event ID
 #r26 = final match struct
@@ -181,12 +109,12 @@ LCancel:
 
 #Create Copy Of Player Struct
 li	r3,0x1C
-branchl	r12,0x8037f1e4
+branchl	r12,HSD_MemAlloc
 mr	r20,r3
 bl	P2Struct
 mflr	r4
 li	r5,0x1C
-branchl	r12,0x800031f4
+branchl	r12,memcpy
 
 #STORE CPU
 lwz	r4,0x0(r29)
@@ -341,7 +269,7 @@ b	exit
 Ledgedash:
 #STORE RANDOM LEGAL STAGE
 #li	r3,6		#6 Legal Stages
-#branchl	r12,0x80380580
+#branchl	r12,HSD_Randi
 #bl	LegalStages
 #mflr	r4
 #lbzx	r3,r3,r4
@@ -444,7 +372,7 @@ b	exit
 		beq	LedgedashThinkMain
 
 			#Create Camera Box
-				branchl	r12,0x80029020
+				branchl	r12,CreateCameraBox
 				stw r3,CameraBox(r31)
 			#Place on Ledge
 				lbz r3,currentLedge(EventData)		#Left Ledge
@@ -468,7 +396,7 @@ b	exit
 
 		#Update HUD Score
 		lhz	r3,-0x4ea8(r13)
-		branchl	r12,0x802fa2d0
+		branchl	r12,HUD_KOCounter_UpdateKOs
 
 		#Check If Toggled Starting Location
 			lbz r3,StartingLocationToggled(MenuData)
@@ -693,7 +621,7 @@ b	exit
 		cmpwi	r3,0x0
 		beq	Ledgedash_DecrementTimer
 		li	r3,0xAA				#Play Sound
-		branchl	r12,0x801c53ec
+		branchl	r12,SFX_PlaySoundAtFullVolume
 		li	r3,1				#Mark As Found
 		stb	r3,hitboxFoundFlag(r31)
 
@@ -724,7 +652,7 @@ b	exit
 			lfs	f31,0x2C(r29)
 		#Enter P1 Into Rebirth Again
 			mr		r3,r30
-			branchl		r12,0x800d4ff4
+			branchl		r12,AS_Rebirth
 		#Restore Facing Direction
 			stfs	f31,0x2C(r29)
 		#Randomize Location
@@ -743,13 +671,13 @@ b	exit
 		#Get Ledge X and Y Coordinates
 			rlwinm	r3,r3,24,24,31
 			addi	r4,sp,0x80
-			branchl	r12,0x80053ecc
+			branchl	r12,Stage_GetLeftOfLineCoordinates
 			b	Ledgedash_LoadState_RandomizePosition
 		Ledgedash_LoadState_GetRightLedge:
 		#Get Ledge X and Y Coordinates
 			rlwinm	r3,r3,0,24,31
 			addi	r4,sp,0x80
-			branchl	r12,0x80053da4
+			branchl	r12,Stage_GetRightOfLineCoordinates
 		Ledgedash_LoadState_RandomizePosition:
 		#Get Random Distance from this
 			.set RandomDistanceMinX,30
@@ -777,7 +705,7 @@ b	exit
 			stfs f30,0xB4(r29)
 		#Enter RebirthWait
 			mr		r3,r30
-			branchl		r12,0x800d5600
+			branchl		r12,AS_RebirthWait
 		#Store Blr as Physics
 			bl		BlrFunctionPointer
 			mflr		r3
@@ -788,7 +716,7 @@ b	exit
 			stw		r3,0x219C(r29)
     #Update RebirthPlat Position
       mr  r3,P1GObj
-      branchl r12,0x800d54a4
+      branchl r12,RebirthPlatform_UpdatePosition
 
 		Ledgedash_LoadState_SkipRespawnPlatform:
       mr  r3,r30
@@ -845,16 +773,16 @@ b	exit
 			stw r21,0x2340(r29)
 		#Enter CliffWait
 			mr	r3,r30
-			branchl r12,0x8009a804
+			branchl r12,AS_CliffWait
     #Get Jump Back
       mr r3,r29
-      branchl r12,0x8007d5d4
+      branchl r12,Air_StoreBool_LoseGroundJump_NoECBfor10Frames
     #Set ECB Update Flag
       mr  r3,P1Data
-      branchl r12,0x8007d5bc
+      branchl r12,DataOffset_ECBBottomUpdateEnable
 		#Move Player To Ledge
 			mr	r3,r30
-			branchl r12,0x80081544
+			branchl r12,MovePlayerToLedge
 		#Update Position
 			mr	r3,r30
 			bl UpdatePosition
@@ -867,7 +795,7 @@ b	exit
 			mr	r3,r30
 			lwz	r4, -0x514C (r13)
 			lwz	r4, 0x049C (r4)
-			branchl	r12,0x8007b760
+			branchl	r12,ApplyIntangibility
 
 		#Adjust Ledge Camera Box Accordingly
 		#Get Ledge Coordinates
@@ -878,10 +806,10 @@ b	exit
 			fcmpo	cr0,f1,f0
 			ble Ledgedash_PlaceOnLedge_CameraBoxRightLedge
 		Ledgedash_PlaceOnLedge_CameraBoxLeftLedge:
-			branchl	r12,0x80053ecc
+			branchl	r12,Stage_GetLeftOfLineCoordinates
 			b	Ledgedash_PlaceOnLedge_UpdateCameraBox
 		Ledgedash_PlaceOnLedge_CameraBoxRightLedge:
-			branchl r12,0x80053da4
+			branchl r12,Stage_GetRightOfLineCoordinates
 		Ledgedash_PlaceOnLedge_UpdateCameraBox:
 		#Get CameraBox
 			lwz r20,CameraBox(r31)
@@ -1174,7 +1102,7 @@ b	exit
 		stb	r0,0x24C8(r3)
 		#Play Sound To Indicate
 		li	r3,0x82
-		branchl	r12,0x801c53ec
+		branchl	r12,SFX_PlaySoundAtFullVolume
 		EggsSkipFreePracticeCheck:
 
     #Check If Toggled
@@ -1196,7 +1124,7 @@ b	exit
 		  stb	r0,0x24C8(r3)
 		#Play Sound To Indicate
 		  li	r3,0x82
-		  branchl	r12,0x801c53ec
+		  branchl	r12,SFX_PlaySoundAtFullVolume
     EggsSkipToggleCheck:
 
 		#Check For First Frame
@@ -1206,7 +1134,7 @@ b	exit
 
 			#Check If Player Can Move
 			li	r3,0x0
-			branchl	r12,0x80034110	 #get player block
+			branchl	r12,PlayerBlock_LoadMainCharDataOffset	 #get player block
 			lwz	r3,0x2c(r3)		#player data in r29
 
 			lbz	r3,0x221D(r3)
@@ -1245,11 +1173,11 @@ b	exit
         #Get Left Ledge X and Y Coordinates
           rlwinm	r3,r20,24,24,31
           addi	r4,sp,0x80
-          branchl	r12,0x80053ecc
+          branchl	r12,Stage_GetLeftOfLineCoordinates
         #Get Right Ledge X and Y Coordinates
           rlwinm	r3,r20,0,24,31
           addi	r4,sp,0x90
-          branchl	r12,0x80053da4
+          branchl	r12,Stage_GetRightOfLineCoordinates
         #Convert Ledge X Values to Int
           lfs f1,0x80(sp)     #Left Ledge X
           lfs f2,0x90(sp)     #Right Ledge X
@@ -1263,7 +1191,7 @@ b	exit
           sub r3,r21,r20
           subi  r3,r3,8       #Minus 8, pad by 4 on each side
         #Get Random Number in Range
-          branchl	r12,0x80380580
+          branchl	r12,HSD_Randi
           addi  r3,r3,4       #Shift over by 4 to make it evenly distrubuted again
         #Get X Value by adding to leftmost coordinate
           add r20,r20,r3     #r20 = X
@@ -1283,7 +1211,7 @@ b	exit
         mr  r21,r4
 			#Get Random Y (1-50)
 			   li	r3,50
-			   branchl	r12,0x80380580
+			   branchl	r12,HSD_Randi
       #Starts at Cliff Y Value + 1
         add r21,r3,r21
         addi r21,r21,1
@@ -1292,7 +1220,7 @@ b	exit
 			   li	r22,0x2			#r22 = Y vel int
 
 			#Get Y Velocity Decimal
-			   branchl	r12,0x80380528
+			   branchl	r12,HSD_Randf
 			   fmr	f4,f1			#f4 = Y Vel Decimal
 
 			#Convert To Float
@@ -1326,33 +1254,40 @@ b	exit
 .set BottomCameraBound,23
 
     EggsThinkSpawn:
-    #li r24,0
+    .if debug==1
+    li r24,0      #Init loop count
+    .endif
+
     EggsThinkSpawnLoop:
-    #addi r24,r24,1
+
+    .if debug==1
+    addi r24,r24,1  #Inc Loop Count
+    .endif
+
     #Get OnScreen Boundaries
     #Left Camera
-      branchl r12,0x80224a54
+      branchl r12,StageInfo_CameraLimitLeft_Load
       fctiwz f1,f1
       stfd f1,0x80(sp)
       lwz LeftCameraBound,0x84(sp)
     #Right Camera
-      branchl r12,0x80224a68
+      branchl r12,StageInfo_CameraLimitRight_Load
       fctiwz f1,f1
       stfd f1,0x80(sp)
       lwz RightCameraBound,0x84(sp)
     #Top Camera
-      branchl r12,0x80224a80
+      branchl r12,StageInfo_CameraLimitTop_Load
       fctiwz f1,f1
       stfd f1,0x80(sp)
       lwz TopCameraBound,0x84(sp)
     #Bottom Camera
-      branchl r12,0x80224a98
+      branchl r12,StageInfo_CameraLimitBottom_Load
       fctiwz f1,f1
       stfd f1,0x80(sp)
       lwz BottomCameraBound,0x84(sp)
 
     #Get Random Velocity
-			branchl	r12,0x80380528
+			branchl	r12,HSD_Randf
       fmr f20,f1
       li  r3,2
       bl  IntToFloat
@@ -1377,10 +1312,12 @@ b	exit
       cmpwi r3,0x0
       beq EggsThinkSpawnLoop
 
+    .if debug==1
     #OSReport Loop Count
-      #load r3,0x803ead3c
-      #mr r4,r24
-      #branchl r12,0x803456a8
+      load r3,0x803ead3c
+      mr r4,r24
+      branchl r12,OSReport
+    .endif
 
 			SpawnEgg:
 			addi	r3,sp,0x80
@@ -1402,7 +1339,7 @@ b	exit
 			stfs	f0,0x38(r3)	#Y Vel
 			li	r4,0x1
 			sth	r4,0x3C(r3)
-			branchl	r12,0x80268b18
+			branchl	r12,EntityItemSpawn
 			mr	r29,r3		#Backup Entity Pointer
 
 			stw	r29,0x0(r31)		#Store Pointer To Target In Event Think
@@ -1424,8 +1361,7 @@ b	exit
 			stw	r3,0x1C(r4)
 
 			#Create Camera Box
-			li	r3,0x0
-			branchl	r12,0x80029044
+			branchl	r12,CreateCameraBox
 			#Attach to Entity
 			lwz	r4,0x2c(r29)
 			stw	r3, 0x0520 (r4)
@@ -1476,24 +1412,24 @@ b	exit
       #Update HUD Score
       li	r3,0
       li	r4,5
-      branchl	r12,0x80034f24
-      branchl	r12,0x802fa2d0
+      branchl	r12,Playerblock_LoadTimesR3KilledR4
+      branchl	r12,HUD_KOCounter_UpdateKOs
 
       #Check If Free Practice
         lbz	r3,0x5(r31)
         cmpwi	r3,0x0
         bne	EggsThinkExit
       #Check For TimeUp
-        branchl	r12,0x8016aeec		#Seconds Left
+        branchl	r12,MatchInfo_LoadSeconds		#Seconds Left
         cmpwi	r3,0x0
         bne	EggsThinkExit
-        branchl	r12,0x8016aefc		#Sub-Seconds Left
+        branchl	r12,MatchInfo_LoadSubSeconds		#Sub-Seconds Left
         cmpwi	r3,59
         bne	EggsThinkExit
 
       #On Event End
         mr	r3,r30
-        branchl	r12,0x801bc4f4			#EventMatch_OnWinCondition
+        branchl	r12,EventMatch_OnWinCondition			#EventMatch_OnWinCondition
 
 EggsThinkExit:
   mr  r3,MenuData
@@ -1525,14 +1461,14 @@ EggsThinkExit:
 			li	r3,0
 			li	r4,0
 			li	r5,5
-			branchl	r12,0x80034fa8
+			branchl	r12,Playerblock_StoreTimesR3KilledR4
 
 			#Display Effect
 			li	r3,1232
 			mr	r4,r30
 			addi	r5, r31, 76
 			crclr	6
-			branchl	r12,0x8005fddc
+			branchl	r12,Textures_DisplayEffectTextures
 
 			#Play Pop Sound
 			mr	r3,r31
@@ -1725,7 +1661,7 @@ b	exit
 			bl	SaveState_Save
 			#Random Start Time
 			li	r3,60
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			li	r4,0
 			sub	r3,r4,r3
 			stw	r3,0x4(r31)		#Reset Timer
@@ -1792,7 +1728,7 @@ b	exit
 
 		#Update Score
 			lhz	r3,-0x4ea8(r13)
-			branchl	r12,0x802fa2d0
+			branchl	r12,HUD_KOCounter_UpdateKOs
 
 		#Check State
 			lbz	r3,0x8(r31)
@@ -1999,7 +1935,7 @@ SDITrainingInputTowardsOpponent_Exit:
 			bl	SaveState_Load
 		#Random Timer
 			li	r3,60
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			mulli	r3,r3,-1
 			stw	r3,0x4(r31)
 		#Reset State
@@ -2064,20 +2000,20 @@ stw	r28,0x1A58(r29)
 
 #Enter P2 Into Grab
 mr	r3,r30			#P2 Enters Grab
-branchl	r12,0x800d9ce8
+branchl	r12,AS_GrabOpponent
 
 #Enter P1 Into Grabbed
 mr	r3,r28			#P1 Grabbed
 mr	r4,r30			#P2 = Grabber
-branchl	r12,0x800daadc
+branchl	r12,AS_Grabbed
 
 #Enter P2 Into GrabWait
 mr	r3,r30			#P2 Enters GrabWait
-branchl	r12,0x800da1d8
+branchl	r12,AS_CatchWait
 
 #Enter P2 Into Grounded
 mr	r3,r29
-branchl	r12,0x8007d7fc
+branchl	r12,SetAsGrounded
 
 #Remove P2's GFX Pointer That Is Crashing the Game
 li	r3,0x0
@@ -2328,7 +2264,7 @@ b	exit
 
 		ReversalRandomSmashAttack:
 			li	r3,3
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			mr	r21,r3
 		#Check If Move is Blacklisted
 			lwz	r4,0x4(r29)		#Char ID
@@ -2457,7 +2393,7 @@ b	exit
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,30
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			li	r4,0
 			sub	r3,r4,r3
 			stw	r3,0x4(r31)
@@ -2912,7 +2848,7 @@ b	exit
 
 		#Update HUD Score
 		lhz	r3,-0x4ea8(r13)
-		branchl	r12,0x802fa2d0
+		branchl	r12,HUD_KOCounter_UpdateKOs
 
 
 		#ON FIRST FRAME
@@ -2959,7 +2895,7 @@ b	exit
 		bne	PowershieldThinkExit
 		#Random Laser Timing
 		li	r3,2
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		addi	r3,r3,5		#Start on Frame 5
 		stw	r3,0x8(r31)
 		#Input Laser
@@ -2997,7 +2933,7 @@ b	exit
 		blt	PowershieldThinkExit
 		bne	PowershieldRandom
 		li	r3,14
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		addi	r3,r3,15
 		stb	r3,0xF(r31)
 		#Get Interval
@@ -3332,7 +3268,7 @@ b	exit
 		lwz	r24,0x624(r27)
 		#Reset Timer
 		li	r3,50
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		li	r4,0
 		sub	r3,r4,r3
 		stw	r3,0x4(r31)
@@ -3764,7 +3700,7 @@ b	exit
 		lbz	r23,0x10(r21)		#Starting X Coord
 		lbz	r24,0x11(r21)		#Furthest X Coord
 		sub	r3,r24,r23		#Get Range
-		branchl	r12,0x80380580		#Get Random Number in Between
+		branchl	r12,HSD_Randi		#Get Random Number in Between
 		add	r3,r3,r23		#Add to Starting Coord
 		#Cast to Float
 		bl  IntToFloat
@@ -3883,19 +3819,19 @@ blr
 Ledgetech:
 #GET RANDOM TOP TIER
 #li	r3,10		#Get Random Top Tier
-#branchl	r12,0x80380580
+#branchl	r12,HSD_Randi
 #bl	TopTiers
 #mflr	r4
 #lbzx	r5,r3,r4
 
 #Create Copy Of Player Struct
 li	r3,0x1C
-branchl	r12,0x8037f1e4
+branchl	r12,HSD_MemAlloc
 mr	r20,r3
 bl	P2Struct
 mflr	r4
 li	r5,0x1C
-branchl	r12,0x800031f4
+branchl	r12,memcpy
 
 #STORE CPU
 lwz	r4,0x0(r29)
@@ -4049,7 +3985,7 @@ b	exit
 		stw	r3,0x1990(r27)
 		stw	r3,0x1994(r27)
 		mr	r3,r28
-		branchl	r12,0x8007db24
+		branchl	r12,GFX_RemoveAll
 		#Set Timer
 		li	r3,180
 		stw	r3,0x4(r31)
@@ -4072,7 +4008,7 @@ b	exit
 		li	r3,0
 		bl	IntToFloat
 		mr	r3,r30
-		branchl	r12,0x8006f190
+		branchl	r12,FrameSpeedChange
 		LedgetechSkipFalcoFreze:
 
 
@@ -4136,7 +4072,7 @@ b	exit
 		LedgetechUpdateScoreHUD:
 		#Update HUD Score
 			lhz	r3,-0x4ea8(r13)
-			branchl	r12,0x802fa2d0
+			branchl	r12,HUD_KOCounter_UpdateKOs
 
 
 		#Unfreeze Falco On Hit
@@ -4151,7 +4087,7 @@ b	exit
 		li	r3,1
 		bl	IntToFloat
 		mr	r3,r30
-		branchl	r12,0x8006f190
+		branchl	r12,FrameSpeedChange
 		LedgetechSkipFalcoUnfreeze:
 
 		LedgetechCheckIfCrouching:
@@ -4276,7 +4212,7 @@ backup
   #Get Ledge Coords (0x80 = X, 0x84 = Y)
     mr  r3,LedgeID
     addi	r4,sp,0x80
-    branchl	r12,0x80053da4
+    branchl	r12,Stage_GetRightOfLineCoordinates
   	b	Ledgetech_InitializePositions_StorePosition
 
   Ledgetech_InitializePositions_GetLeftLedgeID:
@@ -4291,7 +4227,7 @@ backup
   #Get Ledge Coords (0x80 = X, 0x84 = Y)
     mr  r3,LedgeID
     addi	r4,sp,0x80
-    branchl	r12,0x80053ecc
+    branchl	r12,Stage_GetLeftOfLineCoordinates
   	b	Ledgetech_InitializePositions_StorePosition
 
   Ledgetech_InitializePositions_StorePosition:
@@ -4316,16 +4252,16 @@ backup
     Ledgetech_InitializePositions_SkipGroundCorrection:
   #Enter SquatWait
     mr r3,P2GObj
-    branchl r12,0x800d62c4
+    branchl r12,AS_SquatWait
   #Update Position
     mr  r3,P2GObj
     bl  UpdatePosition
   #Update ECB Values for the ground ID
     mr r3,P2GObj
-    branchl r12,0x80084280
+    branchl r12,EnvironmentCollision_WaitLanding
   #Set Grounded
     mr r3,P2Data
-    branchl r12,0x8007d6a4
+    branchl r12,Air_SetAsGrounded
   #Update Camera
     mr r3,P2GObj
     bl  UpdateCameraBox
@@ -4333,7 +4269,7 @@ backup
   #Enter Rebirth
     lwz	r26,0x2C(P1Data)
     mr		r3,P1GObj
-    branchl		r12,0x800d4ff4
+    branchl		r12,AS_Rebirth
     stw	r26,0x2C(P1Data)
   #Place P1 a few Mm in front of it
     li  r3,60
@@ -4347,7 +4283,7 @@ backup
     stfs f1,0xB4(P1Data)
   #Enter RebirthWait
     mr		r3,P1GObj
-    branchl		r12,0x800d5600
+    branchl		r12,AS_RebirthWait
   #Update Position
     mr  r3,P1GObj
     bl  UpdatePosition
@@ -4361,7 +4297,7 @@ backup
 		stw		r3,0x219C(P1Data)
   #Update RebirthPlat Position
     mr  r3,P1GObj
-    branchl r12,0x800d54a4
+    branchl r12,RebirthPlatform_UpdatePosition
   #Update Camera
     mr r3,P1GObj
     bl  UpdateCameraBox
@@ -4391,7 +4327,7 @@ AmsahTech:
 
 #GET RANDOM TOP TIER
 #li	r3,10		#Get Random Top Tier
-#branchl	r12,0x80380580
+#branchl	r12,HSD_Randi
 #bl	TopTiers
 #mflr	r4
 #lbzx	r5,r3,r4
@@ -4587,16 +4523,16 @@ b	exit
     stfs f1,0x2C(P2Data)
   #Enter Wait
     mr  r3,P2GObj
-    branchl r12,0x8008a348
+    branchl r12,AS_Wait
   #Update Position
     mr  r3,P2GObj
     bl  UpdatePosition
   #Update ECB Values for the ground ID
     mr r3,P2GObj
-    branchl r12,0x80084280
+    branchl r12,EnvironmentCollision_WaitLanding
   #Set Grounded
     mr r3,P2Data
-    branchl r12,0x8007d6a4
+    branchl r12,Air_SetAsGrounded
   #Set UpB Timer
     li	r3,30
     stw	r3,Timer(EventData)
@@ -4837,7 +4773,7 @@ b	exit
 			bl	SaveState_Save
 			#Init Score Count
 			lhz	r3,-0x4ea8(r13)
-			branchl	r12,0x802fa2d0
+			branchl	r12,HUD_KOCounter_UpdateKOs
 
 
 		ComboTrainingThinkMain:
@@ -4859,7 +4795,7 @@ b	exit
 		lhz	r3,-0x4ea8(r13)
 		cmpwi	r3,0x1
 		blt	ComboTraining_SkipHUDUpdate
-		branchl	r12,0x802fa2d0
+		branchl	r12,HUD_KOCounter_UpdateKOs
 		ComboTraining_SkipHUDUpdate:
 
 		#DPad Right Makes New Savestate
@@ -5077,10 +5013,10 @@ b	exit
 		#Don't SDI
 		ComboTrainingNoSDI:
 			mr	r3,r29
-			branchl	r12,0x800a17e4
+			branchl	r12,CPU_JoystickXAxis_Convert
 			stfs	f1,0x620(r29)
 			mr	r3,r29
-			branchl	r12,0x800a1874
+			branchl	r12,CPU_JoystickYAxis_Convert
 			stfs	f1,0x624(r29)
 			b	ComboTrainingGetChanceToTech
 
@@ -5227,7 +5163,7 @@ b	exit
 		ComboTrainingRandomTech:
 		#Chance to Not Tech
 		li	r3,4
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		cmpwi	r3,0x0
 		beq	ComboTrainingMissTech
 		#Hold L
@@ -5324,7 +5260,7 @@ b	exit
 		#INPUT AN ATTACK OR DIRECTION WHEN MISSED A TECH
 		ComboTrainingMissedTechThink:
 			li	r3,4		#1/4 chance to getup attack
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			cmpwi	r3,0x0
 			beq	ComboTrainingMissedTech_GetupAttack
 		#No Getup Attack, Input Random Direction
@@ -5369,10 +5305,10 @@ b	exit
 			ComboTrainingPostHitstun_GiveInvinc_ApplyInvinc:
 			mr	r3,r30
 			li	r4,30
-			branchl	r12,0x8007b760
+			branchl	r12,ApplyIntangibility
 			#UpdateGFX
 			mr	r3,r30
-			branchl	r12,0x800c0408
+			branchl	r12,GFX_UpdatePlayerGFX
 			#Set Timer if Not Set
 			lwz	r3,0x4(r31)
 			cmpwi	r3,0x0
@@ -5708,7 +5644,7 @@ beq	ComboTrainingDecideStickAngle_NoDI
 #Get RNG Out of 3
 ComboTrainingDecideStickAngle_RandomDI:
 li	r3,3
-branchl	r12,0x80380580
+branchl	r12,HSD_Randi
 cmpwi	r3,0x0
 beq	ComboTrainingDecideStickAngle_RandomDI_UpStick
 cmpwi	r3,0x1
@@ -5724,7 +5660,7 @@ b	ComboTrainingDecideStickAngleExit
 ComboTrainingDecideStickAngle_RandomDI_LeftStick:
 #Get Random Stick X Input 77-127
 li	r3,50
-branchl	r12,0x80380580
+branchl	r12,HSD_Randi
 addi	r3,r3,77		#Start at 77
 mulli	r3,r3,-1
 stb	r3,0x1A8C(r29)
@@ -5733,7 +5669,7 @@ b	ComboTrainingDecideStickAngleExit
 ComboTrainingDecideStickAngle_RandomDI_RightStick:
 #Get Random Stick X Input 77-127
 li	r3,50
-branchl	r12,0x80380580
+branchl	r12,HSD_Randi
 addi	r3,r3,77		#Start at 77
 stb	r3,0x1A8C(r29)
 b	ComboTrainingDecideStickAngleExit
@@ -5746,7 +5682,7 @@ ComboTrainingDecideStickAngle_SlightDI:
 
 #Get Random Stick X Input 86-105, 86-95 go in front, 96-105 go behind shiek behind
 li	r3,19
-branchl	r12,0x80380580
+branchl	r12,HSD_Randi
 addi	r3,r3,86		#Start at 86
 lfs	f1,0x2C(r27)
 fneg	f1,f1
@@ -5979,14 +5915,14 @@ fmr		f30,f1
 
 #Convert To X and Y Components
 fmr	f1,f31
-branchl	r12,0x80326240		#load cosine function
+branchl	r12,cos		#load cosine function
 fmuls	f1,f1,f30		#Get X Component As Float
 fctiwz	f1,f1
 stfd	f1,0xF0(sp)
 lwz	r20,0xF4(sp)
 
 fmr	f1,f31
-branchl	r12,0x803263d4	#load sine function
+branchl	r12,sin	#load sine function
 fmuls	f1,f1,f30		#Get X Component As Float
 fctiwz	f1,f1
 stfd	f1,0xF0(sp)
@@ -6750,7 +6686,7 @@ b	exit
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,60
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			li	r4,0
 			sub	r3,r4,r3
 			stw	r3,0x4(r31)
@@ -7020,13 +6956,13 @@ b	exit
 
 		#Get P2
 			li		r3,0x1
-			branchl		r12,0x80034110			#get player block
+			branchl		r12,PlayerBlock_LoadMainCharDataOffset			#get player block
 			mr		r30,r3			#player block in r30
 			lwz		r29,0x2c(r30)			#player data in r29
 
 		#Get P1
 			li		r3,0x0
-			branchl		r12,0x80034110			#get player block
+			branchl		r12,PlayerBlock_LoadMainCharDataOffset			#get player block
 			mr		r28,r3			#player block in r28
 			lwz		r27,0x2c(r28)			#player data in r27
 
@@ -7098,7 +7034,7 @@ b	exit
 				#Get Random Recovery Option
 				Event16GetRandomRecovery:
 					li	r3,3		#Number of Recovery Options (Side B Immediately,Jump Then Side B, ShineStall-Jump-SideB)
-					branchl	r12,0x80380580
+					branchl	r12,HSD_Randi
 					cmpwi	r3,0x0
 					bne	Event16StoreRecoveryType
 				#Check If Can Side B Only
@@ -7215,7 +7151,7 @@ b	exit
 
 			Event16ChanceToInputSideB:
 			li	r3,5
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			cmpwi	r3,0x0
 			beq	Event16InputSideB
 			b	Event16CheckToReset
@@ -7255,7 +7191,7 @@ b	exit
 
 		Event16JumpSideB_ChanceToJump:
 		li	r3,20		#1 in 4 Chance
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		cmpwi	r3,0x0
 		beq	Event16JumpSideB_Jump
 		b	Event16CheckToReset
@@ -7296,7 +7232,7 @@ b	exit
 
 		Event16SSJumpSideB_ChanceToJump:
 		li	r3,15		#1 in 6 Chance
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		cmpwi	r3,0x0
 		beq	Event16SSJumpSideB_Jump
 		b	Event16CheckToReset
@@ -7333,7 +7269,7 @@ b	exit
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,60
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			li	r4,0
 			sub	r3,r4,r3
 			stw	r3,0x4(r31)
@@ -7473,13 +7409,13 @@ b	exit
 
 		#Get P2
 		li		r3,0x1
-		branchl		r12,0x80034110			#get player block
+		branchl		r12,PlayerBlock_LoadMainCharDataOffset			#get player block
 		mr		r30,r3			#player block in r30
 		lwz		r29,0x2c(r30)			#player data in r29
 
 		#Get P1
 		li		r3,0x0
-		branchl		r12,0x80034110			#get player block
+		branchl		r12,PlayerBlock_LoadMainCharDataOffset			#get player block
 		mr		r28,r3			#player block in r28
 		lwz		r27,0x2c(r28)			#player data in r27
 
@@ -7609,7 +7545,7 @@ b	exit
 			beq	ShieldDropDashDanceThink_CheckToChangeDirection
 			#RNG Chance To Attack
 			li	r3,20
-			branchl	r12,0x80380580
+			branchl	r12,HSD_Randi
 			cmpwi	r3,0x0
 			bne	ShieldDropDashDanceThink_CheckToChangeDirection
 			li	r3,0x400		#X Button
@@ -7631,7 +7567,7 @@ b	exit
 		bge	ShieldDropDashDanceThink_ChangeDirection
 		#RNG Chance To ChangeDirection
 		li	r3,7
-		branchl	r12,0x80380580
+		branchl	r12,HSD_Randi
 		cmpwi	r3,0x0
 		bne	ShieldDropThinkExit
 		ShieldDropDashDanceThink_ChangeDirection:
@@ -7698,7 +7634,7 @@ b	exit
 		#Make Invincible
 		#mr	r3,r30
 		#li	r4,0x2
-		#branchl	r12,0x8007b7a4
+		#branchl	r12,ApplyInvincibility
 		#b	ShieldDropThinkExit
 
 
@@ -7966,7 +7902,7 @@ mr  ASCIIStruct,r6
   li	r3,6		#GObj Type
   li	r4,7		#On-Pause Function
   li	r5,80
-  branchl	r12,0x803901f0
+  branchl	r12,GObj_Create
 
 #Backup Allocation
   mr	EventGObj,r3
@@ -7974,24 +7910,24 @@ mr  ASCIIStruct,r6
 #Schedule Task
   mr	r4,Function
   mr	r5,Priority
-  branchl	r12,0x8038fd54
+  branchl	r12,SchedulePerFrameProcess
 
 #Give Task Some Data Space
   li	r3,DataspaceSize		#50 bytes of space
-  branchl	r12,0x8037f1e4		#HSD_MemAlloc
+  branchl	r12,HSD_MemAlloc		#HSD_MemAlloc
   mr	EventData,r3
 
 #Initalize GObj
   mr	r6,r3
   mr	r3,EventGObj		#task space
   li	r4,0x0		#typedef
-  load	r5,0x8037f1b0		#destructor (HSD_Free)
-  branchl	r12,0x80390b68		#Create Data Block
+  load	r5,HSD_Free		#destructor (HSD_Free)
+  branchl	r12,GObj_Initialize		#Create Data Block
 
 #Zero Dataspace
   mr	r3,EventData
   li	r4,DataspaceSize
-  branchl	r12,0x8000c160		#zero length
+  branchl	r12,ZeroAreaLength		#zero length
 
 ##############################
 ## Create Option Menu Think ##
@@ -8005,7 +7941,7 @@ mr  ASCIIStruct,r6
   li	r3,6		#GObj Type
   li	r4,0		#On-Pause Function
   li	r5,80
-  branchl	r12,0x803901f0
+  branchl	r12,GObj_Create
 
 #Backup Allocation
   mr	MenuGObj,r3
@@ -8014,24 +7950,24 @@ mr  ASCIIStruct,r6
   bl  OptionMenuThink
   mflr r4
   li	r5,22          #Last Function to Run
-  branchl	r12,0x8038fd54
+  branchl	r12,SchedulePerFrameProcess
 
 #Give Task Some Data Space
   li	r3,DataspaceSize		#50 bytes of space
-  branchl	r12,0x8037f1e4		#HSD_MemAlloc
+  branchl	r12,HSD_MemAlloc		#HSD_MemAlloc
   mr	MenuData,r3
 
 #Initalize GObj
   mr	r6,MenuData
   mr	r3,MenuGObj		#task space
   li	r4,0x0	    	#typedef
-  load	r5,0x8037f1b0		#destructor (HSD_Free)
-  branchl	r12,0x80390b68		#Create Data Block
+  load	r5,HSD_Free		#destructor (HSD_Free)
+  branchl	r12,GObj_Initialize		#Create Data Block
 
 #Zero Dataspace
   mr	r3,MenuData
   li	r4,DataspaceSize
-  branchl	r12,0x8000c160		#zero length
+  branchl	r12,ZeroAreaLength		#zero length
 
 #Store Option Menu info to Dataspace
   stw WindowOptionCount,WindowOptionCountPointer(MenuData)
@@ -8062,7 +7998,7 @@ backup
 
 #Check If Paused
   li  r3,1
-  branchl r12,0x801a45e8
+  branchl r12,DevelopMode_FrameAdvanceCheck
   cmpwi r3,0x2
   bne OptionMenuThink_Exit
 
@@ -8163,7 +8099,7 @@ SaveState_Save:
 		beq		SaveState_SaveStart
 
 		#Remove Old Backup (HSD_Free)
-		branchl		r12,0x8037f1b0
+		branchl		r12,HSD_Free
 
 
 
@@ -8185,7 +8121,7 @@ SaveState_Save:
 		mr		r3,r25
 		addi		r3,r3,0x100			#add static block length
 		addi		r3,r3,0x10			#add additional storage
-		branchl		r12,0x8037f1e4			#HSD_MemAlloc
+		branchl		r12,HSD_MemAlloc			#HSD_MemAlloc
 
 		#Store Pointer To Task Struct
 		cmpwi		r23,0x0
@@ -8201,7 +8137,7 @@ SaveState_Save:
 		mr		r3,r27			#r3 = destination to copy to
 		mr		r4,r26			#r4 = source
 		mr 		r5,r25			#r5 = playerblock length
-		branchl		r12,0x800031f4			#mempcy
+		branchl		r12,memcpy			#mempcy
 
 
 		#Copy Static Block to Backup
@@ -8211,7 +8147,7 @@ SaveState_Save:
 		mullw		r5,r5,r22
 		add		r4,r4,r5
 		li		r5,0x100			#only copying the first 100 bytes
-		branchl		r12,0x800031f4			#mempcy
+		branchl		r12,memcpy			#mempcy
 
 		#Save Camera Flag
 		lwz		r3,0x890(r26)
@@ -8306,7 +8242,7 @@ SaveState_Load:
 		#Enter Into Sleep
 		mr		r3,r25
 		li		r4,0x1
-		branchl		r12,0x800d4f24
+		branchl		r12,AS_Sleep
 
 		#Remove On Death Function Pointer
 		li		r3,0x0
@@ -8321,7 +8257,7 @@ SaveState_Load:
 		lfs		f1,0x894(r27)		#backed up Frame Number
 		lfs		f2,0x89C(r27)		#backed up Frame Speed
 		lfs		f3,0x8A4(r27)		#backup up Blend Amount
-		branchl		r12,0x800693ac		#ASC
+		branchl		r12,ActionStateChange		#ASC
 
 		#Keep Previous Frame Buttons From Current Block
 		lwz		r3,0x620(r26)
@@ -8339,7 +8275,7 @@ SaveState_Load:
 		mr		r3,r26
 		mr		r4,r27
 		mr		r5,r24
-		branchl		r12,0x800031f4	#mempcy
+		branchl		r12,memcpy	#mempcy
 
 		#Copy Static Block Backup to Real
 		load		r3,0x80453080			#get static block in r3
@@ -8348,7 +8284,7 @@ SaveState_Load:
 		add		r3,r3,r4
 		add		r4,r24,r27			#get end of block in r4
 		li		r5,0x100			#length is 0x100
-		branchl		r12,0x800031f4			#mempcy
+		branchl		r12,memcpy			#mempcy
 
 		#Restore Previous Frame Buttons From Current Block
 		lwz		r3,0xD0(sp)
@@ -8548,7 +8484,7 @@ lwz	r31,0x2C(r30)
 
 CheckForSaveAndLoad_CheckIfHuman:
 lbz	r3,0xC(r31)
-branchl	r12,0x8003241c
+branchl	r12,PlayerBlock_LoadSlotType
 cmpwi	r3,0x0
 bne	CheckForSaveAndLoad_GetNextPlayer
 
@@ -8621,7 +8557,7 @@ UpdateAllGFX:
 backup
 
 mr	r3,30
-branchl	r12,0x800c0408
+branchl	r12,GFX_UpdatePlayerGFX
 
 #Check For Follower
 mr	r3,r30
@@ -8630,7 +8566,7 @@ cmpwi	r3,0x0
 beq		UpdateAllGFX_Exit
 
 #Apply To Follower Char
-branchl	r12,0x800c0408
+branchl	r12,GFX_UpdatePlayerGFX
 
 UpdateAllGFX_Exit:
 restore
@@ -8647,7 +8583,7 @@ backup
 #Give To Main Char
 mr	r31,r3
 mr	r30,r4
-branchl	r12,0x8007b7a4
+branchl	r12,ApplyInvincibility
 
 #Check For Follower
 mr	r3,r31
@@ -8657,7 +8593,7 @@ beq		GiveInvincibility_Exit
 
 #Apply To Follower Char
 mr	r4,r30
-branchl	r12,0x8007b7a4
+branchl	r12,ApplyInvincibility
 
 GiveInvincibility_Exit:
 restore
@@ -8941,7 +8877,7 @@ b	RAndDPadChangesEventOption_PlayScrollSFX
 
 RAndDPadChangesEventOption_PlayScrollSFX:
 li  r3,0x2
-branchl r12,0x80024030
+branchl r12,SFX_MenuCommonSound
 
 RAndDPadChangesEventOption_DisplayWindow:
 #Display Text For The New Option Value
@@ -8970,7 +8906,7 @@ mr	text,r3			#backup text pointer
 		mulli	r6,r6,0x4		#Get Y Offset
 		lfsx	f2,r6,r5
 		li	r4,0
-		branchl	r12,0x803a7548
+		branchl	r12,Text_UpdateSubtextSize
 
 		#Move Window
 		bl	RAndDPadChangesEventOption_Floats
@@ -8982,7 +8918,7 @@ mr	text,r3			#backup text pointer
 		lfsx	f2,r6,r5
 		mr	r3,text
 		li	r4,0
-		branchl	r12,0x803a746c
+		branchl	r12,Text_UpdateSubtextPosition
 
 
 	############################
@@ -9014,14 +8950,14 @@ mr	text,r3			#backup text pointer
 			lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 			mr 	r3,text			#text pointer
 			mr	r4,r25			#Title Text Pointer
-			branchl r12,0x803a6b98
+			branchl r12,Text_InitializeSubtext
 		#Make Text Grey
 			load	r4,0xdfdfdf00
 			stw	r4,0xF0(sp)
 			addi	r5,sp,0xF0
 			mr	r4,r3
 			mr	r3,text
-			branchl	r12,0x803a74f0
+			branchl	r12,Text_ChangeTextColor
 
 		#Create Selection Text
 			lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
@@ -9032,7 +8968,7 @@ mr	text,r3			#backup text pointer
 			lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 			mr 	r3,text			#text pointer
 			mr	r4,r26			#Selection Text
-			branchl r12,0x803a6b98
+			branchl r12,Text_InitializeSubtext
 		#Check To Outline in Yellow
 			lbz	r4,0x0(OptionWindowMemory)			#Get Cursor Position
 			cmpw	r4,r27			#Compare With Loop Counter
@@ -9042,7 +8978,7 @@ mr	text,r3			#backup text pointer
 			addi	r5,sp,0xF0
 			mr	r4,r3
 			mr	r3,text
-			branchl	r12,0x803a74f0
+			branchl	r12,Text_ChangeTextColor
 
 		RAndDPadChangesEventOption_DisplayWindow_SkipColor:
 			cmpw	r27,r24
@@ -9145,7 +9081,7 @@ RAndDPadChangesEventOption_GetNextString:
 backup
 
 mr	r31,r3			#Backup String Pointer
-branchl	r12,0x80325b04			#Get Length
+branchl	r12,strlen			#Get Length
 add	r3,r3,r31			#Get End of String
 
 #From here, mini loop to find the next non-zero value.
@@ -9183,7 +9119,7 @@ backup
 
 #Get P1 Block
 li	r3,0x0
-branchl	r12,0x80034110			#get player block
+branchl	r12,PlayerBlock_LoadMainCharDataOffset			#get player block
 lwz	r3,0x2C(r3)
 
 #Get P2 Percent
@@ -9250,7 +9186,7 @@ bl		IntToFloat
 sth	r5,0x60(r6)
 #Active PlayerData
 li	r3,0x1
-branchl	r12,0x80034110		#get player block
+branchl	r12,PlayerBlock_LoadMainCharDataOffset		#get player block
 lwz	r3,0x2C(r3)
 stfs	f1,0x1830(r3)
 
@@ -9364,7 +9300,7 @@ mr	r24,r4
 mr	r25,r5
 lbz	r3,0xC(r25)			#get slot
 branchl	r12,0x80032330			#get external character ID
-load	r4,0x803bcde0			#pdLoadCommonData table
+load	r4,pdLoadCommonData			#pdLoadCommonData table
 mulli	r0, r3, 3			#struct length
 add	r3,r4,r0			#get characters entry
 lbz	r0, 0x2 (r3)			#get subchar functionality
@@ -9395,7 +9331,7 @@ mr	r20,r3		#Backup Stage Side Bool
 
 #Get Left or Right Side
 li	r3,2
-branchl	r12,0x80380580
+branchl	r12,HSD_Randi
 #Check To Negate
 cmpwi	r3,0x0		#0 = Left, 1 = Right
 bne	Randomize_RightSide
@@ -9620,7 +9556,7 @@ branchl	r12,0x80036244		#Get This Players Stale Table
 
 #Fill With 0's
 li	r4,0x2C
-branchl	r12,0x8000c160
+branchl	r12,ZeroAreaLength
 b	ResetStaleMoves_GetNextPlayer
 
 
@@ -9720,7 +9656,7 @@ stw	r3,0x30(text)
 	mflr	r4
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-	branchl r12,0x803a6b98
+	branchl r12,Text_InitializeSubtext
 
 	#Create Text 2
 	mr 	r3,text			#text pointer
@@ -9729,7 +9665,7 @@ stw	r3,0x30(text)
 	mr	r5,r20			#Frame Count
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B0 (rtoc)			#default text X/Y
-	branchl r12,0x803a6b98
+	branchl r12,Text_InitializeSubtext
 
 ActOutOfLaserHitDisplayExit:
 restore
@@ -9828,16 +9764,16 @@ backup
   stfs f1,0x2C(P2Data)
 #Enter Wait
   mr  r3,P2GObj
-  branchl r12,0x8008a348
+  branchl r12,AS_Wait
 #Update Position
   mr  r3,P2GObj
   bl  UpdatePosition
 #Update ECB Values for the ground ID
   mr r3,P2GObj
-  branchl r12,0x80084280
+  branchl r12,EnvironmentCollision_WaitLanding
 #Set Grounded
   mr r3,P2Data
-  branchl r12,0x8007d6a4
+  branchl r12,Air_SetAsGrounded
 
 #Check For Follower
   mr  r3,P2GObj
@@ -9860,16 +9796,16 @@ backup
   stfs f1,0x2C(P2SubcharData)
 #Enter Wait
   mr  r3,P2Subchar
-  branchl r12,0x8008a348
+  branchl r12,AS_Wait
 #Update Position
   mr  r3,P2Subchar
   bl  UpdatePosition
 #Update ECB Values for the ground ID
   mr r3,P2Subchar
-  branchl r12,0x80084280
+  branchl r12,EnvironmentCollision_WaitLanding
 #Set Grounded
   mr r3,P2SubcharData
-  branchl r12,0x8007d6a4
+  branchl r12,Air_SetAsGrounded
 
 MoveCPU_NoFollower:
 #Savestate
@@ -10159,7 +10095,7 @@ PerformAerialThink_DuringWait:
 		b	PerformAerialThink_CheckForValidAttack
 	PerformAerialThink_GetRandomAttack:
     li	r3,3
-  	branchl	r12,0x80380580
+  	branchl	r12,HSD_Randi
   	stb r3,aerialAttack(variables)
   #Determine Frame to Attack on
   PerformAerialThink_CheckForValidAttack:
@@ -10180,7 +10116,7 @@ PerformAerialThink_DuringWait:
     b	PerformAerialThink_GetRandomAttack
   PerformAerialThink_GetRandomFrame:
     sub	r3,r5,r4		#Get Amount of Possibilities
-    branchl	r12,0x80380580		#Get Random Frame
+    branchl	r12,HSD_Randi		#Get Random Frame
     lbz	r4,0x0(r27)		#First Possible Frame
     add	r3,r3,r4		#Adjust for First Possible Frame
     stb	r3,attackFrame(variables)		#Store Frame to Attack on
@@ -10423,7 +10359,7 @@ mr	r31,r3
 	bl	IntToFloat
 	fmr	f31,f1
 #Get Random Float
-	branchl r12,0x80380528
+	branchl r12,HSD_Randf
 	fadds	f1,f1,f31
 
 lfs	f31,0x80(sp)
@@ -10477,7 +10413,7 @@ Custom_InterruptRebirthWait_CheckJoystickDown:
 Custom_InterruptRebirthWait_EnterFall:
 #Enter Fall
 	mr r3,player
-	branchl r12,0x800cc730
+	branchl r12,AS_Fall
 
 Custom_InterruptRebirthWait_Exit:
 	restore
@@ -10578,7 +10514,7 @@ backup
 PlacePlayersCenterStage_Loop:
 #Get Player GObj
   mr  r3,r27
-  branchl r12,0x80034110
+  branchl r12,PlayerBlock_LoadMainCharDataOffset
 #Check if exists
   cmpwi r3,0x0
   beq PlacePlayersCenterStage_IncLoop
@@ -10656,7 +10592,7 @@ backup
 
 #Enter into Wait
   mr  r3,player
-  branchl r12,0x8008a348
+  branchl r12,AS_Wait
 #Find Ground Below Player
   mr  r3,player
   bl  FindGroundNearPlayer
@@ -10671,10 +10607,10 @@ backup
   bl  UpdatePosition
 #Update ECB Values for the ground ID
   mr r3,player
-  branchl r12,0x80084280
+  branchl r12,EnvironmentCollision_WaitLanding
 #Set Grounded
   mr r3,playerdata
-  branchl r12,0x8007d6a4
+  branchl r12,Air_SetAsGrounded
 #Update Camera
   mr r3,player
   bl  UpdateCameraBox
@@ -10763,7 +10699,7 @@ FindGroundNearPlayer_Continue:
 #Additional function pointer
   li  r10,0
 #Call function
-  branchl r12,0x8004f008
+  branchl r12,GroundRaycast
 
 #Check if ground exists
   cmpwi r3,0
@@ -10819,7 +10755,7 @@ FindGroundUnderCoordinate_Continue:
   li  r9,-1
   li  r10,0
 #Call function
-  branchl r12,0x8004f008
+  branchl r12,GroundRaycast
 
 #Check if ground exists
   cmpwi r3,0
@@ -10840,7 +10776,7 @@ blr
 PlaySFX:
 backup
 
-branchl		r12,0x801c53ec
+branchl		r12,SFX_PlaySoundAtFullVolume
 
 restore
 blr
@@ -10861,7 +10797,7 @@ backup
 
 #Update Camera Box Position
   mr  r3,player
-  branchl r12,0x800761c8
+  branchl r12,Camera_UpdatePlayerCameraBoxPosition
 
 #Update Camera Box Direction Tween
 #  lwz r3,0x2C(player)
@@ -10875,7 +10811,7 @@ backup
   stfs f1,0x30(r3)    #Current Right Box Bound
 
 #Correct Camera Position
-  branchl r12,0x8002f3ac
+  branchl r12,Camera_CorrectPosition
 
 restore
 blr
@@ -10907,7 +10843,7 @@ backup
 GetAllPlayerPointers_Loop:
 #Get GObj
   mr  r3,r20
-  branchl r12,0x80034110
+  branchl r12,PlayerBlock_LoadMainCharDataOffset
 #Check If Exists
   cmpwi r3,0x0
   li    r4,0      #Zero Data pointer just in case it doesnt exist
