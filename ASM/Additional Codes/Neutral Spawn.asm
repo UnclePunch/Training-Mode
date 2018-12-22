@@ -1,338 +1,144 @@
 #To be inserted at 8016e48c
-.macro branchl reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctrl
-.endm
+.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
 
-.macro branch reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctr
-.endm
+.set PlayerSlot,28
+.set StaticBlock,27
+.set SpawnTable,26
+.set SpawnOrder,25
+.set SpawnID,24
+.set FacingDirection,23
 
-.macro load reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-.endm
+backup
 
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
+#Don't run in singleplayer
+  branchl r12,0x8016b41c
+  cmpwi r3,0
+  bne Original
+#Don't run for players 5 and 6
+  cmpwi PlayerSlot,5
+  bge Original
 
-.macro backup
-addi sp,sp,-0x4
-mflr r0
-stw r0,0(sp)
-.endm
+#Get static block
+  mr  PlayerSlot,28
+  branchl r12,Playerblock_LoadStaticBlock
+  mr  StaticBlock,r3
 
-.macro restore
-lwz r0,0(sp)
-mtlr r0
-addi sp,sp,0x4
-.endm
+#Get Neutral Spawn Table
+  bl NeutralSpawnTable
+  mflr SpawnTable
 
-.macro intToFloat reg,reg2
-xoris    \reg,\reg,0x8000
-lis    r18,0x4330
-lfd    f16,-0x7470(rtoc)    # load magic number
-stw    r18,0(r2)
-stw    \reg,4(r2)
-lfd    \reg2,0(r2)
-fsubs    \reg2,\reg2,f16
-.endm
+#Get this players spawn order
+  mr  r3,PlayerSlot
+  bl  GetSpawnOrder
+  mr  SpawnOrder,r3
 
-.macro getPlayerBlock reg1,reg2
-lwz \reg1,0x2c(\reg2)
-.endm
+#Get stage ID
+  lwz		r6,-0x6CB8 (r13)
+  li    r5,0
+#Get stage's spawn info
+StageSearchLoop:
+  mulli r4,r5,0x9         #table length
+  add   r4,r4,SpawnTable  #get stage start
+  lbz   r3,0x0(r4)        #get stage ID
+  extsb r3,r3
+  cmpwi r3,-1             #check for end of table
+  beq   Original
+  cmpw  r3,r6             #check for matching stage ID
+  addi  r5,r5,1           #inc count
+  bne   StageSearchLoop
+  mr    SpawnTable,r4
 
-.macro getCharID reg
-lbz \reg,0x7(player)
-.endm
+#Get Players Spawn Point and Facing Direction
+  addi SpawnTable,SpawnTable,0x1    #Skip past stage ID
+  lbzx SpawnID,SpawnOrder,SpawnTable
+  addi SpawnTable,SpawnTable,0x4    #Skip past spawn IDs
+  lbzx FacingDirection,SpawnOrder,SpawnTable
+  extsb FacingDirection,FacingDirection
 
-.macro getCostumeID reg
-lbz \reg,0x619(player)
-.endm
-
-.macro getAS reg
-lwz \reg,0x10(player)
-.endm
-
-.macro getASFrame reg
-lwz \reg,0x894(player)
-.endm
-
-.macro getFacing reg
-lwz \reg,0x2c(player)
-.endm
-
-.macro setFacing reg
-stw \reg,0x2c(player)
-.endm
-
-.macro invertFacing reg
-lfs \reg,0x2c(player)
-fneg \reg,\reg
-stfs \reg,0x2c(player)
-.endm
-
-.macro fsetGroundVelocityX reg
-stfs \reg,0xec(player)
-.endm
-
-.macro fsetAirVelocityX reg
-stfs \reg,0x80(player)
-.endm
-
-.macro fsetAirVelocityY reg
-stfs \reg,0x84(player)
-.endm
-
-.macro fgetGroundVelocityX reg
-lfs \reg,0xec(player)
-.endm
-
-.macro fgetAirVelocityX reg
-lfs \reg,0x80(player)
-.endm
-
-.macro fgetAirVelocityY reg
-lfs \reg,0x84(player)
-.endm
-
-.macro setGroundVelocityX reg
-stw \reg,0xec(player)
-.endm
-
-.macro setAirVelocityX reg
-stw \reg,0x80(player)
-.endm
-
-.macro setAirVelocityY reg
-stw \reg,0x84(player)
-.endm
-
-.macro getGroundVelocityX reg
-lwz \reg,0xec(player)
-.endm
-
-.macro getAirVelocityX reg
-lwz \reg,0x80(player)
-.endm
-
-.macro getAirVelocityY reg
-lwz \reg,0x84(player)
-.endm
-
-.macro getGroundAirState reg
-lwz \reg,0xe0(player)
-.endm
-
-.macro getPlayerDatAddress reg
-lwz \reg,0x108(player)
-.endm
-
-.macro getPlayerBlockFromEntity reg
-lwz \reg,0x518(entity)
-lwz \reg,0x2c(\reg)
-.endm
-
-.macro getStaticBlock reg, reg2
-lbz \reg,0xc(player)			#get player slot (0-3)
-li \reg2,0xe90			#static player block length
-mullw \reg2,\reg,\reg2			#multiply block length by player number
-lis \reg,0x8045			#load in static player block base address
-ori \reg,\reg,0x3080			#load in static player block base address
-add \reg,\reg,\reg2			#add length to base address to get current player's block
-#playerblock address in \reg
-.endm
-
-.macro checkForAPress reg
-lwz \reg,0x65c(player)
-rlwinm.	\reg, \reg, 0, 23, 23
-.endm
-
-.macro checkForBPress reg
-lwz \reg,0x65c(player)
-rlwinm.	\reg, \reg, 0, 22, 22
-.endm
-
-.macro checkForXPress reg
-lwz \reg,0x65c(player)
-rlwinm.	\reg, \reg, 0, 21, 21
-.endm
-
-.macro checkForYPress reg
-lwz \reg,0x65c(player)
-rlwinm.	\reg, \reg, 0, 20, 20
-.endm
-
-.macro getDpad reg
-lbz \reg,0x66b(player)
-.endm
-
-.macro getPlayerSlot reg
-lbz \reg,0xC(player)
-.endm
-
-.macro get reg offset
-lwz \reg,\offset(player)
-.endm
-
-.set ActionStateChange,0x800693ac
-.set HSD_Randi,0x80380580
-.set HSD_Randf,0x80380528
-.set Wait,0x8008a348
-.set Fall,0x800cc730
-
-.set entity,31
-.set player,16
-.set stageID,3
-.set port,14
-
-#check for single player stuff
-
-#get static block in r18
-mulli r14,r28,0xe90
-lis r18,0x8045
-ori r18,r18,0x3080
-add r18,r14,r18
-
-#get table address into r15
-mflr r14
-bl table
-mflr r15
-mtlr r14
-
-#get bytefield offset in r17
-addi r17,r15,0x4C
-
-################################
-#playerblock check init
-li r16, 0x0				#r16 = player slot currently assessing
-lis r14, 0x8045
-ori r14, r14, 0x3080              #r18 = player block BA
-
-#create bytefield for active players
-playerBlockCheck:
-lwz r0, 0x40(r14)
-cmpwi r0,0x0                     #an inactive player block will store "0" at offset 0x0
-beq empty
-b plugged
-
-empty:
-li r0,0
-b continue
-
-plugged:
-li r0,1
-b continue
-
-continue:
-stbx r0,r16,r17
-
-nextPlayerBlock:
-addi r16,r16,0x1
-addi r14, r14, 0xe90              #blocks are 0xe90 in length
-cmpwi r16,0x4
-blt playerBlockCheck
-################################
-
-####################################
-#returns current player's spawn order in r16
-li r16,0			#r16 = spawned order
-mr r14,r28			#r14 = copy of player slot number
-
-checkSpawnNumberLoop:
-cmpwi r14,0x0			#check if player slot is 0
-beq finishedLoop			#if so exit loop
-subi r14,r14,0x1			#move back a slot
-lbzx r0,r14,r17			#check slot contents
-cmpwi r0,0x1			#if 1, a player spawned before
-bne checkSpawnNumberLoop
-addi r16,r16,1			#increment current player spawn order
-b checkSpawnNumberLoop
-
-finishedLoop:
-#get stageID in r3
-lis	r14, 0x8047
-subi	r14, r14, 18784
-lhz	r3, 0x24D6 (r14)
-
-mr r14,r16			#put spawn order into r14
-####################################
-
-#################################
-li r17,0
-
-stageCheckLoop:
-lwzx r16,r17,r15
-cmpwi r16,-1			#check if end of table
-beq exit			#branch to end
-cmpw r16,stageID			#check if stage is on table
-addi r17,r17,0xC			#increment table offset
-bne stageCheckLoop			#loop back
-#################################
-
-stageIDMatch:
-subi r17,r17,0x8			#go back to matching address
-add r17,r17,r15
-lbzx r3,port,r17			#get port's nuetral respawn
-addi r17,r17,0x4
-lbzx r4,port,r17			#get port's nuetral facing direction
-
-#determine left or right
-cmpwi r4,0x1
-lis r4,0x3f80
-beq storeFacing
-lis r4,0xbf80
-storeFacing:
-stw r4,0x40(r18)
-
-b skip
+#Facing Direction to Float
+  lis	r0, 0x4330
+  lfd	f2, -0x6758 (rtoc)
+  xoris	r3, FacingDirection,0x8000
+  stw	r0,0x40(sp)
+  stw	r3,0x44(sp)
+  lfd	f1,0x40(sp)
+  fsubs	f1,f1,f2		#Convert To Float
+#Store Facing Direction
+  stfs f1,0x40(StaticBlock)
+#Return Spawn Point
+  mr  r3,SpawnID
+  b Exit
 
 ######################
-table:
+GetSpawnOrder:
+.set LoopCount,31
+.set SpawnOrder,30
+.set PlayerSlot,28
+
+backup
+#Init variables
+  mr  PlayerSlot,r3
+  li  SpawnOrder,0
+  li  LoopCount,0
+
+#Start Loop
+GetSpawnOrder_Loop:
+#Load slot type
+  mr  r3,LoopCount
+  branchl r12,PlayerBlock_LoadSlotType
+  cmpwi r3,0x1
+  bgt GetSpawnOrder_IncLoop      #If >1, no player present
+#Player is present, check if this is the one were looking for
+  cmpw PlayerSlot,LoopCount
+  beq GetSpawnOrder_Exit
+#Increment offset
+  addi  SpawnOrder,SpawnOrder,1
+
+GetSpawnOrder_IncLoop:
+  addi LoopCount,LoopCount,1
+  cmpwi LoopCount,4
+  ble GetSpawnOrder_Loop
+
+GetSpawnOrder_Exit:
+  mr  r3,SpawnOrder    #Return spawn order
+  restore
+  blr
+######################
+NeutralSpawnTable:
 blrl
-.long 0x00000020 #FD
-.long 0x00010203 #FD neutral ports
-.long 0x01000100 #FD facing directions
-
-.long 0x0000001F #BF
-.long 0x02030001 #BF neutral ports
-.long 0x01000001 #BF facing directions
-
-.long 0x00000008 #YS
-.long 0x00010302 #YS neutral ports
-.long 0x01000100 #YS facing directions
-
-.long 0x0000001C #DL
-.long 0x01030002 #DL neutral ports
-.long 0x01000100 #DL facing directions
-
-.long 0x00000002 #FOD
-.long 0x00010203 #FOD neutral ports
-.long 0x01000001 #FOD facing directions
-
-.long 0x00000003 #PS
-.long 0x00010203 #PS neutral ports
-.long 0x01000001 #PS facing directions
-
-.long 0xFFFFFFFF #terminator
-
-.long 0x00000000 #active players (0x2c)
+#FD
+.byte 0x20                  #Stage ID
+.byte 0x00,0x01,0x02,0x03   #Nuetral Spawn Index
+.byte 0x01,0xFF,0x01,0xFF   #Facing Directions
+#Battlefield
+.byte 0x1F                  #Stage ID
+.byte 0x02,0x03,0x00,0x01   #Nuetral Spawn Index
+.byte 0x01,0xFF,0xFF,0x01   #Facing Directions
+#Yoshi's Story
+.byte 0x08                  #Stage ID
+.byte 0x00,0x01,0x03,0x02   #Nuetral Spawn Index
+.byte 0x01,0xFF,0x01,0xFF   #Facing Directions
+#Dream Land
+.byte 0x1C                  #Stage ID
+.byte 0x01,0x03,0x00,0x02   #Nuetral Spawn Index
+.byte 0x01,0xFF,0x01,0xFF   #Facing Directions
+#FoD
+.byte 0x02                  #Stage ID
+.byte 0x00,0x01,0x02,0x03   #Nuetral Spawn Index
+.byte 0x01,0xFF,0xFF,0x01   #Facing Directions
+#Pokemon Stadium
+.byte 0x03                  #Stage ID
+.byte 0x00,0x01,0x02,0x03   #Nuetral Spawn Index
+.byte 0x01,0xFF,0xFF,0x01   #Facing Directions
+#Terminator
+.byte 0xFF
+.align 2
 ######################
 
-exit:
+Original:
+restore
 addi	r3, r28, 0
-
-skip:
-
-
-
-
+b Skip
+Exit:
+restore
+Skip:
