@@ -183,17 +183,13 @@ blrl
 
 RText:
 blrl
-.long 0x52208181
-.long 0x20547574
-.long 0x00000000
+.string "R = Tut"
+.align 2
 
 LText:
 blrl
-.long 0x4c208181
-.long 0x204f5344
-.long 0x00000000
-
-
+.string "L = OSD"
+.align 2
 
 #**************************************************#
 end:

@@ -107,7 +107,7 @@ Use D-Pad to change ledge"
 Event6:
 #Eggs-ercise
 .string "Break the eggs! Only strong hits will
-break them. DPad down  =  free practice"
+break them. DPad down = free practice"
 .align 2
 
 Event7:
