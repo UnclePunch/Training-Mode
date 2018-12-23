@@ -83,7 +83,7 @@ fsubs    \reg2,\reg2,f16
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
-	branchl r14,0x803a6754
+	branchl r12,0x803a6754
 
 #BACKUP STRUCT POINTER
 	mr text,r3
@@ -110,7 +110,7 @@ fsubs    \reg2,\reg2,f16
 	mr 	r4,EventName		#pointer to ASCII
 	lfs f1,0x0(textProperties) #X offset of text
 	lfs f2,0x4(textProperties) #Y offset of text
-	branchl r14,0x803a6b98
+	branchl r12,0x803a6b98
 
 #Set Size/Scaling
   mr  r4,r3

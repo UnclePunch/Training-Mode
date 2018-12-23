@@ -66,7 +66,7 @@ backup
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,1
-	branchl r14,0x803a6754
+	branchl r12,0x803a6754
 
 #BACKUP STRUCT POINTER
 	mr text,r3
@@ -108,7 +108,7 @@ backup
 	lfs 	f2,VersionY(textproperties)	  	#Y offset of text
 	mr 	r3,text		#struct pointer
 	load	r4,VersionString		#pointer to ASCII
-	branchl r14,0x803a6b98
+	branchl r12,0x803a6b98
 
 ##################
 ## R = Tutorial ##
@@ -131,7 +131,7 @@ backup
 	mr 	r3,text       #struct pointer
 	bl 	RText
 	mflr 	r4		#pointer to ASCII
-	branchl r14,0x803a6b98
+	branchl r12,0x803a6b98
 
 ##################
 ## R = Tutorial ##
@@ -149,7 +149,7 @@ SpawnLText:
 	mr 	r3,text       #struct pointer
 	bl 	LText
 	mflr 	r4		#pointer to ASCII
-	branchl r14,0x803a6b98
+	branchl r12,0x803a6b98
 
 b end
 

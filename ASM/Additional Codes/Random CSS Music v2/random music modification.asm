@@ -217,4 +217,4 @@ b done
 
 done:
 stb	r0, 0x0001 (r31)
-branch r14, 0x8015ed1c
+branch r12, 0x8015ed1c

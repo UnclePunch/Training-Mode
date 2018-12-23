@@ -90,7 +90,7 @@ stw r0,64(sp)
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
-	branchl r14,0x803a6754
+	branchl r12,0x803a6754
 
 #BACKUP STRUCT POINTER
 	mr r31,r3
@@ -108,7 +108,7 @@ stw r0,64(sp)
 		mflr 	r4		#pointer to ASCII
 
 		InitializeText:
-		branchl r14,0x803a6b98
+		branchl r12,0x803a6b98
 
 
 #SET TEXT SPACING TO TIGHT
