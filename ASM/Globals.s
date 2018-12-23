@@ -21,6 +21,11 @@
 .set FourASAgo,PrevASStart+0x6
 .set FiveASAgo,PrevASStart+0x8
 .set SixASAgo,PrevASStart+0xA
+.set PreviousMoveInstanceHitBy,0x2418
+.set AirdodgeAngle,0x241C
+.set SDIInputs,0x2350
+.set SuccessfulSDIInputs,0x2350
+.set TotalSDIInputs,0x2352
 
 #Function Names
 .set ActionStateChange,0x800693ac
