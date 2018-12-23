@@ -182,7 +182,7 @@ blrl
 
 BottomText:
 blrl
-.string "Cliffwait: %df"
+.string "Cliffwait: %d"
 .align 2
 
 ##############################
