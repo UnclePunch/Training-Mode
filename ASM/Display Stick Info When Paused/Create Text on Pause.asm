@@ -1,4 +1,4 @@
-#To be inserted at 8016cbc8
+#To be inserted at 801a10e8
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -79,9 +79,6 @@ fsubs    \reg2,\reg2,f16
 .set staticTextData,29
 .set inputStruct,28
 .set GObj,31
-
-#Original Codeline
-  stb	r0, 0x0002 (r29)
 
 backup
 
@@ -319,3 +316,4 @@ YUpdateColor:
 
 Exit:
 restore
+lmw	r26, 0x0018 (sp)

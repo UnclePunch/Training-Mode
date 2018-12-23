@@ -1,4 +1,4 @@
-#To be inserted at 8016cd78
+#To be inserted at 801a1124
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
@@ -74,9 +74,6 @@ fsubs    \reg2,\reg2,f16
 
 .set FFVar,0x240C
 
-#Original Codeline
-  stb	r0, 0x0004 (r30)
-
 #Get Text Struct
   load r3,0x804a1f58
   lwz r3,0x8(r3)
@@ -92,3 +89,6 @@ fsubs    \reg2,\reg2,f16
   stw r4,0xC(r5)
 #Remove GObj
   branchl r12,0x80390228
+
+#Original Codeline
+  lwz	r0, 0x000C (sp)
