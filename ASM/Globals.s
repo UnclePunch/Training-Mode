@@ -8,6 +8,8 @@
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
 .set InputStructStart,0x804c21cc
+.set PreloadTableQueue,0x8043207c
+.set PreloadTableUpdated,0x804320d0
 
 #Playerdata offsets
 .set PrevASStart,0x23F0
