@@ -7,6 +7,7 @@
 
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
+.set InputStructStart,0x804c21cc
 
 #Playerdata offsets
 .set PrevASStart,0x23F0

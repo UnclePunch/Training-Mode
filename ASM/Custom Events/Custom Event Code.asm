@@ -198,18 +198,17 @@ b	exit
 		cmpwi	r3,0x0
 		beq	LCancelNotFirstFrame
 
-
     #Init Positions
       bl  PlacePlayersCenterStage
-
 		#Check if P2-P4 Is Using the Event
 			lbz	r3, -0x5108 (r13)
 			cmpwi	r3,0x0
-			beq	LCancelNotFirstFrame
+			beq	LCancelIsP1
 			li	r3,0x0		#Make CPU Controlled by P1
 			stb	r3,0x618(r29)
-
-
+    LCancelIsP1:
+    #Clear Inputs
+      bl  RemoveFirstFrameInputs
 		LCancelNotFirstFrame:
 
 		#Check For P2 Dpad Down Press
@@ -384,9 +383,12 @@ b	exit
 			#Set Tangible Frames High So It Doesn't Constantly Show
 				li	r3,100
 				stw	r3,0x2408(r29)
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
 			#Save State
 				addi r3,EventData,0x10
 				bl	SaveState_Save
+
 			#Set Frame 1 As Over
 				li		r3,0x1
 				stb		r3,firstFrameFlag(r31)
@@ -1640,31 +1642,33 @@ b	exit
 		cmpwi	r3,0x0
 		beq	SDITrainingThinkMain
 
-			bl	SDITrainingFloats
-			mflr	r3
-			bl	Event_EnterGrab
+  			bl	SDITrainingFloats
+  			mflr	r3
+  			bl	Event_EnterGrab
 			#Store 999 To Breakout
-			lis	r3,0x4461
-			stw	r3,0x1A4C(r27)
+  			lis	r3,0x4461
+  			stw	r3,0x1A4C(r27)
 			#Give Percent
-			bl	SDITrainingStartingPercents
-			mflr	r4
-			lwz	r3,0x4(r27)		#Get Char ID
-			lbzx	r3,r3,r4		#Get Percent
-			load	r4,0x80453080		#P1 Static Block
-			sth	r3,0x60(r4)		#Store Percent Int To Display Value
-			sth	r3,0x62(r4)		#Store Percent Int To Display Value (Subchar)
-			bl	IntToFloat
-			stfs	f1,0x1830(r27)		#Store to Actual Damage Value
+  			bl	SDITrainingStartingPercents
+  			mflr	r4
+  			lwz	r3,0x4(r27)		#Get Char ID
+  			lbzx	r3,r3,r4		#Get Percent
+  			load	r4,0x80453080		#P1 Static Block
+  			sth	r3,0x60(r4)		#Store Percent Int To Display Value
+  			sth	r3,0x62(r4)		#Store Percent Int To Display Value (Subchar)
+  			bl	IntToFloat
+  			stfs	f1,0x1830(r27)		#Store to Actual Damage Value
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
 			#Save State
-			addi r3,EventData,0x10
-			bl	SaveState_Save
+  			addi r3,EventData,0x10
+  			bl	SaveState_Save
 			#Random Start Time
-			li	r3,60
-			branchl	r12,HSD_Randi
-			li	r4,0
-			sub	r3,r4,r3
-			stw	r3,0x4(r31)		#Reset Timer
+  			li	r3,60
+  			branchl	r12,HSD_Randi
+  			li	r4,0
+  			sub	r3,r4,r3
+  			stw	r3,0x4(r31)		#Reset Timer
 
 
 		SDITrainingThinkMain:
@@ -2169,12 +2173,8 @@ b	exit
   			#bl	InitializePositions
       #Move PLayers Center Stage
         bl  PlacePlayersCenterStage
-			#Remove Input Flag That Messes Up Analog Timer Restore
-  			lbz	r0, 0x221D (r27)
-  			li	r3,0x1
-  			rlwimi	r0,r3,4,27,27
-  			stb	r0,0x221D (r27)
-  			addi r3,EventData,0x10
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
       #SaveState
         addi  r3,EventData,0x10       #SaveState start
   			bl	SaveState_Save
@@ -3193,25 +3193,22 @@ b	exit
 		beq	ShieldDropThinkMain
 
 			#Set Frame 1 As Over
-			li	r3,0x1
-			stb	r3,0x0(r31)
-			bl	ShieldDrop_Floats
-			mflr	r3
-			bl	InitializePositions
-			#Remove Input Flag That Messes Up Analog Timer Restore
-			lbz	r0, 0x221D (r27)
-			li	r3,0x1
-			rlwimi	r0,r3,4,27,27
-			stb	r0,0x221D (r27)
+  			li	r3,0x1
+  			stb	r3,0x0(r31)
+  			bl	ShieldDrop_Floats
+  			mflr	r3
+  			bl	InitializePositions
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
 			#Store Y Position to Last Known Y Position
-			lfs	f1,0xB4(r29)
-			stfs	f1,0x834(r29)
+  			lfs	f1,0xB4(r29)
+  			stfs	f1,0x834(r29)
 			#Save State
-			addi r3,EventData,0x10
-			bl	SaveState_Save
+  			addi r3,EventData,0x10
+  			bl	SaveState_Save
 			#Set Timer to -60
-			li	r3,-60
-			stw	r3,0x4(r31)
+  			li	r3,-60
+  			stw	r3,0x4(r31)
 
 
 
@@ -3469,23 +3466,20 @@ b	exit
 		bl	StoreCPUTypeAndZeroInputs
 
 		#ON FIRST FRAME
-		bl	CheckIfFirstFrame
-		cmpwi	r3,0x0
-		beq	AttackOnShieldThinkMain
+  		bl	CheckIfFirstFrame
+  		cmpwi	r3,0x0
+  		beq	AttackOnShieldThinkMain
 			#Set Frame 1 As Over
-			li		r3,0x1
-			stb		r3,0x0(r31)
-			bl		AttackOnShield_Floats
-			mflr	r3
-			bl		InitializePositions
-			#Remove Input Flag That Messes Up Analog Timer Restore
-			lbz	r0, 0x221D (r27)
-			li	r3,0x1
-			rlwimi	r0,r3,4,27,27
-			stb	r0,0x221D (r27)
+  			li		r3,0x1
+  			stb		r3,0x0(r31)
+  			bl		AttackOnShield_Floats
+  			mflr	r3
+  			bl		InitializePositions
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
 			#Save State
-			addi r3,EventData,0x10
-			bl		SaveState_Save
+  			addi r3,EventData,0x10
+  			bl		SaveState_Save
 
 
 
@@ -3951,11 +3945,8 @@ b	exit
 		cmpwi	r3,0x0
 		beq	LedgetechThinkMain
 
-    #Remove Input Flag That Messes Up Analog Timer Restore
-      lbz	r0, 0x221D (r27)
-      li	r3,0x1
-      rlwimi	r0,r3,4,27,27
-      stb	r0,0x221D (r27)
+    #Clear Inputs
+      bl  RemoveFirstFrameInputs
     #Random Side of Stage
       li  r3,2
       branchl r12,HSD_Randi
@@ -4441,16 +4432,18 @@ b	exit
 		beq	AmsahTechThinkMain
 
       #Move Players
-      bl  PlacePlayersCenterStage
+        bl  PlacePlayersCenterStage
 			#P1 Has 120%
-			li	r3,120
-			load	r4,0x80453080		#P1 Static Block
-			sth	r3,0x60(r4)		#Store Percent Int To Display Value
-			bl	IntToFloat
-			stfs	f1,0x1830(P1Data)
+  			li	r3,120
+  			load	r4,0x80453080		#P1 Static Block
+  			sth	r3,0x60(r4)		#Store Percent Int To Display Value
+  			bl	IntToFloat
+  			stfs	f1,0x1830(P1Data)
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
 			#Save State
-			addi r3,EventData,0x10
-			bl	SaveState_Save
+  			addi r3,EventData,0x10
+  			bl	SaveState_Save
 
 
 
@@ -4790,18 +4783,15 @@ b	exit
 		cmpwi	r3,0x0
 		beq	ComboTrainingThinkMain
 
-      bl  PlacePlayersCenterStage
-			#Remove Input Flag That Messes Up Analog Timer Restore
-			lbz	r0, 0x221D (r27)
-			li	r3,0x1
-			rlwimi	r0,r3,4,27,27
-			stb	r0,0x221D (r27)
+        bl  PlacePlayersCenterStage
+      #Clear Inputs
+        bl  RemoveFirstFrameInputs
 			#Save State
-			addi r3,EventData,0x10
-			bl	SaveState_Save
+  			addi r3,EventData,0x10
+  			bl	SaveState_Save
 			#Init Score Count
-			lhz	r3,-0x4ea8(r13)
-			branchl	r12,HUD_KOCounter_UpdateKOs
+  			lhz	r3,-0x4ea8(r13)
+  			branchl	r12,HUD_KOCounter_UpdateKOs
 
 
 		ComboTrainingThinkMain:
@@ -6417,11 +6407,8 @@ b	exit
 					bl	WaveshineSDI_Floats
 					mflr	r3
 					bl	InitializePositions
-				#Remove Input Flag That Messes Up Analog Timer Restore
-					lbz	r0, 0x221D (r27)
-					li	r3,0x1
-					rlwimi	r0,r3,4,27,27
-					stb	r0,0x221D (r27)
+        #Clear Inputs
+          bl  RemoveFirstFrameInputs
 				#Store Ground As Last Known Position
 					lfs	f1, 0x00B4 (r29)
 					stfs	f1, 0x0834 (r29)
@@ -6856,11 +6843,8 @@ b	exit
 					bl	Event16_Floats
 					mflr	r3
 					bl	Event_EnterGrab
-				#Remove Input Flag That Messes Up Analog Timer Restore
-					lbz	r0, 0x221D (r27)
-					li	r3,0x1
-					rlwimi	r0,r3,4,27,27
-					stb	r0,0x221D (r27)
+        #Clear Inputs
+          bl  RemoveFirstFrameInputs
 				#Store Ground As Last Known Position
 					lfs	f1, 0x00B4 (r29)
 					stfs	f1, 0x0834 (r29)
@@ -7012,11 +6996,8 @@ b	exit
 					bl	Event16_Floats
 					mflr	r3
 					#bl	InitializePositions
-				#Remove Input Flag That Messes Up Analog Timer Restore
-					lbz	r0, 0x221D (r27)
-					li	r3,0x1
-					rlwimi	r0,r3,4,27,27
-					stb	r0,0x221D (r27)
+        #Clear Inputs
+          bl  RemoveFirstFrameInputs
 				#Save State
 					mr	r3,r31
 					bl	SaveState_Save
@@ -10936,6 +10917,39 @@ GetAllPlayerPointers_LoadPointers:
 
 GetAllPlayerPointers_Exit:
 restore
+blr
+
+#####################################
+RemoveFirstFrameInputs:
+
+RemoveFirstFrameInputs_GetFirstPlayer:
+  lwz	r3, -0x3E74 (r13)
+  lwz	r12, 0x0020 (r3)
+  b	RemoveFirstFrameInputs_CheckIfPlayerExists
+
+RemoveFirstFrameInputs_GetNextPlayer:
+  lwz	r12,0x8(r12)
+
+RemoveFirstFrameInputs_CheckIfPlayerExists:
+  cmpwi	r12,0x0
+  beq	RemoveFirstFrameInputs_Exit
+  lwz	r5,0x2C(r12)
+
+#Remove Input Flag
+  lbz	r0, 0x221D (r27)
+  li	r3,0x1
+  rlwimi	r0,r3,4,27,27
+  stb	r0,0x221D (r27)
+#Store Current Input
+  lbz	r4, 0x0618 (r5)
+  load r3,InputStructStart
+  mulli	r0, r4, 68
+  add	r3, r0, r3
+  lwz	r0, 0 (r3)
+  stw	r0, 0x065C (r5)
+  b	RemoveFirstFrameInputs_GetNextPlayer
+
+RemoveFirstFrameInputs_Exit:
 blr
 
 #####################################
