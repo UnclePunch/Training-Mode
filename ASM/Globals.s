@@ -10,6 +10,7 @@
 .set InputStructStart,0x804c21cc
 .set PreloadTableQueue,0x8043207c
 .set PreloadTableUpdated,0x804320d0
+.set SceneController,0x80479D30
 
 #Playerdata offsets
 .set PrevASStart,0x23F0
