@@ -2059,8 +2059,8 @@ blr
 
 Reversal:
 #STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
+#li	r3,0x20
+#sth	r3,0xE(r26)
 
 #STORE CPU
 lwz	r4,0x0(r29)
@@ -2164,44 +2164,49 @@ b	exit
 		cmpwi	r3,0x0
 		beq	ReversalThinkMain
 
-			bl	Reversal_Floats
-			mflr r3
-			bl	InitializePositions
+  			#bl	Reversal_Floats
+  			#mflr r3
+  			#bl	InitializePositions
+      #Move PLayers Center Stage
+        bl  PlacePlayersCenterStage
 			#Remove Input Flag That Messes Up Analog Timer Restore
-			lbz	r0, 0x221D (r27)
-			li	r3,0x1
-			rlwimi	r0,r3,4,27,27
-			stb	r0,0x221D (r27)
-			addi r3,EventData,0x10
-			bl	SaveState_Save
+  			lbz	r0, 0x221D (r27)
+  			li	r3,0x1
+  			rlwimi	r0,r3,4,27,27
+  			stb	r0,0x221D (r27)
+  			addi r3,EventData,0x10
+      #SaveState
+        addi  r3,EventData,0x10       #SaveState start
+  			bl	SaveState_Save
 			#Set Frame 1 As Over
-			li		r3,0x1
-			stb		r3,0x0(r31)
+  			li		r3,0x1
+  			stb		r3,0x0(r31)
 			#Set Timer to -60
-			li		r3,-60
-			stw		r3,0x4(r31)
-
+  			li		r3,-60
+  			stw		r3,0x4(r31)
 
 
 		ReversalThinkMain:
 
 		bl	GiveFullShields
 
-    lbz r3,P1FacingDirectionToggled(MenuData)
-		cmpwi	r3,0x0
-		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
-    lbz r3,CPUFacingDirectionToggled(MenuData)
-		cmpwi	r3,0x0
-		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
-    lbz r3,CPUAttackToggled(MenuData)
-    cmpwi r3,0x0
-    bne ReversalReset
+    #Reset when menu is toggled
+      lbz r3,P1FacingDirectionToggled(MenuData)
+  		cmpwi	r3,0x0
+  		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
+      lbz r3,CPUFacingDirectionToggled(MenuData)
+  		cmpwi	r3,0x0
+  		bne	ReversalReset			#Only Run When Hovered Over Facing Direction
+      lbz r3,CPUAttackToggled(MenuData)
+      cmpwi r3,0x0
+      bne ReversalReset
 		ReversalSkipFacingReset:
 
 		#Move Players Apart With DPad
-		bl	AdjustResetDistance
-		cmpwi	r3,-1
-		bne	ReversalReset
+      addi  r3,EventData,0x10       #SaveState start
+  		bl	AdjustResetDistance
+  		cmpwi	r3,-1
+  		bne	ReversalReset
 
 		ReversalThinkSequence:
 
@@ -2364,16 +2369,38 @@ b	exit
 			cmpwi	r20,150		#Restore After 120 Frames
 			blt	ReversalThinkExit
 		ReversalReset:
-		#Randomize Position
-			li	r3,0x1			#Opposing Sides of Stage
-			bl	Randomize_LeftorRightSide
-		ReversalReset_NoRandomization:
+		#Check to Swap Position
+			li	r3,2        #1/2 Chance to swap positions
+			branchl r12,HSD_Randi
+      cmpwi r3,0x0
+      beq ReversalReset_NoSwap
+    #Swap Position
+        addi r5,EventData,0x10
+      #Get P1 Data
+        lwz r3,0x0(r5)
+        lfs f1,0xB0(r3)
+        lfs f2,0xB4(r3)
+        lfs f3,0x2C(r3)
+      #Get P2 Data
+        lwz r4,0x8(r5)
+        lfs f4,0xB0(r4)
+        lfs f5,0xB4(r4)
+        lfs f6,0x2C(r4)
+      #Swap Data
+        stfs f1,0xB0(r4)
+        stfs f2,0xB4(r4)
+        stfs f3,0x2C(r4)
+        stfs f4,0xB0(r3)
+        stfs f5,0xB4(r3)
+        stfs f6,0x2C(r3)
+		ReversalReset_NoSwap:
 		#Adjust P1 Facing Direction Based on Preference
+      addi r5,EventData,0x10
 			lbz	r3,P1FacingDirection(MenuData)
 			cmpwi	r3,0x1
 			bne	ReversalAdjustCPUDirection
 		#Invert P1 Facing Direction
-			lwz	r3,0x10(r31)
+			lwz	r3,0x0(r5)
 			lfs	f1,0x2C(r3)
 			fneg	f1,f1
 			stfs	f1,0x2C(r3)
@@ -2383,7 +2410,7 @@ b	exit
 			cmpwi	r3,0x1
 			bne	ReversalLoadState
 		#Invert P1 Facing Direction
-			lwz	r3,0x18(r31)
+			lwz	r3,0x8(r5)
 			lfs	f1,0x2C(r3)
 			fneg	f1,f1
 			stfs	f1,0x2C(r3)
@@ -3201,6 +3228,7 @@ b	exit
 		bne	ShieldDropReset
 
 		#Move Players Apart With DPad
+    addi  r3,EventData,0x10       #SaveState start
 		bl	AdjustResetDistance
 		cmpwi	r3,-1
 		bne	ShieldDropReset
@@ -9829,67 +9857,101 @@ blr
 ############################################
 
 AdjustResetDistance:
+.set SaveStateStruct,25
+.set P2Direction,3
+.set PlayerX,2
+.set P1X,31
+.set P2X,30
+
 backup
 
+mr  SaveStateStruct,r3
+
 #Make Sure Nothing is Held
-lhz	r3,0x662(r27)
-cmpwi	r3,0x0
-bne	AdjustResetDistance_NoPress
+  lhz	r3,0x662(r27)
+  cmpwi	r3,0x0
+  bne	AdjustResetDistance_NoPress
+
 
 #Check For DPad Right
-lwz	r3,0x668(r27)			#Get DPad
-rlwinm.	r0,r3,0,30,30
-beq	AdjustResetDistance_CheckLeftDPad
-
+AdjustResetDistance_CheckRightDPad:
+  lwz	r3,0x668(r27)			#Get DPad
+  rlwinm.	r0,r3,0,30,30
+  beq	AdjustResetDistance_CheckLeftDPad
+#Move Apart
+#Determine if P2 is to the left or right of P1 + Get X Pos Multiplier
+  bl  GetDirectionInRelationToP1
+  bl  IntToFloat
+  fmr P2Direction,f1
 #Load P1 Backup X Location
-lwz	r20,0x10(r31)
-lfs	f1,0xB0(r20)
-#Make Positive
-fabs	f3,f1
-#Don't Increment Past 13fp
-li	r3,15
-bl	IntToFloat
-fcmpo	cr0,f3,f1
-bge	AdjustResetDistance_NoPress
-#Add One
-li	r3,1
-bl	IntToFloat
-fadds	f1,f1,f3
+  lwz	r20,0x0(SaveStateStruct)
+  lfs	PlayerX,0xB0(r20)
+#Add One in the correct direction
+  li	r3,1
+  bl	IntToFloat
+  fneg P2Direction,P2Direction
+  fmuls f1,f1,P2Direction
+  fadds	P1X,f1,PlayerX           #New P1 X
+#Load P2 Backup X Location
+  lwz	r21,0x8(SaveStateStruct)
+  lfs	PlayerX,0xB0(r21)
+#Add One in the correct direction
+  li	r3,1
+  bl	IntToFloat
+  fneg P2Direction,P2Direction
+  fmuls f1,f1,P2Direction
+  fadds	P2X,f1,PlayerX            #New P2 X
+#Check if already 30 Mm apart
+  fsubs f2,P1X,P2X
+  fabs f2,f2        #get abs distance from each other in f2
+  li	r3,30
+  bl	IntToFloat
+  fcmpo	cr0,f2,f1
+  bge	AdjustResetDistance_NoPress
 #Store Back To PlayerBlock
-stfs	f1,0xB0(r20)
-#Store Negative Version to CPU's Block
-fneg	f1,f1
-lwz	r20,0x18(r31)
-stfs	f1,0xB0(r20)
-b	AdjustResetDistance_WasPressed
+  stfs	P1X,0xB0(r20)
+  stfs	P2X,0xB0(r21)
+  b	AdjustResetDistance_WasPressed
 
 
 #Check For DPad Left
 AdjustResetDistance_CheckLeftDPad:
-rlwinm.	r0,r3,0,31,31
-beq	AdjustResetDistance_NoPress
-
+  rlwinm.	r0,r3,0,31,31
+  beq	AdjustResetDistance_NoPress
+#Move Together
+#Determine if P2 is to the left or right of P1 + Get X Pos Multiplier
+  bl  GetDirectionInRelationToP1
+  bl  IntToFloat
+  fmr P2Direction,f1
 #Load P1 Backup X Location
-lwz	r20,0x10(r31)
-lfs	f1,0xB0(r20)
-#Make Positive
-fabs	f3,f1
-#Don't Increment Past 3fp
-li	r3,3
-bl	IntToFloat
-fcmpo	cr0,f3,f1
-ble	AdjustResetDistance_NoPress
-#Sub One
-li	r3,1
-bl	IntToFloat
-fsubs	f1,f3,f1
+  lwz	r20,0x0(SaveStateStruct)
+  lfs	PlayerX,0xB0(r20)
+#Add One in the correct direction
+  li	r3,1
+  bl	IntToFloat
+  #fneg P2Direction,P2Direction
+  fmuls f1,f1,P2Direction
+  fadds	P1X,f1,PlayerX           #New P1 X
+#Load P2 Backup X Location
+  lwz	r21,0x8(SaveStateStruct)
+  lfs	PlayerX,0xB0(r21)
+#Add One in the correct direction
+  li	r3,1
+  bl	IntToFloat
+  fneg P2Direction,P2Direction
+  fmuls f1,f1,P2Direction
+  fadds	P2X,f1,PlayerX            #New P2 X
+#Check if already 10 Mm apart
+  fsubs f2,P1X,P2X
+  fabs f2,f2        #get abs distance from each other in f2
+  li	r3,10
+  bl	IntToFloat
+  fcmpo	cr0,f2,f1
+  ble	AdjustResetDistance_NoPress
 #Store Back To PlayerBlock
-stfs	f1,0xB0(r20)
-#Store Negative Version to CPU's Block
-fneg	f1,f1
-lwz	r20,0x18(r31)
-stfs	f1,0xB0(r20)
-b	AdjustResetDistance_WasPressed
+  stfs	P1X,0xB0(r20)
+  stfs	P2X,0xB0(r21)
+  b	AdjustResetDistance_WasPressed
 
 
 AdjustResetDistance_NoPress:
