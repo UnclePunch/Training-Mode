@@ -105,6 +105,7 @@
 
 #Custom Functions
 .set CheckIfCustomEvent,0x80005520
+.set TextCreateFunction,0x80005928
 
 .macro branchl reg, address
 lis \reg, \address @h
