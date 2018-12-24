@@ -1,5 +1,5 @@
 #To be inserted at 8016e48c
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../Globals.s"
 
 .set PlayerSlot,28
 .set StaticBlock,27

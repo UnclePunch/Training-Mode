@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
   "outputFiles": [
     "..\\Additional ISO Files\\codes.gct"
   ],

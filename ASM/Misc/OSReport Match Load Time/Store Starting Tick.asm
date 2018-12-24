@@ -1,5 +1,5 @@
 #To be inserted at 8016e740
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../../Globals.s"
 
 mr	r31, r3
 

@@ -1,5 +1,5 @@
 #To be inserted at 80005520
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../Globals.s"
 
 #CHECK IF CUSTOM EVENT
   cmpwi	r3,FirstCustomEvent

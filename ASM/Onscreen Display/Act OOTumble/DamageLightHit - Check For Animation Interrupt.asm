@@ -1,5 +1,5 @@
 #To be inserted at 8008f914
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../../Globals.s"
 .set entity,31
 .set playerdata,31
 .set player,30
