@@ -1,5 +1,5 @@
 #To be inserted at 801bab28
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../Globals.s"
 
 stb	r0, 0x000A (r31)
 

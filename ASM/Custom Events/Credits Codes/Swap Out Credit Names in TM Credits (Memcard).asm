@@ -1,5 +1,5 @@
 #To be inserted at 801aadb4
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../../Globals.s"
 
 b	FunctionStart
 

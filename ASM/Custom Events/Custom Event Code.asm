@@ -1,5 +1,5 @@
 #To be inserted at 801bb128
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../Globals.s"
 
 #r25 = event ID
 #r26 = final match struct

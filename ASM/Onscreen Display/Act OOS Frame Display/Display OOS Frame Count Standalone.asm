@@ -1,5 +1,5 @@
 #To be inserted at 80005508
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../../Globals.s"
 
 .set ActionStateChange,0x800693ac
 .set HSD_Randi,0x80380580

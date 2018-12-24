@@ -1,5 +1,5 @@
 #To be inserted at 8026325c
-.include "D:/Users/Vin/Documents/GitHub/Training-Mode/ASM/Globals.s"
+.include "../Globals.s"
 
 #Get Random Stage Byte
 load r4,0x8045BF17
