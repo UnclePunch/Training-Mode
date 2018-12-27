@@ -1,9 +1,24 @@
 #Debug Flag
 .set debug,1
 
-#Codeset Variables
-.set FirstCustomEvent, (4)    -1
-.set LastCustomEvent, (15)    -1
+#######################
+## Codeset Variables ##
+#######################
+.set FirstCustomEvent, 3
+.set LastCustomEvent, 14
+#Event Numbers
+.set LCancel.ID,3
+.set Ledgedash.ID,4
+.set Eggs.ID,5
+.set SDI.ID,6
+.set Reversal.ID,7
+.set Powershield.ID,8
+.set ShieldDrop.ID,9
+.set AttackOnShield.ID,10
+.set LedgeTech.ID,11
+.set AmsahTech.ID,12
+.set Combo.ID,13
+.set WaveshineSDI.ID,14
 
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
@@ -111,6 +126,96 @@
 #Custom Functions
 .set CheckIfCustomEvent,0x80005520
 .set TextCreateFunction,0x80005928
+
+#Character External IDs
+.set CaptainFalcon.Ext,0x0
+.set DK.Ext,0x1
+.set Fox.Ext,0x2
+.set GaW.Ext,0x3
+.set Kirby.Ext,0x4
+.set Bowser.Ext,0x5
+.set Link.Ext,0x6
+.set Luigi.Ext,0x7
+.set Mario.Ext,0x8
+.set Marth.Ext,0x9
+.set Mewtwo.Ext,0xA
+.set Ness.Ext,0xB
+.set Peach.Ext,0xC
+.set Pikachu.Ext,0xD
+.set IceClimbers.Ext,0xE
+.set Jigglypuff.Ext,0xF
+.set Samus.Ext,0x10
+.set Yoshi.Ext,0x11
+.set Zelda.Ext,0x12
+.set Sheik.Ext,0x13
+.set Falco.Ext,0x14
+.set YLink.Ext,0x15
+.set Doc.Ext,0x16
+.set Roy.Ext,0x17
+.set Pichu.Ext,0x18
+.set Ganondorf.Ext,0x19
+
+#Character Internal IDs
+.set Mario.Int,0x0
+.set Fox.Int,0x1
+.set CaptainFalcon.Int,0x2
+.set DK.Int,0x3
+.set Kirby.Int,0x4
+.set Bowser.Int,0x5
+.set Link.Int,0x6
+.set Sheik.Int,0x7
+.set Ness.Int,0x8
+.set Peach.Int,0x9
+.set Popo.Int,0xA
+.set Nana.Int,0xB
+.set Pikachu.Int,0xC
+.set Samus.Int,0xD
+.set Yoshi.Int,0xE
+.set Jigglypuff.Int,0xF
+.set Mewtwo.Int,0x10
+.set Luigi.Int,0x11
+.set Marth.Int,0x12
+.set Zelda.Int,0x13
+.set YLink.Int,0x14
+.set Doc.Int,0x15
+.set Falco.Int,0x16
+.set Pichu.Int,0x17
+.set GaW.Int,0x18
+.set Ganondorf.Int,0x19
+.set Roy.Int,0x1A
+
+#Stage External IDs
+.set FoD,0x2
+.set PokemonStadium,0x3
+.set PeachsCastle,0x4
+.set KongoJungle,0x5
+.set Brinstar,0x6
+.set Corneria,0x7
+.set YoshiStory,0x8
+.set Onett,0x9
+.set MuteCity,0xA
+.set RainbowCruise,0xB
+.set JungleJapes,0xC
+.set GreatBay,0xD
+.set HyruleTemple,0xE
+.set BrinstarDepths,0xF
+.set YoshiIsland,0x10
+.set GreenGreens,0x11
+.set Fourside,0x12
+.set MushroomKingdomI,0x13
+.set MushroomKingdomII,0x14
+.set Akaneia,0x15
+.set Venom,0x16
+.set PokeFloats,0x17
+.set BigBlue,0x18
+.set IcicleMountain,0x19
+.set IceTop,0x1A
+.set FlatZone,0x1B
+.set DreamLand,0x1C
+.set YoshiIsland64,0x1D
+.set KongoJungle64,0x1E
+.set Battlefield,0x1F
+.set FinalDestination,0x20
 
 .macro branchl reg, address
 lis \reg, \address @h

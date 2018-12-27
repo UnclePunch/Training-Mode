@@ -5,768 +5,196 @@ b	FunctionStart
 
 Names:
 blrl
-.long 0x43686172
-.long 0x6C6F7474
-.long 0x65000000
-
-.long 0x48756768
-.long 0x204E0000
-.long 0x00000000
-
-.long 0x48415242
-.long 0x00000000
-.long 0x00000000
-
-.long 0x43797275
-.long 0x73205200
-.long 0x00000000
-
-.long 0x72617665
-.long 0x63616B65
-.long 0x00000000
-
-.long 0x4A657265
-.long 0x6D790000
-.long 0x00000000
-
-.long 0x446F6D69
-.long 0x6E69636B
-.long 0x20540000
-
-.long 0x526F6265
-.long 0x72742050
-.long 0x00000000
-
-.long 0x4A6F6E61
-.long 0x7468616E
-.long 0x20420000
-
-.long 0x44616E69
-.long 0x656C2046
-.long 0x00000000
-
-.long 0x4D617273
-.long 0x68616C6C
-.long 0x205A0000
-
-.long 0x54686F6D
-.long 0x61732042
-.long 0x00000000
-
-.long 0x52697368
-.long 0x69000000
-.long 0x00000000
-
-.long 0x4B454C4C
-.long 0x5A000000
-.long 0x00000000
-
-.long 0x5475726B
-.long 0x65790000
-.long 0x00000000
-
-.long 0x4F757473
-.long 0x69646500
-.long 0x00000000
-
-.long 0x4A657373
-.long 0x65000000
-.long 0x00000000
-
-.long 0x42656E53
-.long 0x57000000
-.long 0x00000000
-
-.long 0x53657463
-.long 0x68692000
-.long 0x00000000
-
-.long 0x4A696D6D
-.long 0x79204D00
-.long 0x00000000
-
-.long 0x4D696361
-.long 0x68205300
-.long 0x00000000
-
-.long 0x41766900
-.long 0x00000000
-.long 0x00000000
-
-.long 0x59756E67
-.long 0x5A756E67
-.long 0x61000000
-
-.long 0x52616E64
-.long 0x6C65204A
-.long 0x00000000
-
-.long 0x416E6472
-.long 0x65617320
-.long 0x48000000
-
-.long 0x43616C73
-.long 0x7A6F6E65
-.long 0x00000000
-
-.long 0x52696C65
-.long 0x79204400
-.long 0x00000000
-
-.long 0x416E7468
-.long 0x6F6E7920
-.long 0x43000000
-
-.long 0x4B657669
-.long 0x6E205400
-.long 0x00000000
-
-.long 0x5A616E65
-.long 0x20520000
-.long 0x00000000
-
-.long 0x47616765
-.long 0x204B0000
-.long 0x00000000
-
-.long 0x41726900
-.long 0x00000000
-.long 0x00000000
-
-.long 0x56697472
-.long 0x616C0000
-.long 0x00000000
-
-.long 0x43462054
-.long 0x72756500
-.long 0x00000000
-
-.long 0x79617264
-.long 0x73616C65
-.long 0x00000000
-
-.long 0x4A616D65
-.long 0x73204C00
-.long 0x00000000
-
-.long 0x5A616368
-.long 0x204E0000
-.long 0x00000000
-
-.long 0x53697220
-.long 0x4C656D6F
-.long 0x6E000000
-
-.long 0x4D617474
-.long 0x20420000
-.long 0x00000000
-
-.long 0x4D617820
-.long 0x53000000
-.long 0x00000000
-
-.long 0x5265616C
-.long 0x44696E67
-.long 0x6F732000
-
-.long 0x57617369
-.long 0x66205200
-.long 0x00000000
-
-.long 0x66656D62
-.long 0x6F792075
-.long 0x77750000
-
-.long 0x5370656E
-.long 0x63657220
-.long 0x47000000
-
-.long 0x42656E20
-.long 0x41000000
-.long 0x00000000
-
-.long 0x57696C6C
-.long 0x69616D20
-.long 0x52000000
-
-.long 0x4B4A4800
-.long 0x00000000
-.long 0x00000000
-
-.long 0x52656576
-.long 0x65000000
-.long 0x00000000
-
-.long 0x43687269
-.long 0x73746961
-.long 0x6E204100
-
-.long 0x45737465
-.long 0x62616E20
-.long 0x48000000
-
-.long 0x466F7272
-.long 0x65737420
-.long 0x47000000
-
-.long 0x41696465
-.long 0x6E204300
-.long 0x00000000
-
-.long 0x47726F6C
-.long 0x65780000
-.long 0x00000000
-
-.long 0x4D616E75
-.long 0x656C2050
-.long 0x00000000
-
-.long 0x4D657468
-.long 0x6F727068
-.long 0x616E0000
-
-.long 0x626F6666
-.long 0x74617267
-.long 0x65740000
-
-.long 0x4D61726B
-.long 0x204D0000
-.long 0x00000000
-
-.long 0x52656563
-.long 0x65204500
-.long 0x00000000
-
-.long 0x4B61204D
-.long 0x696E6720
-.long 0x41430000
-
-.long 0x424F4E53
-.long 0x41492042
-.long 0x4F595300
-
-.long 0x4A65616E
-.long 0x20540000
-.long 0x00000000
-
-.long 0x4A6F6E00
-.long 0x00000000
-.long 0x00000000
-
-.long 0x53747561
-.long 0x7274204B
-.long 0x00000000
-
-.long 0x4D696B65
-.long 0x20520000
-.long 0x00000000
-
-.long 0x4A616D65
-.long 0x73000000
-.long 0x00000000
-
-.long 0x4D696C6C
-.long 0x65722054
-.long 0x00000000
-
-.long 0x44617272
-.long 0x656E204D
-.long 0x00000000
-
-.long 0x53686167
-.long 0x67794A00
-.long 0x00000000
-
-.long 0x20000000
-.long 0x00000000
-.long 0x00000000
-
-.long 0x42727961
-.long 0x6E204B00
-.long 0x00000000
-
-.long 0x436F6C6C
-.long 0x696E2042
-.long 0x00000000
-
-.long 0x4C756361
-.long 0x73205300
-.long 0x00000000
-
-.long 0x6A657265
-.long 0x6D696168
-.long 0x204B0000
-
-.long 0x57696C6C
-.long 0x20410000
-.long 0x00000000
-
-.long 0x45616361
-.long 0x62000000
-.long 0x00000000
-
-.long 0x4D616363
-.long 0x72656120
-.long 0x50000000
-
-.long 0x4A757374
-.long 0x696E2048
-.long 0x00000000
-
-.long 0x5A616368
-.long 0x204A0000
-.long 0x00000000
-
-.long 0x4272616E
-.long 0x64742057
-.long 0x00000000
-
-.long 0x47656E65
-.long 0x204B0000
-.long 0x00000000
-
-.long 0x4A617963
-.long 0x6F622041
-.long 0x00000000
-
-.long 0x4A6F7365
-.long 0x70682052
-.long 0x00000000
-
-.long 0x626C616E
-.long 0x6465657A
-.long 0x79000000
-
-.long 0x56696D00
-.long 0x00000000
-.long 0x00000000
-
-.long 0x726F6F62
-.long 0x2061646F
-.long 0x6F620000
-
-.long 0x53616D69
-.long 0x20420000
-.long 0x00000000
-
-.long 0x426C616B
-.long 0x65205000
-.long 0x00000000
-
-.long 0x43686172
-.long 0x6C6F6E00
-.long 0x00000000
-
-.long 0x416C6472
-.long 0x696E2052
-.long 0x00000000
-
-.long 0x4A616E65
-.long 0x204C0000
-.long 0x00000000
-
-.long 0x4D617274
-.long 0x696E2052
-.long 0x00000000
-
-.long 0x53746570
-.long 0x68616E65
-.long 0x20530000
-
-.long 0x47726567
-.long 0x20570000
-.long 0x00000000
-
-.long 0x44656C61
-.long 0x6E6F2057
-.long 0x00000000
-
-.long 0x4B796C65
-.long 0x20530000
-.long 0x00000000
-
-.long 0x4B204F42
-.long 0x7269656E
-.long 0x00000000
-
-.long 0x416C6265
-.long 0x7274205A
-.long 0x00000000
-
-.long 0x4C796B6F
-.long 0x6E000000
-.long 0x00000000
-
-.long 0x42656E6A
-.long 0x616D696E
-.long 0x20450000
-
-.long 0x44617665
-.long 0x20530000
-.long 0x00000000
-
-.long 0x4A6F7264
-.long 0x616E204A
-.long 0x00000000
-
-.long 0x47656172
-.long 0x00000000
-.long 0x00000000
-
-.long 0x46726974
-.long 0x7A000000
-.long 0x00000000
-
-.long 0x4A656666
-.long 0x204A0000
-.long 0x00000000
-
-.long 0x44616C74
-.long 0x6F6E2047
-.long 0x00000000
-
-.long 0x54726576
-.long 0x6F722043
-.long 0x00000000
-
-.long 0x43686164
-.long 0x20530000
-.long 0x00000000
-
-.long 0x42726974
-.long 0x20420000
-.long 0x00000000
-
-.long 0x41757374
-.long 0x696E2044
-.long 0x00000000
-
-.long 0x4D696361
-.long 0x68205700
-.long 0x00000000
-
-.long 0x4A6F6E61
-.long 0x74686F6E
-.long 0x204D0000
-
-.long 0x4A61736F
-.long 0x6E205600
-.long 0x00000000
-
-.long 0x4D617276
-.long 0x696E2053
-.long 0x00000000
-
-.long 0x476C656E
-.long 0x6E205400
-.long 0x00000000
-
-.long 0x4A6F7264
-.long 0x616E204D
-.long 0x00000000
-
-.long 0x426A2043
-.long 0x00000000
-.long 0x00000000
-
-.long 0x4C756369
-.long 0x6F000000
-.long 0x00000000
-
-.long 0x42656E6E
-.long 0x6F204B00
-.long 0x00000000
-
-.long 0x4265726E
-.long 0x616E646F
-.long 0x20420000
-
-.long 0x4B617665
-.long 0x68204100
-.long 0x00000000
-
-.long 0x54686F6D
-.long 0x61732052
-.long 0x00000000
-
-.long 0x41757374
-.long 0x696E204C
-.long 0x00000000
-
-.long 0x4272656E
-.long 0x6E616E20
-.long 0x52000000
-
-.long 0x416E7468
-.long 0x6F6E7920
-.long 0x47000000
-
-.long 0x5279616E
-.long 0x204D0000
-.long 0x00000000
-
-.long 0x546F6E79
-.long 0x204B0000
-.long 0x00000000
-
-.long 0x5368616E
-.long 0x65204B00
-.long 0x00000000
-
-.long 0x416E6472
-.long 0x65772057
-.long 0x00000000
-
-.long 0x56696E63
-.long 0x656E7420
-.long 0x54000000
-
-.long 0x416C6920
-.long 0x53000000
-.long 0x00000000
-
-.long 0x4E617468
-.long 0x616E2048
-.long 0x00000000
-
-.long 0x4D617869
-.long 0x6D652043
-.long 0x00000000
-
-.long 0x52696C65
-.long 0x79204200
-.long 0x00000000
-
-.long 0x6361676C
-.long 0x696F7374
-.long 0x726F3900
-
-.long 0x4A6F6E61
-.long 0x7468616E
-.long 0x204D0000
-
-.long 0x52616661
-.long 0x204D0000
-.long 0x00000000
-
-.long 0x4C756375
-.long 0x69757320
-.long 0x4D000000
-
-.long 0x4A756C69
-.long 0x65204D00
-.long 0x00000000
-
-.long 0x53657267
-.long 0x696F2044
-.long 0x00000000
-
-.long 0x416E6472
-.long 0x65204D4C
-.long 0x4F000000
-
-.long 0x4A75616E
-.long 0x20440000
-.long 0x00000000
-
-.long 0x416E6472
-.long 0x65772059
-.long 0x00000000
-
-.long 0x46616261
-.long 0x64616D00
-.long 0x00000000
-
-.long 0x546F6E79
-.long 0x20520000
-.long 0x00000000
-
-.long 0x44616E69
-.long 0x656C2043
-.long 0x00000000
-
-.long 0x44657265
-.long 0x78204500
-.long 0x00000000
-
-.long 0x43687269
-.long 0x73204300
-.long 0x00000000
-
-.long 0x53616D75
-.long 0x656C2043
-.long 0x44000000
-
-.long 0x4D656C65
-.long 0x65205374
-.long 0x61747300
-
-.long 0x47656F72
-.long 0x67652047
-.long 0x00000000
-
-.long 0x4A6F6579
-.long 0x20410000
-.long 0x00000000
-
-.long 0x53746570
-.long 0x68616E20
-.long 0x4D000000
-
-.long 0x4A61736F
-.long 0x6E205300
-.long 0x00000000
-
-.long 0x4B726973
-.long 0x20530000
-.long 0x00000000
-
-.long 0x4D696B65
-.long 0x79205200
-.long 0x00000000
-
-.long 0x4A616B65
-.long 0x204D0000
-.long 0x00000000
-
-.long 0x4C69616D
-.long 0x204D0000
-.long 0x00000000
-
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-
-.long 0x416E6479
-.long 0x20430000
-.long 0x00000000
-
-.long 0x53756E73
-.long 0x65740000
-.long 0x00000000
-
-.long 0x57696C6C
-.long 0x204E0000
-.long 0x00000000
-
-.long 0x44796C61
-.long 0x6E204D00
-.long 0x00000000
-
-.long 0x4D617474
-.long 0x68657720
-.long 0x4C000000
-
-.long 0x4D617474
-.long 0x68657720
-.long 0x50000000
-
-.long 0x41696465
-.long 0x6E204600
-.long 0x00000000
-
-.long 0x4D696368
-.long 0x61656C20
-.long 0x4F000000
-
-.long 0x44726577
-.long 0x20440000
-.long 0x00000000
-
-.long 0x54796C65
-.long 0x72204D00
-.long 0x00000000
-
-.long 0x6D617361
-.long 0x66756D73
-.long 0x61000000
-
-.long 0x4E617468
-.long 0x616E2053
-.long 0x00000000
-
-.long 0x5175656E
-.long 0x74696E20
-.long 0x46000000
-
-.long 0x426F6262
-.long 0x79205363
-.long 0x61720000
-
-.long 0x4F757465
-.long 0x7248616C
-.long 0x6F000000
-
-.long 0x4D617820
-.long 0x52000000
-.long 0x00000000
-
-.long 0x54727563
-.long 0x6B4A6974
-.long 0x73750000
-
-.long 0x53657468
-.long 0x204D0000
-.long 0x00000000
-
-.long 0x4A616D69
-.long 0x65204300
-.long 0x00000000
-
-.long 0x45646469
-.long 0x65204100
-.long 0x00000000
-
-.long 0x436F6479
-.long 0x204E0000
-.long 0x00000000
-
-.long 0x4A6F656C
-.long 0x00000000
-.long 0x00000000
-
-.long 0x4B616C76
-.long 0x61720000
-.long 0x00000000
-
-.long 0x53706563
-.long 0x20546861
-.long 0x6E6B7300
-
-.long 0x41636869
-.long 0x6C6C6573
-.long 0x00000000
-
-.long 0x44616E20
-.long 0x53616C76
-.long 0x61746F00
-
-.long 0x50756E6B
-.long 0x6C696E65
-.long 0x00000000
-
-.long 0x4452474E
-.long 0x00000000
-.long 0x00000000
-
-.long 0x676F6466
-.long 0x65640000
-.long 0x00000000
-
-.long 0x446F6C70
-.long 0x68696E20
-.long 0x456D7500
-
-.long 0x4765636B
-.long 0x6F204F53
-.long 0x00000000
-
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-
-
-
+.string "Charlotte"
+.string "Hugh N"
+.string "HARB"
+.string "Cyrus R"
+.string "ravecake"
+.string "Jeremy"
+.string "Dominick T"
+.string "Robert P"
+.string "Jonathan B"
+.string "Daniel F"
+.string "Marshall Z"
+.string "Thomas B"
+.string "Rishi"
+.string "KELLZ"
+.string "Turkey"
+.string "Outside"
+.string "Jesse"
+.string "BenSW"
+.string "Setchi "
+.string "Jimmy M"
+.string "Micah S"
+.string "Avi"
+.string "YungZunga"
+.string "Randle J"
+.string "Andreas H"
+.string "Calszone"
+.string "Riley D"
+.string "Anthony C"
+.string "Kevin T"
+.string "Zane R"
+.string "Gage K"
+.string "Ari"
+.string "Vitral"
+.string "CF True"
+.string "yardsale"
+.string "James L"
+.string "Zach N"
+.string "Sir Lemon"
+.string "Matt B"
+.string "Max S"
+.string "RealDingos "
+.string "Wasif R"
+.string "femboy uwu"
+.string "Spencer G"
+.string "Ben A"
+.string "William R"
+.string "KJH"
+.string "Reeve"
+.string "Christian A"
+.string "Esteban H"
+.string "Forrest G"
+.string "Aiden C"
+.string "Grolex"
+.string "Manuel P"
+.string "Methorphan"
+.string "bofftarget"
+.string "Mark M"
+.string "Reece E"
+.string "Ka Ming AC"
+.string "BONSAI BOYS"
+.string "Jean T"
+.string "Jon"
+.string "Stuart K"
+.string "Mike R"
+.string "James"
+.string "Miller T"
+.string "Darren M"
+.string "ShaggyJ"
+.string "Bryan K"
+.string "Collin B"
+.string "Lucas S"
+.string "jeremiah K"
+.string "Will A"
+.string "Eacab"
+.string "Maccrea P"
+.string "Justin H"
+.string "Zach J"
+.string "Brandt W"
+.string "Gene K"
+.string "Jaycob A"
+.string "Joseph R"
+.string "blandeezy"
+.string "Vim"
+.string "roob adoob"
+.string "Sami B"
+.string "Blake P"
+.string "Charlon"
+.string "Aldrin R"
+.string "Jane L"
+.string "Martin R"
+.string "Stephane S"
+.string "Greg W"
+.string "Delano W"
+.string "Kyle S"
+.string "K OBrien"
+.string "Albert Z"
+.string "Lykon"
+.string "Benjamin E"
+.string "Dave S"
+.string "Jordan J"
+.string "Gear"
+.string "Fritz"
+.string "Jeff J"
+.string "Dalton G"
+.string "Trevor C"
+.string "Chad S"
+.string "Brit B"
+.string "Austin D"
+.string "Micah W"
+.string "Jonathon M"
+.string "Jason V"
+.string "Marvin S"
+.string "Glenn T"
+.string "Jordan M"
+.string "Bj C"
+.string "Lucio"
+.string "Benno K"
+.string "Bernando B"
+.string "Kaveh A"
+.string "Thomas R"
+.string "Austin L"
+.string "Brennan R"
+.string "Anthony G"
+.string "Ryan M"
+.string "Tony K"
+.string "Shane K"
+.string "Andrew W"
+.string "Vincent T"
+.string "Ali S"
+.string "Nathan H"
+.string "Maxime C"
+.string "Riley B"
+.string "cagliostro9"
+.string "Jonathan M"
+.string "Rafa M"
+.string "Lucuius M"
+.string "Julie M"
+.string "Sergio D"
+.string "Andre MLO"
+.string "Juan D"
+.string "Andrew Y"
+.string "Fabadam"
+.string "Tony R"
+.string "Daniel C"
+.string "Derex E"
+.string "Chris C"
+.string "Samuel CD"
+.string "Melee Stats"
+.string "George G"
+.string "Joey A"
+.string "Stephan M"
+.string "Jason S"
+.string "Kris S"
+.string "Mikey R"
+.string "Jake M"
+.string "Liam M"
+.string "Andy C"
+.string "+"
+.string "Sunset"
+.string "Will N"
+.string "Dylan M"
+.string "Matthew L"
+.string "Matthew P"
+.string "Aiden F"
+.string "Michael O"
+.string "Drew D"
+.string "Tyler M"
+.string "masafumsa"
+.string "Nathan S"
+.string "Quentin F"
+.string "Bobby Scar"
+.string "OuterHalo"
+.string "Max R"
+.string "TruckJitsu"
+.string "Seth M"
+.string "Jamie C"
+.string "Eddie A"
+.string "Cody N"
+.string "Joel"
+.string "Kalvar"
+.string "+"
+.string "Spec Thanks"
+.string "Achilles"
+.string "Dan Salvato"
+.string "Punkline"
+.string "DRGN"
+.string "Fizzi"
+.string "Dolphin Emu"
+.string "Gecko OS"
+.align 2
 
 FinalMessage:
 blrl
@@ -826,6 +254,8 @@ blrl
 
 
 FunctionStart:
+.set FirstNameToReplace,2
+.set LastNameToReplace,192
 
 branchl	r12,0x803a6368
 
@@ -853,29 +283,66 @@ b	CustomExit
 #Only Display After the First 2 Names
 CheckWhitelist:
 lwz	r3, -0x4eac (r13)
-cmpwi	r3,0x1
-ble	CustomExit
-cmpwi	r3,193
-bge	CustomExit
+cmpwi	r3,FirstNameToReplace
+blt	CustomExit
+cmpwi	r3,LastNameToReplace
+bgt	CustomExit
 
 ConvertToMenuText:
 #Get Text As Menu Text
-li	r3,128
-branchl	r12,0x803a5798
-mr	r20,r3
-bl	Names
-mflr	r4
-lwz	r5, -0x4eac (r13)
-subi	r5,r5,0x2
-mulli	r5,r5,0xC
-add	r4,r4,r5
-branchl	r12,0x803a67ec
+  li	r3,128
+  branchl	r12,0x803a5798
+  mr	r20,r3
+  lwz	r3, -0x4EAC (r13)
+  bl  GetPatronASCIIFromID
+  mr  r4,r3
+  mr  r3,r20
+  branchl	r12,0x803a67ec
 
 
 #Store To Text Struct
 lwz	r3, -0x4EA8 (r13)
 lwzx	r3, r3, r31
 stw	r20,0x5C(r3)
+b CustomExit
+
+###############################
+GetPatronASCIIFromID:
+.set ID,31
+.set LoopCount,30
+.set Name,29
+
+backup
+
+#Get ID
+  subi  ID,r3,FirstNameToReplace
+#Get Names
+  bl	Names
+  mflr	Name
+#Init Loop Count
+  li  LoopCount,0
+
+GetPatronASCIIFromID_Loop:
+#Check if we are up to the correct name
+  cmpw ID,LoopCount
+  beq GetPatronASCIIFromID_Exit
+#Get string length
+  mr  r3,Name
+  branchl r12,strlen
+#Add to current name pointer
+  add Name,Name,r3
+  addi Name,Name,1
+#Inc Loop Count
+  addi LoopCount,LoopCount,1
+  b GetPatronASCIIFromID_Loop
+
+GetPatronASCIIFromID_Exit:
+mr  r3,Name
+restore
+blr
+
+###############################
+
 
 CustomExit:
 #Inc Name Count
@@ -889,4 +356,4 @@ b	Exit
 
 
 Exit:
-mtctr	r12
+#mtctr	r12
