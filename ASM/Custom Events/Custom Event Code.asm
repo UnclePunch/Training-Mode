@@ -2682,7 +2682,7 @@ lwz	r4,0x0(r29)
 bl	P2Struct
 mflr	r3
 stw	r3,0x18(r4)		#p2 pointer
-li	r5,0x14		#fox ext ID
+li	r5,Falco.Ext
 stb	r5,0x0(r3)		#make fox p2
 li	r5,0x1		#make CPU controlled
 stb	r5,0x1(r3)
@@ -7845,7 +7845,7 @@ blr
 P1Struct:
 blrl
 
-.long 0x01000202 #external char, player type, stocks, costume
+.long 0x01000200 #external char, player type, stocks, costume
 .long 0xff000400 #spawn point, subcolor,team,voice pitch
 .long 0x00040700 #player flag
 .long 0x00000000 #level and starting %
@@ -7859,7 +7859,7 @@ blrl
 P2Struct:
 blrl
 
-.long 0x01010202 #external char, player type, stocks, costume
+.long 0x01010200 #external char, player type, stocks, costume
 .long 0xff000400 #spawn point, subcolor,team,voice pitch
 .long 0x00040700 #player flag
 .long 0x00000000 #level and starting %
