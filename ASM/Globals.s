@@ -109,6 +109,7 @@
 .set Text_UpdateSubtextSize,0x803a7548
 .set Text_UpdateSubtextPosition,0x803a746c
 .set Text_ChangeTextColor,0x803a74f0
+.set Text_RemoveText,0x803a5cc4
 .set strlen,0x80325b04
 .set PlayerBlock_LoadExternalCharID,0x80032330
 .set PlayerBlock_GotoStaleMoveEntry_0xBC,0x80036244

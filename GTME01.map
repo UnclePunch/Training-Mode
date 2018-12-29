@@ -9542,9 +9542,9 @@
 801a34fc 00000138 801a34fc 0 SceneThink_CameraModeMemcardPrompt
 801a3634 00000048 801a3634 0 SceneLoad_CameraModeMemcardPrompt
 801a367c 00000004 801a367c 0 SceneLeave_CameraModeMemcardPrompt
-801a3680 00000020 801a3680 0 getPlayerHeldInputs
-801a36a0 00000020 801a36a0 0 getPlayerInstantInputs
-801a36c0 00000020 801a36c0 0 zz_01a36c0_
+801a3680 00000020 801a3680 0 Inputs_GetPlayerHeldInputs
+801a36a0 00000020 801a36a0 0 Inputs_GetPlayerInstantInputs
+801a36c0 00000020 801a36c0 0 Inputs_GetPlayerRapidHeldInputs
 801a36e0 00000034 801a36e0 0 zz_01a36e0_
 801a3714 0000010c 801a3714 0 zz_01a3714_
 801a3820 0000014c 801a3820 0 zz_01a3820_
