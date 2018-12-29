@@ -63,16 +63,16 @@ backup
 ## R = Tutorial ##
 ##################
 
+#SET COLOR TO White
+	load	r3,0xFFFFFFFF		#white
+	stw	r3,0x30(text)
+
 #Check For Training Mode ISO Game ID
 	lis	r5,0x8000
 	lwz	r5,0x0(r5)
 	load	r6,0x47544d45			#GTME
 	cmpw	r5,r6
 	bne	SpawnLText
-
-#SET COLOR TO White
-	load	r3,0xFFFFFFFF		#white
-	stw	r3,0x30(text)
 
 #Initialize Subtext
 	lfs 	f1,RX(textproperties) #X offset of text
