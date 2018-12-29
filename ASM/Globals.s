@@ -1,5 +1,5 @@
 #Debug Flag
-.set debug,1
+.set debug,0
 
 #######################
 ## Codeset Variables ##
