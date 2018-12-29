@@ -3399,7 +3399,7 @@ stb	r3,0x1(r4)
 #Store Events FDD Toggles
 lwz	r5,-0x77C0(r13)
 lwz	r3,0x1F24(r5)
-load	r4,0x00200000
+load	r4,0x00210000
 or	r3,r3,r4
 stw	r3,0x1F24(r5)
 
