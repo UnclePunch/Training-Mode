@@ -9106,7 +9106,7 @@ blr
 RAndDPadChangesEventOption_Floats:
 blrl
 
-.long 0x41480000 #12.5, X position
+.float 16 #12.5, X position
 .long 0x427c0000 #63, 2 Window Y Scale
 .long 0x42bc0000 #94, 3 Window Y Scale
 .long 0xc4610000 #-900, 2 Window Y position
@@ -9975,19 +9975,6 @@ CheckForActiveHitboxes_Exit:
 
 restore
 blr
-
-############################################
-
-LegalStages:
-blrl
-.long 0x1F200802
-.long 0x031C0000
-
-TopTiers:
-blrl
-.long 0x0D02070F
-.long 0x10131409
-.long 0x0c000000
 
 #############################################
 
