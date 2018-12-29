@@ -1,56 +1,5 @@
 #To be inserted at 8024e81c
-.macro branchl reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctrl
-.endm
-
-.macro branch reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctr
-.endm
-
-.macro load reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-.endm
-
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
-
-.macro backup
-mflr r0
-stw r0, 0x4(r1)
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw  r20,0x8(r1)
-.endm
-
-.macro restore
-lmw  r20,0x8(r1)
-lwz r0, 0x104(r1)
-addi	r1,r1,0x100	# release the space
-mtlr r0
-.endm
-
-.macro intToFloat reg,reg2
-xoris    \reg,\reg,0x8000
-lis    r18,0x4330
-lfd    f16,-0x7470(rtoc)    # load magic number
-stw    r18,0(r2)
-stw    \reg,4(r2)
-lfd    \reg2,0(r2)
-fsubs    \reg2,\reg2,f16
-.endm
-
-.set entity,31
-.set player,31
+.include "../../Globals.s"
 
 .set text,31
 .set textproperties,30
@@ -140,8 +89,8 @@ backup
 SpawnLText:
 
 #SET COLOR TO White
-	load	r3,0xFFFFFFFF		#white
-	stw	r3,0x30(text)
+	#load	r3,0xFFFFFFFF		#white
+	#stw	r3,0x30(text)
 
 #Initialize Subtext
 	lfs 	f1,LX(textproperties) #X offset of text
@@ -151,7 +100,33 @@ SpawnLText:
 	mflr 	r4		#pointer to ASCII
 	branchl r12,0x803a6b98
 
+##################
+## R = Tutorial ##
+##################
+
+SpawnZText:
+
+#SET COLOR TO White
+	#load	r3,0xFFFFFFFF		#white
+	#stw	r3,0x30(text)
+
+#Initialize Subtext
+	lfs 	f1,ZX(textproperties) #X offset of text
+	lfs 	f2,ZY(textproperties) #Y offset of text
+	mr 	r3,text       #struct pointer
+	bl 	ZText
+	mflr 	r4		#pointer to ASCII
+	branchl r12,0x803a6b98
+
+#Change scale
+	mr	r4,r3
+	mr	r3,text
+	lfs	f1,ZScale(textproperties)
+	lfs	f2,ZScale(textproperties)
+	branchl r12,Text_UpdateSubtextSize
+
 b end
+
 
 
 #**************************************************#
@@ -164,7 +139,10 @@ blrl
 .set RY,0x10
 .set LX,0x14
 .set LY,0x18
-.set CanvasScaling,0x1C
+.set ZX,0x1C
+.set ZY,0x20
+.set ZScale,0x24
+.set CanvasScaling,0x28
 
 #Version
 .float 0      #text X pos
@@ -179,6 +157,11 @@ blrl
 .float -310   #text X pos
 .float -230   #text Y pos
 
+#Press Z
+.float 300    #text X pos
+.float -280   #text Y pos
+.float 0.8		#text scale
+
 .float 0.035   #Canvas Scaling
 
 RText:
@@ -189,6 +172,11 @@ blrl
 LText:
 blrl
 .string "L = OSD"
+.align 2
+
+ZText:
+blrl
+.string "Z = Credits"
 .align 2
 
 #**************************************************#

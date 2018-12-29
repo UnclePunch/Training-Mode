@@ -196,7 +196,7 @@
 80011ac4 000000b0 80011ac4 0 zz_0011ac4_
 80011b74 000000a4 80011b74 0 zz_0011b74_
 80011c18 0000020c 80011c18 0 zz_0011c18_
-80011e24 00000228 80011e24 0 Texture_ToggleActiveTexture(r3=textureObject,r4=textureToChangeToSomething,r5=typedef,r6=typedef
+80011e24 00000228 80011e24 0 Texture_ToggleActiveTexture_GetTextureData(r3=textureObject,r4=ReturnStruct,r5=typedef,r6=typedef
 8001204c 000001b0 8001204c 0 zz_001204c_
 800121fc 000000cc 800121fc 0 GX_CreateGXTexImageBuffer(r3=UnkPointer,r4=XRes,r5=YRes,r6=ColorType,r7=AllocationType)
 800122c8 00000028 800122c8 0 HSD_ImageDescCopyFromEFB_Prefunction
