@@ -2369,51 +2369,100 @@ b	exit
 			cmpwi	r20,150		#Restore After 120 Frames
 			blt	ReversalThinkExit
 		ReversalReset:
-		#Check to Swap Position
-			li	r3,2        #1/2 Chance to swap positions
-			branchl r12,HSD_Randi
+    ReversalSwap:
+    #I fucking hate this code, i need to clean this up at some point.
+    #Get leftmost player pointer in r20, rightmost in r21
+      addi r5,EventData,0x10
+      lwz r3,0x0(r5)
+      lfs f1,0xB0(r3)
+      lwz r4,0x8(r5)
+      lfs f2,0xB0(r4)
+      fcmpo cr0,f1,f2
+      bgt 0x10
+      mr r20,r3
+      mr r21,r4
+      b 0xC
+      mr r20,r4
+      mr r21,r3
+    #Get which side to start on
+      li	r3,2        #0 = p1 on left, 1 = p1 on right
+      branchl r12,HSD_Randi
       cmpwi r3,0x0
-      beq ReversalReset_NoSwap
+      bne ReversalReset_RightSide
+    ReversalReset_LeftSide:
     #Swap Position
-        addi r5,EventData,0x10
-      #Get P1 Data
+      addi r5,EventData,0x10
+      #Get Leftmost Chars Position
+        li  r3,1
+        bl  IntToFloat
+        fmr f2,f1
+        lfs f3,0xB0(r20)
+        lfs f4,0xB4(r20)
+      #Get Rightmost Chars Position
+        li  r3,-1
+        bl  IntToFloat
+        fmr f5,f1
+        lfs f6,0xB0(r21)
+        lfs f7,0xB4(r21)
+      #Store to P1 Data
         lwz r3,0x0(r5)
-        lfs f1,0xB0(r3)
-        lfs f2,0xB4(r3)
-        lfs f3,0x2C(r3)
-      #Get P2 Data
-        lwz r4,0x8(r5)
-        lfs f4,0xB0(r4)
-        lfs f5,0xB4(r4)
-        lfs f6,0x2C(r4)
-      #Swap Data
-        stfs f1,0xB0(r4)
-        stfs f2,0xB4(r4)
-        stfs f3,0x2C(r4)
-        stfs f4,0xB0(r3)
-        stfs f5,0xB4(r3)
-        stfs f6,0x2C(r3)
-		ReversalReset_NoSwap:
+        stfs f2,0x2C(r3)
+        stfs f3,0xB0(r3)
+        stfs f4,0xB4(r3)
+      #Store to P2 Data
+        lwz r3,0x8(r5)
+        stfs f5,0x2C(r3)
+        stfs f6,0xB0(r3)
+        stfs f7,0xB4(r3)
+        b ReversalReset_SwapEnd
+    ReversalReset_RightSide:
+      addi r5,EventData,0x10
+      #Get Leftmost Chars Position
+        li  r3,1
+        bl  IntToFloat
+        fmr f2,f1
+        lfs f3,0xB0(r20)
+        lfs f4,0xB4(r20)
+      #Get Rightmost Chars Position
+        li  r3,-1
+        bl  IntToFloat
+        fmr f5,f1
+        lfs f6,0xB0(r21)
+        lfs f7,0xB4(r21)
+      #Store to P2 Data
+        lwz r3,0x8(r5)
+        stfs f2,0x2C(r3)
+        stfs f3,0xB0(r3)
+        stfs f4,0xB4(r3)
+      #Store to P1 Data
+        lwz r3,0x0(r5)
+        stfs f5,0x2C(r3)
+        stfs f6,0xB0(r3)
+        stfs f7,0xB4(r3)
+    ReversalReset_SwapEnd:
+    ReversalAdjustP1Direction:
 		#Adjust P1 Facing Direction Based on Preference
       addi r5,EventData,0x10
 			lbz	r3,P1FacingDirection(MenuData)
 			cmpwi	r3,0x1
-			bne	ReversalAdjustCPUDirection
+			bne	ReversalAdjustP1Direction_Skip
 		#Invert P1 Facing Direction
 			lwz	r3,0x0(r5)
 			lfs	f1,0x2C(r3)
 			fneg	f1,f1
 			stfs	f1,0x2C(r3)
+    ReversalAdjustP1Direction_Skip:
 		#Adjust CPU Facing Direction Based on Preference
 		ReversalAdjustCPUDirection:
 			lbz	r3,CPUFacingDirection(MenuData)
 			cmpwi	r3,0x1
-			bne	ReversalLoadState
-		#Invert P1 Facing Direction
+			bne	ReversalAdjustCPUDirection_Skip
+		#Invert P2 Facing Direction
 			lwz	r3,0x8(r5)
 			lfs	f1,0x2C(r3)
 			fneg	f1,f1
 			stfs	f1,0x2C(r3)
+    ReversalAdjustCPUDirection_Skip:
 		#Restore
 		ReversalLoadState:
 			addi r3,EventData,0x10
