@@ -50,6 +50,8 @@ backupall
 	beq	Moonwalk_Exit
 	cmpwi	r3,0xB2
 	beq	Moonwalk_Exit
+	cmpwi r3,ASID_SquatWait
+	beq	Moonwalk_Exit
 
 #Check To Display OSD
 	mr	r3,r31
