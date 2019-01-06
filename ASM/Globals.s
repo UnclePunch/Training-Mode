@@ -1,6 +1,9 @@
 #Debug Flag
 .set debug,0
 
+#PAL Flag, compiles with PAL codes when enabled
+.set PAL,0
+
 #######################
 ## Codeset Variables ##
 #######################

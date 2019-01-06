@@ -1,0 +1,10 @@
+#To be inserted at 8010fc48
+.include "../../../Globals.s"
+
+.if PAL==1
+nop
+.endif
+
+.if PAL==0
+stw	r0, 0x21DC (r5)
+.endif
