@@ -2,9 +2,12 @@
   "settings": {
     "areIncludesRelativeFromFile": true
   },
-  "outputFiles": [
-    "..\\Additional ISO Files\\codes.gct"
-  ],
+    "outputFiles":
+    [
+      {
+        "file": "..\\Additional ISO Files\\codes.gct"
+      }
+    ],
   "codes": [
     {
       "name": "Training Mode Codset",
