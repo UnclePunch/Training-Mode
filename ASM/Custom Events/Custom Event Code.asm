@@ -1307,6 +1307,7 @@ b	exit
       bl  RandFloat
       fmr f22,f1
 
+    .set EggSpawnGroundWidth,8
     #Check If Egg is Above Ground
       fmr f1,f21
       fmr f2,f22
@@ -1314,7 +1315,7 @@ b	exit
       cmpwi r3,0x0
       beq EggsThinkSpawnLoop
     #Check Left
-      li  r3,2
+      li  r3,EggSpawnGroundWidth
       bl  IntToFloat
       fsubs f1,f21,f1
       fmr f2,f22
@@ -1322,7 +1323,7 @@ b	exit
       cmpwi r3,0x0
       beq EggsThinkSpawnLoop
     #Check Right
-      li  r3,2
+      li  r3,EggSpawnGroundWidth
       bl  IntToFloat
       fadds f1,f21,f1
       fmr f2,f22
