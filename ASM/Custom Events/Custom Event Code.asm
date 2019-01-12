@@ -1257,13 +1257,13 @@ b	exit
 
     EggsThinkSpawn:
     .if debug==1
-    li r24,0      #Init loop count
+      li r24,0      #Init loop count
     .endif
 
     EggsThinkSpawnLoop:
 
     .if debug==1
-    addi r24,r24,1  #Inc Loop Count
+      addi r24,r24,1  #Inc Loop Count
     .endif
 
     #Get OnScreen Boundaries
@@ -1313,12 +1313,28 @@ b	exit
       bl  FindGroundUnderCoordinate
       cmpwi r3,0x0
       beq EggsThinkSpawnLoop
+    #Check Left
+      li  r3,2
+      bl  IntToFloat
+      fsubs f1,f21,f1
+      fmr f2,f22
+      bl  FindGroundUnderCoordinate
+      cmpwi r3,0x0
+      beq EggsThinkSpawnLoop
+    #Check Right
+      li  r3,2
+      bl  IntToFloat
+      fadds f1,f21,f1
+      fmr f2,f22
+      bl  FindGroundUnderCoordinate
+      cmpwi r3,0x0
+      beq EggsThinkSpawnLoop
 
     .if debug==1
-    #OSReport Loop Count
-      load r3,0x803ead3c
-      mr r4,r24
-      branchl r12,OSReport
+      #OSReport Loop Count
+        load r3,0x803ead3c
+        mr r4,r24
+        branchl r12,OSReport
     .endif
 
 			SpawnEgg:
