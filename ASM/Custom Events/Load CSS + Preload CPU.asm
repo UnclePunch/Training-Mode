@@ -79,6 +79,7 @@ blrl
 .byte SDI.ID, Fox.Ext, FinalDestination
 .byte Powershield.ID, Falco.Ext, FinalDestination
 .byte ShieldDrop.ID, -1, Battlefield
+.byte AttackOnShield.ID,-1,FinalDestination
 .byte LedgeTech.ID, Falco.Ext, -1
 .byte AmsahTech.ID, Marth.Ext, -1
 .byte WaveshineSDI.ID, Fox.Ext, FinalDestination
