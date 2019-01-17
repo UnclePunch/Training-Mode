@@ -28,7 +28,64 @@
 .set InputStructStart,0x804c21cc
 .set PreloadTableQueue,0x8043207c
 .set PreloadTableUpdated,0x804320d0
+
+#Scene Struct
 .set SceneController,0x80479D30
+  .set Scene.CurrentMajor,0x0
+  .set Scene.PendingMajor,0x1
+  .set Scene.PreviousMajor,0x2
+  .set Scene.CurrentMinor,0x3
+  .set Scene.PendingMinor,0x4
+  .set Scene.PreviousMinor,0x5
+#Scene ID's
+.set Scene.TitleScreen,0x00
+.set Scene.MainMenu,0x01
+.set Scene.VSMode,0x02
+.set Scene.ClassicMode,0x03
+.set Scene.AdventureMode,0x04
+.set Scene.AllStarMode,0x05
+.set Scene.MainDebugMenu,0x06
+.set Scene.SoundTestDebugMenu,0x07
+.set Scene.HanyuTestCSS,0x08
+.set Scene.HanyuTestSSS,0x09
+.set Scene.CameraModeMemcardPrompt,0x0A
+.set Scene.TrophyGallery,0x0B
+.set Scene.TrophyLottery,0x0C
+.set Scene.TrophyCollection,0x0D
+.set Scene.DebugDiarantou,0x0E
+.set Scene.TargetTest,0x0F
+.set Scene.SuperSuddenDeath,0x10
+.set Scene.InvisibleMelee,0x11
+.set Scene.SloMoMelee,0x12
+.set Scene.LightningMelee,0x13
+.set Scene.ChallengerApproaching,0x14
+.set Scene.ClassicModeEnding,0x15
+.set Scene.AdventureModeEnding,0x16
+.set Scene.AllStarModeEnding,0x17
+.set Scene.OpeningMovie,0x18
+.set Scene.VisualSceneDebug,0x19
+.set Scene.1PEndingDebug,0x1A
+.set Scene.TournamentMode,0x1B
+.set Scene.TrainingMode,0x1C
+.set Scene.TinyMelee,0x1D
+.set Scene.GiantMelee,0x1E
+.set Scene.StaminaMode,0x1F
+.set Scene.HomeRunContest,0x20
+.set Scene.10ManMelee,0x21
+.set Scene.100ManMelee,0x22
+.set Scene.3MinuteMelee,0x23
+.set Scene.15MinuteMelee,0x24
+.set Scene.EndlessMelee,0x25
+.set Scene.CruelMelee,0x26
+.set Scene.ProgressiveScanPrompt,0x27
+.set Scene.BootUp,0x28
+.set Scene.MemcardPropmt,0x29
+.set Scene.FixedCamera,0x2A
+.set Scene.EventMode,0x2B
+.set Scene.SingleButton,0x2C
+
+#r13 offsets
+
 
 #Playerdata offsets
 .set PrevASStart,0x23F0
@@ -126,6 +183,7 @@
 .set GroundRaycast,0x8004f008
 .set Camera_UpdatePlayerCameraBoxPosition,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
+.set ItemCollision_Egg,0x802895a8
 
 #Custom Functions
 .set CheckIfCustomEvent,0x80005520

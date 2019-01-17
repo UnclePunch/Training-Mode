@@ -1375,7 +1375,7 @@ b	exit
 			lwz	r4,0xB8(r4)
 
 			#Store OnCollision
-			bl	OnCollision
+			bl	Eggs_OnCollision
 			mflr	r3
 			stw	r3,0x1C(r4)
 
@@ -1457,59 +1457,75 @@ EggsThinkExit:
   blr
 
 
-			OnCollision:
+			Eggs_OnCollision:
 			blrl
 
-			backup
-			mr	r30,r3
-			lwz	r31,0x2C(r3)			#Get Data
+      #First check if this is an event
+        load r4,SceneController
+        lbz r4,Scene.CurrentMajor(r4)
+        cmpwi r4,Scene.EventMode
+        bne Eggs_OnCollisionOriginalFunction
+      #Now check if its eggs-ercise
+        lwz	r4, -0x77C0 (r13)
+        lbz	r4, 0x0535 (r4)         #get event ID
+        cmpwi r4,Eggs.ID
+        beq Eggs_OnCollisionStart
+
+      Eggs_OnCollisionOriginalFunction:
+      #Go to the original egg break function
+        branch r12,ItemCollision_Egg
+
+      Eggs_OnCollisionStart:
+  			backup
+  			mr	r30,r3
+  			lwz	r31,0x2C(r3)			#Get Data
 
 			#Check If Any Attack Should Break
-			lwz	r3,0xDDC(r31)			         #Get Event Data
-      lwz r3,MenuDataPointer(r3)     #Get Menu Data
-			lbz	r3,DamageThreshold(r3)			#Damage Behavior
-			cmpwi	r3,0x1
-			beq	Eggs_OnCollisionBreakEgg
+  			lwz	r3,0xDDC(r31)			         #Get Event Data
+        lwz r3,MenuDataPointer(r3)     #Get Menu Data
+  			lbz	r3,DamageThreshold(r3)			#Damage Behavior
+  			cmpwi	r3,0x1
+  			beq	Eggs_OnCollisionBreakEgg
 			#Check Damage Dealt Before Exploding
-			lwz	r3,0xCA0(r31)
-			cmpwi	r3,11
-			blt	Egg_OnCollisionExit
+  			lwz	r3,0xCA0(r31)
+  			cmpwi	r3,11
+  			blt	Egg_OnCollisionExit
 
 			Eggs_OnCollisionBreakEgg:
 			#Increment Score
-			li	r3,0
-			li	r4,0
-			li	r5,5
-			branchl	r12,Playerblock_StoreTimesR3KilledR4
+  			li	r3,0
+  			li	r4,0
+  			li	r5,5
+  			branchl	r12,Playerblock_StoreTimesR3KilledR4
 
 			#Display Effect
-			li	r3,1232
-			mr	r4,r30
-			addi	r5, r31, 76
-			crclr	6
-			branchl	r12,Textures_DisplayEffectTextures
+  			li	r3,1232
+  			mr	r4,r30
+  			addi	r5, r31, 76
+  			crclr	6
+  			branchl	r12,Textures_DisplayEffectTextures
 
 			#Play Pop Sound
-			mr	r3,r31
-			li	r4,244
-			li	r5,127
-			li	r6,64
-			branchl	r12,0x8026ae84
+  			mr	r3,r31
+  			li	r4,244
+  			li	r5,127
+  			li	r6,64
+  			branchl	r12,0x8026ae84
 
 			#Explode
-			mr	r3,r30
-			branchl	r12,0x80289158
+  			mr	r3,r30
+  			branchl	r12,0x80289158
 
 			#Spawn New Egg
-			lwz	r3,0xDDC(r31)			#Get Event Think
-			li	r4,0x0			#Get 0
-			stw	r4,0x0(r3)			#Zero Pointer
+  			lwz	r3,0xDDC(r31)			#Get Event Think
+  			li	r4,0x0			#Get 0
+  			stw	r4,0x0(r3)			#Zero Pointer
 
 			Egg_OnCollisionExit:
-			li	r3,0x0
+  			li	r3,0x0
 			Egg_OnCollisionExitSkip:
-			restore
-			blr
+  			restore
+  			blr
 
 EggsLoadExit:
 restore
