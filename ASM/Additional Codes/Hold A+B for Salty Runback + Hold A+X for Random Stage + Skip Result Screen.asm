@@ -16,7 +16,7 @@ loop:
 lwz r3,0x0(r5) #get inputs
 
   rlwinm. r0, r3, 0, 6, 6 #check A
-  beq- checkZ
+  beq- increment
   rlwinm. r0, r3, 0, 7, 7 #check B
   beq- checkZ
 
