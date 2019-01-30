@@ -1591,10 +1591,12 @@ lwz	r4,0x0(r29)
 bl	P2Struct
 mflr	r3
 stw	r3,0x18(r4)		#p2 pointer
-li	r5,0x2		#fox ext ID
+li	r5,0x2		    #fox ext ID
 stb	r5,0x0(r3)		#make fox p2
-li	r5,0x1		#make CPU controlled
+li	r5,0x1		    #make CPU controlled
 stb	r5,0x1(r3)
+li  r5,0x0
+stb r5,0x3(r3)    #Default color
 
 #SPAWN 2 PLAYERS
 li	r3,0x40
@@ -8362,13 +8364,13 @@ SaveState_Load:
 		lwz		r3,0x21FC(r26)
 		stw		r3,0xDC(sp)
 
-		#Copy PlayerBlock Backup to Real
+		#Copy PlayerBlock Backup to Current
 		mr		r3,r26
 		mr		r4,r27
 		mr		r5,r24
 		branchl		r12,memcpy	#mempcy
 
-		#Copy Static Block Backup to Real
+		#Copy Static Block Backup to Current
 		load		r3,0x80453080			#get static block in r3
 		li		r4,0xE90
 		mullw		r4,r4,r22
@@ -8401,14 +8403,14 @@ SaveState_Load:
 		mr		r3,r25
 		bl  UpdatePosition
 
-    #Check For Ground
-    #mr r3,r25
-    #branchl r12,0x80082a68
-
     #Remove Respawn Platform JObj Pointer and Think Function
     li  r3,0
     stw r3,0x20A0(r26)
     stw r3,0x21B0(r26)
+
+    #Stop Player's SFX
+    mr  r3,r26
+    branchl r12,SFX_StopAllCharacterSFX
 
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
@@ -8474,6 +8476,12 @@ SaveState_Load:
 		cmpw		r29,r30
 		blt		SaveState_LoadLoop
 
+    SaveState_LoadEnd:
+
+    #Stop Crowd SFX
+    branchl r12,SFXManager_StopSFXIfPlaying
+
+  SaveState_LoadExit:
 	restore
 	blr
 

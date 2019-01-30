@@ -184,6 +184,8 @@
 .set Camera_UpdatePlayerCameraBoxPosition,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
 .set ItemCollision_Egg,0x802895a8
+.set SFX_StopAllCharacterSFX,0x80088a50
+.set SFXManager_StopSFXIfPlaying,0x80321ce8
 
 #Custom Functions
 .set CheckIfCustomEvent,0x80005520
