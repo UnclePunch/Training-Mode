@@ -8412,6 +8412,9 @@ SaveState_Load:
     mr  r3,r26
     branchl r12,SFX_StopAllCharacterSFX
 
+    #Stop Crowd SFX
+    branchl r12,SFXManager_StopSFXIfPlaying
+
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
 		lwz		r3,0xE0(r26)
@@ -8478,8 +8481,23 @@ SaveState_Load:
 
     SaveState_LoadEnd:
 
-    #Stop Crowd SFX
-    branchl r12,SFXManager_StopSFXIfPlaying
+    /*
+    SaveState_Load_RemoveAllGFX:
+    #Get First GFX
+      lwz  r3,-0x3E74 (r13)
+      lwz  r20,0x2C(r3)
+    #Check if exists
+    SaveState_Load_CheckIfGFXExists:
+      cmpwi r20,0
+      beq SaveState_Load_RemoveAllGFXEnd
+    #Remove this GFX
+      mr  r3,r20
+      branchl r12,0x80390228
+    #Get next GFX
+      lwz r20,0x8(r20)
+      b SaveState_Load_CheckIfGFXExists
+    SaveState_Load_RemoveAllGFXEnd:
+    */
 
   SaveState_LoadExit:
 	restore
