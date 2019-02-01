@@ -21,7 +21,7 @@ backupall
 
 
 	#CHECK IF ENABLED
-	li	r0,13			#wavedash ID
+	li	r0,OSD.ShieldStun			#wavedash ID
 	#lwz	r4,-0xdbc(rtoc)			#get frame data toggle bits
 	lwz	r4,-0x77C0(r13)
 	lwz	r4,0x1F24(r4)

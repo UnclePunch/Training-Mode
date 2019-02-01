@@ -64,11 +64,11 @@ CheckToPreloadCPUAndStage_IncLoop:
 ##########################################
 ChooseCPUEvents:
 blrl
-.byte LCancel.ID
-.byte Reversal.ID
-.byte ShieldDrop.ID
-.byte AttackOnShield.ID
-.byte Combo.ID
+.byte Event.LCancel
+.byte Event.Reversal
+.byte Event.ShieldDrop
+.byte Event.AttackOnShield
+.byte Event.Combo
 .byte -1
 .align 2
 
@@ -76,13 +76,13 @@ Preload:
 blrl
 #Format is:
 #Event, CPU char to preload, Stage to preload
-.byte SDI.ID, Fox.Ext, FinalDestination
-.byte Powershield.ID, Falco.Ext, FinalDestination
-.byte ShieldDrop.ID, -1, Battlefield
-.byte AttackOnShield.ID,-1,FinalDestination
-.byte LedgeTech.ID, Falco.Ext, -1
-.byte AmsahTech.ID, Marth.Ext, -1
-.byte WaveshineSDI.ID, Fox.Ext, FinalDestination
+.byte Event.SDI, Fox.Ext, FinalDestination
+.byte Event.Powershield, Falco.Ext, FinalDestination
+.byte Event.ShieldDrop, -1, Battlefield
+.byte Event.AttackOnShield,-1,FinalDestination
+.byte Event.LedgeTech, Falco.Ext, -1
+.byte Event.AmsahTech, Marth.Ext, -1
+.byte Event.WaveshineSDI, Fox.Ext, FinalDestination
 .byte -1
 .align 2
 ##########################################

@@ -10,19 +10,56 @@
 .set FirstCustomEvent, 3
 .set LastCustomEvent, 14
 #Event Numbers
-.set LCancel.ID,3
-.set Ledgedash.ID,4
-.set Eggs.ID,5
-.set SDI.ID,6
-.set Reversal.ID,7
-.set Powershield.ID,8
-.set ShieldDrop.ID,9
-.set AttackOnShield.ID,10
-.set LedgeTech.ID,11
-.set AmsahTech.ID,12
-.set Combo.ID,13
-.set WaveshineSDI.ID,14
+.set Event.LCancel,3
+.set Event.Ledgedash,4
+.set Event.Eggs,5
+.set Event.SDI,6
+.set Event.Reversal,7
+.set Event.Powershield,8
+.set Event.ShieldDrop,9
+.set Event.AttackOnShield,10
+.set Event.LedgeTech,11
+.set Event.AmsahTech,12
+.set Event.Combo,13
+.set Event.WaveshineSDI,14
 
+#OSD IDs
+.set OSD.Wavedash,0
+.set OSD.LCancel,1
+.set OSD.MissedTech,2
+.set OSD.ActOoS,3
+.set OSD.MeteorCancel,4
+.set OSD.Dashback,5
+.set OSD.ShieldDrop,6
+.set OSD.APM,7
+.set OSD.SpacieTech,8
+.set OSD.Powershield,9
+.set OSD.Powershield,10
+.set OSD.ShieldPoke,11
+.set OSD.HitstunLeft,12
+.set OSD.ShieldStun,13
+.set OSD.ASFramesLeft,14
+.set OSD.Miscellaneous,15
+.set OSD.ActOoWait,16
+.set OSD.CrouchCancel,17
+.set OSD.ActOoJump,18
+.set OSD.ActOoJumpSquat,19
+.set OSD.Fastfall,20
+.set OSD.FrameAdvantage,21
+.set OSD.ComboCounter,22
+
+.set OSD.GrabBreakout,24
+
+.set OSD.Ledge,26
+.set OSD.UCF,27
+.set OSD.ActOoHitstun,28
+
+#Static Functions
+.set TextCreateFunction,0x80005928
+
+#####################
+## Melee Variables ##
+#####################
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
 .set InputStructStart,0x804c21cc

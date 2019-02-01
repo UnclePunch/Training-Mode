@@ -20,7 +20,7 @@ backupall
 lwz	playerdata,0x2c(r4)
 
 	#CHECK IF ENABLED
-	li	r0,0x18			#PowerShield ID
+	li	r0,OSD.GrabBreakout			#PowerShield ID
 	lwz	r4,-0x77C0(r13)
 	lwz	r4,0x1F24(r4)
 	li	r3, 1

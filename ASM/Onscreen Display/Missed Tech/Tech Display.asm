@@ -20,7 +20,7 @@ backupall
 	lwz	playerdata,0x2c(player)
 
 	#CHECK IF ENABLED
-	li	r0,2			#wavedash ID
+	li	r0,OSD.MissedTech			#wavedash ID
 	#lwz	r4,-0xdbc(rtoc)			#get frame data toggle bits
 	lwz	r4,-0x77C0(r13)
 	lwz	r4,0x1F24(r4)

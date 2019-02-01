@@ -429,9 +429,11 @@ b	exit
       stfs f1,0x2344(P1Data)
     LedgedashSkipCliffTimer:
 
-		#Make sure nothing else is held
+		#Make sure nothing else besides Z is held
 			lhz	r3,0x662(P1Data)
-			cmpwi	r3,0x0
+			rlwinm.  r0,r3,0,27,27
+      bne 0xC
+      cmpwi r3,0x0
 			bne GetProgressAndAS
 		#CHECK FOR DPAD TO CHANGE LEDGE
 			lwz	r3,0x668(P1Data)			#Get DPad
@@ -1468,7 +1470,7 @@ EggsThinkExit:
       #Now check if its eggs-ercise
         lwz	r4, -0x77C0 (r13)
         lbz	r4, 0x0535 (r4)         #get event ID
-        cmpwi r4,Eggs.ID
+        cmpwi r4,Event.Eggs
         beq Eggs_OnCollisionStart
 
       Eggs_OnCollisionOriginalFunction:
@@ -2865,7 +2867,9 @@ b	exit
 
 		#DPad Changes Falco's Side
 		lhz	r3,0x662(r27)			#Get Held Buttons
-		cmpwi	r3,0x0
+		rlwinm.  r0,r3,0,27,27
+    bne 0xC
+    cmpwi r3,0x0
 		bne	Powershield_SkipPositionChange
 		#CHECK FOR DPAD TO CHANGE Side
 		lwz	r3,0x668(r27)			#Get DPad
@@ -8334,7 +8338,7 @@ SaveState_Load:
 
 		#Enter Into Sleep
 		mr		r3,r25
-		li		r4,0x1
+		li		r4,0x0
 		branchl		r12,AS_Sleep
 
 		#Remove On Death Function Pointer
@@ -8614,7 +8618,9 @@ CheckForSaveAndLoad_CheckInputs:
 
 #Make Sure Nothing Else Is Held
 lhz	r3,0x662(r31)
-cmpwi	r3,0x0
+rlwinm.  r0,r3,0,27,27
+bne 0xC
+cmpwi r3,0x0
 bne	CheckForSaveAndLoad_GetNextPlayer
 lwz	r3,0x668(r31)
 rlwinm.	r0,r3,0,30,30
@@ -9753,7 +9759,7 @@ ActOutOfLaserHitDisplay_DisplayOSD:
 mr	r3,r27			#p1 (no offsetting window)
 li	r4,120			#text timeout
 li	r5,0			#Area to Display (0-2)
-li	r6,21			#Window ID (Unique to This Display)
+li	r6,OSD.Miscellaneous			#Window ID (Unique to This Display)
 branchl	r12,TextCreateFunction			#create text custom function
 mr	text,r3			#backup text pointer
 
@@ -9853,7 +9859,9 @@ backup
 
 #Make Sure Nothing Is Held
 	lhz	r3,0x662(P1Data)
-	cmpwi	r3,0x0
+  rlwinm.  r0,r3,0,27,27
+  bne 0xC
+  cmpwi r3,0x0
 	bne	MoveCPUExit
 #Check DPad Down
 	lwz	r3,0x668(P1Data)
@@ -9958,7 +9966,9 @@ mr  SaveStateStruct,r3
 
 #Make Sure Nothing is Held
   lhz	r3,0x662(r27)
-  cmpwi	r3,0x0
+  rlwinm.  r0,r3,0,27,27
+  bne 0xC
+  cmpwi r3,0x0
   bne	AdjustResetDistance_NoPress
 
 
