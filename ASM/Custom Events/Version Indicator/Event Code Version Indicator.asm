@@ -82,9 +82,9 @@ backup
 	mflr 	r4		#pointer to ASCII
 	branchl r12,0x803a6b98
 
-##################
-## R = Tutorial ##
-##################
+#############
+## L = OSD ##
+#############
 
 SpawnLText:
 
