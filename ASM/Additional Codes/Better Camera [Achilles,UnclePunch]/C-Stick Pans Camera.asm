@@ -1,6 +1,6 @@
 #To be inserted at 8002CB34
 loc_0x0:
-  extsb r4, r0
+  extsb r4, r0    #
   lis r3, 0x804C
   ori r3, r3, 0x1FAC
   mulli r6, r0, 0x44
@@ -41,4 +41,3 @@ loc_0x70:
   stfs f16, 788(r31)
 
 loc_0x7C:
-

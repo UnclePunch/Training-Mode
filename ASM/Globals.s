@@ -217,7 +217,7 @@
 .set Events_StoreEventScore,0x8015cf70
 .set Interrupt_AerialJumpGoTo,0x800cb870
 .set PlayerBlock_UpdateXYCoords,0x80032828
-.set GroundRaycast,0x8004f008
+.set Raycast_GroundLine,0x8004f008
 .set Camera_UpdatePlayerCameraBoxPosition,0x800761c8
 .set Camera_CorrectPosition,0x8002f3ac
 .set ItemCollision_Egg,0x802895a8
@@ -681,6 +681,12 @@ ori \reg,\reg,\address @l
 mtctr \reg
 bctrl
 .endm
+
+/*
+.macro branchl reg, address
+.long \address ^ 0x80<<24 | 0xC8<<24
+.endm
+*/
 
 .macro branch reg, address
 lis \reg, \address @h

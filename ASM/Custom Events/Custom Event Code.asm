@@ -1037,6 +1037,10 @@ b	exit
 	backup
 
 	#Schedule Think
+    #r3 = function to run each frame
+    #r4 = priority
+    #r5 = pointer to Window and Option Count
+    #r6 = pointer to ASCII struct
 	bl	EggsThink
 	mflr	r3
 	li	r4,9		#Priority (After Interrupt)
@@ -1045,11 +1049,6 @@ b	exit
   bl	EggsWindowText
   mflr	r6
 	bl	CreateEventThinkFunction
-
-  #r3 = function to run each frame
-  #r4 = priority
-  #r5 = pointer to Window and Option Count
-  #r6 = pointer to ASCII struct
 
 	bl	InitializeHighScore
 
@@ -10847,7 +10846,7 @@ FindGroundNearPlayer_Continue:
 #Additional function pointer
   li  r10,0
 #Call function
-  branchl r12,GroundRaycast
+  branchl r12,Raycast_GroundLine
 
 #Check if ground exists
   cmpwi r3,0
@@ -10903,7 +10902,7 @@ FindGroundUnderCoordinate_Continue:
   li  r9,-1
   li  r10,0
 #Call function
-  branchl r12,GroundRaycast
+  branchl r12,Raycast_GroundLine
 
 #Check if ground exists
   cmpwi r3,0

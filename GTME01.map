@@ -502,7 +502,7 @@
 80023f28 00000108 80023f28 0 Music_HandleLoading
 80024030 00000084 80024030 0 SFX_Menu/CommonSound
 800240b4 00000068 800240b4 0 zz_00240b4_
-8002411c 00000068 8002411c 0 SFXManager_PlayCrowdSFX
+8002411c 00000068 8002411c 0 CrowdSFXManager_PlayCrowdSFX
 80024184 00000180 80024184 0 ItemCollision_PlaySFX
 80024304 00000088 80024304 0 zz_0024304_
 8002438c 00000068 8002438c 0 zz_002438c_
@@ -1137,7 +1137,7 @@
 8004e97c 0000027c 8004e97c 0 zz_004e97c_
 8004ebf8 00000164 8004ebf8 0 ECB_Land2?
 8004ed5c 000002ac 8004ed5c 0 Raycast_CheckLineIDForCollision?
-8004f008 000003f8 8004f008 0 Collision_SearchForGroundBetween(r3=ReturnGroundPosition,r4=ReturnGroundID,r5=ReturnGroundType,r6=ReturnUnk,r7=,r8=,r9=r10=OptionalFunction,f1=CurrentX,f2=CurrentY,f3=PrevX,f4=PrevY,r5=0)
+8004f008 000003f8 8004f008 0 Raycast_GroundLine(r3=ReturnGroundPosition,r4=ReturnGroundID,r5=ReturnGroundType,r6=ReturnUnk,r7=,r8=,r9=r10=OptionalFunction,f1=CurrentX,f2=CurrentY,f3=PrevX,f4=PrevY,r5=0)
 8004f400 000004a4 8004f400 0 ECB_CheckAllGroundTypesForCollision(r3=LastKnownPosition,r4=LastGroundID,r5=LastGroundType,r6=SomeFloat,r10=perframe)
 8004f8a4 00000388 8004f8a4 0 zz_004f8a4_
 8004fc2c 0000043c 8004fc2c 0 ECB_StoreCeilingID+Type
@@ -1149,7 +1149,7 @@
 800511a4 000003fc 800511a4 0 Collision_SearchForRightWallBetween3 (No Ledge?)
 800515a0 000003fc 800515a0 0 Collision_SearchForLeftWallBetween3 (No Ledge?)
 8005199c 0000020c 8005199c 0 zz_005199c_
-80051ba8 00000320 80051ba8 0 GetLedgePlayerIsNear(r3=PlayerECB,r4=LedgeID,r5=LedgeID,r6=LedgeID)
+80051ba8 00000320 80051ba8 0 Raycast_LedgeLine(r3=PlayerECB,r4=LedgeID,r5=LedgeID,r6=LedgeID)
 80051ec8 00000614 80051ec8 0 Stage_CheckForWallCollision?(f1,f2=PlayerCoordinates, r3=Unk,r4=LedgeCoordinates,r5,r6,r7=Unk,r8,r9=ECBFlags)
 800524dc 0000002c 800524dc 0 GrappleEntity_CheckForWallCollision_Prefunction
 80052508 0000002c 80052508 0 Collision_SearchForCeilingInBetween
@@ -8886,7 +8886,7 @@
 8016d800 000000ac 8016d800 0 SceneThink_InGame
 8016d8ac 00000414 8016d8ac 0 Playerblock_Initialize
 8016dcc0 0000022c 8016dcc0 0 CopyMatchInfoIntoMatchStruct
-8016deec 00000238 8016deec 0 zz_016deec_
+8016deec 00000238 8016deec 0 Player_InitializeSpawnPositions?
 8016e124 00000198 8016e124 0 PlayerBlock_LoadPlayers_CheckForLoadedKirby+LoadHats
 8016e2bc 00000304 8016e2bc 0 PlayerBlock_LoadPlayers / MatchStartRead/WriteValues
 8016e5c0 00000170 8016e5c0 0 zz_016e5c0_
@@ -12832,7 +12832,7 @@
 80224db8 00000010 80224db8 0 StageInfo_FixedCameraZoomLoad
 80224dc8 00000070 80224dc8 0 StageID_CompareToAdventureSpecialStages
 80224e38 0000002c 80224e38 0 zz_0224e38_
-80224e64 00000178 80224e64 0 SpawnPoint_ApplyFromIDInput
+80224e64 00000178 80224e64 0 SpawnPoint_GetXYZFromIDInput            (r3=4 to scan upward for solid ground)
 80224fdc 00000098 80224fdc 0 Items_GetRandomSpawnPointCoordinates
 80225074 00000120 80225074 0 StartMelee_LoadMusic
 80225194 00000008 80225194 0 StageID_Load
@@ -15279,10 +15279,10 @@
 802a087c 000000b4 802a087c 0 zz_02a087c_
 802a0930 00000304 802a0930 0 zz_02a0930_
 802a0c34 0000023c 802a0c34 0 zz_02a0c34_
-802a0e70 00000098 802a0e70 0 zz_02a0e70_
+802a0e70 00000098 802a0e70 0 IS_LinkBoomerangSpawn
 802a0f08 0000007c 802a0f08 0 zz_02a0f08_
 802a0f84 00000004 802a0f84 0 zz_02a0f84_
-802a0f88 00000028 802a0f88 0 zz_02a0f88_
+802a0f88 00000028 802a0f88 0 IS_LinkBoomerangThrow
 802a0fb0 00000020 802a0fb0 0 zz_02a0fb0_
 802a0fd0 000000f0 802a0fd0 0 ProjectilePhysics_LinkBoomerangThrow
 802a10c0 00000024 802a10c0 0 zz_02a10c0_
@@ -15295,14 +15295,12 @@
 802a1784 000001c4 802a1784 0 zz_02a1784_
 802a1948 00000098 802a1948 0 zz_02a1948_
 802a1990 00000050 802a1990 0 zz_02a1990_
-802a19e0 00000250 802a19e0 0 zz_02a19e0_
-802a1a34 000001fc 802a1a34 0 zz_02a1a34_
-802a1ab4 0000017c 802a1ab4 0 zz_02a1ab4_
+802a19e0 000005c8 802a19e0 0 ItemCollision_LinkBoomerangThrown2
 802a1c30 00000130 802a1c30 0 zz_02a1c30_
 802a1c38 00000128 802a1c38 0 zz_02a1c38_
 802a1d60 000001a8 802a1d60 0 ProjectilePhysics_LinkBoomerangReturn
 802a1ef0 00000018 802a1ef0 0 zz_02a1ef0_
-802a1f08 000000a0 802a1f08 0 zz_02a1f08_
+802a1f08 000000a0 802a1f08 0 ItemCollision_LinkBoomerangThrown
 802a1fa8 000000a0 802a1fa8 0 zz_02a1fa8_
 802a2048 000000a0 802a2048 0 zz_02a2048_
 802a20e8 000001a0 802a20e8 0 zz_02a20e8_
@@ -18472,16 +18470,16 @@
 80321294 0000006c 80321294 0 zz_0321294_
 80321300 000005e0 80321300 0 SceneLoad_AdventureGigaDefeated
 803218e0 00000020 803218e0 0 SceneThink_AdventureGigaDefeated
-80321900 00000050 80321900 0 SFXManager_Create
-80321950 0000005c 80321950 0 SFXManager_Initialize
-803219ac 00000054 803219ac 0 SFXManager_Think
-80321a00 000000f4 80321a00 0 SFXManager_Unk
-80321af4 00000104 80321af4 0 SFXManager_Unk
+80321900 00000050 80321900 0 CrowdSFXManager_Create
+80321950 0000005c 80321950 0 CrowdSFXManager_Initialize
+803219ac 00000054 803219ac 0 CrowdSFXManager_Think
+80321a00 000000f4 80321a00 0 CrowdSFXManager_Unk
+80321af4 00000104 80321af4 0 CrowdSFXManager_Unk
 80321bf8 00000030 80321bf8 0 zz_0321bf8_
 80321c28 00000048 80321c28 0 zz_0321c28_
 80321c70 00000034 80321c70 0 zz_0321c70_
-80321ca4 00000044 80321ca4 0 SFXManager_PlaySFX
-80321ce8 00000048 80321ce8 0 SFXManager_StopSFXIfPlaying
+80321ca4 00000044 80321ca4 0 CrowdSFXManager_PlaySFX
+80321ce8 00000048 80321ce8 0 CrowdSFXManager_StopSFXIfPlaying
 80321d30 0000018c 80321d30 0 zz_0321d30_
 80321ebc 00000160 80321ebc 0 zz_0321ebc_
 8032201c 0000015c 8032201c 0 zz_032201c_
