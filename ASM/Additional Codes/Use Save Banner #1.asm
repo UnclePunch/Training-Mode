@@ -9,11 +9,12 @@
 	lwz	r3,0x0(r3)
 	load	r4,0x47544d45			#GTME
 	cmpw	r3,r4
-	beq	Original
+	beq	ISO
 
-AltBanner:
-  li	r0, 1
-
-Original:
+Memcard:
   li	r0, 2
+  b Exit
+
+ISO:
+  li	r0, 1
 Exit:
