@@ -1,2 +1,3 @@
 #To be inserted at 800679bc
-li	r4, 0x2500
+.include "../../Globals.s"
+li	r4, PlayerBlockSize

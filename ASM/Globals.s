@@ -47,12 +47,35 @@
 .set OSD.Fastfall,20
 .set OSD.FrameAdvantage,21
 .set OSD.ComboCounter,22
-
+.set OSD.23,23
 .set OSD.GrabBreakout,24
-
+.set OSD.25,25
 .set OSD.Ledge,26
 .set OSD.UCF,27
 .set OSD.ActOoHitstun,28
+
+#Custom Playerblock Offsets
+.set PlayerBlockSize, 0x2500
+.set ASFrameCount,0x23EC    #half
+.set ShieldFrames,0x23EE    #half
+.set MiscVar1,0x23EE        #half
+.set PrevASStart,0x23F0
+  .set CurrentAS,0x10
+  .set OneASAgo,PrevASStart+0x0
+  .set TwoASAgo,PrevASStart+0x2
+  .set ThreeASAgo,PrevASStart+0x4
+  .set FourASAgo,PrevASStart+0x6
+  .set FiveASAgo,PrevASStart+0x8
+  .set SixASAgo,PrevASStart+0xA
+.set TangibleFrameCount,0x2408        #half
+.set CanFastfallFrameCount,0x240C     #half
+.set PostHitstunFrameCount,0x2410     #word
+.set PlayerWhoShieldedAttack,0x2414   #word
+.set PreviousMoveInstanceHitBy,0x2418 #half
+.set MiscVar2,0x241A                  #half
+.set AirdodgeY,0x241C                 #float
+.set MiscVar3,0x241C                  #word
+
 
 #Static Functions
 .set TextCreateFunction,0x80005928
