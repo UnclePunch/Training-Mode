@@ -1,43 +1,65 @@
-#To be inserted at 8002CB34
-loc_0x0:
-  extsb r4, r0    #
-  lis r3, 0x804C
-  ori r3, r3, 0x1FAC
-  mulli r6, r0, 0x44
-  add r3, r3, r6
-  lwz r6, -20812(r13)
-  lfs f17, 0(r6)
-  fneg f1, f17
-  lfs f15, 44(r3)
-  fcmpo cr0, f15, f1
-  ble- loc_0x34
-  fcmpo cr0, f15, f17
-  blt- loc_0x5C
+#To be inserted at 8002cb30
+.include "../../Globals.s"
 
-loc_0x34:
-  lwz r6, 0(r3)
-  rlwinm. r6, r6, 0, 27, 27
-  beq- loc_0x50
-  lfs f16, 796(r31)
-  fadd f16, f15, f16
-  stfs f16, 796(r31)
-  b loc_0x5C
+.set Player,5
+.set FloatPointer,6
 
-loc_0x50:
-  lfs f16, 792(r31)
-  fadd f16, f15, f16
-  stfs f16, 792(r31)
+#Float regs
+.set Deadzone,5
+.set DeadzoneNeg,6
+.set PlayerY,7
+.set PlayerX,8
 
-loc_0x5C:
-  lfs f15, 40(r3)
-  fcmpo cr0, f15, f1
-  ble- loc_0x70
-  fcmpo cr0, f15, f17
-  blt- loc_0x7C
+#Get Float Pointer
+  bl  Floats
+  mflr FloatPointer
+#Get Player Input Struct
+  load r3,0x804C1FAC
+  lbz	r4, 0x02C5 (r31)
+  mulli Player, r4, 0x44
+  add Player, r3, Player
+#Get Deadzone Value from PlCo
+  lwz	r3, -0x514C (r13)
+  lfs Deadzone, 0(r3)
+  fneg DeadzoneNeg, Deadzone
 
-loc_0x70:
-  lfs f16, 788(r31)
-  fadd f16, f15, f16
-  stfs f16, 788(r31)
+CheckYDeadzone:
+#Check Y Value
+  lfs PlayerY, 0x2C(Player)
+  fcmpo cr0, PlayerY, DeadzoneNeg
+  ble- StoreY
+  fcmpo cr0, PlayerY, Deadzone
+  blt- CheckXDeadzone
 
-loc_0x7C:
+StoreY:
+  lfs f1, 0x318(r31) #Get X
+  lfs f2, 0x330(r31) #Get zoom level
+  lfs f3, 0x0(FloatPointer)    #Get multiplier
+  fdivs f3,f2,f3   #Zoom * var
+  fmuls PlayerY,PlayerY,f3   #Stick axis * zoomed
+  fadds f1,f1,PlayerY   #Add to X
+  stfs f1, 0x318(r31)  #Store
+
+CheckXDeadzone:
+  lfs PlayerY, 0x28(Player)
+  fcmpo cr0, PlayerY, DeadzoneNeg
+  ble- StoreX
+  fcmpo cr0, PlayerY, Deadzone
+  blt- Exit
+
+StoreX:
+  lfs f1, 0x314(r31)
+  lfs f2, 0x330(r31) #Get zoom level
+  lfs f3, 0x0(FloatPointer)    #Get multiplier
+  fdivs f3,f2,f3   #Zoom * var
+  fmuls PlayerY,PlayerY,f3   #Stick axis * zoomed
+  fadds f1,f1,PlayerY   #Add to Y
+  stfs f1, 0x314(r31)
+  b Exit
+
+Floats:
+blrl
+.float 125
+
+Exit:
+lbz	r0, 0x02C5 (r31)
