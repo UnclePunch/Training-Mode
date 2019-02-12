@@ -160,6 +160,8 @@ diffKirby:
 .long 0x348c8011
 .long 0x00008400
 .long 0x348C8011
+.long 0x000089E0
+.long 0x04fef704
 .long 0x000000FF
 
 diffBowser:
