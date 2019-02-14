@@ -233,7 +233,7 @@
 800149e0 000000dc 800149e0 0 zz_00149e0_
 80014abc 00000008 80014abc 0 zz_0014abc_
 80014ac4 0000010c 80014ac4 0 Animation_CopyFromARAM_CallbackFunction
-80014bd0 0000015c 80014bd0 0 copyAnimationDataFromARAMToPointerIn0x59C(r3=requestAddress,r4=Destination,r5=Length
+80014bd0 0000015c 80014bd0 0 Animation_CopyAnimationDataFromARAMToPointerIn0x59C(r3=requestAddress,r4=Destination,r5=Length
 80014d2c 000000f8 80014d2c 0 zz_0014d2c_
 80014e24 000000c8 80014e24 0 Heap_CreatePersistentHeap(r3=Lo,r4=Hi // r3 = HeapStruct)
 80014eec 00000090 80014eec 0 zz_0014eec_
@@ -315,7 +315,7 @@
 80019894 0000004c 80019894 0 PadAlarm? (VSync)
 800198e0 00000020 800198e0 0 ButtonPresses_ConvertRawInput_Prefunction
 80019900 00000130 80019900 0 ButtonPresses_CopyInputsToStruct
-80019a30 00000018 80019a30 0 zz_0019a30_
+80019a30 00000018 80019a30 0 Pad_CheckToProcessFrame?
 80019a48 00000064 80019a48 0 zz_0019a48_
 80019aac 0000010c 80019aac 0 zz_0019aac_
 80019bb8 00000080 80019bb8 0 CARD_GetReturnValue?
@@ -1289,7 +1289,7 @@
 8005bb40 00000074 8005bb40 0 GFX_Destroy
 8005bbb4 0000009c 8005bbb4 0 zz_005bbb4_
 8005bc50 00000238 8005bc50 0 EffectObjectThink
-8005be88 0000032c 8005be88 0 EfDataIndexer
+8005be88 0000032c 8005be88 0 EffectObjectCreate
 8005c1b4 00000108 8005c1b4 0 zz_005c1b4_
 8005c2bc 00000120 8005c2bc 0 zz_005c2bc_
 8005c3dc 000001e8 8005c3dc 0 Textures_AttatchTextureEffectToJObj
@@ -8860,7 +8860,7 @@
 8016b8d4 00000044 8016b8d4 0 SetDefeatedSFXDelayTimer
 8016b918 000001dc 8016b918 0 StockStealCheck
 8016baf4 000000c0 8016baf4 0 zz_016baf4_
-8016bbb4 000000c0 8016bbb4 0 zz_016bbb4_
+8016bbb4 000000c0 8016bbb4 0 FrameAdvance_CheckButtonInputsToFrameAdvance
 8016bc74 0000020c 8016bc74 0 Pause_CheckButtonInputsToPause
 8016be80 000000f4 8016be80 0 zz_016be80_
 8016bf74 00000154 8016bf74 0 VSMode_EndGameThink_StockMatch
@@ -9577,7 +9577,7 @@
 801a46f4 000000f0 801a46f4 0 zz_01a46f4_
 801a47e4 000000c0 801a47e4 0 zz_01a47e4_
 801a48a4 000000cc 801a48a4 0 zz_01a48a4_
-801a4970 00000198 801a4970 0 DevelopMode_CPUStats_X+DPadRight
+801a4970 00000198 801a4970 0 DevelopMode_X+DPadRight_MemoryStats+FrameAdvanceCheck
 801a4b08 00000014 801a4b08 0 zz_01a4b08_
 801a4b1c 00000024 801a4b1c 0 zz_01a4b1c_
 801a4b40 00000010 801a4b40 0 zz_01a4b40_
@@ -10391,13 +10391,13 @@
 801ca284 00000110 801ca284 0 zz_01ca284_
 801ca394 000000a8 801ca394 0 zz_01ca394_
 801ca43c 00000240 801ca43c 0 zz_01ca43c_
-801ca67c 00000238 801ca67c 0 zz_01ca67c_
+801ca67c 00000238 801ca67c 0 YoshiStory_CreateUnkStruct
 801ca8b4 00000360 801ca8b4 0 zz_01ca8b4_
 801cac14 000000a4 801cac14 0 zz_01cac14_
 801cacb8 00000104 801cacb8 0 zz_01cacb8_
-801cadbc 00000024 801cadbc 0 zz_01cadbc_
+801cadbc 00000024 801cadbc 0 YoshiStory_UnkPerFrame
 801cade0 00000024 801cade0 0 zz_01cade0_
-801cae04 000000ac 801cae04 0 zz_01cae04_
+801cae04 000000ac 801cae04 0 YoshiStory_OnGO
 801caeb0 00000040 801caeb0 0 zz_01caeb0_
 801caef0 00000018 801caef0 0 zz_01caef0_
 801caf08 000000b4 801caf08 0 zz_01caf08_
@@ -10845,7 +10845,7 @@
 801e302c 00000004 801e302c 0 zz_01e302c_
 801e3030 00000078 801e3030 0 StageInitialization_YoshisStory
 801e30a8 00000004 801e30a8 0 zz_01e30a8_
-801e30ac 00000024 801e30ac 0 zz_01e30ac_
+801e30ac 00000024 801e30ac 0 YoshiStory_OnGO_Prefunction
 801e30d0 00000008 801e30d0 0 zz_01e30d0_
 801e30d8 000000e8 801e30d8 0 Stages_YoshiStory_SpawnMap
 801e31c0 00000064 801e31c0 0 Stages_YoshiStory_AnimateClouds
@@ -20528,7 +20528,7 @@
 80390c84 00000028 80390c84 0 zz_0390c84_
 80390cac 00000028 80390cac 0 zz_0390cac_
 80390cd4 00000028 80390cd4 0 zz_0390cd4_
-80390cfc 000001bc 80390cfc 0 TaskScheduler
+80390cfc 000001bc 80390cfc 0 GObjProc
 80390eb8 00000018 80390eb8 0 Texture_GetSomeFlag
 80390ed0 000000f0 80390ed0 0 TextureTaskScheduler
 80390fc0 00000084 80390fc0 0 CameraTaskScheduler
