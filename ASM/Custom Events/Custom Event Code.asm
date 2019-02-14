@@ -8160,36 +8160,47 @@ ClearToggledOptions_Exit:
 ################################
 
 SaveState_Save:
+.set REG_SaveStruct,31
+.set REG_PlayerTotal,30
+.set REG_LoopCount,29
+.set REG_isSubchar,23
+.set REG_Backup,28
+.set REG_SpawnedOrder,22
+.set REG_PlayerGObj,25
+.set PlayerData,26
+.set PlayerDataSize,24
+.set PlayerData_Backup,27
+
 	backup
 
 	#Backup Task Data
-	mr	r31,r3
+	mr	REG_SaveStruct,r3
 
 	#Save Camera Info Here
 
 	#Count Players in Match
 	branchl	r3,0x8016b558
 
-	#Move Player Number to r30
-	mr	r30,r3
+	#Move Player Number to REG_PlayerTotal
+	mr	REG_PlayerTotal,r3
 
 	#Init Save Loop
-	li	r29,0x0		#player ID
-	li	r23,0x0		#main/sub char bool
+	li	REG_LoopCount,0x0		#player ID
+	li	REG_isSubchar,0x0		#main/sub char bool
 
 		SaveState_SaveLoop:
-		#Get This Player's Backup Pointer in r28
-		mulli		r4,r29,0x8		#8 bytes per player pointer
-		add		r28,r4,r31		#r28 contains this players block backup
+		#Get This Player's Backup Pointer in REG_Backup
+		mulli		r4,REG_LoopCount,0x8		#8 bytes per player pointer
+		add		REG_Backup,r4,REG_SaveStruct		#REG_Backup contains this players block backup
 
 		#Check If Backup Exists
-		cmpwi		r23,0x0
+		cmpwi		REG_isSubchar,0x0
 		beq		SaveState_Save_MainChar
 		SaveState_Save_SubChar:
-		lwz 		r3,0x4(r28)		#get pointer to backup if it exists
+		lwz 		r3,0x4(REG_Backup)		#get pointer to backup if it exists
 		b		SaveState_Save_CheckIfExists
 		SaveState_Save_MainChar:
-		lwz 		r3,0x0(r28)		#get pointer to backup if it exists
+		lwz 		r3,0x0(REG_Backup)		#get pointer to backup if it exists
 		SaveState_Save_CheckIfExists:
 		cmpwi		r3,0x0
 		beq		SaveState_SaveStart
@@ -8202,103 +8213,115 @@ SaveState_Save:
 		SaveState_SaveStart:
 
 		#Get Proper Player Data
-		mr		r3,r29
-		mr		r4,r23
+		mr		r3,REG_LoopCount
+		mr		r4,REG_isSubchar
 		bl		SaveState_GetPlayerDataPointer		#returns player slot,player pointer and player data
 		cmpwi		r3,0xFF				#check if player didnt exist
 		beq		SaveState_SaveLoopInc				#move on with loop
-		mr		r22,r3				#r22 contains actual player slot
-		mr		r26,r5				#r26 contains real player block
+		mr		REG_SpawnedOrder,r3				#REG_SpawnedOrder contains actual player slot
+		mr		REG_PlayerData,r5				#REG_PlayerData contains real player block
 
 		#Get Player Data Length
 		SaveState_Save_GetPlayerBlockLength:
 		load		r3,0x80458fd0
-		lwz    		r25,0x20(r3)			#get player block length in r25
-		mr		r3,r25
+		lwz    		REG_PlayerGObj,0x20(r3)			#get player block length in REG_PlayerGObj
+		mr		r3,REG_PlayerGObj
 		addi		r3,r3,0x100			#add static block length
 		addi		r3,r3,0x10			#add additional storage
 		branchl		r12,HSD_MemAlloc			#HSD_MemAlloc
 
 		#Store Pointer To Task Struct
-		cmpwi		r23,0x0
+		cmpwi		REG_isSubchar,0x0
 		bne		Savestate_Save_StoreBackupSubChar
-		stw		r3,0x0(r28)
+		stw		r3,0x0(REG_Backup)
 		b		Savestate_Save_StoreBackupEnd
 		Savestate_Save_StoreBackupSubChar:
-		stw		r3,0x4(r28)
+		stw		r3,0x4(REG_Backup)
 		Savestate_Save_StoreBackupEnd:
-		mr		r27,r3				#r27 contains playerblock backup
+		mr		REG_PlayerData_Backup,r3				#REG_PlayerData_Backup contains playerblock backup
 
 		#Copy Player Block to Backup
-		mr		r3,r27			#r3 = destination to copy to
-		mr		r4,r26			#r4 = source
-		mr 		r5,r25			#r5 = playerblock length
+		mr		r3,REG_PlayerData_Backup			#r3 = destination to copy to
+		mr		r4,REG_PlayerData			#r4 = source
+		mr 		r5,REG_PlayerGObj			#r5 = playerblock length
 		branchl		r12,memcpy			#mempcy
 
 
 		#Copy Static Block to Backup
-		add		r3,r25,r27			#get end of playerblock in r4
+		add		r3,REG_PlayerGObj,REG_PlayerData_Backup			#get end of playerblock in r4
 		load		r4,0x80453080			#get static block in r4
 		li		r5,0xE90
-		mullw		r5,r5,r22
+		mullw		r5,r5,REG_SpawnedOrder
 		add		r4,r4,r5
 		li		r5,0x100			#only copying the first 100 bytes
 		branchl		r12,memcpy			#mempcy
 
 		#Save Camera Flag
-		lwz		r3,0x890(r26)
+		lwz		r3,0x890(REG_PlayerData)
 		lwz		r3,0x8(r3)
-		add		r4,r25,r27		#get end of player block in r4
+		add		r4,REG_PlayerGObj,REG_PlayerData_Backup		#get end of player block in r4
 		addi		r4,r4,0x100		#get end of static block
 		stw		r3,0x0(r4)		#store to end of block
 
 		SaveState_SaveLoopInc:
 		#Check For Subchar Before Looping
-		cmpwi		r23,0x1
+		cmpwi		REG_isSubchar,0x1
 		beq		SaveState_SaveLoopInc_ToggleSubCharOff
-		li		r23,0x1
+		li		REG_isSubchar,0x1
 		b		SaveState_SaveLoop
 
 		SaveState_SaveLoopInc_ToggleSubCharOff:
-		li		r23,0x0
-		addi		r29,r29,0x1
-		cmpw		r29,r30
+		li		REG_isSubchar,0x0
+		addi		REG_LoopCount,REG_LoopCount,0x1
+		cmpw		REG_LoopCount,REG_PlayerTotal
 		blt		SaveState_SaveLoop
 
 	restore
 	blr
 
 SaveState_Load:
+.set REG_SaveStruct,31
+.set REG_PlayerTotal,30
+.set REG_LoopCount,29
+.set REG_isSubchar,23
+.set REG_Backup,28
+.set REG_SpawnedOrder,22
+.set REG_PlayerGObj,25
+.set REG_PlayerData,26
+.set REG_PlayerDataSize,24
+.set REG_PlayerData_Backup,27
+
+
 	backup
 
-	mr	r31,r3
+	mr	REG_SaveStruct,r3
 
 	#Count Players in Match
 	branchl	r3,0x8016b558
 
-	#Move Player Number to r30
-	mr	r30,r3
+	#Move Player Number to REG_PlayerTotal
+	mr	REG_PlayerTotal,r3
 
 	#Restore Camera Info Here
 
 
 	#Init Load Loop
-	li	r29,0x0		#player count
-	li	r23,0x0		#main/subchar bool
+	li	REG_LoopCount,0x0		#player count
+	li	REG_isSubchar,0x0		#main/subchar bool
 
 		SaveState_LoadLoop:
-		#Get This Player's Backup Pointer in r28
-		mulli		r4,r29,0x8		#8 bytes per player pointer
-		add		r28,r4,r31		#r28 contains this players block backup
+		#Get This Player's Backup Pointer in REG_Backup
+		mulli		r4,REG_LoopCount,0x8		#8 bytes per player pointer
+		add		REG_Backup,r4,REG_SaveStruct		#REG_Backup contains this players block backup
 
 		#Check If Backup Exists
-		cmpwi		r23,0x0
+		cmpwi		REG_isSubchar,0x0
 		beq		SaveState_Load_MainChar
 		SaveState_Load_SubChar:
-		lwz 		r3,0x4(r28)		#get pointer to backup if it exists
+		lwz 		r3,0x4(REG_Backup)		#get pointer to backup if it exists
 		b		SaveState_Load_CheckIfExists
 		SaveState_Load_MainChar:
-		lwz 		r3,0x0(r28)		#get pointer to backup if it exists
+		lwz 		r3,0x0(REG_Backup)		#get pointer to backup if it exists
 		SaveState_Load_CheckIfExists:
 		cmpwi		r3,0x0
 		beq		SaveState_LoadLoopInc
@@ -8307,150 +8330,154 @@ SaveState_Load:
 		SaveState_LoadStart:
 
 		#Get Proper Player Data
-		mr		r3,r29
-		mr		r4,r23
+		mr		r3,REG_LoopCount
+		mr		r4,REG_isSubchar
 		bl		SaveState_GetPlayerDataPointer		#returns player slot,player pointer and player data
 		cmpwi		r3,0xFF				#check if player didnt exist
 		beq		SaveState_LoadLoopInc				#move on with loop
-		mr		r22,r3				#r22 contains actual player slot
-		mr		r25,r4				#r25 contains external player
-		mr		r26,r5				#r26 contains real player block
+		mr		REG_SpawnedOrder,r3				#REG_SpawnedOrder contains actual player slot
+		mr		REG_PlayerGObj,r4				#REG_PlayerGObj contains external player
+		mr		REG_PlayerData,r5				#REG_PlayerData contains real player block
 
-		#Get Player Block Length in r24
+		#Get Player Block Length in REG_PlayerDataSize
 		SaveState_Load_GetPlayerBlockLength:
-		load		r24,0x80458fd0
-		lwz    		r24,0x20(r24)		#r24 = length
+		load		REG_PlayerDataSize,0x80458fd0
+		lwz    		REG_PlayerDataSize,0x20(REG_PlayerDataSize)		#REG_PlayerDataSize = length
 
 		#Get Pointer From Task Struct
-		cmpwi		r23,0x0		#check if subcharacter
+		cmpwi		REG_isSubchar,0x0		#check if subcharacter
 		beq		Savestate_Load_GetBackupMainChar
 		Savestate_Load_GetBackupSubChar:
-		lwz		r27,0x4(r28)		#r27 contains playerblock backup
+		lwz		REG_PlayerData_Backup,0x4(REG_Backup)		#REG_PlayerData_Backup contains playerblock backup
 		b		Savestate_Load_RestoreFacingDirection
 		Savestate_Load_GetBackupMainChar:
-		lwz		r27,0x0(r28)		#r27 contains playerblock backup
+		lwz		REG_PlayerData_Backup,0x0(REG_Backup)		#REG_PlayerData_Backup contains playerblock backup
 
 		#Restore Facing Direction
 		Savestate_Load_RestoreFacingDirection:
-		lwz		r3,0x2C(r27)		#backed up Facing Direction
-		stw		r3,0x2C(r26)
+		lwz		r3,0x2C(REG_PlayerData_Backup)		#backed up Facing Direction
+		stw		r3,0x2C(REG_PlayerData)
 
 		#Enter Into Sleep
-		mr		r3,r25
+		mr		r3,REG_PlayerGObj
 		li		r4,0x0
 		branchl		r12,AS_Sleep
 
 		#Remove On Death Function Pointer
 		li		r3,0x0
-		stw		r3,0x21E4(r26)
-		stw		r3,0x21E8(r26)
+		stw		r3,0x21E4(REG_PlayerData)
+		stw		r3,0x21E8(REG_PlayerData)
 
 		#Enter Into Backed Up State
-		mr		r3,r25
-		lwz		r4,0x10(r27)		#backed up AS
+		mr		r3,REG_PlayerGObj
+		lwz		r4,0x10(REG_PlayerData_Backup)		#backed up AS
 		li		r5,0x0
 		li		r6,0x0
-		lfs		f1,0x894(r27)		#backed up Frame Number
-		lfs		f2,0x89C(r27)		#backed up Frame Speed
-		lfs		f3,0x8A4(r27)		#backup up Blend Amount
+		lfs		f1,0x894(REG_PlayerData_Backup)		#backed up Frame Number
+		lfs		f2,0x89C(REG_PlayerData_Backup)		#backed up Frame Speed
+		lfs		f3,0x8A4(REG_PlayerData_Backup)		#backup up Blend Amount
 		branchl		r12,ActionStateChange		#ASC
 
 		#Keep Previous Frame Buttons From Current Block
-		lwz		r3,0x620(r26)
+		lwz		r3,0x620(REG_PlayerData)
 		stw		r3,0xD0(sp)
-		lwz		r3,0x624(r26)
+		lwz		r3,0x624(REG_PlayerData)
 		stw		r3,0xD4(sp)
-		lwz		r3,0x65C(r26)
+		lwz		r3,0x65C(REG_PlayerData)
 		stw		r3,0xD8(sp)
 
 		#Keep Collision Bubble Toggles
-		lwz		r3,0x21FC(r26)
+		lwz		r3,0x21FC(REG_PlayerData)
 		stw		r3,0xDC(sp)
 
 		#Copy PlayerBlock Backup to Current
-		mr		r3,r26
-		mr		r4,r27
-		mr		r5,r24
+		mr		r3,REG_PlayerData
+		mr		r4,REG_PlayerData_Backup
+		mr		r5,REG_PlayerDataSize
 		branchl		r12,memcpy	#mempcy
 
 		#Copy Static Block Backup to Current
 		load		r3,0x80453080			#get static block in r3
 		li		r4,0xE90
-		mullw		r4,r4,r22
+		mullw		r4,r4,REG_SpawnedOrder
 		add		r3,r3,r4
-		add		r4,r24,r27			#get end of block in r4
+		add		r4,REG_PlayerDataSize,REG_PlayerData_Backup			#get end of block in r4
 		li		r5,0x100			#length is 0x100
 		branchl		r12,memcpy			#mempcy
 
 		#Restore Previous Frame Buttons From Current Block
 		lwz		r3,0xD0(sp)
-		stw		r3,0x620(r26)
-		stw		r3,0x628(r26)
+		stw		r3,0x620(REG_PlayerData)
+		stw		r3,0x628(REG_PlayerData)
 		lwz		r3,0xD4(sp)
-		stw		r3,0x624(r26)
-		stw		r3,0x62C(r26)
+		stw		r3,0x624(REG_PlayerData)
+		stw		r3,0x62C(REG_PlayerData)
 		lwz		r3,0xD8(sp)
-		stw		r3,0x65C(r26)
-		stw		r3,0x660(r26)
-		stw		r3,0x664(r26)
+		stw		r3,0x65C(REG_PlayerData)
+		stw		r3,0x660(REG_PlayerData)
+		stw		r3,0x664(REG_PlayerData)
 
 		#Restore Collision Bubble Toggles
 		lwz		r3,0xDC(sp)
-		stw		r3,0x21FC(r26)
+		stw		r3,0x21FC(REG_PlayerData)
 
 		#Remove Cached Animation Pointer (This fixes the Fall Animation Bug)
 		li	r3,0x0
-		stw	r3,0x5A8(r26)
+		stw	r3,0x5A8(REG_PlayerData)
 
     #Update ECB Position
-		mr		r3,r25
+		mr		r3,REG_PlayerGObj
 		bl  UpdatePosition
 
     #Remove Respawn Platform JObj Pointer and Think Function
     li  r3,0
-    stw r3,0x20A0(r26)
-    stw r3,0x21B0(r26)
+    stw r3,0x20A0(REG_PlayerData)
+    stw r3,0x21B0(REG_PlayerData)
 
     #Stop Player's SFX
-    mr  r3,r26
+    mr  r3,REG_PlayerData
     branchl r12,SFX_StopAllCharacterSFX
 
     #Stop Crowd SFX
     branchl r12,SFXManager_StopSFXIfPlaying
 
+    #Remove GFX
+    mr  r3,REG_PlayerGObj
+    branchl	r12,GFX_RemoveAll
+
 		/* #Removing this, causes ground issues when restoring. instead im removing the OSReport call for the error
 		#If Grounded, Change Ground Variable Back
-		lwz		r3,0xE0(r26)
+		lwz		r3,0xE0(REG_PlayerData)
 		cmpwi		r3,0x0
 		bne		Savestate_RestoreCameraFlag
 		li		r3,0x1
-		stw		r3,0x83C(r26)
+		stw		r3,0x83C(REG_PlayerData)
 		*/
 
 		#Restore Camera Flag
 		Savestate_RestoreCameraFlag:
-		add		r3,r24,r27		#get end of block in r4
+		add		r3,REG_PlayerDataSize,REG_PlayerData_Backup		#get end of block in r4
 		addi		r3,r3,0x100		#static block length = 0x100
 		lwz		r3,0x0(r3)		#get flag
-		lwz		r4,0x890(r26)
+		lwz		r4,0x890(REG_PlayerData)
 		stw		r3,0x8(r4)
 
     #Update Camera Box Position
-    mr  r3,r25
+    mr  r3,REG_PlayerGObj
     bl  UpdateCameraBox
 
 		#Remake HUD For Dead Players (Taken from Achilles' GitHub)
-		cmpwi		r23,0x1		#dont run this on subcharacters
+		cmpwi		REG_isSubchar,0x1		#dont run this on subcharacters
 		beq		SaveState_HUD_End
 		load		r3,0x804a10c8		#get base HUD info
-		mulli 		r4,r22,100		#get offset
+		mulli 		r4,REG_SpawnedOrder,100		#get offset
 		add		r20,r4,r3		#get to this player's HUD info
 		branchl		r12,0x8016b094	 #MatchInfo_StockModeCheck
 		cmpwi 		r3,0		#if not stock mode
 		beq- 		SaveState_RELOAD_PERCENT_HUDS_NOT_STOCK
 
 			SaveState_RELOAD_PERCENT_HUDS_STOCK:
-			mr		r3,r22		#get player number
+			mr		r3,REG_SpawnedOrder		#get player number
 			branchl		r12,0x80033bd8		#get stocks left
 			cmpwi 		r3,0
 			bne- 		SaveState_RELOAD_PERCENT_HUDS_NOT_STOCK
@@ -8465,21 +8492,21 @@ SaveState_Load:
 
 				SaveState_REMAKE_PERCENT:
 				.set 		HUD_PlayerCreate_Prefunction, 0x802f6e1c
-				mr 		r3,r22
+				mr 		r3,REG_SpawnedOrder
 				branchl		r4, HUD_PlayerCreate_Prefunction
 
 		SaveState_HUD_End:
 
 		SaveState_LoadLoopInc:
 		#Check For Subchar Before Looping
-		cmpwi		r23,0x1
+		cmpwi		REG_isSubchar,0x1
 		beq		SaveState_LoadLoopInc_ToggleSubCharOff
-		li		r23,0x1
+		li		REG_isSubchar,0x1
 		b		SaveState_LoadLoop
 		SaveState_LoadLoopInc_ToggleSubCharOff:
-		li		r23,0x0
-		addi		r29,r29,0x1
-		cmpw		r29,r30
+		li		REG_isSubchar,0x0
+		addi		REG_LoopCount,REG_LoopCount,0x1
+		cmpw		REG_LoopCount,REG_PlayerTotal
 		blt		SaveState_LoadLoop
 
     SaveState_LoadEnd:
@@ -8488,15 +8515,20 @@ SaveState_Load:
     SaveState_Load_RemoveAllGFX:
     #Get First GFX
       lwz  r3,-0x3E74 (r13)
-      lwz  r20,0x2C(r3)
+      lwz  r20,0x30(r3)
     #Check if exists
     SaveState_Load_CheckIfGFXExists:
       cmpwi r20,0
       beq SaveState_Load_RemoveAllGFXEnd
+    #Check if this is a particle GObj?
+      lbz r3,0x4(r20)
+      cmpwi r3,1
+      beq SaveState_Load_GetNextGFX
     #Remove this GFX
       mr  r3,r20
       branchl r12,0x80390228
     #Get next GFX
+    SaveState_Load_GetNextGFX:
       lwz r20,0x8(r20)
       b SaveState_Load_CheckIfGFXExists
     SaveState_Load_RemoveAllGFXEnd:

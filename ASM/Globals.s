@@ -56,7 +56,7 @@
 
 #Custom Playerblock Offsets
 .set PlayerBlockSize, 0x2500
-.set ASFrameCount,0x23EC    #half
+.set FramesinCurrentAS,0x23EC    #half
 .set ShieldFrames,0x23EE    #half
 .set MiscVar1,0x23EE        #half
 .set PrevASStart,0x23F0
@@ -67,6 +67,13 @@
   .set FourASAgo,PrevASStart+0x6
   .set FiveASAgo,PrevASStart+0x8
   .set SixASAgo,PrevASStart+0xA
+.set FramesInPrevASStart,0x23FC
+  .set FramesinOneASAgo,FramesInPrevASStart+0x0
+  .set FramesinTwoASAgo,FramesInPrevASStart+0x2
+  .set FramesinThreeASAgo,FramesInPrevASStart+0x4
+  .set FramesinFourASAgo,FramesInPrevASStart+0x6
+  .set FramesinFiveASAgo,FramesInPrevASStart+0x8
+  .set FramesinSixASAgo,FramesInPrevASStart+0xA
 .set TangibleFrameCount,0x2408        #half
 .set CanFastfallFrameCount,0x240C     #half
 .set PostHitstunFrameCount,0x2410     #word
