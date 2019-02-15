@@ -62,6 +62,10 @@
 	li	r3,0x0
 	stb	r3,0x6C(r26)
 
+  #SET FFA FLAG
+  li  r3,0
+  stb r3,0x8(r26)
+
   #Store SSS Stage
   load	r3,0x80497758
   lha	r4, 0x001E (r3)
@@ -209,6 +213,9 @@ b	exit
     LCancelIsP1:
     #Clear Inputs
       bl  RemoveFirstFrameInputs
+    #Save State
+      addi r3,EventData,0x10
+      bl  SaveState_Save
 		LCancelNotFirstFrame:
 
 		#Check For P2 Dpad Down Press
@@ -8167,9 +8174,9 @@ SaveState_Save:
 .set REG_Backup,28
 .set REG_SpawnedOrder,22
 .set REG_PlayerGObj,25
-.set PlayerData,26
-.set PlayerDataSize,24
-.set PlayerData_Backup,27
+.set REG_PlayerData,26
+.set REG_PlayerDataSize,24
+.set REG_PlayerData_Backup,27
 
 	backup
 
@@ -8224,9 +8231,8 @@ SaveState_Save:
 		#Get Player Data Length
 		SaveState_Save_GetPlayerBlockLength:
 		load		r3,0x80458fd0
-		lwz    		REG_PlayerGObj,0x20(r3)			#get player block length in REG_PlayerGObj
-		mr		r3,REG_PlayerGObj
-		addi		r3,r3,0x100			#add static block length
+		lwz    	REG_PlayerDataSize,0x20(r3)			#get player block length in REG_PlayerDataSize
+		addi		r3,REG_PlayerDataSize,0x100			#add static block length
 		addi		r3,r3,0x10			#add additional storage
 		branchl		r12,HSD_MemAlloc			#HSD_MemAlloc
 
@@ -8243,12 +8249,12 @@ SaveState_Save:
 		#Copy Player Block to Backup
 		mr		r3,REG_PlayerData_Backup			#r3 = destination to copy to
 		mr		r4,REG_PlayerData			#r4 = source
-		mr 		r5,REG_PlayerGObj			#r5 = playerblock length
+		mr 		r5,REG_PlayerDataSize			#r5 = playerblock length
 		branchl		r12,memcpy			#mempcy
 
 
 		#Copy Static Block to Backup
-		add		r3,REG_PlayerGObj,REG_PlayerData_Backup			#get end of playerblock in r4
+		add		r3,REG_PlayerDataSize,REG_PlayerData_Backup			#get end of playerblock in r4
 		load		r4,0x80453080			#get static block in r4
 		li		r5,0xE90
 		mullw		r5,r5,REG_SpawnedOrder
@@ -8259,7 +8265,7 @@ SaveState_Save:
 		#Save Camera Flag
 		lwz		r3,0x890(REG_PlayerData)
 		lwz		r3,0x8(r3)
-		add		r4,REG_PlayerGObj,REG_PlayerData_Backup		#get end of player block in r4
+		add		r4,REG_PlayerDataSize,REG_PlayerData_Backup		#get end of player block in r4
 		addi		r4,r4,0x100		#get end of static block
 		stw		r3,0x0(r4)		#store to end of block
 
@@ -8425,14 +8431,16 @@ SaveState_Load:
 		li	r3,0x0
 		stw	r3,0x5A8(REG_PlayerData)
 
+    #Remove Respawn Platform JObj Pointer and Think Function
+    stw r3,0x20A0(REG_PlayerData)
+    stw r3,0x21B0(REG_PlayerData)
+
+    #Remove Held Item Pointer
+    stw r3,0x1974(REG_PlayerData)
+
     #Update ECB Position
 		mr		r3,REG_PlayerGObj
 		bl  UpdatePosition
-
-    #Remove Respawn Platform JObj Pointer and Think Function
-    li  r3,0
-    stw r3,0x20A0(REG_PlayerData)
-    stw r3,0x21B0(REG_PlayerData)
 
     #Stop Player's SFX
     mr  r3,REG_PlayerData
