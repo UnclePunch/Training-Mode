@@ -20,6 +20,9 @@ InputLoop:
   b LoadEventMenu
 
 LoadCSS:
+#Play SFX
+  li  r3,1
+  branchl r12,SFX_MenuCommonSound
   li  r3,2
   b Exit
 

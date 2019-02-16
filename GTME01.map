@@ -20850,6 +20850,7 @@
 
 .data section layout
 803ba640 00000050 803ba640 0 Preload_InitialTableValues
+803bcb18 0000001C 803bcb18 0 Camera_CameraThinkFunctionTable
 803f0b24 0000001c 803f0b24 0 MnSlChr_IconData_DrMario
 803f0b40 0000001c 803f0b40 0 MnSlChr_IconData_Mario
 803f0b5c 0000001c 803f0b5c 0 MnSlChr_IconData_Luigi
