@@ -8622,62 +8622,50 @@ blr
 
 CheckForSaveAndLoad:
 
+.set LoopCount,31
+
 backup
 
 mr	r29,r3		#Task Data
 
-CheckForSaveAndLoad_GetFirstPlayer:
-lwz	r3, -0x3E74 (r13)
-lwz	r30, 0x0020 (r3)
-b	CheckForSaveAndLoad_CheckIfPlayerExists
-
-CheckForSaveAndLoad_GetNextPlayer:
-lwz	r30,0x8(r30)
-
-CheckForSaveAndLoad_CheckIfPlayerExists:
-cmpwi	r30,0x0
-bne		CheckForSaveAndLoad_LoadPlayerData
-li	r3,-1
-b	CheckForSaveAndLoad_Exit
-CheckForSaveAndLoad_LoadPlayerData:
-lwz	r31,0x2C(r30)
-
-CheckForSaveAndLoad_CheckIfHuman:
-lbz	r3,0xC(r31)
-branchl	r12,PlayerBlock_LoadSlotType
-cmpwi	r3,0x0
-bne	CheckForSaveAndLoad_GetNextPlayer
-
-CheckForSaveAndLoad_CheckIfFollower:
-lbz	r3,0x221F(r31)
-rlwinm.	r0,r3,0,28,28
-bne	CheckForSaveAndLoad_GetNextPlayer
-
+#Init Loop
+  li  LoopCount,0
+#Loop
+CheckForSaveAndLoad_Loop:
+  mr  r3,LoopCount
+  branchl r12,PlayerBlock_LoadMainCharDataOffset
+  cmpwi r3,0x0
+  beq CheckForSaveAndLoad_Inc
 CheckForSaveAndLoad_CheckInputs:
-
+  load r3,0x804c21cc
+  #load r3,0x804c1fac
+  mulli r0,LoopCount,68
+  add r4,r3,r0
 #Make Sure Nothing Else Is Held
-lhz	r3,0x662(r31)
-rlwinm.  r0,r3,0,27,27
-bne 0xC
-cmpwi r3,0x0
-bne	CheckForSaveAndLoad_GetNextPlayer
-lwz	r3,0x668(r31)
-rlwinm.	r0,r3,0,30,30
-beq	CheckForSaveAndLoad_NoSave
-mr	r3,r29
-bl	SaveState_Save
-li	r3,0x0
-b	CheckForSaveAndLoad_Exit
+  lhz	r3,0x2(r4)
+  rlwinm.  r0,r3,0,0,26
+  bne	CheckForSaveAndLoad_Inc
+  lwz	r3,0x8(r4)
+  rlwinm.	r0,r3,0,30,30
+  beq	CheckForSaveAndLoad_NoSave
+  mr	r3,r29
+  bl	SaveState_Save
+  li	r3,0x0
+  b	CheckForSaveAndLoad_Exit
 CheckForSaveAndLoad_NoSave:
-rlwinm.	r0,r3,0,31,31
-beq	CheckForSaveAndLoad_GetNextPlayer
-mr	r3,r29
-bl	SaveState_Load
-mr	r3,r29
-bl	SaveState_Load
-li	r3,0x1
-b	CheckForSaveAndLoad_Exit
+  rlwinm.	r0,r3,0,31,31
+  beq	CheckForSaveAndLoad_Inc
+  mr	r3,r29
+  bl	SaveState_Load
+  mr	r3,r29
+  bl	SaveState_Load
+  li	r3,0x1
+  b	CheckForSaveAndLoad_Exit
 
+CheckForSaveAndLoad_Inc:
+  addi LoopCount,LoopCount,1
+  cmpwi LoopCount,4
+  blt CheckForSaveAndLoad_Loop
 
 CheckForSaveAndLoad_Exit:
 restore
