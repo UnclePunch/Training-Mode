@@ -8191,6 +8191,61 @@ SaveState_Save:
 	#Move Player Number to REG_PlayerTotal
 	mr	REG_PlayerTotal,r3
 
+SaveState_OnDeathCheck:
+#Mini loop to make sure no players have on-death functions
+	li	REG_LoopCount,0x0		#player ID
+	li	REG_isSubchar,0x0		#main/sub char bool
+SaveState_OnDeathCheckLoop:
+#Get Proper Player Data
+	mr		r3,REG_LoopCount
+	mr		r4,REG_isSubchar
+	bl		SaveState_GetPlayerDataPointer  #returns player slot,player pointer and player data
+	cmpwi		r3,0xFF				                #check if player didnt exist
+	beq		SaveState_OnDeathCheckInc				#move on with loop
+#Check for on-death function
+	lwz		r3,0x21E0(r5)
+  cmpwi r3,0x0
+  bne SaveState_OnDeathCheckExit
+	lwz		r3,0x21E4(r5)
+  cmpwi r3,0x0
+  bne SaveState_OnDeathCheckExit
+	lwz		r3,0x21E8(r5)
+  cmpwi r3,0x0
+  bne SaveState_OnDeathCheckExit
+#Check if holding an item
+	lwz		r3,0x1974(r5)
+  cmpwi r3,0x0
+  bne SaveState_OnDeathCheckExit
+	lwz		r3,0x1978(r5)
+  cmpwi r3,0x0
+  bne SaveState_OnDeathCheckExit
+#Check for fighter accessory
+	lwz		r3,0x20A0(r5)
+  cmpwi r3,0x0
+  bne SaveState_OnDeathCheckExit
+  b SaveState_OnDeathCheckInc
+
+SaveState_OnDeathCheckExit:
+#PLay Error SFX
+  li	r3,0xAF
+  bl  PlaySFX
+  li	r3,0xAF
+  bl  PlaySFX
+  b SaveState_SaveExit
+
+SaveState_OnDeathCheckInc:
+#Check For Subchar Before Looping
+	cmpwi		REG_isSubchar,0x1
+	beq		SaveState_OnDeathCheck_ToggleSubCharOff
+	li		REG_isSubchar,0x1
+	b		SaveState_OnDeathCheckLoop
+SaveState_OnDeathCheck_ToggleSubCharOff:
+	li		REG_isSubchar,0x0
+	addi		REG_LoopCount,REG_LoopCount,0x1
+	cmpw		REG_LoopCount,REG_PlayerTotal
+	blt		SaveState_OnDeathCheckLoop
+
+SaveState_SaveLoopInit:
 	#Init Save Loop
 	li	REG_LoopCount,0x0		#player ID
 	li	REG_isSubchar,0x0		#main/sub char bool
@@ -8282,6 +8337,7 @@ SaveState_Save:
 		cmpw		REG_LoopCount,REG_PlayerTotal
 		blt		SaveState_SaveLoop
 
+SaveState_SaveExit:
 	restore
 	blr
 
@@ -9070,10 +9126,50 @@ mr	text,r3			#backup text pointer
 		li	r4,0
 		branchl	r12,Text_UpdateSubtextPosition
 
+############################
+## Display Up/Down Arrows ##
+############################
 
-	############################
-	## Print Each Option Loop ##
-	############################
+#Check if at the top of the screen
+  lbz r3,0x1(r20)
+  cmpwi r3,0x0
+  beq RAndDPadChangesEventOption_DisplayDownArrow
+#Create Title Text
+	li r3,-20        #Y
+  bl  IntToFloat
+  fmr f2,f1
+  li  r3,-210      #X
+  bl  IntToFloat
+	mr 	r3,text			#text pointer
+	bl  RAndDPadChangesEventOption_UpArrowText
+  mflr r4
+	branchl r12,Text_InitializeSubtext
+
+RAndDPadChangesEventOption_DisplayDownArrow:
+#Check if at the bottom of the screen
+  lbz r3,0x0(r21)
+  cmpwi r3,2
+  blt RAndDPadChangesEventOption_DisplayArrowExit
+  lbz r4,0x1(r20)
+  sub r3,r3,r4
+  cmpwi r3,2
+  ble RAndDPadChangesEventOption_DisplayArrowExit
+#Create Title Text
+  li  r3,320      #Y value
+  bl  IntToFloat
+  fmr f2,f1
+  li  r3,-210     #X Value
+  bl  IntToFloat
+	mr 	r3,text			#text pointer
+	bl  RAndDPadChangesEventOption_DownArrowText
+  mflr r4
+	branchl r12,Text_InitializeSubtext
+
+RAndDPadChangesEventOption_DisplayArrowExit:
+
+############################
+## Print Each Option Loop ##
+############################
 
 	RAndDPadChangesEventOption_DisplayWindow_LoopInit:
 
@@ -9092,12 +9188,12 @@ mr	text,r3			#backup text pointer
 			mr	r26,r4
 
 		#Create Title Text
-			lfs	f2, -0x37B4 (rtoc)			#default text X/Y
+			lfs	f2, -0x37B4 (rtoc)			#default text Y
 			li	r3,120
 			mullw	r3,r3,r27
 			bl	IntToFloat
 			fadds	f2,f1,f2
-			lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+			lfs	f1, -0x37B4 (rtoc)			#default text X
 			mr 	r3,text			#text pointer
 			mr	r4,r25			#Title Text Pointer
 			branchl r12,Text_InitializeSubtext
@@ -9253,6 +9349,18 @@ blrl
 .long 0xc4610000 #-900, 2 Window Y position
 .long 0xc4a8c000 #-1350, 3 Window Y position
 
+#########################################
+RAndDPadChangesEventOption_UpArrowText:
+blrl
+
+.string "^"
+.align 2
+
+RAndDPadChangesEventOption_DownArrowText:
+blrl
+
+.string "v"
+.align 2
 
 #########################################
 
@@ -9894,6 +10002,11 @@ backup
 	lwz	r3,0x668(P1Data)
 	rlwinm.	r0,r3,0,29,29
 	beq	MoveCPUExit
+
+#Make Sure Player is Grounded
+  lwz r3,0xE0(P1Data)
+  cmpwi r3,0x0
+  bne MoveCPU_NoGroundFound
 
 #Get Position
   li  r3,10
