@@ -31,6 +31,12 @@
         },
         {
           "type": "replaceCodeBlock",
+          "address": "8042a760",
+          "sourceFile": "..\\ASM\\Misc\\Edit Carrot Texture.s",
+          "annotation": "Edit Carrot Texture"
+        },
+        {
+          "type": "replaceCodeBlock",
           "address": "8040a58c",
           "sourceFile": "..\\ASM\\Misc\\Store Version Number.s",
           "annotation": "Version Number"

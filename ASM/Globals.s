@@ -96,6 +96,16 @@
 .set PreloadTableQueue,0x8043207c
 .set PreloadTableUpdated,0x804320d0
 
+#r13 Offsets
+.set TM_FrozenToggle,-0x4F8C
+.set CSS_MatchStruct,-0x49F0
+.set CSS_SinglePlayerPort,-0x49AF
+.set CSS_Type,-0x49AB
+.set HPS_Unk,-0x3F44
+.set HPS_CurrentSongEntryNum,-0x3F3C
+.set HPS_Unk,-0x3F14
+.set HSDPerf_,0x0
+
 #Scene Struct
 .set SceneController,0x80479D30
   .set Scene.CurrentMajor,0x0

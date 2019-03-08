@@ -34,15 +34,15 @@ backupall
 	cmpwi	r3,0x27
 	beq	Moonwalk_Exit
 
-#Ensure I'm Actually Coming from Wait
-	lhz	r3,TwoASAgo(playerdata)
-	cmpwi	r3,0xE
-	bne	Moonwalk_Exit
-
 #Make Sure Player Didn't Buffer Shield
 	lwz	r3,0x10(playerdata)
 	cmpwi	r3,0xB2
 	beq	Moonwalk_Exit
+
+#Ensure I'm Actually Coming from Wait
+	lhz	r3,TwoASAgo(playerdata)
+	cmpwi	r3,0xE
+	bne	Moonwalk_Exit
 
 #Check To Display OSD
 	mr	r3,r31
