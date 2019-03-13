@@ -4,27 +4,34 @@
 backup
 
 #Check For L
-li	r3,4
-branchl	r12,0x801a36a0
-rlwinm.	r0, r4, 0, 25, 25			#CHECK FOR L
-bne	OpenFDD
-rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
-bne	OpenCredits
+	li	r3,4
+	branchl	r12,0x801a36c0
+	rlwinm.	r0, r4, 0, 25, 25			#CHECK FOR L
+	bne	OpenFDD
+	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
+	bne	OpenCredits
 
-#Check For Training Mode ISO Game ID
-lis	r5,0x8000
-lwz	r5,0x0(r5)
-load	r6,0x47544d45			#GTME
-cmpw	r5,r6
-bne	exit
+#Check for Tutotial (R)
+#Check For Training Mode ISO Game ID First
+	lis	r5,0x8000
+	lwz	r5,0x0(r5)
+	load	r6,0x47544d45			#GTME
+	cmpw	r5,r6
+	bne	CheckToSwitchPage
 #Check for R
-rlwinm.	r0, r4, 0, 26, 26			#CHECK FOR R
-bne	PlayMovie
-b	exit
+	rlwinm.	r0, r4, 0, 26, 26			#CHECK FOR R
+	bne	PlayMovie
 
-#Check For DPad Left
-
-#Check
+CheckToSwitchPage:
+#Check For Left
+	li	r5,-1
+	rlwinm. r0,r3,0,25,25
+	bne	SwitchPage
+#Check For Right
+	li	r5,1
+	rlwinm. r0,r3,0,24,24
+	bne	SwitchPage
+	b	exit
 
 OpenFDD:
 
@@ -122,21 +129,13 @@ PlayMovie:
 			lwz	r3, 0x0004 (r5)		 #Selection Number
 			lbz	r0, 0 (r5)		  #Page Number
 			add	r23,r3,r0
-			subi	r23,r23,0x3
 
-			#Ensure Number is Bewteen 0 and 14
-			cmpwi	r23,0
-			blt	FileNotFound
-			cmpwi	r23,14
-			bgt	FileNotFound
-
-			#Get Movie File Strings
+			#Get Movie File String
+			mr	r3,r23
 			bl	MovieFileNames
 			mflr	r4
-
-			#Get Event's Tutorial File Name in r20
-			mulli	r3,r23,0x8
-			add	r20,r3,r4
+			bl	SearchStringTable
+			mr	r20,r3							#Get Event's Tutorial File Name in r20
 
 			#Get Extension Pointer in r21
 			bl	FileSuffixes
@@ -393,58 +392,82 @@ Exit:
 restore
 blr
 
-#######################################
+#############################################
+
+SearchStringTable:
+.set ID,31
+.set LoopCount,30
+.set Name,29
+
+backup
+
+#Get ID
+  mr  ID,r3
+#Get Names
+  mr  Name,r4
+#Init Loop Count
+  li  LoopCount,0
+
+SearchStringTable_Loop:
+#Check if we are up to the correct name
+  cmpw ID,LoopCount
+  beq SearchStringTable_Exit
+#Get string length
+  mr  r3,Name
+  branchl r12,0x80325b04
+#Add to current name pointer
+  add Name,Name,r3
+  addi Name,Name,1
+#Inc Loop Count
+  addi LoopCount,LoopCount,1
+  b SearchStringTable_Loop
+
+SearchStringTable_Exit:
+mr  r3,Name
+restore
+blr
+
+###################################
 
 MovieFileNames:
 blrl
 
 #L-Cancelling (TvLC)
-.long 0x54764c43
-.long 0x00000000
+.string "TvLC"
 
 #LedgeDash (TvLedDa)
-.long 0x54764c65
-.long 0x64446100
+.string "TvLedDa"
 
 #LedgeDash (TvEgg)
-.long 0x54764567
-.long 0x67000000
+.string "TvEgg"
 
 #SDI (TvSDI)
-.long 0x54765344
-.long 0x49000000
+.string "TvSDI"
 
 #Reversal (TvRvrsl)
-.long 0x54765276
-.long 0x72736c00
+.string "TvRvrsl"
 
 #Powersheld (TvPowSh)
-.long 0x5476506f
-.long 0x77536800
+.string "TvPowSh"
 
 #Shield Drop (TvShDrp)
-.long 0x54765368
-.long 0x44727000
+.string "TvShDrp"
 
 #Spacing on Shield (TvSpaSh)
-.long 0x54765370
-.long 0x61536800
+.string "TvSpaSh"
 
 #Ledge Tech (TvLedTc)
-.long 0x54764c65
-.long 0x64546300
+.string "TvLedTc"
 
 #Amsah Tech (TvAmsTc)
-.long 0x5476416d
-.long 0x73546300
+.string "TvAmsTc"
 
 #Techchase (TvTchCh)
-.long 0x54765463
-.long 0x68436800
+.string "TvTchCh"
 
 #Waveshine SDI (TvWvSDI)
-.long 0x54765776
-.long 0x53444900
+.string "TvWvSDI"
+.align 2
 
 #######################################
 
@@ -452,15 +475,94 @@ FileSuffixes:
 blrl
 
 #.hps
-.long 0x2e687073
-.long 0x00000000
+.string ".hps"
+.align 2
 
 #.mth
-.long 0x2e6d7468
-.long 0x00000000
+.string ".mth"
+.align 2
 
 #######################################
 
+SwitchPage:
+
+#Change page
+	lwz r4,MemcardData(r13)
+	lbz r3,CurrentEventPage(r4)
+	add	r3,r3,r5
+	stb r3,CurrentEventPage(r4)
+#Check if within page bounds
+SwitchPage_CheckHigh:
+	cmpwi r3,NumOfPages
+	ble SwitchPage_CheckLow
+#Stay on current page
+	subi r3,r3,1
+	stb r3,CurrentEventPage(r4)
+	b	exit
+SwitchPage_CheckLow:
+	cmpwi r3,0
+	bge SwitchPage_ChangePage
+#Stay on current page
+	li	r3,0
+	stb r3,CurrentEventPage(r4)
+	b	exit
+
+SwitchPage_ChangePage:
+#Get Page Name ASCII
+	branchl r12,GetCustomEventPageName
+#Update Page Name
+	mr	r5,r3
+	lwz r3,-0x4EB4(r13)
+	li	r4,0
+	branchl r12,Text_UpdateSubtextContents
+
+#Reset cursor to 0,0
+	lwz	r5, -0x4A40 (r13)
+	lwz	r5, 0x002C (r5)
+	li	r3,0
+	stw	r3, 0x0004 (r5)		 #Selection Number
+	stb	r3, 0 (r5)		  	 #Page Number
+
+#Redraw Event Text
+SwitchPage_DrawEventTextInit:
+	li	r29,0							#loop count
+	lwz	r3, 0x0004 (r5)		 #Selection Number
+	lwz	r4, 0 (r5)		  	 #Page Number
+	add r28,r3,r4
+SwitchPage_DrawEventTextLoop:
+	mr	r3,r29
+	add	r4,r29,r28
+	branchl r12,0x8024d15c
+	addi r29,r29,1
+	cmpwi r29,9
+	blt SwitchPage_DrawEventTextLoop
+
+#Redraw Event Description
+	lwz	r3, -0x4A40 (r13)
+	mr	r4,r28
+	branchl r12,0x8024d7e0
+
+#Update cursor position
+#Get Texture Data
+	lwz	r3, -0x4A40 (r13)
+	lwz	r3, 0x0028 (r3)
+	addi r4,sp,0x40
+	li	r5,11
+	li	r6,-1
+	crclr	6
+	branchl r12,0x80011e24
+	lwz r3,0x40(sp)
+#Change Y offset?
+	li	r0,0
+	stw r0,0x3C(r3)
+#DirtySub
+	branchl r12,0x803732e8
+
+#Play SFX
+	li	r3,2
+	branchl r12,SFX_MenuCommonSound
+
+#######################################
 
 exit:
 restore

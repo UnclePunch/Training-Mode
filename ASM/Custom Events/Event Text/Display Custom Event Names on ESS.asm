@@ -4,12 +4,6 @@
 #r24 = text struct
 #r27 = Event ID
 
-#Check For Custom Event
-  mr r3,r27
-  branchl r12,0x80005524
-  cmpwi r3,0x0
-  beq VanillaEvent
-
 CustomEvent:
 .set text,24
 

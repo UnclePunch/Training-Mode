@@ -24,7 +24,13 @@ b	Loop
 
 SSSEvents:
 blrl
-.byte 0x03,0x04,0x05,0x07,0x0B,0x0C,0x0D
+.byte Event.LCancel
+.byte Event.Ledgedash
+.byte Event.Eggs
+.byte Event.Reversal
+.byte Event.LedgeTech
+.byte Event.AmsahTech
+.byte Event.Combo
 .byte 0xFF
 .align 2
 

@@ -7,10 +7,6 @@ backup
 
 mr EventID,r3
 
-#Check For Custom Event
-  branchl r12,0x80005520
-  cmpwi r3,0x0
-  beq VanillaEvent
 #Get Events Text
   bl	SkipJumpTable
   #bl	PlaceHolder
@@ -33,8 +29,7 @@ mr EventID,r3
   bl	Event18
 SkipJumpTable:
   mflr	r4		#Jump Table Start in r4
-  subi	r5,EventID,0x3		#Start at Event 0, so 0-Index
-  mulli	r5,r5,0x4		#Each Pointer is 0x4 Long
+  mulli	r5,EventID,0x4		#Each Pointer is 0x4 Long
   add	r4,r4,r5		#Get Event's Pointer Address
   lwz	r5,0x0(r4)		#Get bl Instruction
   rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)

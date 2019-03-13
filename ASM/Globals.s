@@ -7,21 +7,35 @@
 #######################
 ## Codeset Variables ##
 #######################
-.set FirstCustomEvent, 3
-.set LastCustomEvent, 14
+#Number of Pages
+.set NumOfPages,2 -1
+
+#Number of Events
+.set GeneralTech.LastCustomEvent, 11
+.set FoxTech.LastCustomEvent,1
+
 #Event Numbers
-.set Event.LCancel,3
-.set Event.Ledgedash,4
-.set Event.Eggs,5
-.set Event.SDI,6
-.set Event.Reversal,7
-.set Event.Powershield,8
-.set Event.ShieldDrop,9
-.set Event.AttackOnShield,10
-.set Event.LedgeTech,11
-.set Event.AmsahTech,12
-.set Event.Combo,13
-.set Event.WaveshineSDI,14
+#General Tech
+.set Event.LCancel,0
+.set Event.Ledgedash,1
+.set Event.Eggs,2
+.set Event.SDI,3
+.set Event.Reversal,4
+.set Event.Powershield,5
+.set Event.ShieldDrop,6
+.set Event.AttackOnShield,7
+.set Event.LedgeTech,8
+.set Event.AmsahTech,9
+.set Event.Combo,10
+.set Event.WaveshineSDI,11
+#Fox Tech
+.set Event.LedgetechCounter,1
+
+#Custom Memcard Data Bitfield
+.set OSDBitfield,0x1F24
+.set OSDMaxWindows,0x1F28
+.set CurrentEventPage,0x1F29
+
 
 #OSD IDs
 .set OSD.Wavedash,0
@@ -97,6 +111,7 @@
 .set PreloadTableUpdated,0x804320d0
 
 #r13 Offsets
+.set MemcardData,-0x77C0
 .set TM_FrozenToggle,-0x4F8C
 .set CSS_MatchStruct,-0x49F0
 .set CSS_SinglePlayerPort,-0x49AF
@@ -245,6 +260,7 @@
 .set Text_InitializeSubtext,0x803a6b98
 .set Text_UpdateSubtextSize,0x803a7548
 .set Text_UpdateSubtextPosition,0x803a746c
+.set Text_UpdateSubtextContents,0x803a70a0
 .set Text_ChangeTextColor,0x803a74f0
 .set Text_RemoveText,0x803a5cc4
 .set strlen,0x80325b04
@@ -267,6 +283,7 @@
 #Custom Functions
 .set CheckIfCustomEvent,0x80005520
 .set TextCreateFunction,0x80005928
+.set GetCustomEventPageName,0x8000552c
 
 #Character External IDs
 .set CaptainFalcon.Ext,0x0

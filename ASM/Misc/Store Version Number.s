@@ -1,3 +1,3 @@
 #To be inserted at 8040a58c
-.string "Training Mode vX"
+.string "v2.0"
 .align 2

@@ -48,24 +48,59 @@ backup
 ## Version Indicator ##
 #######################
 
-#SET COLOR TO GREEN
-	load	r3,0x8dff6eff			#green
-	stw	r3,0x30(text)
+#Get Current Page
+	lwz r3,MemcardData(r13)
+	lbz r3,CurrentEventPage(r3)
+	branchl r12,GetCustomEventPageName
 
 #Initialize Subtext
+	mr	r4,r3
 	lfs 	f1,VersionX(textproperties) 		#X offset of text
 	lfs 	f2,VersionY(textproperties)	  	#Y offset of text
 	mr 	r3,text		#struct pointer
-	load	r4,VersionString		#pointer to ASCII
 	branchl r12,0x803a6b98
+
+###############################
+## Left Page Arrow Indicator ##
+###############################
+
+#Initialize Subtext
+	lfs 	f1,LeftArrowX(textproperties) 		#X offset of text
+	lfs 	f2,ArrowY(textproperties)	  			#Y offset of text
+	mr 	r3,text		#struct pointer
+	bl	PageArrowLeft
+	mflr r4
+	branchl r12,0x803a6b98
+
+#Change scale
+	mr	r4,r3
+	mr	r3,text
+	lfs	f1,ArrowScale(textproperties)
+	lfs	f2,ArrowScale(textproperties)
+	branchl r12,Text_UpdateSubtextSize
+
+###############################
+## Right Page Arrow Indicator ##
+###############################
+
+#Initialize Subtext
+	lfs 	f1,RightArrowX(textproperties) 		#X offset of text
+	lfs 	f2,ArrowY(textproperties)	  			#Y offset of text
+	mr 	r3,text		#struct pointer
+	bl	PageArrowRight
+	mflr r4
+	branchl r12,0x803a6b98
+
+#Change scale
+	mr	r4,r3
+	mr	r3,text
+	lfs	f1,ArrowScale(textproperties)
+	lfs	f2,ArrowScale(textproperties)
+	branchl r12,Text_UpdateSubtextSize
 
 ##################
 ## R = Tutorial ##
 ##################
-
-#SET COLOR TO White
-	load	r3,0xFFFFFFFF		#white
-	stw	r3,0x30(text)
 
 #Check For Training Mode ISO Game ID
 	lis	r5,0x8000
@@ -82,15 +117,18 @@ backup
 	mflr 	r4		#pointer to ASCII
 	branchl r12,0x803a6b98
 
+#Change scale
+	mr	r4,r3
+	mr	r3,text
+	lfs	f1,RScale(textproperties)
+	lfs	f2,RScale(textproperties)
+	branchl r12,Text_UpdateSubtextSize
+
 #############
 ## L = OSD ##
 #############
 
 SpawnLText:
-
-#SET COLOR TO White
-	#load	r3,0xFFFFFFFF		#white
-	#stw	r3,0x30(text)
 
 #Initialize Subtext
 	lfs 	f1,LX(textproperties) #X offset of text
@@ -100,15 +138,18 @@ SpawnLText:
 	mflr 	r4		#pointer to ASCII
 	branchl r12,0x803a6b98
 
+#Change scale
+	mr	r4,r3
+	mr	r3,text
+	lfs	f1,RScale(textproperties)
+	lfs	f2,RScale(textproperties)
+	branchl r12,Text_UpdateSubtextSize
+
 ##################
 ## R = Tutorial ##
 ##################
 
 SpawnZText:
-
-#SET COLOR TO White
-	#load	r3,0xFFFFFFFF		#white
-	#stw	r3,0x30(text)
 
 #Initialize Subtext
 	lfs 	f1,ZX(textproperties) #X offset of text
@@ -116,14 +157,26 @@ SpawnZText:
 	mr 	r3,text       #struct pointer
 	bl 	ZText
 	mflr 	r4		#pointer to ASCII
+	load r5,VersionString
 	branchl r12,0x803a6b98
 
+#Temp remember subtext ID
+	mr	r20,r3
+
 #Change scale
-	mr	r4,r3
+	mr	r4,r20
 	mr	r3,text
 	lfs	f1,ZScale(textproperties)
 	lfs	f2,ZScale(textproperties)
 	branchl r12,Text_UpdateSubtextSize
+
+#Change Color
+	mr	r4,r20				#subtext id
+	mr 	r3,text			#text pointer
+	load	r5,0x8dff6eff
+	stw	r5,0xF0(sp)
+	addi r5,sp,0xF0
+	branchl r12,Text_ChangeTextColor
 
 b end
 
@@ -137,21 +190,27 @@ blrl
 .set ZOffset,0x8
 .set RX,0xC
 .set RY,0x10
-.set LX,0x14
-.set LY,0x18
-.set ZX,0x1C
-.set ZY,0x20
-.set ZScale,0x24
-.set CanvasScaling,0x28
+.set RScale,0x14
+.set LX,0x18
+.set LY,0x1C
+.set ZX,0x20
+.set ZY,0x24
+.set ZScale,0x28
+.set CanvasScaling,0x2C
+.set ArrowY,0x30
+.set LeftArrowX,0x34
+.set RightArrowX,0x38
+.set ArrowScale,0x3C
 
 #Version
 .float 0      #text X pos
-.float -230   #text Y pos
+.float -236   #text Y pos
 .float 17     #Z offset
 
 #Press R
 .float 310    #text X pos
 .float -230   #text Y pos
+.float 0.8		#scale
 
 #Press L
 .float -310   #text X pos
@@ -160,9 +219,30 @@ blrl
 #Press Z
 .float 300    #text X pos
 .float -280   #text Y pos
-.float 0.8		#text scale
+.float 0.85		#text scale
 
 .float 0.035   #Canvas Scaling
+
+#Arrows
+.float	-215		#Y coordinate
+.float	-210		#left X
+.float   210    #Right X
+.float	 0.7		#Scale
+
+NullString:
+blrl
+.string "General Tech"
+.align 2
+
+PageArrowLeft:
+blrl
+.string "<"
+.align 2
+
+PageArrowRight:
+blrl
+.string ">"
+.align 2
 
 RText:
 blrl
@@ -176,7 +256,7 @@ blrl
 
 ZText:
 blrl
-.string "Z = Credits"
+.string "TM Beta %s"
 .align 2
 
 #**************************************************#

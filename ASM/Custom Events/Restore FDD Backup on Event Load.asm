@@ -83,10 +83,5 @@ stw	r5,0x1F24(r6)
 
 Exit:
 
-#Ensure Event 4+ is Selected
-cmpwi	r3,0x2
-bgt	0x8
-li	r3,0x3
-
 #Original Line
 li	r4, 0
