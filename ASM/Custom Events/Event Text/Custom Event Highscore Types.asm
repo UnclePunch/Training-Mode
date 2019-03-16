@@ -1,31 +1,56 @@
 #To be inserted at 801beb8c
 .include "../../Globals.s"
 
-#0x0 = KOs
-#0x1 = Time
+.set EventID,31
+.set PageID,30
+
+.set KO,0x0
+.set Time,0x1
 
 backup
-bl	EventTypes
-mflr	r4
-lbzx	r3,r3,r4
 
-b	exit
+#Backup Requested Event
+  mr EventID,r3
 
-EventTypes:
-blrl
-.long 0x01010100
-.long 0x00000000
-.long 0x00000000
-.long 0x00000001
-.long 0x01010001
-.long 0x01010101
-.long 0x01010101
-.long 0x01010000
-.long 0x01010101
-.long 0x01010101
-.long 0x01010101
-.long 0x01010101
-.long 0x01010101
+#Get Current Page
+  lwz r3,MemcardData(r13)
+  lbz PageID,CurrentEventPage(r3)
+  bl  SkipPageList
+
+##### Page List #######
+
+  bl  GeneralTech
+  bl  FoxTech
+
+##########################
+GeneralTech:
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.byte KO
+.align 2
+
+FoxTech:
+.byte KO
+.align 2
+##########################
+
+SkipPageList:
+  mflr	r4		#Jump Table Start in r4
+  mulli	r5,PageID,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r4,r4,r5		#Gets ASCII Address in r4
+#Get Byte
+  lbzx	r3,EventID,r4
 
 exit:
 restore

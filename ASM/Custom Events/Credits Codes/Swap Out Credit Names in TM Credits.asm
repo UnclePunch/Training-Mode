@@ -257,7 +257,9 @@ CheckWhitelist:
 ConvertToMenuText:
 #Get Text As Menu Text
   lwz	r3, -0x4EAC (r13)
-  bl  GetPatronASCIIFromID
+  bl  Names
+  mflr r4
+  branchl r12,SearchStringTable
   mr  r4,r3
   addi r3,sp,0x40
   branchl	r12,0x803a67ec
@@ -322,44 +324,6 @@ NoAdjustAllocation:
   lwz r4,0x5C(text)
   sthx r3,r20,r4
   b CustomExit
-
-###############################
-GetPatronASCIIFromID:
-.set ID,31
-.set LoopCount,30
-.set Name,29
-
-backup
-
-#Get ID
-  subi  ID,r3,FirstNameToReplace
-#Get Names
-  bl	Names
-  mflr	Name
-#Init Loop Count
-  li  LoopCount,0
-
-GetPatronASCIIFromID_Loop:
-#Check if we are up to the correct name
-  cmpw ID,LoopCount
-  beq GetPatronASCIIFromID_Exit
-#Get string length
-  mr  r3,Name
-  branchl r12,strlen
-#Add to current name pointer
-  add Name,Name,r3
-  addi Name,Name,1
-#Inc Loop Count
-  addi LoopCount,LoopCount,1
-  b GetPatronASCIIFromID_Loop
-
-GetPatronASCIIFromID_Exit:
-mr  r3,Name
-restore
-blr
-
-###############################
-
 
 CustomExit:
 #Inc Name Count

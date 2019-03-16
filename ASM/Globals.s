@@ -97,10 +97,6 @@
 .set AirdodgeY,0x241C                 #float
 .set MiscVar3,0x241C                  #word
 
-
-#Static Functions
-.set TextCreateFunction,0x80005928
-
 #####################
 ## Melee Variables ##
 #####################
@@ -175,9 +171,6 @@
 .set Scene.FixedCamera,0x2A
 .set Scene.EventMode,0x2B
 .set Scene.SingleButton,0x2C
-
-#r13 offsets
-
 
 #Playerdata offsets
 .set PrevASStart,0x23F0
@@ -284,6 +277,7 @@
 .set CheckIfCustomEvent,0x80005520
 .set TextCreateFunction,0x80005928
 .set GetCustomEventPageName,0x8000552c
+.set SearchStringTable,0x80005530
 
 #Character External IDs
 .set CaptainFalcon.Ext,0x0
