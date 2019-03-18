@@ -256,7 +256,7 @@ blrl
 
 ZText:
 blrl
-.string "TM Beta %s"
+.string "TM %s Beta"
 .align 2
 
 #**************************************************#

@@ -11,8 +11,8 @@
 .set NumOfPages,2 -1
 
 #Number of Events
-.set GeneralTech.LastCustomEvent, 11
-.set FoxTech.LastCustomEvent,1
+.set GeneralTech.NumOfEvents, 12 -1
+.set FoxTech.NumOfEvents,1 -1
 
 #Event Numbers
 #General Tech
@@ -274,10 +274,10 @@
 .set SFXManager_StopSFXIfPlaying,0x80321ce8
 
 #Custom Functions
-.set CheckIfCustomEvent,0x80005520
 .set TextCreateFunction,0x80005928
 .set GetCustomEventPageName,0x8000552c
 .set SearchStringTable,0x80005530
+.set GetNumOfEventsOnCurrentPage,0x80005534
 
 #Character External IDs
 .set CaptainFalcon.Ext,0x0

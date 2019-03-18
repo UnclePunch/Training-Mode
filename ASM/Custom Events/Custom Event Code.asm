@@ -6,19 +6,12 @@
 #r28 = same as r26
 #r29 = event struct index (0x0 of this, then 0x8 of that to get the specifics)
 
-
+#region Init Custom Event
 #################
 ## Custom Code ##
 #################
 
 #all registers free
-
-#CHECK IF CUSTOM EVENT
-  lwz	r3, -0x77C0 (r13)
-  lbz	r3, 0x0535 (r3)
-  branchl r12,0x80005520
-  cmpwi r3,0x0
-  beq exit
 
 	#1 PLAYER, NO ITEMS, TIME COUNTING UP
 	lwz	r9,0x0(r29)		#get event pointers
@@ -71,7 +64,14 @@
   lha	r4, 0x001E (r3)
   sth	r4,0xE(r26)
 
-bl	SkipJumpTable
+#Get Event Code
+  bl  SkipPageList
+
+##### Page List #######
+  bl  GeneralTech
+  bl  FoxTech
+#######################
+GeneralTech:
 bl	LCancel
 bl	Ledgedash
 bl	Eggs
@@ -84,23 +84,37 @@ bl	Ledgetech
 bl	AmsahTech
 bl	ComboTraining
 bl	WaveshineSDI
-bl	Event16
-bl	Event17
-bl	Event18
-bl	Event19
-bl	Event20
+#######################
+FoxTech:
+bl  LedgetechCounter
+#######################
 
-SkipJumpTable:
-mflr	r4		#Jump Table Start in r4
-mulli	r5,r25,0x4		#Each Pointer is 0x4 Long
-add	r4,r4,r5		#Get Event's Pointer Address
-lwz	r5,0x0(r4)		#Get bl Instruction
-rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-add	r4,r4,r5		#Gets ASCII Address in r4
-mtctr	r4
-bctr
+SkipPageList:
+#Get Page Jump Table
+  mflr	r4		#Jump Table Start in r4
+#Get Current Page
+  lwz r3,MemcardData(r13)
+  lbz r3,CurrentEventPage(r3)
+  mulli	r5,r3,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r4,r4,r5		#Gets ASCII Address in r4
+#Get Event Code Pointer
+  mulli	r5,r25,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r4,r4,r5		#Gets ASCII Address in r4
+  mtctr	r4
+  bctr
+#endregion
 
+##################
+## General Tech ##
+##################
 
+#region L-Cancel Training
 #########################
 ## L Cancel HIJACK INFO ##
 #########################
@@ -262,11 +276,9 @@ b	exit
 
 ################################################################################
 ################################################################################
+#endregion
 
-
-
-
-
+#region Ledgedash Training
 #########################
 ## Ledgedash HIJACK INFO ##
 #########################
@@ -994,14 +1006,9 @@ LedgedashLoadExit:
 restore
 blr
 
+#endregion
 
-
-################################################################################
-################################################################################
-
-
-
-
+#region Eggs-ercise
 #########################
 ## Eggs-ercise HIJACK INFO ##
 #########################
@@ -1580,13 +1587,12 @@ blrl
 ################################################################################
 ################################################################################
 
+#endregion
 
-
-
-
-#########################
+#region SDI Training
+##############################
 ## SDI Training HIJACK INFO ##
-#########################
+##############################
 
 SDITraining:
 #STORE STAGE
@@ -2096,9 +2102,9 @@ blr
 
 ################################################################################
 ################################################################################
+#endregion
 
-
-
+#region Reversal Training
 #########################
 ## Reversal HIJACK INFO ##
 #########################
@@ -2757,8 +2763,9 @@ blr
 
 ################################################################################
 ################################################################################
+#endregion
 
-
+#region Powershield Training
 #########################
 ## Powershield HIJACK INFO ##
 #########################
@@ -3183,7 +3190,9 @@ blrl
 
 ################################################################################
 ################################################################################
+#endregion
 
+#region Shield Drop Training
 #########################
 ## Shield Drop HIJACK INFO ##
 #########################
@@ -3457,7 +3466,9 @@ restore
 blr
 
 ################################################################################
+#endregion
 
+#region Attack on Shield
 #########################
 ## Attack On Shield HIJACK INFO ##
 #########################
@@ -3916,17 +3927,9 @@ blr
 
 
 ################################################################################
+#endregion
 
-
-
-
-
-
-
-
-
-
-
+#region Ledgetech Training
 #########################
 ## Ledgetech HIJACK INFO ##
 #########################
@@ -4426,11 +4429,9 @@ blr
 
 
 ###################################################
+#endregion
 
-
-
-
-
+#region Amsah Tech
 #########################
 ## Amsah Tech HIJACK INFO ##
 #########################
@@ -4757,12 +4758,9 @@ blr
 
 
 ###########################################
+#endregion
 
-
-
-
-
-
+#region Combo Training
 #########################
 ## Combo Training HIJACK INFO ##
 #########################
@@ -6336,15 +6334,10 @@ ComboTrainingLoadExit:
 restore
 blr
 
-
-
-
-
-
-
 ##################################################
+#endregion
 
-
+#region Waveshine SDI
 #########################
 ## Waveshine SDI HIJACK INFO ##
 #########################
@@ -6824,23 +6817,10 @@ WaveshineSDILoadExit:
 restore
 blr
 
-
-
-
-
-
-
 ##################################################
+#endregion
 
-
-
-
-
-
-
-
-
-
+#region SDI IC DThrow Dair
 #########################
 ## Event 16 HIJACK INFO ##
 #########################
@@ -6970,31 +6950,13 @@ restore
 blr
 
 ##################################################
+#endregion
 
+##############
+## Fox Tech ##
+##############
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#region Scrapped Edgeguard Event
 /*
 
 #########################
@@ -7447,7 +7409,9 @@ blr
 
 
 */
+#endregion
 
+#region Scrapped Dash Dance Code
 /*
 #########################
 ## Shield Drop HIJACK INFO ##
@@ -7799,85 +7763,9 @@ restore
 blr
 
 */
+#endregion
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#region Event Template
 /*
 
 #########################
@@ -7929,8 +7817,8 @@ restore
 blr
 
 */
-
 ####################################################
+#endregion
 
 ###############
 ## P1 STRUCT ##
