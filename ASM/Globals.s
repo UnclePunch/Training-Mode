@@ -116,6 +116,9 @@
 .set HPS_CurrentSongEntryNum,-0x3F3C
 .set HPS_Unk,-0x3F14
 .set HSDPerf_,0x0
+.set Hitbox_DamageLog,-0x5148     #Num of solid hits dealt by the player this check
+.set Hitbox_TipLog,-0x5144        #Num of phantom hits dealt by the player this check
+.set StageID_External,-0x6CB8
 
 #Scene Struct
 .set SceneController,0x80479D30
@@ -187,7 +190,10 @@
 .set SuccessfulSDIInputs,0x2350
 .set TotalSDIInputs,0x2352
 
-#Function Names
+####################
+## Function Names ##
+####################
+
 .set ActionStateChange,0x800693ac
 .set OSReport,0x803456a8
 .set HSD_Randi,0x80380580
@@ -272,6 +278,7 @@
 .set ItemCollision_Egg,0x802895a8
 .set SFX_StopAllCharacterSFX,0x80088a50
 .set SFXManager_StopSFXIfPlaying,0x80321ce8
+.set memset,0x80003100
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
