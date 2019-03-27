@@ -673,8 +673,8 @@ b	exit
 		#Remember Facing Direction (Rebirth changes this)
 			lfs	f31,0x2C(r29)
 		#Enter P1 Into Rebirth Again
-			mr		r3,r30
-			branchl		r12,AS_Rebirth
+			mr	r3,r30
+			branchl	r12,AS_Rebirth
 		#Restore Facing Direction
 			stfs	f31,0x2C(r29)
 		#Randomize Location
@@ -4852,6 +4852,20 @@ b	exit
 		.set PostHitstunActionToggled,(OptionMenuToggled)+0x3
 		.set GrabMashoutToggled,(OptionMenuToggled)+0x4
 
+		#Definitions
+		#DIBehavior
+			.set DI_Random,0x0
+			.set DI_SlightDI,0x1
+			.set DI_Survival,0x2
+			.set DI_ComboDI,0x3
+			.set DI_DownAndAway,0x4
+			.set DI_None,0x5
+		#SDIBehavior
+			.set SDI_33Percent,0x0
+			.set SDI_66Percent,0x1
+			.set SDI_Always,0x2
+			.set SDI_None,0x3
+
 		ComboTrainingThink:
 		blrl
 		backup
@@ -5089,7 +5103,7 @@ b	exit
 		#Check If Attack Was Strong
 		#DI Attack
 			lbz	r3,DIBehavior(MenuData)		#Get DI Behavior
-			cmpwi	r3,0x1		#Check If Slight In
+			cmpwi	r3,DI_SlightDI		#Check If Slight In
 			bne	0x8
 			li	r3,0x0		#Override To Never Slight DI In Attacks
 			b	0x8
@@ -5097,17 +5111,17 @@ b	exit
 			bl	ComboTrainingDecideStickAngle
 		#SDI Attack
 			lbz	r3,SDIBehavior(MenuData)		#Get SDI Behavior
-			cmpwi	r3,0x3		#No SDI
+			cmpwi	r3,SDI_None		#No SDI
 			beq	ComboTrainingNoSDI
-			cmpwi	r3,0x2		#Always SDI
+			cmpwi	r3,SDI_Always		#Always SDI
 			beq	ComboTrainingCheckToReset
 
 			li	r3,0x3
 			branchl	r12,HSD_Randi
 			lbz	r4,SDIBehavior(MenuData)		#Get SDI Behavior
-			cmpwi	r4,0x0
+			cmpwi	r4,SDI_33Percent
 			beq	ComboTraining33PercentSDI
-			cmpwi	r4,0x1
+			cmpwi	r4,SDI_66Percent
 			beq	ComboTraining66PercentSDI
 			ComboTraining33PercentSDI:
 			li	r4,0
@@ -5732,17 +5746,17 @@ stb	r4,0x1A8C(r29)
 stb	r4,0x1A8D(r29)
 
 #Check Which Type Of DI To Perform
-cmpwi	r3,0x0
+cmpwi	r3,DI_Random
 beq	ComboTrainingDecideStickAngle_RandomDI
-cmpwi	r3,0x1
+cmpwi	r3,DI_SlightDI
 beq	ComboTrainingDecideStickAngle_SlightDI
-cmpwi	r3,0x2
+cmpwi	r3,DI_Survival
 beq	ComboTrainingDecideStickAngle_SurvivalDI
-cmpwi	r3,0x3
+cmpwi	r3,DI_ComboDI
 beq	ComboTrainingDecideStickAngle_ComboDI
-cmpwi	r3,0x4
+cmpwi	r3,DI_DownAndAway
 beq	ComboTrainingDecideStickAngle_DownAwayDI
-cmpwi	r3,0x5
+cmpwi	r3,DI_None
 beq	ComboTrainingDecideStickAngle_NoDI
 
 
@@ -5981,14 +5995,17 @@ b	ComboTrainingDecideStickAngleExit
 
 ComboTrainingDecideStickAngle_DownAwayDI:
 #Load X Value
-bl	GetDirectionInRelationToP1
+	bl	GetDirectionInRelationToP1
 #Point Away From P1
-li	r4,89
-mullw	r3,r3,r4
-stb	r3, 0x1A8C (r29)
+	li	r4,89
+	mullw	r3,r3,r4
+	stb	r3, 0x1A8C (r29)
 #Load Y Value
-li	r3,-89
-stb	r3, 0x1A8D (r29)
+	li	r3,-89
+	stb	r3, 0x1A8D (r29)
+#C-Stick Down
+	li	r3,-127
+	stb	r3, 0x1A8F (r29)
 
 b	ComboTrainingDecideStickAngleExit
 
