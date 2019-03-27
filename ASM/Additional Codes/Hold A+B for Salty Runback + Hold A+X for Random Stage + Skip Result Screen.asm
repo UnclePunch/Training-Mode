@@ -34,8 +34,11 @@ RandomStage:
   load r4,0x8045AC64     #load VS match struct
 
   sth r3,0x2(r4)             #store stage half to struct
+
+/*
   load r4,0x8043207c         #Preload Cache
   stw r3,0xC(r4)             #Store to Preload Cache
+*/
   li r4,0x2                  #reload match scene
   b exit
 
