@@ -1,2 +1,6 @@
 #To be inserted at 8025B8BC
-li	r3, 2
+.include "../Globals.s"
+
+#Load first minor of current major
+  load r3,Scene.SceneController
+  lbz r3,0x0(r3)
