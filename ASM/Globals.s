@@ -380,13 +380,24 @@
 ## Playerblock Offsets ##
 #########################
 
-.set ControllerPort,0x618
-.set CostumeID,0x619
-.set HeldButtons,0x65C
-.set InstantButtons,0x668
-.set AnalogX,0x620
-.set AnalogY,0x624
-.set CurrentFrame,0x894
+#Misc
+  .set ControllerPort,0x618
+  .set CostumeID,0x619
+#Input Data
+  .set HeldButtons,0x65C
+  .set InstantButtons,0x668
+  .set AnalogX,0x620
+  .set AnalogY,0x624
+#Animation Data
+  .set CurrentFrame,0x894
+#CPU AI Data
+  .set CPU_HeldButtons,0x1A88
+  .set CPU_AnalogX,0x1A8C
+  .set CPU_AnalogY,0x1A8D
+  .set CPU_CStickX,0x1A8E
+  .set CPU_CStickY,0x1A8F
+  .set CPU_LAnalog,0x1A90
+  .set CPU_RAnalog,0x1A91
 
 #############################
 ## Player Action State IDs ##
