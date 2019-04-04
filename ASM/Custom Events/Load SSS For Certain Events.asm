@@ -3,27 +3,57 @@
 
 stb	r0, 0x000A (r31)
 
-#Get Current Event Number
-lwz	r4, -0x77C0 (r13)
-lbz	r7, 0x0535 (r4)
+.set EventID,7
+.set PageID,8
 
-#Init Loop
-bl	SSSEvents
-mflr	r5
-subi	r5,r5,0x1
+#Get Hovered Over Event ID in r23
+	lwz	r5, -0x4A40 (r13)
+	lwz	r5, 0x002C (r5)
+	lwz	r3, 0x0004 (r5)		 #Selection Number
+  lbz	r0, 0 (r5)		  #Page Number
+  add	EventID,r3,r0
+
+#Get Current Page in
+  lwz r3,MemcardData(r13)
+  lbz PageID,CurrentEventPage(r3)
+
+#Get pointer page's string array
+	bl	SkipJumpTable
+
+##### Page List #######
+	bl	GeneralTech
+	bl	FoxTech
+#######################
+
+SkipJumpTable:
+  mflr	r4		#Jump Table Start in r4
+  mulli	r5,PageID,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r5,r4,r5		#Gets Address in r4
 
 #Loop Through Whitelisted Events
+  subi	r5,r5,0x1
 Loop:
-lbzu	r6,0x1(r5)
-extsb	r0,r6
-cmpwi	r0,-1
-beq	original
-cmpw	r6,r7
-beq	SSS
-b	Loop
+  lbzu	r6,0x1(r5)
+  extsb	r0,r6
+  cmpwi	r0,-1
+  beq	original
+  cmpw	r6,EventID
+  beq	SSS
+  b	Loop
 
-SSSEvents:
-blrl
+SSS:
+#Store SSS as Next Scene
+  load	r3,SceneController
+  li	r4,0x3
+  stb	r4,0x5(r3)
+  b original
+
+#########################
+
+GeneralTech:
 .byte Event.LCancel
 .byte Event.Ledgedash
 .byte Event.Eggs
@@ -34,9 +64,11 @@ blrl
 .byte 0xFF
 .align 2
 
-SSS:
-#Store SSS as Next Scene
-load	r3,SceneController
-li	r4,0x3
-stb	r4,0x5(r3)
+FoxTech:
+.byte Event.LedgetechCounter
+.byte 0xFF
+.align 2
+
+#########################
+
 original:
