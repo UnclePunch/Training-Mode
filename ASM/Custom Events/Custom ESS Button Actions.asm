@@ -40,7 +40,7 @@ OpenFDD:
 	branchl	r4,0x80024030
 
 	#SET FLAG IN RULES STRUCT
-	li	r0,3		#3 = frame data from event toggle
+	li	r0,3								#3 = frame data from event toggle
 	load	r3,0x804a04f0
 	stb	r0, 0x0011 (r3)
 
@@ -116,24 +116,41 @@ OpenCredits:
 	b	exit
 
 PlayMovie:
-
-
-
 		################################################
 		## Get Movie's FileName and Extension Pointer ##
 		################################################
 
-			#Get Hovered Over Event ID in r23
+		.set EventID,23
+		.set PageID,24
+
+		#Get Hovered Over Event ID in r23
 			lwz	r5, -0x4A40 (r13)
 			lwz	r5, 0x002C (r5)
 			lwz	r3, 0x0004 (r5)		 #Selection Number
 			lbz	r0, 0 (r5)		  #Page Number
-			add	r23,r3,r0
+			add	EventID,r3,r0
 
-			#Get Movie File String
-			mr	r3,r23
-			bl	MovieFileNames
-			mflr	r4
+		#Get Current Page in
+		  lwz r3,MemcardData(r13)
+		  lbz PageID,CurrentEventPage(r3)
+
+		#Get pointer page's string array
+			bl	SkipJumpTable
+
+		##### Page List #######
+			bl	GeneralTech
+			bl	FoxTech
+		#######################
+
+		SkipJumpTable:
+		  mflr	r4		#Jump Table Start in r4
+		  mulli	r5,PageID,0x4		#Each Pointer is 0x4 Long
+		  add	r4,r4,r5		#Get Event's Pointer Address
+		  lwz	r5,0x0(r4)		#Get bl Instruction
+		  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+		#Get Movie File String
+			mr	r3,EventID
+			add	r4,r4,r5		#Gets ASCII Address in r4
 			branchl r12,SearchStringTable
 			mr	r20,r3							#Get Event's Tutorial File Name in r20
 
@@ -392,44 +409,39 @@ Exit:
 restore
 blr
 
-MovieFileNames:
-blrl
-
+#######################################
+GeneralTech:
 #L-Cancelling (TvLC)
 .string "TvLC"
-
 #LedgeDash (TvLedDa)
 .string "TvLedDa"
-
 #LedgeDash (TvEgg)
 .string "TvEgg"
-
 #SDI (TvSDI)
 .string "TvSDI"
-
 #Reversal (TvRvrsl)
 .string "TvRvrsl"
-
 #Powersheld (TvPowSh)
 .string "TvPowSh"
-
 #Shield Drop (TvShDrp)
 .string "TvShDrp"
-
 #Spacing on Shield (TvSpaSh)
 .string "TvSpaSh"
-
 #Ledge Tech (TvLedTc)
 .string "TvLedTc"
-
 #Amsah Tech (TvAmsTc)
 .string "TvAmsTc"
-
 #Techchase (TvTchCh)
 .string "TvTchCh"
-
 #Waveshine SDI (TvWvSDI)
 .string "TvWvSDI"
+.align 2
+
+#######################################
+
+FoxTech:
+#Ledgetech Counter
+.string "TvFxLt"
 .align 2
 
 #######################################
