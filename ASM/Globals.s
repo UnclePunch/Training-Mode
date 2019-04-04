@@ -29,7 +29,7 @@
 .set Event.Combo,10
 .set Event.WaveshineSDI,11
 #Fox Tech
-.set Event.LedgetechCounter,1
+.set Event.LedgetechCounter,0
 
 #Custom Memcard Data Bitfield
 .set OSDBitfield,0x1F24
@@ -67,6 +67,9 @@
 .set OSD.Ledge,26
 .set OSD.UCF,27
 .set OSD.ActOoHitstun,28
+
+#Event OSDs
+.set EventOSD_ComboTraining,0x01010020
 
 #Custom Playerblock Offsets
 .set PlayerBlockSize, 0x2500

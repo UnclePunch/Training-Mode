@@ -5,6 +5,8 @@
 
 #Get number of events on this page
   branchl r12,GetNumOfEventsOnCurrentPage
+  cmpwi r3,8
+  blt Exit
   subi r3,r3,8
 
 Exit:
