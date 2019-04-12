@@ -2,5 +2,5 @@
 .include "../Globals.s"
 
 #Load first minor of current major
-  load r3,Scene.SceneController
+  load r3,SceneController
   lbz r3,0x0(r3)
