@@ -33,6 +33,7 @@ lhz	r4, ThreeASAgo (r5)
 cmpwi	r4,0xFD
 bne	Moonwalk_Exit
 
+li  r4,1
 branchl	r12,0x80005514
 
 

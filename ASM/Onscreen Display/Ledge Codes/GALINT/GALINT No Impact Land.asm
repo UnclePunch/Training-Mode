@@ -35,6 +35,7 @@ cmpwi	r3,0xFD
 bne	Moonwalk_Exit
 
 mr	r3,r30
+li  r4,0
 branchl	r12,0x80005514
 
 

@@ -5,8 +5,8 @@
 .set playerdata,31
 .set player,30
 .set text,29
-.set textprop,28
-.set hitbool,27
+.set REG_isAerialInterrupt,28
+.set REG_GALINT,27
 
 .set PrevASStart,0x23F0
 .set CurrentAS,0x10
@@ -16,7 +16,6 @@
 .set FourASAgo,PrevASStart+0x6
 .set FiveASAgo,PrevASStart+0x8
 .set SixASAgo,PrevASStart+0xA
-
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -29,7 +28,7 @@ backupall
 
 mr	player,r3
 lwz	playerdata,0x2c(player)
-
+mr	REG_isAerialInterrupt,r4
 
 	#CHECK IF ENABLED
 	li	r0,OSD.Ledge			#PowerShield ID
@@ -48,16 +47,26 @@ lwz	playerdata,0x2c(player)
 	beq	Moonwalk_Exit
 
 	#Check if Over 20 Frames past GALINT
-		lwz	r3,0x2408(playerdata)
+		lwz	r3,TangibleFrameCount(playerdata)
 		cmpwi r3,20
 		bgt Moonwalk_Exit
+
+		#Get GALINT Frames (Ledge Intang - Landing Lag)
+		lwz	REG_GALINT,0x1990 (playerdata)
+		cmpwi REG_isAerialInterrupt,0
+		beq	SkipAI
+		lfs	f1,0x1F4 (playerdata)
+		fctiwz f1,f1
+		stfd f1,0x80(sp)
+		lwz r3,0x84(sp)
+		sub REG_GALINT,REG_GALINT,r3
+		SkipAI:
 
 		bl	CreateText
 
 		#Change Text Color
-		lwz	r3, 0x1990 (playerdata)
-		cmpwi	r3,0x0
-		beq	RedText
+		cmpwi	REG_GALINT,0x0
+		ble	RedText
 
 		GreenText:
 		load	r3,0x8dff6eff			#green
@@ -81,7 +90,7 @@ lwz	playerdata,0x2c(player)
 		bl	BottomText
 		mr 	r3,r29			#text pointer
 		mflr	r4
-		lwz	r5, 0x1990 (playerdata)
+		mr	r5,REG_GALINT
 		cmpwi	r5,0x0
 		bgt	SkipShowingTangibleFrames
 

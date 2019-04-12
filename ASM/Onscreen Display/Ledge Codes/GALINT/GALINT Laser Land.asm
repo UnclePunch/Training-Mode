@@ -44,6 +44,7 @@ CliffWaitSearch:
 #Display GALINT
 DisplayGALINT:
   mr  r3,r28
+  li  r4,0
   branchl	r12,0x80005514
 
 Moonwalk_Exit:
