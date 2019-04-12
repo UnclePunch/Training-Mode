@@ -47,7 +47,7 @@
 .set OSD.ShieldDrop,6
 .set OSD.APM,7
 .set OSD.SpacieTech,8
-.set OSD.Powershield,9
+.set OSD.SDI,9
 .set OSD.Powershield,10
 .set OSD.ShieldPoke,11
 .set OSD.HitstunLeft,12
@@ -69,7 +69,18 @@
 .set OSD.ActOoHitstun,28
 
 #Event OSDs
+.set EventOSD_LCancel,0x00000003
+.set EventOSD_Ledgedash,0x04000000
+.set EventOSD_Eggs,0
+.set EventOSD_SDI,0x10000400
+.set EventOSD_Reversal,0x002C0009
+.set EventOSD_Powershield,0x00000200
+.set EventOSD_ShieldDrop,0x00200048
+.set EventOSD_AttackOnShield,0x00210000
+.set EventOSD_LedgeTech,0x00000404
+.set EventOSD_AmsahTech,0x00000004
 .set EventOSD_ComboTraining,0x01010020
+.set EventOSD_WaveshineSDI,0x10000400
 
 #Custom Playerblock Offsets
 .set PlayerBlockSize, 0x2500
@@ -122,6 +133,9 @@
 .set Hitbox_DamageLog,-0x5148     #Num of solid hits dealt by the player this check
 .set Hitbox_TipLog,-0x5144        #Num of phantom hits dealt by the player this check
 .set StageID_External,-0x6CB8
+.set Stage_LedgeInfo,-0x51E8
+.set Stage_LineInfo,-0x51EC       #ctrl f "stage line counts" in melee notes.txt for detailed info
+
 
 #Scene Struct
 .set SceneController,0x80479D30

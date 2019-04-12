@@ -24,7 +24,7 @@ stfs	f3,0x88(sp)
 mr	playerdata,r3
 
 	#CHECK IF ENABLED
-	li	r0,OSD.Powershield			#PowerShield ID
+	li	r0,OSD.SDI			#PowerShield ID
 	#lwz	r4,-0xdbc(rtoc)			#get frame data toggle bits
 	lwz	r4,-0x77C0(r13)
 	lwz	r4,0x1F24(r4)
