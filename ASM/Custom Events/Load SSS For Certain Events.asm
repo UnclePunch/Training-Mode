@@ -7,15 +7,11 @@ stb	r0, 0x000A (r31)
 .set PageID,8
 
 #Get Hovered Over Event ID in r23
-	lwz	r5, -0x4A40 (r13)
-	lwz	r5, 0x002C (r5)
-	lwz	r3, 0x0004 (r5)		 #Selection Number
-  lbz	r0, 0 (r5)		  #Page Number
-  add	EventID,r3,r0
+	lwz	r4, -0x77C0 (r13)
+	lbz	EventID, 0x0535 (r4)
 
-#Get Current Page in
-  lwz r3,MemcardData(r13)
-  lbz PageID,CurrentEventPage(r3)
+#Get Current Page
+  lbz PageID,CurrentEventPage(r4)
 
 #Get pointer page's string array
 	bl	SkipJumpTable

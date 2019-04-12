@@ -1,10 +1,5 @@
 #To be inserted at 801a44bc
 .include "../Globals.s"
-
-.set entity,31
-.set player,31
-.set playerdata,31
-
 ##################################################
 
 #Overwrite Event Scene List
