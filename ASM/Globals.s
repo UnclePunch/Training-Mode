@@ -81,6 +81,7 @@
 .set EventOSD_AmsahTech,0x00000004
 .set EventOSD_ComboTraining,0x01010020
 .set EventOSD_WaveshineSDI,0x10000400
+.set EventOSD_LedgetechCounter,0x10000400
 
 #Custom Playerblock Offsets
 .set PlayerBlockSize, 0x2500

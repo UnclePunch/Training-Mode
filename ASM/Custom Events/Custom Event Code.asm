@@ -28,10 +28,6 @@
 	li	r3,0x0
 	stb	r3,0x0(r9)
 
-	#1 Player
-	li	r3,0x20
-	stb	r3,0x1(r9)
-
 	#P1 = Choose Char + Normal Modifiers
 	bl	P1Struct
 	mflr	r3
@@ -120,46 +116,19 @@ SkipPageList:
 #########################
 
 LCancel:
-#STORE STAGE
-#li	r3,0x20
-#sth	r3,0xE(r26)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,-1										#Use chosen CPU
+	li	r6,-1										#Use SSS Stage
+	load r7,EventOSD_LCancel
+	bl	InitializeMatch
 
-#Create Copy Of Player Struct
-li	r3,0x1C
-branchl	r12,HSD_MemAlloc
-mr	r20,r3
-bl	P2Struct
-mflr	r4
-li	r5,0x1C
-branchl	r12,memcpy
-
-#STORE CPU
-lwz	r4,0x0(r29)
-stw	r20,0x18(r4)		#p2 pointer
-
-#Store Character Choice
-load	r5,0x8043207c		#get preload table
-lwz	r6,0x18(r5)		#get p2 character ID
-cmpwi	r6,0x12
-bne	0x8
-li	r6,0x13		#Make Zelda Sheik
-stb	r6,0x0(r20)		#store chosen char
-lbz	r6,0x1C(r5)		#get p2 costume ID
-stb	r6,0x3(r20)		#store p2 costume ID
-li	r5,0x0		#make player controlled
-stb	r5,0x1(r20)
-
-#SPAWN 2 PLAYERS
-LCancelSetSpawnAmount:
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x00000003
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Make P2 a human
+	lwz r3,0x0(r29)
+	lwz r3,0x18(r3)
+	li	r4,0
+	stb r4,0x1(r3)
 
 #STORE THINK FUNCTION
 bl	LCancelLoad
@@ -279,43 +248,43 @@ b	exit
 #endregion
 
 #region Ledgedash Training
-#########################
+
+###########################
 ## Ledgedash HIJACK INFO ##
-#########################
+###########################
 
 Ledgedash:
-#STORE RANDOM LEGAL STAGE
-#li	r3,6		#6 Legal Stages
-#branchl	r12,HSD_Randi
-#bl	LegalStages
-#mflr	r4
-#lbzx	r3,r3,r4
-#sth	r3,0xE(r26)
-
-#Make HUD Centered For 1P and No Timer
-li	r3,0x0420
-sth	r3,0x0(r26)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x04000000
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
 
 #SET EVENT TYPE TO KOs
-load	r5,0x8045abf0		#Static Match Struct
-lbz	r3,0xB(r5)		#Get Event Score Behavior Byte
-li	r4,0x0
-rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
-stb	r3,0xB(r5)		#Set Event Score Behavior Byte
+	load	r5,0x8045abf0		#Static Match Struct
+	lbz	r3,0xB(r5)		#Get Event Score Behavior Byte
+	li	r4,0x0
+	rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
+	stb	r3,0xB(r5)		#Set Event Score Behavior Byte
+
+#Make HUD Centered For 1P and No Timer
+	li	r3,0x0420
+	sth	r3,0x0(r26)
+
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,-1										#Use chosen CPU
+	li	r6,-1										#Use SSS Stage
+	load r7,EventOSD_Ledgedash
+	bl	InitializeMatch
+
+#1 Player
+	lwz r4,0x0(r29)
+	li	r3,0x20
+	stb	r3,0x1(r9)
 
 #If IC's Make SoPo
-lbz	r3,0x2(r30)		#P1 External ID
-cmpwi	r3,0xE
-bne	LedgedashStoreThink
-li	r3,0x20
-stb	r3,0x2(r30)		#Make SoPo
+	lbz	r3,0x2(r30)		#P1 External ID
+	cmpwi	r3,0xE
+	bne	LedgedashStoreThink
+	li	r3,0x20
+	stb	r3,0x2(r30)		#Make SoPo
 
 #STORE THINK FUNCTION
 LedgedashStoreThink:
@@ -1034,6 +1003,11 @@ li	r4,0x0
 rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
 stb	r3,0xB(r5)		#Set Event Score Behavior Byte
 
+#1 Player
+	lwz r4,0x0(r29)
+	li	r3,0x20
+	stb	r3,0x1(r9)
+
 #STORE THINK FUNCTION
 bl	EggsLoad
 mflr	r3
@@ -1595,32 +1569,19 @@ blrl
 ##############################
 
 SDITraining:
-#STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,Fox.Ext							#Use chosen CPU
+	li	r6,FinalDestination			#Use SSS Stage
+	load r7,EventOSD_SDI
+	bl	InitializeMatch
 
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-li	r5,0x2		    #fox ext ID
-stb	r5,0x0(r3)		#make fox p2
-li	r5,0x1		    #make CPU controlled
-stb	r5,0x1(r3)
-li  r5,0x0
-stb r5,0x3(r3)    #Default color
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x10000400
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Make default color
+	lwz	r3,0x0(r29)
+	lwz	r3,0x18(r3)		#p2 pointer
+	li  r4,0x0
+	stb r4,0x3(r3)    #Default color
 
 #If IC's Make SoPo
 lbz	r3,0x2(r30)		#P1 External ID
@@ -2110,36 +2071,14 @@ blr
 #########################
 
 Reversal:
-#STORE STAGE
-#li	r3,0x20
-#sth	r3,0xE(r26)
 
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-load	r5,0x8043207c		#get preload table
-lwz	r6,0x18(r5)		#get p2 character ID
-cmpwi	r6,0x12
-bne	0x8
-li	r6,0x13		#Make Zelda Sheik
-stb	r6,0x0(r3)		#store chosen char
-lbz	r6,0x1C(r5)		#get p2 costume ID
-stb	r6,0x3(r3)		#store p2 costume ID
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x002C0009
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,-1										#Use chosen CPU
+	li	r6,FinalDestination			#Use SSS Stage
+	load r7,EventOSD_Reversal
+	bl	InitializeMatch
 
 #STORE THINK FUNCTION
 bl	ReversalLoad
@@ -2771,30 +2710,13 @@ blr
 #########################
 
 Powershield:
-#STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
-
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-li	r5,Falco.Ext
-stb	r5,0x0(r3)		#make fox p2
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x00000200
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,Falco.Ext						#Use chosen CPU
+	li	r6,FinalDestination			#Use SSS Stage
+	load r7,EventOSD_Powershield
+	bl	InitializeMatch
 
 #STORE THINK FUNCTION
 bl	PowershieldLoad
@@ -3198,36 +3120,14 @@ blrl
 #########################
 
 ShieldDrop:
-#STORE STAGE
-li	r3,0x1f
-sth	r3,0xE(r26)
 
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-load	r5,0x8043207c		#get preload table
-lwz	r6,0x18(r5)		#get p2 character ID
-cmpwi	r6,0x12
-bne	0x8
-li	r6,0x13		#Make Zelda Sheik
-stb	r6,0x0(r3)		#store chosen char
-lbz	r6,0x1C(r5)		#get p2 costume ID
-stb	r6,0x3(r3)		#store p2 costume ID
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x00200048
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)						#Send event struct
+	mr	r4,r26								#Send match struct
+	li	r5,-1									#Use chosen CPU
+	li	r6,Battlefield				#Use SSS Stage
+	load r7,EventOSD_ShieldDrop
+	bl	InitializeMatch
 
 #STORE THINK FUNCTION
 bl	ShieldDropLoad
@@ -3474,43 +3374,19 @@ blr
 #########################
 
 AttackOnShield:
-#STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
 
-#li	r5,0x14
-
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-load	r5,0x8043207c		#get preload table
-lwz	r6,0x18(r5)		#get p2 character ID
-cmpwi	r6,0x12
-bne	0x8
-li	r6,0x13		#Make Zelda Sheik
-stb	r6,0x0(r3)		#store chosen char
-lbz	r6,0x1C(r5)		#get p2 costume ID
-stb	r6,0x3(r3)		#store p2 costume ID
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x00210000
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)						#Send event struct
+	mr	r4,r26								#Send match struct
+	li	r5,-1									#Use chosen CPU
+	li	r6,FinalDestination		#Use SSS Stage
+	load r7,EventOSD_AttackOnShield
+	bl	InitializeMatch
 
 #STORE THINK FUNCTION
-bl	AttackOnShieldLoad
-mflr	r3
-stw	r3,0x44(r26)		#on match load
+	bl	AttackOnShieldLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
 
 b	exit
 
@@ -3935,44 +3811,18 @@ blr
 #########################
 
 Ledgetech:
-#GET RANDOM TOP TIER
-#li	r3,10		#Get Random Top Tier
-#branchl	r12,HSD_Randi
-#bl	TopTiers
-#mflr	r4
-#lbzx	r5,r3,r4
 
-#Create Copy Of Player Struct
-li	r3,0x1C
-branchl	r12,HSD_MemAlloc
-mr	r20,r3
-bl	P2Struct
-mflr	r4
-li	r5,0x1C
-branchl	r12,memcpy
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)						#Send event struct
+	mr	r4,r26								#Send match struct
+	li	r5,Falco.Ext					#Use chosen CPU
+	li	r6,FinalDestination		#Use chosen Stage
+	load r7,EventOSD_LedgeTech
+	bl	InitializeMatch
 
-#STORE CPU
-lwz	r4,0x0(r29)
-stw	r20,0x18(r4)		#p2 pointer
-li	r5,0x14 #Falco
-stb	r5,0x0(r20)		#make top tier p2
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r20)
 #BUFF DEFENSE RATIO
 lis	r3,0x3f00
 stw	r3,0x14(r20)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-lwz	r4,0x0(r29)
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x00000404
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
 
 #If IC's Make SoPo
 lbz	r3,0x2(r30)		#P1 External ID
@@ -4438,34 +4288,13 @@ blr
 
 AmsahTech:
 
-#GET RANDOM TOP TIER
-#li	r3,10		#Get Random Top Tier
-#branchl	r12,HSD_Randi
-#bl	TopTiers
-#mflr	r4
-#lbzx	r5,r3,r4
-
-li	r5,0x9		#Marth
-
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-stb	r5,0x0(r3)		#make top tier p2
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x00000004
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)			#Send event struct
+	mr	r4,r26					#Send match struct
+	li	r5,9						#Use chosen CPU
+	li	r6,-1						#Use chosen Stage
+	load r7,EventOSD_AmsahTech
+	bl	InitializeMatch
 
 #STORE THINK FUNCTION
 bl	AmsahTechLoad
@@ -4761,41 +4590,19 @@ blr
 #endregion
 
 #region Combo Training
-#########################
+################################
 ## Combo Training HIJACK INFO ##
-#########################
+################################
 
 ComboTraining:
-#STORE STAGE
-#li	r3,0x20
-#sth	r3,0xE(r26)
 
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-load	r5,0x8043207c		#get preload table
-lwz	r6,0x18(r5)		#get p2 character ID
-cmpwi	r6,0x12
-bne	0x8
-li	r6,0x13		#Make Zelda Sheik
-stb	r6,0x0(r3)		#store chosen char
-lbz	r6,0x1C(r5)		#get p2 costume ID
-stb	r6,0x3(r3)		#store p2 costume ID
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x01010020
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)			#Send event struct
+	mr	r4,r26					#Send match struct
+	li	r5,-1						#Use chosen CPU
+	li	r6,-1						#Use chosen Stage
+	load r7,EventOSD_ComboTraining
+	bl	InitializeMatch
 
 #STORE THINK FUNCTION
 bl	ComboTrainingLoad
@@ -4815,7 +4622,7 @@ b	exit
 	#Schedule Think
 	bl	ComboTrainingThink
 	mflr	r3
-	li	r4,3		#Priority (After Interrupt)
+	li	r4,3												#Priority (After Interrupt)
   bl	ComboTrainingWindowInfo			#r4 = pointer to option info
   mflr	r5
   bl	ComboTrainingWindowText			#r5 = pointer to ASCII struct
@@ -6360,44 +6167,27 @@ blr
 #########################
 
 WaveshineSDI:
-#STORE STAGE
-li	r3,0x20
-sth	r3,0xE(r26)
 
-li	r5,0x2		#Fox
-
-#STORE CPU
-lwz	r4,0x0(r29)
-bl	P2Struct
-mflr	r3
-stw	r3,0x18(r4)		#p2 pointer
-stb	r5,0x0(r3)		#make top tier p2
-li	r5,0x1		#make CPU controlled
-stb	r5,0x1(r3)
-
-#SPAWN 2 PLAYERS
-li	r3,0x40
-stb	r3,0x1(r4)
-
-#Store Events FDD Toggles
-lwz	r5,-0x77C0(r13)
-lwz	r3,0x1F24(r5)
-load	r4,0x10000400
-or	r3,r3,r4
-stw	r3,0x1F24(r5)
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)										#Send event struct
+	mr	r4,r26												#Send match struct
+	li	r5,Fox.Ext										#Use chosen CPU
+	li	r6,FinalDestination						#Use chosen Stage
+	load r7,EventOSD_WaveshineSDI
+	bl	InitializeMatch
 
 #If IC's Make SoPo
-lbz	r3,0x2(r30)		#P1 External ID
-cmpwi	r3,0xE
-bne	WaveshineSDIStoreThink
-li	r3,0x20
-stb	r3,0x2(r30)		#Make SoPo
+	lbz	r3,0x2(r30)		#P1 External ID
+	cmpwi	r3,0xE
+	bne	WaveshineSDIStoreThink
+	li	r3,0x20
+	stb	r3,0x2(r30)		#Make SoPo
 
 #STORE THINK FUNCTION
 WaveshineSDIStoreThink:
-bl	WaveshineSDILoad
-mflr	r3
-stw	r3,0x44(r26)		#on match load
+	bl	WaveshineSDILoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
 
 b	exit
 
@@ -6972,6 +6762,60 @@ blr
 ##############
 ## Fox Tech ##
 ##############
+
+#region Ledgetech Counter
+###################################
+## Ledgetech Counter HIJACK INFO ##
+###################################
+
+LedgetechCounter:
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)										#Send event struct
+	mr	r4,r26												#Send match struct
+	li	r5,Marth.Ext									#Use marth
+	li	r6,0													#Use chosen Stage
+	load r7,EventOSD_LedgetechCounter
+	bl	InitializeMatch
+
+#STORE THINK FUNCTION
+LedgetechCounterStoreThink:
+	bl	LedgetechCounterLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
+
+b	exit
+
+##################################
+## Ledgetech Counter LOAD FUNCT ##
+##################################
+LedgetechCounterLoad:
+	blrl
+
+	backup
+
+#Schedule Think
+	bl	LedgetechCounterThink
+	mflr	r3
+	li	r4,9		#Priority (After EnvCOllision)
+  li  r5,0
+	bl	CreateEventThinkFunction
+	b	LedgetechCounterThink_Exit
+
+###################################
+## Ledgetech Counter THINK FUNCT ##
+###################################
+
+LedgetechCounterThink:
+	blrl
+
+
+
+LedgetechCounterThink_Exit:
+	restore
+	blr
+
+#endregion
+
 
 #region Scrapped Edgeguard Event
 /*
@@ -8342,7 +8186,7 @@ SaveState_Load:
 		lfs		f1,0x894(REG_PlayerData_Backup)		#backed up Frame Number
 		lfs		f2,0x89C(REG_PlayerData_Backup)		#backed up Frame Speed
 		lfs		f3,0x8A4(REG_PlayerData_Backup)		#backup up Blend Amount
-		branchl		r12,ActionStateChange		#ASC
+		branchl		r12,ActionStateChange					#ASC
 
 		#Keep Previous Frame Buttons From Current Block
 		lwz		r3,0x620(REG_PlayerData)
@@ -10623,22 +10467,42 @@ backup
   lwz PlayerData,0x2C(PlayerGObj)
 
 #Update Position (Copy Physics XYZ into all ECB XYZ)
+#X
   lwz	r3, 0x00B0 (PlayerData)
   stw	r3, 0x06F4 (PlayerData)
-  stw	r3, 0x070C (PlayerData)
+  stw	r3, 0x0700 (PlayerData)
+	stw	r3, 0x070C (PlayerData)
+	stw	r3, 0x0718 (PlayerData)
+#Y
   lwz	r3, 0x00B4 (PlayerData)
   stw	r3, 0x06F8 (PlayerData)
-  stw	r3, 0x0710 (PlayerData)
+  stw	r3, 0x0704 (PlayerData)
+	stw	r3, 0x0710 (PlayerData)
+	stw	r3, 0x071C (PlayerData)
+#Z
   lwz	r3, 0x00B8 (PlayerData)
   stw	r3, 0x06FC (PlayerData)
-  stw	r3, 0x0714 (PlayerData)
-
+  stw	r3, 0x0708 (PlayerData)
+	stw	r3, 0x0714 (PlayerData)
+	stw	r3, 0x0720 (PlayerData)
 #Update Collision Frame ID
   lwz	r3, -0x51F4 (r13)
   stw r3, 0x728(PlayerData)
 
   #branchl	r12,0x80081b38     #Stopped using this because it deletes way too much ECB info
   #branchl r12,0x80082a68      #Better than the above function, but all i need is to copy current position into the ECB previous values
+
+#Adjust JObj position (code copied from 8006c324)
+	lwz r3,0x28(PlayerGObj)			#get character model JObj
+	lwz	r4,0xB0(PlayerData)			#get X
+	stw r4,0x38(r3)							#store X
+	lwz	r4,0xB4(PlayerData)			#get Y
+	stw r4,0x3C(r3)							#store Y
+	lwz	r4,0xB8(PlayerData)			#get Z
+	stw r4,0x40(r3)							#store Z
+#Dirty Sub
+	#branchl r12,0x803732e8
+
 #Update Static Player Block Coords
   lbz r3,0xC(PlayerData)
   lbz	r4, 0x221F (PlayerData)
@@ -11100,6 +10964,81 @@ RemoveFirstFrameInputs_CheckIfPlayerExists:
 
 RemoveFirstFrameInputs_Exit:
 blr
+
+#####################################
+
+InitializeMatch:
+
+.set REG_EventStruct,31
+.set REG_MatchStruct,30
+.set REG_CPUChoice,29
+.set REG_StageChoice,28
+.set REG_EventOSDs,27
+.set REG_PlayerStruct,26
+
+#Init
+	backup
+	mr REG_EventStruct,r3
+	mr REG_MatchStruct,r4
+	mr REG_CPUChoice,r5
+	mr REG_StageChoice,r6
+	mr REG_EventOSDs,r7
+
+#Store Events FDD Toggles
+	lwz	r4,-0x77C0(r13)
+	lwz	r3,0x1F24(r4)
+	or	r3,r3,REG_EventOSDs
+	stw	r3,0x1F24(r4)
+
+#SPAWN 2 PLAYERS
+	li	r3,0x40
+	stb	r3,0x1(REG_EventStruct)
+
+#Make Copy of Struct
+	li	r3,32
+	branchl r12,HSD_MemAlloc
+	mr REG_PlayerStruct,r3
+	bl	P2Struct
+	mflr r4
+	li	r5,0x1C
+	branchl r12,memcpy
+#Store to P2 pointer in event struct
+	stw REG_PlayerStruct,0x18(REG_EventStruct)
+
+#Store CPU
+	cmpwi REG_CPUChoice,-1
+	beq InitializeMatch_StoreCSSCPU
+#Store this CPU
+	stb	REG_CPUChoice,0x0(REG_PlayerStruct)
+	b	InitializeMatch_StoreStage
+InitializeMatch_StoreCSSCPU:
+	load	r3,0x8043207c							#get preload table
+	lwz	r4,0x18(r3)									#get p2 character ID
+	cmpwi	r4,0x12										#check if zelda
+	bne	0x8
+	li	r4,0x13											#make zelda sheik
+	stb	r4,0x0(REG_PlayerStruct)		#store chosen char
+	lbz	r6,0x1C(r3)									#get p2 costume ID
+	stb	r6,0x3(REG_PlayerStruct)		#store p2 costume ID
+	li	r5,0x1											#make CPU controlled
+	stb	r5,0x1(REG_PlayerStruct)
+
+InitializeMatch_StoreStage:
+#Store Stage
+	cmpwi REG_StageChoice,-1
+	beq InitializeMatch_StoreSSSStage
+#Store this Stage
+	sth	REG_StageChoice,0xE(REG_MatchStruct)
+	b	InitializeMatch_Exit
+InitializeMatch_StoreSSSStage:
+	load	r3,0x8043207c							#get preload table
+	lwz	r3, 0x00C (r3)
+	sth	r3,0xE(REG_MatchStruct)			#store chosen stage
+
+#Exit
+InitializeMatch_Exit:
+	restore
+	blr
 
 #####################################
 exit:
