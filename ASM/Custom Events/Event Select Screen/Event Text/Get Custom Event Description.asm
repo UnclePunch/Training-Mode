@@ -17,71 +17,7 @@ backup
 ##### Page List #######
 	EventJumpTable
 #######################
-
-Minigames:
-#Eggs-ercise
-.string "Break the eggs! Only strong hits will
-break them. DPad down = free practice."
-.align 2
-
-GeneralTech:
-#L-Cancel Training
-.string "Practice L-Cancelling on
-a stationary CPU."
-
-#Ledgedash Training
-.string "Practice Ledgedashes!
-Use D-Pad to change ledge."
-
-#SDI Training
-.string "Practice Smash DI'ing
-Fox's up-air!"
-
-#Reversal Training
-.string "Practice OoS punishes! DPad left/right
-moves characters closer and further apart."
-
-#Powershield Training
-.string "Powershield Falco's laser!
-Pause to change fire-rate."
-
-#Shield Drop Training
-.string "Counter with a shield-drop aerial!
-DPad left/right moves players apart."
-
-#Attack On Shield
-.string "Practice attacks on a shielding opponent!
-Pause to change their OoS option."
-
-#Ledge-Tech Training
-.string "Practice ledge-teching
-Falco's down-smash!"
-
-#Amsah-Tech Training
-.string "Taunt to have Marth Up-B,
-then ASDI down and tech!"
-
-#Combo Training
-.string "L+DPad adjusts percent/DPadDown moves CPU
-DPad right/left saves and loads positions."
-
-#Waveshine SDI
-.string "Use Smash DI to get out
-of Fox's waveshine!"
-.align 2
-
-#######################
-
-SpacieTech:
-#Ledgetech Marths Counter
-.string "Practice ledge-teching
-Marth's counter!"
-
-#Armada-Shine Practice
-.string "Finish off the enemy Fox
-with an Aramda-Shine!"
-
-.align 2
+  EventDescriptionStrings
 #######################
 
 SkipPageList:

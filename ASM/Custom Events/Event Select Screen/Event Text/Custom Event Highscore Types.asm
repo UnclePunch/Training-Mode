@@ -18,11 +18,13 @@ backup
   bl  SkipPageList
 
 ##### Page List #######
+  EventJumpTable
+#######################
 
-  bl  GeneralTech
-  bl  SpacieTech
+Minigames:
+.byte KO
+.align 2
 
-##########################
 GeneralTech:
 .byte KO
 .byte KO

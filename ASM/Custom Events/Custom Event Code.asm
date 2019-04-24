@@ -1477,7 +1477,7 @@ EggsThinkExit:
       #Now check if its eggs-ercise
         lwz	r4, -0x77C0 (r13)
         lbz	r4, 0x0535 (r4)         #get event ID
-        cmpwi r4,Event.Eggs
+        cmpwi r4,Event_Eggs
         beq Eggs_OnCollisionStart
 
       Eggs_OnCollisionOriginalFunction:

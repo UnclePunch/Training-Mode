@@ -3926,7 +3926,7 @@
 800deee8 00000050 800deee8 0 zz_00deee8_
 800def38 00000198 800def38 0 SmashAttackChargeThink
 800df0d0 000000f8 800df0d0 0 zz_00df0d0_
-800df1c8 00000054 800df1c8 0 zz_00df1c8_
+800df1c8 00000054 800df1c8 0 Interrupt_CheckAnalogStickSomething?
 800df21c 000000bc 800df21c 0 zz_00df21c_
 800df2d8 00000034 800df2d8 0 zz_00df2d8_
 800df30c 0000009c 800df30c 0 zz_00df30c_
@@ -10012,7 +10012,7 @@
 801ba888 0000002c 801ba888 0 SceneDecide_LightningMelee_ResultScreen
 801ba8b4 00000028 801ba8b4 0 MajorSetup_LightningMelee
 801ba8dc 00000020 801ba8dc 0 MajorLoad_LightningMelee
-801ba8fc 0000003c 801ba8fc 0 FileLoad_GmEvent.dat
+801ba8fc 0000003c 801ba8fc 0 FileLoad_GmEventdat
 801ba938 00000128 801ba938 0 EventMode_updateGameAndAudioCache
 801baa60 00000070 801baa60 0 ScenePrep_EventMode_CSS
 801baad0 00000070 801baad0 0 SceneDecide_EventMode_CSS

@@ -10,32 +10,11 @@
 #Number of Pages
 .set NumOfPages,3 -1
 
-#Number of Events
-.set Minigames.NumOfEvents,1 -1
-.set GeneralTech.NumOfEvents, 11 -1
-.set SpacieTech.NumOfEvents,2 -1
+#Score Types
+.set KO,0x0
+.set Time,0x1
 
-#Event Numbers
-#Minigames
-.set Event.Eggs,0
-#General Tech
-.set Event.LCancel,0
-.set Event.Ledgedash,1
-.set Event.SDI,2
-.set Event.Reversal,3
-.set Event.Powershield,4
-.set Event.ShieldDrop,5
-.set Event.AttackOnShield,6
-.set Event.LedgeTech,7
-.set Event.AmsahTech,8
-.set Event.Combo,9
-.set Event.WaveshineSDI,10
-#Spacie Tech
-.set Event.LedgetechCounter,0
-.set Event.ArmadaShine,1
-
-#region Event Order Macros
-
+#region Event Page Order
 #This macro will change the order of the pages
 #Only thing this macro doesn't affect is Load CSS + Preload CPU. Must change this manually.
 .macro EventJumpTable
@@ -43,10 +22,696 @@
   bl  GeneralTech
   bl  SpacieTech
 .endm
+#endregion
 
+##################################
+#region Minigame Page Data
+#Number of Events
+.set Minigames.NumOfEvents,1 -1
+
+#region Eggs-ercise
+  .set Event_Eggs,0
+  #Event Name
+    .macro Event_Eggs_Name
+      .string "Eggs-ercise"
+    .endm
+
+    .macro Event_Eggs_Description
+      .string "Break the eggs! Only strong hits will
+break them. DPad down = free practice."
+    .endm
+
+    .macro Event_Eggs_ChooseCPU
+    .endm
+
+    .macro Event_Eggs_PreloadData
+    .endm
+
+    .macro Event_Eggs_LoadSSS
+      .byte Event_Eggs
+    .endm
+
+    .macro Event_Eggs_PlayableCharacters
+    .endm
+
+    .macro Event_Eggs_AvailableCPUs
+    .endm
+
+    .macro Event_Eggs_ScoreType
+      .byte KO
+    .endm
 
 #endregion
 
+#endregion
+#region Universal Tech Page Data
+#Number of Events
+  .set GeneralTech.NumOfEvents, 11 -1
+
+#Event List
+#region LCancel
+  .set Event_LCancel,0
+  #Event Name
+    .macro Event_LCancel_Name
+      .string "L-Cancel Training"
+    .endm
+
+    .macro Event_LCancel_Description
+      .string "Practice L-Cancelling on
+a stationary CPU."
+    .endm
+
+    .macro Event_LCancel_ChooseCPU
+      .byte Event_LCancel
+    .endm
+
+    .macro Event_LCancel_PreloadData
+    .endm
+
+    .macro Event_LCancel_LoadSSS
+      .byte Event_LCancel
+    .endm
+
+    .macro Event_LCancel_PlayableCharacters
+    .endm
+
+    .macro Event_LCancel_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region Ledgedash
+  .set Event_Ledgedash,1
+  #Event Name
+    .macro Event_Ledgedash_Name
+      .string "Ledgedash Training"
+    .endm
+
+    .macro Event_Ledgedash_Description
+      .string "Practice Ledgedashes!
+Use D-Pad to change ledge."
+    .endm
+
+    .macro Event_Ledgedash_ChooseCPU
+    .endm
+
+    .macro Event_Ledgedash_PreloadData
+    .endm
+
+    .macro Event_Ledgedash_LoadSSS
+      .byte Event_Ledgedash
+    .endm
+
+    .macro Event_Ledgedash_PlayableCharacters
+    .endm
+
+    .macro Event_Ledgedash_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region SDI
+  .set Event_SDI,2
+  #Event Name
+    .macro Event_SDI_Name
+      .string "SDI Training"
+    .endm
+
+    .macro Event_SDI_Description
+      .string "Practice Smash DI'ing
+Fox's up-air!"
+    .endm
+
+    .macro Event_SDI_ChooseCPU
+    .endm
+
+    .macro Event_SDI_PreloadData
+      .byte Event_SDI, Fox.Ext, FinalDestination
+    .endm
+
+    .macro Event_SDI_LoadSSS
+    .endm
+
+    .macro Event_SDI_PlayableCharacters
+    .endm
+
+    .macro Event_SDI_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region Reversal
+  .set Event_Reversal,3
+  #Event Name
+    .macro Event_Reversal_Name
+      .string "Reversal Training"
+    .endm
+
+    .macro Event_Reversal_Description
+      .string "Practice OoS punishes! DPad left/right
+moves characters closer and further apart."
+    .endm
+
+    .macro Event_Reversal_ChooseCPU
+      .byte Event_Reversal
+    .endm
+
+    .macro Event_Reversal_PreloadData
+    .endm
+
+    .macro Event_Reversal_LoadSSS
+      .byte Event_Reversal
+    .endm
+
+    .macro Event_Reversal_PlayableCharacters
+    .endm
+
+    .macro Event_Reversal_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region Powershield
+  .set Event_Powershield,4
+  #Event Name
+    .macro Event_Powershield_Name
+      .string "Shield Drop Training"
+    .endm
+
+    .macro Event_Powershield_Description
+      .string "Powershield Falco's laser!
+Pause to change fire-rate."
+    .endm
+
+    .macro Event_Powershield_ChooseCPU
+    .endm
+
+    .macro Event_Powershield_PreloadData
+      .byte Event_Powershield, Falco.Ext, FinalDestination
+    .endm
+
+    .macro Event_Powershield_LoadSSS
+    .endm
+
+    .macro Event_Powershield_PlayableCharacters
+    .endm
+
+    .macro Event_Powershield_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region ShieldDrop
+  .set Event_ShieldDrop,5
+  #Event Name
+    .macro Event_ShieldDrop_Name
+      .string "Shield Drop Training"
+    .endm
+
+    .macro Event_ShieldDrop_Description
+      .string "Counter with a shield-drop aerial!
+DPad left/right moves players apart."
+    .endm
+
+    .macro Event_ShieldDrop_ChooseCPU
+      .byte Event_ShieldDrop
+    .endm
+
+    .macro Event_ShieldDrop_PreloadData
+      .byte Event_ShieldDrop, -1, Battlefield
+    .endm
+
+    .macro Event_ShieldDrop_LoadSSS
+    .endm
+
+    .macro Event_ShieldDrop_PlayableCharacters
+    .endm
+
+    .macro Event_ShieldDrop_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region AttackOnShield
+  .set Event_AttackOnShield,6
+  #Event Name
+    .macro Event_AttackOnShield_Name
+      .string "Attack On Shield"
+    .endm
+
+    .macro Event_AttackOnShield_Description
+      .string "Practice attacks on a shielding opponent!
+Pause to change their OoS option."
+    .endm
+
+    .macro Event_AttackOnShield_ChooseCPU
+      .byte Event_AttackOnShield
+    .endm
+
+    .macro Event_AttackOnShield_PreloadData
+      .byte Event_AttackOnShield,-1,FinalDestination
+    .endm
+
+    .macro Event_AttackOnShield_LoadSSS
+    .endm
+
+    .macro Event_AttackOnShield_PlayableCharacters
+    .endm
+
+    .macro Event_AttackOnShield_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region LedgeTech
+  .set Event_LedgeTech,7
+  #Event Name
+    .macro Event_LedgeTech_Name
+      .string "Ledge-Tech Training"
+    .endm
+
+    .macro Event_LedgeTech_Description
+      #Ledge-Tech Training
+      .string "Practice ledge-teching
+Falco's down-smash!"
+    .endm
+
+    .macro Event_LedgeTech_ChooseCPU
+    .endm
+
+    .macro Event_LedgeTech_PreloadData
+      .byte Event_LedgeTech, Falco.Ext, -1
+    .endm
+
+    .macro Event_LedgeTech_LoadSSS
+      .byte Event_LedgeTech
+    .endm
+
+    .macro Event_LedgeTech_PlayableCharacters
+    .endm
+
+    .macro Event_LedgeTech_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region AmsahTech
+  .set Event_AmsahTech,8
+  #Event Name
+    .macro Event_AmsahTech_Name
+      .string "Amsah-Tech Training"
+    .endm
+
+    .macro Event_AmsahTech_Description
+      .string "Taunt to have Marth Up-B,
+then ASDI down and tech!"
+    .endm
+
+    .macro Event_AmsahTech_ChooseCPU
+    .endm
+
+    .macro Event_AmsahTech_PreloadData
+      .byte Event_AmsahTech, Marth.Ext, -1
+    .endm
+
+    .macro Event_AmsahTech_LoadSSS
+      .byte Event_AmsahTech
+    .endm
+
+    .macro Event_AmsahTech_PlayableCharacters
+    .endm
+
+    .macro Event_AmsahTech_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region Combo
+  .set Event_Combo,9
+  #Event Name
+    .macro Event_Combo_Name
+      .string "Combo Training"
+    .endm
+
+    .macro Event_Combo_Description
+      .string "L+DPad adjusts percent/DPadDown moves CPU
+DPad right/left saves and loads positions."
+    .endm
+
+    .macro Event_Combo_ChooseCPU
+      .byte Event_Combo
+    .endm
+
+    .macro Event_Combo_PreloadData
+    .endm
+
+    .macro Event_Combo_LoadSSS
+      .byte Event_Combo
+    .endm
+
+    .macro Event_Combo_PlayableCharacters
+    .endm
+
+    .macro Event_Combo_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region WaveshineSDI
+  .set Event_WaveshineSDI,10
+  #Event Name
+    .macro Event_WaveshineSDI_Name
+      .string "Waveshine SDI"
+    .endm
+
+    .macro Event_WaveshineSDI_Description
+      .string "Use Smash DI to get out
+of Fox's waveshine!"
+    .endm
+
+    .macro Event_WaveshineSDI_ChooseCPU
+    .endm
+
+    .macro Event_WaveshineSDI_PreloadData
+      .byte Event_WaveshineSDI, Fox.Ext, FinalDestination
+    .endm
+
+    .macro Event_WaveshineSDI_LoadSSS
+    .endm
+
+    .macro Event_WaveshineSDI_PlayableCharacters
+    .byte Event_WaveshineSDI
+    .if PAL==0
+      .long Doc_CSSID | Mario_CSSID | Bowser_CSSID | Peach_CSSID | Yoshi_CSSID | DK_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Ness_CSSID | Samus_CSSID | Zelda_CSSID | Link_CSSID | Marth_CSSID
+    .endif
+    .if PAL==1
+      .long Doc_CSSID | Mario_CSSID | Bowser_CSSID | Peach_CSSID | Yoshi_CSSID | DK_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Ness_CSSID | Samus_CSSID | Zelda_CSSID | Link_CSSID
+    .endif
+    .long -1
+    .endm
+
+    .macro Event_WaveshineSDI_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+
+#endregion
+#region Spacie Tech Page Data
+#Number of Events
+  .set SpacieTech.NumOfEvents,2 -1
+
+#Event List
+#region LedgetechCounter
+  .set Event_LedgetechCounter,0
+  #Event Name
+    .macro Event_LedgetechCounter_Name
+      .string "Ledgetech Marth Counter"
+    .endm
+
+    .macro Event_LedgetechCounter_Description
+      .string "Practice ledge-teching
+Marth's counter!"
+    .endm
+
+    .macro Event_LedgetechCounter_ChooseCPU
+    .endm
+
+    .macro Event_LedgetechCounter_PreloadData
+      .byte Event_LedgetechCounter, Marth.Ext, -1
+    .endm
+
+    .macro Event_LedgetechCounter_LoadSSS
+      .byte Event_LedgetechCounter
+    .endm
+
+    .macro Event_LedgetechCounter_PlayableCharacters
+      .byte Event_LedgetechCounter
+      .long Fox_CSSID | Falco_CSSID      #Player Characters
+    .endm
+
+    .macro Event_LedgetechCounter_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region ArmadaShine
+  .set Event_ArmadaShine,1
+  #Event Name
+    .macro Event_ArmadaShine_Name
+      .string "Armada-Shine Practice"
+    .endm
+
+    .macro Event_ArmadaShine_Description
+      .string "Finish off the enemy Fox
+with an Aramada-Shine!"
+    .endm
+
+    .macro Event_ArmadaShine_ChooseCPU
+    .endm
+
+    .macro Event_ArmadaShine_PreloadData
+    .endm
+
+    .macro Event_ArmadaShine_LoadSSS
+      .byte Event_ArmadaShine
+    .endm
+
+    .macro Event_ArmadaShine_PlayableCharacters
+      .byte Event_ArmadaShine
+      .long Fox_CSSID         #Player Characters
+    .endm
+
+    .macro Event_ArmadaShine_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+
+#endregion
+##################################
+
+#region Event Table Macros
+
+#region EventNameStrings
+.macro EventNameStrings
+Minigames:
+#Eggs-ercise
+  Event_Eggs_Name
+.align 2
+
+GeneralTech:
+#L-Cancel Training
+  Event_LCancel_Name
+#Ledgedash Training
+  Event_Ledgedash_Name
+#SDI Training
+  Event_SDI_Name
+#Reversal Training
+  Event_Reversal_Name
+#Powershield Training
+  Event_Powershield_Name
+#Shield Drop Training
+  Event_ShieldDrop_Name
+#Attack On Shield
+  Event_AttackOnShield_Name
+#Ledge-Tech Training
+  Event_LedgeTech_Name
+#Amsah-Tech Training
+  Event_AmsahTech_Name
+#Combo Training
+  Event_Combo_Name
+#Waveshine SDI
+  Event_WaveshineSDI_Name
+.align 2
+
+#######################
+
+SpacieTech:
+#Ledgetech Marth Counter
+  Event_LedgetechCounter_Name
+#Armada-Shine Practice
+  Event_ArmadaShine_Name
+.align 2
+.endm
+#endregion
+#region EventDescriptionStrings
+.macro EventDescriptionStrings
+
+################
+Minigames:
+#Eggs-ercise
+  Event_Eggs_Description
+.align 2
+################
+GeneralTech:
+#L-Cancel Training
+  Event_LCancel_Description
+#Ledgedash Training
+  Event_Ledgedash_Description
+#SDI Training
+  Event_SDI_Description
+#Reversal Training
+  Event_Reversal_Description
+#Powershield Training
+  Event_Powershield_Description
+#Shield Drop Training
+  Event_ShieldDrop_Description
+#Attack On Shield
+  Event_AttackOnShield_Description
+#Ledge-Tech Training
+  Event_LedgeTech_Description
+#Amsah-Tech Training
+  Event_AmsahTech_Description
+#Combo Training
+  Event_Combo_Description
+#Waveshine SDI
+  Event_WaveshineSDI_Description
+.align 2
+#######################
+SpacieTech:
+#Ledgetech Marths Counter
+  Event_LedgetechCounter_Description
+#Armada-Shine Practice
+  Event_ArmadaShine_Description
+.align 2
+########################
+.endm
+#endregion
+#region EventChooseCPU
+.macro EventChooseCPU
+
+############################
+ChooseCPU_Minigames:
+  Event_Eggs_ChooseCPU
+  .byte -1
+.align 2
+############################
+ChooseCPU_GeneralTech:
+  Event_LCancel_ChooseCPU
+  Event_Ledgedash_ChooseCPU
+  Event_SDI_ChooseCPU
+  Event_Reversal_ChooseCPU
+  Event_Powershield_ChooseCPU
+  Event_ShieldDrop_ChooseCPU
+  Event_AttackOnShield_ChooseCPU
+  Event_LedgeTech_ChooseCPU
+  Event_AmsahTech_ChooseCPU
+  Event_Combo_ChooseCPU
+  Event_WaveshineSDI_ChooseCPU
+  .byte -1
+.align 2
+############################
+ChooseCPU_SpacieTech:
+  Event_LedgetechCounter_ChooseCPU
+  Event_ArmadaShine_ChooseCPU
+  .byte -1
+.align 2
+############################
+
+.endm
+#endregion
+#region EventPreloadData
+.macro EventPreloadData
+
+############################
+PreloadEvents_Minigames:
+  Event_Eggs_PreloadData
+  .byte -1
+.align 2
+############################
+PreloadEvents_GeneralTech:
+  Event_LCancel_PreloadData
+  Event_Ledgedash_PreloadData
+  Event_SDI_PreloadData
+  Event_Reversal_PreloadData
+  Event_Powershield_PreloadData
+  Event_ShieldDrop_PreloadData
+  Event_AttackOnShield_PreloadData
+  Event_LedgeTech_PreloadData
+  Event_AmsahTech_PreloadData
+  Event_Combo_PreloadData
+  Event_WaveshineSDI_PreloadData
+  .byte -1
+.align 2
+############################
+PreloadEvents_SpacieTech:
+  Event_LedgetechCounter_PreloadData
+  Event_ArmadaShine_PreloadData
+  .byte -1
+.align 2
+############################
+
+.endm
+#endregion
+#region EventLoadSSS
+.macro EventLoadSSS
+
+############################
+Minigames:
+  Event_Eggs_LoadSSS
+  .byte -1
+.align 2
+############################
+GeneralTech:
+  Event_LCancel_LoadSSS
+  Event_Ledgedash_LoadSSS
+  Event_SDI_LoadSSS
+  Event_Reversal_LoadSSS
+  Event_Powershield_LoadSSS
+  Event_ShieldDrop_LoadSSS
+  Event_AttackOnShield_LoadSSS
+  Event_LedgeTech_LoadSSS
+  Event_AmsahTech_LoadSSS
+  Event_Combo_LoadSSS
+  Event_WaveshineSDI_LoadSSS
+  .byte -1
+.align 2
+############################
+SpacieTech:
+  Event_LedgetechCounter_LoadSSS
+  Event_ArmadaShine_LoadSSS
+  .byte -1
+.align 2
+############################
+
+.endm
+#endregion
+#region EventPlayableCharacters
+.macro EventPlayableCharacters
+
+############################
+Minigames:
+  Event_Eggs_PlayableCharacters
+  .byte -1
+.align 2
+############################
+GeneralTech:
+  Event_LCancel_PlayableCharacters
+  Event_Ledgedash_PlayableCharacters
+  Event_SDI_PlayableCharacters
+  Event_Reversal_PlayableCharacters
+  Event_Powershield_PlayableCharacters
+  Event_ShieldDrop_PlayableCharacters
+  Event_AttackOnShield_PlayableCharacters
+  Event_LedgeTech_PlayableCharacters
+  Event_AmsahTech_PlayableCharacters
+  Event_Combo_PlayableCharacters
+  Event_WaveshineSDI_PlayableCharacters
+  .byte -1
+.align 2
+############################
+SpacieTech:
+  Event_LedgetechCounter_PlayableCharacters
+  Event_ArmadaShine_PlayableCharacters
+  .byte -1
+.align 2
+############################
+
+.endm
+#endregion
+
+#endregion
 
 #Custom Memcard Data Bitfield
 .set OSDBitfield,0x1F24

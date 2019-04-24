@@ -166,38 +166,7 @@ ToggleCSSIcon_ToggleSelectedIconsExit:
   blr
 
 #******************************#
-Minigames:
-#End
-  .byte 0xFF
-  .align 2
-
-GeneralTech:
-#Waveshine SDI
-  .byte Event.WaveshineSDI
-.if PAL==0
-  .long Doc_CSSID | Mario_CSSID | Bowser_CSSID | Peach_CSSID | Yoshi_CSSID | DK_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Ness_CSSID | Samus_CSSID | Zelda_CSSID | Link_CSSID | Marth_CSSID
-.endif
-.if PAL==1
-  .long Doc_CSSID | Mario_CSSID | Bowser_CSSID | Peach_CSSID | Yoshi_CSSID | DK_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Ness_CSSID | Samus_CSSID | Zelda_CSSID | Link_CSSID
-.endif
-  .long -1                           #CPU Characters
-#End
-  .byte 0xFF
-  .align 2
-
-SpacieTech:
-#Ledgetech Counter
-  .byte Event.LedgetechCounter
-  .long Fox_CSSID | Falco_CSSID      #Player Characters
-  .long -1                            #CPU Characters
-#Armada-Shine
-  .byte Event.ArmadaShine
-  .long Fox_CSSID                     #Player Characters
-  .long -1                            #CPU Characters
-#End
-  .byte 0xFF
-  .align 2
-
+  EventPlayableCharacters
 #******************************#
 
 Original:

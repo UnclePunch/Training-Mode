@@ -99,46 +99,9 @@ CheckToPreloadCPUAndStage_IncLoop:
   b CheckToPreloadCPUAndStage_Loop
 
 ##########################################
-ChooseCPU_Minigames:
-.byte -1
-.align 2
-
-ChooseCPU_GeneralTech:
-.byte Event.LCancel
-.byte Event.Reversal
-.byte Event.ShieldDrop
-.byte Event.AttackOnShield
-.byte Event.Combo
-.byte -1
-.align 2
-
-ChooseCPU_SpacieTech:
-.byte -1
-.align 2
+  EventChooseCPU
 ##########################################
-
-PreloadEvents_Minigames:
-.byte -1
-.align 2
-
-PreloadEvents_GeneralTech:
-#Format is:
-#Event, CPU char to preload, Stage to preload
-.byte Event.SDI, Fox.Ext, FinalDestination
-.byte Event.Powershield, Falco.Ext, FinalDestination
-.byte Event.ShieldDrop, -1, Battlefield
-.byte Event.AttackOnShield,-1,FinalDestination
-.byte Event.LedgeTech, Falco.Ext, -1
-.byte Event.AmsahTech, Marth.Ext, -1
-.byte Event.WaveshineSDI, Fox.Ext, FinalDestination
-.byte -1
-.align 2
-
-PreloadEvents_SpacieTech:
-.byte Event.LedgetechCounter, Marth.Ext, -1
-.byte -1
-.align 2
-
+  EventPreloadData
 ##########################################
 
 

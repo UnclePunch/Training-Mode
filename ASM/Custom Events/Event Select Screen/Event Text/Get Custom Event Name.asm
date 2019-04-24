@@ -17,45 +17,7 @@ backup
 ##### Page List #######
 	EventJumpTable
 #######################
-Minigames:
-#Eggs-ercise
-.string "Eggs-ercise"
-.align 2
-
-GeneralTech:
-#L-Cancel Training
-.string "L-Cancel Training"
-#Ledgedash Training
-.string "Ledgedash Training"
-#SDI Training
-.string "SDI Training"
-#Reversal Training
-.string "Reversal Training"
-#Powershield Training
-.string "Powershield Training"
-#Shield Drop Training
-.string "Shield Drop Training"
-#Attack On Shield
-.string "Attack On Shield"
-#Ledge-Tech Training
-.string "Ledge-Tech Training"
-#Amsah-Tech Training
-.string "Amsah-Tech Training"
-#Combo Training
-.string "Combo Training"
-#Waveshine SDI
-.string "Waveshine SDI"
-.align 2
-
-#######################
-
-SpacieTech:
-#Ledgetech Marth Counter
-.string "Ledgetech Marth Counter"
-#Armada-Shine Practice
-.string "Armada-Shine Practice"
-.align 2
-
+  EventNameStrings
 #######################
 SkipPageList:
   mflr	r4		#Jump Table Start in r4

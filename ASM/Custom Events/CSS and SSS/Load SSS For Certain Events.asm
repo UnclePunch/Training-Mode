@@ -47,26 +47,7 @@ SSS:
   b original
 
 #########################
-Minigames:
-.byte Event.Eggs
-.byte 0xFF
-.align 2
-
-GeneralTech:
-.byte Event.LCancel
-.byte Event.Ledgedash
-.byte Event.Reversal
-.byte Event.LedgeTech
-.byte Event.AmsahTech
-.byte Event.Combo
-.byte 0xFF
-.align 2
-
-SpacieTech:
-.byte Event.LedgetechCounter
-.byte 0xFF
-.align 2
-
+	EventLoadSSS
 #########################
 
 original:
