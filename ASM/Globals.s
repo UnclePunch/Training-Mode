@@ -14,16 +14,6 @@
 .set KO,0x0
 .set Time,0x1
 
-#region Event Page Order
-#This macro will change the order of the pages
-#Only thing this macro doesn't affect is Load CSS + Preload CPU. Must change this manually.
-.macro EventJumpTable
-	bl	Minigames
-  bl  GeneralTech
-  bl  SpacieTech
-.endm
-#endregion
-
 ##################################
 #region Minigame Page Data
 #Number of Events
@@ -493,6 +483,16 @@ with an Aramada-Shine!"
 
 #region Event Table Macros
 
+#region Event Page Order
+#This macro will change the order of the pages
+#Only thing this macro doesn't affect is Load CSS + Preload CPU. Must change this manually.
+.macro EventJumpTable
+	bl	Minigames
+  bl  GeneralTech
+  bl  SpacieTech
+.endm
+#endregion
+
 #region EventNameStrings
 .macro EventNameStrings
 Minigames:
@@ -807,8 +807,8 @@ SpacieTech:
 .set TM_FrozenToggle,-0x4F8C
 .set DEBUGLV,-0x6C98
 .set CSS_MatchStruct,-0x49F0
-.set CSS_CPUPlayerPort,-0x49B0
 .set CSS_MainPlayerPort,-0x49B0
+.set CSS_CPUPlayerPort,-0x49AF
 .set CSS_Type,-0x49AB
 .set HPS_Unk,-0x3F44
 .set HPS_CurrentSongEntryNum,-0x3F3C

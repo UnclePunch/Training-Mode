@@ -1,61 +1,34 @@
 #To be inserted at 801baa9c
-.macro branchl reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctrl
-.endm
+.include "../../Globals.s"
 
-.macro branch reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctr
-.endm
+.set P1Info,0 *0x24
+.set P2Info,1 *0x24
+.set P3Info,2 *0x24
+.set P4Info,3 *0x24
+.set P5Info,4 *0x24
+.set P6Info,5 *0x24
+#this is a custom offset that comes after the player info.
+#its seemingly unused so im going to place the backed up CPU info there
+  .set MiscInfo,6 *0x24
+#**********************************#
+#b Original
+#Get Event CSS Match Info
+  load  r5,0x804977c8
+#Get CPU Info
+  lbz r3,MiscInfo+0x0(r5)   #Get CPU Character ID
+  lbz r4,MiscInfo+0x1(r5)   #Get CPU Costime ID
+#Get CPU Slot
+  li  r6,1                #Temp make CPU slot 1
+  lbz	r7, 0x0006 (r31)    #Player who accessed CSS
+  cmpwi r7,0x1            #Check if P1
+  bne 0x8
+  li  r6,0
+#Get CPU's Match Info
+  mulli r6,r6,0x24
+  add r6,r6,r5
+#Store to CPU Match Info
+  stb	r3,0x0(r6)
+  stb	r4,0x3(r6)
 
-.macro load reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-.endm
-
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
-
-.macro backup
-mflr r0
-stw r0, 0x4(r1)
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw  r20,0x8(r1)
-.endm
-
- .macro restore
-lmw  r20,0x8(r1)
-lwz r0, 0x104(r1)
-addi	r1,r1,0x100	# release the space
-mtlr r0
-.endm
-
-.macro intToFloat reg,reg2
-xoris    \reg,\reg,0x8000
-lis    r18,0x4330
-lfd    f16,-0x7470(rtoc)    # load magic number
-stw    r18,0(r2)
-stw    \reg,4(r2)
-lfd    \reg2,0(r2)
-fsubs    \reg2,\reg2,f16
-.endm
-
-.set entity,31
-.set player,31
-
-load	r3,0x804977ec		#P2 Match Struct Location
-lbz	r4,0x54(r31)
-lbz	r5,0x55(r31)
-stb	r4,0x0(r3)
-stb	r5,0x3(r3)
-
-lbz	r0, 0x0044 (r31)
+Original:
+  lbz	r0, 0x0044 (r31)

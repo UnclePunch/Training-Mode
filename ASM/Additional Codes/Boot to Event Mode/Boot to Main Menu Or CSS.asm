@@ -1,5 +1,5 @@
 #To be inserted at 801BFA20
-.include "../../../Globals.s"
+.include "../../Globals.s"
 
 .set LoopCount,12
 .set InputStruct,11
