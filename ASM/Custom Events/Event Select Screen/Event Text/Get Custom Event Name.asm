@@ -15,19 +15,18 @@ backup
   bl  SkipPageList
 
 ##### Page List #######
-
-  bl  GeneralTech
-  bl  SpacieTech
-
+	EventJumpTable
 #######################
+Minigames:
+#Eggs-ercise
+.string "Eggs-ercise"
+.align 2
 
 GeneralTech:
 #L-Cancel Training
 .string "L-Cancel Training"
 #Ledgedash Training
 .string "Ledgedash Training"
-#Eggs-ercise
-.string "Eggs-ercise"
 #SDI Training
 .string "SDI Training"
 #Reversal Training

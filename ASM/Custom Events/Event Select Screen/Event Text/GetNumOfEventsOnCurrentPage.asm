@@ -12,16 +12,31 @@ backup
 #Get Current Page
   lwz r3,MemcardData(r13)
   lbz PageID,CurrentEventPage(r3)
-  bl  EventNumbers
-  mflr r3
-  lbzx r3,r3,PageID
+#Get pointer page's string array
+	bl	SkipJumpTable
 
+##### Page List #######
+	EventJumpTable
+#######################
+
+SkipJumpTable:
+  mflr	r4		#Jump Table Start in r4
+  mulli	r5,PageID,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r5,r4,r5		#Gets Address in r4
+  lwz r3,0x0(r5)
 b exit
 
-EventNumbers:
-blrl
-.byte GeneralTech.NumOfEvents
-.byte SpacieTech.NumOfEvents
+Minigames:
+.long Minigames.NumOfEvents
+.align 2
+GeneralTech:
+.long GeneralTech.NumOfEvents
+.align 2
+SpacieTech:
+.long SpacieTech.NumOfEvents
 .align 2
 
 exit:

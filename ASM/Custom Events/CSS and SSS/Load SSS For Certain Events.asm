@@ -17,8 +17,7 @@ stb	r0, 0x000A (r31)
 	bl	SkipJumpTable
 
 ##### Page List #######
-	bl	GeneralTech
-	bl	SpacieTech
+	EventJumpTable
 #######################
 
 SkipJumpTable:
@@ -48,11 +47,14 @@ SSS:
   b original
 
 #########################
+Minigames:
+.byte Event.Eggs
+.byte 0xFF
+.align 2
 
 GeneralTech:
 .byte Event.LCancel
 .byte Event.Ledgedash
-.byte Event.Eggs
 .byte Event.Reversal
 .byte Event.LedgeTech
 .byte Event.AmsahTech

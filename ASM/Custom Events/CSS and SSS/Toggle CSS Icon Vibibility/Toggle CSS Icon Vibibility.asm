@@ -41,8 +41,7 @@ backup
 	bl	ToggleCSSIcon_SkipJumpTable
 
 ##### Page List #######
-	bl	GeneralTech
-	bl	SpacieTech
+  EventJumpTable
 #######################
 
 ToggleCSSIcon_SkipJumpTable:
@@ -54,14 +53,14 @@ ToggleCSSIcon_SkipJumpTable:
   add	r6,r4,r5		#Gets Address in r6
 
 #Loop Through Whitelisted Events
-  subi	r6,r6,0x1
 ToggleCSSIcon_Loop:
-  lbzu	r3,0x1(r6)
+  lbzu	r3,0x0(r6)
   extsb	r0,r3
   cmpwi	r0,-1
   beq	ToggleCSSIcon_Exit
   cmpw	r3,EventID
   beq	ToggleCSSIcon_Start
+  addi r6,r6,0x9
   b	ToggleCSSIcon_Loop
 
 ToggleCSSIcon_Start:
@@ -86,29 +85,13 @@ ToggleCSSIcon_Start:
   b ToggleCSSIcon_Exit
 
 ToggleCSSIcon_HoldingP1Puck:
-  li  r3,0  #Hide
-  bl  ToggleCSSIcon_ToggleAllIcons
   mr  r3,REG_Whitelist
   bl ToggleCSSIcon_ToggleSelectedIcons
   b ToggleCSSIcon_Exit
 
 ToggleCSSIcon_HoldingCPUPuck:
-  li  r3,0  #Hide
-  bl  ToggleCSSIcon_ToggleAllIcons
-#Loop Through Whitelisted Characters
-  subi	r6,REG_Whitelist,0x1
-ToggleCSSIcon_HoldingCPUPuckLoop:
-  lbzu	r3,0x1(r6)
-  extsb	r0,r3
-  cmpwi	r0,-2
-  bne	ToggleCSSIcon_HoldingCPUPuckLoop
-  subi r3,r6,1
+  addi r3,REG_Whitelist,0x4     #CPU List is at 0x4
   bl	ToggleCSSIcon_ToggleSelectedIcons
-  b ToggleCSSIcon_Exit
-
-ToggleCSSIcon_ShowAllCharacters:
-  li  r3,1  #Show
-  bl  ToggleCSSIcon_ToggleAllIcons
   b ToggleCSSIcon_Exit
 
 ToggleCSSIcon_Exit:
@@ -117,29 +100,39 @@ ToggleCSSIcon_Exit:
 
 #******************************#
 
-######################
-## Adjust all icons ##
-######################
+############################
+## Show Whitelisted Chars ##
+############################
+ToggleCSSIcon_ToggleSelectedIcons:
 
-ToggleCSSIcon_ToggleAllIcons:
-.set REG_LoopCount,31
-.set REG_IconDataStart,30
-.set REG_Whitelist,29
-.set REG_IconData,28
-.set REG_VisibilityBool,27
+.set REG_IconDataStart,31
+.set REG_Whitelist,30
+.set REG_IconData,29
+.set REG_VisibilityBool,28
+.set REG_LoopCount,27
 
 backup
 
-ToggleCSSIcon_AdjustAllIconsInit:
+ToggleCSSIcon_ToggleSelectedIconsInit:
 #Init Stuff
-  mr  REG_VisibilityBool,r3
+  lwz  REG_Whitelist,0x0(r3)
   li  REG_LoopCount,25
   load REG_IconDataStart,0x803f0b24
-  b ToggleCSSIcon_AdjustAllIconsIncLoop
-ToggleCSSIcon_AdjustAllIconsLoop:
+  b ToggleCSSIcon_ToggleSelectedIconsIncLoop
+ToggleCSSIcon_ToggleSelectedIconsLoop:
 #Get Icons Data
   mulli r3,REG_LoopCount,0x1C
   add REG_IconData,r3,REG_IconDataStart
+#Check if icon should be visible
+  li	r3, 1
+  slw	r0, r3, REG_LoopCount
+  and.	r0, r0, REG_Whitelist
+  bne	ToggleCSSIcon_ToggleSelectedIcons_Display
+ToggleCSSIcon_ToggleSelectedIcons_Hide:
+  li  REG_VisibilityBool,0
+  b 0x8
+ToggleCSSIcon_ToggleSelectedIcons_Display:
+  li  REG_VisibilityBool,1
 #Set Invisible
   #Get JObj
     lwz	r3, -0x49E0 (r13)
@@ -163,70 +156,31 @@ ToggleCSSIcon_AdjustAllIconsLoop:
   beq 0x8
   li  r3,2
   stb r3,0x2(REG_IconData)
-ToggleCSSIcon_AdjustAllIconsIncLoop:
+ToggleCSSIcon_ToggleSelectedIconsIncLoop:
   subi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,0
-  bge ToggleCSSIcon_AdjustAllIconsLoop
-
-ToggleCSSIcon_AdjustAllIconsExit:
-  restore
-  blr
-
-############################
-## Show Whitelisted Chars ##
-############################
-ToggleCSSIcon_ToggleSelectedIcons:
-
-.set REG_IconDataStart,31
-.set REG_Whitelist,30
-.set REG_IconData,29
-
-backup
-
-ToggleCSSIcon_ToggleSelectedIconsInit:
-#Init Stuff
-  subi  REG_Whitelist,r3,1
-  load REG_IconDataStart,0x803f0b24
-ToggleCSSIcon_ToggleSelectedIconsLoop:
-  lbzu	r3,0x1(REG_Whitelist)
-  extsb	r0,r3
-  cmpwi	r0,-2
-  beq	ToggleCSSIcon_ToggleSelectedIconsExit
-#Toggle Character Icon On
-  #Get Icons Data
-    mulli r3,r3,0x1C
-    add REG_IconData,r3,REG_IconDataStart
-  #Set Invisible
-    #Get JObj
-      lwz	r3, -0x49E0 (r13)
-      addi r4,sp,0x80
-      lbz r5,0x5(REG_IconData)
-      crclr 6
-      li  r6,-1
-      branchl r12,0x80011e24
-    #Toggle invisibility flag off
-      lwz r3,0x80(sp)
-      li  r5,0
-      lwz r4,0x14(r3)
-      rlwimi r4,r5,4,27,27
-      stw r4,0x14(r3)
-  #Set interactable
-    li  r3,2
-    stb r3,0x2(REG_IconData)
-ToggleCSSIcon_ToggleSelectedIconsIncLoop:
-  b ToggleCSSIcon_ToggleSelectedIconsLoop
+  bge ToggleCSSIcon_ToggleSelectedIconsLoop
 
 ToggleCSSIcon_ToggleSelectedIconsExit:
   restore
   blr
 
 #******************************#
+Minigames:
+#End
+  .byte 0xFF
+  .align 2
 
 GeneralTech:
 #Waveshine SDI
   .byte Event.WaveshineSDI
-  .byte Fox_CSSID,Falco_CSSID,-2      #Player Characters
-  .byte -2                            #CPU Characters
+.if PAL==0
+  .long Doc_CSSID | Mario_CSSID | Bowser_CSSID | Peach_CSSID | Yoshi_CSSID | DK_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Ness_CSSID | Samus_CSSID | Zelda_CSSID | Link_CSSID | Marth_CSSID
+.endif
+.if PAL==1
+  .long Doc_CSSID | Mario_CSSID | Bowser_CSSID | Peach_CSSID | Yoshi_CSSID | DK_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Ness_CSSID | Samus_CSSID | Zelda_CSSID | Link_CSSID
+.endif
+  .long -1                           #CPU Characters
 #End
   .byte 0xFF
   .align 2
@@ -234,12 +188,12 @@ GeneralTech:
 SpacieTech:
 #Ledgetech Counter
   .byte Event.LedgetechCounter
-  .byte Fox_CSSID,Falco_CSSID,-2      #Player Characters
-  .byte -2                            #CPU Characters
+  .long Fox_CSSID | Falco_CSSID      #Player Characters
+  .long -1                            #CPU Characters
 #Armada-Shine
   .byte Event.ArmadaShine
-  .byte Fox_CSSID,-2                  #Player Characters
-  .byte -2                            #CPU Characters
+  .long Fox_CSSID                     #Player Characters
+  .long -1                            #CPU Characters
 #End
   .byte 0xFF
   .align 2

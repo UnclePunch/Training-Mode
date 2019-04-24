@@ -8,35 +8,50 @@
 ## Codeset Variables ##
 #######################
 #Number of Pages
-.set NumOfPages,2 -1
+.set NumOfPages,3 -1
 
 #Number of Events
-.set GeneralTech.NumOfEvents, 12 -1
+.set Minigames.NumOfEvents,1 -1
+.set GeneralTech.NumOfEvents, 11 -1
 .set SpacieTech.NumOfEvents,2 -1
 
 #Event Numbers
+#Minigames
+.set Event.Eggs,0
 #General Tech
 .set Event.LCancel,0
 .set Event.Ledgedash,1
-.set Event.Eggs,2
-.set Event.SDI,3
-.set Event.Reversal,4
-.set Event.Powershield,5
-.set Event.ShieldDrop,6
-.set Event.AttackOnShield,7
-.set Event.LedgeTech,8
-.set Event.AmsahTech,9
-.set Event.Combo,10
-.set Event.WaveshineSDI,11
+.set Event.SDI,2
+.set Event.Reversal,3
+.set Event.Powershield,4
+.set Event.ShieldDrop,5
+.set Event.AttackOnShield,6
+.set Event.LedgeTech,7
+.set Event.AmsahTech,8
+.set Event.Combo,9
+.set Event.WaveshineSDI,10
 #Spacie Tech
 .set Event.LedgetechCounter,0
 .set Event.ArmadaShine,1
+
+#region Event Order Macros
+
+#This macro will change the order of the pages
+#Only thing this macro doesn't affect is Load CSS + Preload CPU. Must change this manually.
+.macro EventJumpTable
+	bl	Minigames
+  bl  GeneralTech
+  bl  SpacieTech
+.endm
+
+
+#endregion
+
 
 #Custom Memcard Data Bitfield
 .set OSDBitfield,0x1F24
 .set OSDMaxWindows,0x1F28
 .set CurrentEventPage,0x1F29
-
 
 #OSD IDs
 .set OSD.Wavedash,0
@@ -364,6 +379,7 @@
 .set Ganondorf.Int,0x19
 .set Roy.Int,0x1A
 
+/*
 #Character CSS ID
 .set Doc_CSSID,0x0
 .set Mario_CSSID,0x1
@@ -390,6 +406,35 @@
 .set GaW_CSSID,0x16
 .set Marth_CSSID,0x17
 .set Roy_CSSID,0x18
+*/
+
+#Character CSS Bitflag IDs
+#(used for TM's lookup tables for displaying CSS icons)
+.set Doc_CSSID,0x1
+.set Mario_CSSID,0x2
+.set Luigi_CSSID,0x4
+.set Bowser_CSSID,0x8
+.set Peach_CSSID,0x10
+.set Yoshi_CSSID,0x20
+.set DK_CSSID,0x40
+.set CaptainFalcon_CSSID,0x80
+.set Ganondorf_CSSID,0x100
+.set Falco_CSSID,0x200
+.set Fox_CSSID,0x400
+.set Ness_CSSID,0x800
+.set IceClimbers_CSSID,0x1000
+.set Kirby_CSSID,0x2000
+.set Samus_CSSID,0x4000
+.set Zelda_CSSID,0x8000
+.set Link_CSSID,0x10000
+.set YLink_CSSID,0x20000
+.set Pichu_CSSID,0x40000
+.set Pikachu_CSSID,0x80000
+.set Jigglypuff_CSSID,0x100000
+.set Mewtwo_CSSID,0x200000
+.set GaW_CSSID,0x400000
+.set Marth_CSSID,0x800000
+.set Roy_CSSID,0x1000000
 
 #Stage External IDs
 .set FoD,0x2

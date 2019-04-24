@@ -15,11 +15,14 @@ backup
   bl  SkipPageList
 
 ##### Page List #######
-
-  bl  GeneralTech
-  bl  SpacieTech
-
+	EventJumpTable
 #######################
+
+Minigames:
+#Eggs-ercise
+.string "Break the eggs! Only strong hits will
+break them. DPad down = free practice."
+.align 2
 
 GeneralTech:
 #L-Cancel Training
@@ -29,10 +32,6 @@ a stationary CPU."
 #Ledgedash Training
 .string "Practice Ledgedashes!
 Use D-Pad to change ledge."
-
-#Eggs-ercise
-.string "Break the eggs! Only strong hits will
-break them. DPad down = free practice."
 
 #SDI Training
 .string "Practice Smash DI'ing
@@ -79,8 +78,8 @@ SpacieTech:
 Marth's counter!"
 
 #Armada-Shine Practice
-.string "Finish off the enemy
-Fox with an Aramda-Shine!"
+.string "Finish off the enemy Fox
+with an Aramda-Shine!"
 
 .align 2
 #######################

@@ -79,13 +79,14 @@
   bl  SkipPageList
 
 ##### Page List #######
-  bl  GeneralTech
-  bl  SpacieTech
+	EventJumpTable
+#######################
+Minigames:
+bl	Eggs
 #######################
 GeneralTech:
 bl	LCancel
 bl	Ledgedash
-bl	Eggs
 bl	SDITraining
 bl	Reversal
 bl	Powershield
@@ -4241,6 +4242,7 @@ backup
     Ledgetech_InitializePositions_SkipGroundCorrection:
   #Enter into Wait
     mr  r3,P2GObj
+		lfs	f1, -0x75A8 (rtoc)
     branchl r12,AS_Wait
   #Update Position
     mr  r3,P2GObj

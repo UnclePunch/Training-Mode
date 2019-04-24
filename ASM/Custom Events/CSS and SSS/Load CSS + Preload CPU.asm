@@ -20,8 +20,9 @@
 	bl	ChooseCPU_SkipJumpTable
 
 ##### Page List #######
-	bl	ChooseCPU_GeneralTech
-	bl	ChooseCPU_SpacieTech
+  bl  ChooseCPU_Minigames
+  bl	ChooseCPU_GeneralTech
+  bl	ChooseCPU_SpacieTech
 #######################
 
 ChooseCPU_SkipJumpTable:
@@ -60,6 +61,7 @@ CheckToPreloadCPUAndStage:
 	bl	PreloadEvents_SkipJumpTable
 
 ##### Page List #######
+  bl  PreloadEvents_Minigames
 	bl	PreloadEvents_GeneralTech
 	bl	PreloadEvents_SpacieTech
 #######################
@@ -97,6 +99,9 @@ CheckToPreloadCPUAndStage_IncLoop:
   b CheckToPreloadCPUAndStage_Loop
 
 ##########################################
+ChooseCPU_Minigames:
+.byte -1
+.align 2
 
 ChooseCPU_GeneralTech:
 .byte Event.LCancel
@@ -111,6 +116,10 @@ ChooseCPU_SpacieTech:
 .byte -1
 .align 2
 ##########################################
+
+PreloadEvents_Minigames:
+.byte -1
+.align 2
 
 PreloadEvents_GeneralTech:
 #Format is:

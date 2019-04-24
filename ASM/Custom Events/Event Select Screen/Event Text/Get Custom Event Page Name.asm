@@ -9,8 +9,11 @@ mr PageID,r3
 
 #Get Events Text
   bl	SkipJumpTable
-  bl  Page1
-  bl  Page2
+
+##### Page List #######
+  EventJumpTable
+#######################
+
 SkipJumpTable:
   mflr	r4		#Jump Table Start in r4
   mulli	r5,PageID,0x4		#Each Pointer is 0x4 Long
@@ -20,11 +23,15 @@ SkipJumpTable:
   add	r3,r4,r5		#Gets ASCII Address in r4
   b Exit
 
-Page1:
+Minigames:
+.string "Minigames"
+.align 2
+
+GeneralTech:
 .string "Universal Tech"
 .align 2
 
-Page2:
+SpacieTech:
 .string "Spacie Tech"
 .align 2
 
