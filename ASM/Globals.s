@@ -12,7 +12,7 @@
 
 #Number of Events
 .set GeneralTech.NumOfEvents, 12 -1
-.set FoxTech.NumOfEvents,1 -1
+.set SpacieTech.NumOfEvents,2 -1
 
 #Event Numbers
 #General Tech
@@ -28,8 +28,9 @@
 .set Event.AmsahTech,9
 .set Event.Combo,10
 .set Event.WaveshineSDI,11
-#Fox Tech
+#Spacie Tech
 .set Event.LedgetechCounter,0
+.set Event.ArmadaShine,1
 
 #Custom Memcard Data Bitfield
 .set OSDBitfield,0x1F24
@@ -61,9 +62,9 @@
 .set OSD.Fastfall,20
 .set OSD.FrameAdvantage,21
 .set OSD.ComboCounter,22
-.set OSD.23,23
+.set OSD_23,23
 .set OSD.GrabBreakout,24
-.set OSD.25,25
+.set OSD_25,25
 .set OSD.Ledge,26
 .set OSD.UCF,27
 .set OSD.ActOoHitstun,28
@@ -81,7 +82,7 @@
 .set EventOSD_AmsahTech,0x00000004
 .set EventOSD_ComboTraining,0x01010020
 .set EventOSD_WaveshineSDI,0x10000400
-.set EventOSD_LedgetechCounter,0x10000400
+.set EventOSD_LedgetechCounter,0x00000604
 
 #Custom Playerblock Offsets
 .set PlayerBlockSize, 0x2500
@@ -118,14 +119,16 @@
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
 .set InputStructStart,0x804c21cc
-.set PreloadTableQueue,0x8043207c
-.set PreloadTableUpdated,0x804320d0
+.set PreloadTable,0x80432078
+  .set Preload_Stage,0x10
 
 #r13 Offsets
 .set MemcardData,-0x77C0
 .set TM_FrozenToggle,-0x4F8C
+.set DEBUGLV,-0x6C98
 .set CSS_MatchStruct,-0x49F0
-.set CSS_SinglePlayerPort,-0x49AF
+.set CSS_CPUPlayerPort,-0x49B0
+.set CSS_MainPlayerPort,-0x49B0
 .set CSS_Type,-0x49AB
 .set HPS_Unk,-0x3F44
 .set HPS_CurrentSongEntryNum,-0x3F3C
@@ -267,7 +270,7 @@
 .set GObj_Create,0x803901f0
 .set GObj_Initialize,0x80390b68
 .set GObj_Destroy,0x80390228
-.set SchedulePerFrameProcess,0x8038fd54
+.set GObj_SchedulePerFrameFunction,0x8038fd54
 .set DevelopMode_FrameAdvanceCheck,0x801a45e8
 .set MatchInfo_StockModeCheck,0x8016b094
 .set PlayerBlock_LoadStocksLeft,0x80033bd8
@@ -360,6 +363,33 @@
 .set GaW.Int,0x18
 .set Ganondorf.Int,0x19
 .set Roy.Int,0x1A
+
+#Character CSS ID
+.set Doc_CSSID,0x0
+.set Mario_CSSID,0x1
+.set Luigi_CSSID,0x2
+.set Bowser_CSSID,0x3
+.set Peach_CSSID,0x4
+.set Yoshi_CSSID,0x5
+.set DK_CSSID,0x6
+.set CaptainFalcon_CSSID,0x7
+.set Ganondorf_CSSID,0x8
+.set Falco_CSSID,0x9
+.set Fox_CSSID,0xA
+.set Ness_CSSID,0xB
+.set IceClimbers_CSSID,0xC
+.set Kirby_CSSID,0xD
+.set Samus_CSSID,0xE
+.set Zelda_CSSID,0xF
+.set Link_CSSID,0x10
+.set YLink_CSSID,0x11
+.set Pichu_CSSID,0x12
+.set Pikachu_CSSID,0x13
+.set Jigglypuff_CSSID,0x14
+.set Mewtwo_CSSID,0x15
+.set GaW_CSSID,0x16
+.set Marth_CSSID,0x17
+.set Roy_CSSID,0x18
 
 #Stage External IDs
 .set FoD,0x2

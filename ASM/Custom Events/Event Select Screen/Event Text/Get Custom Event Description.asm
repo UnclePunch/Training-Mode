@@ -1,5 +1,5 @@
 #To be inserted at 80005528
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set EventID,31
 .set PageID,30
@@ -17,7 +17,7 @@ backup
 ##### Page List #######
 
   bl  GeneralTech
-  bl  FoxTech
+  bl  SpacieTech
 
 #######################
 
@@ -73,11 +73,16 @@ of Fox's waveshine!"
 
 #######################
 
-FoxTech:
+SpacieTech:
 #Ledgetech Marths Counter
 .string "Practice ledge-teching
 Marth's counter!"
 
+#Armada-Shine Practice
+.string "Finish off the enemy
+Fox with an Aramda-Shine!"
+
+.align 2
 #######################
 
 SkipPageList:

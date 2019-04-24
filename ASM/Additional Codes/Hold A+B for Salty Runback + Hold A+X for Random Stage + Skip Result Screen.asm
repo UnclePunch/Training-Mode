@@ -31,10 +31,10 @@ RandomStage:
 
   sth r3,0x2(r4)             #store stage half to struct
 
-/*
+
   load r4,0x8043207c         #Preload Cache
   stw r3,0xC(r4)             #Store to Preload Cache
-*/
+
   li r27,0x2                  #reload match scene
   b exit
 

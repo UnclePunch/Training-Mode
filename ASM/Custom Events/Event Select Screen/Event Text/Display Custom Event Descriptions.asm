@@ -1,5 +1,5 @@
 #To be inserted at 8024d80c
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set HeaderLength,0xB
 

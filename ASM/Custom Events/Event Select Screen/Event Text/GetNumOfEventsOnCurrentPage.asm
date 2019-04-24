@@ -1,5 +1,5 @@
 #To be inserted at 80005534
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set EventID,31
 .set PageID,30
@@ -21,7 +21,7 @@ b exit
 EventNumbers:
 blrl
 .byte GeneralTech.NumOfEvents
-.byte FoxTech.NumOfEvents
+.byte SpacieTech.NumOfEvents
 .align 2
 
 exit:

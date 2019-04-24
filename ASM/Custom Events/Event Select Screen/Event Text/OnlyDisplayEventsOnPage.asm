@@ -1,5 +1,5 @@
 #To be inserted at 8024cffc
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set PageID,31
 

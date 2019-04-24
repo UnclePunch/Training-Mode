@@ -1,5 +1,5 @@
 #To be inserted at 8000552c
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set PageID,31
 
@@ -21,11 +21,11 @@ SkipJumpTable:
   b Exit
 
 Page1:
-.string "General Tech"
+.string "Universal Tech"
 .align 2
 
 Page2:
-.string "Fox Tech"
+.string "Spacie Tech"
 .align 2
 
 Exit:

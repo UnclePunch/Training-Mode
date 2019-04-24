@@ -1,5 +1,5 @@
 #To be inserted at 801bab28
-.include "../Globals.s"
+.include "../../Globals.s"
 
 stb	r0, 0x000A (r31)
 
@@ -18,7 +18,7 @@ stb	r0, 0x000A (r31)
 
 ##### Page List #######
 	bl	GeneralTech
-	bl	FoxTech
+	bl	SpacieTech
 #######################
 
 SkipJumpTable:
@@ -60,7 +60,7 @@ GeneralTech:
 .byte 0xFF
 .align 2
 
-FoxTech:
+SpacieTech:
 .byte Event.LedgetechCounter
 .byte 0xFF
 .align 2

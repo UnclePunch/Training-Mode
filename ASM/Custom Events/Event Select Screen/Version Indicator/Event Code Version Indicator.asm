@@ -1,5 +1,5 @@
 #To be inserted at 8024e81c
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set text,31
 .set textproperties,30
@@ -231,7 +231,7 @@ blrl
 
 NullString:
 blrl
-.string "General Tech"
+.string "Null"
 .align 2
 
 PageArrowLeft:

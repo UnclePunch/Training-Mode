@@ -1,5 +1,5 @@
 #To be inserted at 801beb8c
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set EventID,31
 .set PageID,30
@@ -20,7 +20,7 @@ backup
 ##### Page List #######
 
   bl  GeneralTech
-  bl  FoxTech
+  bl  SpacieTech
 
 ##########################
 GeneralTech:
@@ -37,7 +37,7 @@ GeneralTech:
 .byte KO
 .align 2
 
-FoxTech:
+SpacieTech:
 .byte KO
 .align 2
 ##########################

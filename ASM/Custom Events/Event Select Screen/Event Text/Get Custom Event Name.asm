@@ -1,5 +1,5 @@
 #To be inserted at 80005524
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 .set EventID,31
 .set PageID,30
@@ -17,7 +17,7 @@ backup
 ##### Page List #######
 
   bl  GeneralTech
-  bl  FoxTech
+  bl  SpacieTech
 
 #######################
 
@@ -50,9 +50,11 @@ GeneralTech:
 
 #######################
 
-FoxTech:
+SpacieTech:
 #Ledgetech Marth Counter
 .string "Ledgetech Marth Counter"
+#Armada-Shine Practice
+.string "Armada-Shine Practice"
 .align 2
 
 #######################

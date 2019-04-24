@@ -1,5 +1,5 @@
 #To be inserted at 801a44bc
-.include "../Globals.s"
+.include "../../Globals.s"
 ##################################################
 
 #Overwrite Event Scene List

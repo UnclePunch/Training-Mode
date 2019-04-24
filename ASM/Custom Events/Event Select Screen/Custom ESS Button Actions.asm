@@ -1,5 +1,5 @@
 #To be inserted at 8024d92c
-.include "../Globals.s"
+.include "../../Globals.s"
 
 backup
 
@@ -139,7 +139,7 @@ PlayMovie:
 
 		##### Page List #######
 			bl	GeneralTech
-			bl	FoxTech
+			bl	SpacieTech
 		#######################
 
 		SkipJumpTable:
@@ -439,7 +439,7 @@ GeneralTech:
 
 #######################################
 
-FoxTech:
+SpacieTech:
 #Ledgetech Counter
 .string "TvFxLt"
 .align 2

@@ -6,6 +6,21 @@
 #r28 = same as r26
 #r29 = event struct index (0x0 of this, then 0x8 of that to get the specifics)
 
+#region Event and Menu GObj Data Structs
+#Event GObj Data Struct
+.set EventData_DataSize,0x50
+.set EventData_MenuDataPointer,(EventData_DataSize-0x4)
+.set EventData_SaveStateStruct,0x10
+
+#Menu GObj Data Struct
+.set MenuData_DataSize,0x50
+.set MenuData_EventDataPointer,(MenuData_DataSize-0x4)
+.set MenuData_WindowOptionCountPointer,0x0
+.set MenuData_ASCIIStructPointer,0x4
+.set MenuData_OptionMenuMemory,0x8
+.set MenuData_OptionMenuToggled,0x28
+#endregion
+
 #region Init Custom Event
 #################
 ## Custom Code ##
@@ -65,7 +80,7 @@
 
 ##### Page List #######
   bl  GeneralTech
-  bl  FoxTech
+  bl  SpacieTech
 #######################
 GeneralTech:
 bl	LCancel
@@ -81,7 +96,7 @@ bl	AmsahTech
 bl	ComboTraining
 bl	WaveshineSDI
 #######################
-FoxTech:
+SpacieTech:
 bl  LedgetechCounter
 #######################
 
@@ -196,7 +211,8 @@ b	exit
     #Clear Inputs
       bl  RemoveFirstFrameInputs
     #Save State
-      addi r3,EventData,0x10
+      addi r3,EventData,EventData_SaveStateStruct
+			li	r4,1			#Override failsafe code
       bl  SaveState_Save
 		LCancelNotFirstFrame:
 
@@ -225,7 +241,7 @@ b	exit
 
 		LCancelThink_CheckForSaveState:
 		#Poll For Savestates
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
 		bl	CheckForSaveAndLoad
 
     mr  r3,P1GObj
@@ -334,10 +350,10 @@ b	exit
     .set currentLedge,0x3
 		.set timer,0x4
 		.set CameraBox,0x8
-		.set StartingLocation,OptionMenuMemory+0x2+0x0
-		.set AutoRestore,OptionMenuMemory+0x2+0x1
-    .set StartingLocationToggled,OptionMenuToggled+0x0
-		.set AutoRestoreToggled,OptionMenuToggled+0x1
+		.set StartingLocation,(MenuData_OptionMenuMemory+0x2+0x0)
+		.set AutoRestore,(MenuData_OptionMenuMemory+0x2+0x1)
+    .set StartingLocationToggled,(MenuData_OptionMenuToggled+0x0)
+		.set AutoRestoreToggled,(MenuData_OptionMenuToggled+0x1)
 
 		LedgedashThink:
 		blrl
@@ -345,7 +361,7 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-		lwz   MenuData,MenuDataPointer(EventData)
+		lwz   MenuData,EventData_MenuDataPointer(EventData)
 
     bl    GetAllPlayerPointers
 		mr		P1GObj,r3			#player block in r30
@@ -373,7 +389,8 @@ b	exit
       #Clear Inputs
         bl  RemoveFirstFrameInputs
 			#Save State
-				addi r3,EventData,0x10
+				addi r3,EventData,EventData_SaveStateStruct
+				li	r4,1			#Override failsafe code
 				bl	SaveState_Save
 
 			#Set Frame 1 As Over
@@ -427,28 +444,30 @@ b	exit
 			rlwinm.	r0,r3,0,30,30
 			beq	Ledgedash_CheckLeft
 		#Load Most Recent State
-			#addi r3,EventData,0x10
+			#addi r3,EventData,EventData_SaveStateStruct
 			#bl		SaveState_Load
 		#Place on Right Ledge
       li	r3,1
       stb r3,currentLedge(EventData)
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
+			li	r4,1			#Override failsafe code
 			bl		SaveState_Save
 			b	Ledgedash_LoadState
 		Ledgedash_CheckLeft:
 			rlwinm.	r0,r3,0,31,31
 			beq	GetProgressAndAS
 		#Load Most Recent State
-			#addi r3,EventData,0x10
+			#addi r3,EventData,EventData_SaveStateStruct
 			#bl		SaveState_Load
 		#Place on Left Ledge
 			li	r3,0
       stb r3,currentLedge(EventData)
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
+			li	r4,1			#Override failsafe code
 			bl		SaveState_Save
 			b	Ledgedash_LoadState
 
@@ -624,7 +643,8 @@ b	exit
 			bgt	LedgedashThinkEnd
       bl	Ledgedash_PlaceOnLedge
     #Save State
-      addi r3,EventData,0x10
+      addi r3,EventData,EventData_SaveStateStruct
+			li	r4,1			#Override failsafe code
       bl		SaveState_Save
 
 		Ledgedash_LoadState:
@@ -633,7 +653,7 @@ b	exit
 			stb		r3,eventState(r31)				#Progress Byte
 			stb		r3,hitboxFoundFlag(r31)		#Invincible Move Bool
 			stb		r3,timer(r31)							#Timer
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
 			bl		SaveState_Load
 		#Create Respawn Platform If Enabled
 			lbz		r3,StartingLocation(MenuData)
@@ -1053,8 +1073,8 @@ b	exit
     .set P1GObj,28
 
     #Offsets
-		.set	DamageThreshold,(OptionMenuMemory+0x2) +0x0
-		.set	DamageThresholdToggled,(OptionMenuToggled) +0x0
+		.set	DamageThreshold,(MenuData_OptionMenuMemory+0x2) +0x0
+		.set	DamageThresholdToggled,(MenuData_OptionMenuToggled) +0x0
 
 		EggsThink:
 		blrl
@@ -1063,7 +1083,7 @@ b	exit
 		#Get and Backup Event Data
 		mr	r30,r3			#r30 = think entity
 		lwz	EventData,0x2c(r3)			#backup data pointer in r31
-    lwz MenuData,MenuDataPointer(EventData)
+    lwz MenuData,EventData_MenuDataPointer(EventData)
 
 		#Get Player Data
     bl  GetAllPlayerPointers
@@ -1470,7 +1490,7 @@ EggsThinkExit:
 
 			#Check If Any Attack Should Break
   			lwz	r3,0xDDC(r31)			         #Get Event Data
-        lwz r3,MenuDataPointer(r3)     #Get Menu Data
+        lwz r3,EventData_MenuDataPointer(r3)     #Get Menu Data
   			lbz	r3,DamageThreshold(r3)			#Damage Behavior
   			cmpwi	r3,0x1
   			beq	Eggs_OnCollisionBreakEgg
@@ -1670,7 +1690,8 @@ b	exit
       #Clear Inputs
         bl  RemoveFirstFrameInputs
 			#Save State
-  			addi r3,EventData,0x10
+  			addi r3,EventData,EventData_SaveStateStruct
+				li	r4,1			#Override failsafe code
   			bl	SaveState_Save
 			#Random Start Time
   			li	r3,60
@@ -1942,9 +1963,9 @@ SDITrainingInputTowardsOpponent_Exit:
 			cmpwi	r3,0x0
 			bne	SDITrainingThinkExit
 		#Load State
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
 			bl	SaveState_Load
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
 			bl	SaveState_Load
 		#Random Timer
 			li	r3,60
@@ -2121,12 +2142,12 @@ b	exit
 
 		.set firstFrameFlag,0x0
 		.set timer,0x4
-		.set CPUAttack,(OptionMenuMemory+0x2)+(0x0)
-		.set P1FacingDirection,(OptionMenuMemory+0x2)+(0x1)
-		.set CPUFacingDirection,(OptionMenuMemory+0x2)+(0x2)
-    .set CPUAttackToggled,OptionMenuToggled+(0x0)
-    .set P1FacingDirectionToggled,OptionMenuToggled+(0x1)
-    .set CPUFacingDirectionToggled,OptionMenuToggled+(0x2)
+		.set CPUAttack,(MenuData_OptionMenuMemory+0x2)+(0x0)
+		.set P1FacingDirection,(MenuData_OptionMenuMemory+0x2)+(0x1)
+		.set CPUFacingDirection,(MenuData_OptionMenuMemory+0x2)+(0x2)
+    .set CPUAttackToggled,MenuData_OptionMenuToggled+(0x0)
+    .set P1FacingDirectionToggled,MenuData_OptionMenuToggled+(0x1)
+    .set CPUFacingDirectionToggled,MenuData_OptionMenuToggled+(0x2)
 		.set AerialThinkStruct,0x20
 
 		ReversalThink:
@@ -2138,7 +2159,7 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-    lwz MenuData,MenuDataPointer(EventData)
+    lwz MenuData,EventData_MenuDataPointer(EventData)
 
     bl  GetAllPlayerPointers
     mr P1GObj,r3
@@ -2164,6 +2185,7 @@ b	exit
         bl  RemoveFirstFrameInputs
       #SaveState
         addi  r3,EventData,0x10       #SaveState start
+				li	r4,1			#Override failsafe code
   			bl	SaveState_Save
 			#Set Frame 1 As Over
   			li		r3,0x1
@@ -2452,7 +2474,7 @@ b	exit
     ReversalAdjustCPUDirection_Skip:
 		#Restore
 		ReversalLoadState:
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,30
@@ -2761,7 +2783,7 @@ b	exit
     .set P2GObj,30
 
     #Offsets
-		.set FireSpeed,(OptionMenuMemory+0x2)+0x0
+		.set FireSpeed,(MenuData_OptionMenuMemory+0x2)+0x0
 
 		PowershieldThink:
 		blrl
@@ -2769,7 +2791,7 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-    lwz   MenuData,MenuDataPointer(EventData)
+    lwz   MenuData,EventData_MenuDataPointer(EventData)
 
     bl  GetAllPlayerPointers
     mr P1GObj,r3
@@ -2911,7 +2933,8 @@ b	exit
 		#Fix Inputs
 		bl	CurrentInputsAsLastFramesInputs
 		#SaveState
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
+		li	r4,1			#Override failsafe code
 		bl	SaveState_Save
 
 
@@ -3046,9 +3069,9 @@ blr
 ##################################
 
 PowershieldRestore:
-addi r3,EventData,0x10
+addi r3,EventData,EventData_SaveStateStruct
 bl	SaveState_Load
-addi r3,EventData,0x10
+addi r3,EventData,EventData_SaveStateStruct
 bl	SaveState_Load
 b	PowershieldThinkExit
 
@@ -3170,8 +3193,8 @@ b	exit
     .set P2GObj,30
 
     #Offsets
-		.set FacingDirection,(OptionMenuMemory+0x2)+0x0
-    .set FacingDirectionToggled,(OptionMenuToggled)+0x0
+		.set FacingDirection,(MenuData_OptionMenuMemory+0x2)+0x0
+    .set FacingDirectionToggled,(MenuData_OptionMenuToggled)+0x0
 
 		ShieldDropThink:
 		blrl
@@ -3179,7 +3202,7 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-    lwz   MenuData,MenuDataPointer(EventData)
+    lwz   MenuData,EventData_MenuDataPointer(EventData)
 
     bl  GetAllPlayerPointers
     mr P1GObj,r3
@@ -3206,7 +3229,8 @@ b	exit
   			lfs	f1,0xB4(r29)
   			stfs	f1,0x834(r29)
 			#Save State
-  			addi r3,EventData,0x10
+  			addi r3,EventData,EventData_SaveStateStruct
+				li	r4,1			#Override failsafe code
   			bl	SaveState_Save
 			#Set Timer to -60
   			li	r3,-60
@@ -3288,7 +3312,7 @@ b	exit
 		lwz	r23,0x620(r27)
 		lwz	r24,0x624(r27)
 		#Restore
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
 		bl	SaveState_Load
 		#Restore P1 Analog Timers
 		lwz	r23,0x620(r27)
@@ -3426,8 +3450,8 @@ b	exit
 
 		.set firstFrameFlag,0x0
 		.set timer,0x4
-		.set OoSOption,OptionMenuMemory+0x2 + 0x0
-  	.set OoSOptionToggled,OptionMenuToggled + 0x0
+		.set OoSOption,MenuData_OptionMenuMemory+0x2 + 0x0
+  	.set OoSOptionToggled,MenuData_OptionMenuToggled + 0x0
 
 		AttackOnShieldThink:
 		blrl
@@ -3435,7 +3459,7 @@ b	exit
 
 		#INIT FUNCTION VARIABLES
 		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-    lwz MenuData,MenuDataPointer(EventData)
+    lwz MenuData,EventData_MenuDataPointer(EventData)
 
     bl  GetAllPlayerPointers
     mr P1GObj,r3
@@ -3458,7 +3482,8 @@ b	exit
       #Clear Inputs
         bl  RemoveFirstFrameInputs
 			#Save State
-  			addi r3,EventData,0x10
+  			addi r3,EventData,EventData_SaveStateStruct
+				li	r4,1			#Override failsafe code
   			bl		SaveState_Save
 
 
@@ -3713,7 +3738,7 @@ b	exit
 
 		AttackOnShieldRestoreState:
 		#Restore State
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
 		bl	SaveState_Load
 		b	AttackOnShieldThinkExit
 
@@ -3816,7 +3841,7 @@ Ledgetech:
 	lwz r3,0x0(r29)						#Send event struct
 	mr	r4,r26								#Send match struct
 	li	r5,Falco.Ext					#Use chosen CPU
-	li	r6,FinalDestination		#Use chosen Stage
+	li	r6,-1									#Use chosen Stage
 	load r7,EventOSD_LedgeTech
 	bl	InitializeMatch
 
@@ -3897,6 +3922,9 @@ b	exit
       li  r3,2
       branchl r12,HSD_Randi
       bl  Ledgetech_InitializePositions
+		#Enter SquatWait
+		  mr r3,P2GObj
+		  branchl r12,AS_SquatWait
 		#P1 Has 90%
 			li	r3,90
 			load	r4,0x80453080		#P1 Static Block
@@ -3907,7 +3935,8 @@ b	exit
       li	r3,-127
       stb	r3,0x1A8D(P2Data)
 		#Save State
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
+			li	r4,1			#Override failsafe
 			bl		SaveState_Save
 
 
@@ -4065,17 +4094,9 @@ b	exit
 		b	LedgetechCheckToReset
 		LedgetechCheckDistance:
 		#Distance Formula	(Get Distance in f1)
-		lfs	f3,0xB0(r29)	#P2 X
-		lfs	f4,0xB4(r29) #P2 Y
-		lfs	f5,0xB0(r27) #P1 X
-		lfs	f6,0xB4(r27) #P1 Y
-		fsubs	f1,f5,f3
-		fsubs	f2,f4,f6
-		fmuls	f1,f1,f1
-		fmuls	f2,f2,f2
-		fadds	f2,f1,f2
-		frsqrte	f1,f2
-		fmuls	f1,f1,f2
+		addi r3,r29,0xB0 #P2 Positon
+		addi r4,r27,0xB0 #P1 Position
+		bl	GetDistance
 		lfs	f2,0x10(r21)
 		fcmpo	cr0,f1,f2
 		bgt	LedgetechCheckToReset
@@ -4104,12 +4125,15 @@ b	exit
 
 		LedgetechRestoreState:
 	  #Restore State
-    	addi r3,EventData,0x10
+    	addi r3,EventData,EventData_SaveStateStruct
     	bl	SaveState_Load
     #Random Side of Stage
       li  r3,2
       branchl r12,HSD_Randi
       bl  Ledgetech_InitializePositions
+		#Enter SquatWait
+		  mr r3,P2GObj
+		  branchl r12,AS_SquatWait
 
 		#Set Timer
 		li	r3,0
@@ -4215,9 +4239,9 @@ backup
     stfs f2,0xB4(P2Data)
     stw r4,0x83C(P2Data)
     Ledgetech_InitializePositions_SkipGroundCorrection:
-  #Enter SquatWait
-    mr r3,P2GObj
-    branchl r12,AS_SquatWait
+  #Enter into Wait
+    mr  r3,P2GObj
+    branchl r12,AS_Wait
   #Update Position
     mr  r3,P2GObj
     bl  UpdatePosition
@@ -4365,7 +4389,8 @@ b	exit
       #Clear Inputs
         bl  RemoveFirstFrameInputs
 			#Save State
-  			addi r3,EventData,0x10
+  			addi r3,EventData,EventData_SaveStateStruct
+				li	r4,1			#Override failsafe code
   			bl	SaveState_Save
 
 
@@ -4556,7 +4581,7 @@ b	exit
 
 		AmsahTechRestoreState:
 		#Restore State
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
 		bl	SaveState_Load
 		#Restore Timers Just In Case
 		li	r3,0x0
@@ -4648,16 +4673,16 @@ b	exit
 
     #Offsets
 		.set EventState,0x8
-		.set DIBehavior,(OptionMenuMemory+0x2)+0x0
-		.set SDIBehavior,(OptionMenuMemory+0x2)+0x1
-		.set TechOption,(OptionMenuMemory+0x2)+0x2
-		.set PostHitstunAction,(OptionMenuMemory+0x2)+0x3
-		.set GrabMashout,(OptionMenuMemory+0x2)+0x4
-    .set DIBehaviorToggled,(OptionMenuToggled)+0x0
-		.set SDIBehaviorToggled,(OptionMenuToggled)+0x1
-		.set TechOptionToggled,(OptionMenuToggled)+0x2
-		.set PostHitstunActionToggled,(OptionMenuToggled)+0x3
-		.set GrabMashoutToggled,(OptionMenuToggled)+0x4
+		.set DIBehavior,(MenuData_OptionMenuMemory+0x2)+0x0
+		.set SDIBehavior,(MenuData_OptionMenuMemory+0x2)+0x1
+		.set TechOption,(MenuData_OptionMenuMemory+0x2)+0x2
+		.set PostHitstunAction,(MenuData_OptionMenuMemory+0x2)+0x3
+		.set GrabMashout,(MenuData_OptionMenuMemory+0x2)+0x4
+    .set DIBehaviorToggled,(MenuData_OptionMenuToggled)+0x0
+		.set SDIBehaviorToggled,(MenuData_OptionMenuToggled)+0x1
+		.set TechOptionToggled,(MenuData_OptionMenuToggled)+0x2
+		.set PostHitstunActionToggled,(MenuData_OptionMenuToggled)+0x3
+		.set GrabMashoutToggled,(MenuData_OptionMenuToggled)+0x4
 
 		#Definitions
 		#DIBehavior
@@ -4686,7 +4711,7 @@ b	exit
     mr P2GObj,r5
     mr P2Data,r6
 
-    lwz MenuData,MenuDataPointer(EventData)
+    lwz MenuData,EventData_MenuDataPointer(EventData)
 
 		bl	StoreCPUTypeAndZeroInputs
 
@@ -4699,7 +4724,8 @@ b	exit
       #Clear Inputs
         bl  RemoveFirstFrameInputs
 			#Save State
-  			addi r3,EventData,0x10
+  			addi r3,EventData,EventData_SaveStateStruct
+				li	r4,1			#Override failsafe code
   			bl	SaveState_Save
 			#Init Score Count
   			lhz	r3,-0x4ea8(r13)
@@ -5505,9 +5531,9 @@ b	exit
 
 		ComboTrainingRestoreState:
 		#Restore State
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
 		bl	SaveState_Load
-		addi r3,EventData,0x10
+		addi r3,EventData,EventData_SaveStateStruct
 		bl	SaveState_Load
 		#Reset State ID
 		li	r3,0x0
@@ -5610,7 +5636,7 @@ b	ComboTrainingDecideStickAngleExit
 
 ComboTrainingDecideStickAngle_SlightDI:
 
-#Get Random Stick X Input 86-105, 86-95 go in front, 96-105 go behind shiek behind
+#Get Random Stick X Input 86-105, 86-95 go in front, 96-105 go behind shiek
 li	r3,19
 branchl	r12,HSD_Randi
 addi	r3,r3,86		#Start at 86
@@ -6306,7 +6332,8 @@ b	exit
 					lfs	f1, 0x00B4 (r29)
 					stfs	f1, 0x0834 (r29)
 				#Save State
-					addi r3,EventData,0x10
+					addi r3,EventData,EventData_SaveStateStruct
+					li	r4,1			#Override failsafe code
 					bl	SaveState_Save
 				#Set Timer to -60
 					li		r3,-60
@@ -6590,7 +6617,7 @@ b	exit
 			fneg	f1,f1
 			stfs	f1,0xB0(r5)
 		#Restore State
-			addi r3,EventData,0x10
+			addi r3,EventData,EventData_SaveStateStruct
 			bl	SaveState_Load
 		#Reset Timer
 			li	r3,60
@@ -6729,7 +6756,8 @@ b	exit
 					lfs	f1, 0x00B4 (r29)
 					stfs	f1, 0x0834 (r29)
 				#Save State
-					addi r3,EventData,0x10
+					addi r3,EventData,EventData_SaveStateStruct
+					li	r4,1			#Override failsafe code
 					bl	SaveState_Save
 
 
@@ -6773,7 +6801,7 @@ LedgetechCounter:
 	lwz r3,0x0(r29)										#Send event struct
 	mr	r4,r26												#Send match struct
 	li	r5,Marth.Ext									#Use marth
-	li	r6,0													#Use chosen Stage
+	li	r6,-1													#Use chosen Stage
 	load r7,EventOSD_LedgetechCounter
 	bl	InitializeMatch
 
@@ -6796,7 +6824,7 @@ LedgetechCounterLoad:
 #Schedule Think
 	bl	LedgetechCounterThink
 	mflr	r3
-	li	r4,9		#Priority (After EnvCOllision)
+	li	r4,3		#Priority (After EnvCOllision)
   li  r5,0
 	bl	CreateEventThinkFunction
 	b	LedgetechCounterThink_Exit
@@ -6808,11 +6836,171 @@ LedgetechCounterLoad:
 LedgetechCounterThink:
 	blrl
 
+#Registers
+	.set EventConstants,25
+  .set MenuData,26
+  .set EventData,31
+  .set P1Data,27
+  .set P1GObj,28
+	.set P2Data,29
+	.set P2GObj,30
 
+#Event Data Offsets
+	.set EventState,0x0
+		.set EventState_OnRebirthPlat,0x0
+		.set EventState_Recovering,0x1
+	.set MarthState,0x1
+		.set MarthState_Wait,0x0
+		.set MarthState_Attacked,0x1
+	.set Timer,0x2
+
+backup
+
+#INIT FUNCTION VARIABLES
+	lwz		EventData,0x2c(r3)			#backup data pointer in r31
+
+  bl  GetAllPlayerPointers
+  mr P1GObj,r3
+  mr P1Data,r4
+  mr P2GObj,r5
+  mr P2Data,r6
+
+  lwz MenuData,EventData_MenuDataPointer(EventData)
+
+	bl	LedgetechCounter_Constants
+	mflr EventConstants
+
+	bl	StoreCPUTypeAndZeroInputs
+
+#ON FIRST FRAME
+	bl	CheckIfFirstFrame
+	cmpwi	r3,0x0
+	beq	LedgetechCounterThink_Start
+	#Random Side of Stage
+		li  r3,2
+		branchl r12,HSD_Randi
+		bl  Ledgetech_InitializePositions
+	#Move Marth forward a bit
+		lfs f1,0x2C(P2Data)
+		lfs f2,0x4(EventConstants)
+		fmuls f1,f1,f2
+		lfs f2,0xB0(P2Data)
+		fadds f1,f1,f2
+		stfs f1,0xB0(P2Data)
+  #Clear Inputs
+    bl  RemoveFirstFrameInputs
+	#Save State
+  	addi r3,EventData,EventData_SaveStateStruct
+		li	r4,1			#Override failsafe code
+  	bl	SaveState_Save
+	#Init Score Count
+  	lhz	r3,-0x4ea8(r13)
+  	branchl	r12,HUD_KOCounter_UpdateKOs
+
+LedgetechCounterThink_Start:
+
+#Reset if anyone died
+	bl	IsAnyoneDead
+	cmpwi r3,0
+	bne LedgetechCounterThink_Restore
+
+#Switch case for state of event
+	lbz r3,EventState(EventData)
+	cmpwi r3,EventState_OnRebirthPlat
+	beq LedgetechCounterThink_OnRebirthPlat
+	cmpwi r3,EventState_Recovering
+	beq LedgetechCounterThink_Recovering
+	b	LedgetechCounterThink_CheckForTimer
+
+###########################################
+LedgetechCounterThink_OnRebirthPlat:
+#Check if exited RebirthWait
+	lwz r3,0x10(P1Data)
+	cmpwi r3,ASID_RebirthWait
+	beq LedgetechCounterThink_OnRebirthPlat_ExtendTimer
+#Change Event State
+	li	r3,EventState_Recovering
+	stb r3,EventState(EventData)
+	b	LedgetechCounterThink_CheckForTimer
+LedgetechCounterThink_OnRebirthPlat_ExtendTimer:
+#Extend RebithWait Timer
+	li	r3,2
+	stw r3,0x2340(P1Data)
+	b	LedgetechCounterThink_CheckForTimer
+###########################################
+
+###########################################
+LedgetechCounterThink_Recovering:
+#Check if marth acted already
+	lbz r3,MarthState(EventData)
+	cmpwi r3,MarthState_Wait
+	bne LedgetechCounterThink_CheckForTimer
+
+#Check P1s Distance from Marth
+	addi r3,P1Data,0xB0
+	addi r4,P2Data,0xB0
+	bl	GetDistance
+	lfs f2,0x0(EventConstants)
+	fcmpo cr0,f1,f2
+	bgt LedgetechCounterThink_CheckForTimer
+#P1 is in range, use down B
+	li	r3,0x200
+	stw r3,CPU_HeldButtons(P2Data)
+	li	r3,-127
+	stb r3,CPU_AnalogY(P2Data)
+#Set as attacking
+	li	r3,MarthState_Attacked
+	stb r3,MarthState(EventData)
+#Start Timer
+	li	r3,70
+	stb r3,Timer(EventData)
+
+	b	LedgetechCounterThink_CheckForTimer
+############################################
+
+LedgetechCounterThink_CheckForTimer:
+#Check Timer
+	lbz r3,Timer(EventData)
+	cmpwi r3,0
+	beq LedgetechCounterThink_Exit
+#Decrement
+	subi r3,r3,1
+	stb r3,Timer(EventData)
+	cmpwi r3,0
+	bne LedgetechCounterThink_Exit
+
+LedgetechCounterThink_Restore:
+#Load State
+  addi r3,EventData,EventData_SaveStateStruct
+  bl	SaveState_Load
+#Random Side of Stage
+	li  r3,2
+	branchl r12,HSD_Randi
+	bl  Ledgetech_InitializePositions
+#Move Marth forward a bit
+	lfs f1,0x2C(P2Data)
+	lfs f2,0x4(EventConstants)
+	fmuls f1,f1,f2
+	lfs f2,0xB0(P2Data)
+	fadds f1,f1,f2
+	stfs f1,0xB0(P2Data)
+#Reset Variables
+	li	r3,EventState_OnRebirthPlat
+	stb r3,EventState(EventData)
+	li	r3,MarthState_Wait
+	stb r3,MarthState(EventData)
 
 LedgetechCounterThink_Exit:
 	restore
 	blr
+
+
+######
+LedgetechCounter_Constants:
+blrl
+.float 33		#Mm away from fox to init counter
+.float 5		#Mm to move marth forward after placing on ledge
+######
 
 #endregion
 
@@ -7715,12 +7903,7 @@ blrl
 ###########################
 CreateEventThinkFunction:
 
-#in
-#r3 = function to run each frame
-#r4 = priority
-#r5 = pointer to Window and Option Count
-#r6 = pointer to ASCII struct
-
+#Registers
 .set WindowOptionCount,31
 .set ASCIIStruct,30
 .set EventGObj,29
@@ -7729,14 +7912,6 @@ CreateEventThinkFunction:
 .set MenuData,26
 .set Priority,25
 .set Function,24
-
-#Offsets
-.set DataspaceSize,0x50
-.set MenuDataPointer,(DataspaceSize-0x4)
-.set EventDataPointer,(DataspaceSize-0x4)
-.set WindowOptionCountPointer,0x0
-.set ASCIIStructPointer,0x4
-.set OptionMenuMemory,0x8
 
 backup
 
@@ -7761,10 +7936,10 @@ mr  ASCIIStruct,r6
 #Schedule Task
   mr	r4,Function
   mr	r5,Priority
-  branchl	r12,SchedulePerFrameProcess
+  branchl	r12,GObj_SchedulePerFrameFunction
 
 #Give Task Some Data Space
-  li	r3,DataspaceSize		#50 bytes of space
+  li	r3,EventData_DataSize		#50 bytes of space
   branchl	r12,HSD_MemAlloc		#HSD_MemAlloc
   mr	EventData,r3
 
@@ -7777,7 +7952,7 @@ mr  ASCIIStruct,r6
 
 #Zero Dataspace
   mr	r3,EventData
-  li	r4,DataspaceSize
+  li	r4,EventData_DataSize
   branchl	r12,ZeroAreaLength		#zero length
 
 ##############################
@@ -7801,10 +7976,10 @@ mr  ASCIIStruct,r6
   bl  OptionMenuThink
   mflr r4
   li	r5,22          #Last Function to Run
-  branchl	r12,SchedulePerFrameProcess
+  branchl	r12,GObj_SchedulePerFrameFunction
 
 #Give Task Some Data Space
-  li	r3,DataspaceSize		#50 bytes of space
+  li	r3,MenuData_DataSize		#50 bytes of space
   branchl	r12,HSD_MemAlloc		#HSD_MemAlloc
   mr	MenuData,r3
 
@@ -7817,16 +7992,16 @@ mr  ASCIIStruct,r6
 
 #Zero Dataspace
   mr	r3,MenuData
-  li	r4,DataspaceSize
+  li	r4,MenuData_DataSize
   branchl	r12,ZeroAreaLength		#zero length
 
 #Store Option Menu info to Dataspace
-  stw WindowOptionCount,WindowOptionCountPointer(MenuData)
-  stw ASCIIStruct,ASCIIStructPointer(MenuData)
+  stw WindowOptionCount,MenuData_WindowOptionCountPointer(MenuData)
+  stw ASCIIStruct,MenuData_ASCIIStructPointer(MenuData)
 
 #Store Pointers to Each Other
-  stw MenuData,MenuDataPointer(EventData)
-  stw EventData,EventDataPointer(MenuData)
+  stw MenuData,EventData_MenuDataPointer(EventData)
+  stw EventData,MenuData_EventDataPointer(MenuData)
 
 CreateEventThinkFunction_Exit:
 restore
@@ -7840,7 +8015,6 @@ OptionMenuThink:
 blrl
 
 .set MenuData,31
-.set OptionMenuToggled,0x28
 
 backup
 
@@ -7855,15 +8029,15 @@ backup
 
 #Run OptionThink Code
 OptionMenuThink_CheckInputs:
-  addi r3,MenuData,OptionMenuMemory
-  lwz r4,WindowOptionCountPointer(MenuData)
-  lwz r5,ASCIIStructPointer(MenuData)
+  addi r3,MenuData,MenuData_OptionMenuMemory
+  lwz r4,MenuData_WindowOptionCountPointer(MenuData)
+  lwz r5,MenuData_ASCIIStructPointer(MenuData)
   bl	OptionWindow
 
 #Store Modified Option Bool
   cmpwi r3,0
   beq OptionMenuThink_Exit
-  addi r5,MenuData,OptionMenuToggled
+  addi r5,MenuData,MenuData_OptionMenuToggled
   stbx r3,r4,r5
 
 OptionMenuThink_Exit:
@@ -7880,11 +8054,11 @@ ClearToggledOptions:
 #r3 = Menu Data
 
 #Get Amount of Options
-  lwz r4,WindowOptionCountPointer(r3)
+  lwz r4,MenuData_WindowOptionCountPointer(r3)
   lbz r4,0x0(r4)
 
 #Loop Through All Data
-  addi r3,r3,OptionMenuToggled
+  addi r3,r3,MenuData_OptionMenuToggled
   li  r5,0
 
 ClearToggledOptions_Loop:
@@ -7928,16 +8102,20 @@ SaveState_Save:
 
 	backup
 
-	#Backup Task Data
+#Backup Task Data
 	mr	REG_SaveStruct,r3
+#Backup "skip failsafe" bool
+	mr	r20,r4
 
-	#Save Camera Info Here
-
-	#Count Players in Match
+#Count Players in Match
 	branchl	r3,0x8016b558
 
-	#Move Player Number to REG_PlayerTotal
+#Move Player Number to REG_PlayerTotal
 	mr	REG_PlayerTotal,r3
+
+#Check to run failsafe code
+	cmpwi r20,0x0
+	bne SaveState_SaveLoopInit
 
 SaveState_OnDeathCheck:
 #Mini loop to make sure no players have on-death functions
@@ -8453,6 +8631,7 @@ CheckForSaveAndLoad_CheckInputs:
   rlwinm.	r0,r3,0,30,30
   beq	CheckForSaveAndLoad_NoSave
   mr	r3,r29
+	li	r4,0			#run failsafe code
   bl	SaveState_Save
   li	r3,0x0
   b	CheckForSaveAndLoad_Exit
@@ -9823,6 +10002,7 @@ backup
 MoveCPU_NoFollower:
 #Savestate
   mr  r3,SaveStateStruct
+	li	r4,1			#Override failsafe code
   bl  SaveState_Save
 #Play SFX
   li r3,0xDD
@@ -11040,6 +11220,20 @@ InitializeMatch_Exit:
 	restore
 	blr
 
+#####################################
+GetDistance:
+	lfs	f3,0x0(r3)	#X
+	lfs	f4,0x4(r3)  #Y
+	lfs	f5,0x0(r4)  #X
+	lfs	f6,0x4(r4)  #Y
+	fsubs	f1,f5,f3
+	fsubs	f2,f4,f6
+	fmuls	f1,f1,f1
+	fmuls	f2,f2,f2
+	fadds	f2,f1,f2
+	frsqrte	f1,f2
+	fmuls	f1,f1,f2
+	blr
 #####################################
 exit:
 li	r0, 3

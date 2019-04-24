@@ -1,4 +1,4 @@
-#To be inserted at 80264524
+#To be inserted at 80264504
 .include "../../Globals.s"
 
 .set text,31
@@ -87,4 +87,4 @@ blrl
 
 VanillaEvent:
 Original:
-  lwz	r3, -0x49C8 (r13)
+  li	r3, 4

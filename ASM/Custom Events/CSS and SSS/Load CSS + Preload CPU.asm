@@ -1,5 +1,5 @@
 #To be inserted at 801baa80
-.include "../Globals.s"
+.include "../../Globals.s"
 
 .set EventID,7
 .set PageID,9
@@ -9,11 +9,8 @@
   lbz	EventID, 0x0535 (r4)
 
 #Get Hovered Over Event ID in r23
-	lwz	r5, -0x4A40 (r13)
-	lwz	r5, 0x002C (r5)
-	lwz	r4, 0x0004 (r5)		 #Selection Number
-  lbz	r0, 0 (r5)		  #Page Number
-  add	EventID,r4,r0
+	lwz	r4, -0x77C0 (r13)
+	lbz	EventID, 0x0535 (r4)
 
 #Get Current Page in
   lwz r4,MemcardData(r13)
@@ -24,7 +21,7 @@
 
 ##### Page List #######
 	bl	ChooseCPU_GeneralTech
-	bl	ChooseCPU_FoxTech
+	bl	ChooseCPU_SpacieTech
 #######################
 
 ChooseCPU_SkipJumpTable:
@@ -64,7 +61,7 @@ CheckToPreloadCPUAndStage:
 
 ##### Page List #######
 	bl	PreloadEvents_GeneralTech
-	bl	PreloadEvents_FoxTech
+	bl	PreloadEvents_SpacieTech
 #######################
 
 PreloadEvents_SkipJumpTable:
@@ -83,17 +80,17 @@ CheckToPreloadCPUAndStage_Loop:
   cmpw r6,EventID
   bne CheckToPreloadCPUAndStage_IncLoop
 #Store Preload
-  load r4,PreloadTableQueue
+  load r4,PreloadTable
   lbz r6,0x1(r5)
   extsb r0,r6
   cmpwi r0,-1
   beq 0x8
-  stw r6,0x18(r4)   #p2 character
+  stw r6,0x1C(r4)   #p2 character
   lbz r6,0x2(r5)
   extsb r0,r6
   cmpwi r0,-1
   beq 0x8
-  stw r6,0xC(r4)   #stage
+  stw r6,0x10(r4)   #stage
   b Exit
 CheckToPreloadCPUAndStage_IncLoop:
   addi r5,r5,0x3
@@ -110,7 +107,7 @@ ChooseCPU_GeneralTech:
 .byte -1
 .align 2
 
-ChooseCPU_FoxTech:
+ChooseCPU_SpacieTech:
 .byte -1
 .align 2
 ##########################################
@@ -128,7 +125,7 @@ PreloadEvents_GeneralTech:
 .byte -1
 .align 2
 
-PreloadEvents_FoxTech:
+PreloadEvents_SpacieTech:
 .byte Event.LedgetechCounter, Marth.Ext, -1
 .byte -1
 .align 2

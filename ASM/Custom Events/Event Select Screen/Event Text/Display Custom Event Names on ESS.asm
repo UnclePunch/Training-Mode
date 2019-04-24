@@ -1,5 +1,5 @@
 #To be inserted at 8024d470
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 #r24 = text struct
 #r27 = Event ID
