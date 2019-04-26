@@ -818,6 +818,7 @@ SpacieTech:
 .set CSS_MainPlayerPort,-0x49B0
 .set CSS_CPUPlayerPort,-0x49AF
 .set CSS_Type,-0x49AB
+.set CSS_SinglePlayerPortNumber,-0x4DE0
 .set HPS_Unk,-0x3F44
 .set HPS_CurrentSongEntryNum,-0x3F3C
 .set HPS_Unk,-0x3F14

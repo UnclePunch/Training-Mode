@@ -8707,10 +8707,10 @@
 801677f8 00000060 801677f8 0 zz_01677f8_
 80167858 000000a0 80167858 0 ClassicMode_RumbleSomething?
 801678f8 00000064 801678f8 0 zz_01678f8_
-8016795c 000000b8 8016795c 0 CSS/EventMatch_InitializeMatchPlayerInfo
+8016795c 000000b8 8016795c 0 CSS_InitializeCSSMatchPlayerInfo
 80167a14 00000050 80167a14 0 zz_0167a14_
 80167a64 000000ec 80167a64 0 Match&PlayerDataStructure_Initialize
-80167b50 00000078 80167b50 0 ResetMatchStruct
+80167b50 00000078 80167b50 0 CSS_ResetCSSMatchPlayerInfo
 80167bc8 000003fc 80167bc8 0 StartMelee_FlagCheckAndStuff_ScoreDisplay
 80167fc4 00000610 80167fc4 0 CSS->SSS
 8016802c 000005a8 8016802c 0 zz_016802c_
@@ -9728,10 +9728,10 @@
 801b05f4 0000002c 801b05f4 0 zz_01b05f4_
 801b0620 00000044 801b0620 0 zz_01b0620_
 801b0664 0000004c 801b0664 0 zz_01b0664_
-801b06b0 00000080 801b06b0 0 CSS_Store1PlayerCSSInfoAndType(r3=,r4=CSSType,r5=ExtCharID,r6=,r7=CostumeID,r8=,r9=,r10=PlayerWhoAccessedCSS)
-801b0730 00000084 801b0730 0 CSS_StoreCharacterChoices(r3=CSSMatchInfo,r4=BackupLocation,r5=,r6=
-801b07b4 00000034 801b07b4 0 TrainingMode_RestoreCharacterChoices
-801b07e8 00000094 801b07e8 0 TrainingMode_SaveCharacterChoices
+801b06b0 00000080 801b06b0 0 CSS_Restore1PlayerCharChoices+CSSType(r3=,r4=CSSType,r5=ExtCharID,r6=,r7=CostumeID,r8=,r9=,r10=PlayerWhoAccessedCSS)
+801b0730 00000084 801b0730 0 CSS_StoreHMNCharChoices(r3=CSSData,r4=StoreCharacter,r5=Store?,r6=StoreCostume,r7=StoreNametag,r8=Store?)
+801b07b4 00000034 801b07b4 0 TrainingMode_RestoreCPUCharChoices(r3=CSSData,r4=CharID,r5=Unk,r6=CostumeID,r7=NametagID,r8=Unk,r9=PlayerWhoAccessedCSS)
+801b07e8 00000094 801b07e8 0 CSS_SaveCPUCharacterChoices(r3=CSSData,r4=StoreCharacter,r5=Store?,r6=StoreCostume,r7=StoreNametag,r8=Store?)
 801b087c 00000020 801b087c 0 ScenePrep_OpeningMovie_MinID0x2
 801b089c 00000100 801b089c 0 SceneDecide_StartScreen
 801b099c 00000024 801b099c 0 SceneDecide_MainDebugMenu_KIM_exit?
