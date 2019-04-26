@@ -185,7 +185,7 @@ moves characters closer and further apart."
   .set Event_Powershield,4
   #Event Name
     .macro Event_Powershield_Name
-      .string "Shield Drop Training"
+      .string "Powershield Training"
     .endm
 
     .macro Event_Powershield_Description
@@ -438,6 +438,7 @@ Marth's counter!"
     .macro Event_LedgetechCounter_PlayableCharacters
       .byte Event_LedgetechCounter
       .long Fox_CSSID | Falco_CSSID      #Player Characters
+			.long -1
     .endm
 
     .macro Event_LedgetechCounter_ScoreType
@@ -470,6 +471,7 @@ with an Aramada-Shine!"
     .macro Event_ArmadaShine_PlayableCharacters
       .byte Event_ArmadaShine
       .long Fox_CSSID         #Player Characters
+			.long -1
     .endm
 
     .macro Event_ArmadaShine_ScoreType
@@ -718,6 +720,11 @@ SpacieTech:
 .set OSDMaxWindows,0x1F28
 .set CurrentEventPage,0x1F29
 
+#Custom rtoc offsets
+.set FirstBootFlag,-0xDA4 						#byte
+.set EventCPUBackup_CharID,-0xDA3			#byte
+.set EventCPUBackup_CostumeID,-0xDA2	#byte
+
 #OSD IDs
 .set OSD.Wavedash,0
 .set OSD.LCancel,1
@@ -801,6 +808,7 @@ SpacieTech:
 .set InputStructStart,0x804c21cc
 .set PreloadTable,0x80432078
   .set Preload_Stage,0x10
+.set CSS_CursorPointers,0x804a0bc0
 
 #r13 Offsets
 .set MemcardData,-0x77C0

@@ -4098,7 +4098,7 @@ b	exit
 		addi r3,r29,0xB0 #P2 Positon
 		addi r4,r27,0xB0 #P1 Position
 		bl	GetDistance
-		lfs	f2,0x10(r21)
+		lfs	f2,0x0(r21)
 		fcmpo	cr0,f1,f2
 		bgt	LedgetechCheckToReset
 		#Enter DSmash
@@ -4157,11 +4157,7 @@ b	exit
 
 Ledgetech_Floats:
 blrl
-.long 0x4308ca0c		#P1 X Position
-.long 0x42942371		#P2 X Position
-.long 0x41A00000  #P1 Y Position
-.long 0x38d1b717		#FD Floor Y Coord
-.long 0x420C0000		#Distance to Initiate DSmash
+.float 35.0		#Distance to Initiate DSmash
 
 #################################
 
@@ -6889,6 +6885,11 @@ backup
 		lfs f2,0xB0(P2Data)
 		fadds f1,f1,f2
 		stfs f1,0xB0(P2Data)
+	#Move Falco down a bit
+		lfs f1,0x8(EventConstants)
+		lfs f2,0xB4(P1Data)
+		fadds f1,f1,f2
+		stfs f1,0xB4(P1Data)
   #Clear Inputs
     bl  RemoveFirstFrameInputs
 	#Save State
@@ -6986,11 +6987,19 @@ LedgetechCounterThink_Restore:
 	lfs f2,0xB0(P2Data)
 	fadds f1,f1,f2
 	stfs f1,0xB0(P2Data)
+#Move Falco down a bit
+	lfs f1,0x8(EventConstants)
+	lfs f2,0xB4(P1Data)
+	fadds f1,f1,f2
+	stfs f1,0xB4(P1Data)
+
 #Reset Variables
 	li	r3,EventState_OnRebirthPlat
 	stb r3,EventState(EventData)
 	li	r3,MarthState_Wait
 	stb r3,MarthState(EventData)
+	li	r3,0
+	stb r3,Timer(EventData)
 
 LedgetechCounterThink_Exit:
 	restore
@@ -7002,6 +7011,7 @@ LedgetechCounter_Constants:
 blrl
 .float 33		#Mm away from fox to init counter
 .float 5		#Mm to move marth forward after placing on ledge
+.float -15		#Mm to move spacies down after placing in the air
 ######
 
 #endregion

@@ -19,6 +19,9 @@
   li  r5,2      #Priority (after CSS_BigFunctionMonitorInputsAndMore)
   branchl r12,GObj_SchedulePerFrameFunction
 
+#Also check to make sure the CPU and P1 is a whitelisted character
+
+
 b Original
 
 #######################
@@ -68,8 +71,8 @@ ToggleCSSIcon_Start:
   addi REG_Whitelist,r6,1
 
 #Get P1's Cursor Data
-  load r3,0x804a0bc0      #Load CSS Cursor Pointers
-  lwz r5,0x0(r3)          #Get P1's Cursor Data
+  load r3,CSS_CursorPointers      #Load CSS Cursor Pointers
+  lwz r5,0x0(r3)                  #Get P1's Cursor Data
 
 #Check if holding a puck
   lbz r3,0x5(r5)          #Check hand state

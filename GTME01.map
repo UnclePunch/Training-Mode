@@ -10572,7 +10572,7 @@
 801d2278 000000cc 801d2278 0 zz_01d2278_
 801d231c 00000028 801d231c 0 zz_01d231c_
 801d2344 000001e4 801d2344 0 PokemonStadium_Main
-801d2528 00000538 801d2528 0 PokemonStadium_ChangeScreenType2
+801d2528 00000538 801d2528 0 PokemonStadium_ApplyScreenChange(r3=ScreenPointer,r4=ScreenState)
 801d2780 000002e0 801d2780 0 Stages_PokemonStadium_ChangeScreenType2
 801d2a60 0000018c 801d2a60 0 Stages_PokemonStadium_ChangeScreenType
 801d2bec 0000018c 801d2bec 0 Stages_PokemonStadium_CreateMonitorTextObject
@@ -13387,8 +13387,8 @@
 8025fdec 000002a8 8025fdec 0 CSS_CursorPuck_BtoReturnToLastChar
 80260094 0000020c 80260094 0 CSS_CostumeChange
 802602a0 000023a8 802602a0 0 CSS_BigFunctionMonitorInputsAndMore
-80262648 000008fc 80262648 0 CSS_AnimationThink
-802626dc 00000868 802626dc 0 CSS_AnimationThink
+80262648 000008fc 80262648 0 CSS_PuckThink
+802626dc 00000868 802626dc 0 CSS_PuckThink
 80262f44 00000410 80262f44 0 CSS_LoadButtonInputs
 802633b0 00000cc0 802633b0 0 CSS_NametagRectangleThink
 80264070 0000000c 80264070 0 zz_0264070_
@@ -20506,18 +20506,18 @@
 8038fd54 000000d0 8038fd54 0 GObj_SchedulePerFrameProcess (r3=GObj,r4=function,r5=Priority)
 8038fe24 000000b0 8038fe24 0 zz_038fe24_
 8038fed4 00000088 8038fed4 0 zz_038fed4_
-8038ff5c 0000005c 8038ff5c 0 GObj_AddPointerToGObjList    -0x3E74 (r13)
+8038ff5c 0000005c 8038ff5c 0 GObj_AddPointerToGObjList/GObj_PReorder    -0x3E74 (r13)
 8038ffb8 00000238 8038ffb8 0 GObj_Create
 803901f0 00000038 803901f0 0 GObj_Create (r3=GObjType,r4=Subclass,r5=?)
 80390228 00000104 80390228 0 GObj_Destroy (Removes Think Functions)
 8039032c 00000310 8039032c 0 GObj_Unk
-8039063c 00000060 8039063c 0 GObj_CameraCreate
+8039063c 00000060 8039063c 0 GObj_GXReorder
 8039069c 000000c0 8039069c 0 GObj_CreateTextureProcess (r3 =GObj,r4=Function,r5=RenderType,r6=Priority)
 8039075c 0000006c 8039075c 0 GObj_CreateCameraPerFrameProcess
 803907c8 00000084 803907c8 0 zz_03907c8_
-8039084c 000000bc 8039084c 0 zz_039084c_
+8039084c 000000bc 8039084c 0 GObj_GXLinkDestructor
 80390908 000000d0 80390908 0 zz_0390908_
-803909d8 00000064 803909d8 0 zz_03909d8_
+803909d8 00000064 803909d8 0 GObj_CopyGObjGXLinkPriority(r3=TargetGObj,r4=SourceGObj)
 80390a3c 00000034 80390a3c 0 zz_0390a3c_
 80390a70 0000006c 80390a70 0 GObj_StorePointerToJObj(r3=GObj,r4=Unk,r5=JObj)
 80390adc 00000030 80390adc 0 GObj_Unk
