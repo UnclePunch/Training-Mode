@@ -1,0 +1,53 @@
+{
+  "settings": {
+    "areIncludesRelativeFromFile": true
+  },
+    "outputFiles":
+    [
+      {
+        "file": "../../Additional ISO Files//codes.gct"
+      }
+    ],
+  "codes": [
+    {
+      "name": "Training Mode Codset",
+      "authors": [
+        "UnclePunch"
+      ],
+      "description": [
+        "Complete TM Codeset"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "../../ASM",
+          "isRecursive": true
+        },
+        {
+          "type": "replaceCodeBlock",
+          "address": "8042ABD8",
+          "sourceFile": "../../ASM/Misc/Edit Hyphen Texture.s",
+          "annotation": "Edit Hyphen Texture"
+        },
+        {
+          "type": "replaceCodeBlock",
+          "address": "8040a58c",
+          "sourceFile": "../../ASM/Misc/Store Version Number.s",
+          "annotation": "Version Number"
+        },
+        {
+          "type": "replaceCodeBlock",
+          "address": "803ea6c8",
+          "sourceFile": "../../ASM/Misc/Overwrite Compile Date.s",
+          "annotation": "Overwrite Compile Date"
+        },
+        {
+          "type": "replaceCodeBlock",
+          "address": "803edc1c",
+          "sourceFile": "../../ASM/Additional Codes/QWERTY Keyboard.s",
+          "annotation": "QWERTY Keyboard"
+        }
+      ]
+    }
+  ]
+}

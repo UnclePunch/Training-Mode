@@ -23,3 +23,14 @@ $RECYCLE.BIN/
 # =========================
 ASM/Misc/Store Version Number.asm
 ASM/Misc/Overwrite Compile Date.asm
+
+# ==========================
+# Project files
+# ==========================
+Build\ TM\ Codeset/mac/gecko
+Additional\ ISO\ Files/codes.gct
+Additional\ ISO\ Files/Start.dol
+
+
+# Mac files
+.DS_Store
