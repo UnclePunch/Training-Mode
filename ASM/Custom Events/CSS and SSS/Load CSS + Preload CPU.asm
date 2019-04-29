@@ -8,10 +8,6 @@
   lwz	r4, -0x77C0 (r13)
   lbz	EventID, 0x0535 (r4)
 
-#Get Hovered Over Event ID in r23
-	lwz	r4, -0x77C0 (r13)
-	lbz	EventID, 0x0535 (r4)
-
 #Get Current Page in
   lwz r4,MemcardData(r13)
   lbz PageID,CurrentEventPage(r4)

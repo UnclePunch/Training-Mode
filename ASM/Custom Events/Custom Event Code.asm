@@ -9424,6 +9424,8 @@ stfs	f1,0xB4(r27)
 mr	r3,r28
 bl  UpdatePosition
 mr	r3,r28
+bl	UpdateCameraBox
+mr	r3,r28
 bl	CheckIfPlayerHasAFollower
 cmpwi	r3,0x0
 beq	InitializePositions_MoveP2
@@ -9438,7 +9440,8 @@ lfs	f1,0x8(r20)
 stfs	f1,0xB4(r25)
 mr	r3,r24
 bl  UpdatePosition
-
+mr	r3,r24
+bl	UpdateCameraBox
 
 #Move P2
 InitializePositions_MoveP2:
@@ -9450,6 +9453,8 @@ lfs	f1,0xC(r20)
 stfs	f1,0xB4(r29)
 mr	r3,r30
 bl  UpdatePosition
+mr	r3,r30
+bl	UpdateCameraBox
 mr	r3,r30
 bl	CheckIfPlayerHasAFollower
 cmpwi	r3,0x0
@@ -9465,6 +9470,8 @@ lfs	f1,0xC(r20)
 stfs	f1,0xB4(r25)
 mr	r3,r24
 bl  UpdatePosition
+mr	r3,r24
+bl	UpdateCameraBox
 
 InitializePositions_Exit:
 bl	ClearNanaInputs

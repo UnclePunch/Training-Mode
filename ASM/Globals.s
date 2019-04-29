@@ -722,8 +722,8 @@ SpacieTech:
 
 #Custom rtoc offsets
 .set FirstBootFlag,-0xDA4 						#byte
-.set EventCPUBackup_CharID,-0xDA3			#byte
-.set EventCPUBackup_CostumeID,-0xDA2	#byte
+.set None,-0xDA3			                #byte
+.set None,-0xDA2                    	#byte
 
 #OSD IDs
 .set OSD.Wavedash,0
@@ -814,7 +814,7 @@ SpacieTech:
 .set MemcardData,-0x77C0
 .set TM_FrozenToggle,-0x4F8C
 .set DEBUGLV,-0x6C98
-.set CSS_MatchStruct,-0x49F0
+.set CSS_Data,-0x49F0
 .set CSS_MainPlayerPort,-0x49B0
 .set CSS_CPUPlayerPort,-0x49AF
 .set CSS_Type,-0x49AB

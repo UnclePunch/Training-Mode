@@ -1,5 +1,5 @@
 #To be inserted at 801baa98
-.include "../../Globals.s"
+.include "../../../Globals.s"
 
 #Get Backup Location
   lwz	r9, -0x77C0 (r13)
@@ -19,7 +19,7 @@
   lwz	r9, -0x77C0 (r13)
   addi r9,r9,3344
 #Backup CPU Character Choice
-  load r3,0x80497758       #CSS Match Info
+  load r3,0x80497758        #CSS Match Info
   lbz r4,140(r9)           #Character Backup
   li  r5,1                 #Unk
   lbz r6,143(r9)           #Costume Backup
