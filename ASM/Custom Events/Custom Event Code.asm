@@ -445,8 +445,8 @@ b	exit
 			rlwinm.	r0,r3,0,30,30
 			beq	Ledgedash_CheckLeft
 		#Load Most Recent State
-			#addi r3,EventData,EventData_SaveStateStruct
-			#bl		SaveState_Load
+			addi r3,EventData,EventData_SaveStateStruct
+			bl		SaveState_Load
 		#Place on Right Ledge
       li	r3,1
       stb r3,currentLedge(EventData)
@@ -460,8 +460,8 @@ b	exit
 			rlwinm.	r0,r3,0,31,31
 			beq	GetProgressAndAS
 		#Load Most Recent State
-			#addi r3,EventData,EventData_SaveStateStruct
-			#bl		SaveState_Load
+			addi r3,EventData,EventData_SaveStateStruct
+			bl		SaveState_Load
 		#Place on Left Ledge
 			li	r3,0
       stb r3,currentLedge(EventData)
@@ -507,27 +507,27 @@ b	exit
 		## Terminator = FFFF
 		## Jump to    = 7FXX
 		LedgedashASCheckLoop:
-		lhzu	r4,0x2(r3)		#Get Next Value
-		extsb	r0,r4
-		cmpwi	r0,-1		#Check For Terminator
-		beq	Ledgedash_ResetProg
-		rlwinm	r0,r4,0,15,23		#Isolate Left Half
-		cmpwi	r0,0x7F00		#Check If New "Jump To"
-		bne	LedgedashCompareAS
-		rlwinm	r5,r4,0,24,31		#Isolate Right Half to r5
-		b	LedgedashASCheckLoop
+			lhzu	r4,0x2(r3)		#Get Next Value
+			extsb	r0,r4
+			cmpwi	r0,-1		#Check For Terminator
+			beq	Ledgedash_ResetProg
+			rlwinm	r0,r4,0,15,23		#Isolate Left Half
+			cmpwi	r0,0x7F00		#Check If New "Jump To"
+			bne	LedgedashCompareAS
+			rlwinm	r5,r4,0,24,31		#Isolate Right Half to r5
+			b	LedgedashASCheckLoop
 		LedgedashCompareAS:
-		cmpw	r6,r4
-		bne	LedgedashASCheckLoop
-		stb	r5,0x1(r31)		#Progress Byte
-		b	LedgedashThinkEnd
+			cmpw	r6,r4
+			bne	LedgedashASCheckLoop
+			stb	r5,0x1(r31)		#Progress Byte
+			b	LedgedashThinkEnd
 
 
 		LedgedashThinkEnd:
-    mr  r3,MenuData
-    bl  ClearToggledOptions
-		restore
-		blr
+	    mr  r3,MenuData
+	    bl  ClearToggledOptions
+			restore
+			blr
 
 
 		####################
@@ -536,32 +536,33 @@ b	exit
 
 		Ledgedash_ResetProg:
 		#Check If On Ground
-		lwz	r3,0xE0(r29)
-		cmpwi	r3,0x0
-		beq	Ledgedash_Reset
+			lwz	r3,0xE0(r29)
+			cmpwi	r3,0x0
+			beq	Ledgedash_Reset
 		#Check If Dead
-		lbz	r3,0x221F(r29)
-		rlwinm.	r3,r3,0,25,25
-		bne	Ledgedash_Reset
+			lbz	r3,0x221F(r29)
+			rlwinm.	r3,r3,0,25,25
+			bne	Ledgedash_Reset
 		#Check If Frame 9 Of Wrong Move
-		lwz	r3,0x894(r29)			#Frames in State
-		lis	r5,0x4110			#9fp
-		cmpw	r3,r5
-		blt	LedgedashThinkEnd
+			li	r3,9
+			bl	IntToFloat
+			lfs	f2,0x894(r29)		#Frames in State
+			fcmpo	cr0,f1,f2
+			blt	LedgedashThinkEnd
 
 		Ledgedash_Reset:
 		#Play Success or Failure Noise
-		lhz	r3,OneASAgo(r29)			#Check Prev AS
-		cmpwi	r3,0x2B			#If Landing, Success
-		beq	Ledgedash_PlaySuccess
-		cmpwi	r3,0xE			#If Wait, Success (Frame Perfect Action)
-		beq	Ledgedash_PlaySuccess
+			lhz	r3,OneASAgo(r29)			#Check Prev AS
+			cmpwi	r3,0x2B			#If Landing, Success
+			beq	Ledgedash_PlaySuccess
+			cmpwi	r3,0xE			#If Wait, Success (Frame Perfect Action)
+			beq	Ledgedash_PlaySuccess
 
-		lwz	r3,CurrentAS(r29)
-		cmpwi	r3,0x2A			#If Aerial Interrupt, Check If Can IASA Yet
-		beq	Ledgedash_AerialInterruptCheck
-		cmpwi	r3,0xE			#If No Impact Land, Success
-		beq	Ledgedash_PlaySuccess
+			lwz	r3,CurrentAS(r29)
+			cmpwi	r3,0x2A			#If Aerial Interrupt, Check If Can IASA Yet
+			beq	Ledgedash_AerialInterruptCheck
+			cmpwi	r3,0xE			#If No Impact Land, Success
+			beq	Ledgedash_PlaySuccess
 
 		b	Ledgedash_PlayFailure
 
