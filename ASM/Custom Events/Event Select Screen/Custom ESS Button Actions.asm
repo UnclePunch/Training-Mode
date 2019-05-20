@@ -138,8 +138,7 @@ PlayMovie:
 			bl	SkipJumpTable
 
 		##### Page List #######
-			bl	GeneralTech
-			bl	SpacieTech
+			EventJumpTable
 		#######################
 
 		SkipJumpTable:
@@ -410,39 +409,8 @@ restore
 blr
 
 #######################################
-GeneralTech:
-#L-Cancelling (TvLC)
-.string "TvLC"
-#LedgeDash (TvLedDa)
-.string "TvLedDa"
-#LedgeDash (TvEgg)
-.string "TvEgg"
-#SDI (TvSDI)
-.string "TvSDI"
-#Reversal (TvRvrsl)
-.string "TvRvrsl"
-#Powersheld (TvPowSh)
-.string "TvPowSh"
-#Shield Drop (TvShDrp)
-.string "TvShDrp"
-#Spacing on Shield (TvSpaSh)
-.string "TvSpaSh"
-#Ledge Tech (TvLedTc)
-.string "TvLedTc"
-#Amsah Tech (TvAmsTc)
-.string "TvAmsTc"
-#Techchase (TvTchCh)
-.string "TvTchCh"
-#Waveshine SDI (TvWvSDI)
-.string "TvWvSDI"
-.align 2
 
-#######################################
-
-SpacieTech:
-#Ledgetech Counter
-.string "TvFxLt"
-.align 2
+EventTutorials
 
 #######################################
 

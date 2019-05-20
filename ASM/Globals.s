@@ -31,6 +31,10 @@
 break them. DPad down = free practice."
     .endm
 
+    .macro Event_Eggs_Tutorial
+      .string "TvEgg"
+    .endm
+
     .macro Event_Eggs_ChooseCPU
     .endm
 
@@ -62,6 +66,10 @@ break them. DPad down = free practice."
     .macro Event_Multishine_Description
       .string "How many multishines can you
 perform in 10 seconds?"
+    .endm
+
+    .macro Event_Multishine_Tutorial
+      .string "TvMulShine"
     .endm
 
     .macro Event_Multishine_ChooseCPU
@@ -107,6 +115,10 @@ perform in 10 seconds?"
 a stationary CPU."
     .endm
 
+    .macro Event_LCancel_Tutorial
+      .string "TvLC"
+    .endm
+
     .macro Event_LCancel_ChooseCPU
       .byte Event_LCancel
     .endm
@@ -136,6 +148,10 @@ a stationary CPU."
     .macro Event_Ledgedash_Description
       .string "Practice Ledgedashes!
 Use D-Pad to change ledge."
+    .endm
+
+    .macro Event_Ledgedash_Tutorial
+      .string "TvLedDa"
     .endm
 
     .macro Event_Ledgedash_ChooseCPU
@@ -168,6 +184,10 @@ Use D-Pad to change ledge."
 Fox's up-air!"
     .endm
 
+    .macro Event_SDI_Tutorial
+      .string "TvSDI"
+    .endm
+
     .macro Event_SDI_ChooseCPU
     .endm
 
@@ -196,6 +216,10 @@ Fox's up-air!"
     .macro Event_Reversal_Description
       .string "Practice OoS punishes! DPad left/right
 moves characters closer and further apart."
+    .endm
+
+    .macro Event_Reversal_Tutorial
+      .string "TvRvrsl"
     .endm
 
     .macro Event_Reversal_ChooseCPU
@@ -229,6 +253,10 @@ moves characters closer and further apart."
 Pause to change fire-rate."
     .endm
 
+    .macro Event_Powershield_Tutorial
+      .string "TvPowSh"
+    .endm
+
     .macro Event_Powershield_ChooseCPU
     .endm
 
@@ -257,6 +285,10 @@ Pause to change fire-rate."
     .macro Event_ShieldDrop_Description
       .string "Counter with a shield-drop aerial!
 DPad left/right moves players apart."
+    .endm
+
+    .macro Event_ShieldDrop_Tutorial
+      .string "TvShDrp"
     .endm
 
     .macro Event_ShieldDrop_ChooseCPU
@@ -288,6 +320,10 @@ DPad left/right moves players apart."
     .macro Event_AttackOnShield_Description
       .string "Practice attacks on a shielding opponent!
 Pause to change their OoS option."
+    .endm
+
+    .macro Event_AttackOnShield_Tutorial
+      .string "TvAttOnSh"
     .endm
 
     .macro Event_AttackOnShield_ChooseCPU
@@ -322,6 +358,10 @@ Pause to change their OoS option."
 Falco's down-smash!"
     .endm
 
+    .macro Event_LedgeTech_Tutorial
+      .string "TvLedTc"
+    .endm
+
     .macro Event_LedgeTech_ChooseCPU
     .endm
 
@@ -351,6 +391,10 @@ Falco's down-smash!"
     .macro Event_AmsahTech_Description
       .string "Taunt to have Marth Up-B,
 then ASDI down and tech!"
+    .endm
+
+    .macro Event_AmsahTech_Tutorial
+      .string "TvAmsTc"
     .endm
 
     .macro Event_AmsahTech_ChooseCPU
@@ -384,6 +428,10 @@ then ASDI down and tech!"
 DPad right/left saves and loads positions."
     .endm
 
+    .macro Event_Combo_Tutorial
+      .string "TvCombo"
+    .endm
+
     .macro Event_Combo_ChooseCPU
       .byte Event_Combo
     .endm
@@ -413,6 +461,10 @@ DPad right/left saves and loads positions."
     .macro Event_WaveshineSDI_Description
       .string "Use Smash DI to get out
 of Fox's waveshine!"
+    .endm
+
+    .macro Event_WaveshineSDI_Tutorial
+      .string "TvWvSDI"
     .endm
 
     .macro Event_WaveshineSDI_ChooseCPU
@@ -460,6 +512,10 @@ of Fox's waveshine!"
 Marth's counter!"
     .endm
 
+    .macro Event_LedgetechCounter_Tutorial
+      .string "TvLdTcCntr"
+    .endm
+
     .macro Event_LedgetechCounter_ChooseCPU
     .endm
 
@@ -492,6 +548,10 @@ Marth's counter!"
     .macro Event_ArmadaShine_Description
       .string "Finish off the enemy Fox
 with an Aramada-Shine!"
+    .endm
+
+    .macro Event_ArmadaShine_Tutorial
+      .string "TvArmShine"
     .endm
 
     .macro Event_ArmadaShine_ChooseCPU
@@ -767,6 +827,37 @@ blrl
 .align 2
 
 .endm
+#endregion
+#region EventTutorials
+
+.macro EventTutorials
+
+Minigames:
+Event_Eggs_Tutorial
+Event_Multishine_Tutorial
+.align 2
+
+GeneralTech:
+Event_LCancel_Tutorial
+Event_Ledgedash_Tutorial
+Event_SDI_Tutorial
+Event_Reversal_Tutorial
+Event_Powershield_Tutorial
+Event_ShieldDrop_Tutorial
+Event_AttackOnShield_Tutorial
+Event_LedgeTech_Tutorial
+Event_AmsahTech_Tutorial
+Event_Combo_Tutorial
+Event_WaveshineSDI_Tutorial
+.align 2
+
+SpacieTech:
+Event_LedgetechCounter_Tutorial
+Event_ArmadaShine_Tutorial
+.align 2
+
+.endm
+
 #endregion
 
 #endregion
