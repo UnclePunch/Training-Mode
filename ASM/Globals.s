@@ -17,7 +17,7 @@
 ##################################
 #region Minigame Page Data
 #Number of Events
-.set Minigames.NumOfEvents,1 -1
+.set Minigames.NumOfEvents,2 -1
 
 #region Eggs-ercise
   .set Event_Eggs,0
@@ -48,6 +48,42 @@ break them. DPad down = free practice."
     .endm
 
     .macro Event_Eggs_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region Multishine
+  .set Event_Multishine,1
+  #Event Name
+    .macro Event_Multishine_Name
+      .string "Shined Blind"
+    .endm
+
+    .macro Event_Multishine_Description
+      .string "How many multishines can you
+perform in 10 seconds?"
+    .endm
+
+    .macro Event_Multishine_ChooseCPU
+    .endm
+
+    .macro Event_Multishine_PreloadData
+    .byte Event_Multishine, -1, FinalDestination
+    .endm
+
+    .macro Event_Multishine_LoadSSS
+    .endm
+
+    .macro Event_Multishine_PlayableCharacters
+      .byte Event_Multishine
+      .long Falco_CSSID | Fox_CSSID
+      .long -1
+    .endm
+
+    .macro Event_Multishine_AvailableCPUs
+    .endm
+
+    .macro Event_Multishine_ScoreType
       .byte KO
     .endm
 
@@ -487,7 +523,7 @@ with an Aramada-Shine!"
 
 #region Event Page Order
 #This macro will change the order of the pages
-#Only thing this macro doesn't affect is Load CSS + Preload CPU. Must change this manually.
+#Only thing this macro doesn't affect is Load CSS + Preload CPU + high scores. Must change this manually.
 .macro EventJumpTable
 	bl	Minigames
   bl  GeneralTech
@@ -500,6 +536,8 @@ with an Aramada-Shine!"
 Minigames:
 #Eggs-ercise
   Event_Eggs_Name
+#Multishine
+  Event_Multishine_Name
 .align 2
 
 GeneralTech:
@@ -544,6 +582,8 @@ SpacieTech:
 Minigames:
 #Eggs-ercise
   Event_Eggs_Description
+#Multishine
+  Event_Multishine_Description
 .align 2
 ################
 GeneralTech:
@@ -586,6 +626,7 @@ SpacieTech:
 ############################
 ChooseCPU_Minigames:
   Event_Eggs_ChooseCPU
+  Event_Multishine_ChooseCPU
   .byte -1
 .align 2
 ############################
@@ -619,6 +660,7 @@ ChooseCPU_SpacieTech:
 ############################
 PreloadEvents_Minigames:
   Event_Eggs_PreloadData
+  Event_Multishine_PreloadData
   .byte -1
 .align 2
 ############################
@@ -652,6 +694,7 @@ PreloadEvents_SpacieTech:
 ############################
 Minigames:
   Event_Eggs_LoadSSS
+  Event_Multishine_LoadSSS
   .byte -1
 .align 2
 ############################
@@ -685,6 +728,7 @@ SpacieTech:
 ############################
 Minigames:
   Event_Eggs_PlayableCharacters
+  Event_Multishine_PlayableCharacters
   .byte -1
 .align 2
 ############################
@@ -709,6 +753,18 @@ SpacieTech:
   .byte -1
 .align 2
 ############################
+
+.endm
+#endregion
+#region EventHighScores
+.macro EventHighScores
+
+EventHighScores:
+blrl
+.byte 0
+.byte Minigames.NumOfEvents +1
+.byte Minigames.NumOfEvents + GeneralTech.NumOfEvents +1
+.align 2
 
 .endm
 #endregion
@@ -812,16 +868,16 @@ SpacieTech:
 
 #r13 Offsets
 .set MemcardData,-0x77C0
-.set TM_FrozenToggle,-0x4F8C
 .set DEBUGLV,-0x6C98
 .set CSS_Data,-0x49F0
 .set CSS_MainPlayerPort,-0x49B0
 .set CSS_CPUPlayerPort,-0x49AF
-.set CSS_Type,-0x49AB
+.set CSS_MaxPlayers,-0x49AB
 .set CSS_SinglePlayerPortNumber,-0x4DE0
 .set HPS_Unk,-0x3F44
 .set HPS_CurrentSongEntryNum,-0x3F3C
 .set HPS_Unk,-0x3F14
+.set GObj_CurrentProc,-0x3E68
 .set HSDPerf_,0x0
 .set Hitbox_DamageLog,-0x5148     #Num of solid hits dealt by the player this check
 .set Hitbox_TipLog,-0x5144        #Num of phantom hits dealt by the player this check
@@ -829,6 +885,8 @@ SpacieTech:
 .set Stage_LedgeInfo,-0x51E8
 .set Stage_LineInfo,-0x51EC       #ctrl f "stage line counts" in melee notes.txt for detailed info
 
+.set TM_FrozenToggle,-0x4F8C
+.set TM_GameFrameCounter,-0x49ac
 
 #Scene Struct
 .set SceneController,0x80479D30

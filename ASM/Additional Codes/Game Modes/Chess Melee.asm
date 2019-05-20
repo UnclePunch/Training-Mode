@@ -1,5 +1,5 @@
 #To be inserted at 801b8c74
-.include "../Globals.s"
+.include "../../Globals.s"
 
 #Store Pointer to onStartMelee function
   lwz	r4, -0x77C0 (r13)

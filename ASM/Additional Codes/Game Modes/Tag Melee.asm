@@ -1,5 +1,5 @@
 #To be inserted at 801b8e80
-.include "../Globals.s"
+.include "../../Globals.s"
 
 #Store Pointer to onStartMelee function
   lwz	r4, -0x77C0 (r13)
@@ -194,9 +194,44 @@ b SmashPotato_Think_InProgress
 
 #region InProgress
 SmashPotato_Think_InProgress:
-#Check For Dead Players
-.set REG_PlayerSlot,29
-.set REG_PlayerGObj,28
+
+.set REG_LoopCount,29
+.set REG_TotalPlayerCount,28
+#Init Loop
+  li  REG_LoopCount,0
+  li  REG_TotalPlayerCount,0
+SmashPotato_Think_PunishPlayers:
+#Check Players Presence
+  mr  r3,REG_LoopCount
+  branchl r12,0x800322c0
+  cmpwi r3,0x2
+  bne SmashPotato_Think_PunishPlayersIncLoop
+#Check if player has stocks remaining
+  mr  r3,REG_LoopCount
+  branchl r12,0x80033bd8
+  cmpwi r3,0
+  ble SmashPotato_Think_PunishPlayersIncLoop
+#Ensure this player os not it
+  lbz r3,ItSlot(REG_GObjData)
+  cmpw r3,REG_LoopCount
+  beq SmashPotato_Think_PunishPlayersIncLoop
+#Get this players gobj
+  mr  r3,REG_LoopCount
+  branchl r12,PlayerBlock_LoadMainCharDataOffset
+  mr  REG_PlayerGObj,r3
+  lwz REG_PlayerData,0x2C(REG_PlayerGObj)
+#Check if they have a victim
+  lwz r3,0x2094(REG_PlayerData)
+  cmpwi r3,0
+  beq SmashPotato_Think_PunishPlayersIncLoop
+#If victim is not it, give the damage they just dealt
+  lwz r4,0x2C(r3)
+
+
+SmashPotato_Think_PunishPlayersIncLoop:
+  addi REG_LoopCount,REG_LoopCount,1
+  cmpwi REG_LoopCount,6
+  blt SmashPotato_Think_PunishPlayers
 
 ##################
 ## Monitor "It" ##

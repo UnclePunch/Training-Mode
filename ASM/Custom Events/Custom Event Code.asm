@@ -83,6 +83,8 @@
 #######################
 Minigames:
 bl	Eggs
+bl	Multishine
+.long -1
 #######################
 GeneralTech:
 bl	LCancel
@@ -96,9 +98,12 @@ bl	Ledgetech
 bl	AmsahTech
 bl	ComboTraining
 bl	WaveshineSDI
+.long -1
 #######################
 SpacieTech:
 bl  LedgetechCounter
+bl	ArmadaShine
+.long -1
 #######################
 
 SkipPageList:
@@ -116,10 +121,658 @@ SkipPageList:
   mulli	r5,r25,0x4		#Each Pointer is 0x4 Long
   add	r4,r4,r5		#Get Event's Pointer Address
   lwz	r5,0x0(r4)		#Get bl Instruction
+	cmpwi r5,-1
+	beq	exit
   rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
   add	r4,r4,r5		#Gets ASCII Address in r4
   mtctr	r4
   bctr
+#endregion
+
+###############
+## Minigames ##
+###############
+
+#region Eggs-ercise
+#########################
+## Eggs-ercise HIJACK INFO ##
+#########################
+
+Eggs:
+
+#COUNT DOWN TIME
+	li	r3,0x6
+	stb	r3,0x0(r26)
+
+#1 Minute On the Clock
+	li	r3,60
+	stw	r3,0x10(r26)
+
+#Store Match Type to READY, GO!
+	li	r3,0x80
+	stb	r3,0x1(r26)
+
+#SET EVENT TYPE TO KOs
+	load	r5,0x8045abf0		#Static Match Struct
+	lbz	r3,0xB(r5)		#Get Event Score Behavior Byte
+	li	r4,0x0
+	rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
+	stb	r3,0xB(r5)		#Set Event Score Behavior Byte
+
+#1 Player
+	lwz r4,0x0(r29)
+	li	r3,0x20
+	stb	r3,0x1(r9)
+
+#STORE THINK FUNCTION
+	bl	EggsLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
+
+b	exit
+
+	########################
+	## Eggs-ercise LOAD FUNCT ##
+	########################
+	EggsLoad:
+	blrl
+
+	backup
+
+	#Schedule Think
+    #r3 = function to run each frame
+    #r4 = priority
+    #r5 = pointer to Window and Option Count
+    #r6 = pointer to ASCII struct
+	bl	EggsThink
+	mflr	r3
+	li	r4,9		#Priority (After Interrupt)
+  bl	EggsWindowInfo
+  mflr	r5
+  bl	EggsWindowText
+  mflr	r6
+	bl	CreateEventThinkFunction
+
+	bl	InitializeHighScore
+
+	b	EggsLoadExit
+
+
+		#########################
+		## Eggs-ercise THINK FUNCT ##
+		#########################
+
+    #Registers
+    .set EventData,31
+    .set MenuData,26
+    .set P1Data,27
+    .set P1GObj,28
+
+    #Offsets
+		.set	DamageThreshold,(MenuData_OptionMenuMemory+0x2) +0x0
+		.set	DamageThresholdToggled,(MenuData_OptionMenuToggled) +0x0
+
+		EggsThink:
+		blrl
+		backup
+
+		#Get and Backup Event Data
+		mr	r30,r3			#r30 = think entity
+		lwz	EventData,0x2c(r3)			#backup data pointer in r31
+    lwz MenuData,EventData_MenuDataPointer(EventData)
+
+		#Get Player Data
+    bl  GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+
+		#No Staling
+		bl	ResetStaleMoves
+
+		#Check If Free Practice
+		lbz	r3,0x5(r31)
+		cmpwi	r3,0x0
+		bne	EggsSkipFreePracticeCheck
+		#Check DPad Down
+		lwz	r0,0x668(r27)
+		rlwinm.	r0,r0,0,29,29
+		beq	EggsSkipFreePracticeCheck
+		#Toggle Free Practice On
+		li	r3,0x1
+		stb	r3,0x5(r31)
+		#Timer Now Counts Up
+		load	r3,0x8046b6a0
+		lbz	r0,0x24C8(r3)
+		li	r4,1
+		rlwimi	r0,r4,0,31,31
+		stb	r0,0x24C8(r3)
+		#Play Sound To Indicate
+		li	r3,0x82
+		branchl	r12,SFX_PlaySoundAtFullVolume
+		EggsSkipFreePracticeCheck:
+
+    #Check If Toggled
+      lbz r3,DamageThresholdToggled(MenuData)
+		  cmpwi	r3,0x0
+		  beq	EggsSkipToggleCheck
+		#Check If Already Free Practice
+		  lbz	r3,0x5(r31)
+		  cmpwi	r3,0x0
+		  bne	EggsSkipToggleCheck
+		#Make Free Practice
+		  li	r3,0x1
+		  stb	r3,0x5(r31)
+		#Timer Now Counts Up
+		  load	r3,0x8046b6a0
+		  lbz	r0,0x24C8(r3)
+		  li	r4,1
+		  rlwimi	r0,r4,0,31,31
+		  stb	r0,0x24C8(r3)
+		#Play Sound To Indicate
+		  li	r3,0x82
+		  branchl	r12,SFX_PlaySoundAtFullVolume
+    EggsSkipToggleCheck:
+
+		#Check For First Frame
+		lbz	r3,0x4(r31)
+		cmpwi	r3,0x0
+		bne	EggsNotFirstFrame
+
+			#Check If Player Can Move
+			li	r3,0x0
+			branchl	r12,PlayerBlock_LoadMainCharDataOffset	 #get player block
+			lwz	r3,0x2c(r3)		#player data in r29
+
+			lbz	r3,0x221D(r3)
+			rlwinm.	r3,r3,0,28,28
+			bne	EggsThinkExit
+
+			#Set First Frame Over
+			li	r3,0x1
+			stb	r3,0x4(r31)
+			EggsNotFirstFrame:
+
+		#Check If Target is Spawned
+		EggsTargetCheck:
+    #Check If Pointer is Stored
+		  lwz	r3,0x0(r31)
+		  cmpwi	r3,0x0
+		  beq	EggsThinkSpawn
+    #Check if Item GObj is live
+      lwz r3,0x2C(r3)
+      cmpwi r3,0x0
+      beq EggsThinkSpawn
+      b   EggsThinkSkipSpawn
+
+################
+# Spawn Target #
+################
+
+.set LeftCameraBound,20
+.set RightCameraBound,21
+.set TopCameraBound,22
+.set BottomCameraBound,23
+
+    EggsThinkSpawn:
+    .if debug==1
+      li r24,0      #Init loop count
+    .endif
+
+    EggsThinkSpawnLoop:
+
+    .if debug==1
+      addi r24,r24,1  #Inc Loop Count
+    .endif
+
+    #Get OnScreen Boundaries
+    #Left Camera
+      branchl r12,StageInfo_CameraLimitLeft_Load
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz LeftCameraBound,0x84(sp)
+    #Right Camera
+      branchl r12,StageInfo_CameraLimitRight_Load
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz RightCameraBound,0x84(sp)
+    #Top Camera
+      branchl r12,StageInfo_CameraLimitTop_Load
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz TopCameraBound,0x84(sp)
+    #Bottom Camera
+      branchl r12,StageInfo_CameraLimitBottom_Load
+      fctiwz f1,f1
+      stfd f1,0x80(sp)
+      lwz BottomCameraBound,0x84(sp)
+
+    #Get Random Velocity
+			branchl	r12,HSD_Randf
+      fmr f20,f1
+      li  r3,2
+      bl  IntToFloat
+      fadds f20,f20,f1
+
+    #Get Random X Value Between These
+      mr  r3,LeftCameraBound
+      mr  r4,RightCameraBound
+      bl  RandFloat
+      fmr f21,f1
+
+    #Get Random Y Value Between These
+      mr   r3,BottomCameraBound
+      subi  r4,TopCameraBound,70        #Minus 40 so it doesnt fly up offscreen
+      bl  RandFloat
+      fmr f22,f1
+
+    .set EggSpawnGroundWidth,8
+    #Check If Egg is Above Ground
+      fmr f1,f21
+      fmr f2,f22
+      bl  FindGroundUnderCoordinate
+      cmpwi r3,0x0
+      beq EggsThinkSpawnLoop
+    #Check Left
+      li  r3,EggSpawnGroundWidth
+      bl  IntToFloat
+      fsubs f1,f21,f1
+      fmr f2,f22
+      bl  FindGroundUnderCoordinate
+      cmpwi r3,0x0
+      beq EggsThinkSpawnLoop
+    #Check Right
+      li  r3,EggSpawnGroundWidth
+      bl  IntToFloat
+      fadds f1,f21,f1
+      fmr f2,f22
+      bl  FindGroundUnderCoordinate
+      cmpwi r3,0x0
+      beq EggsThinkSpawnLoop
+
+    .if debug==1
+      #OSReport Loop Count
+        load r3,0x803ead3c
+        mr r4,r24
+        branchl r12,OSReport
+    .endif
+
+			SpawnEgg:
+			addi	r3,sp,0x80
+			li	r4,0x0
+			stw	r4,0x0(r3)	#Player Pointer
+			stw	r4,0x4(r3)	#Player Pointer
+			li	r4,0x03
+			stw	r4,0x8(r3)	#Item ID
+			lfs	f0, -0x2858 (rtoc)
+			stfs	f21,0x14(r3)	#X Coord
+			stfs	f22,0x18(r3)	#Y Coord
+			stfs	f0,0x1C(r3)	#Z Coord
+			stfs	f21,0x20(r3)	#X Coord
+			stfs	f22,0x24(r3)	#Y Coord
+			stfs	f0,0x28(r3)	#Z Coord
+			stfs	f0,0x2C(r3)	#Unk
+			stfs	f0,0x30(r3)	#Unk
+			stfs	f0,0x34(r3)	#X Vel
+			stfs	f0,0x38(r3)	#Y Vel
+			li	r4,0x1
+			sth	r4,0x3C(r3)
+			branchl	r12,EntityItemSpawn
+			mr	r29,r3		#Backup Entity Pointer
+
+			stw	r29,0x0(r31)		#Store Pointer To Target In Event Think
+
+			#Store Pointer To Event Think In Target
+			lwz	r4,0x2C(r29)
+			stw	r31,0xDDC(r4)
+
+			#Store Y Velocity
+			stfs	f20,0x44(r4)
+
+			#Get OnDestroy
+			lwz	r4,0x2C(r29)
+			lwz	r4,0xB8(r4)
+
+			#Store OnCollision
+			bl	Eggs_OnCollision
+			mflr	r3
+			stw	r3,0x1C(r4)
+
+			#Create Camera Box
+			branchl	r12,CreateCameraBox
+			#Attach to Entity
+			lwz	r4,0x2c(r29)
+			stw	r3, 0x0520 (r4)
+			#Enable Camera Box Bit
+			lbz	r0, 0x0DCD (r4)
+			li	r5,0x22
+			rlwimi	r0, r5, 5, 24, 25
+			stb	r0, 0x0DCD (r4)
+			#Copy Some Stuff To Camera Box
+			lwz	r4, -0x4978 (r13)
+			lfs	f0, 0x014C (r4)
+			stfs	f0, 0x0040 (r3)
+			lfs	f0, 0x0150 (r4)
+			stfs	f0, 0x0044 (r3)
+			lfs	f0, 0x0154 (r4)
+			stfs	f0, 0x0048 (r3)
+			lfs	f0, 0x0158 (r4)
+			stfs	f0, 0x004C (r3)
+
+			#Never Timeout
+			lwz	r5, 0x002C (r29)
+			lbz	r3,0xDD0(r5)
+			li	r4,0x1
+			rlwimi	r3,r4,4,27,27
+			stb	r3,0xDD0(r5)
+
+			#Not Grabbable
+			lbz	r3, 0x0DCA (r5)
+			li	r4,0x0
+			rlwimi	r3,r4,2,29,29
+			stb	r3, 0x0DCA (r5)
+
+			#Un-Nudgeable?
+			lbz	r3, 0x0DCB (r5)
+			li	r4,0x0
+			rlwimi	r3,r4,3,28,28
+			stb	r3, 0x0DCB (r5)
+
+      EggsThinkSkipSpawn:
+      #Not Grabbable Every Frame
+      lwz	r5,0x0(r31)
+      lwz	r5,0x2c(r5)
+      lbz	r3, 0x0DCA (r5)
+      li	r4,0x0
+      rlwimi	r3,r4,2,29,29
+      stb	r3, 0x0DCA (r5)
+
+      #Update HUD Score
+      li	r3,0
+      li	r4,5
+      branchl	r12,Playerblock_LoadTimesR3KilledR4
+      branchl	r12,HUD_KOCounter_UpdateKOs
+
+      #Check If Free Practice
+        lbz	r3,0x5(r31)
+        cmpwi	r3,0x0
+        bne	EggsThinkExit
+      #Check For TimeUp
+        branchl	r12,MatchInfo_LoadSeconds		#Seconds Left
+        cmpwi	r3,0x0
+        bne	EggsThinkExit
+        branchl	r12,MatchInfo_LoadSubSeconds		#Sub-Seconds Left
+        cmpwi	r3,59
+        bne	EggsThinkExit
+      #On Event End
+        mr	r3,r30
+        branchl	r12,EventMatch_OnWinCondition			#EventMatch_OnWinCondition
+
+EggsThinkExit:
+  mr  r3,MenuData
+  bl  ClearToggledOptions
+  restore
+  blr
+
+
+			Eggs_OnCollision:
+			blrl
+
+      #First check if this is an event
+        load r4,SceneController
+        lbz r4,Scene.CurrentMajor(r4)
+        cmpwi r4,Scene.EventMode
+        bne Eggs_OnCollisionOriginalFunction
+      #Now check if its eggs-ercise
+        lwz	r4, -0x77C0 (r13)
+        lbz	r4, 0x0535 (r4)         #get event ID
+        cmpwi r4,Event_Eggs
+        beq Eggs_OnCollisionStart
+
+      Eggs_OnCollisionOriginalFunction:
+      #Go to the original egg break function
+        branch r12,ItemCollision_Egg
+
+      Eggs_OnCollisionStart:
+  			backup
+  			mr	r30,r3
+  			lwz	r31,0x2C(r3)			#Get Data
+
+			#Check If Any Attack Should Break
+  			lwz	r3,0xDDC(r31)			         #Get Event Data
+        lwz r3,EventData_MenuDataPointer(r3)     #Get Menu Data
+  			lbz	r3,DamageThreshold(r3)			#Damage Behavior
+  			cmpwi	r3,0x1
+  			beq	Eggs_OnCollisionBreakEgg
+			#Check Damage Dealt Before Exploding
+  			lwz	r3,0xCA0(r31)
+  			cmpwi	r3,11
+  			blt	Egg_OnCollisionExit
+
+			Eggs_OnCollisionBreakEgg:
+			#Increment Score
+  			li	r3,0
+  			li	r4,0
+  			li	r5,5
+  			branchl	r12,Playerblock_StoreTimesR3KilledR4
+
+			#Display Effect
+  			li	r3,1232
+  			mr	r4,r30
+  			addi	r5, r31, 76
+  			crclr	6
+  			branchl	r12,Textures_DisplayEffectTextures
+
+			#Play Pop Sound
+  			mr	r3,r31
+  			li	r4,244
+  			li	r5,127
+  			li	r6,64
+  			branchl	r12,0x8026ae84
+
+			#Explode
+  			mr	r3,r30
+  			branchl	r12,0x80289158
+
+			#Spawn New Egg
+  			lwz	r3,0xDDC(r31)			#Get Event Think
+  			li	r4,0x0			#Get 0
+  			stw	r4,0x0(r3)			#Zero Pointer
+
+			Egg_OnCollisionExit:
+  			li	r3,0x0
+			Egg_OnCollisionExitSkip:
+  			restore
+  			blr
+
+EggsLoadExit:
+restore
+blr
+
+####################################################
+
+EggsWindowInfo:
+blrl
+#amount of options, amount of options in each window
+
+.long 0x0001FFFF  #1 window, Smash Attack has 2 options
+
+####################################################
+
+EggsWindowText:
+blrl
+
+######################
+## Damage Threshold ##
+######################
+
+#Window Title = Damage Threshold
+.long 0x44616d61
+.long 0x67652054
+.long 0x68726573
+.long 0x686f6c64
+.long 0x
+
+#Option 1 = 12+ Damage
+.long 0x3132817B
+.long 0x2044616d
+.long 0x61676500
+.long 0x
+.long 0x
+
+#Option 2 = Any Damage
+.long 0x416e7920
+.long 0x44616d61
+.long 0x67650000
+.long 0x
+.long 0x
+
+
+################################################################################
+################################################################################
+
+#endregion
+
+#region Multishine
+#########################
+## Multishine HIJACK INFO ##
+#########################
+
+Multishine:
+#COUNT DOWN TIME
+	li	r3,0x6
+	stb	r3,0x0(r26)
+
+#10 Seconds On the Clock
+	li	r3,10
+	stw	r3,0x10(r26)
+
+#Store Match Type to READY, GO!
+	li	r3,0x80
+	stb	r3,0x1(r26)
+
+#SET EVENT TYPE TO KOs
+	load	r5,0x8045abf0		#Static Match Struct
+	lbz	r3,0xB(r5)		#Get Event Score Behavior Byte
+	li	r4,0x0
+	rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
+	stb	r3,0xB(r5)		#Set Event Score Behavior Byte
+
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,-1										#Use chosen CPU
+	li	r6,FinalDestination			#Use FD
+	load r7,EventOSD_Multishine
+	bl	InitializeMatch
+
+#1 Player
+	lwz r4,0x0(r29)
+	li	r3,0x20
+	stb	r3,0x1(r9)
+
+#STORE THINK FUNCTION
+	bl	MultishineLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
+
+b	exit
+
+
+	########################
+	## Multishine LOAD FUNCT ##
+	########################
+	MultishineLoad:
+	blrl
+
+	backup
+
+	#Schedule Think
+	bl	MultishineThink
+	mflr	r3
+	li	r4,17		#Priority (After Everything)
+  li  r5,0    #No Option Menu
+	li	r6,0
+	bl	CreateEventThinkFunction
+
+	bl	InitializeHighScore
+
+	b	MultishineLoadExit
+
+		#########################
+		## Multishine THINK FUNCT ##
+		#########################
+
+		MultishineThink:
+		blrl
+
+    .set EventData,31
+    .set Event,30
+    .set P1Data,27
+    .set P1GObj,28
+
+		backup
+
+		mr	Event,r3
+		lwz	EventData,0x2c(Event)
+
+    bl GetAllPlayerPointers
+    mr P1GObj,r3
+    mr P1Data,r4
+
+	#First Frame Actions
+		bl	CheckIfFirstFrame
+		cmpwi	r3,0x0
+		beq	MultishineNotFirstFrame
+  #Init Positions
+    bl  PlacePlayersCenterStage
+	MultishineNotFirstFrame:
+
+	#Check for grounded or aerial shine, frame 1
+		lwz r3,0x10(P1Data)
+		cmpwi r3,0x168
+		beq Multishine_IsShining
+		cmpwi r3,0x16D
+		beq Multishine_IsShining
+		b	Multishine_SkipShineCheck
+	Multishine_IsShining:
+	#Check for frame 1
+		lhz r3,FramesinCurrentAS(P1Data)
+		cmpwi r3,0
+		bne Multishine_SkipShineCheck
+	#Increment Score
+  	li	r3,0
+  	li	r4,0
+  	li	r5,5
+  	branchl	r12,Playerblock_StoreTimesR3KilledR4
+	Multishine_SkipShineCheck:
+
+	#Check For TimeUp
+  	branchl	r12,MatchInfo_LoadSeconds		#Seconds Left
+    cmpwi	r3,0x0
+    bne	MultishineThinkExit
+    branchl	r12,MatchInfo_LoadSubSeconds		#Sub-Seconds Left
+    cmpwi	r3,59
+    bne	MultishineThinkExit
+  #On Event End
+    mr	r3,Event
+    branchl	r12,EventMatch_OnWinCondition			#EventMatch_OnWinCondition
+
+	MultishineThinkExit:
+  #Update HUD Score
+  	li	r3,0
+  	li	r4,5
+    branchl	r12,Playerblock_LoadTimesR3KilledR4
+    branchl	r12,HUD_KOCounter_UpdateKOs
+
+	MultishineLoadExit:
+	restore
+	blr
+
+
+
+
+################################################################################
+################################################################################
 #endregion
 
 ##################
@@ -190,7 +843,7 @@ b	exit
 
 		lwz	EventData,0x2c(r3)
 
-    bl  GetAllPlayerPointers
+    bl GetAllPlayerPointers
     mr P1GObj,r3
     mr P1Data,r4
     mr P2GObj,r5
@@ -213,32 +866,75 @@ b	exit
       bl  RemoveFirstFrameInputs
     #Save State
       addi r3,EventData,EventData_SaveStateStruct
-			li	r4,1			#Override failsafe code
+			li	r4,1									#Override failsafe code
       bl  SaveState_Save
 		LCancelNotFirstFrame:
 
 		#Check For P2 Dpad Down Press
-		lwz	r3,0x668(r29)		#Inputs
-		rlwinm.	r0,r3,0,29,29
-		beq	LCancelThink_CheckForInvinc
+			lwz	r3,0x668(r29)					#Inputs
+			rlwinm.	r0,r3,0,29,29
+			beq	LCancelThink_CheckForInvinc
 		#Toggle Invinc Bit
-		lbz	r3,0x0(r31)
-		nand 	3,3,3
-		stb	r3,0x0(r31)
+			lbz	r3,0x0(r31)
+			nand 	3,3,3
+			stb	r3,0x0(r31)
 
 
 
 		LCancelThink_CheckForInvinc:
-		lbz	r3,0x0(r31)
-		cmpwi	r3,0x0
-		bne	LCancelThink_CheckForSaveState
-		#Give Invincibility To P1
-		mr	r3,r30
-		li	r4,0x2
-		bl	GiveInvincibility
-
-
-
+			lbz	r3,0x0(r31)
+			cmpwi	r3,0x0
+			bne	LCancelThink_RemoveInvincibility
+		#Give No Knockback To P2
+			lbz r3,0x2220(P2Data)
+			li	r4,1
+			rlwimi r3,r4,4,27,27
+			stb r3,0x2220(P2Data)
+		#Ignore Grabs
+			li	r3,0x1FF
+			sth r3,0x1A6A(P2Data)
+		#Ignore Percent
+			li	r3,0
+			bl	IntToFloat
+			stfs f1,0x1830(P2Data)
+			lbz r3,0xC(P2Data)
+			li	r4,0
+			li	r5,0
+			branchl r12,0x80034418
+		#Un-nudgeable
+			li	r3,0x1
+			lbz	r0, 0x221D (P2Data)
+			rlwimi	r0,r3,2,29,29
+			stb	r0, 0x221D (P2Data)
+		#Apply Overlay
+			mr	r3,P2Data
+			li	r4,9
+			li	r5,0
+			branchl r12,0x800bffd0
+			b	LCancelThink_SkipInvincibility
+		LCancelThink_RemoveInvincibility:
+		#Give Invincibility To P2
+			lbz r3,0x2220(P2Data)
+			li	r4,0
+			rlwimi r3,r4,4,27,27
+			stb r3,0x2220(P2Data)
+		#Allow Grabs
+			#li	r3,0x0
+			#sth r3,0x1A6A(P2Data)
+		#Allow Percent
+			#li	r3,1
+			#bl	IntToFloat
+			#stfs f1,0x182C(P2Data)
+		#Nudgeable
+			li	r3,0x0
+			lbz	r0, 0x221D (P2Data)
+			rlwimi	r0,r3,2,29,29
+			stb	r0, 0x221D (P2Data)
+		#Remove Overlay
+			mr	r3,P2Data
+			li	r4,9
+			branchl r12,0x800c0200
+		LCancelThink_SkipInvincibility:
 
 		LCancelThink_CheckForSaveState:
 		#Poll For Savestates
@@ -547,21 +1243,21 @@ b	exit
 			li	r3,9
 			bl	IntToFloat
 			lfs	f2,0x894(r29)		#Frames in State
-			fcmpo	cr0,f1,f2
+			fcmpo	cr0,f2,f1
 			blt	LedgedashThinkEnd
 
 		Ledgedash_Reset:
 		#Play Success or Failure Noise
 			lhz	r3,OneASAgo(r29)			#Check Prev AS
-			cmpwi	r3,0x2B			#If Landing, Success
+			cmpwi	r3,ASID_LandingFallSpecial			#If Landing, Success
 			beq	Ledgedash_PlaySuccess
-			cmpwi	r3,0xE			#If Wait, Success (Frame Perfect Action)
+			cmpwi	r3,ASID_Wait			#If Wait, Success (Frame Perfect Action)
 			beq	Ledgedash_PlaySuccess
 
 			lwz	r3,CurrentAS(r29)
-			cmpwi	r3,0x2A			#If Aerial Interrupt, Check If Can IASA Yet
+			cmpwi	r3,ASID_Landing			#If Aerial Interrupt, Check If Can IASA Yet
 			beq	Ledgedash_AerialInterruptCheck
-			cmpwi	r3,0xE			#If No Impact Land, Success
+			cmpwi	r3,ASID_Wait			#If No Impact Land, Success
 			beq	Ledgedash_PlaySuccess
 
 		b	Ledgedash_PlayFailure
@@ -569,9 +1265,9 @@ b	exit
 		Ledgedash_AerialInterruptCheck:
 		#Check If Coming From an Aerial Attack
 		lhz	r3,OneASAgo(r29)			#Check Prev AS
-		cmpwi	r3,0x41
+		cmpwi	r3,ASID_AttackAirN
 		blt	Ledgedash_PlayFailure
-		cmpwi	r3,0x45
+		cmpwi	r3,ASID_AttackAirLw
 		bgt	Ledgedash_PlayFailure
 
 		#Check If Interruptable Yet
@@ -643,6 +1339,10 @@ b	exit
 			stb	r3,timer(r31)
 			cmpwi	r3,0x0
 			bgt	LedgedashThinkEnd
+    #Load State (to cleanup volatile entities)
+      addi r3,EventData,EventData_SaveStateStruct
+      bl		SaveState_Load
+		#Place on Ledge
       bl	Ledgedash_PlaceOnLedge
     #Save State
       addi r3,EventData,EventData_SaveStateStruct
@@ -734,7 +1434,6 @@ b	exit
 		Ledgedash_LoadState_SkipRespawnPlatform:
       mr  r3,r30
       bl  UpdatePosition
-
     #Update Camera Box
       mr  r3,P1GObj
       bl  UpdateCameraBox
@@ -826,11 +1525,20 @@ b	exit
 		Ledgedash_PlaceOnLedge_UpdateCameraBox:
 		#Get CameraBox
 			lwz r20,CameraBox(r31)
-		#Position Base of CameraBox at the Ledge
-			lfs f1,0xD0(sp)		#Ledge X
+		#Position Base of CameraBox behind the ledge
+		.set CameraBoxXOffset,35
+		.set CameraBoxYOffset,20
+			li	r3,CameraBoxXOffset
+			bl	IntToFloat
+			lfs f2,0xD0(sp)		#Ledge X
+			lfs f3,0x2C(r29)
+			fmadds f1,f1,f3,f2
 			stfs f1,0x10(r20)  #Camera X Position
-			lfs f1,0xD4(sp)		#Ledge Y
-			stfs f1,0x14(r20)  #Camera X Position
+			li	r3,CameraBoxYOffset
+			bl	IntToFloat
+			lfs f2,0xD4(sp)		#Ledge Y
+			fadds f1,f1,f2
+			stfs f1,0x14(r20)  #Camera Y Position
 		#Make Boundaries around ledge position
 		#Left Bound
 			li	r3,-10
@@ -881,81 +1589,103 @@ blrl
 
 
 ####################################
-/*
-#Fall -> GliffGrab
-LedgedashProg0:
-.long 0x7F00001D
-.long 0x7F0100FC
-.long 0xFFFF0000
-
-#CliffGrab -> GliffWait
-LedgedashProg1:
-.long 0x7F0100FC
-.long 0x7F0200FD
-.long 0xFFFF0000
-*/
-
 #CliffWait -> Fall
 LedgedashProg0:
-.long 0x7F0000FC
-.long 0x00FD000D
-.long 0x7F01001D
-.long 0x7F02001B
-.long 0x001C001C
-.long 0xFFFF0000
+#*********************#
+.hword 0x7F00
+.hword ASID_CliffCatch,ASID_CliffWait
+.hword ASID_RebirthWait
+#*********************#
+.hword 0x7F01
+.hword ASID_Fall
+#*********************#
+.hword 0x7F02
+.hword ASID_JumpAerialF,ASID_JumpAerialB
+#*********************#
+.hword -1
+.align 2
 
 #Fall -> JumpAerial
 LedgedashProg1:
-.long 0x7F0000FC
-.long 0x7F01001D
-.long 0x00CB00CB
-.long 0x7F02001B
-.long 0x001C0155
-.long 0x01620166
-.long 0x01670170
-.long 0x01640023
-.long 0x015e015f
-.long 0x0160016B
-.long 0x0171015C
-.long 0x016D0165
-.long 0x016E0168
-.long 0x01610176
-.long 0x015DFFFF
+.hword 0x7F00
+.hword ASID_CliffCatch,ASID_CliffWait
+#*********************#
+.hword 0x7F01
+.hword ASID_Fall,ASID_PassiveWallJump
+#*********************#
+.hword 0x7F02
+.hword ASID_JumpAerialF,ASID_JumpAerialB
+.hword ASID_FallSpecial,ASID_CliffJumpSlow2
+.hword 0x166,0x167
+.hword 0x170,0x164
+.hword 0x155,0x15e
+.hword 0x15f,0x160
+.hword 0x16B,0x171
+.hword 0x15C,0x16D
+.hword 0x165,0x16E
+.hword 0x168,0x161
+.hword 0x176,0x15D
+.hword 0x169,0x162
+#*********************#
+.hword -1
+.align 2
+
 
 #JumpAerial -> Airdodge
 LedgedashProg2:
-.long 0x7F02001B
-.long 0x00CB00CB
-.long 0x001C0155
-.long 0x01620166
-.long 0x01670170
-.long 0x01640023
-.long 0x015e015f
-.long 0x0160016B
-.long 0x0171015C
-.long 0x016D016E
-.long 0x01650168
-.long 0x01610176
-.long 0x015D001D
-.long 0x7F0300EC
-.long 0x00410042
-.long 0x00430044
-.long 0x00450045
-.long 0x002B7F00
-.long 0x00FCFFFF
+#*********************#
+.hword 0x7F02
+.hword ASID_JumpAerialF,ASID_PassiveWallJump
+.hword ASID_JumpAerialB,ASID_Fall
+.hword ASID_FallSpecial,ASID_CliffJumpSlow2
+.hword 0x167,0x170
+.hword 0x164,0x162
+.hword 0x15e,0x15f
+.hword 0x160,0x16B
+.hword 0x171,0x15C
+.hword 0x16D,0x16E
+.hword 0x165,0x168
+.hword 0x161,0x176
+.hword 0x15D,0x155
+.hword 0x169,0x166
+#*********************#
+.hword 0x7F03
+.hword ASID_EscapeAir,ASID_AttackAirB
+.hword ASID_AttackAirB,ASID_AttackAirU
+.hword ASID_AttackAirD,ASID_AttackAirF
+.hword ASID_AttackAirN,ASID_LandingFallSpecial
+#*********************#
+.hword 0x7F00
+.hword ASID_CliffCatch
+#*********************#
+.hword -1
+.align 2
 
 #Airdodge -> Landing
 LedgedashProg3:
-.long 0x7F0300AA
-.long 0x7F04002B
-.long 0x002AFFFF
+#*********************#
+.hword 0x7F03
+.hword 0xAA		#i think this is just a placeholder, could prob remove but w/e
+#*********************#
+.hword 0x7F04
+.hword ASID_LandingFallSpecial,ASID_Landing
+#*********************#
+.hword -1
+.align 2
+
 
 #Landing -> Wait
 LedgedashProg4:
-.long 0x7F04002B
-#.long 0x002A002A
-.long 0x7F02001D
-.long 0xFFFFFFFF
+#*********************#
+.hword 0x7F04
+.hword ASID_LandingFallSpecial
+#*********************#
+.hword 0x7F02
+.hword ASID_Fall
+#*********************#
+.hword -1
+.align 2
+
 
 ####################################
 
@@ -996,592 +1726,6 @@ blrl
 LedgedashLoadExit:
 restore
 blr
-
-#endregion
-
-#region Eggs-ercise
-#########################
-## Eggs-ercise HIJACK INFO ##
-#########################
-
-Eggs:
-
-#COUNT DOWN TIME
-li	r3,0x6
-stb	r3,0x0(r26)
-
-#1 Minute On the Clock
-li	r3,60
-stw	r3,0x10(r26)
-
-#Store Match Type to READY, GO!
-li	r3,0x80
-stb	r3,0x1(r26)
-
-#SET EVENT TYPE TO KOs
-load	r5,0x8045abf0		#Static Match Struct
-lbz	r3,0xB(r5)		#Get Event Score Behavior Byte
-li	r4,0x0
-rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
-stb	r3,0xB(r5)		#Set Event Score Behavior Byte
-
-#1 Player
-	lwz r4,0x0(r29)
-	li	r3,0x20
-	stb	r3,0x1(r9)
-
-#STORE THINK FUNCTION
-bl	EggsLoad
-mflr	r3
-stw	r3,0x44(r26)		#on match load
-
-b	exit
-
-	########################
-	## Eggs-ercise LOAD FUNCT ##
-	########################
-	EggsLoad:
-	blrl
-
-	backup
-
-	#Schedule Think
-    #r3 = function to run each frame
-    #r4 = priority
-    #r5 = pointer to Window and Option Count
-    #r6 = pointer to ASCII struct
-	bl	EggsThink
-	mflr	r3
-	li	r4,9		#Priority (After Interrupt)
-  bl	EggsWindowInfo
-  mflr	r5
-  bl	EggsWindowText
-  mflr	r6
-	bl	CreateEventThinkFunction
-
-	bl	InitializeHighScore
-
-	b	EggsLoadExit
-
-
-		#########################
-		## Eggs-ercise THINK FUNCT ##
-		#########################
-
-    #Registers
-    .set EventData,31
-    .set MenuData,26
-    .set P1Data,27
-    .set P1GObj,28
-
-    #Offsets
-		.set	DamageThreshold,(MenuData_OptionMenuMemory+0x2) +0x0
-		.set	DamageThresholdToggled,(MenuData_OptionMenuToggled) +0x0
-
-		EggsThink:
-		blrl
-		backup
-
-		#Get and Backup Event Data
-		mr	r30,r3			#r30 = think entity
-		lwz	EventData,0x2c(r3)			#backup data pointer in r31
-    lwz MenuData,EventData_MenuDataPointer(EventData)
-
-		#Get Player Data
-    bl  GetAllPlayerPointers
-    mr P1GObj,r3
-    mr P1Data,r4
-
-		#No Staling
-		bl	ResetStaleMoves
-
-		#Check If Free Practice
-		lbz	r3,0x5(r31)
-		cmpwi	r3,0x0
-		bne	EggsSkipFreePracticeCheck
-		#Check DPad Down
-		lwz	r0,0x668(r27)
-		rlwinm.	r0,r0,0,29,29
-		beq	EggsSkipFreePracticeCheck
-		#Toggle Free Practice On
-		li	r3,0x1
-		stb	r3,0x5(r31)
-		#Timer Now Counts Up
-		load	r3,0x8046b6a0
-		lbz	r0,0x24C8(r3)
-		li	r4,1
-		rlwimi	r0,r4,0,31,31
-		stb	r0,0x24C8(r3)
-		#Play Sound To Indicate
-		li	r3,0x82
-		branchl	r12,SFX_PlaySoundAtFullVolume
-		EggsSkipFreePracticeCheck:
-
-    #Check If Toggled
-      lbz r3,DamageThresholdToggled(MenuData)
-		  cmpwi	r3,0x0
-		  beq	EggsSkipToggleCheck
-		#Check If Already Free Practice
-		  lbz	r3,0x5(r31)
-		  cmpwi	r3,0x0
-		  bne	EggsSkipToggleCheck
-		#Make Free Practice
-		  li	r3,0x1
-		  stb	r3,0x5(r31)
-		#Timer Now Counts Up
-		  load	r3,0x8046b6a0
-		  lbz	r0,0x24C8(r3)
-		  li	r4,1
-		  rlwimi	r0,r4,0,31,31
-		  stb	r0,0x24C8(r3)
-		#Play Sound To Indicate
-		  li	r3,0x82
-		  branchl	r12,SFX_PlaySoundAtFullVolume
-    EggsSkipToggleCheck:
-
-		#Check For First Frame
-		lbz	r3,0x4(r31)
-		cmpwi	r3,0x0
-		bne	EggsNotFirstFrame
-
-			#Check If Player Can Move
-			li	r3,0x0
-			branchl	r12,PlayerBlock_LoadMainCharDataOffset	 #get player block
-			lwz	r3,0x2c(r3)		#player data in r29
-
-			lbz	r3,0x221D(r3)
-			rlwinm.	r3,r3,0,28,28
-			bne	EggsThinkExit
-
-			#Set First Frame Over
-			li	r3,0x1
-			stb	r3,0x4(r31)
-			EggsNotFirstFrame:
-
-		#Check If Target is Spawned
-		EggsTargetCheck:
-    #Check If Pointer is Stored
-		  lwz	r3,0x0(r31)
-		  cmpwi	r3,0x0
-		  beq	EggsThinkSpawn
-    #Check if Item GObj is live
-      lwz r3,0x2C(r3)
-      cmpwi r3,0x0
-      beq EggsThinkSpawn
-      b   EggsThinkSkipSpawn
-
-    ################
-		# Spawn Target #
-    ################
-/*
-			EggsThinkSpawn:
-			#Get Random X Value that falls between ledges
-        #Get Stage's Ledge IDs
-          lwz		r3,-0x6CB8 (r13)			#External Stage ID
-          bl		LedgedashCliffIDs
-          mflr  r4
-          mulli	r3,r3,0x2
-          lhzx	r20,r3,r4
-        #Get Left Ledge X and Y Coordinates
-          rlwinm	r3,r20,24,24,31
-          addi	r4,sp,0x80
-          branchl	r12,Stage_GetLeftOfLineCoordinates
-        #Get Right Ledge X and Y Coordinates
-          rlwinm	r3,r20,0,24,31
-          addi	r4,sp,0x90
-          branchl	r12,Stage_GetRightOfLineCoordinates
-        #Convert Ledge X Values to Int
-          lfs f1,0x80(sp)     #Left Ledge X
-          lfs f2,0x90(sp)     #Right Ledge X
-          fctiwz f1,f1
-          stfd  f1,0x9C(sp)
-          lwz   r20,0xA0(sp)
-          fctiwz f2,f2
-          stfd  f2,0x9C(sp)
-          lwz   r21,0xA0(sp)
-        #Get amount of all possible values between the two
-          sub r3,r21,r20
-          subi  r3,r3,8       #Minus 8, pad by 4 on each side
-        #Get Random Number in Range
-          branchl	r12,HSD_Randi
-          addi  r3,r3,4       #Shift over by 4 to make it evenly distrubuted again
-        #Get X Value by adding to leftmost coordinate
-          add r20,r20,r3     #r20 = X
-
-      #Convert Ledge Y Values to Int
-        lfs f1,0x84(sp)     #Left Ledge Y
-        lfs f2,0x94(sp)     #Right Ledge Y
-        fctiwz f1,f1
-        stfd  f1,0x9C(sp)
-        lwz   r21,0xA0(sp)
-        fctiwz f2,f2
-        stfd  f2,0x9C(sp)
-        lwz   r4,0xA0(sp)
-      #Keep Highest Cliff Y Value
-        cmpw r21,r4
-        bge 0x8
-        mr  r21,r4
-			#Get Random Y (1-50)
-			   li	r3,50
-			   branchl	r12,HSD_Randi
-      #Starts at Cliff Y Value + 1
-        add r21,r3,r21
-        addi r21,r21,1
-
-			#Get Random Y Velocity
-			   li	r22,0x2			#r22 = Y vel int
-
-			#Get Y Velocity Decimal
-			   branchl	r12,HSD_Randf
-			   fmr	f4,f1			#f4 = Y Vel Decimal
-
-			#Convert To Float
-			#Get as Floats
-			#X
-			   mr r3,r20
-         bl  IntToFloat
-         fmr  f21,f1
-			#Y
-        mr r3,r21
-        bl  IntToFloat
-        fmr  f22,f1
-			#Y Vel
-        mr r3,r22
-        bl  IntToFloat
-			#Add Decimal to Y Vel
-			  fadds	f20,f1,f4
-
-      #Check If Egg is Above Ground
-        li  r3,0
-        fmr f1,f21
-        fmr f2,f22
-        bl  FindGroundUnderCoordinate
-        cmpwi r3,0x0
-        beq EggsThinkSpawn
-*/
-
-.set LeftCameraBound,20
-.set RightCameraBound,21
-.set TopCameraBound,22
-.set BottomCameraBound,23
-
-    EggsThinkSpawn:
-    .if debug==1
-      li r24,0      #Init loop count
-    .endif
-
-    EggsThinkSpawnLoop:
-
-    .if debug==1
-      addi r24,r24,1  #Inc Loop Count
-    .endif
-
-    #Get OnScreen Boundaries
-    #Left Camera
-      branchl r12,StageInfo_CameraLimitLeft_Load
-      fctiwz f1,f1
-      stfd f1,0x80(sp)
-      lwz LeftCameraBound,0x84(sp)
-    #Right Camera
-      branchl r12,StageInfo_CameraLimitRight_Load
-      fctiwz f1,f1
-      stfd f1,0x80(sp)
-      lwz RightCameraBound,0x84(sp)
-    #Top Camera
-      branchl r12,StageInfo_CameraLimitTop_Load
-      fctiwz f1,f1
-      stfd f1,0x80(sp)
-      lwz TopCameraBound,0x84(sp)
-    #Bottom Camera
-      branchl r12,StageInfo_CameraLimitBottom_Load
-      fctiwz f1,f1
-      stfd f1,0x80(sp)
-      lwz BottomCameraBound,0x84(sp)
-
-    #Get Random Velocity
-			branchl	r12,HSD_Randf
-      fmr f20,f1
-      li  r3,2
-      bl  IntToFloat
-      fadds f20,f20,f1
-
-    #Get Random X Value Between These
-      mr  r3,LeftCameraBound
-      mr  r4,RightCameraBound
-      bl  RandFloat
-      fmr f21,f1
-
-    #Get Random Y Value Between These
-      mr   r3,BottomCameraBound
-      subi  r4,TopCameraBound,70        #Minus 40 so it doesnt fly up offscreen
-      bl  RandFloat
-      fmr f22,f1
-
-    .set EggSpawnGroundWidth,8
-    #Check If Egg is Above Ground
-      fmr f1,f21
-      fmr f2,f22
-      bl  FindGroundUnderCoordinate
-      cmpwi r3,0x0
-      beq EggsThinkSpawnLoop
-    #Check Left
-      li  r3,EggSpawnGroundWidth
-      bl  IntToFloat
-      fsubs f1,f21,f1
-      fmr f2,f22
-      bl  FindGroundUnderCoordinate
-      cmpwi r3,0x0
-      beq EggsThinkSpawnLoop
-    #Check Right
-      li  r3,EggSpawnGroundWidth
-      bl  IntToFloat
-      fadds f1,f21,f1
-      fmr f2,f22
-      bl  FindGroundUnderCoordinate
-      cmpwi r3,0x0
-      beq EggsThinkSpawnLoop
-
-    .if debug==1
-      #OSReport Loop Count
-        load r3,0x803ead3c
-        mr r4,r24
-        branchl r12,OSReport
-    .endif
-
-			SpawnEgg:
-			addi	r3,sp,0x80
-			li	r4,0x0
-			stw	r4,0x0(r3)	#Player Pointer
-			stw	r4,0x4(r3)	#Player Pointer
-			li	r4,0x03
-			stw	r4,0x8(r3)	#Item ID
-			lfs	f0, -0x2858 (rtoc)
-			stfs	f21,0x14(r3)	#X Coord
-			stfs	f22,0x18(r3)	#Y Coord
-			stfs	f0,0x1C(r3)	#Z Coord
-			stfs	f21,0x20(r3)	#X Coord
-			stfs	f22,0x24(r3)	#Y Coord
-			stfs	f0,0x28(r3)	#Z Coord
-			stfs	f0,0x2C(r3)	#Unk
-			stfs	f0,0x30(r3)	#Unk
-			stfs	f0,0x34(r3)	#X Vel
-			stfs	f0,0x38(r3)	#Y Vel
-			li	r4,0x1
-			sth	r4,0x3C(r3)
-			branchl	r12,EntityItemSpawn
-			mr	r29,r3		#Backup Entity Pointer
-
-			stw	r29,0x0(r31)		#Store Pointer To Target In Event Think
-
-			#Store Pointer To Event Think In Target
-			lwz	r4,0x2C(r29)
-			stw	r31,0xDDC(r4)
-
-			#Store Y Velocity
-			stfs	f20,0x44(r4)
-
-			#Get OnDestroy
-			lwz	r4,0x2C(r29)
-			lwz	r4,0xB8(r4)
-
-			#Store OnCollision
-			bl	Eggs_OnCollision
-			mflr	r3
-			stw	r3,0x1C(r4)
-
-			#Create Camera Box
-			branchl	r12,CreateCameraBox
-			#Attach to Entity
-			lwz	r4,0x2c(r29)
-			stw	r3, 0x0520 (r4)
-			#Enable Camera Box Bit
-			lbz	r0, 0x0DCD (r4)
-			li	r5,0x22
-			rlwimi	r0, r5, 5, 24, 25
-			stb	r0, 0x0DCD (r4)
-			#Copy Some Stuff To Camera Box
-			lwz	r4, -0x4978 (r13)
-			lfs	f0, 0x014C (r4)
-			stfs	f0, 0x0040 (r3)
-			lfs	f0, 0x0150 (r4)
-			stfs	f0, 0x0044 (r3)
-			lfs	f0, 0x0154 (r4)
-			stfs	f0, 0x0048 (r3)
-			lfs	f0, 0x0158 (r4)
-			stfs	f0, 0x004C (r3)
-
-			#Never Timeout
-			lwz	r5, 0x002C (r29)
-			lbz	r3,0xDD0(r5)
-			li	r4,0x1
-			rlwimi	r3,r4,4,27,27
-			stb	r3,0xDD0(r5)
-
-			#Not Grabbable
-			lbz	r3, 0x0DCA (r5)
-			li	r4,0x0
-			rlwimi	r3,r4,2,29,29
-			stb	r3, 0x0DCA (r5)
-
-			#Un-Nudgeable?
-			lbz	r3, 0x0DCB (r5)
-			li	r4,0x0
-			rlwimi	r3,r4,3,28,28
-			stb	r3, 0x0DCB (r5)
-
-      EggsThinkSkipSpawn:
-      #Not Grabbable Every Frame
-      lwz	r5,0x0(r31)
-      lwz	r5,0x2c(r5)
-      lbz	r3, 0x0DCA (r5)
-      li	r4,0x0
-      rlwimi	r3,r4,2,29,29
-      stb	r3, 0x0DCA (r5)
-
-      #Update HUD Score
-      li	r3,0
-      li	r4,5
-      branchl	r12,Playerblock_LoadTimesR3KilledR4
-      branchl	r12,HUD_KOCounter_UpdateKOs
-
-      #Check If Free Practice
-        lbz	r3,0x5(r31)
-        cmpwi	r3,0x0
-        bne	EggsThinkExit
-      #Check For TimeUp
-        branchl	r12,MatchInfo_LoadSeconds		#Seconds Left
-        cmpwi	r3,0x0
-        bne	EggsThinkExit
-        branchl	r12,MatchInfo_LoadSubSeconds		#Sub-Seconds Left
-        cmpwi	r3,59
-        bne	EggsThinkExit
-
-      #On Event End
-        mr	r3,r30
-        branchl	r12,EventMatch_OnWinCondition			#EventMatch_OnWinCondition
-
-EggsThinkExit:
-  mr  r3,MenuData
-  bl  ClearToggledOptions
-  restore
-  blr
-
-
-			Eggs_OnCollision:
-			blrl
-
-      #First check if this is an event
-        load r4,SceneController
-        lbz r4,Scene.CurrentMajor(r4)
-        cmpwi r4,Scene.EventMode
-        bne Eggs_OnCollisionOriginalFunction
-      #Now check if its eggs-ercise
-        lwz	r4, -0x77C0 (r13)
-        lbz	r4, 0x0535 (r4)         #get event ID
-        cmpwi r4,Event_Eggs
-        beq Eggs_OnCollisionStart
-
-      Eggs_OnCollisionOriginalFunction:
-      #Go to the original egg break function
-        branch r12,ItemCollision_Egg
-
-      Eggs_OnCollisionStart:
-  			backup
-  			mr	r30,r3
-  			lwz	r31,0x2C(r3)			#Get Data
-
-			#Check If Any Attack Should Break
-  			lwz	r3,0xDDC(r31)			         #Get Event Data
-        lwz r3,EventData_MenuDataPointer(r3)     #Get Menu Data
-  			lbz	r3,DamageThreshold(r3)			#Damage Behavior
-  			cmpwi	r3,0x1
-  			beq	Eggs_OnCollisionBreakEgg
-			#Check Damage Dealt Before Exploding
-  			lwz	r3,0xCA0(r31)
-  			cmpwi	r3,11
-  			blt	Egg_OnCollisionExit
-
-			Eggs_OnCollisionBreakEgg:
-			#Increment Score
-  			li	r3,0
-  			li	r4,0
-  			li	r5,5
-  			branchl	r12,Playerblock_StoreTimesR3KilledR4
-
-			#Display Effect
-  			li	r3,1232
-  			mr	r4,r30
-  			addi	r5, r31, 76
-  			crclr	6
-  			branchl	r12,Textures_DisplayEffectTextures
-
-			#Play Pop Sound
-  			mr	r3,r31
-  			li	r4,244
-  			li	r5,127
-  			li	r6,64
-  			branchl	r12,0x8026ae84
-
-			#Explode
-  			mr	r3,r30
-  			branchl	r12,0x80289158
-
-			#Spawn New Egg
-  			lwz	r3,0xDDC(r31)			#Get Event Think
-  			li	r4,0x0			#Get 0
-  			stw	r4,0x0(r3)			#Zero Pointer
-
-			Egg_OnCollisionExit:
-  			li	r3,0x0
-			Egg_OnCollisionExitSkip:
-  			restore
-  			blr
-
-EggsLoadExit:
-restore
-blr
-
-####################################################
-
-EggsWindowInfo:
-blrl
-#amount of options, amount of options in each window
-
-.long 0x0001FFFF  #1 window, Smash Attack has 2 options
-
-####################################################
-
-EggsWindowText:
-blrl
-
-######################
-## Damage Threshold ##
-######################
-
-#Window Title = Damage Threshold
-.long 0x44616d61
-.long 0x67652054
-.long 0x68726573
-.long 0x686f6c64
-.long 0x
-
-#Option 1 = 12+ Damage
-.long 0x3132817B
-.long 0x2044616d
-.long 0x61676500
-.long 0x
-.long 0x
-
-#Option 2 = Any Damage
-.long 0x416e7920
-.long 0x44616d61
-.long 0x67650000
-.long 0x
-.long 0x
-
-
-################################################################################
-################################################################################
 
 #endregion
 
@@ -2806,7 +2950,7 @@ b	exit
 		#Make P2 A Follower (No Nudge)
 		#li	r3,0x8
 		#stb	r3,0x221F(r29)
-		#li	r3,0x1
+		li	r3,0x1
 		lbz	r0, 0x221D (r29)
 		rlwimi	r0,r3,2,29,29
 		stb	r0, 0x221D (r29)
@@ -7017,7 +7161,6 @@ blrl
 
 #endregion
 
-
 #region Scrapped Edgeguard Event
 /*
 
@@ -8790,9 +8933,7 @@ blr
 ###########################################
 
 CheckIfFirstFrame:
-lis	r3, 0x8047
-subi	r3, r3, 18784
-lwz	r3, 0x0024 (r3)
+lwz r3,TM_GameFrameCounter(r13)
 cmpwi	r3,0x1
 bne	CheckIfFirstFrame_False
 li	r3,0x1

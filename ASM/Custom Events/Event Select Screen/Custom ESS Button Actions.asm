@@ -517,6 +517,11 @@ SwitchPage_DrawEventTextLoop:
 	mr	r4,r28
 	branchl r12,0x8024d7e0
 
+#Update High Score
+	lwz	r3, -0x4A40 (r13)
+	li	r4,0
+	branchl r12,0x8024d5b0
+
 #Update cursor position
 #Get Texture Data
 	lwz	r3, -0x4A40 (r13)

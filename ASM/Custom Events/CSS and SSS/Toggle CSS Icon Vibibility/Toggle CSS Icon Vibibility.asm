@@ -275,4 +275,4 @@ blrl
 #******************************#
 Original:
   restore
-  lwz	r0, 0x0024 (sp)
+  lbz	r4, -0x3E57 (r13)
