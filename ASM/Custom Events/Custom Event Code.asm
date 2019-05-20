@@ -49,7 +49,7 @@
 	stw	r3,0x14(r9)
 
 	#STORE MATCH SETTINGS
-	load	r3,0x0bA0027c		#HUD and timer behavior
+	load	r3,0x0BB0027C		#HUD and timer behavior
 	stw	r3,0x0(r26)
 	load	r3,0x90800000
 	stw	r3,0x4(r26)		#think functions
