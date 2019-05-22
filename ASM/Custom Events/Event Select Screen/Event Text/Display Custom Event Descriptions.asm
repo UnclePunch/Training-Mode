@@ -131,9 +131,9 @@ Exit:
 
 DescriptionHeader:
 blrl
-.long 0x160CAAAA
-.long 0xAA0E00B3
-.long 0x00B31800
+.long 0x160caaaa
+.long 0xaa0e00b3
+.long 0x00b31800
 
 VanillaEvent:
   rlwinm	r3, r30, 1, 0, 30

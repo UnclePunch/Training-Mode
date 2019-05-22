@@ -856,12 +856,13 @@ b	exit
     #Init Positions
       bl  PlacePlayersCenterStage
 		#Check if P2-P4 Is Using the Event
+			li	r4,0x1		#Make CPU Controlled by P2
 			lbz	r3, -0x5108 (r13)
 			cmpwi	r3,0x0
 			beq	LCancelIsP1
-			li	r3,0x0		#Make CPU Controlled by P1
-			stb	r3,0x618(r29)
+			li	r4,0x0
     LCancelIsP1:
+			stb	r4,0x618(r29)
     #Clear Inputs
       bl  RemoveFirstFrameInputs
     #Save State
@@ -976,7 +977,7 @@ Ledgedash:
 	stb	r3,0xB(r5)		#Set Event Score Behavior Byte
 
 #Make HUD Centered For 1P and No Timer
-	li	r3,0x0420
+	li	r3,0x0430
 	sth	r3,0x0(r26)
 
 #Store Stage, CPU, and FDD Toggles
