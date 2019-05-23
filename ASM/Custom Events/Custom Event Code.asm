@@ -4831,11 +4831,12 @@ b	exit
 		#Definitions
 		#DIBehavior
 			.set DI_Random,0x0
-			.set DI_SlightDI,0x1
-			.set DI_Survival,0x2
-			.set DI_ComboDI,0x3
-			.set DI_DownAndAway,0x4
-			.set DI_None,0x5
+			.set DI_Survival,0x1
+			.set DI_ComboDI,0x2
+			.set DI_SlightDIRandom,0x3
+			.set DI_SlightDIInwards,0x4
+			.set DI_DownAndAway,0x5
+			.set DI_None,0x6
 		#SDIBehavior
 			.set SDI_33Percent,0x0
 			.set SDI_66Percent,0x1
@@ -5080,7 +5081,7 @@ b	exit
 		#Check If Attack Was Strong
 		#DI Attack
 			lbz	r3,DIBehavior(MenuData)		#Get DI Behavior
-			cmpwi	r3,DI_SlightDI		#Check If Slight In
+			cmpwi	r3,DI_SlightDIInwards		#Check If Slight In
 			bne	0x8
 			li	r3,0x0		#Override To Never Slight DI In Attacks
 			b	0x8
@@ -5245,9 +5246,8 @@ b	exit
 
 
 
-		ComboTrainingGetChanceToTech:
-
-		#INPUT A TECH WHEN IN AERIAL HITSTUN
+	ComboTrainingGetChanceToTech:
+	#INPUT A TECH WHEN IN AERIAL HITSTUN
 		lbz	r3,TechOption(MenuData)		#Get Tech Behavior
 		cmpwi	r3,0x0		#Random Tech (Original Behavior)
 		beq	ComboTrainingRandomTech
@@ -5260,56 +5260,62 @@ b	exit
 		cmpwi	r3,0x4
 		beq	ComboTrainingTechAway
 
-		ComboTrainingRandomTech:
-		#Chance to Not Tech
-		li	r3,4
-		branchl	r12,HSD_Randi
-		cmpwi	r3,0x0
-		beq	ComboTrainingMissTech
-		#Hold L
-		#li	r3,0xC0
-		#stw	r3,0x1A88(r29)
-		#Reset Tech Cooldown Window Constantly
+	ComboTrainingRandomTech:
+	#Reset Tech Cooldown Window Constantly
 		li	r3,0x1
 		stb	r3,0x680(r29)		#Frames Since Pressed L/R
 		li	r3,0xFF
 		stb	r3,0x684(r29)		#L/R Lockout Window
-
-		#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
+	#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
 		lbz	r3,0x221A(r29)
 		rlwinm.	r3,r3,0,26,26
 		bne	ComboTrainingCheckToReset
-		#Tech Random Side
-		ComboTrainingRandomTech_GetStickAngle:
-		li	r3,0x0		#0 = random direction
-		bl	ComboTrainingDecideStickAngle
-		#Check If Held Up
-		lbz	r3,0x1A8D(r29)
-		cmpwi	r3,0x0
-		beq	ComboTrainingCheckToReset
-		li	r3,0x0
-		stb	r3,0x1A8D(r29)
+	#Tech Random Side
+	ComboTrainingRandomTech_GetStickAngle:
+		li	r3,4									#Decide between left right and center and none
+		branchl	r12,HSD_Randi
+		cmpwi r3,0x0
+		beq ComboTrainingRandomTech_TechInPlace
+		cmpwi r3,0x1
+		beq ComboTrainingRandomTech_TechLeft
+		cmpwi r3,0x2
+		beq ComboTrainingRandomTech_TechRight
+		cmpwi r3,0x3
+		beq ComboTrainingMissTech
+
+	ComboTrainingRandomTech_TechInPlace:
+		li	r3,0
+		stb r3,0x1A8C(r29)
+		stb r3,0x1A8D(r29)
 		b	ComboTrainingCheckToReset
-		ComboTrainingMissTech:
+	ComboTrainingRandomTech_TechLeft:
+		li	r3,-127
+		stb r3,0x1A8C(r29)
+		b	ComboTrainingCheckToReset
+	ComboTrainingRandomTech_TechRight:
+		li	r3,127
+		stb r3,0x1A8C(r29)
+		b	ComboTrainingCheckToReset
+	ComboTrainingMissTech:
 		li	r3,0x0
 		stw	r3,0x1A88(r29)
-		#Fail Tech Cooldown
+	#Fail Tech Cooldown
 		li	r3,0xFF
 		stb	r3,0x680(r29)
 		li	r3,0x00
 		stb	r3,0x684(r29)
 		b	ComboTrainingCheckToReset
 
-		ComboTrainingTechInPlace:
+	ComboTrainingTechInPlace:
 		#Hold L
 		li	r3,0xC0
 		stw	r3,0x1A88(r29)
-		#Reset Tech Cooldown Window Constantly
+	#Reset Tech Cooldown Window Constantly
 		li	r3,0x0
 		stb	r3,0x680(r29)
 		li	r3,0xFF
 		stb	r3,0x684(r29)
-		#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
+	#Check If In Hitlag Before Inputting Random Side (Messes Up DI Otherwise)
 		lbz	r3,0x221A(r29)
 		rlwinm.	r3,r3,0,26,26
 		bne	ComboTrainingCheckToReset
@@ -5725,60 +5731,109 @@ stb	r4,0x1A8D(r29)
 #Check Which Type Of DI To Perform
 cmpwi	r3,DI_Random
 beq	ComboTrainingDecideStickAngle_RandomDI
-cmpwi	r3,DI_SlightDI
-beq	ComboTrainingDecideStickAngle_SlightDI
 cmpwi	r3,DI_Survival
 beq	ComboTrainingDecideStickAngle_SurvivalDI
 cmpwi	r3,DI_ComboDI
 beq	ComboTrainingDecideStickAngle_ComboDI
+cmpwi	r3,DI_SlightDIRandom
+beq	ComboTrainingDecideStickAngle_RandomDI_SlightDI
+cmpwi	r3,DI_SlightDIInwards
+beq	ComboTrainingDecideStickAngle_SlightDIInwards
 cmpwi	r3,DI_DownAndAway
 beq	ComboTrainingDecideStickAngle_DownAwayDI
 cmpwi	r3,DI_None
 beq	ComboTrainingDecideStickAngle_NoDI
 
-
 ###############
 ## Random DI ##
 ###############
 
-#Get RNG Out of 3
+#Roll RNG
 ComboTrainingDecideStickAngle_RandomDI:
-li	r3,3
-branchl	r12,HSD_Randi
-cmpwi	r3,0x0
-beq	ComboTrainingDecideStickAngle_RandomDI_UpStick
-cmpwi	r3,0x1
-beq	ComboTrainingDecideStickAngle_RandomDI_LeftStick
-cmpwi	r3,0x2
-beq	ComboTrainingDecideStickAngle_RandomDI_RightStick
+	li	r3,6
+	branchl	r12,HSD_Randi
+	cmpwi	r3,0x0
+	beq	ComboTrainingDecideStickAngle_RandomDI_TrulyRandom
+	cmpwi	r3,0x1
+	beq	ComboTrainingDecideStickAngle_ComboDI
+	cmpwi	r3,0x2
+	beq	ComboTrainingDecideStickAngle_SurvivalDI
+	cmpwi r3,0x3
+	beq ComboTrainingDecideStickAngle_RandomDI_SlightDI
+	cmpwi r3,0x4
+	beq	ComboTrainingDecideStickAngle_DownAwayDI
+	cmpwi	r3,0x5
+	beq	ComboTrainingDecideStickAngle_NoDI
 
-ComboTrainingDecideStickAngle_RandomDI_UpStick:
-li	r3,127
-stb	r3,0x1A8D(r29)
-b	ComboTrainingDecideStickAngleExit
+ComboTrainingDecideStickAngle_RandomDI_TrulyRandom:
+.set Combo_RandomAnalogMin, 36
+.set Combo_RandomAnalogMax, 127
 
-ComboTrainingDecideStickAngle_RandomDI_LeftStick:
-#Get Random Stick X Input 77-127
-li	r3,50
-branchl	r12,HSD_Randi
-addi	r3,r3,77		#Start at 77
-mulli	r3,r3,-1
-stb	r3,0x1A8C(r29)
-b	ComboTrainingDecideStickAngleExit
+#Get X magnitude
+	li	r3,Combo_RandomAnalogMax - Combo_RandomAnalogMin
+	branchl r12,HSD_Randi
+	addi r3,r3,Combo_RandomAnalogMin
+	stb r3,0x1A8C(r29)
+#Chance to negate
+	li	r3,2
+	branchl r12,HSD_Randi
+	cmpwi r3,0x0
+	beq 0x10
+	lbz r3,0x1A8C(r29)
+	neg r3,r3
+	stb r3,0x1A8C(r29)
+#Get Y magnitude
+	li	r3,Combo_RandomAnalogMax - Combo_RandomAnalogMin
+	branchl r12,HSD_Randi
+	addi r3,r3,Combo_RandomAnalogMin
+	stb r3,0x1A8D(r29)
+#Chance to negate
+	li	r3,2
+	branchl r12,HSD_Randi
+	cmpwi r3,0x0
+	beq 0x10
+	lbz r3,0x1A8D(r29)
+	neg r3,r3
+	stb r3,0x1A8D(r29)
+	b	ComboTrainingDecideStickAngleExit
 
-ComboTrainingDecideStickAngle_RandomDI_RightStick:
-#Get Random Stick X Input 77-127
-li	r3,50
-branchl	r12,HSD_Randi
-addi	r3,r3,77		#Start at 77
-stb	r3,0x1A8C(r29)
-b	ComboTrainingDecideStickAngleExit
+ComboTrainingDecideStickAngle_RandomDI_SlightDI:
+.set Combo_SlightAnalogMin, 36
+.set Combo_SlightAnalogMax, 66
+
+#Get X magnitude
+	li	r3,Combo_SlightAnalogMax - Combo_SlightAnalogMin
+	branchl r12,HSD_Randi
+	addi r3,r3,Combo_RandomAnalogMin
+	stb r3,0x1A8C(r29)
+#Chance to negate
+	li	r3,2
+	branchl r12,HSD_Randi
+	cmpwi r3,0x0
+	beq 0x10
+	lbz r3,0x1A8C(r29)
+	neg r3,r3
+	stb r3,0x1A8C(r29)
+#Get Y magnitude
+	li	r3,Combo_SlightAnalogMax - Combo_SlightAnalogMin
+	branchl r12,HSD_Randi
+	addi r3,r3,Combo_SlightAnalogMin
+	stb r3,0x1A8D(r29)
+#Chance to negate
+	li	r3,2
+	branchl r12,HSD_Randi
+	cmpwi r3,0x0
+	beq 0x10
+	lbz r3,0x1A8D(r29)
+	neg r3,r3
+	stb r3,0x1A8D(r29)
+	b	ComboTrainingDecideStickAngleExit
 
 #######################
 ## Slight DI Towards ##
 #######################
 
-ComboTrainingDecideStickAngle_SlightDI:
+ComboTrainingDecideStickAngle_SlightDIInwards:
 
 #Get Random Stick X Input 86-105, 86-95 go in front, 96-105 go behind shiek
 li	r3,19
@@ -6131,7 +6186,7 @@ ComboTrainingWindowInfo:
 blrl
 #amount of options, amount of options in each window
 
-.long 0x04050304  #5 windows, DI has 6 options, SDI has 4 Options, Tech Has 5 Options
+.long 0x04060304  #5 windows, DI has 7 options, SDI has 4 Options, Tech Has 5 Options
 .long 0x02020000  #PostHitstun has 3 options, Mash has 3 options
 
 ####################################################
@@ -6144,42 +6199,36 @@ blrl
 ########
 
 #Window Title = DI Behavior
-.long 0x44492042
-.long 0x65686176
-.long 0x696f7200
+.string "DI Behavior"
+.align 2
 
 #Option 1 = Random DI
-.long 0x52616e64
-.long 0x6f6d2044
-.long 0x49000000
+.string "Random DI"
+.align 2
 
-#Option 2 = Slight DI Towards
-.long 0x536c6967
-.long 0x68742044
-.long 0x4920546f
-.long 0x77617264
-.long 0x73000000
+#Option 2 = Survival DI
+.string "Survival DI"
+.align 2
 
-#Option 3 = Survival DI
-.long 0x53757276
-.long 0x6976616c
-.long 0x20444900
+#Option 3 = Combo DI
+.string "Combo DI"
+.align 2
 
-#Option 4 = Combo DI
-.long 0x436f6d62
-.long 0x6f204449
-.long 0x00000000
+#Option 4 = Slight DI Random
+.string "Slight DI Random"
+.align 2
 
-#Option 5 = Down and Away DI
-.long 0x446f776e
-.long 0x20616e64
-.long 0x20417761
-.long 0x79204449
-.long 0x00000000
+#Option 5 = Slight DI Towards
+.string "Slight DI Towards"
+.align 2
+
+#Option 6 = Down and Away DI
+.string "Down and Away DI"
+.align 2
 
 #Option 6 = No DI
-.long 0x4e6f2044
-.long 0x49000000
+.string "No DI"
+.align 2
 
 #########
 ## SDI ##

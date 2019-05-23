@@ -10582,7 +10582,7 @@
 801d2fd0 000000b4 801d2fd0 0 PokemonStadium_DisplayMonitorFeed
 801d3084 000000b4 801d3084 0 Stages_PokemonStadium_
 801d3138 00000198 801d3138 0 zz_01d3138_
-801d32d0 00000190 801d32d0 0 zz_01d32d0_
+801d32d0 00000190 801d32d0 0 PokemonStadium_CheckIfPlayerIsDamaged
 801d3460 000003ec 801d3460 0 PokemonStadium_UpdateOverviewScreen
 801d384c 00000154 801d384c 0 zz_01d384c_
 801d39a0 0000006c 801d39a0 0 PokemonStadium_InfoScreenMain
@@ -10603,7 +10603,7 @@
 801d4548 00000ab0 801d4548 0 PokemonStadium_TransformationDecide
 801d4700 000008f8 801d4700 0 PokemonStadium_TransformationDecide
 801d4b08 000004f0 801d4b08 0 PokemonStadium_TransformationDecide
-801d4ff8 0000007c 801d4ff8 0 zz_01d4ff8_
+801d4ff8 0000007c 801d4ff8 0 PokemonStadium_CheckIfMonitorIsZoomedOnPlayer
 801d5074 00000044 801d5074 0 Textures_PokemonStadium
 801d50b8 00000008 801d50b8 0 zz_01d50b8_
 801d50c0 0000005c 801d50c0 0 zz_01d50c0_
