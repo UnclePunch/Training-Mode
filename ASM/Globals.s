@@ -172,42 +172,78 @@ Use D-Pad to change ledge."
     .endm
 
 #endregion
-#region SDI
-  .set Event_SDI,2
+#region Combo
+  .set Event_Combo,2
   #Event Name
-    .macro Event_SDI_Name
-      .string "SDI Training"
+    .macro Event_Combo_Name
+      .string "Combo Training"
     .endm
 
-    .macro Event_SDI_Description
-      .string "Practice Smash DI'ing
-Fox's up-air!"
+    .macro Event_Combo_Description
+      .string "L+DPad adjusts percent/DPadDown moves CPU
+DPad right/left saves and loads positions."
     .endm
 
-    .macro Event_SDI_Tutorial
-      .string "TvSDI"
+    .macro Event_Combo_Tutorial
+      .string "TvCombo"
     .endm
 
-    .macro Event_SDI_ChooseCPU
+    .macro Event_Combo_ChooseCPU
+      .byte Event_Combo
     .endm
 
-    .macro Event_SDI_PreloadData
-      .byte Event_SDI, Fox.Ext, FinalDestination
+    .macro Event_Combo_PreloadData
     .endm
 
-    .macro Event_SDI_LoadSSS
+    .macro Event_Combo_LoadSSS
+      .byte Event_Combo
     .endm
 
-    .macro Event_SDI_PlayableCharacters
+    .macro Event_Combo_PlayableCharacters
     .endm
 
-    .macro Event_SDI_ScoreType
+    .macro Event_Combo_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region AttackOnShield
+  .set Event_AttackOnShield,3
+  #Event Name
+    .macro Event_AttackOnShield_Name
+      .string "Attack On Shield"
+    .endm
+
+    .macro Event_AttackOnShield_Description
+      .string "Practice attacks on a shielding opponent!
+Pause to change their OoS option."
+    .endm
+
+    .macro Event_AttackOnShield_Tutorial
+      .string "TvAttOnSh"
+    .endm
+
+    .macro Event_AttackOnShield_ChooseCPU
+      .byte Event_AttackOnShield
+    .endm
+
+    .macro Event_AttackOnShield_PreloadData
+      .byte Event_AttackOnShield,-1,FinalDestination
+    .endm
+
+    .macro Event_AttackOnShield_LoadSSS
+    .endm
+
+    .macro Event_AttackOnShield_PlayableCharacters
+    .endm
+
+    .macro Event_AttackOnShield_ScoreType
       .byte KO
     .endm
 
 #endregion
 #region Reversal
-  .set Event_Reversal,3
+  .set Event_Reversal,4
   #Event Name
     .macro Event_Reversal_Name
       .string "Reversal Training"
@@ -241,8 +277,42 @@ moves characters closer and further apart."
     .endm
 
 #endregion
+#region SDI
+  .set Event_SDI,5
+  #Event Name
+    .macro Event_SDI_Name
+      .string "SDI Training"
+    .endm
+
+    .macro Event_SDI_Description
+      .string "Practice Smash DI'ing
+Fox's up-air!"
+    .endm
+
+    .macro Event_SDI_Tutorial
+      .string "TvSDI"
+    .endm
+
+    .macro Event_SDI_ChooseCPU
+    .endm
+
+    .macro Event_SDI_PreloadData
+      .byte Event_SDI, Fox.Ext, FinalDestination
+    .endm
+
+    .macro Event_SDI_LoadSSS
+    .endm
+
+    .macro Event_SDI_PlayableCharacters
+    .endm
+
+    .macro Event_SDI_ScoreType
+      .byte KO
+    .endm
+
+#endregion
 #region Powershield
-  .set Event_Powershield,4
+  .set Event_Powershield,6
   #Event Name
     .macro Event_Powershield_Name
       .string "Powershield Training"
@@ -271,76 +341,6 @@ Pause to change fire-rate."
     .endm
 
     .macro Event_Powershield_ScoreType
-      .byte KO
-    .endm
-
-#endregion
-#region ShieldDrop
-  .set Event_ShieldDrop,5
-  #Event Name
-    .macro Event_ShieldDrop_Name
-      .string "Shield Drop Training"
-    .endm
-
-    .macro Event_ShieldDrop_Description
-      .string "Counter with a shield-drop aerial!
-DPad left/right moves players apart."
-    .endm
-
-    .macro Event_ShieldDrop_Tutorial
-      .string "TvShDrp"
-    .endm
-
-    .macro Event_ShieldDrop_ChooseCPU
-      .byte Event_ShieldDrop
-    .endm
-
-    .macro Event_ShieldDrop_PreloadData
-      .byte Event_ShieldDrop, -1, Battlefield
-    .endm
-
-    .macro Event_ShieldDrop_LoadSSS
-    .endm
-
-    .macro Event_ShieldDrop_PlayableCharacters
-    .endm
-
-    .macro Event_ShieldDrop_ScoreType
-      .byte KO
-    .endm
-
-#endregion
-#region AttackOnShield
-  .set Event_AttackOnShield,6
-  #Event Name
-    .macro Event_AttackOnShield_Name
-      .string "Attack On Shield"
-    .endm
-
-    .macro Event_AttackOnShield_Description
-      .string "Practice attacks on a shielding opponent!
-Pause to change their OoS option."
-    .endm
-
-    .macro Event_AttackOnShield_Tutorial
-      .string "TvAttOnSh"
-    .endm
-
-    .macro Event_AttackOnShield_ChooseCPU
-      .byte Event_AttackOnShield
-    .endm
-
-    .macro Event_AttackOnShield_PreloadData
-      .byte Event_AttackOnShield,-1,FinalDestination
-    .endm
-
-    .macro Event_AttackOnShield_LoadSSS
-    .endm
-
-    .macro Event_AttackOnShield_PlayableCharacters
-    .endm
-
-    .macro Event_AttackOnShield_ScoreType
       .byte KO
     .endm
 
@@ -416,37 +416,37 @@ then ASDI down and tech!"
     .endm
 
 #endregion
-#region Combo
-  .set Event_Combo,9
+#region ShieldDrop
+  .set Event_ShieldDrop,9
   #Event Name
-    .macro Event_Combo_Name
-      .string "Combo Training"
+    .macro Event_ShieldDrop_Name
+      .string "Shield Drop Training"
     .endm
 
-    .macro Event_Combo_Description
-      .string "L+DPad adjusts percent/DPadDown moves CPU
-DPad right/left saves and loads positions."
+    .macro Event_ShieldDrop_Description
+      .string "Counter with a shield-drop aerial!
+DPad left/right moves players apart."
     .endm
 
-    .macro Event_Combo_Tutorial
-      .string "TvCombo"
+    .macro Event_ShieldDrop_Tutorial
+      .string "TvShDrp"
     .endm
 
-    .macro Event_Combo_ChooseCPU
-      .byte Event_Combo
+    .macro Event_ShieldDrop_ChooseCPU
+      .byte Event_ShieldDrop
     .endm
 
-    .macro Event_Combo_PreloadData
+    .macro Event_ShieldDrop_PreloadData
+      .byte Event_ShieldDrop, -1, Battlefield
     .endm
 
-    .macro Event_Combo_LoadSSS
-      .byte Event_Combo
+    .macro Event_ShieldDrop_LoadSSS
     .endm
 
-    .macro Event_Combo_PlayableCharacters
+    .macro Event_ShieldDrop_PlayableCharacters
     .endm
 
-    .macro Event_Combo_ScoreType
+    .macro Event_ShieldDrop_ScoreType
       .byte KO
     .endm
 
@@ -605,22 +605,22 @@ GeneralTech:
   Event_LCancel_Name
 #Ledgedash Training
   Event_Ledgedash_Name
-#SDI Training
-  Event_SDI_Name
-#Reversal Training
-  Event_Reversal_Name
-#Powershield Training
-  Event_Powershield_Name
-#Shield Drop Training
-  Event_ShieldDrop_Name
+#Combo Training
+  Event_Combo_Name
 #Attack On Shield
   Event_AttackOnShield_Name
+#Reversal Training
+  Event_Reversal_Name
+#SDI Training
+  Event_SDI_Name
+#Powershield Training
+  Event_Powershield_Name
 #Ledge-Tech Training
   Event_LedgeTech_Name
 #Amsah-Tech Training
   Event_AmsahTech_Name
-#Combo Training
-  Event_Combo_Name
+#Shield Drop Training
+  Event_ShieldDrop_Name
 #Waveshine SDI
   Event_WaveshineSDI_Name
 .align 2
@@ -651,22 +651,22 @@ GeneralTech:
   Event_LCancel_Description
 #Ledgedash Training
   Event_Ledgedash_Description
-#SDI Training
-  Event_SDI_Description
-#Reversal Training
-  Event_Reversal_Description
-#Powershield Training
-  Event_Powershield_Description
-#Shield Drop Training
-  Event_ShieldDrop_Description
+#Combo Training
+  Event_Combo_Description
 #Attack On Shield
   Event_AttackOnShield_Description
+#Reversal Training
+  Event_Reversal_Description
+#SDI Training
+  Event_SDI_Description
+#Powershield Training
+  Event_Powershield_Description
 #Ledge-Tech Training
   Event_LedgeTech_Description
 #Amsah-Tech Training
   Event_AmsahTech_Description
-#Combo Training
-  Event_Combo_Description
+#Shield Drop Training
+  Event_ShieldDrop_Description
 #Waveshine SDI
   Event_WaveshineSDI_Description
 .align 2
@@ -840,14 +840,14 @@ Event_Multishine_Tutorial
 GeneralTech:
 Event_LCancel_Tutorial
 Event_Ledgedash_Tutorial
-Event_SDI_Tutorial
-Event_Reversal_Tutorial
-Event_Powershield_Tutorial
-Event_ShieldDrop_Tutorial
+Event_Combo_Tutorial
 Event_AttackOnShield_Tutorial
+Event_Reversal_Tutorial
+Event_SDI_Tutorial
+Event_Powershield_Tutorial
 Event_LedgeTech_Tutorial
 Event_AmsahTech_Tutorial
-Event_Combo_Tutorial
+Event_ShieldDrop_Tutorial
 Event_WaveshineSDI_Tutorial
 .align 2
 
