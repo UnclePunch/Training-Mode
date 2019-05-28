@@ -84,19 +84,20 @@
 Minigames:
 bl	Eggs
 bl	Multishine
+bl	Reaction
 .long -1
 #######################
 GeneralTech:
 bl	LCancel
 bl	Ledgedash
-bl	SDITraining
-bl	Reversal
-bl	Powershield
-bl	ShieldDrop
+bl	ComboTraining
 bl	AttackOnShield
+bl	Reversal
+bl	SDITraining
+bl	Powershield
 bl	Ledgetech
 bl	AmsahTech
-bl	ComboTraining
+bl	ShieldDrop
 bl	WaveshineSDI
 .long -1
 #######################
@@ -765,6 +766,199 @@ b	exit
     branchl	r12,HUD_KOCounter_UpdateKOs
 
 	MultishineLoadExit:
+	restore
+	blr
+
+
+
+
+################################################################################
+################################################################################
+#endregion
+
+#region Reaction
+#########################
+## Reaction HIJACK INFO ##
+#########################
+
+Reaction:
+#SET EVENT TYPE TO KOs
+	load	r5,0x8045abf0		#Static Match Struct
+	lbz	r3,0xB(r5)		#Get Event Score Behavior Byte
+	li	r4,0x0
+	rlwimi	r3,r4,1,30,30		#Zero Out Time Bit
+	stb	r3,0xB(r5)		#Set Event Score Behavior Byte
+
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)							#Send event struct
+	mr	r4,r26									#Send match struct
+	li	r5,Fox.Ext							#Use chosen CPU
+	li	r6,FinalDestination			#Use FD
+	load r7,EventOSD_Reaction
+	bl	InitializeMatch
+
+#STORE THINK FUNCTION
+	bl	ReactionLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
+
+b	exit
+
+
+	########################
+	## Reaction LOAD FUNCT ##
+	########################
+	ReactionLoad:
+	blrl
+
+	backup
+
+	#Schedule Think
+	bl	ReactionThink
+	mflr	r3
+	li	r4,3		#Priority (Interrupt)
+  li  r5,0    #No Option Menu
+	li	r6,0
+	bl	CreateEventThinkFunction
+
+	b	ReactionLoadExit
+
+		#########################
+		## Reaction THINK FUNCT ##
+		#########################
+
+		ReactionThink:
+		blrl
+
+    .set EventData,31
+    .set Event,30
+    .set P1Data,27
+    .set P1GObj,28
+    .set P2Data,29
+    .set P2GObj,30
+
+		#Constants
+		.set ShineTimerMax,7*60
+		.set ShineTimerMin,2*60
+		.set ResetTimer,1*60
+
+		#GObj Data Offsets
+		.set OFST_ShineTimer,0x0
+		.set OFST_ResetTimer,0x1
+		.set OFST_ReactionTimer,0x2
+
+
+		backup
+
+		mr	Event,r3
+		lwz	EventData,0x2c(Event)
+
+    bl	GetAllPlayerPointers
+    mr	P1GObj,r3
+    mr	P1Data,r4
+    mr	P2GObj,r5
+    mr	P2Data,r6
+
+	#First Frame Actions
+		bl	CheckIfFirstFrame
+		cmpwi	r3,0x0
+		beq	ReactionNotFirstFrame
+  #Init Positions
+    bl  PlacePlayersCenterStage
+	#Savestate
+		addi r3,EventData,EventData_SaveStateStruct
+		li	r4,1
+		bl	SaveState_Save
+	#Set Initial Timer
+		li	r3,ShineTimerMax - ShineTimerMin
+		branchl r12,HSD_Randi
+		addi r3,r3,ShineTimerMin
+		stb r3,OFST_ShineTimer(EventData)
+	#Initialize Reaction Timer
+		li	r3,-1
+		stb r3,OFST_ReactionTimer(EventData)
+	ReactionNotFirstFrame:
+
+		bl	StoreCPUTypeAndZeroInputs
+
+	#Give Intangibility to both chars
+		mr	r3,P1GObj
+		li	r4,1
+		branchl r12,ApplyIntangibility
+		mr	r3,P2GObj
+		li	r4,1
+		branchl r12,ApplyIntangibility
+
+	#Check post countdown timer
+		lbz r3,OFST_ResetTimer(EventData)
+		cmpwi r3,0
+		ble Reaction_SkipResetTimer
+	#Dec timer, if 0 reset
+		subi r3,r3,1
+		stb r3,OFST_ResetTimer(EventData)
+		cmpwi r3,0
+		beq Reaction_Reset
+		b	ReactionThinkExit
+	Reaction_SkipResetTimer:
+
+	#Check shine countdown timer
+		lbz r3,OFST_ShineTimer(EventData)
+		cmpwi r3,0
+		ble Reaction_SkipShineTimer
+	#Dec timer, if 0 perform move
+		subi r3,r3,1
+		stb r3,OFST_ShineTimer(EventData)
+		cmpwi r3,0
+		bgt ReactionThinkExit
+	#Perform down b
+		mr	r3,P2GObj
+		branchl r12,0x800e8560
+	#Start reaction timer
+		li	r3,0
+		stb	r3,OFST_ReactionTimer(EventData)
+		b	ReactionThinkExit
+	Reaction_SkipShineTimer:
+
+	#Check reaction timer
+		lbz r3,OFST_ReactionTimer(EventData)
+		cmpwi r3,0
+		ble Reaction_SkipReactionTimer
+	#Check if P1 Reacted
+		lwz r3,0x10(P1Data)
+		cmpwi r3,ASID_Wait
+		beq Reaction_SkipReactionTimer
+	#Output reaction time
+		nop
+	#Start post countdown timer
+		li	r3,ResetTimer
+		stb r3,OFST_ResetTimer(EventData)
+		b	ReactionLoadExit
+	Reaction_SkipReactionTimer:
+	#Inc timer
+		lbz r3,OFST_ReactionTimer(EventData)
+		addi r3,r3,1
+		stb r3,OFST_ReactionTimer(EventData)
+		b	ReactionThinkExit
+
+	Reaction_Reset:
+	#Load State
+		addi r3,EventData,EventData_SaveStateStruct
+		bl	SaveState_Load
+	#Reset Variables
+	#Set Initial Timer
+		li	r3,ShineTimerMax - ShineTimerMin
+		branchl r12,HSD_Randi
+		addi r3,r3,ShineTimerMin
+		stb r3,OFST_ShineTimer(EventData)
+	#Reset Timer
+		li	r3,0
+		stb	r3,OFST_ResetTimer(EventData)
+	#Initialize Reaction Timer
+		li	r3,-1
+		stb r3,OFST_ReactionTimer(EventData)
+
+	ReactionThinkExit:
+	ReactionLoadExit:
 	restore
 	blr
 
