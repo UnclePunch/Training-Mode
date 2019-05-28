@@ -17,7 +17,7 @@
 ##################################
 #region Minigame Page Data
 #Number of Events
-.set Minigames.NumOfEvents,2 -1
+.set Minigames.NumOfEvents,3 -1
 
 #region Eggs-ercise
   .set Event_Eggs,0
@@ -92,6 +92,43 @@ perform in 10 seconds?"
     .endm
 
     .macro Event_Multishine_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region Reaction
+  .set Event_Reaction,2
+  #Event Name
+    .macro Event_Reaction_Name
+      .string "Reaction Test"
+    .endm
+
+    .macro Event_Reaction_Description
+      .string "Test your reaction time by
+jabbing when you see/hear Fox shine!"
+    .endm
+
+    .macro Event_Reaction_Tutorial
+      .string "TvReaction"
+    .endm
+
+    .macro Event_Reaction_ChooseCPU
+    .endm
+
+    .macro Event_Reaction_PreloadData
+      .byte Event_Reaction, Fox.Ext, FinalDestination
+    .endm
+
+    .macro Event_Reaction_LoadSSS
+    .endm
+
+    .macro Event_Reaction_PlayableCharacters
+    .endm
+
+    .macro Event_Reaction_AvailableCPUs
+    .endm
+
+    .macro Event_Reaction_ScoreType
       .byte KO
     .endm
 
@@ -598,6 +635,7 @@ Minigames:
   Event_Eggs_Name
 #Multishine
   Event_Multishine_Name
+  Event_Reaction_Name
 .align 2
 
 GeneralTech:
@@ -644,6 +682,7 @@ Minigames:
   Event_Eggs_Description
 #Multishine
   Event_Multishine_Description
+  Event_Reaction_Description
 .align 2
 ################
 GeneralTech:
@@ -687,6 +726,7 @@ SpacieTech:
 ChooseCPU_Minigames:
   Event_Eggs_ChooseCPU
   Event_Multishine_ChooseCPU
+  Event_Reaction_ChooseCPU
   .byte -1
 .align 2
 ############################
@@ -721,6 +761,7 @@ ChooseCPU_SpacieTech:
 PreloadEvents_Minigames:
   Event_Eggs_PreloadData
   Event_Multishine_PreloadData
+  Event_Reaction_PreloadData
   .byte -1
 .align 2
 ############################
@@ -755,6 +796,7 @@ PreloadEvents_SpacieTech:
 Minigames:
   Event_Eggs_LoadSSS
   Event_Multishine_LoadSSS
+  Event_Reaction_LoadSSS
   .byte -1
 .align 2
 ############################
@@ -789,6 +831,7 @@ SpacieTech:
 Minigames:
   Event_Eggs_PlayableCharacters
   Event_Multishine_PlayableCharacters
+  Event_Reaction_PlayableCharacters
   .byte -1
 .align 2
 ############################
@@ -835,6 +878,7 @@ blrl
 Minigames:
 Event_Eggs_Tutorial
 Event_Multishine_Tutorial
+Event_Reaction_Tutorial
 .align 2
 
 GeneralTech:
@@ -984,8 +1028,8 @@ Event_ArmadaShine_Tutorial
   .set Scene.CurrentMajor,0x0
   .set Scene.PendingMajor,0x1
   .set Scene.PreviousMajor,0x2
-  .set Scene.CurrentMinor,0x3
-  .set Scene.PendingMinor,0x4
+  .set Scene.PendingMinor,0x3
+  .set Scene.CurrentMinor,0x4
   .set Scene.PreviousMinor,0x5
 #Scene ID's
 .set Scene.TitleScreen,0x00

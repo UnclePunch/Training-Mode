@@ -15,7 +15,7 @@
   load	r3,0x803dda00		#Get Some Scene Struct
   lwz	r4, -0x77C0 (r13) #Get SSS Struct
   addi	r4, r4, 1424
-  li  r5,1
+  li  r5,0              #Next Minor Scene
   branchl	r12,0x801a5f64		#Update KO Stars
 
 #Update VS Records
