@@ -104,8 +104,8 @@ perform in 10 seconds?"
     .endm
 
     .macro Event_Reaction_Description
-      .string "Test your reaction time by
-jabbing when you see/hear Fox shine!"
+      .string "Test your reaction time by pressing
+any button when you see/hear Fox shine!"
     .endm
 
     .macro Event_Reaction_Tutorial
@@ -953,7 +953,7 @@ Event_ArmadaShine_Tutorial
 .set EventOSD_Eggs,0
 .set EventOSD_SDI,0x10000400
 .set EventOSD_Reversal,0x002C0009
-.set EventOSD_Powershield,0x00000200
+.set EventOSD_Powershield,0x00000400
 .set EventOSD_ShieldDrop,0x00200048
 .set EventOSD_AttackOnShield,0x00210000
 .set EventOSD_LedgeTech,0x00000404

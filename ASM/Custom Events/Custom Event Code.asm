@@ -839,13 +839,13 @@ b	exit
 
 		#Constants
 		.set ShineTimerMax,7*60
-		.set ShineTimerMin,2*60
+		.set ShineTimerMin,3*60
 		.set ResetTimer,1*60
 
 		#GObj Data Offsets
 		.set OFST_ShineTimer,0x0
-		.set OFST_ResetTimer,0x1
-		.set OFST_ReactionTimer,0x2
+		.set OFST_ResetTimer,0x2
+		.set OFST_ReactionTimer,0x4
 
 
 		backup
@@ -873,10 +873,14 @@ b	exit
 		li	r3,ShineTimerMax - ShineTimerMin
 		branchl r12,HSD_Randi
 		addi r3,r3,ShineTimerMin
-		stb r3,OFST_ShineTimer(EventData)
+		sth r3,OFST_ShineTimer(EventData)
 	#Initialize Reaction Timer
 		li	r3,-1
-		stb r3,OFST_ReactionTimer(EventData)
+		sth r3,OFST_ReactionTimer(EventData)
+	#Stop Music
+		li	r3,0
+		li	r4,2
+		branchl r12,0x80025064
 	ReactionNotFirstFrame:
 
 		bl	StoreCPUTypeAndZeroInputs
@@ -890,24 +894,24 @@ b	exit
 		branchl r12,ApplyIntangibility
 
 	#Check post countdown timer
-		lbz r3,OFST_ResetTimer(EventData)
+		lhz r3,OFST_ResetTimer(EventData)
 		cmpwi r3,0
 		ble Reaction_SkipResetTimer
 	#Dec timer, if 0 reset
 		subi r3,r3,1
-		stb r3,OFST_ResetTimer(EventData)
+		sth r3,OFST_ResetTimer(EventData)
 		cmpwi r3,0
 		beq Reaction_Reset
 		b	ReactionThinkExit
 	Reaction_SkipResetTimer:
 
 	#Check shine countdown timer
-		lbz r3,OFST_ShineTimer(EventData)
+		lhz r3,OFST_ShineTimer(EventData)
 		cmpwi r3,0
 		ble Reaction_SkipShineTimer
 	#Dec timer, if 0 perform move
 		subi r3,r3,1
-		stb r3,OFST_ShineTimer(EventData)
+		sth r3,OFST_ShineTimer(EventData)
 		cmpwi r3,0
 		bgt ReactionThinkExit
 	#Perform down b
@@ -915,29 +919,71 @@ b	exit
 		branchl r12,0x800e8560
 	#Start reaction timer
 		li	r3,0
-		stb	r3,OFST_ReactionTimer(EventData)
+		sth	r3,OFST_ReactionTimer(EventData)
 		b	ReactionThinkExit
 	Reaction_SkipShineTimer:
 
 	#Check reaction timer
-		lbz r3,OFST_ReactionTimer(EventData)
+		lhz r3,OFST_ReactionTimer(EventData)
+		extsh r3,r3
 		cmpwi r3,0
-		ble Reaction_SkipReactionTimer
+		blt Reaction_SkipReactionTimer
+	#Poll Inputs Again
+		#branchl r12,0x80377ce8
 	#Check if P1 Reacted
-		lwz r3,0x10(P1Data)
-		cmpwi r3,ASID_Wait
+		lbz r3,0x618(P1Data)
+		load r4,InputStructStart
+		mulli	r3,r3,68
+		add	r3,r3,r4
+		lwz r3,0x8(r3)
+		cmpwi r3,0
 		beq Reaction_SkipReactionTimer
 	#Output reaction time
-		nop
+		mr	r3,r27			#p1 (no offsetting window)
+		li	r4,120			#text timeout
+		li	r5,0			#Area to Display (0-2)
+		li	r6,OSD.Miscellaneous			#Window ID (Unique to This Display)
+		branchl	r12,TextCreateFunction			#create text custom function
+		mr	r20,r3			#backup text pointer
+	#Decide Color
+		lhz r3,OFST_ReactionTimer(EventData)
+		cmpwi	r3,15
+		ble	Reaction_Good
+	Reaction_Bad:
+		load	r3,0xffa2baff			#Red
+		b	Reaction_StoreTextColor
+	Reaction_Good:
+		load	r3,0x8dff6eff			#green
+	Reaction_StoreTextColor:
+		stw	r3,0x30(r20)
+
+	#Create Text 1
+		mr 	r3,r20			#text pointer
+		bl	Reaction_TopText
+		mflr	r4
+		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+		lfs	f2, -0x37B4 (rtoc)			#default text X/Y
+		branchl r12,Text_InitializeSubtext
+
+	#Create Text 2
+		mr 	r3,r20			#text pointer
+		bl	Reaction_BottomText
+		mflr	r4
+		lhz	r5,OFST_ReactionTimer(EventData)
+		addi r5,r5,1								#0-index is scary
+		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+		lfs	f2, -0x37B0 (rtoc)			#default text X/Y
+		branchl r12,Text_InitializeSubtext
+
 	#Start post countdown timer
 		li	r3,ResetTimer
-		stb r3,OFST_ResetTimer(EventData)
+		sth r3,OFST_ResetTimer(EventData)
 		b	ReactionLoadExit
 	Reaction_SkipReactionTimer:
 	#Inc timer
-		lbz r3,OFST_ReactionTimer(EventData)
+		lhz r3,OFST_ReactionTimer(EventData)
 		addi r3,r3,1
-		stb r3,OFST_ReactionTimer(EventData)
+		sth r3,OFST_ReactionTimer(EventData)
 		b	ReactionThinkExit
 
 	Reaction_Reset:
@@ -949,21 +995,28 @@ b	exit
 		li	r3,ShineTimerMax - ShineTimerMin
 		branchl r12,HSD_Randi
 		addi r3,r3,ShineTimerMin
-		stb r3,OFST_ShineTimer(EventData)
+		sth r3,OFST_ShineTimer(EventData)
 	#Reset Timer
 		li	r3,0
-		stb	r3,OFST_ResetTimer(EventData)
+		sth	r3,OFST_ResetTimer(EventData)
 	#Initialize Reaction Timer
 		li	r3,-1
-		stb r3,OFST_ReactionTimer(EventData)
+		sth r3,OFST_ReactionTimer(EventData)
 
 	ReactionThinkExit:
 	ReactionLoadExit:
 	restore
 	blr
 
+Reaction_TopText:
+blrl
+.string "Reaction Time:"
+.align 2
 
-
+Reaction_BottomText:
+blrl
+.string "%d Frames"
+.align 2
 
 ################################################################################
 ################################################################################

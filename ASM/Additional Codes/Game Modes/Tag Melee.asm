@@ -331,7 +331,7 @@ SmashPotato_Think_InProgressNoTag:
   bgt SmashPotato_ThinkExit
 
 #Timer up, kill "it"
-  mr  r3,REG_PlayerGObj
+  addi  r3,REG_PlayerGObj,0
   branchl r12,0x800d3e40
 
 ########################
