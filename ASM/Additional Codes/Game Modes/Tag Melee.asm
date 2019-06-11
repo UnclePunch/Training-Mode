@@ -4,13 +4,13 @@
 #Store Pointer to onStartMelee function
   lwz	r4, -0x77C0 (r13)
   addi	r4, r4, 3672
-  bl  SmashPotato_Init
+  bl  TagMelee_Init
   mflr r5
   stw r5,0x44(r4)
   b InjectionExit
 
-#region SmashPotato_Init
-SmashPotato_Init:
+#region TagMelee_Init
+TagMelee_Init:
 blrl
 
 .set REG_GObj,31
@@ -46,19 +46,19 @@ backup
 
 #Attach Process
   mr  r3,REG_GObj
-  bl  SmashPotato_Think
+  bl  TagMelee_Think
   mflr r4
   li  r5,23
   branchl r12,GObj_SchedulePerFrameFunction
 
-SmashPotato_InitExit:
+TagMelee_InitExit:
 restore
 blr
 
 #endregion
 
-#region SmashPotato_Think
-SmashPotato_Think:
+#region TagMelee_Think
+TagMelee_Think:
 blrl
 
 #Registers
@@ -88,14 +88,14 @@ backup
 #Check state of game
   lbz r3,GameState(REG_GObjData)
   cmpwi r3,Start
-  beq SmashPotato_Think_Start
+  beq TagMelee_Think_Start
   cmpwi r3,InProgress
-  beq SmashPotato_Think_InProgress
+  beq TagMelee_Think_InProgress
   cmpwi r3,Frozen
-  beq SmashPotato_Think_Frozen
+  beq TagMelee_Think_Frozen
 
 #region Start
-SmashPotato_Think_Start:
+TagMelee_Think_Start:
 
 .set REG_LoopCount,29
 .set REG_TotalPlayerCount,28
@@ -106,17 +106,17 @@ SmashPotato_Think_Start:
 #Init Loop
   li  REG_LoopCount,0
   li  REG_TotalPlayerCount,0
-SmashPotato_Think_StartCountAllPlayers:
+TagMelee_Think_StartCountAllPlayers:
 #Check Players Presence
   mr  r3,REG_LoopCount
   branchl r12,0x800322c0
   cmpwi r3,0x2
-  bne SmashPotato_Think_StartCountAllPlayersIncLoop
+  bne TagMelee_Think_StartCountAllPlayersIncLoop
 #Check if player has stocks remaining
   mr  r3,REG_LoopCount
   branchl r12,0x80033bd8
   cmpwi r3,0
-  ble SmashPotato_Think_StartCountAllPlayersIncLoop
+  ble TagMelee_Think_StartCountAllPlayersIncLoop
 #Get Players GObj
   mr  r3,REG_LoopCount
   branchl r12,0x80034110
@@ -124,13 +124,13 @@ SmashPotato_Think_StartCountAllPlayers:
 #Check if READY,GO is over
   lbz r4,0x221D(r3)
   rlwinm. r4,r4,0,28,28
-  bne SmashPotato_ThinkExit
+  bne TagMelee_ThinkExit
 #Player exists, increment total count
   addi REG_TotalPlayerCount,REG_TotalPlayerCount,1
-SmashPotato_Think_StartCountAllPlayersIncLoop:
+TagMelee_Think_StartCountAllPlayersIncLoop:
   addi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,6
-  blt SmashPotato_Think_StartCountAllPlayers
+  blt TagMelee_Think_StartCountAllPlayers
 
 #############################
 ## Now get a random player ##
@@ -147,32 +147,32 @@ SmashPotato_Think_StartCountAllPlayersIncLoop:
 #Init Loop
   li  REG_LoopCount,0
   li  REG_TotalPlayerCount,0
-SmashPotato_Think_StartGetItSlot:
+TagMelee_Think_StartGetItSlot:
 #Check Players Presence
   mr  r3,REG_LoopCount
   branchl r12,0x800322c0
   cmpwi r3,0x2
-  bne SmashPotato_Think_StartGetItSlotIncLoop
+  bne TagMelee_Think_StartGetItSlotIncLoop
 #Check if player has stocks remaining
   mr  r3,REG_LoopCount
   branchl r12,0x80033bd8
   cmpwi r3,0
-  ble SmashPotato_Think_StartGetItSlotIncLoop
+  ble TagMelee_Think_StartGetItSlotIncLoop
 #Is this who im looking for?
   cmpw REG_RandomPlayer,REG_TotalPlayerCount
-  beq SmashPotato_Think_StartFoundIt
+  beq TagMelee_Think_StartFoundIt
 #Player exists, increment total count
   addi REG_TotalPlayerCount,REG_TotalPlayerCount,1
-SmashPotato_Think_StartGetItSlotIncLoop:
+TagMelee_Think_StartGetItSlotIncLoop:
   addi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,6
-  blt SmashPotato_Think_StartGetItSlot
+  blt TagMelee_Think_StartGetItSlot
 
 ###################
 ## Store as "it" ##
 ###################
 
-SmashPotato_Think_StartFoundIt:
+TagMelee_Think_StartFoundIt:
   stb REG_LoopCount,ItSlot(REG_GObjData)
 
 .set TimerMin, 10 * 60
@@ -188,33 +188,33 @@ SmashPotato_Think_StartFoundIt:
   li  r3,InProgress
   stb r3,GameState(REG_GObjData)
 
-b SmashPotato_Think_InProgress
+b TagMelee_Think_InProgress
 
 #endregion
 
 #region InProgress
-SmashPotato_Think_InProgress:
+TagMelee_Think_InProgress:
 
 .set REG_LoopCount,29
 .set REG_TotalPlayerCount,28
 #Init Loop
   li  REG_LoopCount,0
   li  REG_TotalPlayerCount,0
-SmashPotato_Think_PunishPlayers:
+TagMelee_Think_PunishPlayers:
 #Check Players Presence
   mr  r3,REG_LoopCount
   branchl r12,0x800322c0
   cmpwi r3,0x2
-  bne SmashPotato_Think_PunishPlayersIncLoop
+  bne TagMelee_Think_PunishPlayersIncLoop
 #Check if player has stocks remaining
   mr  r3,REG_LoopCount
   branchl r12,0x80033bd8
   cmpwi r3,0
-  ble SmashPotato_Think_PunishPlayersIncLoop
+  ble TagMelee_Think_PunishPlayersIncLoop
 #Ensure this player os not it
   lbz r3,ItSlot(REG_GObjData)
   cmpw r3,REG_LoopCount
-  beq SmashPotato_Think_PunishPlayersIncLoop
+  beq TagMelee_Think_PunishPlayersIncLoop
 #Get this players gobj
   mr  r3,REG_LoopCount
   branchl r12,PlayerBlock_LoadMainCharDataOffset
@@ -223,20 +223,20 @@ SmashPotato_Think_PunishPlayers:
 #Check if they have a victim
   lwz r3,0x2094(REG_PlayerData)
   cmpwi r3,0
-  beq SmashPotato_Think_PunishPlayersIncLoop
+  beq TagMelee_Think_PunishPlayersIncLoop
 #If victim is not it, give the damage they just dealt
   lwz r4,0x2C(r3)
 
 
-SmashPotato_Think_PunishPlayersIncLoop:
+TagMelee_Think_PunishPlayersIncLoop:
   addi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,6
-  blt SmashPotato_Think_PunishPlayers
+  blt TagMelee_Think_PunishPlayers
 
 ##################
 ## Monitor "It" ##
 ##################
-SmashPotato_Think_InProgressMonitorIt:
+TagMelee_Think_InProgressMonitorIt:
 #Get Players GObj
   lbz r3,ItSlot(REG_GObjData)
   branchl r12,0x80034110
@@ -246,74 +246,78 @@ SmashPotato_Think_InProgressMonitorIt:
   lwz r3,0x2C(REG_PlayerGObj)
   lbz r4,0x2219(r3)
   rlwinm. r4,r4,0,25,25
-  beq SmashPotato_Think_InProgressMonitorItCheckForVictim
+  beq TagMelee_Think_InProgressMonitorItCheckForVictim
 #Rebirth gets here too, check if NOT rebirth/rebirthWait
   lwz r4,0x10(r3)
   cmpwi r4,ASID_Rebirth
-  beq SmashPotato_Think_InProgressMonitorItCheckForVictim
+  beq TagMelee_Think_InProgressMonitorItCheckForVictim
   cmpwi r4,ASID_RebirthWait
-  beq SmashPotato_Think_InProgressMonitorItCheckForVictim
+  beq TagMelee_Think_InProgressMonitorItCheckForVictim
 #If in any Star KO State, enter them into DeadUp
   cmpwi r4,ASID_DeadUpStar
-  beq SmashPotato_Think_InProgressEnterDeadUp
+  beq TagMelee_Think_InProgressEnterDeadUp
   cmpwi r4,ASID_DeadUpStarIce
-  beq SmashPotato_Think_InProgressEnterDeadUp
+  beq TagMelee_Think_InProgressEnterDeadUp
   cmpwi r4,ASID_DeadUpFall
-  beq SmashPotato_Think_InProgressEnterDeadUp
-  b  SmashPotato_Think_InProgressFreezeAllPlayers
-SmashPotato_Think_InProgressEnterDeadUp:
+  beq TagMelee_Think_InProgressEnterDeadUp
+  b  TagMelee_Think_InProgressFreezeAllPlayers
+TagMelee_Think_InProgressEnterDeadUp:
 #Enter DeadUp
   lwz r3,0x0(r3)
   branchl r12,0x800d3e40
-  b SmashPotato_Think_InProgressFreezeAllPlayers
-SmashPotato_Think_InProgressMonitorItCheckForVictim:
+  b TagMelee_Think_InProgressFreezeAllPlayers
+TagMelee_Think_InProgressMonitorItCheckForVictim:
 #Check if player has a victim
   lwz r3,0x2C(REG_PlayerGObj)
   lwz r4,0x2094(r3)
   cmpwi r4,0
-  beq SmashPotato_Think_InProgressNoTag
+  beq TagMelee_Think_InProgressNoTag
+#Ensure there is no hitbox exception (this should catch Thrown hitboxes)
+  lwz r5,0x1198(r3)
+  cmpwi r5,0
+  bne TagMelee_Think_InProgressRemoveVictim
 #Get the victims damage source
   lwz r5,0x2C(r4)
   lwz r5,0x1868(r5)
 #Check if source pointer exists
   cmpwi r5,0x0
-  beq SmashPotato_Think_InProgressRemoveVictim
+  beq TagMelee_Think_InProgressRemoveVictim
 #Check if source pointer is live (check userdata pointer)
   lwz r6,0x2C(r5)
   cmpwi r6,0        #if not, item most likely was removed on hit, so assume it was an item
-  beq SmashPotato_Think_InProgressRemoveVictim
+  beq TagMelee_Think_InProgressRemoveVictim
 #Check if they were hit by an "item"
   lhz r6,0x0(r5)
   cmpwi r6,6
-  beq SmashPotato_Think_InProgressNoTag
-  b SmashPotato_Think_InProgressSetNewIt
+  beq TagMelee_Think_InProgressNoTag
+  b TagMelee_Think_InProgressSetNewIt
 
-/*  bne SmashPotato_Think_InProgressSetNewIt
+/*  bne TagMelee_Think_InProgressSetNewIt
 #Check if hitbox is still active
   lwz r6,0x2C(r5)
   addi r6,r6,0x5D4    #Start of hitbox struct
   lwz r5,0x0(r6)      #check if hitbox is active
   cmpwi r5,0x0
-  beq SmashPotato_Think_InProgressSetNewIt
+  beq TagMelee_Think_InProgressSetNewIt
 #Ensure it was non reflectable
   lbz r5,0x42(r6)     #get collision bools
   rlwinm.	r5, r5, 29, 31, 31
-  bne	SmashPotato_Think_InProgressNoTag
+  bne	TagMelee_Think_InProgressNoTag
 */
 
-SmashPotato_Think_InProgressRemoveVictim:
+TagMelee_Think_InProgressRemoveVictim:
   li  r4,0
   stw r4,0x2094(r3)
-  b SmashPotato_Think_InProgressNoTag
+  b TagMelee_Think_InProgressNoTag
 
-SmashPotato_Think_InProgressSetNewIt:
+TagMelee_Think_InProgressSetNewIt:
 #Set this as new "it"
   mr  REG_PlayerGObj,r4
   lwz r3,0x2C(r4)
   lbz r4,0xC(r3)
   stb r4,ItSlot(REG_GObjData)
 
-SmashPotato_Think_InProgressNoTag:
+TagMelee_Think_InProgressNoTag:
 #Apply GFX to "it"
   lwz r3,0x2C(REG_PlayerGObj)
   li	r4,0x23		# darkness body aura
@@ -328,7 +332,7 @@ SmashPotato_Think_InProgressNoTag:
   sth r3,Timer(REG_GObjData)
 #Check if up
   cmpwi r3,0
-  bgt SmashPotato_ThinkExit
+  bgt TagMelee_ThinkExit
 
 #Timer up, kill "it"
   addi  r3,REG_PlayerGObj,0
@@ -342,21 +346,21 @@ SmashPotato_Think_InProgressNoTag:
 .set REG_TotalPlayerCount,28
 .set REG_PlayerGObj,27
 .set REG_PlayerData,26
-SmashPotato_Think_InProgressFreezeAllPlayers:
+TagMelee_Think_InProgressFreezeAllPlayers:
 #Init Loop
   li  REG_LoopCount,0
   li  REG_TotalPlayerCount,0
-SmashPotato_Think_InProgressFreezeAllPlayersLoop:
+TagMelee_Think_InProgressFreezeAllPlayersLoop:
 #Check Players Presence
   mr  r3,REG_LoopCount
   branchl r12,0x800322c0
   cmpwi r3,0x2
-  bne SmashPotato_Think_InProgressFreezeAllPlayersIncLoop
+  bne TagMelee_Think_InProgressFreezeAllPlayersIncLoop
 #Check if player has stocks remaining
   mr  r3,REG_LoopCount
   branchl r12,0x80033bd8
   cmpwi r3,0
-  ble SmashPotato_Think_InProgressFreezeAllPlayersIncLoop
+  ble TagMelee_Think_InProgressFreezeAllPlayersIncLoop
 #Player exists, get pointers
   mr  r3,REG_LoopCount
   branchl r12,0x80034110
@@ -379,14 +383,14 @@ SmashPotato_Think_InProgressFreezeAllPlayersLoop:
 #Freeze GFX if not dead
   lbz r3,0x221E(REG_PlayerData)
   rlwinm. r0,r3,0,24,24
-  bne SmashPotato_Think_InProgressFreezeAllPlayersIncLoop
+  bne TagMelee_Think_InProgressFreezeAllPlayersIncLoop
   mr  r3,REG_PlayerGObj
   branchl r12,0x8005ba40
 
-SmashPotato_Think_InProgressFreezeAllPlayersIncLoop:
+TagMelee_Think_InProgressFreezeAllPlayersIncLoop:
   addi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,6
-  blt SmashPotato_Think_InProgressFreezeAllPlayersLoop
+  blt TagMelee_Think_InProgressFreezeAllPlayersLoop
 
 #Set timer
   li  r3,60
@@ -395,20 +399,20 @@ SmashPotato_Think_InProgressFreezeAllPlayersIncLoop:
 #Change state to frozen
   li  r3,Frozen
   stb r3,GameState(REG_GObjData)
-  b SmashPotato_ThinkExit
+  b TagMelee_ThinkExit
 
 
 #endregion
 
 #region Frozen
-SmashPotato_Think_Frozen:
+TagMelee_Think_Frozen:
 #Dec Timer
   lhz r3,Timer(REG_GObjData)
   subi r3,r3,1
   sth r3,Timer(REG_GObjData)
 #Check if up
   cmpwi r3,0
-  bgt SmashPotato_ThinkExit
+  bgt TagMelee_ThinkExit
 
 #Respawn all
 .set REG_LoopCount,29
@@ -418,17 +422,17 @@ SmashPotato_Think_Frozen:
 #Init Loop
   li  REG_LoopCount,0
   li  REG_TotalPlayerCount,0
-SmashPotato_Think_FrozenRespawnAllPlayersLoop:
+TagMelee_Think_FrozenRespawnAllPlayersLoop:
 #Check Players Presence
   mr  r3,REG_LoopCount
   branchl r12,0x800322c0
   cmpwi r3,0x2
-  bne SmashPotato_Think_FrozenRespawnAllPlayersIncLoop
+  bne TagMelee_Think_FrozenRespawnAllPlayersIncLoop
 #Check if player has stocks remaining
   mr  r3,REG_LoopCount
   branchl r12,0x80033bd8
   cmpwi r3,0
-  ble SmashPotato_Think_FrozenRespawnAllPlayersIncLoop
+  ble TagMelee_Think_FrozenRespawnAllPlayersIncLoop
 #Get data
   mr  r3,REG_LoopCount
   branchl r12,0x80034110
@@ -440,19 +444,19 @@ SmashPotato_Think_FrozenRespawnAllPlayersLoop:
   mr  r3,REG_PlayerGObj
 	li r4,0x1
 	branchl	r12,0x800bfd9c
-SmashPotato_Think_FrozenRespawnAllPlayersIncLoop:
+TagMelee_Think_FrozenRespawnAllPlayersIncLoop:
   addi REG_LoopCount,REG_LoopCount,1
   cmpwi REG_LoopCount,6
-  blt SmashPotato_Think_FrozenRespawnAllPlayersLoop
+  blt TagMelee_Think_FrozenRespawnAllPlayersLoop
 
 #Change state to start
   li  r3,Start
   stb r3,GameState(REG_GObjData)
-  b SmashPotato_ThinkExit
+  b TagMelee_ThinkExit
 
 #endregion
 
-SmashPotato_ThinkExit:
+TagMelee_ThinkExit:
 restore
 blr
 
