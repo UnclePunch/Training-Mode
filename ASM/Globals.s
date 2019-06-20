@@ -595,6 +595,7 @@ with an Aramada-Shine!"
     .endm
 
     .macro Event_ArmadaShine_PreloadData
+      .byte Event_ArmadaShine, Fox.Ext, -1
     .endm
 
     .macro Event_ArmadaShine_LoadSSS
@@ -1101,7 +1102,7 @@ Event_ArmadaShine_Tutorial
 .set OSReport,0x803456a8
 .set HSD_Randi,0x80380580
 .set HSD_Randf,0x80380528
-.set AS_Wait,0x8008a348
+.set AS_Wait,0x8008a2bc
 .set AS_Fall,0x800cc730
 .set HSD_MemAlloc,0x8037f1e4
 .set memcpy,0x800031f4

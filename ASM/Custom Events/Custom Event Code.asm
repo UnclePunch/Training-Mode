@@ -1185,17 +1185,18 @@ b	exit
 		LCancelThink_SkipInvincibility:
 
 		LCancelThink_CheckForSaveState:
-		#Poll For Savestates
+		#Check For Savestates
 		addi r3,EventData,EventData_SaveStateStruct
 		bl	CheckForSaveAndLoad
 
     mr  r3,P1GObj
     mr  r4,P2GObj
-    addi r5,EventData,0x10
+    addi r5,EventData,EventData_SaveStateStruct
 		bl	MoveCPU
 		bl	GiveFullShields
+		addi r3,EventData,EventData_SaveStateStruct+(1*0x8)
+		bl	DPadCPUPercent
 		bl	UpdateAllGFX
-
 
 	LCancelLoadExit:
 	restore
@@ -2491,7 +2492,7 @@ Reversal:
 	lwz r3,0x0(r29)							#Send event struct
 	mr	r4,r26									#Send match struct
 	li	r5,-1										#Use chosen CPU
-	li	r6,FinalDestination			#Use SSS Stage
+	li	r6,-1										#Use SSS Stage
 	load r7,EventOSD_Reversal
 	bl	InitializeMatch
 
@@ -4151,7 +4152,7 @@ blrl
 .long 0x41A00000		#P2 X Position
 .long 0x38d1b717		#FD Floor Y Coord
 .long 0x38d1b717		#FD Floor Y Coord
-.long 0x14460000  #P1 X Rand Pos Range
+.long 0x14460000    #P1 X Rand Pos Range
 
 #################################
 
@@ -4564,123 +4565,108 @@ Ledgetech_InitializePositions:
 backup
 
 .set LedgeSide,20
-.set LedgeID,21
 
-  #Backup Ledge Choice (0 = Left, 1 = Right)
-    mr	LedgeSide,r3
+#Backup Ledge Side
+	mr	LedgeSide,r3
 
-  #Get Stage's Ledge IDs
-    lwz		r3,-0x6CB8 (r13)			#External Stage ID
-    bl		LedgedashCliffIDs
-    mflr  r4
-    mulli	r3,r3,0x2
-    lhzx	r3,r3,r4
-  #Get Requested Ledge
-  	cmpwi LedgeSide,0x0
-  	beq	Ledgetech_InitializePositions_GetLeftLedgeID
+#Change Facing Directions
+  cmpwi LedgeSide,0x0
+  beq	Ledgetech_InitializePositions_GetLeftLedgeID
+Ledgetech_InitializePositions_GetRightLedgeID:
+ #Change Facing Direction
+	li	r3,-1
+	bl	IntToFloat
+	stfs	f1,0x2C(P1Data)
+  li	r3,1
+  bl	IntToFloat
+  stfs	f1,0x2C(P2Data)
+	b	Ledgetech_InitializePositions_DirectionChangeEnd
+Ledgetech_InitializePositions_GetLeftLedgeID:
+#Change Facing Direction
+	li	r3,1
+  bl	IntToFloat
+  stfs	f1,0x2C(P1Data)
+  li	r3,-1
+  bl	IntToFloat
+  stfs	f1,0x2C(P2Data)
+Ledgetech_InitializePositions_DirectionChangeEnd:
 
-  Ledgetech_InitializePositions_GetRightLedgeID:
-    rlwinm	LedgeID,r3,0,24,31
-   #Change Facing Direction
-  	li	r3,-1
-  	bl	IntToFloat
-  	stfs	f1,0x2C(P1Data)
-    li	r3,1
-    bl	IntToFloat
-    stfs	f1,0x2C(P2Data)
-  #Get Ledge Coords (0x80 = X, 0x84 = Y)
-    mr  r3,LedgeID
-    addi	r4,sp,0x80
-    branchl	r12,Stage_GetRightOfLineCoordinates
-  	b	Ledgetech_InitializePositions_StorePosition
+#Get Ledge Coordinates
+	mr	r3,LedgeSide
+	addi r4,sp,0x80
+	bl	GetLedgeCoordinates
 
-  Ledgetech_InitializePositions_GetLeftLedgeID:
-  	rlwinm	LedgeID,r3,24,24,31
-  #Change Facing Direction
-  	li	r3,1
-  	bl	IntToFloat
-  	stfs	f1,0x2C(P1Data)
-    li	r3,-1
-    bl	IntToFloat
-    stfs	f1,0x2C(P2Data)
-  #Get Ledge Coords (0x80 = X, 0x84 = Y)
-    mr  r3,LedgeID
-    addi	r4,sp,0x80
-    branchl	r12,Stage_GetLeftOfLineCoordinates
-  	b	Ledgetech_InitializePositions_StorePosition
+Ledgetech_InitializePositions_StorePosition:
+#Place P2 a few Mm behind it
+  li  r3,10
+  bl  IntToFloat
+  lfs f2,0x2C(P2Data)
+  fmuls f1,f1,f2
+  lfs f2,0x80(sp)
+  fsubs f1,f2,f1
+  stfs f1,0xB0(P2Data)
+  lfs f1,0x84(sp)
+  stfs f1,0xB4(P2Data)
+#Find Ground Below Player
+  mr  r3,P2GObj
+  bl  FindGroundNearPlayer
+  cmpwi r3,0    #Check if ground was found
+  beq Ledgetech_InitializePositions_SkipGroundCorrection
+  stfs f1,0xB0(P2Data)
+  stfs f2,0xB4(P2Data)
+  stw r4,0x83C(P2Data)
+  Ledgetech_InitializePositions_SkipGroundCorrection:
+#Enter into Wait
+  mr  r3,P2GObj
+  branchl r12,AS_Wait
+#Update Position
+  mr  r3,P2GObj
+  bl  UpdatePosition
+#Update ECB Values for the ground ID
+  mr r3,P2GObj
+  branchl r12,EnvironmentCollision_WaitLanding
+#Set Grounded
+  mr r3,P2Data
+  branchl r12,Air_SetAsGrounded
+#Update Camera
+  mr r3,P2GObj
+  bl  UpdateCameraBox
 
-  Ledgetech_InitializePositions_StorePosition:
-  #Place P2 a few Mm behind it
-    li  r3,10
-    bl  IntToFloat
-    lfs f2,0x2C(P2Data)
-    fmuls f1,f1,f2
-    lfs f2,0x80(sp)
-    fsubs f1,f2,f1
-    stfs f1,0xB0(P2Data)
-    lfs f1,0x84(sp)
-    stfs f1,0xB4(P2Data)
-  #Find Ground Below Player
-    mr  r3,P2GObj
-    bl  FindGroundNearPlayer
-    cmpwi r3,0    #Check if ground was found
-    beq Ledgetech_InitializePositions_SkipGroundCorrection
-    stfs f1,0xB0(P2Data)
-    stfs f2,0xB4(P2Data)
-    stw r4,0x83C(P2Data)
-    Ledgetech_InitializePositions_SkipGroundCorrection:
-  #Enter into Wait
-    mr  r3,P2GObj
-		lfs	f1, -0x75A8 (rtoc)
-    branchl r12,AS_Wait
-  #Update Position
-    mr  r3,P2GObj
-    bl  UpdatePosition
-  #Update ECB Values for the ground ID
-    mr r3,P2GObj
-    branchl r12,EnvironmentCollision_WaitLanding
-  #Set Grounded
-    mr r3,P2Data
-    branchl r12,Air_SetAsGrounded
-  #Update Camera
-    mr r3,P2GObj
-    bl  UpdateCameraBox
-
-  #Enter Rebirth
-    lwz	r26,0x2C(P1Data)
-    mr		r3,P1GObj
-    branchl		r12,AS_Rebirth
-    stw	r26,0x2C(P1Data)
-  #Place P1 a few Mm in front of it
-    li  r3,60
-    bl  IntToFloat
-    lfs f2,0x2C(P1Data)
-    fmuls f1,f1,f2
-    lfs f2,0x80(sp)
-    fsubs f1,f2,f1
-    stfs f1,0xB0(P1Data)
-    lfs f1,0x84(sp)
-    stfs f1,0xB4(P1Data)
-  #Enter RebirthWait
-    mr		r3,P1GObj
-    branchl		r12,AS_RebirthWait
-  #Update Position
-    mr  r3,P1GObj
-    bl  UpdatePosition
-  #Store Blr as Physics
-		bl		BlrFunctionPointer
-		mflr		r3
-		stw		r3,0x21A4(P1Data)
-	#Store Custom RebirthWait Interrupt
-		bl	Custom_InterruptRebirthWait
-		mflr	r3
-		stw		r3,0x219C(P1Data)
-  #Update RebirthPlat Position
-    mr  r3,P1GObj
-    branchl r12,RebirthPlatform_UpdatePosition
-  #Update Camera
-    mr r3,P1GObj
-    bl  UpdateCameraBox
+#Enter Rebirth
+  lwz	r26,0x2C(P1Data)
+  mr		r3,P1GObj
+  branchl		r12,AS_Rebirth
+  stw	r26,0x2C(P1Data)
+#Place P1 a few Mm in front of it
+  li  r3,60
+  bl  IntToFloat
+  lfs f2,0x2C(P1Data)
+  fmuls f1,f1,f2
+  lfs f2,0x80(sp)
+  fsubs f1,f2,f1
+  stfs f1,0xB0(P1Data)
+  lfs f1,0x84(sp)
+  stfs f1,0xB4(P1Data)
+#Enter RebirthWait
+  mr		r3,P1GObj
+  branchl		r12,AS_RebirthWait
+#Update Position
+  mr  r3,P1GObj
+  bl  UpdatePosition
+#Store Blr as Physics
+	bl		BlrFunctionPointer
+	mflr		r3
+	stw		r3,0x21A4(P1Data)
+#Store Custom RebirthWait Interrupt
+	bl	Custom_InterruptRebirthWait
+	mflr	r3
+	stw		r3,0x219C(P1Data)
+#Update RebirthPlat Position
+  mr  r3,P1GObj
+  branchl r12,RebirthPlatform_UpdatePosition
+#Update Camera
+  mr r3,P1GObj
+  bl  UpdateCameraBox
 
 restore
 blr
@@ -5183,6 +5169,7 @@ b	exit
 		ComboTrainingSkipMoveCPU:
 
 		#L+DPad Controls CPU Percent
+		addi r3,EventData,EventData_SaveStateStruct+(1*0x8)
 		bl	DPadCPUPercent
 
 		bl	GiveFullShields
@@ -7458,6 +7445,488 @@ blrl
 
 #endregion
 
+#region Armada Shine
+###################################
+## Armada Shine HIJACK INFO ##
+###################################
+
+ArmadaShine:
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)										#Send event struct
+	mr	r4,r26												#Send match struct
+	li	r5,Fox.Ext										#Use fox
+	li	r6,-1													#Use chosen Stage
+	load r7,EventOSD_ArmadaShine
+	bl	InitializeMatch
+
+#STORE THINK FUNCTION
+ArmadaShineStoreThink:
+	bl	ArmadaShineLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
+
+b	exit
+
+##################################
+## Armada Shine LOAD FUNCT ##
+##################################
+ArmadaShineLoad:
+	blrl
+
+	backup
+
+#Schedule Think
+	bl	ArmadaShineThink
+	mflr	r3
+	li	r4,3		#Priority (After EnvCOllision)
+  li  r5,0
+	bl	CreateEventThinkFunction
+	b	ArmadaShineThink_Exit
+
+###################################
+## Armada Shine THINK FUNCT ##
+###################################
+
+ArmadaShineThink:
+	blrl
+
+#Registers
+	.set REG_EventConstants,25
+  .set REG_MenuData,26
+  .set REG_EventData,31
+  .set REG_P1Data,27
+  .set REG_P1GObj,28
+	.set REG_P2Data,29
+	.set REG_P2GObj,30
+
+#Event Data Offsets
+	.set EventState,0x0
+		.set EventState_Hitstun,0x0
+		.set EventState_Falling,0x1
+		.set EventState_RecoverStart,0x2
+		.set EventState_RecoverEnd,0x3
+	.set Timer,0x1
+
+backup
+
+#INIT FUNCTION VARIABLES
+	lwz	REG_EventData,0x2c(r3)			#backup data pointer in r31
+
+#Get Player Pointers
+  bl GetAllPlayerPointers
+  mr REG_P1GObj,r3
+  mr REG_P1Data,r4
+  mr REG_P2GObj,r5
+  mr REG_P2Data,r6
+
+#Get Menu and Constants Pointers
+  lwz REG_MenuData,REG_EventData_REG_MenuDataPointer(REG_EventData)
+	bl	ArmadaShineThink_Constants
+	mflr REG_EventConstants
+
+	bl	StoreCPUTypeAndZeroInputs
+
+#ON FIRST FRAME
+	bl	CheckIfFirstFrame
+	cmpwi	r3,0x0
+	beq	ArmadaShineThink_Start
+	#Init Positions
+		mr	r3,P1GObj
+		mr	r4,P2GObj
+		bl	ArmadaShine_InitializePositions
+  #Clear Inputs
+    bl  RemoveFirstFrameInputs
+	#Save State
+  	addi r3,REG_EventData,EventData_SaveStateStruct
+		li	r4,1			#Override failsafe code
+  	bl	SaveState_Save
+	#Init State
+		li	r3,EventState_Hitstun
+		stb	r3,EventState(EventData)
+ArmadaShineThink_Start:
+
+#Reset if anyone died
+	bl	IsAnyoneDead
+	cmpwi r3,0
+	bne ArmadaShineThink_Restore
+
+#Switch Case
+	lbz r3,EventState(EventData)
+	cmpwi r3,EventState_Hitstun
+	beq ArmadaShineThink_Hitstun
+	cmpwi r3,EventState_Falling
+	beq ArmadaShineThink_Falling
+	cmpwi r3,EventState_RecoverStart
+	beq ArmadaShineThink_RecoverStart
+	cmpwi r3,EventState_RecoverEnd
+	beq ArmadaShineThink_RecoverEnd
+	b	ArmadaShineThink_Exit
+
+#region ArmadaShineThink_Hitstun
+ArmadaShineThink_Hitstun:
+#Check if still in hitstun
+	lbz	r3,0x221C(P2Data)
+	rlwinm. r3,r3,0,30,30
+	bne	ArmadaShineThink_Hitstun_Exit
+#Change Event State
+	li	r3,EventState_Falling
+	stb	r3,EventState(EventData)
+#Run Next State Code
+	b	ArmadaShineThink_Falling
+
+ArmadaShineThink_Hitstun_Exit:
+#Always L-Cancel
+	li	r3,0
+	stb r3,0x67F(P1Data)
+	b	ArmadaShineThink_Exit
+#endregion
+
+#region ArmadaShineThink_Falling
+ArmadaShineThink_Falling:
+.set FirefoxRadius,80
+.set FirefoxChance,6
+#Get distance from ledge
+	addi r3,P2Data,0xB0
+	addi r4,P2Data,0x1ADC
+	bl	GetDistance
+	stfs	f1,0x80(sp)
+#Fox travels approx 82 Mm during firefox, so ensure he is at least this far
+	li	r3,FirefoxRadius
+	bl	IntToFloat
+	lfs f2,0x80(sp)
+	fcmpo cr0,f2,f1
+	bge ArmadaShineThink_Falling_EnterFirefox
+#Random chance to firefox
+	li	r3,FirefoxChance
+	branchl r12,HSD_Randi
+	cmpwi r3,0
+	beq ArmadaShineThink_Falling_EnterFirefox
+	b	ArmadaShineThink_Exit
+
+ArmadaShineThink_Falling_EnterFirefox:
+#Enter Firefox
+	mr	r3,P2GObj
+	branchl r12,0x800e72c4
+#Change Event State
+	li	r3,EventState_RecoverStart
+	stb	r3,EventState(EventData)
+#Run Next State Code
+	b	ArmadaShineThink_RecoverStart
+#endregion
+
+#region ArmadaShineThink_RecoverStart
+ArmadaShineThink_RecoverStart:
+.set RestartTimer,30
+
+#Hold towards ledge
+#Get Angle Between Fox and Ledge
+	addi r3,P2Data,0xB0
+	addi r4,P2Data,0x1ADC
+	bl	GetAngleBetweenPoints
+
+#Convert this to an input
+.set REG_arctan,31
+.set REG_XComp,30
+.set REG_YComp,31
+.set REG_127,29
+#Backup arctan
+	fmr REG_arctan,f1
+#Get 127 as a float
+	li	r3,127
+	bl	IntToFloat
+	fmr REG_127,f1
+#Get X Component
+	fmr f1,REG_arctan		#angle in radians
+	branchl r12,cos
+	fmr REG_XComp,f1
+#Get Y Component
+	fmr f1,REG_arctan		#angle in radians
+	branchl r12,sin
+	fmr REG_YComp,f1
+#Get X input
+	fmuls f1,REG_XComp,REG_127
+	fctiwz f1,f1,
+	stfd f1,0x80(sp)
+	lwz r3,0x84(sp)
+	stb r3,0x1A8C(P2Data)
+#Get Y input
+	fmuls f1,REG_YComp,REG_127
+	fctiwz f1,f1,
+	stfd f1,0x80(sp)
+	lwz r3,0x84(sp)
+	stb r3,0x1A8D(P2Data)
+
+#Restore f28-f31
+	lfs f29,0xB0(sp)
+	lfs f30,0xB4(sp)
+	lfs f31,0xB8(sp)
+
+#Check if no longer in SpecialHiStart
+	lwz r3,0x10(P2Data)
+	cmpwi r3,354
+	beq ArmadaShineThink_RecoverStart_Exit
+#Start restart timer
+	li	r3,RestartTimer
+	stb r3,Timer(EventData)
+#Change Event State
+	li	r3,EventState_RecoverEnd
+	stb	r3,EventState(EventData)
+#Run Next State Code
+	b	ArmadaShineThink_RecoverEnd
+
+ArmadaShineThink_RecoverStart_Exit:
+	b	ArmadaShineThink_Exit
+#endregion
+
+#region ArmadaShineThink_RecoverEnd
+ArmadaShineThink_RecoverEnd:
+#Get timer
+	lbz r3,Timer(EventData)
+	subi r3,r3,1
+	stb r3,Timer(EventData)
+	cmpwi r3,0
+	ble ArmadaShineThink_Restore
+
+b	ArmadaShineThink_Exit
+#endregion
+
+ArmadaShineThink_Restore:
+#Restore State
+	addi r3,EventData,EventData_SaveStateStruct
+	li	r4,1
+	bl	SaveState_Load
+#Init Positions Again
+	mr	r3,P1GObj
+	mr	r4,P2GObj
+	bl	ArmadaShine_InitializePositions
+#Reset Variables
+	li	r3,0
+	stb r3,EventState(EventData)
+	stb r3,Timer(EventData)
+
+ArmadaShineThink_Exit:
+	restore
+	blr
+
+ArmadaShineThink_Constants:
+blrl
+.float 0
+.float 6.28319
+.float 3.14159
+
+ArmadaShine_InitializePositions:
+backup
+
+.set LedgeSide,20
+
+#Constants
+.set ArmadaShine_P1X,15
+.set ArmadaShine_P1Y,6
+.set ArmadaShine_P2X,12
+.set ArmadaShine_P2Y,6
+.set HitlagFrames,12
+
+#Get random side
+	li	r3,2
+	branchl r12,HSD_Randi
+#Backup Ledge Side
+	mr	LedgeSide,r3
+
+#Change Facing Directions
+  cmpwi LedgeSide,0x0
+  beq	ArmadaShine_InitializePositions_GetLeftLedgeID
+ArmadaShine_InitializePositions_GetRightLedgeID:
+ #Change Facing Direction
+	li	r3,-1
+	bl	IntToFloat
+	stfs	f1,0x2C(P1Data)
+  li	r3,-1
+  bl	IntToFloat
+  stfs	f1,0x2C(P2Data)
+	b	ArmadaShine_InitializePositions_DirectionChangeEnd
+ArmadaShine_InitializePositions_GetLeftLedgeID:
+#Change Facing Direction
+	li	r3,1
+  bl	IntToFloat
+  stfs	f1,0x2C(P1Data)
+  li	r3,1
+  bl	IntToFloat
+  stfs	f1,0x2C(P2Data)
+ArmadaShine_InitializePositions_DirectionChangeEnd:
+
+#Get Ledge Coordinates
+	mr	r3,LedgeSide
+	addi r4,sp,0x80
+	bl	GetLedgeCoordinates
+
+#Move P1
+	li r3,ArmadaShine_P1X
+	bl	IntToFloat
+	lfs f2,0x80(sp)
+	lfs f3,0x2C(P1Data)
+	fmadds f1,f1,f3,f2
+	stfs f1,0xB0(P1Data)
+	li r3,ArmadaShine_P1Y
+	bl	IntToFloat
+	lfs f2,0x84(sp)
+	fadds f1,f1,f2
+	stfs f1,0xB4(P1Data)
+	mr	r3,P1GObj
+	bl	UpdatePosition
+#Move P2
+	li r3,ArmadaShine_P2X
+	bl	IntToFloat
+	lfs f2,0x80(sp)
+	lfs f3,0x2C(P2Data)
+	fmadds f1,f1,f3,f2
+	stfs f1,0xB0(P2Data)
+	li r3,ArmadaShine_P2Y
+	bl	IntToFloat
+	lfs f2,0x84(sp)
+	fadds f1,f1,f2
+	stfs f1,0xB4(P2Data)
+	mr	r3,P2GObj
+	bl	UpdatePosition
+#P1 enters Bair
+	mr	r3,P1GObj
+	li	r4,ASID_AttackAirB
+	branchl r12,0x8008cfac
+#Fastforward to frame 7
+	li	r3,7
+	bl	IntToFloat
+	mr	r3,P1GObj
+	lfs	f2, -0x67D8 (rtoc)
+	lfs	f3, -0x67E4 (rtoc)
+	branchl r12,0x8006ebe8
+	li	r3,7
+	bl	IntToFloat
+	stfs f1,0x894(P1Data)
+	li	r3,0
+	stw r3,0x3E4(P1Data)
+	mr	r3,P1GObj
+	branchl r12,0x80073354
+#Update Animation
+	mr	r3,P1GObj
+	branchl r12,0x8006e9b4
+#Remove all hitboxes
+	mr	r3,P1GObj
+	branchl r12,0x8007aff8
+#Stop subaction script from being updated
+	li	r3,0
+	stw r3,0x3EC(P1Data)
+#Update Camera
+	mr	r3,P1GObj
+	bl	UpdateCameraBox
+
+#P2 enters DamageFlyN
+	mr	r3,P2GObj
+	li	r4,ASID_DamageFlyN
+	li	r5,0x40
+	li	r6,0
+	lfs	f1, -0x750C (rtoc)
+	lfs	f2, -0x7508 (rtoc)
+	lfs	f3, -0x750C (rtoc)
+	branchl r12,ActionStateChange
+#Update Animation
+	mr	r3,P2GObj
+	branchl r12,0x8006e9b4
+#Remove Jump
+	lwz r3,0x168(P2Data)
+	stb r3,0x1968(P2Data)
+#Update Camera
+	mr	r3,P2GObj
+	bl	UpdateCameraBox
+
+.set REG_Angle,20
+.set AngleLo,45
+.set AngleHi,60		#60
+#Random angle between 30 and 60
+	li	r3,AngleHi-AngleLo
+	branchl r12,HSD_Randi
+	addi REG_Angle,r3,AngleLo
+#Cast to float
+	mr	r3,REG_Angle
+	bl	IntToFloat
+#Now in radians
+	lfs	f2, -0x7510 (rtoc)
+	fmuls f1,f1,f2
+	stfs f1,0x80(sp)
+
+#Random magnitude between X and Y
+.set REG_Magnitude,21
+.set MagLo,106
+.set MagHi,120		#135
+	li	r3,MagLo
+	li	r4,MagHi
+	bl	RandFloat
+	stfs f1,0x7C(sp)		#will be used later for
+	lwz	r3, -0x514C (r13)
+	lfs	f0, 0x0100 (r3)
+	fmuls f1,f1,f0
+	stfs f1,0x84(sp)
+
+#Get X Component
+	lfs f1,0x80(sp)		#KB angle in radians
+	branchl r12,cos
+	lfs f2,0x84(sp)		#KB magnitude
+	fmuls f1,f1,f2
+	lfs f2,0x2C(P2Data)
+	fneg f2,f2
+	fmuls f1,f1,f2
+	stfs f1,0x8C(P2Data)
+#Get Y Component
+	lfs f1,0x80(sp)		#KB angle in radians
+	branchl r12,sin
+	lfs f2,0x84(sp)		#KB magnitude
+	fmuls f1,f1,f2
+	stfs f1,0x90(P2Data)
+
+#Calculate Hitstun
+	lwz	r3, -0x514C (r13)
+	lfs	f0, 0x0154 (r3)
+	lfs f1,0x7C(sp)
+	fmuls f1,f1,f0			#hitstun frames is 0.4 * magnitude
+	fctiwz f1,f1				#Round down
+	stfd f1,0x88(sp)
+	lwz r3,0x8C(sp)
+	bl	IntToFloat
+	stfs f1,0x2340(P2Data)
+#Enable Hitstun Bit
+	lbz r0,0x221C(P2Data)
+	li	r3,1
+	rlwimi r0,r3,1,30,30
+	stb r0,0x221C(P2Data)
+
+#Give 7 Frames of Hitlag to Each
+	li	r3,HitlagFrames
+	bl	IntToFloat
+	stfs f1,0x195C(P1Data)
+	lbz r0,0x221A(P1Data)
+	li	r3,1
+	rlwimi r0,r3,5,26,26
+	stb r0,0x221A(P1Data)
+	lbz r0,0x2219(P1Data)
+	li	r3,1
+	rlwimi r0,r3,2,29,29
+	stb r0,0x2219(P1Data)
+	li	r3,HitlagFrames
+	bl	IntToFloat
+	stfs f1,0x195C(P2Data)
+	lbz r0,0x221A(P2Data)
+	li	r3,1
+	rlwimi r0,r3,5,26,26
+	stb r0,0x221A(P2Data)
+	lbz r0,0x2219(P2Data)
+	li	r3,1
+	rlwimi r0,r3,2,29,29
+	stb r0,0x2219(P2Data)
+
+ArmadaShine_InitializePositions_Exit:
+	restore
+	blr
+
+#endregion
+
 #region Scrapped Edgeguard Event
 /*
 
@@ -8688,13 +9157,16 @@ SaveState_SaveLoopInit:
 
 
 		#Copy Static Block to Backup
-		add		r3,REG_PlayerDataSize,REG_PlayerData_Backup			#get end of playerblock in r4
-		load		r4,0x80453080			#get static block in r4
-		li		r5,0xE90
-		mullw		r5,r5,REG_SpawnedOrder
-		add		r4,r4,r5
-		li		r5,0x100			#only copying the first 100 bytes
-		branchl		r12,memcpy			#mempcy
+			cmpwi REG_isSubchar,0x0					#unless this is a subcharacter
+			bne	Savestate_Save_SkipStaticBlockBackup
+			add		r3,REG_PlayerDataSize,REG_PlayerData_Backup			#get end of playerblock in r4
+			load		r4,0x80453080			#get static block in r4
+			li		r5,0xE90
+			mullw		r5,r5,REG_SpawnedOrder
+			add		r4,r4,r5
+			li		r5,0x100			#only copying the first 100 bytes
+			branchl		r12,memcpy			#mempcy
+		Savestate_Save_SkipStaticBlockBackup:
 
 		#Save Camera Flag
 		lwz		r3,0x890(REG_PlayerData)
@@ -8816,7 +9288,8 @@ SaveState_Load:
 		li		r6,0x0
 		lfs		f1,0x894(REG_PlayerData_Backup)		#backed up Frame Number
 		lfs		f2,0x89C(REG_PlayerData_Backup)		#backed up Frame Speed
-		lfs		f3,0x8A4(REG_PlayerData_Backup)		#backup up Blend Amount
+		lfs		f3,-0x7548 (rtoc)
+		#lfs		f3,0x8A4(REG_PlayerData_Backup)		#backup up Blend Amount
 		branchl		r12,ActionStateChange					#ASC
 
 		#Keep Previous Frame Buttons From Current Block
@@ -8837,14 +9310,21 @@ SaveState_Load:
 		mr		r5,REG_PlayerDataSize
 		branchl		r12,memcpy	#mempcy
 
+		#Zero Blend
+		#lfs	 f1,-0x7548 (rtoc)
+		#stfs f1,0x8A4(REG_PlayerData)
+
 		#Copy Static Block Backup to Current
-		load		r3,0x80453080			#get static block in r3
-		li		r4,0xE90
-		mullw		r4,r4,REG_SpawnedOrder
-		add		r3,r3,r4
-		add		r4,REG_PlayerDataSize,REG_PlayerData_Backup			#get end of block in r4
-		li		r5,0x100			#length is 0x100
-		branchl		r12,memcpy			#mempcy
+			cmpwi REG_isSubchar,0									#but not if subcharacter
+			bne Savestate_Load_SkipStaticBlockRestore
+			load		r3,0x80453080			#get static block in r3
+			li		r4,0xE90
+			mullw		r4,r4,REG_SpawnedOrder
+			add		r3,r3,r4
+			add		r4,REG_PlayerDataSize,REG_PlayerData_Backup			#get end of block in r4
+			li		r5,0x100			#length is 0x100
+			branchl		r12,memcpy			#mempcy
+			Savestate_Load_SkipStaticBlockRestore:
 
 		#Restore Previous Frame Buttons From Current Block
 		lwz		r3,0xD0(sp)
@@ -9753,92 +10233,105 @@ blr
 DPadCPUPercent:
 backup
 
+.set REG_SaveStruct,31
+.set REG_PercentInt,30
+.set REG_isSubcharBool,29
+
+#Backup savestate struct
+	mr	REG_SaveStruct,r3
+
 #Get P1 Block
-li	r3,0x0
-branchl	r12,PlayerBlock_LoadMainCharDataOffset			#get player block
-lwz	r3,0x2C(r3)
+	li	r3,0x0
+	branchl	r12,PlayerBlock_LoadMainCharDataOffset			#get player block
+	lwz	r3,0x2C(r3)
 
 #Get P2 Percent
-load	r6,0x80453F10
-lhz	r5,0x60(r6)
+	load	r6,0x80453F10
+	lhz	REG_PercentInt,0x60(r6)
+
+#Get Subchar Bool
+	lbz REG_isSubcharBool,0xC(r6)
 
 #Make Sure L Is Held
-lhz	r4,0x662(r3)
-cmpwi	r4,0x40
-bne	DPadCPUPercent_Exit
+	lhz	r4,0x662(r3)
+	cmpwi	r4,0x40
+	bne	DPadCPUPercent_Exit
 #Poll P1 For DPad
-lhz	r4,0x66A(r3)
-cmpwi	r4,0x2		#rlwinm.	r0,r4,0,30,30
-beq	DPadCPUPercent_IncByOne
-cmpwi	r4,0x1		#rlwinm.	r0,r4,0,31,31
-beq	DPadCPUPercent_DecByOne
-cmpwi	r4,0x8		#rlwinm.	r0,r4,0,28,28
-beq	DPadCPUPercent_IncByTen
-cmpwi	r4,0x4		#rlwinm.	r0,r4,0,29,29
-beq	DPadCPUPercent_DecByTen
-b	DPadCPUPercent_Exit
+	lhz	r4,0x66A(r3)
+	cmpwi	r4,0x2		#rlwinm.	r0,r4,0,30,30
+	beq	DPadCPUPercent_IncByOne
+	cmpwi	r4,0x1		#rlwinm.	r0,r4,0,31,31
+	beq	DPadCPUPercent_DecByOne
+	cmpwi	r4,0x8		#rlwinm.	r0,r4,0,28,28
+	beq	DPadCPUPercent_IncByTen
+	cmpwi	r4,0x4		#rlwinm.	r0,r4,0,29,29
+	beq	DPadCPUPercent_DecByTen
+	b	DPadCPUPercent_Exit
 
 DPadCPUPercent_IncByOne:
-cmpwi	r5,999
-blt	DPadCPUPercent_IncByOneReal
-li	r5,999
-b	DPadCPUPercent_StorePercent
-DPadCPUPercent_IncByOneReal:
-addi	r5,r5,0x1
-b	DPadCPUPercent_StorePercent
+	cmpwi	REG_PercentInt,999
+	blt	DPadCPUPercent_IncByOneReal
+	li	REG_PercentInt,999
+	b	DPadCPUPercent_StorePercent
+	DPadCPUPercent_IncByOneReal:
+	addi	REG_PercentInt,REG_PercentInt,0x1
+	b	DPadCPUPercent_StorePercent
 
 DPadCPUPercent_DecByOne:
-cmpwi	r5,0
-bgt	DPadCPUPercent_DecByOneReal
-li	r5,0
-b	DPadCPUPercent_StorePercent
-DPadCPUPercent_DecByOneReal:
-subi	r5,r5,0x1
-b	DPadCPUPercent_StorePercent
+	cmpwi	REG_PercentInt,0
+	bgt	DPadCPUPercent_DecByOneReal
+	li	REG_PercentInt,0
+	b	DPadCPUPercent_StorePercent
+	DPadCPUPercent_DecByOneReal:
+	subi	REG_PercentInt,REG_PercentInt,0x1
+	b	DPadCPUPercent_StorePercent
 
 DPadCPUPercent_IncByTen:
-cmpwi	r5,989
-blt	DPadCPUPercent_IncByTenReal
-li	r5,999
-b	DPadCPUPercent_StorePercent
-DPadCPUPercent_IncByTenReal:
-addi	r5,r5,10
-b	DPadCPUPercent_StorePercent
+	cmpwi	REG_PercentInt,989
+	blt	DPadCPUPercent_IncByTenReal
+	li	REG_PercentInt,999
+	b	DPadCPUPercent_StorePercent
+	DPadCPUPercent_IncByTenReal:
+	addi	REG_PercentInt,REG_PercentInt,10
+	b	DPadCPUPercent_StorePercent
 
 DPadCPUPercent_DecByTen:
-cmpwi	r5,9
-bgt	DPadCPUPercent_DecByTenReal
-li	r5,0
-b	DPadCPUPercent_StorePercent
-DPadCPUPercent_DecByTenReal:
-subi	r5,r5,10
-b	DPadCPUPercent_StorePercent
+	cmpwi	REG_PercentInt,9
+	bgt	DPadCPUPercent_DecByTenReal
+	li	REG_PercentInt,0
+	b	DPadCPUPercent_StorePercent
+	DPadCPUPercent_DecByTenReal:
+	subi	REG_PercentInt,REG_PercentInt,10
+	b	DPadCPUPercent_StorePercent
 
 DPadCPUPercent_StorePercent:
+#Store to Active Static Playerblock
+	sth	REG_PercentInt,0x60(r6)
 #Convert to Float
-mr		r3,r5
-bl		IntToFloat
-#Active Static Playerblock
-sth	r5,0x60(r6)
+	mr		r3,REG_PercentInt
+	bl		IntToFloat
 #Active PlayerData
-li	r3,0x1
-branchl	r12,PlayerBlock_LoadMainCharDataOffset		#get player block
-lwz	r3,0x2C(r3)
-stfs	f1,0x1830(r3)
+	li	r3,0x1
+	branchl	r12,PlayerBlock_LoadMainCharDataOffset		#get player block
+	lwz	r3,0x2C(r3)
+	stfs	f1,0x1830(r3)
 
 #Backed Up PlayerData
-lwz	r3,0x18(r31)
-stfs	f1,0x1830(r3)
+	mulli	r4,REG_isSubcharBool,0x4
+	lwzx r3,r4,REG_SaveStruct
+	stfs	f1,0x1830(r3)
 #Backed Up Static Playerblock
-load	r4,0x80458fd0			#get player block length
-lwz    	r4,0x20(r4)			#get player block length
-add	r3,r3,r4			#static block start
-sth	r5,0x60(r3)
+	load	r4,0x80458fd0					#get player block length
+	lwz   r4,0x20(r4)						#get player block length
+	lwz r3,0x0(REG_SaveStruct)	#only the main character has a static block backup
+	add	r3,r3,r4								#static block start
+	sth	REG_PercentInt,0x60(r3)
+	sth	REG_PercentInt,0x62(r3)
 
 
 DPadCPUPercent_Exit:
-restore
-blr
+	restore
+	blr
 
 ##################################
 
@@ -11679,6 +12172,7 @@ InitializeMatch_Exit:
 	blr
 
 #####################################
+
 GetDistance:
 	lfs	f3,0x0(r3)	#X
 	lfs	f4,0x4(r3)  #Y
@@ -11692,6 +12186,94 @@ GetDistance:
 	frsqrte	f1,f2
 	fmuls	f1,f1,f2
 	blr
+
 #####################################
+
+GetLedgeCoordinates:
+
+.set LedgeSide,20
+.set LedgeID,21
+.set Return,22
+
+backup
+
+#Backup Ledge Choice (0 = Left, 1 = Right)
+  mr	LedgeSide,r3
+  mr  Return,r4
+
+#Get Stage's Ledge IDs
+  lwz		r3,-0x6CB8 (r13)			#External Stage ID
+  bl		LedgedashCliffIDs
+  mflr  r4
+  mulli	r3,r3,0x2
+  lhzx	r3,r3,r4
+#Get Requested Ledge
+	cmpwi LedgeSide,0x0
+	beq	GetLedgeCoordinates_GetLeftLedgeID
+
+GetLedgeCoordinates_GetRightLedgeID:
+  rlwinm	LedgeID,r3,0,24,31
+#Get Ledge Coords (0x80 = X, 0x84 = Y)
+  mr  r3,LedgeID
+  mr 	r4,Return
+  branchl	r12,Stage_GetRightOfLineCoordinates
+  b	GetLedgeCoordinates_Exit
+
+GetLedgeCoordinates_GetLeftLedgeID:
+	rlwinm	LedgeID,r3,24,24,31
+#Get Ledge Coords (0x80 = X, 0x84 = Y)
+  mr  r3,LedgeID
+  mr 	r4,Return
+  branchl	r12,Stage_GetLeftOfLineCoordinates
+	b	GetLedgeCoordinates_Exit
+
+GetLedgeCoordinates_Exit:
+  restore
+  blr
+
+##########################################
+GetAngleBetweenPoints:
+.set REG_arctan,2
+
+backup
+
+#Hold towards ledge
+	lfs f1,0x0(r3)
+	lfs f2,0x4(r3)
+	lfs f3,0x0(r4)
+	lfs f4,0x4(r4)
+#Get slope ydelta / xdelta
+	fsubs f5,f4,f2
+	fsubs f6,f3,f1
+	fdivs f1,f5,f6
+#atan
+	branchl r12,0x80022e68
+	fmr REG_arctan,f1
+
+#Ensure above 0 and below 6.28319
+GetAngleBetweenPoints_CheckIfOver0:
+	lfs f1,0x0(REG_EventConstants)
+	fcmpo cr0,REG_arctan,f1
+	bge GetAngleBetweenPoints_CheckIfUnder360
+#Add 180
+	lfs f1,0x8(REG_EventConstants)
+	fadds REG_arctan,REG_arctan,f1
+	b	GetAngleBetweenPoints_CheckIfOver0
+GetAngleBetweenPoints_CheckIfUnder360:
+	lfs f1,0x4(REG_EventConstants)
+	fcmpo cr0,REG_arctan,f1
+	ble GetAngleBetweenPoints_Under360
+#Add 180
+	lfs f1,0x8(REG_EventConstants)
+	fsubs REG_arctan,REG_arctan,f1
+	b	GetAngleBetweenPoints_CheckIfUnder360
+GetAngleBetweenPoints_Under360:
+	fmr	f1,REG_arctan
+
+GetAngleBetweenPoints_Exit:
+restore
+blr
+
+##########################################
 exit:
 li	r0, 3
