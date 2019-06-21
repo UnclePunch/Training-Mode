@@ -49,7 +49,7 @@ backup
   bl  TagMelee_Think
   mflr r4
   li  r5,23
-  branchl r12,GObj_SchedulePerFrameFunction
+  branchl r12,GObj_AddProc
 
 TagMelee_InitExit:
 restore

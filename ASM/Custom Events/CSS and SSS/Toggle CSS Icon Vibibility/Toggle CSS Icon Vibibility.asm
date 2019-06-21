@@ -36,7 +36,7 @@ backup
   bl  ToggleCSSIcon
   mflr r4
   li  r5,2      #Priority (after CSS_BigFunctionMonitorInputsAndMore)
-  branchl r12,GObj_SchedulePerFrameFunction
+  branchl r12,GObj_AddProc
 
 #Store Whitelist to GObj Data
   bl  GetCharacterList

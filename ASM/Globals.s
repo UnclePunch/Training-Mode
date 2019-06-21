@@ -579,7 +579,7 @@ Marth's counter!"
   .set Event_ArmadaShine,1
   #Event Name
     .macro Event_ArmadaShine_Name
-      .string "Armada-Shine Practice"
+      .string "Armada-Shine Training"
     .endm
 
     .macro Event_ArmadaShine_Description
@@ -1130,6 +1130,8 @@ Event_ArmadaShine_Tutorial
 .set StageInfo_CameraLimitRight_Load,0x80224a68
 .set StageInfo_CameraLimitTop_Load,0x80224a80
 .set StageInfo_CameraLimitBottom_Load,0x80224a98
+.set Stage_map_gobj_Load,0x801c2ba4
+.set Stage_Destroy_map_gobj,0x801c4a08
 .set EntityItemSpawn,0x80268b18
 .set MatchInfo_LoadSeconds,0x8016aeec
 .set MatchInfo_LoadSubSeconds,0x8016aefc
@@ -1153,7 +1155,8 @@ Event_ArmadaShine_Tutorial
 .set GObj_Create,0x803901f0
 .set GObj_Initialize,0x80390b68
 .set GObj_Destroy,0x80390228
-.set GObj_SchedulePerFrameFunction,0x8038fd54
+.set GObj_AddProc,0x8038fd54
+.set GObj_RemoveProc,0x8038fed4
 .set DevelopMode_FrameAdvanceCheck,0x801a45e8
 .set MatchInfo_StockModeCheck,0x8016b094
 .set PlayerBlock_LoadStocksLeft,0x80033bd8
