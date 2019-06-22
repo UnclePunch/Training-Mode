@@ -1276,8 +1276,6 @@ b	exit
 
 	bl	InitializeHighScore
 
-	bl	DisableHazards
-
 	b	LedgedashLoadExit
 
 
@@ -8885,7 +8883,7 @@ mr  ASCIIStruct,r6
 
 #Check if Option Menu is enabled for this event
   cmpwi WindowOptionCount,0
-  beq CreateEventThinkFunction_Exit
+  beq CreateEventThinkFunction_NoOptionMenu
 
 #Create GObj
   li	r3,6		#GObj Type
@@ -8926,6 +8924,10 @@ mr  ASCIIStruct,r6
 #Store Pointers to Each Other
   stw MenuData,EventData_MenuDataPointer(EventData)
   stw EventData,MenuData_EventDataPointer(MenuData)
+CreateEventThinkFunction_NoOptionMenu:
+
+#Disable Hazards
+	bl	DisableHazards
 
 CreateEventThinkFunction_Exit:
 restore
@@ -12330,11 +12332,8 @@ DisableHazards_SkipList:
 	bctr
 
 ########################
-DisableHazards_Story:
-.set REG_map_gobj,31
 
-#Get Randalls map_gobj ID
-	li	REG_map_gobj,2
+DisableHazards_Story:
 /*
 #Get randall's line ID
 	mr	r3,REG_map_gobj
@@ -12366,7 +12365,7 @@ DisableHazards_Story:
 */
 
 #Get randall's map_gobj
-	mr	r3,REG_map_gobj				#randalls map_gobj is 2
+	li	r3,2				#randalls map_gobj is 2
 	branchl r12,Stage_map_gobj_Load
 	branchl r12,Stage_Destroy_map_gobj
 
@@ -12376,11 +12375,38 @@ DisableHazards_Story:
 #Remove Proc
 	branchl r12,GObj_RemoveProc
 
+b	DisableHazards_SkipList_Exit
+
+########################
+
+DisableHazards_Pstadium:
+#Get transformation's map_gobj
+	li	r3,2				#transformation's map_gobj ID
+	branchl r12,Stage_map_gobj_Load
+#Remove Proc
+	branchl r12,GObj_RemoveProc
 
 b	DisableHazards_SkipList_Exit
 
 ########################
 
+DisableHazards_OldDL:
+#Destroy whispy's map_gobj
+	li	r3,7				#transformation's map_gobj ID
+	branchl r12,Stage_map_gobj_Load
+	branchl r12,Stage_Destroy_map_gobj
+
+#Destroy whispy's blink map_gobj proc
+	li	r3,6				#transformation's map_gobj ID
+	branchl r12,Stage_map_gobj_Load
+	branchl r12,GObj_RemoveProc
+
+#set wind hazard count to 0
+	li	r3,0
+	stw	r3,Stage_PositionHazardCount(r13)
+b	DisableHazards_SkipList_Exit
+
+########################
 DisableHazards_SkipList_Exit:
 	restore
 	blr
