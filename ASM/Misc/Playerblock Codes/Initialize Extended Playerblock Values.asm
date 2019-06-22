@@ -61,28 +61,14 @@ fsubs    \reg2,\reg2,f16
 .set ExtendedBlockLength,0x23EC
 
 #Backup Data Pointer After Creation
-addi	r30, r3, 0
-
-####################################
-## Clear Playerblock up to 0x2200 ##
-####################################
-li	r4,0x2200
-branchl	r12,0x8000c160
-
-#Get To Extended Portion
-addi	r3,r30,0x23EC		#Original PB Length
+  addi	r30, r3, 0
 
 #Get Player Data Length
-load	r4,0x80458fd0
-lwz	r4,0x20(r4)
-
-#Extended Playerblock Length
-subi	r4,r4,0x23EC
-
-#Zero Entire Data Block Before Initializing
-branchl	r12,0x8000c160
-
+  load	r4,0x80458fd0
+  lwz	r4,0x20(r4)
+#Zero Entire Data Block
+  branchl	r12,0x8000c160
 
 exit:
-mr	r3,r30
-lis	r4, 0x8046
+  mr	r3,r30
+  lis	r4, 0x8046
