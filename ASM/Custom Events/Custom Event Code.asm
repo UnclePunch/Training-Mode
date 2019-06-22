@@ -99,6 +99,7 @@ bl	Ledgetech
 bl	AmsahTech
 bl	ShieldDrop
 bl	WaveshineSDI
+bl	SlideOff
 .long -1
 #######################
 SpacieTech:
@@ -7081,6 +7082,390 @@ blr
 ##################################################
 #endregion
 
+#region Slide Off
+###################################
+## Slide Off HIJACK INFO ##
+###################################
+
+SlideOff:
+#Store Stage, CPU, and FDD Toggles
+	lwz r3,0x0(r29)										#Send event struct
+	mr	r4,r26												#Send match struct
+	li	r5,Marth.Ext
+	li	r6,-1													#Use chosen Stage
+	load r7,EventOSD_SlideOff
+	bl	InitializeMatch
+
+#STORE THINK FUNCTION
+SlideOffStoreThink:
+	bl	SlideOffLoad
+	mflr	r3
+	stw	r3,0x44(r26)		#on match load
+
+b	exit
+
+##################################
+## Slide Off LOAD FUNCT ##
+##################################
+SlideOffLoad:
+	blrl
+
+	backup
+
+#Schedule Think
+	bl	SlideOffThink
+	mflr	r3
+	li	r4,3		#Priority (After EnvCOllision)
+  li  r5,0
+	bl	CreateEventThinkFunction
+	b	SlideOffThink_Exit
+
+###################################
+## Slide Off THINK FUNCT ##
+###################################
+
+SlideOffThink:
+	blrl
+
+#Registers
+	.set REG_EventConstants,25
+  .set REG_MenuData,26
+  .set REG_EventData,31
+  .set REG_P1Data,27
+  .set REG_P1GObj,28
+	.set REG_P2Data,29
+	.set REG_P2GObj,30
+
+#Event Data Offsets
+	.set EventState,0x0
+		.set EventState_Hitstun,0x0
+		.set EventState_Falling,0x1
+		.set EventState_RecoverStart,0x2
+		.set EventState_RecoverEnd,0x3
+	.set Timer,0x1
+
+backup
+
+#INIT FUNCTION VARIABLES
+	lwz	REG_EventData,0x2c(r3)			#backup data pointer in r31
+
+#Get Player Pointers
+  bl GetAllPlayerPointers
+  mr REG_P1GObj,r3
+  mr REG_P1Data,r4
+  mr REG_P2GObj,r5
+  mr REG_P2Data,r6
+
+#Get Menu and Constants Pointers
+  lwz REG_MenuData,REG_EventData_REG_MenuDataPointer(REG_EventData)
+	bl	SlideOffThink_Constants
+	mflr REG_EventConstants
+
+	bl	StoreCPUTypeAndZeroInputs
+
+#ON FIRST FRAME
+	bl	CheckIfFirstFrame
+	cmpwi	r3,0x0
+	beq	SlideOffThink_Start
+	#Init Positions
+		mr	r3,P1GObj
+		mr	r4,P2GObj
+		bl	SlideOff_InitializePositions
+  #Clear Inputs
+    bl  RemoveFirstFrameInputs
+	#Save State
+  	addi r3,REG_EventData,EventData_SaveStateStruct
+		li	r4,1			#Override failsafe code
+  	bl	SaveState_Save
+	#Init State
+		li	r3,EventState_Hitstun
+		stb	r3,EventState(EventData)
+SlideOffThink_Start:
+	b	SlideOffThink_Exit
+#Reset if anyone died
+	bl	IsAnyoneDead
+	cmpwi r3,0
+	bne SlideOffThink_Restore
+
+#Switch Case
+	lbz r3,EventState(EventData)
+	cmpwi r3,EventState_Hitstun
+	beq SlideOffThink_Hitstun
+	cmpwi r3,EventState_Falling
+	beq SlideOffThink_Falling
+	cmpwi r3,EventState_RecoverStart
+	beq SlideOffThink_RecoverStart
+	cmpwi r3,EventState_RecoverEnd
+	beq SlideOffThink_RecoverEnd
+	b	SlideOffThink_Exit
+
+#region SlideOffThink_Hitstun
+SlideOffThink_Hitstun:
+#Check if still in hitstun
+	lbz	r3,0x221C(P2Data)
+	rlwinm. r3,r3,0,30,30
+	bne	SlideOffThink_Hitstun_Exit
+#Change Event State
+	li	r3,EventState_Falling
+	stb	r3,EventState(EventData)
+#Run Next State Code
+	b	SlideOffThink_Falling
+
+SlideOffThink_Hitstun_Exit:
+#Always L-Cancel
+	li	r3,0
+	stb r3,0x67F(P1Data)
+	b	SlideOffThink_Exit
+#endregion
+
+#region SlideOffThink_Falling
+SlideOffThink_Falling:
+.set FirefoxRadius,80
+.set FirefoxChance,6
+#Get distance from ledge
+	addi r3,P2Data,0xB0
+	addi r4,P2Data,0x1ADC
+	bl	GetDistance
+	stfs	f1,0x80(sp)
+#Fox travels approx 82 Mm during firefox, so ensure he is at least this far
+	li	r3,FirefoxRadius
+	bl	IntToFloat
+	lfs f2,0x80(sp)
+	fcmpo cr0,f2,f1
+	bge SlideOffThink_Falling_EnterFirefox
+#Random chance to firefox
+	li	r3,FirefoxChance
+	branchl r12,HSD_Randi
+	cmpwi r3,0
+	beq SlideOffThink_Falling_EnterFirefox
+	b	SlideOffThink_Exit
+
+SlideOffThink_Falling_EnterFirefox:
+#Enter Firefox
+	li	r3,127
+	stb r3,CPU_AnalogY(P2Data)
+	li	r3,PAD_BUTTON_B
+	stw r3,CPU_HeldButtons(P2Data)
+#Change Event State
+	li	r3,EventState_RecoverStart
+	stb	r3,EventState(EventData)
+#Exit
+	b	SlideOffThink_Exit
+#endregion
+
+#region SlideOffThink_RecoverStart
+SlideOffThink_RecoverStart:
+.set RestartTimer,30
+
+#Hold towards ledge
+#Get Angle Between Fox and Ledge
+	addi r3,P2Data,0xB0
+	addi r4,P2Data,0x1ADC
+	bl	GetAngleBetweenPoints
+
+#Convert this to an input
+.set REG_arctan,31
+.set REG_XComp,30
+.set REG_YComp,31
+.set REG_127,29
+#Backup arctan
+	fmr REG_arctan,f1
+#Get 127 as a float
+	li	r3,127
+	bl	IntToFloat
+	fmr REG_127,f1
+#Get X Component
+	fmr f1,REG_arctan		#angle in radians
+	branchl r12,cos
+	fmr REG_XComp,f1
+#Get Y Component
+	fmr f1,REG_arctan		#angle in radians
+	branchl r12,sin
+	fmr REG_YComp,f1
+#Get X input
+	fmuls f1,REG_XComp,REG_127
+	fctiwz f1,f1,
+	stfd f1,0x80(sp)
+	lwz r3,0x84(sp)
+	stb r3,0x1A8C(P2Data)
+#Get Y input
+	fmuls f1,REG_YComp,REG_127
+	fctiwz f1,f1,
+	stfd f1,0x80(sp)
+	lwz r3,0x84(sp)
+	stb r3,0x1A8D(P2Data)
+
+#Restore f28-f31
+	lfs f29,0xB0(sp)
+	lfs f30,0xB4(sp)
+	lfs f31,0xB8(sp)
+
+#Check if no longer in SpecialHiStart
+	lwz r3,0x10(P2Data)
+	cmpwi r3,354
+	beq SlideOffThink_RecoverStart_Exit
+#Start restart timer
+	li	r3,RestartTimer
+	stb r3,Timer(EventData)
+#Change Event State
+	li	r3,EventState_RecoverEnd
+	stb	r3,EventState(EventData)
+#Run Next State Code
+	b	SlideOffThink_RecoverEnd
+
+SlideOffThink_RecoverStart_Exit:
+	b	SlideOffThink_Exit
+#endregion
+
+#region SlideOffThink_RecoverEnd
+SlideOffThink_RecoverEnd:
+#Get timer
+	lbz r3,Timer(EventData)
+	subi r3,r3,1
+	stb r3,Timer(EventData)
+	cmpwi r3,0
+	ble SlideOffThink_Restore
+
+b	SlideOffThink_Exit
+#endregion
+
+SlideOffThink_Restore:
+#Restore State
+	addi r3,EventData,EventData_SaveStateStruct
+	li	r4,1
+	bl	SaveState_Load
+#Init Positions Again
+	mr	r3,P1GObj
+	mr	r4,P2GObj
+	bl	SlideOff_InitializePositions
+#Reset Variables
+	li	r3,0
+	stb r3,EventState(EventData)
+	stb r3,Timer(EventData)
+
+SlideOffThink_Exit:
+	restore
+	blr
+
+################################
+
+SlideOffThink_Constants:
+blrl
+.set P1X,0x0
+.set P1Y,0x4
+.set P2X,0x8
+.set P2Y,0xC
+.set UThrowStartFrame,0x10
+.set DamageFlyTopStartFrame,0x14
+
+.float -37.7		#p1 x
+.float 21.2			#p1 y
+.float -42.8		#p2 x
+.float 0				#p2 y
+.float 13				#marth upthrow starting frame
+.float 2				#p1 damageflytop starting frame
+
+#################################
+
+SlideOff_InitializePositions:
+backup
+
+ #Change Facing Direction
+	li	r3,-1
+	bl	IntToFloat
+	stfs	f1,0x2C(P1Data)
+  li	r3,1
+  bl	IntToFloat
+  stfs	f1,0x2C(P2Data)
+
+#Get Starting Coordinates
+	lfs f1,P1X(REG_EventConstants)
+	stfs f1,0xB0(P1Data)
+	lfs f1,P1Y(REG_EventConstants)
+	stfs f1,0xB4(P1Data)
+	mr	r3,P1GObj
+	bl	UpdatePosition
+	mr	r3,P1GObj
+	bl	UpdateCameraBox
+
+	lfs f1,P2X(REG_EventConstants)
+	stfs f1,0xB0(P2Data)
+	lfs f1,P2Y(REG_EventConstants)
+	stfs f1,0xB4(P2Data)
+	mr	r3,P2GObj
+	bl	PlacePlayerOnGround
+	mr	r3,P2GObj
+	bl	UpdateCameraBox
+
+#P2 enters UpThrow
+	mr	r3,P2GObj
+	li	r4,ASID_ThrowHi
+	li	r5,0
+	li	r6,0
+	lwz r7,0x10C(P1Data)		#determine speed from weight
+	lwz r7,0x0(r7)
+	lfs f1,0x88(r7)
+	lfs	f2, -0x68DC (rtoc)
+	lwz	r7, -0x514C (r13)
+	lfs	f0, 0x037C (r7)
+	fmuls	f0,f1,f0
+	fdivs	f2,f2,f0															#anim speed
+	lfs	f3, -0x68E0 (rtoc)											#frame blend
+	lfs f1,UThrowStartFrame(REG_EventConstants)	#starting frame
+	branchl r12,ActionStateChange
+
+#P1 enters DamageFlyTop
+	mr	r3,P1GObj
+	li	r4,ASID_DamageFlyTop
+	li	r5,0x40
+	li	r6,0
+	lfs	f1, -0x750C (rtoc)
+	lfs	f2,DamageFlyTopStartFrame (REG_EventConstants)
+	lfs	f3, -0x750C (rtoc)
+	branchl r12,ActionStateChange
+
+.set AngleLo,93
+.set AngleHi,93
+.set MagLo,85
+.set MagHi,85
+#Enter into knockback
+	mr	r3,P1GObj
+	li	r4,AngleLo
+	li	r5,AngleHi
+	li	r6,MagLo
+	li	r7,MagHi
+	bl	EnterKnockback
+
+#Give 7 Frames of Hitlag to Each
+	li	r3,HitlagFrames
+	bl	IntToFloat
+	stfs f1,0x195C(P1Data)
+	lbz r0,0x221A(P1Data)
+	li	r3,1
+	rlwimi r0,r3,5,26,26
+	stb r0,0x221A(P1Data)
+	lbz r0,0x2219(P1Data)
+	li	r3,1
+	rlwimi r0,r3,2,29,29
+	stb r0,0x2219(P1Data)
+	li	r3,HitlagFrames
+	bl	IntToFloat
+	stfs f1,0x195C(P2Data)
+	lbz r0,0x221A(P2Data)
+	li	r3,1
+	rlwimi r0,r3,5,26,26
+	stb r0,0x221A(P2Data)
+	lbz r0,0x2219(P2Data)
+	li	r3,1
+	rlwimi r0,r3,2,29,29
+	stb r0,0x2219(P2Data)
+
+SlideOff_InitializePositions_Exit:
+	restore
+	blr
+
+#endregion
+
 #region SDI IC DThrow Dair
 #########################
 ## Event 16 HIJACK INFO ##
@@ -7605,13 +7990,15 @@ ArmadaShineThink_Falling:
 
 ArmadaShineThink_Falling_EnterFirefox:
 #Enter Firefox
-	mr	r3,P2GObj
-	branchl r12,0x800e72c4
+	li	r3,127
+	stb r3,CPU_AnalogY(P2Data)
+	li	r3,PAD_BUTTON_B
+	stw r3,CPU_HeldButtons(P2Data)
 #Change Event State
 	li	r3,EventState_RecoverStart
 	stb	r3,EventState(EventData)
-#Run Next State Code
-	b	ArmadaShineThink_RecoverStart
+#Exit
+	b	ArmadaShineThink_Exit
 #endregion
 
 #region ArmadaShineThink_RecoverStart
@@ -7837,65 +8224,17 @@ ArmadaShine_InitializePositions_DirectionChangeEnd:
 	mr	r3,P2GObj
 	bl	UpdateCameraBox
 
-.set REG_Angle,20
 .set AngleLo,45
-.set AngleHi,60		#60
-#Random angle between 30 and 60
-	li	r3,AngleHi-AngleLo
-	branchl r12,HSD_Randi
-	addi REG_Angle,r3,AngleLo
-#Cast to float
-	mr	r3,REG_Angle
-	bl	IntToFloat
-#Now in radians
-	lfs	f2, -0x7510 (rtoc)
-	fmuls f1,f1,f2
-	stfs f1,0x80(sp)
-
-#Random magnitude between X and Y
-.set REG_Magnitude,21
+.set AngleHi,60
 .set MagLo,106
-.set MagHi,120		#135
-	li	r3,MagLo
-	li	r4,MagHi
-	bl	RandFloat
-	stfs f1,0x7C(sp)		#will be used later for
-	lwz	r3, -0x514C (r13)
-	lfs	f0, 0x0100 (r3)
-	fmuls f1,f1,f0
-	stfs f1,0x84(sp)
-
-#Get X Component
-	lfs f1,0x80(sp)		#KB angle in radians
-	branchl r12,cos
-	lfs f2,0x84(sp)		#KB magnitude
-	fmuls f1,f1,f2
-	lfs f2,0x2C(P2Data)
-	fneg f2,f2
-	fmuls f1,f1,f2
-	stfs f1,0x8C(P2Data)
-#Get Y Component
-	lfs f1,0x80(sp)		#KB angle in radians
-	branchl r12,sin
-	lfs f2,0x84(sp)		#KB magnitude
-	fmuls f1,f1,f2
-	stfs f1,0x90(P2Data)
-
-#Calculate Hitstun
-	lwz	r3, -0x514C (r13)
-	lfs	f0, 0x0154 (r3)
-	lfs f1,0x7C(sp)
-	fmuls f1,f1,f0			#hitstun frames is 0.4 * magnitude
-	fctiwz f1,f1				#Round down
-	stfd f1,0x88(sp)
-	lwz r3,0x8C(sp)
-	bl	IntToFloat
-	stfs f1,0x2340(P2Data)
-#Enable Hitstun Bit
-	lbz r0,0x221C(P2Data)
-	li	r3,1
-	rlwimi r0,r3,1,30,30
-	stb r0,0x221C(P2Data)
+.set MagHi,120
+#Enter into knockback
+	mr	r3,P2GObj
+	li	r4,AngleLo
+	li	r5,AngleHi
+	li	r6,MagLo
+	li	r7,MagHi
+	bl	EnterKnockback
 
 #Give 7 Frames of Hitlag to Each
 	li	r3,HitlagFrames
@@ -11964,6 +12303,39 @@ restore
 blr
 
 #####################################
+PlacePlayerOnGround:
+backup
+
+.set REG_GObj,31
+.set REG_GObjData,30
+
+#Get Pointers
+	mr	REG_GObj,r3
+	lwz REG_GObjData,0x2C(REG_GObj)
+
+#Find Ground Below Player
+  mr  r3,REG_GObj
+  bl  FindGroundNearPlayer
+  cmpwi r3,0    #Check if ground was found
+  beq PlacePlayerOnGround_SkipGroundCorrection
+  stfs f1,0xB0(REG_GObjData)
+  stfs f2,0xB4(REG_GObjData)
+  stw r4,0x83C(REG_GObjData)
+  PlacePlayerOnGround_SkipGroundCorrection:
+#Update Position
+  mr  r3,REG_GObj
+  bl  UpdatePosition
+#Update ECB Values for the ground ID
+  mr r3,REG_GObj
+  branchl r12,EnvironmentCollision_WaitLanding
+#Set Grounded
+  mr r3,REG_GObjData
+  branchl r12,Air_SetAsGrounded
+
+PlacePlayerOnGround_Exit:
+	restore
+	blr
+#####################################
 PlaySFX:
 backup
 
@@ -12277,6 +12649,85 @@ GetAngleBetweenPoints_Under360:
 GetAngleBetweenPoints_Exit:
 restore
 blr
+
+##########################################
+EnterKnockback:
+backup
+
+.set REG_GObj,31
+.set REG_GObjData,30
+.set REG_AngleLo,29
+.set REG_AngleHi,28
+.set REG_MagLo,27
+.set REG_MagHi,26
+.set REG_Angle,29
+.set REG_Magnitude,28
+
+#Backup Data
+	mr	REG_GObj,r3
+	lwz REG_GObjData,0x2C(REG_GObj)
+	mr	REG_AngleLo,r4
+	mr	REG_AngleHi,r5
+	mr	REG_MagLo,r6
+	mr	REG_MagHi,r7
+
+#Random angle between
+	sub	r3,REG_AngleHi,REG_AngleLo
+	branchl r12,HSD_Randi
+	add REG_Angle,r3,REG_AngleLo
+#Cast to float
+	mr	r3,REG_Angle
+	bl	IntToFloat
+#Now in radians
+	lfs	f2, -0x7510 (rtoc)
+	fmuls f1,f1,f2
+	stfs f1,0x80(sp)
+
+#Random magnitude between X and Y
+	mr	r3,REG_MagLo
+	mr	r4,REG_MagHi
+	bl	RandFloat
+	stfs f1,0x7C(sp)		#will be used later for
+	lwz	r3, -0x514C (r13)
+	lfs	f0, 0x0100 (r3)
+	fmuls f1,f1,f0
+	stfs f1,0x84(sp)
+
+#Get X Component
+	lfs f1,0x80(sp)		#KB angle in radians
+	branchl r12,cos
+	lfs f2,0x84(sp)		#KB magnitude
+	fmuls f1,f1,f2
+	lfs f2,0x2C(REG_GObjData)
+	fneg f2,f2
+	fmuls f1,f1,f2
+	stfs f1,0x8C(REG_GObjData)
+#Get Y Component
+	lfs f1,0x80(sp)		#KB angle in radians
+	branchl r12,sin
+	lfs f2,0x84(sp)		#KB magnitude
+	fmuls f1,f1,f2
+	stfs f1,0x90(REG_GObjData)
+
+#Calculate Hitstun
+	lwz	r3, -0x514C (r13)
+	lfs	f0, 0x0154 (r3)
+	lfs f1,0x7C(sp)
+	fmuls f1,f1,f0			#hitstun frames is 0.4 * magnitude
+	fctiwz f1,f1				#Round down
+	stfd f1,0x88(sp)
+	lwz r3,0x8C(sp)
+	bl	IntToFloat
+	stfs f1,0x2340(REG_GObjData)
+#Enable Hitstun Bit
+	lbz r0,0x221C(REG_GObjData)
+	li	r3,1
+	rlwimi r0,r3,1,30,30
+	stb r0,0x221C(REG_GObjData)
+
+EnterKnockback_Exit:
+	restore
+	blr
 
 ##########################################
 DisableHazards:

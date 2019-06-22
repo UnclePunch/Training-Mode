@@ -137,7 +137,7 @@ any button when you see/hear Fox shine!"
 #endregion
 #region Universal Tech Page Data
 #Number of Events
-  .set GeneralTech.NumOfEvents, 11 -1
+  .set GeneralTech.NumOfEvents, 12 -1
 
 #Event List
 #region LCancel
@@ -530,6 +530,39 @@ of Fox's waveshine!"
     .endm
 
 #endregion
+#region SlideOff
+  .set Event_SlideOff,11
+  #Event Name
+    .macro Event_SlideOff_Name
+      .string "Slide Off Training"
+    .endm
+
+    .macro Event_SlideOff_Description
+      .string "Use Slide Off DI to slide off
+the platform and counter attack!"
+    .endm
+
+    .macro Event_SlideOff_Tutorial
+      .string "TvSlOff"
+    .endm
+
+    .macro Event_SlideOff_ChooseCPU
+    .endm
+
+    .macro Event_SlideOff_PreloadData
+      .byte Event_SlideOff, Marth.Ext, PokemonStadium
+    .endm
+
+    .macro Event_SlideOff_LoadSSS
+    .endm
+
+    .macro Event_SlideOff_PlayableCharacters
+    .endm
+
+    .macro Event_SlideOff_ScoreType
+    .endm
+
+#endregion
 
 #endregion
 #region Spacie Tech Page Data
@@ -662,6 +695,8 @@ GeneralTech:
   Event_ShieldDrop_Name
 #Waveshine SDI
   Event_WaveshineSDI_Name
+#SlideOff
+  Event_SlideOff_Name
 .align 2
 
 #######################
@@ -709,6 +744,8 @@ GeneralTech:
   Event_ShieldDrop_Description
 #Waveshine SDI
   Event_WaveshineSDI_Description
+#Slide Off
+  Event_SlideOff_Description
 .align 2
 #######################
 SpacieTech:
@@ -743,6 +780,7 @@ ChooseCPU_GeneralTech:
   Event_AmsahTech_ChooseCPU
   Event_Combo_ChooseCPU
   Event_WaveshineSDI_ChooseCPU
+  Event_SlideOff_ChooseCPU
   .byte -1
 .align 2
 ############################
@@ -778,6 +816,7 @@ PreloadEvents_GeneralTech:
   Event_AmsahTech_PreloadData
   Event_Combo_PreloadData
   Event_WaveshineSDI_PreloadData
+  Event_SlideOff_PreloadData
   .byte -1
 .align 2
 ############################
@@ -813,6 +852,7 @@ GeneralTech:
   Event_AmsahTech_LoadSSS
   Event_Combo_LoadSSS
   Event_WaveshineSDI_LoadSSS
+  Event_SlideOff_LoadSSS
   .byte -1
 .align 2
 ############################
@@ -848,6 +888,7 @@ GeneralTech:
   Event_AmsahTech_PlayableCharacters
   Event_Combo_PlayableCharacters
   Event_WaveshineSDI_PlayableCharacters
+  Event_SlideOff_PlayableCharacters
   .byte -1
 .align 2
 ############################
@@ -894,6 +935,7 @@ Event_LedgeTech_Tutorial
 Event_AmsahTech_Tutorial
 Event_ShieldDrop_Tutorial
 Event_WaveshineSDI_Tutorial
+Event_SlideOff_Tutorial
 .align 2
 
 SpacieTech:
@@ -1020,6 +1062,9 @@ Event_ArmadaShine_Tutorial
 .set StageID_External,-0x6CB8
 .set Stage_LedgeInfo,-0x51E8
 .set Stage_LineInfo,-0x51EC       #ctrl f "stage line counts" in melee notes.txt for detailed info
+.set Stage_PositionHazardCount,-0x5128
+.set Stage_GrabHazardCount,-0x512C
+.set Stage_DamageHazardCount,-0x5130
 
 .set TM_FrozenToggle,-0x4F8C
 .set TM_GameFrameCounter,-0x49ac
@@ -1339,6 +1384,20 @@ Event_ArmadaShine_Tutorial
 .set KongoJungle64,0x1E
 .set Battlefield,0x1F
 .set FinalDestination,0x20
+
+#Button Definitions
+.set PAD_BUTTON_LEFT,0x0001
+.set PAD_BUTTON_RIGHT,0x0002
+.set PAD_BUTTON_DOWN,0x0004
+.set PAD_BUTTON_UP,0x0008
+.set PAD_TRIGGER_Z,0x0010
+.set PAD_TRIGGER_R,0x0020
+.set PAD_TRIGGER_L,0x0040
+.set PAD_BUTTON_A,0x0100
+.set PAD_BUTTON_B,0x0200
+.set PAD_BUTTON_X,0x0400
+.set PAD_BUTTON_Y,0x0800
+.set PAD_BUTTON_START,0x1000
 
 #########################
 ## Playerblock Offsets ##
