@@ -2,11 +2,16 @@
 .include "../../Globals.s"
 
 .set MEMCARD_NONE,0xF
+.set MEMCARD_NONE2,0xD
 
 #Check if no memcard inserted
   cmpwi r29,MEMCARD_NONE
-  bne Original
+  beq NoMemcard
+  cmpwi r29,MEMCARD_NONE2
+  beq NoMemcard
+  b Original
 
+NoMemcard:
 #Exit memcard think and disable saving
   branch r12,0x801b01ac
 
