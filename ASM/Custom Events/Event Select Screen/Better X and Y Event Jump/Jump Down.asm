@@ -67,17 +67,7 @@ LessThan9Events:
   b UpdateText
 
 #############################
-
-Minigames:
-.long Minigames.NumOfEvents
-.align 2
-GeneralTech:
-.long GeneralTech.NumOfEvents
-.align 2
-SpacieTech:
-.long SpacieTech.NumOfEvents
-.align 2
-
+EventAmountPerPage
 ##############################
 
 UpdateText:

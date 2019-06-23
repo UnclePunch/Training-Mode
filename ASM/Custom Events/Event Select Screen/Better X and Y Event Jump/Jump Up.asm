@@ -35,20 +35,6 @@ FirstEvent:
 	stw r3,0x4(r28)
   b UpdateText
 
-#############################
-
-Minigames:
-.long Minigames.NumOfEvents
-.align 2
-GeneralTech:
-.long GeneralTech.NumOfEvents
-.align 2
-SpacieTech:
-.long SpacieTech.NumOfEvents
-.align 2
-
-##############################
-
 UpdateText:
 #overflow event ID to scroll ID
   lbz r3,0x0(r28)
