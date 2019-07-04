@@ -668,6 +668,7 @@ Multishine:
 	li	r5,-1										#Use chosen CPU
 	li	r6,FinalDestination			#Use FD
 	load r7,EventOSD_Multishine
+	li	r8,0										#Use Sopo Bool
 	bl	InitializeMatch
 
 #1 Player
@@ -799,6 +800,7 @@ Reaction:
 	li	r5,Fox.Ext							#Use chosen CPU
 	li	r6,FinalDestination			#Use FD
 	load r7,EventOSD_Reaction
+	li	r8,0										#Use Sopo Bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -1042,6 +1044,7 @@ LCancel:
 	li	r5,-1										#Use chosen CPU
 	li	r6,-1										#Use SSS Stage
 	load r7,EventOSD_LCancel
+	li	r8,0										#Use Sopo Bool
 	bl	InitializeMatch
 
 #Make P2 a human
@@ -1238,19 +1241,13 @@ Ledgedash:
 	li	r5,-1										#Use chosen CPU
 	li	r6,-1										#Use SSS Stage
 	load r7,EventOSD_Ledgedash
+	li	r8,1										#Use Sopo Bool
 	bl	InitializeMatch
 
 #1 Player
 	lwz r4,0x0(r29)
 	li	r3,0x20
 	stb	r3,0x1(r9)
-
-#If IC's Make SoPo
-	lbz	r3,0x2(r30)		#P1 External ID
-	cmpwi	r3,0xE
-	bne	LedgedashStoreThink
-	li	r3,0x20
-	stb	r3,0x2(r30)		#Make SoPo
 
 #STORE THINK FUNCTION
 LedgedashStoreThink:
@@ -1994,6 +1991,7 @@ SDITraining:
 	li	r5,Fox.Ext							#Use chosen CPU
 	li	r6,FinalDestination			#Use SSS Stage
 	load r7,EventOSD_SDI
+	li	r8,1										#Use Sopo bool
 	bl	InitializeMatch
 
 #Make default color
@@ -2001,13 +1999,6 @@ SDITraining:
 	lwz	r3,0x18(r3)		#p2 pointer
 	li  r4,0x0
 	stb r4,0x3(r3)    #Default color
-
-#If IC's Make SoPo
-lbz	r3,0x2(r30)		#P1 External ID
-cmpwi	r3,0xE
-bne	SDITrainingStoreThink
-li	r3,0x20
-stb	r3,0x2(r30)		#Make SoPo
 
 #STORE THINK FUNCTION
 SDITrainingStoreThink:
@@ -2498,6 +2489,7 @@ Reversal:
 	li	r5,-1										#Use chosen CPU
 	li	r6,-1										#Use SSS Stage
 	load r7,EventOSD_Reversal
+	li	r8,0										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -3137,6 +3129,7 @@ Powershield:
 	li	r5,Falco.Ext						#Use chosen CPU
 	li	r6,FinalDestination			#Use SSS Stage
 	load r7,EventOSD_Powershield
+	li	r8,0										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -3549,6 +3542,7 @@ ShieldDrop:
 	li	r5,-1									#Use chosen CPU
 	li	r6,Battlefield				#Use SSS Stage
 	load r7,EventOSD_ShieldDrop
+	li	r8,0										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -3804,6 +3798,7 @@ AttackOnShield:
 	li	r5,-1									#Use chosen CPU
 	li	r6,FinalDestination		#Use SSS Stage
 	load r7,EventOSD_AttackOnShield
+	li	r8,0										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -4242,18 +4237,12 @@ Ledgetech:
 	li	r5,Falco.Ext					#Use chosen CPU
 	li	r6,-1									#Use chosen Stage
 	load r7,EventOSD_LedgeTech
+	li	r8,1										#Use Sopo bool
 	bl	InitializeMatch
 
 #BUFF DEFENSE RATIO
 lis	r3,0x3f00
 stw	r3,0x14(r20)
-
-#If IC's Make SoPo
-lbz	r3,0x2(r30)		#P1 External ID
-cmpwi	r3,0xE
-bne	LedgetechStoreThink
-li	r3,0x20
-stb	r3,0x2(r30)		#Make SoPo
 
 #STORE THINK FUNCTION
 LedgetechStoreThink:
@@ -4699,6 +4688,7 @@ AmsahTech:
 	li	r5,9						#Use chosen CPU
 	li	r6,-1						#Use chosen Stage
 	load r7,EventOSD_AmsahTech
+	li	r8,0										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -5008,6 +4998,7 @@ ComboTraining:
 	li	r5,-1						#Use chosen CPU
 	li	r6,-1						#Use chosen Stage
 	load r7,EventOSD_ComboTraining
+	li	r8,0										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -6631,14 +6622,8 @@ WaveshineSDI:
 	li	r5,Fox.Ext										#Use chosen CPU
 	li	r6,FinalDestination						#Use chosen Stage
 	load r7,EventOSD_WaveshineSDI
+	li	r8,1										#Use Sopo bool
 	bl	InitializeMatch
-
-#If IC's Make SoPo
-	lbz	r3,0x2(r30)		#P1 External ID
-	cmpwi	r3,0xE
-	bne	WaveshineSDIStoreThink
-	li	r3,0x20
-	stb	r3,0x2(r30)		#Make SoPo
 
 #STORE THINK FUNCTION
 WaveshineSDIStoreThink:
@@ -7086,9 +7071,9 @@ blr
 #endregion
 
 #region Slide Off
-###################################
+###########################
 ## Slide Off HIJACK INFO ##
-###################################
+###########################
 
 SlideOff:
 #Store Stage, CPU, and FDD Toggles
@@ -7097,6 +7082,7 @@ SlideOff:
 	li	r5,Marth.Ext
 	li	r6,-1													#Use chosen Stage
 	load r7,EventOSD_SlideOff
+	li	r8,1										#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -7160,7 +7146,7 @@ SlideOffThink:
 	.set HitlagFrames,12
 	.set PercentLo,40
 	.set PercentHi,40
-	.set FramesBeforeHitbox,6
+	.set FramesBeforeHitbox,7
 
 backup
 
@@ -7205,23 +7191,24 @@ SlideOffThink_Start:
 	cmpwi r3,0
 	bne SlideOffThink_Restore
 
+SlideOffThink_CheckIfFailed:
 #Check if failed the slide off (in non-hitlag damage state)
 #EventState > EventState_Hitstun
 	lbz r3,EventState(REG_EventData)
 	cmpwi r3,EventState_Hitstun
-	ble SlideOffThink_SwitchCase
+	ble SlideOffThink_CheckIfFailed_End
 #Check for hitlag
 	lbz r3,0x221A(REG_P1Data)
 	rlwinm. r3,r3,0,26,26
-	bne SlideOffThink_SwitchCase
+	bne SlideOffThink_CheckIfFailed_End
 #Check if in hitstun
 	lbz r3,0x221C(REG_P1Data)
 	rlwinm. r3,r3,0,30,30
-	beq SlideOffThink_SwitchCase
+	beq SlideOffThink_CheckIfFailed_End
 #Check if player has been in this state for over 5 frames
 	lhz r3,FramesinCurrentAS(REG_P1Data)
 	cmpwi r3,5
-	blt SlideOffThink_SwitchCase
+	blt SlideOffThink_CheckIfFailed_End
 #Check if timer has started
 	lbz r3,Timer(REG_EventData)
 	cmpwi r3,0
@@ -7229,6 +7216,22 @@ SlideOffThink_Start:
 #Start Timer
 	li	r3,10
 	stb r3,Timer(REG_EventData)
+SlideOffThink_CheckIfFailed_End:
+
+SlideOffThink_CheckIfCPUDamaged:
+	lwz	r3,0x10(REG_P2Data)
+	cmpwi r3,ASID_DamageHi1
+	blt	SlideOffThink_CheckIfCPUDamaged_End
+	cmpwi r3,ASID_DamageFlyRoll
+	bgt	SlideOffThink_CheckIfCPUDamaged_End
+#Check if timer has started
+	lbz r3,Timer(REG_EventData)
+	cmpwi r3,0
+	bgt SlideOffThink_CheckIfCPUDamaged_End
+#Start Timer
+	li	r3,ResetTimer
+	stb r3,Timer(REG_EventData)
+SlideOffThink_CheckIfCPUDamaged_End:
 
 SlideOffThink_SwitchCase:
 #Switch Case
@@ -7344,6 +7347,15 @@ SlideOffThink_DetermineAttackorShield_CheckToAttack_CanAttack:
 	blt SlideOffThink_DetermineAttackorShield_CheckToAttack_StartAttack
 	cmpwi r3,ASID_PassiveStandB
 	bgt SlideOffThink_DetermineAttackorShield_CheckToAttack_StartAttack
+#If DownWait or Bound, dont do anything
+	cmpwi r3,ASID_DownWaitD
+	beq SlideOffThink_DetermineAttackorShield_CheckToAttackEnd
+	cmpwi r3,ASID_DownWaitU
+	beq SlideOffThink_DetermineAttackorShield_CheckToAttackEnd
+	cmpwi r3,ASID_DownBoundD
+	beq SlideOffThink_DetermineAttackorShield_CheckToAttackEnd
+	cmpwi r3,ASID_DownBoundU
+	beq SlideOffThink_DetermineAttackorShield_CheckToAttackEnd
 #Get the frame data to use
 	subi r3,r3,ASID_DownBoundU
 	addi r4,REG_EventConstants,VulnFrameData
@@ -7503,32 +7515,33 @@ blrl
 .float 18				#ymin
 .float 30				#ymax
 ##########################################
-.set TechVuln,24
+.set TechVuln,24-4
 .set TechRollVuln,23
 .set KnockdownVuln,23
 .set GetupVuln,23
-.set GetupRollVuln,20
+.set GetupRollForwardVuln,20-2
+.set GetupRollBackwardVuln,30-4
 .set GetupAttackVuln,27
 
-.byte KnockdownVuln				#DownBoundU
-.byte 0										#DownWaitU
-.byte 0										#DownDamageU
-.byte GetupVuln						#DownStandU
-.byte GetupAttackVuln			#DownAttackU
-.byte GetupRollVuln				#DownForwardU
-.byte GetupRollVuln				#DownBackU
-.byte -1									#DownSpotU (unused state)
-.byte KnockdownVuln				#DownBoundD
-.byte 0										#DownWaitD
-.byte 0										#DownDamageD
-.byte GetupVuln						#DownStandD
-.byte GetupAttackVuln			#DownAttackD
-.byte GetupRollVuln				#DownForwardD
-.byte GetupRollVuln				#DownBackD
-.byte -1									#DownSpotD (unused state)
-.byte TechVuln						#Passive
-.byte TechRollVuln				#PassiveStandF
-.byte TechRollVuln				#PassiveStandB
+.byte KnockdownVuln					#DownBoundU
+.byte 0											#DownWaitU
+.byte 0											#DownDamageU
+.byte GetupVuln							#DownStandU
+.byte GetupAttackVuln				#DownAttackU
+.byte GetupRollForwardVuln	#DownForwardU
+.byte GetupRollBackwardVuln	#DownBackU
+.byte -1										#DownSpotU (unused state)
+.byte KnockdownVuln					#DownBoundD
+.byte 0											#DownWaitD
+.byte 0											#DownDamageD
+.byte GetupVuln							#DownStandD
+.byte GetupAttackVuln				#DownAttackD
+.byte GetupRollForwardVuln	#DownForwardD
+.byte GetupRollBackwardVuln	#DownBackD
+.byte -1										#DownSpotD (unused state)
+.byte TechVuln							#Passive
+.byte TechRollVuln					#PassiveStandF
+.byte TechRollVuln					#PassiveStandB
 .align 2
 ###########################################
 SlideOffThink_AttackInputs:
@@ -7837,6 +7850,7 @@ LedgetechCounter:
 	li	r5,Marth.Ext									#Use marth
 	li	r6,-1													#Use chosen Stage
 	load r7,EventOSD_LedgetechCounter
+	li	r8,0													#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -8064,6 +8078,7 @@ ArmadaShine:
 	li	r5,Fox.Ext										#Use fox
 	li	r6,-1													#Use chosen Stage
 	load r7,EventOSD_ArmadaShine
+	li	r8,0													#Use Sopo bool
 	bl	InitializeMatch
 
 #STORE THINK FUNCTION
@@ -12711,6 +12726,7 @@ InitializeMatch:
 .set REG_StageChoice,28
 .set REG_EventOSDs,27
 .set REG_PlayerStruct,26
+.set REG_UseSopo,25
 
 #Init
 	backup
@@ -12719,6 +12735,7 @@ InitializeMatch:
 	mr REG_CPUChoice,r5
 	mr REG_StageChoice,r6
 	mr REG_EventOSDs,r7
+	mr REG_UseSopo,r8
 
 #Store Events FDD Toggles
 	lwz	r4,-0x77C0(r13)
@@ -12765,13 +12782,26 @@ InitializeMatch_StoreStage:
 	beq InitializeMatch_StoreSSSStage
 #Store this Stage
 	sth	REG_StageChoice,0xE(REG_MatchStruct)
-	b	InitializeMatch_Exit
+	b	InitializeMatch_StoreStage_End
 InitializeMatch_StoreSSSStage:
 	load	r3,0x8043207c							#get preload table
 	lwz	r3, 0x00C (r3)
 	sth	r3,0xE(REG_MatchStruct)			#store chosen stage
+InitializeMatch_StoreStage_End:
 
-#Exit
+InitializeMatch_SwapInSopo:
+	cmpwi REG_UseSopo,0
+	beq	InitializeMatch_SwapInSopo_End
+#Swap P1 Character to Sopo
+	lwz	r4, -0x77C0 (r13)
+	addi	r4, r4, 1328		#event mode match backup struct?
+	lbz	r3,0x2(r4)		#P1 External ID
+	cmpwi	r3,0xE
+	bne	InitializeMatch_SwapInSopo_End
+	li	r3,0x20
+	stb	r3,0x2(r4)		#Make SoPo
+InitializeMatch_SwapInSopo_End:
+
 InitializeMatch_Exit:
 	restore
 	blr
