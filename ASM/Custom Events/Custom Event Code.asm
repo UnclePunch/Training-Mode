@@ -124,11 +124,14 @@ SkipPageList:
   add	r4,r4,r5		#Get Event's Pointer Address
   lwz	r5,0x0(r4)		#Get bl Instruction
 	cmpwi r5,-1
-	beq	exit
+	beq	EventNoExist
   rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
   add	r4,r4,r5		#Gets ASCII Address in r4
   mtctr	r4
   bctr
+
+EventNoExist:
+	b	exit
 #endregion
 
 ###############
@@ -1596,7 +1599,7 @@ b	exit
       bl	Ledgedash_PlaceOnLedge
     #Save State
       addi r3,EventData,EventData_SaveStateStruct
-			li	r4,1			#Override failsafe code
+			li	r4,1							#Override failsafe code
       bl		SaveState_Save
 
 		Ledgedash_LoadState:
@@ -7139,10 +7142,25 @@ SlideOffThink:
 #Event Data Offsets
 	.set EventState,0x0
 		.set EventState_Hitstun,0x0
-		.set EventState_Falling,0x1
-		.set EventState_RecoverStart,0x2
-		.set EventState_RecoverEnd,0x3
+		.set EventState_DetermineAttack,0x1
+		.set EventState_AttackThink,0x2
+		.set EventState_Shield,0x3
 	.set Timer,0x1
+	.set P1State,0x2
+		.set P1State_Wait,0x0
+		.set P1State_Attacking,0x1
+	.set AttackTimer,0x3
+
+#Constants
+	.set ResetTimer,40
+	.set AngleLo,83
+	.set AngleHi,100
+	.set MagLo,65
+	.set MagHi,75
+	.set HitlagFrames,12
+	.set PercentLo,40
+	.set PercentHi,40
+	.set FramesBeforeHitbox,6
 
 backup
 
@@ -7168,8 +7186,8 @@ backup
 	cmpwi	r3,0x0
 	beq	SlideOffThink_Start
 	#Init Positions
-		mr	r3,P1GObj
-		mr	r4,P2GObj
+		mr	r3,REG_P1GObj
+		mr	r4,REG_P2GObj
 		bl	SlideOff_InitializePositions
   #Clear Inputs
     bl  RemoveFirstFrameInputs
@@ -7179,169 +7197,272 @@ backup
   	bl	SaveState_Save
 	#Init State
 		li	r3,EventState_Hitstun
-		stb	r3,EventState(EventData)
+		stb	r3,EventState(REG_EventData)
 SlideOffThink_Start:
-	b	SlideOffThink_Exit
+
 #Reset if anyone died
 	bl	IsAnyoneDead
 	cmpwi r3,0
 	bne SlideOffThink_Restore
 
+#Check if failed the slide off (in non-hitlag damage state)
+#EventState > EventState_Hitstun
+	lbz r3,EventState(REG_EventData)
+	cmpwi r3,EventState_Hitstun
+	ble SlideOffThink_SwitchCase
+#Check for hitlag
+	lbz r3,0x221A(REG_P1Data)
+	rlwinm. r3,r3,0,26,26
+	bne SlideOffThink_SwitchCase
+#Check if in hitstun
+	lbz r3,0x221C(REG_P1Data)
+	rlwinm. r3,r3,0,30,30
+	beq SlideOffThink_SwitchCase
+#Check if player has been in this state for over 5 frames
+	lhz r3,FramesinCurrentAS(REG_P1Data)
+	cmpwi r3,5
+	blt SlideOffThink_SwitchCase
+#Check if timer has started
+	lbz r3,Timer(REG_EventData)
+	cmpwi r3,0
+	bgt SlideOffThink_CheckTimer
+#Start Timer
+	li	r3,10
+	stb r3,Timer(REG_EventData)
+
+SlideOffThink_SwitchCase:
 #Switch Case
-	lbz r3,EventState(EventData)
+	lbz r3,EventState(REG_EventData)
 	cmpwi r3,EventState_Hitstun
 	beq SlideOffThink_Hitstun
-	cmpwi r3,EventState_Falling
-	beq SlideOffThink_Falling
-	cmpwi r3,EventState_RecoverStart
-	beq SlideOffThink_RecoverStart
-	cmpwi r3,EventState_RecoverEnd
-	beq SlideOffThink_RecoverEnd
-	b	SlideOffThink_Exit
+	cmpwi r3,EventState_DetermineAttack
+	beq SlideOffThink_DetermineAttackorShield
+	cmpwi r3,EventState_AttackThink
+	beq SlideOffThink_AttackThink
+	cmpwi r3,EventState_Shield
+	beq SlideOffThink_Shield
+	b	SlideOffThink_CheckTimer
 
 #region SlideOffThink_Hitstun
 SlideOffThink_Hitstun:
-#Check if still in hitstun
-	lbz	r3,0x221C(P2Data)
-	rlwinm. r3,r3,0,30,30
-	bne	SlideOffThink_Hitstun_Exit
-#Change Event State
-	li	r3,EventState_Falling
-	stb	r3,EventState(EventData)
-#Run Next State Code
-	b	SlideOffThink_Falling
+#Check if still in ThrowHi
+	lwz r3,0x10(REG_P2Data)
+	cmpwi r3,ASID_ThrowHi
+	beq SlideOffThink_CheckTimer
 
-SlideOffThink_Hitstun_Exit:
-#Always L-Cancel
-	li	r3,0
-	stb r3,0x67F(P1Data)
-	b	SlideOffThink_Exit
+#Check if P1 is in a tech/mistech state
+	lwz r3,0x10(REG_P1Data)
+	cmpwi r3,ASID_DownBoundU
+	blt SlideOffThink_CheckTimer
+	cmpwi r3,ASID_PassiveStandB
+	bgt SlideOffThink_CheckTimer
+
+#Change state to attack
+	li	r3,EventState_DetermineAttack
+	stb	r3,EventState(EventData)
+	b	SlideOffThink_CheckTimer
+
 #endregion
 
-#region SlideOffThink_Falling
-SlideOffThink_Falling:
-.set FirefoxRadius,80
-.set FirefoxChance,6
-#Get distance from ledge
-	addi r3,P2Data,0xB0
-	addi r4,P2Data,0x1ADC
-	bl	GetDistance
-	stfs	f1,0x80(sp)
-#Fox travels approx 82 Mm during firefox, so ensure he is at least this far
-	li	r3,FirefoxRadius
-	bl	IntToFloat
-	lfs f2,0x80(sp)
+#region SlideOffThink_DetermineAttackorShield
+SlideOffThink_DetermineAttackorShield:
+/*
+#Ensure facing correct direction
+#Get Values
+	lfs f1,0xB0(REG_P2Data)				#p2 position
+	lfs f2,0x2C(REG_P2Data)				#p2 direction
+	lfs f4,TriggerBoxXMin(REG_EventConstants)
+	lfs f5,TriggerBoxXMax(REG_EventConstants)
+	lfs f6,0xB0(REG_P1Data)
+#Check X
+	fmadds f3,f2,f4,f1				#XMin
+	fmadds f4,f2,f5,f1				#XMax
+#Make sure player is not behind marths range
+	lfs f1,-0x68E0 (rtoc)			#fp 0
 	fcmpo cr0,f2,f1
-	bge SlideOffThink_Falling_EnterFirefox
-#Random chance to firefox
-	li	r3,FirefoxChance
-	branchl r12,HSD_Randi
+	bge SlideOffThink_Attck_FacingRight
+SlideOffThink_Attck_FacingLeft:
+	li	r3,1
+	fcmpo cr0,f6,f3
+	bge SlideOffThink_Attck_InputTurn
+	b	SlideOffThink_Attck_SkipDirectionChange
+SlideOffThink_Attck_FacingRight:
+	li	r3,-1
+	fcmpo cr0,f6,f3
+	ble SlideOffThink_Attck_InputTurn
+	b	SlideOffThink_Attck_SkipDirectionChange
+SlideOffThink_Attck_InputTurn:
+#Check if already turning
+	lwz r4,0x10(REG_P2Data)
+	cmpwi r4,ASID_Turn
+	beq SlideOffThink_Attck_SkipDirectionChange
+#Input turn
+	mulli r3,r3,36
+	stb r3,CPU_AnalogX(REG_P2Data)
+SlideOffThink_Attck_SkipDirectionChange:
+*/
+
+SlideOffThink_DetermineAttackorShield_SkipFailCheck:
+
+#Decide to shield or attack
+	lfs f1,0xB4(REG_P2Data)				#p2 position
+	lfs f2,TriggerBoxYMin(REG_EventConstants)
+	lfs f3,TriggerBoxYMax(REG_EventConstants)
+	lfs f4,0xB4(REG_P1Data)				#p1 position
+	fadds f2,f1,f2						#YMin
+	fadds f3,f1,f3						#YMax
+#Check if P1 is above YMax
+	fcmpo cr0,f4,f3
+	bge SlideOffThink_DetermineAttackorShield_AboveTriggerBox
+#Check if P1 is below YMin
+	fcmpo cr0,f4,f2
+	bge SlideOffThink_DetermineAttackorShield_CheckToAttack_CanAttack
+SlideOffThink_DetermineAttackorShield_EnterShield:
+#Change Event State
+	li	r3,EventState_Shield
+	stb	r3,EventState(REG_EventData)
+#Start Timer
+	li	r3,ResetTimer
+	stb r3,Timer(REG_EventData)
+	b	SlideOffThink_Shield
+
+SlideOffThink_DetermineAttackorShield_AboveTriggerBox:
+#Check if timer has started
+	lbz r3,Timer(REG_EventData)
 	cmpwi r3,0
-	beq SlideOffThink_Falling_EnterFirefox
-	b	SlideOffThink_Exit
+	bgt SlideOffThink_CheckTimer
+#Start Timer
+	li	r3,10
+	stb r3,Timer(REG_EventData)
+	b	SlideOffThink_CheckTimer
 
-SlideOffThink_Falling_EnterFirefox:
-#Enter Firefox
-	li	r3,127
-	stb r3,CPU_AnalogY(P2Data)
-	li	r3,PAD_BUTTON_B
-	stw r3,CPU_HeldButtons(P2Data)
-#Change Event State
-	li	r3,EventState_RecoverStart
-	stb	r3,EventState(EventData)
-#Exit
-	b	SlideOffThink_Exit
+SlideOffThink_DetermineAttackorShield_CheckToAttack_CanAttack:
+#Get P1's State
+	lwz r3,0x10(REG_P1Data)
+#Ensure we have the frame data for this state
+	cmpwi r3,ASID_DownBoundU
+	blt SlideOffThink_DetermineAttackorShield_CheckToAttack_StartAttack
+	cmpwi r3,ASID_PassiveStandB
+	bgt SlideOffThink_DetermineAttackorShield_CheckToAttack_StartAttack
+#Get the frame data to use
+	subi r3,r3,ASID_DownBoundU
+	addi r4,REG_EventConstants,VulnFrameData
+	lbzx r3,r3,r4
+#Marth takes 8 frames for his utilt hitbox to appear, so subtract 8
+	subi r3,r3,FramesBeforeHitbox
+#Use the custom playerblock offset to check P1's frame count
+	lhz r4,FramesinCurrentAS(REG_P1Data)
+	cmpw r4,r3
+	blt SlideOffThink_DetermineAttackorShield_CheckToAttackEnd
+#Time to attack
+SlideOffThink_DetermineAttackorShield_CheckToAttack_StartAttack:
+	li	r3,EventState_AttackThink
+	stb r3,EventState(REG_EventData)
+	b	SlideOffThink_DetermineAttackorShield_CheckToAttackEnd
+SlideOffThink_DetermineAttackorShield_CheckToAttackEnd:
+	b	SlideOffThink_CheckTimer
+
 #endregion
 
-#region SlideOffThink_RecoverStart
-SlideOffThink_RecoverStart:
-.set RestartTimer,30
+#region SlideOffThink_AttackThink
+SlideOffThink_AttackThink:
+#Get Inputs for this frame
+	mr	r3,REG_P2Data
+	bl	SlideOffThink_AttackInputs
+	mflr r4
+	lbz r5,AttackTimer(REG_EventData)
+	bl	PlaybackInputSequence
 
-#Hold towards ledge
-#Get Angle Between Fox and Ledge
-	addi r3,P2Data,0xB0
-	addi r4,P2Data,0x1ADC
-	bl	GetAngleBetweenPoints
+#Always succeed LCancel
+	li	r3,0
+	stb r3,0x67F(REG_P2Data)
 
-#Convert this to an input
-.set REG_arctan,31
-.set REG_XComp,30
-.set REG_YComp,31
-.set REG_127,29
-#Backup arctan
-	fmr REG_arctan,f1
-#Get 127 as a float
-	li	r3,127
-	bl	IntToFloat
-	fmr REG_127,f1
-#Get X Component
-	fmr f1,REG_arctan		#angle in radians
-	branchl r12,cos
-	fmr REG_XComp,f1
-#Get Y Component
-	fmr f1,REG_arctan		#angle in radians
-	branchl r12,sin
-	fmr REG_YComp,f1
-#Get X input
-	fmuls f1,REG_XComp,REG_127
-	fctiwz f1,f1,
+#Remove Hitbox ID 1,2 and 3 (problematic for getting slideoff)
+	mr	r3,REG_P2GObj
+	li	r4,1
+	branchl r12,0x8007afc8
+	mr	r3,REG_P2GObj
+	li	r4,2
+	branchl r12,0x8007afc8
+	mr	r3,REG_P2GObj
+	li	r4,3
+	branchl r12,0x8007afc8
+
+#Exit AttackThink when returning to Wait
+	lbz r3,AttackTimer(REG_EventData)
+	cmpwi r3,0
+	ble SlideOffThink_AttackThink_Exit
+	lwz r3,0x10(REG_P2Data)
+	cmpwi r3,ASID_Wait
+	beq SlideOffThink_AttackThink_Reset
+	cmpwi r3,ASID_Landing
+	bne SlideOffThink_AttackThink_Exit
+#Now check if interruptable
+	lwz	r3, 0x2340 (REG_P2Data)
+	cmpwi r3,0
+	beq SlideOffThink_AttackThink_Exit
+#Check if this frame is interruptable
+	lfs f1,0x1f4 (REG_P2Data)
+	fctiwz f1,f1
 	stfd f1,0x80(sp)
 	lwz r3,0x84(sp)
-	stb r3,0x1A8C(P2Data)
-#Get Y input
-	fmuls f1,REG_YComp,REG_127
-	fctiwz f1,f1,
-	stfd f1,0x80(sp)
-	lwz r3,0x84(sp)
-	stb r3,0x1A8D(P2Data)
+	lhz r4,FramesinCurrentAS(REG_P2Data)
+	cmpw r4,r3
+	blt SlideOffThink_AttackThink_Exit
 
-#Restore f28-f31
-	lfs f29,0xB0(sp)
-	lfs f30,0xB4(sp)
-	lfs f31,0xB8(sp)
+SlideOffThink_AttackThink_Reset:
+	li	r3,EventState_DetermineAttack			#event state
+	stb r3,EventState(REG_EventData)
+	li	r3,0															#reset timer
+	stb r3,AttackTimer(REG_EventData)
+	b	SlideOffThink_CheckTimer
 
-#Check if no longer in SpecialHiStart
-	lwz r3,0x10(P2Data)
-	cmpwi r3,354
-	beq SlideOffThink_RecoverStart_Exit
-#Start restart timer
-	li	r3,RestartTimer
-	stb r3,Timer(EventData)
-#Change Event State
-	li	r3,EventState_RecoverEnd
-	stb	r3,EventState(EventData)
-#Run Next State Code
-	b	SlideOffThink_RecoverEnd
-
-SlideOffThink_RecoverStart_Exit:
-	b	SlideOffThink_Exit
+SlideOffThink_AttackThink_Exit:
+#Check if in Hitlag
+	lbz r3,0x221A(REG_P2Data)
+	rlwinm. r3,r3,0,26,26
+	bne SlideOffThink_CheckTimer
+#Increment Attack Timer
+	lbz r3,AttackTimer(REG_EventData)
+	addi r3,r3,1
+	stb r3,AttackTimer(REG_EventData)
+	b	SlideOffThink_CheckTimer
 #endregion
 
-#region SlideOffThink_RecoverEnd
-SlideOffThink_RecoverEnd:
-#Get timer
-	lbz r3,Timer(EventData)
+#region SlideOffThink_Shield
+SlideOffThink_Shield:
+#Hold Shield
+	li	r3,PAD_TRIGGER_R
+	stw	r3,CPU_HeldButtons(REG_P2Data)
+	b	SlideOffThink_CheckTimer
+#endregion
+
+SlideOffThink_CheckTimer:
+#Check if timer exists
+	lbz r3,Timer(REG_EventData)
+	cmpwi r3,0
+	ble SlideOffThink_Exit
+#Decrement timer
 	subi r3,r3,1
-	stb r3,Timer(EventData)
+	stb r3,Timer(REG_EventData)
 	cmpwi r3,0
-	ble SlideOffThink_Restore
-
-b	SlideOffThink_Exit
-#endregion
+	bgt SlideOffThink_Exit
 
 SlideOffThink_Restore:
 #Restore State
-	addi r3,EventData,EventData_SaveStateStruct
+	addi r3,REG_EventData,EventData_SaveStateStruct
 	li	r4,1
 	bl	SaveState_Load
 #Init Positions Again
-	mr	r3,P1GObj
-	mr	r4,P2GObj
+	mr	r3,REG_P1GObj
+	mr	r4,REG_P2GObj
 	bl	SlideOff_InitializePositions
 #Reset Variables
 	li	r3,0
-	stb r3,EventState(EventData)
-	stb r3,Timer(EventData)
+	stb r3,EventState(REG_EventData)
+	stb r3,Timer(REG_EventData)
+	stb r3,P1State(REG_EventData)
+	stb r3,AttackTimer(REG_EventData)
 
 SlideOffThink_Exit:
 	restore
@@ -7351,19 +7472,81 @@ SlideOffThink_Exit:
 
 SlideOffThink_Constants:
 blrl
+.set MarthUTiltFrame,8
 .set P1X,0x0
 .set P1Y,0x4
 .set P2X,0x8
 .set P2Y,0xC
 .set UThrowStartFrame,0x10
 .set DamageFlyTopStartFrame,0x14
+.set MagnitudeScalar,0x18
+.set MagnitudeScalar2,0x1C
+.set MagnitudeScalar3,0x20
+.set TriggerBoxXMin,0x24
+.set TriggerBoxXMax,0x28
+.set TriggerBoxYMin,0x2C
+.set TriggerBoxYMax,0x30
+.set VulnFrameData,0x34
+.set Unk,0x48
 
 .float -37.7		#p1 x
 .float 21.2			#p1 y
-.float -42.8		#p2 x
+.float -41.5		#p2 x
 .float 0				#p2 y
 .float 13				#marth upthrow starting frame
 .float 2				#p1 damageflytop starting frame
+.float 0.1			#baseline for mag scaling
+.float 1				#mag scaling constant
+.float 0.4			#mag scaling constant
+.float -8				#xmin
+.float 20				#xmax
+.float 18				#ymin
+.float 30				#ymax
+##########################################
+.set TechVuln,24
+.set TechRollVuln,23
+.set KnockdownVuln,23
+.set GetupVuln,23
+.set GetupRollVuln,20
+.set GetupAttackVuln,27
+
+.byte KnockdownVuln				#DownBoundU
+.byte 0										#DownWaitU
+.byte 0										#DownDamageU
+.byte GetupVuln						#DownStandU
+.byte GetupAttackVuln			#DownAttackU
+.byte GetupRollVuln				#DownForwardU
+.byte GetupRollVuln				#DownBackU
+.byte -1									#DownSpotU (unused state)
+.byte KnockdownVuln				#DownBoundD
+.byte 0										#DownWaitD
+.byte 0										#DownDamageD
+.byte GetupVuln						#DownStandD
+.byte GetupAttackVuln			#DownAttackD
+.byte GetupRollVuln				#DownForwardD
+.byte GetupRollVuln				#DownBackD
+.byte -1									#DownSpotD (unused state)
+.byte TechVuln						#Passive
+.byte TechRollVuln				#PassiveStandF
+.byte TechRollVuln				#PassiveStandB
+.align 2
+###########################################
+SlideOffThink_AttackInputs:
+blrl
+.byte 0
+.long PAD_BUTTON_X
+.byte 0,0,0,0
+
+.byte 4
+.long 0
+.byte 0,0,0,127
+
+.byte 26
+.long PAD_TRIGGER_L
+.byte 0,-127,0,0
+
+.byte -1
+.align 2
 
 #################################
 
@@ -7373,36 +7556,36 @@ backup
  #Change Facing Direction
 	li	r3,-1
 	bl	IntToFloat
-	stfs	f1,0x2C(P1Data)
+	stfs	f1,0x2C(REG_P1Data)
   li	r3,1
   bl	IntToFloat
-  stfs	f1,0x2C(P2Data)
+  stfs	f1,0x2C(REG_P2Data)
 
 #Get Starting Coordinates
 	lfs f1,P1X(REG_EventConstants)
-	stfs f1,0xB0(P1Data)
+	stfs f1,0xB0(REG_P1Data)
 	lfs f1,P1Y(REG_EventConstants)
-	stfs f1,0xB4(P1Data)
-	mr	r3,P1GObj
+	stfs f1,0xB4(REG_P1Data)
+	mr	r3,REG_P1GObj
 	bl	UpdatePosition
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	bl	UpdateCameraBox
 
 	lfs f1,P2X(REG_EventConstants)
-	stfs f1,0xB0(P2Data)
+	stfs f1,0xB0(REG_P2Data)
 	lfs f1,P2Y(REG_EventConstants)
-	stfs f1,0xB4(P2Data)
-	mr	r3,P2GObj
+	stfs f1,0xB4(REG_P2Data)
+	mr	r3,REG_P2GObj
 	bl	PlacePlayerOnGround
-	mr	r3,P2GObj
+	mr	r3,REG_P2GObj
 	bl	UpdateCameraBox
 
 #P2 enters UpThrow
-	mr	r3,P2GObj
+	mr	r3,REG_P2GObj
 	li	r4,ASID_ThrowHi
 	li	r5,0
 	li	r6,0
-	lwz r7,0x10C(P1Data)		#determine speed from weight
+	lwz r7,0x10C(REG_P1Data)		#determine speed from weight
 	lwz r7,0x0(r7)
 	lfs f1,0x88(r7)
 	lfs	f2, -0x68DC (rtoc)
@@ -7415,50 +7598,89 @@ backup
 	branchl r12,ActionStateChange
 
 #P1 enters DamageFlyTop
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	li	r4,ASID_DamageFlyTop
 	li	r5,0x40
 	li	r6,0
-	lfs	f1, -0x750C (rtoc)
-	lfs	f2,DamageFlyTopStartFrame (REG_EventConstants)
+	lfs	f1,DamageFlyTopStartFrame (REG_EventConstants)
+	lfs	f2, -0x73D0 (rtoc)
 	lfs	f3, -0x750C (rtoc)
 	branchl r12,ActionStateChange
 
-.set AngleLo,93
-.set AngleHi,93
-.set MagLo,85
-.set MagHi,85
+#Scale KB Magnitude based on characters weight
+	li	r3,MagLo
+	bl	IntToFloat
+	lfs f2,MagnitudeScalar(REG_EventConstants)
+	lfs f3,0x16C(REG_P1Data)
+	lfs f4,MagnitudeScalar2(REG_EventConstants)
+	lfs f5,MagnitudeScalar3(REG_EventConstants)
+	fdivs f2,f3,f2
+	fsubs f2,f2,f4
+	fmuls f2,f2,f5
+	fmuls f2,f2,f1
+	fadds f1,f1,f2
+	fctiwz f1,f1
+	stfd f1,0x80(sp)
+	lwz r20,0x84(sp)
+
+	li	r3,MagHi
+	bl	IntToFloat
+	lfs f2,MagnitudeScalar(REG_EventConstants)
+	lfs f3,0x16C(REG_P1Data)
+	lfs f4,MagnitudeScalar2(REG_EventConstants)
+	lfs f5,MagnitudeScalar3(REG_EventConstants)
+	fdivs f2,f3,f2
+	fsubs f2,f2,f4
+	fmuls f2,f2,f5
+	fmuls f2,f2,f1
+	fadds f1,f1,f2
+	fctiwz f1,f1
+	stfd f1,0x80(sp)
+	lwz r21,0x84(sp)
+
 #Enter into knockback
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	li	r4,AngleLo
 	li	r5,AngleHi
-	li	r6,MagLo
-	li	r7,MagHi
+	mr	r6,r20
+	mr	r7,r21
 	bl	EnterKnockback
+
+#Override hitstun amount
+	li	r3,255
+	bl	IntToFloat
+	stfs f1,0x2340(REG_P1Data)
 
 #Give 7 Frames of Hitlag to Each
 	li	r3,HitlagFrames
 	bl	IntToFloat
-	stfs f1,0x195C(P1Data)
-	lbz r0,0x221A(P1Data)
+	stfs f1,0x195C(REG_P1Data)
+	lbz r0,0x221A(REG_P1Data)
 	li	r3,1
 	rlwimi r0,r3,5,26,26
-	stb r0,0x221A(P1Data)
-	lbz r0,0x2219(P1Data)
+	stb r0,0x221A(REG_P1Data)
+	lbz r0,0x2219(REG_P1Data)
 	li	r3,1
 	rlwimi r0,r3,2,29,29
-	stb r0,0x2219(P1Data)
+	stb r0,0x2219(REG_P1Data)
 	li	r3,HitlagFrames
 	bl	IntToFloat
-	stfs f1,0x195C(P2Data)
-	lbz r0,0x221A(P2Data)
+	stfs f1,0x195C(REG_P2Data)
+	lbz r0,0x221A(REG_P2Data)
 	li	r3,1
 	rlwimi r0,r3,5,26,26
-	stb r0,0x221A(P2Data)
-	lbz r0,0x2219(P2Data)
+	stb r0,0x221A(REG_P2Data)
+	lbz r0,0x2219(REG_P2Data)
 	li	r3,1
 	rlwimi r0,r3,2,29,29
-	stb r0,0x2219(P2Data)
+	stb r0,0x2219(REG_P2Data)
+
+#Random percent between 10-25
+	li	r3,PercentHi-PercentLo
+	branchl r12,HSD_Randi
+	addi r4,r3,PercentLo
+	lbz r3,0xC(REG_P1Data)
+	branchl r12,PlayerBlock_SetDamage
 
 SlideOff_InitializePositions_Exit:
 	restore
@@ -11213,16 +11435,23 @@ backup
   lwz P2Data,0x2C(P2GObj)
   mr  SaveStateStruct,r5
 
-#Make Sure Nothing Is Held
-	lhz	r3,0x662(P1Data)
-  rlwinm.  r0,r3,0,27,27
-  bne 0xC
-  cmpwi r3,0x0
-	bne	MoveCPUExit
+#Get Input
+  lbz	r4, 0x0618 (P1Data)
+  load r3,InputStructStart
+  mulli	r0, r4, 68
+  add	r5, r0, r3
+
 #Check DPad Down
-	lwz	r3,0x668(P1Data)
+	lwz	r3,0xC(r5)
 	rlwinm.	r0,r3,0,29,29
 	beq	MoveCPUExit
+#Make Sure Nothing Is Held
+	lwz	r3,0x0(r5)
+	li	r4,0
+	rlwimi r3,r4,0,29,29		#except dpad down
+	rlwimi r3,r4,0,27,27		#except Z (cause frame advance)
+	cmpwi r3,0
+	bne	MoveCPUExit
 
 #Make Sure Player is Grounded
   lwz r3,0xE0(P1Data)
@@ -12725,6 +12954,10 @@ backup
 	rlwimi r0,r3,1,30,30
 	stb r0,0x221C(REG_GObjData)
 
+#Enable ECB Update
+	mr	r3,REG_GObjData
+	branchl r12,0x8007d5bc
+
 EnterKnockback_Exit:
 	restore
 	blr
@@ -12858,10 +13091,85 @@ DisableHazards_OldDL:
 b	DisableHazards_SkipList_Exit
 
 ########################
+
+DisableHazards_OldYS:
+#Destroy cloud's map_gobj
+	li	r3,2				#map_gobj ID
+	branchl r12,Stage_map_gobj_Load
+	branchl r12,Stage_Destroy_map_gobj
+
+b	DisableHazards_SkipList_Exit
+
+########################
+
+DisableHazards_OldKongo:
+#Destroy barrel's map_gobj
+	li	r3,1				#map_gobj ID
+	branchl r12,Stage_map_gobj_Load
+	branchl r12,Stage_Destroy_map_gobj
+
+b	DisableHazards_SkipList_Exit
+
+########################
+
 DisableHazards_SkipList_Exit:
 	restore
 	blr
-##########################################
+###########################################
+
+PlaybackInputSequence:
+.set REG_PlayerData,31
+.set REG_InputSequence,30
+.set REG_AttackTimer,29
+
+#Input Sequence Struct
+.set InputSequence_Length,0x9
+.set InputSequence_Frame,0x0
+.set InputSequence_Buttons,0x1
+.set InputSequence_AnalogX,0x5
+.set InputSequence_AnalogY,0x6
+.set InputSequence_CStickX,0x7
+.set InputSequence_CStickY,0x8
+
+backup
+
+#Backup args
+	mr	REG_PlayerData,r3
+	mr	REG_InputSequence,r4
+	mr	REG_AttackTimer,r5
+
+PlaybackInputSequence_Loop:
+#Search for this frames input in the sequence
+	lbz r3,InputSequence_Frame(REG_InputSequence)
+#Check if end of sequence
+	extsb r0,r3
+	cmpwi r0,-1
+	beq PlaybackInputSequenceExit
+#Check if this frame's input
+	cmpw r5,r3
+	beq PlaybackInputSequence_PlayInput
+	blt PlaybackInputSequenceExit						#Check if the current frame is less than the parsed frame
+#If greater, continue parsing
+	addi REG_InputSequence,REG_InputSequence,InputSequence_Length
+	b PlaybackInputSequence_Loop						#If greater, continue parsing
+
+PlaybackInputSequence_PlayInput:
+	lwz r3,InputSequence_Buttons(REG_InputSequence)
+	stw r3,CPU_HeldButtons(REG_PlayerData)
+	lbz r3,InputSequence_AnalogX(REG_InputSequence)
+	stb r3,CPU_AnalogX(REG_PlayerData)
+	lbz r3,InputSequence_AnalogY(REG_InputSequence)
+	stb r3,CPU_AnalogY(REG_PlayerData)
+	lbz r3,InputSequence_CStickX(REG_InputSequence)
+	stb r3,CPU_CStickX(REG_PlayerData)
+	lbz r3,InputSequence_CStickY(REG_InputSequence)
+	stb r3,CPU_CStickY(REG_PlayerData)
+
+PlaybackInputSequenceExit:
+	restore
+	blr
+
+###########################################
 
 exit:
 li	r0, 3

@@ -64,7 +64,7 @@ break them. DPad down = free practice."
     .endm
 
     .macro Event_Multishine_Description
-      .string "How many multishines can you
+      .string "How many shines can you
 perform in 10 seconds?"
     .endm
 
@@ -534,11 +534,11 @@ of Fox's waveshine!"
   .set Event_SlideOff,11
   #Event Name
     .macro Event_SlideOff_Name
-      .string "Slide Off Training"
+      .string "Slide-Off Training"
     .endm
 
     .macro Event_SlideOff_Description
-      .string "Use Slide Off DI to slide off
+      .string "Use Slide-Off DI to slide off
 the platform and counter attack!"
     .endm
 
@@ -617,7 +617,7 @@ Marth's counter!"
 
     .macro Event_ArmadaShine_Description
       .string "Finish off the enemy Fox
-with an Aramada-Shine!"
+with an Armada-Shine!"
     .endm
 
     .macro Event_ArmadaShine_Tutorial
@@ -659,6 +659,21 @@ with an Aramada-Shine!"
 	bl	Minigames
   bl  GeneralTech
   bl  SpacieTech
+.endm
+#endregion
+#region EventAmountPerPage
+.macro EventAmountPerPage
+
+Minigames:
+.long Minigames.NumOfEvents
+.align 2
+GeneralTech:
+.long GeneralTech.NumOfEvents
+.align 2
+SpacieTech:
+.long SpacieTech.NumOfEvents
+.align 2
+
 .endm
 #endregion
 
@@ -1074,8 +1089,8 @@ Event_ArmadaShine_Tutorial
   .set Scene.CurrentMajor,0x0
   .set Scene.PendingMajor,0x1
   .set Scene.PreviousMajor,0x2
-  .set Scene.PendingMinor,0x3
-  .set Scene.CurrentMinor,0x4
+  .set Scene.CurrentMinor,0x3
+  .set Scene.PendingMinor,0x4
   .set Scene.PreviousMinor,0x5
 #Scene ID's
 .set Scene.TitleScreen,0x00
@@ -1171,6 +1186,8 @@ Event_ArmadaShine_Tutorial
 .set ApplyInvincibility,0x8007b7a4
 .set GFX_RemoveAll,0x8007db24
 .set PlayerBlock_LoadMainCharDataOffset,0x80034110
+.set PlayerBlock_SetDamage,0x80034330
+.set PlayerBlock_LoadDamage,0x800342b4
 .set StageInfo_CameraLimitLeft_Load,0x80224a54
 .set StageInfo_CameraLimitRight_Load,0x80224a68
 .set StageInfo_CameraLimitTop_Load,0x80224a80
@@ -1386,10 +1403,14 @@ Event_ArmadaShine_Tutorial
 .set FinalDestination,0x20
 
 #Button Definitions
-.set PAD_BUTTON_LEFT,0x0001
-.set PAD_BUTTON_RIGHT,0x0002
-.set PAD_BUTTON_DOWN,0x0004
-.set PAD_BUTTON_UP,0x0008
+.set PAD_BUTTON_LEFT,0x40000
+.set PAD_BUTTON_RIGHT,0x80000
+.set PAD_BUTTON_DOWN,0x20000
+.set PAD_BUTTON_UP,0x10000
+.set PAD_BUTTON_DPAD_LEFT,0x0001
+.set PAD_BUTTON_DPAD_RIGHT,0x0002
+.set PAD_BUTTON_DPAD_DOWN,0x0004
+.set PAD_BUTTON_DPAD_UP,0x0008
 .set PAD_TRIGGER_Z,0x0010
 .set PAD_TRIGGER_R,0x0020
 .set PAD_TRIGGER_L,0x0040
