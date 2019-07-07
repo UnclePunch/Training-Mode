@@ -217,7 +217,7 @@ Use D-Pad to change ledge."
     .endm
 
     .macro Event_Combo_Description
-      .string "L+DPad adjusts percent/DPadDown moves CPU
+      .string "L+DPad adjusts percent | DPadDown moves CPU
 DPad right/left saves and loads positions."
     .endm
 
