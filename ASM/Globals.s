@@ -567,7 +567,7 @@ the platform and counter attack!"
 #endregion
 #region Spacie Tech Page Data
 #Number of Events
-  .set SpacieTech.NumOfEvents,2 -1
+  .set SpacieTech.NumOfEvents,3 -1
 
 #Event List
 #region LedgetechCounter
@@ -642,6 +642,43 @@ with an Armada-Shine!"
     .endm
 
     .macro Event_ArmadaShine_ScoreType
+      .byte KO
+    .endm
+
+#endregion
+#region EscapeSheik
+  .set Event_EscapeSheik,2
+  #Event Name
+    .macro Event_EscapeSheik_Name
+      .string "Escape Sheik Techchase"
+    .endm
+
+    .macro Event_EscapeSheik_Description
+      .string "Practice escaping the tech chase with a
+frame perfect shine or jab SDI!"
+    .endm
+
+    .macro Event_EscapeSheik_Tutorial
+      .string "TvEscSheik"
+    .endm
+
+    .macro Event_EscapeSheik_ChooseCPU
+    .endm
+
+    .macro Event_EscapeSheik_PreloadData
+      .byte Event_EscapeSheik, Sheik.Ext, FinalDestination
+    .endm
+
+    .macro Event_EscapeSheik_LoadSSS
+    .endm
+
+    .macro Event_EscapeSheik_PlayableCharacters
+      .byte Event_EscapeSheik
+      .long Fox_CSSID | Falco_CSSID | CaptainFalcon_CSSID         #Player Characters
+			.long -1
+    .endm
+
+    .macro Event_EscapeSheik_ScoreType
       .byte KO
     .endm
 
@@ -721,6 +758,7 @@ SpacieTech:
   Event_LedgetechCounter_Name
 #Armada-Shine Practice
   Event_ArmadaShine_Name
+  Event_EscapeSheik_Name
 .align 2
 .endm
 #endregion
@@ -768,6 +806,7 @@ SpacieTech:
   Event_LedgetechCounter_Description
 #Armada-Shine Practice
   Event_ArmadaShine_Description
+  Event_EscapeSheik_Description
 .align 2
 ########################
 .endm
@@ -802,6 +841,7 @@ ChooseCPU_GeneralTech:
 ChooseCPU_SpacieTech:
   Event_LedgetechCounter_ChooseCPU
   Event_ArmadaShine_ChooseCPU
+  Event_EscapeSheik_ChooseCPU
   .byte -1
 .align 2
 ############################
@@ -838,6 +878,7 @@ PreloadEvents_GeneralTech:
 PreloadEvents_SpacieTech:
   Event_LedgetechCounter_PreloadData
   Event_ArmadaShine_PreloadData
+  Event_EscapeSheik_PreloadData
   .byte -1
 .align 2
 ############################
@@ -874,6 +915,7 @@ GeneralTech:
 SpacieTech:
   Event_LedgetechCounter_LoadSSS
   Event_ArmadaShine_LoadSSS
+  Event_EscapeSheik_LoadSSS
   .byte -1
 .align 2
 ############################
@@ -910,6 +952,7 @@ GeneralTech:
 SpacieTech:
   Event_LedgetechCounter_PlayableCharacters
   Event_ArmadaShine_PlayableCharacters
+  Event_EscapeSheik_PlayableCharacters
   .byte -1
 .align 2
 ############################
@@ -956,6 +999,7 @@ Event_SlideOff_Tutorial
 SpacieTech:
 Event_LedgetechCounter_Tutorial
 Event_ArmadaShine_Tutorial
+Event_EscapeSheik_Tutorial
 .align 2
 
 .endm
@@ -984,8 +1028,8 @@ Event_ArmadaShine_Tutorial
 .set OSD.ShieldDrop,6
 .set OSD.APM,7
 .set OSD.SpacieTech,8
-.set OSD.SDI,9
-.set OSD.Powershield,10
+.set OSD.SDI,10
+.set OSD.Powershield,9
 .set OSD.ShieldPoke,11
 .set OSD.HitstunLeft,12
 .set OSD.ShieldStun,13
@@ -1011,14 +1055,19 @@ Event_ArmadaShine_Tutorial
 .set EventOSD_Eggs,0
 .set EventOSD_SDI,0x10000400
 .set EventOSD_Reversal,0x002C0009
-.set EventOSD_Powershield,0x00000400
+.set EventOSD_Powershield,0x00000200
 .set EventOSD_ShieldDrop,0x00200048
 .set EventOSD_AttackOnShield,0x00210000
 .set EventOSD_LedgeTech,0x00000404
 .set EventOSD_AmsahTech,0x00000004
 .set EventOSD_ComboTraining,0x01010020
 .set EventOSD_WaveshineSDI,0x10000400
+.set EventOSD_SlideOff,0x00000000
+
 .set EventOSD_LedgetechCounter,0x00000604
+.set EventOSD_ArmadaShine,0x0000000002
+.set EventOSD_EscapeSheik,0x00000400
+
 
 #Custom Playerblock Offsets
 .set PlayerBlockSize, 0x2500
@@ -1164,6 +1213,8 @@ Event_ArmadaShine_Tutorial
 .set HSD_Randf,0x80380528
 .set AS_Wait,0x8008a2bc
 .set AS_Fall,0x800cc730
+.set AS_Catch,0x800d8c54
+.set AS_Guard,0x800939b4
 .set HSD_MemAlloc,0x8037f1e4
 .set memcpy,0x800031f4
 .set ZeroAreaLength,0x8000c160
