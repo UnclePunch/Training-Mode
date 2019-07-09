@@ -9002,13 +9002,6 @@ SideBSweet_InitializePositions_DirectionChangeEnd:
 	stb r3,EventState(REG_EventData)
 	li	r3,0
 	stb r3,Timer(REG_EventData)
-	stb r3,JabFrame(REG_EventData)
-#Init Throw Timer
-	li	r3,ThrowTimerHi-ThrowTimerLo
-	branchl r12,HSD_Randi
-	addi r3,r3,ThrowTimerLo
-	sth r3,ThrowTimer(REG_EventData)
-
 SideBSweetspot_InitializePositions_Exit:
 	restore
 	blr
