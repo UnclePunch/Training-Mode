@@ -1345,6 +1345,7 @@ Event_EscapeSheik_Tutorial
 .set SFX_StopAllCharacterSFX,0x80088a50
 .set SFXManager_StopSFXIfPlaying,0x80321ce8
 .set memset,0x80003100
+.set Ragdoll_WindDecayThink,0x800115f4
 
 #Custom Functions
 .set TextCreateFunction,0x80005928

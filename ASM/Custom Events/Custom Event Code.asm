@@ -14298,6 +14298,9 @@ DisableHazards_Story:
 #Remove Proc
 	branchl r12,GObj_RemoveProc
 
+#Fix ragdoll issue
+	bl	DisableHazards_RagdollFix
+
 b	DisableHazards_SkipList_Exit
 
 ########################
@@ -14308,6 +14311,8 @@ DisableHazards_Pstadium:
 	branchl r12,Stage_map_gobj_Load
 #Remove Proc
 	branchl r12,GObj_RemoveProc
+#Fix ragdoll issue
+	bl	DisableHazards_RagdollFix
 
 b	DisableHazards_SkipList_Exit
 
@@ -14327,6 +14332,7 @@ DisableHazards_OldDL:
 #set wind hazard count to 0
 	li	r3,0
 	stw	r3,Stage_PositionHazardCount(r13)
+
 b	DisableHazards_SkipList_Exit
 
 ########################
@@ -14350,6 +14356,41 @@ DisableHazards_OldKongo:
 b	DisableHazards_SkipList_Exit
 
 ########################
+DisableHazards_RagdollFix:
+#Certain stages have an essential ragdoll function
+#in their map_gobj think function. If the think function is removed,
+#the ragdoll function must be re-scheduled to function properly.
+
+backup
+
+#Create GObj
+  li	r3,3		#GObj Type
+  li	r4,5		#On-Pause Function
+  li	r5,0
+  branchl	r12,GObj_Create
+#Schedule Task
+	bl	DisableHazards_RagdollFix_Think
+	mflr r4
+  mr	r5,4		#Priority
+  branchl	r12,GObj_AddProc
+	b	DisableHazards_RagdollFix_Exit
+
+#********************************#
+DisableHazards_RagdollFix_Think:
+blrl
+
+backup
+
+branchl r12,Ragdoll_WindDecayThink
+
+restore
+blr
+#********************************#
+
+DisableHazards_RagdollFix_Exit:
+restore
+blr
+#########################
 
 DisableHazards_SkipList_Exit:
 	restore
