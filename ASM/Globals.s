@@ -567,7 +567,7 @@ the platform and counter attack!"
 #endregion
 #region Spacie Tech Page Data
 #Number of Events
-  .set SpacieTech.NumOfEvents,3 -1
+  .set SpacieTech.NumOfEvents,4 -1
 
 #Event List
 #region LedgetechCounter
@@ -646,8 +646,46 @@ with an Armada-Shine!"
     .endm
 
 #endregion
+#region SideBSweetspot
+  .set Event_SideBSweetspot,2
+  #Event Name
+    .macro Event_SideBSweetspot_Name
+      .string "Side-B Sweetspot"
+    .endm
+
+    .macro Event_SideBSweetspot_Description
+      .string "Use a sweetspot side-B to avoid Marth's
+down-tilt and grab the ledge!"
+    .endm
+
+    .macro Event_SideBSweetspot_Tutorial
+      .string "TvSideBSweet"
+    .endm
+
+    .macro Event_SideBSweetspot_ChooseCPU
+    .endm
+
+    .macro Event_SideBSweetspot_PreloadData
+      .byte Event_SideBSweetspot, Marth.Ext, -1
+    .endm
+
+    .macro Event_SideBSweetspot_LoadSSS
+      .byte Event_SideBSweetspot
+    .endm
+
+    .macro Event_SideBSweetspot_PlayableCharacters
+      .byte Event_SideBSweetspot
+      .long Fox_CSSID | Falco_CSSID         #Player Characters
+			.long -1
+    .endm
+
+    .macro Event_SideBSweetspot_ScoreType
+      .byte KO
+    .endm
+
+#endregion
 #region EscapeSheik
-  .set Event_EscapeSheik,2
+  .set Event_EscapeSheik,3
   #Event Name
     .macro Event_EscapeSheik_Name
       .string "Escape Sheik Techchase"
@@ -758,6 +796,7 @@ SpacieTech:
   Event_LedgetechCounter_Name
 #Armada-Shine Practice
   Event_ArmadaShine_Name
+  Event_SideBSweetspot_Name
   Event_EscapeSheik_Name
 .align 2
 .endm
@@ -806,6 +845,7 @@ SpacieTech:
   Event_LedgetechCounter_Description
 #Armada-Shine Practice
   Event_ArmadaShine_Description
+  Event_SideBSweetspot_Description
   Event_EscapeSheik_Description
 .align 2
 ########################
@@ -841,6 +881,7 @@ ChooseCPU_GeneralTech:
 ChooseCPU_SpacieTech:
   Event_LedgetechCounter_ChooseCPU
   Event_ArmadaShine_ChooseCPU
+  Event_SideBSweetspot_ChooseCPU
   Event_EscapeSheik_ChooseCPU
   .byte -1
 .align 2
@@ -878,6 +919,7 @@ PreloadEvents_GeneralTech:
 PreloadEvents_SpacieTech:
   Event_LedgetechCounter_PreloadData
   Event_ArmadaShine_PreloadData
+  Event_SideBSweetspot_PreloadData
   Event_EscapeSheik_PreloadData
   .byte -1
 .align 2
@@ -915,6 +957,7 @@ GeneralTech:
 SpacieTech:
   Event_LedgetechCounter_LoadSSS
   Event_ArmadaShine_LoadSSS
+  Event_SideBSweetspot_LoadSSS
   Event_EscapeSheik_LoadSSS
   .byte -1
 .align 2
@@ -952,6 +995,7 @@ GeneralTech:
 SpacieTech:
   Event_LedgetechCounter_PlayableCharacters
   Event_ArmadaShine_PlayableCharacters
+  Event_SideBSweetspot_PlayableCharacters
   Event_EscapeSheik_PlayableCharacters
   .byte -1
 .align 2
@@ -999,6 +1043,7 @@ Event_SlideOff_Tutorial
 SpacieTech:
 Event_LedgetechCounter_Tutorial
 Event_ArmadaShine_Tutorial
+Event_SideBSweetspot_Tutorial
 Event_EscapeSheik_Tutorial
 .align 2
 
@@ -1219,6 +1264,7 @@ Event_EscapeSheik_Tutorial
 .set memcpy,0x800031f4
 .set ZeroAreaLength,0x8000c160
 .set CreateCameraBox,0x80029020
+.set FrameSpeedChange,0x8006f190
 .set HUD_KOCounter_UpdateKOs,0x802fa2d0
 .set Playerblock_StoreTimesR3KilledR4,0x80034fa8
 .set Playerblock_LoadTimesR3KilledR4,0x80034f24
