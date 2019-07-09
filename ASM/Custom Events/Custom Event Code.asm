@@ -8577,7 +8577,7 @@ EscapeSheikThink:
 	.set ThrowTimerHi,60
 	.set ReactFrame,12
 	.set JabFrameLo,15
-	.set JabFrameHi,24
+	.set JabFrameHi,22
 
 backup
 
