@@ -1868,6 +1868,7 @@ LedgedashProg1:
 .hword 0x7F02
 .hword ASID_JumpAerialF,ASID_JumpAerialB
 .hword ASID_FallSpecial,ASID_CliffJumpSlow2
+.hword ASID_FallAerial,0x17E
 .hword 0x166,0x167
 .hword 0x170,0x164
 .hword 0x155,0x15e
@@ -1890,6 +1891,7 @@ LedgedashProg2:
 .hword ASID_JumpAerialF,ASID_PassiveWallJump
 .hword ASID_JumpAerialB,ASID_Fall
 .hword ASID_FallSpecial,ASID_CliffJumpSlow2
+.hword ASID_FallAerial,0x17E
 .hword 0x167,0x170
 .hword 0x164,0x162
 .hword 0x15e,0x15f
