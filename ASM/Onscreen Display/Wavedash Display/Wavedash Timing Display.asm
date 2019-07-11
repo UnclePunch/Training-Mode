@@ -183,8 +183,8 @@ blrl
 Floats:
 blrl
 .float 16.8		#Great Angle Min
-.float 20			#Great Angle Max
-.float 23.7		#Good Angle Max
+.float 23.7		#Great Angle Max
+.float 30.5		#Good Angle Max
 
 ##############################
 
