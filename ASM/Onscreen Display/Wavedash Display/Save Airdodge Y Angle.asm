@@ -7,8 +7,10 @@
 .set text,29
 .set textprop,28
 
-#Save Airdodge Angle
-	lfs f1,0x624(r31)
+#Get Airdodge Angle
+	mr	r3,r31
+	branchl r12,Joystick_Angle_Retrieve
+#Save angle
 	stfs f1,AirdodgeAngle(r31)
 
 Exit:

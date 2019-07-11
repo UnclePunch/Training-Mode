@@ -3819,7 +3819,7 @@
 800dbac4 00000020 800dbac4 0 AS_CaptureWaitLow_Transition_Prefunction
 800dbae4 00000114 800dbae4 0 AS_227_CaptureWaitLow
 800dbbf8 00000118 800dbbf8 0 AS_CaptureWaitLow_Transition
-800dbd10 00000020 800dbd10 0 zz_00dbd10_
+800dbd10 00000020 800dbd10 0 Animation_CaptureWaitLw
 800dbd30 00000020 800dbd30 0 zz_00dbd30_
 800dbd50 0000014c 800dbd50 0 Physics_CapturePulledLw
 800dbe9c 00000038 800dbe9c 0 zz_00dbe9c_

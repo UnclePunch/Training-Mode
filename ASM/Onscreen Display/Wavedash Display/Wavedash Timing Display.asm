@@ -53,6 +53,7 @@ backup
 	addi r5,r5,1								#1-index number
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
+	crset 6
 	branchl r12,0x803a6b98
 
 #Check if frame perfect
@@ -72,31 +73,84 @@ backup
 ###########################
 
 DisplayWavedashAngle:
+#Convert angle to degrees
+	lfs	f1,AirdodgeAngle(playerdata)
+	lfs	f2, -0x3D10 (rtoc)			#0.017453
+	fdivs f2,f1,f2
+#Multiply by 10 to preserve 1 decimal point
+	li	r3,10
+	bl	IntToFloat
+	fmuls f2,f1,f2
+#Cast to int to floor
+	fctiwz f1,f2
+	stfd f1,-0x4(sp)
+	lwz r3,0x0(sp)
+#Cast back to float
+	bl	IntToFloat
+#Divide by 10 to get decimal point back
+	fmr f2,f1
+	li	r3,10
+	bl	IntToFloat
+	fdivs f2,f2,f1
+#Normalize to 0-90, definitely could have handled this better but its w/e
+	li	r3,0
+	bl	IntToFloat
+	fcmpo cr0,f2,f1
+	bge TopQuadrant
+BottomQuadrant:
+	li	r3,-90
+	bl	IntToFloat
+	fcmpo cr0,f2,f1
+	bgt Quadrant4
+Quadrant3:
+	li	r3,180
+	bl	IntToFloat
+	fadds f2,f1,f2
+	b	SaveAngle
+Quadrant4:
+	fneg f2,f2
+	b	SaveAngle
+TopQuadrant:
+	li	r3,90
+	bl	IntToFloat
+	fcmpo cr0,f2,f1
+	bgt Quadrant2
+Quadrant1:
+	b	SaveAngle
+Quadrant2:
+	fneg f2,f2
+	li	r3,180
+	bl	IntToFloat
+	fadds f2,f1,f2
+	b	SaveAngle
+
+SaveAngle:
+	stfs f2,0x80(sp)			#place on stack for safe keeping
+
 #Display Wavedash Angle
 	mr 	r3,text			#text pointer
 	bl	TextASCII2
 	mflr 	r4			#get ASCII to print
-	lfs f3,AirdodgeAngle(playerdata)
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
+	lfs f3,	0x80(sp)
 	crset 6
 	branchl r12,0x803a6b98
 
-#Check Angle
-	lfs f1,AirdodgeAngle(playerdata)
+#Get Angle and Float Pointer
 	bl	Floats
 	mflr r4
+	lfs f1,	0x80(sp)
 #Check For Perfect Angle
 	lfs f2,0x0(r4)
 	fcmpo cr0,f1,f2
-	beq PerfectAngle
-#Check For OK Angle
+	blt Injection_Exit
 	lfs f2,0x4(r4)
 	fcmpo cr0,f1,f2
-	bgt Injection_Exit
+	blt PerfectAngle
 	lfs f2,0x8(r4)
 	fcmpo cr0,f1,f2
-	blt Injection_Exit
+	bgt Injection_Exit
 OKAngle:
 	load	r5,0xfff000ff
 	stw	r5,0xF0(sp)
@@ -112,7 +166,6 @@ ChangeAngleColor:
 	addi r5,sp,0xF0
 	branchl r12,0x803a74f0
 
-
 b Injection_Exit
 
 #########################
@@ -124,14 +177,38 @@ blrl
 
 TextASCII2:
 blrl
-.string "Angle: %4.4f"
+.string "Angle: %2.1f"
 .align 2
 
 Floats:
 blrl
-.float -0.2875		#Perfect Angle
-.float -0.3000   #Good Angle Max
-.float -0.3375   #Good Angle Min
+.float 16.8		#Great Angle Min
+.float 20			#Great Angle Max
+.float 23.7		#Good Angle Max
+
+##############################
+
+IntToFloat:
+mflr r0
+stw r0, 0x4(r1)
+stwu	r1,-0x100(r1)	# make space for 12 registers
+stmw  r20,0x8(r1)
+stfs  f2,0x38(r1)
+
+lis	r0, 0x4330
+lfd	f2, -0x6758 (rtoc)
+xoris	r3, r3,0x8000
+stw	r0,0xF0(sp)
+stw	r3,0xF4(sp)
+lfd	f1,0xF0(sp)
+fsubs	f1,f1,f2		#Convert To Float
+
+lfs  f2,0x38(r1)
+lmw  r20,0x8(r1)
+lwz r0, 0x104(r1)
+addi	r1,r1,0x100	# release the space
+mtlr r0
+blr
 
 ##############################
 
