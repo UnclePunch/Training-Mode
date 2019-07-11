@@ -137,7 +137,7 @@ any button when you see/hear Fox shine!"
 #endregion
 #region Universal Tech Page Data
 #Number of Events
-  .set GeneralTech.NumOfEvents, 12 -1
+  .set GeneralTech.NumOfEvents, 13 -1
 
 #Event List
 #region LCancel
@@ -563,6 +563,40 @@ the platform and counter attack!"
     .endm
 
 #endregion
+#region GrabMashOut
+  .set Event_GrabMashOut,12
+  #Event Name
+    .macro Event_GrabMashOut_Name
+      .string "Grab Mash Training"
+    .endm
+
+    .macro Event_GrabMashOut_Description
+      .string "Mash buttons to escape the grab
+as quickly as possible!"
+    .endm
+
+    .macro Event_GrabMashOut_Tutorial
+      .string "TvGrabMash"
+    .endm
+
+    .macro Event_GrabMashOut_ChooseCPU
+    .endm
+
+    .macro Event_GrabMashOut_PreloadData
+      .byte Event_GrabMashOut, Marth.Ext, FinalDestination
+    .endm
+
+    .macro Event_GrabMashOut_LoadSSS
+    .endm
+
+    .macro Event_GrabMashOut_PlayableCharacters
+    .endm
+
+    .macro Event_GrabMashOut_ScoreType
+      .byte KO
+    .endm
+
+#endregion
 
 #endregion
 #region Spacie Tech Page Data
@@ -763,30 +797,19 @@ Minigames:
 .align 2
 
 GeneralTech:
-#L-Cancel Training
   Event_LCancel_Name
-#Ledgedash Training
   Event_Ledgedash_Name
-#Combo Training
   Event_Combo_Name
-#Attack On Shield
   Event_AttackOnShield_Name
-#Reversal Training
   Event_Reversal_Name
-#SDI Training
   Event_SDI_Name
-#Powershield Training
   Event_Powershield_Name
-#Ledge-Tech Training
   Event_LedgeTech_Name
-#Amsah-Tech Training
   Event_AmsahTech_Name
-#Shield Drop Training
   Event_ShieldDrop_Name
-#Waveshine SDI
   Event_WaveshineSDI_Name
-#SlideOff
   Event_SlideOff_Name
+  Event_GrabMashOut_Name
 .align 2
 
 #######################
@@ -814,30 +837,19 @@ Minigames:
 .align 2
 ################
 GeneralTech:
-#L-Cancel Training
   Event_LCancel_Description
-#Ledgedash Training
   Event_Ledgedash_Description
-#Combo Training
   Event_Combo_Description
-#Attack On Shield
   Event_AttackOnShield_Description
-#Reversal Training
   Event_Reversal_Description
-#SDI Training
   Event_SDI_Description
-#Powershield Training
   Event_Powershield_Description
-#Ledge-Tech Training
   Event_LedgeTech_Description
-#Amsah-Tech Training
   Event_AmsahTech_Description
-#Shield Drop Training
   Event_ShieldDrop_Description
-#Waveshine SDI
   Event_WaveshineSDI_Description
-#Slide Off
   Event_SlideOff_Description
+  Event_GrabMashOut_Description
 .align 2
 #######################
 SpacieTech:
@@ -875,6 +887,7 @@ ChooseCPU_GeneralTech:
   Event_Combo_ChooseCPU
   Event_WaveshineSDI_ChooseCPU
   Event_SlideOff_ChooseCPU
+  Event_GrabMashOut_ChooseCPU
   .byte -1
 .align 2
 ############################
@@ -913,6 +926,7 @@ PreloadEvents_GeneralTech:
   Event_Combo_PreloadData
   Event_WaveshineSDI_PreloadData
   Event_SlideOff_PreloadData
+  Event_GrabMashOut_PreloadData
   .byte -1
 .align 2
 ############################
@@ -951,6 +965,7 @@ GeneralTech:
   Event_Combo_LoadSSS
   Event_WaveshineSDI_LoadSSS
   Event_SlideOff_LoadSSS
+  Event_GrabMashOut_LoadSSS
   .byte -1
 .align 2
 ############################
@@ -989,6 +1004,7 @@ GeneralTech:
   Event_Combo_PlayableCharacters
   Event_WaveshineSDI_PlayableCharacters
   Event_SlideOff_PlayableCharacters
+  Event_GrabMashOut_PlayableCharacters
   .byte -1
 .align 2
 ############################
@@ -1038,6 +1054,7 @@ Event_AmsahTech_Tutorial
 Event_ShieldDrop_Tutorial
 Event_WaveshineSDI_Tutorial
 Event_SlideOff_Tutorial
+Event_GrabMashOut_Tutorial
 .align 2
 
 SpacieTech:
@@ -1307,6 +1324,7 @@ Event_EscapeSheik_Tutorial
 .set Air_SetAsGrounded,0x8007d6a4
 .set CPU_JoystickXAxis_Convert,0x800a17e4
 .set CPU_JoystickYAxis_Convert,0x800a1874
+.set Joystick_Angle_Retrieve,0x8007d9d4
 .set GFX_UpdatePlayerGFX,0x800c0408
 .set cos,0x80326240
 .set sin,0x803263d4
@@ -1517,6 +1535,12 @@ Event_EscapeSheik_Tutorial
 .set PAD_BUTTON_X,0x0400
 .set PAD_BUTTON_Y,0x0800
 .set PAD_BUTTON_START,0x1000
+
+#SFX Definitions
+.set SFX_cs_cancel,0xac
+.set SFX_cs_decide,0xad
+.set SFX_cs_mv,0xae
+.set SFX_cs_beep1,0xaf
 
 #########################
 ## Playerblock Offsets ##
