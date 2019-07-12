@@ -5,7 +5,7 @@ backup
 
 #Check For L
 	li	r3,4
-	branchl	r12,0x801a36c0
+	branchl	r12,Inputs_GetPlayerInstantInputs
 	rlwinm.	r0, r4, 0, 25, 25			#CHECK FOR L
 	bne	OpenFDD
 	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
@@ -23,6 +23,8 @@ backup
 	bne	PlayMovie
 
 CheckToSwitchPage:
+	li	r3,4
+	branchl	r12,Inputs_GetPlayerRapidInputs
 #Check For Left
 	li	r5,-1
 	rlwinm. r0,r3,0,25,25

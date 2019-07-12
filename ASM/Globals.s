@@ -722,11 +722,11 @@ down-tilt and grab the ledge!"
   .set Event_EscapeSheik,3
   #Event Name
     .macro Event_EscapeSheik_Name
-      .string "Escape Sheik Techchase"
+      .string "Escape Sheik Tech-chase"
     .endm
 
     .macro Event_EscapeSheik_Description
-      .string "Practice escaping the tech chase with a
+      .string "Practice escaping the tech-chase with a
 frame perfect shine or jab SDI!"
     .endm
 
@@ -1364,6 +1364,9 @@ Event_EscapeSheik_Tutorial
 .set SFXManager_StopSFXIfPlaying,0x80321ce8
 .set memset,0x80003100
 .set Ragdoll_WindDecayThink,0x800115f4
+.set Inputs_GetPlayerHeldInputs,0x801a3680
+.set Inputs_GetPlayerInstantInputs,0x801a36a0
+.set Inputs_GetPlayerRapidInputs,0x801a36c0
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
