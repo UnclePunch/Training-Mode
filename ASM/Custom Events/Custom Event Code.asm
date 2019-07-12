@@ -5184,7 +5184,7 @@ b	exit
 	## Check If Was Hit Again ##
 	############################
 
-		#Don't Run If Over 6 Frames in Escape Air
+	#Don't Run If Over 6 Frames in Escape Air
 		lwz	r3,0x10(r29)
 		cmpwi	r3,0xEC
 		bne	ComboTrainingCheckIfP2isGrabbed
@@ -5193,92 +5193,119 @@ b	exit
 		lfs	f2,0x894(r29)
 		fcmpo	cr0,f1,f2
 		bge	ComboTrainingCheckState
-		#Check If P2 is Grabbed (Any Grab State)
-		ComboTrainingCheckIfP2isGrabbed:
+	#Check If P2 is Grabbed (Any Grab State)
+	ComboTrainingCheckIfP2isGrabbed:
 		lwz	r3,0x10(r29)
 		cmpwi	r3,0xDF
 		blt	ComboTrainingStartCheckIfHit
 		cmpwi	r3,0xE8
 		bgt	ComboTrainingStartCheckIfHit
 		b	ComboTrainingChangeToRandomDIandTech
-		#Check If P2 is Hit
-		ComboTrainingStartCheckIfHit:
+	#Check If P2 is Hit
+	ComboTrainingStartCheckIfHit:
 		lbz	r3,0x221A(r29)			#Check If in Hitlag
 		rlwinm.	r3,r3,0,26,26
 		bne	ComboTrainingCheckIfBeingHit
 		b	ComboTrainingCheckState
 		ComboTrainingCheckIfBeingHit:
 		lwz	r3,0x10(r29)
-		cmpwi	r3,0x4B
+		cmpwi	r3,ASID_DamageHi1
 		blt	ComboTrainingCheckState
-		cmpwi	r3,0x5B
+		cmpwi	r3,ASID_DamageFlyRoll
 		bgt	ComboTrainingCheckState
 		ComboTrainingChangeToRandomDIandTech:
-		#Change To Random DI and Tech
+	#Change To DI and Tech
 		li	r3,0x1
 		stb	r3,EventState(r31)
-		b	ComboTrainingRandomDIAndTech
+		b	ComboTrainingInputDIAndTech
 
-		#Get Which State
-		ComboTrainingCheckState:
-		lbz	r3,EventState(r31)
-		cmpwi	r3,0x0
-		beq	ComboTrainingStart
-		cmpwi	r3,0x1
-		beq	ComboTrainingRandomDIAndTech
-		cmpwi	r3,0x2
-		beq	ComboTrainingPostHitstun
-
-
-		ComboTrainingStart:
-		b	ComboTrainingCheckToReset
-
-		ComboTrainingRandomDIAndTech:
-		bl	ComboTrainingCheckExitStates
-		cmpwi	r3,0x0
-		beq	ComboTrainingRandomDIAndTechNoJiggs
-		b	ComboTrainingChangeStateToPostHitstun
+#Get Which State
+ComboTrainingCheckState:
+	lbz	r3,EventState(r31)
+	cmpwi	r3,0x0
+	beq	ComboTrainingStart
+	cmpwi	r3,0x1
+	beq	ComboTrainingInputDIAndTech
+	cmpwi	r3,0x2
+	beq	ComboTrainingPostHitstun
 
 
-		ComboTrainingRandomDIAndTechNoJiggs:
-		lwz	r3,0x10(r29)
-		cmpwi	r3,0xB8		#Missed Tech, Needs to Input a Roll or Attack
-		beq	ComboTrainingMissedTechThink
-		cmpwi	r3,0xC0		#Missed Tech, Needs to Input a Roll or Attack
-		beq	ComboTrainingMissedTechThink
-		#Check If Still Grabbed
-		cmpwi	r3,0xDF		#CapturePulledLow
-		blt	ComboTrainingDecideInputs
-		cmpwi	r3,0xE8 		#CapturePulledHi
-		bgt	ComboTrainingDecideInputs
+ComboTrainingStart:
+	b	ComboTrainingCheckToReset
 
-		#When Grabbed
-		#Check Mash Out Behavior
-		lbz	r3,GrabMashout(MenuData)
-		cmpwi	r3,0x0
-		beq	ComboTrainingRandomDIAndTech_RandomMash
-		cmpwi	r3,0x1
-		beq	ComboTrainingRandomDIAndTech_RandomMash_AnalogInput
-		cmpwi	r3,0x2								#No Mash
-		beq	ComboTrainingCheckToReset
+ComboTrainingInputDIAndTech:
+	bl	ComboTrainingCheckExitStates
+	cmpwi	r3,0x0
+	beq	ComboTrainingInputDIAndTechNoJiggs
+	b	ComboTrainingChangeStateToPostHitstun
 
 
-		#Random Mash Out
-		ComboTrainingRandomDIAndTech_RandomMash:
+ComboTrainingInputDIAndTechNoJiggs:
+	lwz	r3,0x10(r29)
+	cmpwi	r3,0xB8		#Missed Tech, Needs to Input a Roll or Attack
+	beq	ComboTrainingMissedTechThink
+	cmpwi	r3,0xC0		#Missed Tech, Needs to Input a Roll or Attack
+	beq	ComboTrainingMissedTechThink
+#Check If Still Grabbed
+	cmpwi r3,ASID_ShoulderedWait
+	blt ComboTraining_GrabCheckSkipShoulder
+	cmpwi r3,ASID_ShoulderedTurn
+	ble ComboTrainingMashOutOfGrab
+ComboTraining_GrabCheckSkipShoulder:
+	cmpwi	r3,ASID_CaptureKoopa
+	blt	ComboTraining_GrabCheckSkipKoopaLw
+	cmpwi	r3,ASID_CaptureWaitKoopa
+	ble	ComboTrainingMashOutOfGrab
+ComboTraining_GrabCheckSkipKoopaLw:
+	cmpwi	r3,ASID_CaptureKoopaAir
+	blt	ComboTraining_GrabCheckSkipKoopaAir
+	cmpwi	r3,ASID_CaptureWaitKoopaAir
+	ble	ComboTrainingMashOutOfGrab
+ComboTraining_GrabCheckSkipKoopaAir:
+	cmpwi	r3,ASID_CapturePulledHi		#CapturePulledLow
+	blt	ComboTraining_GrabCheckSkipGrabbed
+	cmpwi	r3,ASID_CaptureFoot 		#CapturePulledHi
+	ble	ComboTrainingMashOutOfGrab
+ComboTraining_GrabCheckSkipGrabbed:
+	b	ComboTrainingDecideInputs
+
+#When Grabbed
+#Check Mash Out Behavior
+ComboTrainingMashOutOfGrab:
+	lbz	r3,GrabMashout(MenuData)
+	cmpwi	r3,0x0
+	beq	ComboTrainingInputDIAndTech_RandomMash
+	cmpwi	r3,0x1
+	beq	ComboTrainingInputDIAndTech_RandomMash_AnalogInput
+	cmpwi	r3,0x2								#No Mash
+	beq	ComboTrainingCheckToReset
+
+
+	#Random Mash Out
+	ComboTrainingInputDIAndTech_RandomMash:
+	#Only start randomly mashing after a few frames (to simulate human reaction)
+		lwz r3,0x10(r29)
+		cmpwi	r3,ASID_CapturePulledHi		#CapturePulledLow
+		blt	ComboTrainingInputDIAndTech_RandomMashStart
+		cmpwi	r3,ASID_CaptureFoot 		#CapturePulledHi
+		bgt	ComboTrainingInputDIAndTech_RandomMashStart
+	#In a normal grab state, should wait a few frames before starting to mash
+
+	ComboTrainingInputDIAndTech_RandomMashStart:
 		li	r3,4										#4 Numbers
 		branchl	r12,HSD_Randi
 		cmpwi	r3,1									#1 and 2 Are No Input
 		ble	ComboTrainingCheckToReset
 		cmpwi	r3,0x2									#2 = Button Only, 3 = Both Analog and Button
-		beq	ComboTrainingRandomDIAndTech_RandomMash_ButtonPress
+		beq	ComboTrainingInputDIAndTech_RandomMash_ButtonPress
 
-		ComboTrainingRandomDIAndTech_RandomMash_AnalogInput:
+	ComboTrainingInputDIAndTech_RandomMash_AnalogInput:
 		li	r3,127
 		stb	r3,0x1A8C(r29)			#Push Analog Stick Forward
 		li	r3,-1
 		stb	r3,0x1A50(r29)			#Spoof Analog Stick as First Frame Pushed
 
-		ComboTrainingRandomDIAndTech_RandomMash_ButtonPress:
+	ComboTrainingInputDIAndTech_RandomMash_ButtonPress:
 		#Input Button Press
 		li	r3,0x100
 		stw	r3,0x1A88(r29)			#Press A
