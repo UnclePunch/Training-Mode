@@ -12420,20 +12420,25 @@ backup
 #Get Subchar Bool
 	lbz REG_isSubcharBool,0xC(r6)
 
+#Get inputs
+  load r4,0x804c21cc
+	lbz r3,0xC(r3)
+  mulli r0,r3,68
+  add r5,r4,r0
 #Make Sure L Is Held
-	lhz	r4,0x662(r3)
-	cmpwi	r4,0x40
-	bne	DPadCPUPercent_Exit
-#Poll P1 For DPad
-	lhz	r4,0x66A(r3)
-	cmpwi	r4,0x2		#rlwinm.	r0,r4,0,30,30
-	beq	DPadCPUPercent_IncByOne
-	cmpwi	r4,0x1		#rlwinm.	r0,r4,0,31,31
-	beq	DPadCPUPercent_DecByOne
-	cmpwi	r4,0x8		#rlwinm.	r0,r4,0,28,28
-	beq	DPadCPUPercent_IncByTen
-	cmpwi	r4,0x4		#rlwinm.	r0,r4,0,29,29
-	beq	DPadCPUPercent_DecByTen
+	lwz r3,0x0(r5)		#get held inputs
+	rlwinm. r0,r3,0,25,25
+	beq	DPadCPUPercent_Exit
+#Check DPad
+	lwz r3,0xC(r5)		#get rapid inputs
+	rlwinm.	r0,r3,0,30,30
+	bne	DPadCPUPercent_IncByOne
+	rlwinm.	r0,r3,0,31,31
+	bne	DPadCPUPercent_DecByOne
+	rlwinm.	r0,r3,0,28,28
+	bne	DPadCPUPercent_IncByTen
+	rlwinm.	r0,r3,0,29,29
+	bne	DPadCPUPercent_DecByTen
 	b	DPadCPUPercent_Exit
 
 DPadCPUPercent_IncByOne:
