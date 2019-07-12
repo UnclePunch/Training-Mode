@@ -7551,8 +7551,8 @@ blrl
 .set TechRollVuln,23
 .set KnockdownVuln,23
 .set GetupVuln,23
-.set GetupRollForwardVuln,20-2
-.set GetupRollBackwardVuln,30-4
+.set GetupRollForwardVuln,20-1
+.set GetupRollBackwardVuln,30-3
 .set GetupAttackVuln,27
 
 .byte KnockdownVuln					#DownBoundU
