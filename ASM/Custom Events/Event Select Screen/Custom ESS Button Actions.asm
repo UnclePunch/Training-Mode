@@ -228,14 +228,22 @@ PlayMovie:
 			branchl	r12,0x80024e50
 
 			#Load Movie File
-			mr	r3,r22		#File Name
-			li	r4,0
-			lwz	r5, -0x4A14 (r13)
-			li	r5,0
-			load	r6,0x00271000
-			#li	r6,0		#Frame Buffer Heap Size?
+			mr	r3,r22								#File Name
+			bl	FramerateDefinition
+			mflr r4										#0x803dbfb4 = opening movie fps define
+			li	r5,0									#lwz	r5, -0x4A14 (r13)
+			load	r6,0x00271000				#li	r6,0		#Frame Buffer Heap Size?
 			li	r7,0
 			branchl	r12,0x8001f410
+
+		#Set Framerate
+			load r3,0x804333e0
+			lwz r3,0x18(r3)						#get framerate from mth header
+			li	r4,60
+			divw r3,r4,r3							#decide how many in game frames per movie frame
+			bl	FramerateDefinition
+			mflr r4
+			stw r3,0x4(r4)						#update fps
 
 			#Unk Unset
 			li	r3,0x0
@@ -321,6 +329,18 @@ PlayMovie:
 			branchl	r12,0x80390228
 
 	b	exit
+
+#######################################
+FramerateDefinition:
+blrl
+#This structure is passed through via r4 to the MTH play function
+#It contains variable framerate information
+
+#Structure is
+# 0x0 = number of frames to use the following fps for
+# 0x4 = in game frames per movie frame
+.long 1048576
+.long 2
 
 
 #######################################
