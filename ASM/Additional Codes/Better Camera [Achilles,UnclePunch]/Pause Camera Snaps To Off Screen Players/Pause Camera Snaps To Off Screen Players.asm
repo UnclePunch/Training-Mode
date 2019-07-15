@@ -1,4 +1,4 @@
-#To be inserted at 8002cf34
+#To be inserted at 8002c5f0
 .include "../../../Globals.s"
 
 #Check if player is alive
@@ -8,11 +8,10 @@
   lwz r3,0x2C(r3)
   lbz r3,0x221F(r3)
   rlwinm. r3,r3,0,25,25
-  bne Dead
+  bne Original
 
-Alive:
-  li  r3,0
-  b Exit
-Dead:
-  li  r3,1
-Exit:
+Skip:
+  branch r12,0x8002c644
+
+Original:
+  lfs	f0, 0x000C (r26)
