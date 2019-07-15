@@ -17,7 +17,7 @@
 ##################################
 #region Minigame Page Data
 #Number of Events
-.set Minigames.NumOfEvents,3 -1
+.set Minigames.NumOfEvents,4 -1
 
 #region Eggs-ercise
   .set Event_Eggs,0
@@ -131,6 +131,48 @@ any button when you see/hear Fox shine!"
     .macro Event_Reaction_ScoreType
       .byte KO
     .endm
+
+#endregion
+#region Ledgestall
+  .set Event_Ledgestall,3
+  #Event Name
+    .macro Event_Ledgestall_Name
+      .string "Under Fire"
+    .endm
+
+    .macro Event_Ledgestall_Description
+      .string "Use ledgestalling to remain
+invincible while the lava rises!"
+    .endm
+
+    .macro Event_Ledgestall_Tutorial
+      .string "TvMulShine"
+    .endm
+
+    .macro Event_Ledgestall_ChooseCPU
+    .endm
+
+    .macro Event_Ledgestall_PreloadData
+    .byte Event_Ledgestall, -1, Brinstar
+    .endm
+
+    .macro Event_Ledgestall_LoadSSS
+    .endm
+
+    .macro Event_Ledgestall_PlayableCharacters
+      .byte #Event_Ledgestall
+      .long #Falco_CSSID | Fox_CSSID | Zelda_CSSID | Mewtwo_CSSID | Pikachu_CSSID | CaptainFalcon_CSSID | Ganondorf_CSSID | Link_CSSID | Roy_CSSID | Bowser_CSSID | Marth_CSSID | Yoshi_CSSID
+      .long #-1
+    .endm
+
+    .macro Event_Ledgestall_AvailableCPUs
+    .endm
+
+    .macro Event_Ledgestall_ScoreType
+      .byte Time
+    .endm
+
+    .set EventOSD_LedgeStall,0x00000000
 
 #endregion
 
@@ -562,6 +604,8 @@ the platform and counter attack!"
     .macro Event_SlideOff_ScoreType
     .endm
 
+    .set EventOSD_SlideOff,0x00000000
+
 #endregion
 #region GrabMashOut
   .set Event_GrabMashOut,12
@@ -595,6 +639,8 @@ as quickly as possible!"
     .macro Event_GrabMashOut_ScoreType
       .byte KO
     .endm
+
+    .set EventOSD_GrabMashOut,0x01000000
 
 #endregion
 
@@ -789,11 +835,10 @@ SpacieTech:
 #region EventNameStrings
 .macro EventNameStrings
 Minigames:
-#Eggs-ercise
   Event_Eggs_Name
-#Multishine
   Event_Multishine_Name
   Event_Reaction_Name
+  Event_Ledgestall_Name
 .align 2
 
 GeneralTech:
@@ -829,11 +874,10 @@ SpacieTech:
 
 ################
 Minigames:
-#Eggs-ercise
   Event_Eggs_Description
-#Multishine
   Event_Multishine_Description
   Event_Reaction_Description
+  Event_Ledgestall_Description
 .align 2
 ################
 GeneralTech:
@@ -871,6 +915,7 @@ ChooseCPU_Minigames:
   Event_Eggs_ChooseCPU
   Event_Multishine_ChooseCPU
   Event_Reaction_ChooseCPU
+  Event_Ledgestall_ChooseCPU
   .byte -1
 .align 2
 ############################
@@ -910,6 +955,7 @@ PreloadEvents_Minigames:
   Event_Eggs_PreloadData
   Event_Multishine_PreloadData
   Event_Reaction_PreloadData
+  Event_Ledgestall_PreloadData
   .byte -1
 .align 2
 ############################
@@ -949,6 +995,7 @@ Minigames:
   Event_Eggs_LoadSSS
   Event_Multishine_LoadSSS
   Event_Reaction_LoadSSS
+  Event_Ledgestall_LoadSSS
   .byte -1
 .align 2
 ############################
@@ -988,6 +1035,7 @@ Minigames:
   Event_Eggs_PlayableCharacters
   Event_Multishine_PlayableCharacters
   Event_Reaction_PlayableCharacters
+  Event_Ledgestall_PlayableCharacters
   .byte -1
 .align 2
 ############################
@@ -1039,6 +1087,7 @@ Minigames:
 Event_Eggs_Tutorial
 Event_Multishine_Tutorial
 Event_Reaction_Tutorial
+Event_Ledgestall_Tutorial
 .align 2
 
 GeneralTech:
@@ -1112,9 +1161,13 @@ Event_EscapeSheik_Tutorial
 .set OSD.ActOoHitstun,28
 
 #Event OSDs
+.set EventOSD_Eggs,0x00000000
+.set EventOSD_Multishine,0x00000000
+.set EventOSD_Reaction,0x00000000
+
 .set EventOSD_LCancel,0x00000003
 .set EventOSD_Ledgedash,0x04000000
-.set EventOSD_Eggs,0
+.set EventOSD_Eggs,0x00000000
 .set EventOSD_SDI,0x10000400
 .set EventOSD_Reversal,0x002C0009
 .set EventOSD_Powershield,0x00000200
@@ -1124,7 +1177,6 @@ Event_EscapeSheik_Tutorial
 .set EventOSD_AmsahTech,0x00000004
 .set EventOSD_ComboTraining,0x01010020
 .set EventOSD_WaveshineSDI,0x10000400
-.set EventOSD_SlideOff,0x00000000
 
 .set EventOSD_LedgetechCounter,0x00000604
 .set EventOSD_ArmadaShine,0x0000000002
@@ -1307,11 +1359,14 @@ Event_EscapeSheik_Tutorial
 .set StageInfo_CameraLimitTop_Load,0x80224a80
 .set StageInfo_CameraLimitBottom_Load,0x80224a98
 .set Stage_map_gobj_Load,0x801c2ba4
+.set Stage_map_gobj_LoadJObj,0x801c3fa4
 .set Stage_Destroy_map_gobj,0x801c4a08
 .set EntityItemSpawn,0x80268b18
 .set MatchInfo_LoadSeconds,0x8016aeec
 .set MatchInfo_LoadSubSeconds,0x8016aefc
 .set EventMatch_OnWinCondition,0x801bc4f4
+.set Events_GetEventSavedScore,0x8015cf5c
+.set Events_SetEventSavedScore,0x8015cf70
 .set Textures_DisplayEffectTextures,0x8005fddc
 .set AS_GrabOpponent,0x800d9ce8
 .set AS_Grabbed,0x800daadc
@@ -1328,12 +1383,14 @@ Event_EscapeSheik_Tutorial
 .set GFX_UpdatePlayerGFX,0x800c0408
 .set cos,0x80326240
 .set sin,0x803263d4
+.set fmod,0x80364340
 .set HSD_Free,0x8037f1b0
 .set GObj_Create,0x803901f0
 .set GObj_Initialize,0x80390b68
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54
 .set GObj_RemoveProc,0x8038fed4
+.set HSD_JObjSetMtxDirtySub,0x803732e8
 .set DevelopMode_FrameAdvanceCheck,0x801a45e8
 .set MatchInfo_StockModeCheck,0x8016b094
 .set PlayerBlock_LoadStocksLeft,0x80033bd8

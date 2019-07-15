@@ -23,6 +23,9 @@ backup
 
 Minigames:
 .byte KO
+.byte KO
+.byte KO
+.byte Time
 .align 2
 
 GeneralTech:
@@ -37,9 +40,14 @@ GeneralTech:
 .byte KO
 .byte KO
 .byte KO
+.byte KO
+.byte KO
 .align 2
 
 SpacieTech:
+.byte KO
+.byte KO
+.byte KO
 .byte KO
 .align 2
 ##########################
