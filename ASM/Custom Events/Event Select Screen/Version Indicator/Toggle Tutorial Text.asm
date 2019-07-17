@@ -1,0 +1,92 @@
+#To be inserted at 8024d84c
+.include "../../../Globals.s"
+
+.set MainTextOffset,-0x4EB4
+.set LeftArrowTextOffset,-0x4EB0
+.set RightArrowTextOffset,-0x4EAC
+.set TutTextOffset,-0x4EA8
+
+backup
+
+.set EventID,23
+.set PageID,24
+
+#Check if first page
+  lwz r3,MemcardData(r13)
+  lbz PageID,CurrentEventPage(r3)
+	cmpwi PageID,0
+	bne ShowFirstPage
+#Hide left arrow
+	li	r4,1
+	b	FirstPageVisibility
+ShowFirstPage:
+#Show left arrow
+	li	r4,0
+	b	FirstPageVisibility
+FirstPageVisibility:
+	lwz	r3, LeftArrowTextOffset (r13)
+	stb r4,0x4D(r3)
+
+#Check if last page
+	cmpwi PageID,NumOfPages
+	bne ShowLastPage
+#Hide right arrow
+	li	r4,1
+	b	LastPageVisibility
+ShowLastPage:
+#Show right arrow
+	li	r4,0
+	b	LastPageVisibility
+LastPageVisibility:
+	lwz	r3, RightArrowTextOffset (r13)
+	stb r4,0x4D(r3)
+
+
+#Check For Training Mode ISO Game ID
+	lis	r5,0x8000
+	lwz	r5,0x0(r5)
+	load	r6,0x47544d45			#GTME
+	cmpw	r5,r6
+	bne	end
+#Get Events Tutorial
+	branchl r12,GetEventTutorialFileName
+	mr	r20,r3
+	addi	r21,sp,0x80					#Destination
+#Copy File Name To Temp Space
+	mr	r3,r21								#Destination
+	mr	r4,r20								#Movie FileName
+	branchl	r12,0x80325a50		#strcpy
+#Get Length of This String Now
+	mr	r3,r21								#Destination
+	branchl	r12,0x80325b04
+#Copy .mth Suffix
+	add	r3,r3,r21							#Dest
+	bl	FileSuffix
+	mflr r4
+	branchl	r12,0x80325a50
+
+#Check if exists
+	mr	r3,r21								#Destination
+	branchl r12,0x8033796c
+	cmpwi r3,-1
+	beq HideTutorial
+ShowTutorial:
+	li	r4,0
+	b	DisplayTutorial
+HideTutorial:
+	li	r4,1
+DisplayTutorial:
+	lwz	r3, TutTextOffset (r13)
+	stb r4,0x4D(r3)
+
+	b	end
+
+FileSuffix:
+blrl
+.string ".mth"
+.align 2
+
+
+end:
+restore
+lwz	r0, 0x0024 (sp)

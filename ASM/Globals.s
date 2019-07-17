@@ -1331,6 +1331,7 @@ Event_EscapeSheik_Tutorial
 .set AS_Guard,0x800939b4
 .set HSD_MemAlloc,0x8037f1e4
 .set memcpy,0x800031f4
+.set strcpy,0x80325a50
 .set ZeroAreaLength,0x8000c160
 .set CreateCameraBox,0x80029020
 .set FrameSpeedChange,0x8006f190
@@ -1430,6 +1431,7 @@ Event_EscapeSheik_Tutorial
 .set GetCustomEventPageName,0x8000552c
 .set SearchStringTable,0x80005530
 .set GetNumOfEventsOnCurrentPage,0x80005534
+.set GetEventTutorialFileName,0x80005538
 
 #Character External IDs
 .set CaptainFalcon.Ext,0x0
