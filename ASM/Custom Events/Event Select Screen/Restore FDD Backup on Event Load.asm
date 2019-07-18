@@ -61,7 +61,7 @@ fsubs    \reg2,\reg2,f16
 
 #Check If First Boot
 CheckIfFirstBoot:
-lbz	r5,-0xDA4(rtoc)
+lbz	r5,FirstBootFlag(rtoc)
 cmpwi	r5,0x0
 beq	RestoreBackup
 #On First Boot
@@ -71,7 +71,7 @@ lwz	r5,0x1F24(r6)
 stw	r5,-0xDA8(rtoc)
 #Remove Boot Flag
 li	r5,0x0
-stb	r5,-0xDA4(rtoc)
+stb	r5,FirstBootFlag(rtoc)
 
 b	Exit
 
