@@ -9086,7 +9086,7 @@ ArmadaShineThink_Hitstun_Exit:
 #region ArmadaShineThink_Falling
 ArmadaShineThink_Falling:
 .set FirefoxRadius,80
-.set FirefoxChance,6
+.set FirefoxChance,8
 #Get distance from ledge
 	addi r3,P2Data,0xB0
 	addi r4,P2Data,0x1ADC
