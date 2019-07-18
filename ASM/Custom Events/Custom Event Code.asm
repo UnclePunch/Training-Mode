@@ -1056,14 +1056,6 @@ LedgeStall:
 	li	r3,0x20
 	stb	r3,0x1(r4)
 
-/*
-#Set high score bit
-	lwz	r4, -0x77C0 (r13)
-	addi	r4, r4, 1328
-	li	r3,0x42
-	stb	r3,0xB(r4)		#Set Event Score Behavior Byte
-*/
-
 #STORE THINK FUNCTION
 LedgeStallStoreThink:
 	bl	LedgeStallLoad
@@ -1091,9 +1083,30 @@ LedgeStallLoad:
 	li	r3,8				#lava's map_gobj ID
 	branchl r12,Stage_map_gobj_Load
 	branchl r12,GObj_RemoveProc
-
+/*
+#Make Lava transparent
+	li	r3,8				#lava's map_gobj ID
+	branchl r12,Stage_map_gobj_Load
+	li	r4,0
+	branchl r12,Stage_map_gobj_LoadJObj
+	li	r5,1
+	lwz r4,0x14(r3)
+	rlwimi r4,r5,29,2,2
+	rlwimi r4,r5,28,3,3
+	rlwimi r4,r5,19,12,12
+	stw r4,0x14(r3)
+	lwz r3,0x18(r3)
+	lwz r3,0x8(r3)
+	lwz r4,0x4(r3)
+	rlwimi r4,r5,29,2,2
+	rlwimi r4,r5,30,1,1
+	stw r4,0x4(r3)
+	lwz r3,0xC(r3)
+	load r4,0x3f000000
+	stw r4,0xC(r3)
+*/
 #Get map_gobj
-	li	r3,6				#lava's map_gobj ID
+	li	r3,6				#platform's map_gobj ID
 	branchl r12,Stage_map_gobj_Load
 #Get platform flesh item pointer
 	lwz r3,0x2C(r3)
@@ -5775,11 +5788,11 @@ ComboTrainingMashOutOfGrab:
 	#In a normal grab state, should wait a few frames before starting to mash
 
 	ComboTrainingInputDIAndTech_RandomMashStart:
-		li	r3,4										#4 Numbers
+		li	r3,10										#1- Numbers
 		branchl	r12,HSD_Randi
-		cmpwi	r3,1									#1 and 2 Are No Input
+		cmpwi	r3,7									#7 and below are no input
 		ble	ComboTrainingCheckToReset
-		cmpwi	r3,0x2									#2 = Button Only, 3 = Both Analog and Button
+		cmpwi	r3,8									#8 = Button Only, 9 = Both Analog and Button
 		beq	ComboTrainingInputDIAndTech_RandomMash_ButtonPress
 
 	ComboTrainingInputDIAndTech_RandomMash_AnalogInput:
