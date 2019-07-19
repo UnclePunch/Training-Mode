@@ -1146,6 +1146,16 @@ InitSettings:
   stw r3,OSDBitfield(r4)
 .endm
 #endregion
+#region OnBootup
+.macro OnBootup
+#Set First Boot Flag (used for OSD backup/restore)
+  li	r3,0x1
+  stb	r3,FirstBootFlag(rtoc)
+#Set CPU Info
+  li  r3,0x21
+  stb r3,EventCPUBackup_CharID(rtoc)   #Set CPU Character ID
+.endm
+#endregion
 
 #Custom Memcard Data Bitfield
 .set OSDBitfield,0x1F24
@@ -1153,9 +1163,10 @@ InitSettings:
 .set CurrentEventPage,0x1F29
 
 #Custom rtoc offsets
+.set EventCPUBackup_CharID,-0xDA5     #byte
 .set FirstBootFlag,-0xDA4 						#byte
-.set None,-0xDA3			                #byte
-.set None,-0xDA2                    	#byte
+.set CodesetPointer,-0xDA0            #word
+.set CodesetLength,-0xD9C            	#word
 
 #OSD IDs
 .set OSD.Wavedash,0
@@ -1358,6 +1369,7 @@ InitSettings:
 .set AS_Catch,0x800d8c54
 .set AS_Guard,0x800939b4
 .set HSD_MemAlloc,0x8037f1e4
+.set HSD_JObjLoadJoint,0x80370e44
 .set memcpy,0x800031f4
 .set strcpy,0x80325a50
 .set ZeroAreaLength,0x8000c160
