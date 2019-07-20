@@ -20508,7 +20508,7 @@
 8038fed4 00000088 8038fed4 0 GObj_RemoveProc(r3=GObj)
 8038ff5c 0000005c 8038ff5c 0 GObj_AddPointerToGObjList/GObj_PReorder    -0x3E74 (r13)
 8038ffb8 00000238 8038ffb8 0 GObj_Create
-803901f0 00000038 803901f0 0 GObj_Create (r3=GObjType,r4=Subclass,r5=?)
+803901f0 00000038 803901f0 0 GObj_Create (r3=GObjType,r4=Subclass,r5=BehaviorBitflags)
 80390228 00000104 80390228 0 GObj_Destroy (r3=GObj)
 8039032c 00000310 8039032c 0 GObj_Unk
 8039063c 00000060 8039063c 0 GObj_GXReorder
@@ -20522,7 +20522,7 @@
 80390a70 0000006c 80390a70 0 GObj_StorePointerToJObj(r3=GObj,r4=Unk,r5=JObj)
 80390adc 00000030 80390adc 0 GObj_Unk
 80390b0c 0000005c 80390b0c 0 GObj_Unk
-80390b68 0000007c 80390b68 0 GObj_Initalize (r3=entity,r4=UserDataKind,r5=destructor,r6=dataspace)
+80390b68 0000007c 80390b68 0 GObj_AddUserData (r3=entity,r4=UserDataKind,r5=destructor,r6=dataspace)
 80390be4 00000078 80390be4 0 GObj_RunUserDataRemoveFunc
 80390c5c 00000028 80390c5c 0 GObj_ProcUnk
 80390c84 00000028 80390c84 0 GObj_ProcUnk
@@ -20718,7 +20718,7 @@
 803a5798 000001b4 803a5798 0 Text_AllocateMenuTextMemory
 803a594c 000000e0 803a594c 0 Text_DestroyMenuTextAllocation
 803a5a2c 000000a0 803a5a2c 0 Text_DestroyAllMenuTextAllocations
-803a5acc 000001f8 803a5acc 0 Text_AllocateTextObject
+803a5acc 000001f8 803a5acc 0 Text_AllocateTextObject(r3=Unk,r4=TextCanvasID)
 803a5cc4 0000006c 803a5cc4 0 Text_RemoveText
 803a5d30 00000070 803a5d30 0 zz_03a5d30_
 803a5da0 000000d0 803a5da0 0 zz_03a5da0_
@@ -20727,13 +20727,13 @@
 803a5fbc 0000008c 803a5fbc 0 zz_03a5fbc_
 803a6048 000000a4 803a6048 0 FirstHeapAlloc
 803a60ec 00000030 803a60ec 0 zz_03a60ec_
-803a611c 00000184 803a611c 0 Text_MakeTextObjectToAttachTo?(r3=Unk,r4=OptionalGObj,r5=GObjType,r6=GObjArg,r7=GObjArg,r8=layer?,r9,Unk,r10=CObjArg)
+803a611c 00000184 803a611c 0 Text_CreateTextCanvas(r3=Unk,r4=OptionalGObj,r5=GObjType,r6=GObjSubclass,r7=GObjBehvaior,r8=LayerID,r9,GXLinkPri,r10=CObjArg)
 803a62a0 000000c8 803a62a0 0 fileLoad_SdMsgBox.usd
 803a6368 00000110 803a6368 0 Text_CopyPremadeTextDataToStruct(r3=textstruct,r4=textID)
 803a6478 000000b8 803a6478 0 zz_03a6478_
 803a6530 000000dc 803a6530 0 Text_Unk   Snapshot_WriteText
 803a660c 00000148 803a660c 0 Text_Unk    CSS_Rules_WriteTextToRuleWindowLoop
-803a6754 00000098 803a6754 0 Text_CreateTextStruct (all in one)
+803a6754 00000098 803a6754 0 Text_CreateTextStruct(r3=Unk,r4=TextCanvasID)
 803a67ec 000003ac 803a67ec 0 ASCII->MenuText
 803a6b98 00000454 803a6b98 0 Text_InitializeSubtext
 803a6fec 000000b4 803a6fec 0 Text_GetSubtext(r3=FirstTextPointer,r4=SubtextID)

@@ -9,7 +9,7 @@ CustomEvent:
 
 #Create Text
   li  r3,0
-  li  r4,1
+  li  r4,0
   branchl r12,0x803a6754
   mr  text,r3
 

@@ -1427,10 +1427,12 @@ InitSettings:
 .set fmod,0x80364340
 .set HSD_Free,0x8037f1b0
 .set GObj_Create,0x803901f0
-.set GObj_Initialize,0x80390b68
+.set GObj_AddUserData,0x80390b68
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54
 .set GObj_RemoveProc,0x8038fed4
+.set GObj_StorePointerToJObj,0x80390a70
+.set GObj_AddGXLink,0x8039069c
 .set HSD_JObjSetMtxDirtySub,0x803732e8
 .set DevelopMode_FrameAdvanceCheck,0x801a45e8
 .set MatchInfo_StockModeCheck,0x8016b094

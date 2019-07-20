@@ -10,6 +10,8 @@
 .set LeftArrowTextOffset,-0x4EB0
 .set RightArrowTextOffset,-0x4EAC
 .set TutTextOffset,-0x4EA8
+.set MenuBackgroundPointer,-0x4EA4
+.set MenuTextPointer,-0x4EA0
 
 backup
 
@@ -17,13 +19,17 @@ backup
 	bl TEXTPROPERTIES
 	mflr textproperties
 
+#Init background pointer
+	li	r3,0
+	stw r3,MenuBackgroundPointer(r13)
+
 ########################
 ## Create Text Object ##
 ########################
 
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
-	li r4,1
+	li r4,0
 	branchl r12,0x803a6754
 #BACKUP STRUCT POINTER
 	mr text,r3
@@ -111,7 +117,7 @@ backup
 
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
-	li r4,1
+	li r4,0
 	branchl r12,0x803a6754
 #BACKUP STRUCT POINTER
 	mr text,r3
@@ -151,7 +157,7 @@ backup
 
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
-	li r4,1
+	li r4,0
 	branchl r12,0x803a6754
 #BACKUP STRUCT POINTER
 	mr text,r3
@@ -199,7 +205,7 @@ backup
 
 #CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
-	li r4,1
+	li r4,0
 	branchl r12,0x803a6754
 #BACKUP STRUCT POINTER
 	mr text,r3

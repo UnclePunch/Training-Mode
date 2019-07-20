@@ -11530,7 +11530,7 @@ mr  ASCIIStruct,r6
   mr	r3,EventGObj		#task space
   li	r4,0x0		#typedef
   load	r5,HSD_Free		#destructor (HSD_Free)
-  branchl	r12,GObj_Initialize		#Create Data Block
+  branchl	r12,GObj_AddUserData		#Create Data Block
 
 #Zero Dataspace
   mr	r3,EventData
@@ -11570,7 +11570,7 @@ mr  ASCIIStruct,r6
   mr	r3,MenuGObj		#task space
   li	r4,0x0	    	#typedef
   load	r5,HSD_Free		#destructor (HSD_Free)
-  branchl	r12,GObj_Initialize		#Create Data Block
+  branchl	r12,GObj_AddUserData		#Create Data Block
 
 #Zero Dataspace
   mr	r3,MenuData

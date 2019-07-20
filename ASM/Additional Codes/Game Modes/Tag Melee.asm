@@ -42,7 +42,7 @@ backup
   li  r4,14
   load r5,HSD_Free
   mr  r6,REG_Data
-  branchl r12,GObj_Initialize
+  branchl r12,GObj_AddUserData
 
 #Attach Process
   mr  r3,REG_GObj
