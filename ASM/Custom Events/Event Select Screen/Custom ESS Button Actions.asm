@@ -723,7 +723,7 @@ DeleteMainSave:
 	mr	r3,REG_MemcardSlot
 	load	r4,0x803bac5c
 	load	r5,0x8043331c
-  branchl r12,0x8001cc4c
+  branchl r12,0x8001ba44
   cmpwi r3,0
   bne SaveError
 
@@ -811,7 +811,7 @@ ExploitFillLoop:
 	lwz r8,0x8(r9)					#banner data with flames
 	lwz r9,0xC(r9)					#icon data
 	addi	r10,r10,4
-  branchl r12,0x8001c8bc
+  branchl r12,0x8001bc18
   cmpwi r3,0
   bne SaveError
 #Copy original save data back
@@ -838,6 +838,8 @@ ExploitFillLoop:
 #Check if file exists on card
   load  r3,MemcardFileList                            #go to pointer location
   lwz REG_SnapshotStruct,0x0(r3)                      #access pointer to snapshot file list
+	mulli	r3,REG_MemcardSlot,1032
+	add	REG_SnapshotStruct,REG_SnapshotStruct,r3
   lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
   addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
   bl  SnapshotID                                      #get ID we are looking for
@@ -2436,7 +2438,7 @@ backup
 	load	r4,0x803dae44		#Main Menu's Minor Table Pointer
 	lwz	r4,0x0(r4)
 	stw	r3,0x8(r4)		#Overwrite MainMenu's SceneDecide Temporarily
-	
+
 #Init Name Count Variable
 	li	r3,0x0
 	stw	r3, -0x4eac (r13)
