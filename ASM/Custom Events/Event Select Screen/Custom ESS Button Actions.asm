@@ -77,7 +77,7 @@ OpenOptions:
 	mflr r4
 	bl	OptionMenu_CreateText
 #Play SFX
-	li	r3,2
+	li	r3,1
 	branchl r12,0x80024030
 	b	exit
 
@@ -212,30 +212,123 @@ backup
 	bne OptionMenu_ThinkUp
 	rlwinm.	r0, r3, 0, 31, 31			#CHECK FOR A
 	bne OptionMenu_ThinkSelect
+	rlwinm.	r0, r3, 0, 30, 30			#CHECK FOR B
+	bne OptionMenu_ThinkBack
 	b	OptionMenu_ThinkExit
 
 OptionMenu_ThinkDown:
-
 #Down one cursor position
 	lwz	r3,Cursor(REG_GObjData)
-	addi r5,r3,1
+	addi r4,r3,1
 #Highlight current cursor
-	lwz	r3,TextGObj(REG_GObjData)
-	mr	r4,REG_GObjData
+	mr	r3,REG_GObjData
 	bl	OptionMenu_AdjustCursor
+#Play SFX
+	li	r3,2
+	branchl r12,0x80024030
 	b	OptionMenu_ThinkExit
 
 OptionMenu_ThinkUp:
 #Up one cursor position
 	lwz	r3,Cursor(REG_GObjData)
-	subi r5,r3,1
+	subi r4,r3,1
 #Highlight current cursor
-	lwz	r3,TextGObj(REG_GObjData)
-	mr	r4,REG_GObjData
+	mr	r3,REG_GObjData
 	bl	OptionMenu_AdjustCursor
+#Play SFX
+	li	r3,2
+	branchl r12,0x80024030
 	b	OptionMenu_ThinkExit
 
 OptionMenu_ThinkSelect:
+#Loop through current menu
+.set REG_Count,20
+.set REG_OptionData,22
+.set REG_OptionCount,23
+.set REG_MenuData,24
+.set REG_Cursor,25
+#Init
+	li	REG_Count,0														#loop count
+	li	REG_OptionCount,0											#Only incremented when an option is found
+	lwz	REG_MenuData,MenuData(REG_GObjData)
+	lwz	REG_Cursor,Cursor(REG_GObjData)
+
+OptionMenu_ThinkSelect_SearchOptionsLoop:
+#Get this option's text
+	addi r3,REG_MenuData,MenuData_OptionsStart
+	mulli	r4,REG_Count,MenuData_OptionDataLength
+	add	REG_OptionData,r3,r4
+#Get OnSelectType
+	lwz 	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_None
+	beq	OptionMenu_ThinkSelect_SearchOptionsIncLoop
+#Check if this is the desired option
+	cmpw REG_OptionCount,REG_Cursor
+	beq OptionMenu_ThinkSelect_SelectOption
+#Increment Option Count
+	addi	REG_OptionCount,REG_OptionCount,1
+	b	OptionMenu_ThinkSelect_SearchOptionsIncLoop
+
+OptionMenu_ThinkSelect_SelectOption:
+#Play SFX
+	li	r3,1
+	branchl r12,0x80024030
+#Decide Selection Type
+	lwz	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_Menu
+	beq	OptionMenu_ThinkSelect_GetNextMenu
+	cmpwi	r3,OnSelect_Function
+	beq	OptionMenu_ThinkSelect_GetFunction
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+
+OptionMenu_ThinkSelect_GetNextMenu:
+#Convert bl instruction to mem address
+	addi	r4,REG_OptionData,MenuData_OnSelectData
+	lwz	r5,0x0(r4)
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+	extsh	r5,r5
+  add	r4,r4,r5						#Gets Address in r3
+#Create Text
+	mr	r3,REG_GObj
+	bl	OptionMenu_CreateText
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+
+OptionMenu_ThinkSelect_GetFunction:
+#Convert bl instruction to mem address
+	addi	r4,REG_OptionData,MenuData_OnSelectData
+	lwz	r5,0x0(r4)
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+	extsh	r5,r5
+  add	r4,r4,r5						#Gets Address in r3
+	mtctr	r4
+	mr	r3,REG_GObj
+	bctrl
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+
+OptionMenu_ThinkSelect_SearchOptionsIncLoop:
+	addi REG_Count,REG_Count,1
+	b	OptionMenu_ThinkSelect_SearchOptionsLoop
+
+OptionMenu_ThinkSelect_SearchOptionsEnd:
+	b	OptionMenu_ThinkExit
+
+OptionMenu_ThinkBack:
+.set REG_MenuData,24
+	lwz	r4,MenuData(REG_GObjData)
+#Convert bl instruction to mem address
+	addi	r4,r4,MenuData_ReturnMenu
+	lwz	r5,0x0(r4)
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+	extsh	r5,r5
+	cmpwi	r5,0
+	beq OptionMenu_ThinkDestroy
+  add	r4,r4,r5						#Gets Address in r4
+#Load Prev Menu
+	mr	r3,REG_GObj
+	bl	OptionMenu_CreateText
+#Play SFX
+	li	r3,0
+	branchl r12,0x80024030
 	b	OptionMenu_ThinkExit
 
 OptionMenu_ThinkDestroy:
@@ -344,6 +437,7 @@ OptionMenu_CreateText_PrintOptionsLoop:
 	cmpwi	r5,-1
 	beq OptionMenu_CreateText_PrintOptionsEnd
   rlwinm	r4,r4,0,6,29							#Mask Bits 6-29 (the offset)
+	extsh	r4,r4
   add	REG_ASCII,REG_OptionData,r4		#Gets ASCII Address in r3
 
 #Get Y offset
@@ -386,9 +480,8 @@ OptionMenu_CreateText_PrintOptionsEnd:
 #Reset cursor position
 	li	r3,0
 #Highlight current cursor
-	mr	r5,r3
-	mr	r3,REG_TextGObj
-	mr	r4,REG_GObjData
+	mr	r4,r3
+	mr	r3,REG_GObjData
 	bl	OptionMenu_AdjustCursor
 
 
@@ -424,9 +517,9 @@ OptionMenu_AdjustCursor:
 backup
 
 #Backup
-	mr	REG_TextGObj,r3
-	mr	REG_GObjData,r4
-	mr	REG_Cursor,r5
+	mr	REG_GObjData,r3
+	lwz	REG_TextGObj,TextGObj(REG_GObjData)
+	mr	REG_Cursor,r4
 
 #Change all options to white
 OptionMenu_AdjustCursor_ResetColors:
@@ -534,7 +627,7 @@ MenuData_MainMenu:
 #Play
 	bl	MenuData_MainMenu_PlayCreditsName
 	.long	OnSelect_Function
-	bl	PlayMovie
+	bl	LoadCredits
 #Create Save File
 	bl	MenuData_MainMenu_CreateSaveName
 	.long	OnSelect_Menu
@@ -2343,11 +2436,7 @@ backup
 	load	r4,0x803dae44		#Main Menu's Minor Table Pointer
 	lwz	r4,0x0(r4)
 	stw	r3,0x8(r4)		#Overwrite MainMenu's SceneDecide Temporarily
-
-#PLAY SFX
-	li	r3, 1
-	branchl	r4,0x80024030
-
+	
 #Init Name Count Variable
 	li	r3,0x0
 	stw	r3, -0x4eac (r13)
