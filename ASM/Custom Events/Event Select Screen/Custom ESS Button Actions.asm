@@ -512,7 +512,7 @@ blrl
 .float -250  		#REG_TextGObj Y pos
 .float 21.9     #Z offset
 .float 0.035   	#Canvas Scaling
-.float 0.8			#Text scale
+.float 0.65			#Text scale
 .float 30				#Y offset difference
 .float 20				#Y Offset to Add After Title
 #endregion
