@@ -725,6 +725,8 @@ with an Armada-Shine!"
       .byte KO
     .endm
 
+  .set EventOSD_ArmadaShine,0x00000000
+
 #endregion
 #region SideBSweetspot
   .set Event_SideBSweetspot,2
@@ -1218,7 +1220,6 @@ InitSettings:
 .set EventOSD_WaveshineSDI,0x10000400
 
 .set EventOSD_LedgetechCounter,0x00000604
-.set EventOSD_ArmadaShine,0x0000000002
 .set EventOSD_EscapeSheik,0x00000400
 
 
