@@ -82,11 +82,26 @@ OpenOptions:
 	b	exit
 
 #region OptionMenu_CreateBackground
+BG_Constants:
+blrl
+.set BG_Transparency,0x0
+.set BG_ScaleX,0x4
+.set BG_ScaleY,0x8
+.set BG_TransformX,0xC
+.set BG_TransformY,0x10
+.set BG_TransformZ,0x14
+.set BG_Color,0x18
+.float 0.85							#transparency
+.float 0.1							#scale X
+.float 0.15							#scale Y
+.float 7								#X Position
+.float 3								#Y position
+.float 20								#Z Position
+.byte 13, 13, 46, 255		#Color
+
 OptionMenu_CreateBackground:
 .set	REG_GObj,20
 .set	REG_GObjData,21
-
-#this returns a pointer to the gobj
 
 backup
 
@@ -168,23 +183,6 @@ backup
 #Exit
 	restore
 	blr
-
-BG_Constants:
-blrl
-.set BG_Transparency,0x0
-.set BG_ScaleX,0x4
-.set BG_ScaleY,0x8
-.set BG_TransformX,0xC
-.set BG_TransformY,0x10
-.set BG_TransformZ,0x14
-.set BG_Color,0x18
-.float 0.85				#transparency
-.float 0.1				#scale X
-.float 0.15				#scale Y
-.float 7					#X Position
-.float 3					#Y position
-.float 20					#Z Position
-.long 0x000000FF	#Color
 #endregion
 
 #region OptionMenu_Think
@@ -358,6 +356,27 @@ OptionMenu_ThinkExit:
 #endregion
 
 #region OptionMenu_CreateText
+TextProperties:
+blrl
+.set VersionX,0x0
+.set VersionY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YOffset,0x14
+.set YOffsetAddAfterTitle,0x18
+.set HighlightColor,0x1C
+.set NonHighlightColor,0x20
+.float 100      			#REG_TextGObj X pos
+.float -250  					#REG_TextGObj Y pos
+.float 21.9     			#Z offset
+.float 0.035   				#Canvas Scaling
+.float 0.65						#Text scale
+.float 30							#Y offset difference
+.float 20							#Y Offset to Add After Title
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	#nonhighlighted color
+
 OptionMenu_CreateText:
 .set REG_MenuData,28
 .set REG_GObjData,29
@@ -498,23 +517,6 @@ OptionMenu_CreateText_PrintOptionsEnd:
 #Exit
 	restore
 	blr
-
-TextProperties:
-blrl
-.set VersionX,0x0
-.set VersionY,0x4
-.set ZOffset,0x8
-.set CanvasScaling,0xC
-.set Scale,0x10
-.set YOffset,0x14
-.set YOffsetAddAfterTitle,0x18
-.float 100      #REG_TextGObj X pos
-.float -250  		#REG_TextGObj Y pos
-.float 21.9     #Z offset
-.float 0.035   	#Canvas Scaling
-.float 0.65			#Text scale
-.float 30				#Y offset difference
-.float 20				#Y Offset to Add After Title
 #endregion
 
 #region OptionMenu_AdjustCursor
@@ -522,6 +524,7 @@ OptionMenu_AdjustCursor:
 .set REG_GObjData,31
 .set REG_TextGObj,30
 .set REG_Cursor,29
+.set REG_TextProp,28
 
 backup
 
@@ -529,6 +532,8 @@ backup
 	mr	REG_GObjData,r3
 	lwz	REG_TextGObj,TextGObj(REG_GObjData)
 	mr	REG_Cursor,r4
+	bl	TextProperties
+	mflr	REG_TextProp
 
 #Change all options to white
 OptionMenu_AdjustCursor_ResetColors:
@@ -539,9 +544,7 @@ OptionMenu_AdjustCursor_ResetColorsLoop:
 #Adjust Subtext
 	mr 	r3,REG_TextGObj		#struct pointer
 	mr	r4,REG_Count			#subtext text
-	load	r5,0xFFFFFF00
-	stw	r5,0x80(sp)
-	addi	r5,sp,0x80
+	addi	r5,REG_TextProp,NonHighlightColor
 	branchl r12,Text_ChangeTextColor
 
 OptionMenu_AdjustCursor_ResetColorsIncLoop:
@@ -599,9 +602,7 @@ OptionMenu_AdjustCursor_SearchOptionsChangeColor:
 #Adjust Subtext
 	mr 	r3,REG_TextGObj		#struct pointer
 	mr	r4,REG_Count			#subtext text
-	load	r5,0xFFFF0000		#color
-	stw	r5,0x80(sp)
-	addi	r5,sp,0x80
+	addi	r5,REG_TextProp,HighlightColor
 	branchl r12,Text_ChangeTextColor
 
 #Update Cursor Position
@@ -630,7 +631,7 @@ MenuData_MainMenu:
 #Return menu
 	.long 0
 #Options
-	bl	MenuData_MainMenu_OptionsName
+	bl	MenuData_MainMenu_OptionsTitleName
 	.long	OnSelect_None
 	.long 0
 #Create Save File
@@ -644,8 +645,8 @@ MenuData_MainMenu:
 	.long -1
 .align 2
 
-MenuData_MainMenu_OptionsName:
-.string "Options"
+MenuData_MainMenu_OptionsTitleName:
+.string "<Options>"
 .align 2
 MenuData_MainMenu_PlayCreditsName:
 .string "Show Credits"
@@ -659,7 +660,7 @@ MenuData_CreateSave:
 #Return menu
 	bl	MenuData_MainMenu
 #Create Save
-	bl	MenuData_MainMenu_CreateSaveName
+	bl	MenuData_MainMenu_CreateSaveTitleName
 	.long	OnSelect_None
 	.long 0
 #Play
@@ -673,11 +674,14 @@ MenuData_CreateSave:
 .long -1
 .align 2
 
+MenuData_MainMenu_CreateSaveTitleName:
+.string "<Create Save>"
+.align 2
 MenuData_CreateSave_SlotA:
-.string "Save to SlotA"
+.string "Save to Slot A"
 .align 2
 MenuData_CreateSave_SlotB:
-.string "Save to SlotB"
+.string "Save to Slot B"
 .align 2
 
 CreateSave_SlotA:
