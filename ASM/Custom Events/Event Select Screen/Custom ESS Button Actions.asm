@@ -299,10 +299,19 @@ OptionMenu_ThinkSelect_GetFunction:
 	lwz	r5,0x0(r4)
   rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
 	extsh	r5,r5
+	cmpwi	r5,0
+	beq	OptionMenu_ThinkSelect_NoFunction
   add	r4,r4,r5						#Gets Address in r3
 	mtctr	r4
 	mr	r3,REG_GObj
 	bctrl
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+OptionMenu_ThinkSelect_NoFunction:
+#Play Error Sound
+  li	r3, 3
+  branchl	r12,0x80024030
+  li	r3, 3
+  branchl	r12,0x80024030
 	b	OptionMenu_ThinkSelect_SearchOptionsEnd
 
 OptionMenu_ThinkSelect_SearchOptionsIncLoop:
