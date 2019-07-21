@@ -347,8 +347,8 @@
 8001b8c8 000000d4 8001b8c8 0 zz_001b8c8_
 8001b99c 000000a8 8001b99c 0 zz_001b99c_
 8001ba44 00000104 8001ba44 0 MemoryCard_DeleteGameData
-8001bb48 000000d0 8001bb48 0 MemoryCard_SaveDataToMemoryCard(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
-8001bc18 0000011c 8001bc18 0 MemoryCard_CreateData(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
+8001bb48 000000d0 8001bb48 0 MemoryCard_CreateSnapshot(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
+8001bc18 0000011c 8001bc18 0 MemoryCard_CreateMainSave(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
 8001bd34 000000fc 8001bd34 0 MemoryCard_LoadData
 8001be30 000000d4 8001be30 0 MemoryCard_SaveGameData
 8001bf04 000000d4 8001bf04 0 MemoryCard_ReadDataIntoMemory(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
@@ -419,7 +419,7 @@
 8001f2a4 0000016c 8001f2a4 0 Movie_Callback
 8001f410 00000168 8001f410 0 fileLoad_.mthFile
 8001f578 0000004c 8001f578 0 Movie_AdvanceFrame
-8001f5c4 00000010 8001f5c4 0 zz_001f5c4_
+8001f5c4 00000010 8001f5c4 0 Movie_GetCurrentFrame
 8001f5d4 00000010 8001f5d4 0 zz_001f5d4_
 8001f5e4 00000010 8001f5e4 0 zz_001f5e4_
 8001f5f4 00000010 8001f5f4 0 zz_001f5f4_
@@ -429,9 +429,9 @@
 8001f67c 00000184 8001f67c 0 Movie_DisplayProcessPerFrame
 8001f800 0000007c 8001f800 0 Movie_Unload
 8001f87c 00000014 8001f87c 0 zz_001f87c_
-8001f890 00000098 8001f890 0 zz_001f890_
+8001f890 00000098 8001f890 0 THP_DisplayImage?
 8001f928 00000178 8001f928 0 zz_001f928_
-8001faa0 00000168 8001faa0 0 zz_001faa0_
+8001faa0 00000168 8001faa0 0 THP_LoadFile
 8001fc08 000002bc 8001fc08 0 zz_001fc08_
 8001fec4 00000604 8001fec4 0 zz_001fec4_
 800204c8 00000128 800204c8 0 FullscreenShaderThink
@@ -442,7 +442,7 @@
 8002087c 00000034 8002087c 0 zz_002087c_
 800208b0 0000003c 800208b0 0 zz_00208b0_
 800208ec 00000108 800208ec 0 FullscreenShader_InitThinkFunction
-800209f4 000000f8 800209f4 0 zz_00209f4_
+800209f4 000000f8 800209f4 0 THP_UnkInit
 80020aec 0000034c 80020aec 0 zz_0020aec_
 80020e38 00000304 80020e38 0 zz_0020e38_
 8002113c 000002d4 8002113c 0 zz_002113c_
@@ -20714,7 +20714,7 @@
 803a4c98 00000854 803a4c98 0 zz_03a4c98_
 803a4ee4 00000608 803a4ee4 0 zz_03a4ee4_
 803a54ec 000000f0 803a54ec 0 zz_03a54ec_
-803a55dc 000001bc 803a55dc 0 zz_03a55dc_
+803a55dc 000001bc 803a55dc 0 THP_InitializeCamera
 803a5798 000001b4 803a5798 0 Text_AllocateMenuTextMemory
 803a594c 000000e0 803a594c 0 Text_DestroyMenuTextAllocation
 803a5a2c 000000a0 803a5a2c 0 Text_DestroyAllMenuTextAllocations

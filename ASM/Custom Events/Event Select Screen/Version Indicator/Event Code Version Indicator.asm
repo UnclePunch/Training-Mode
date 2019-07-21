@@ -59,8 +59,8 @@ backup
 	branchl r12,GetCustomEventPageName
 #Initialize Subtext
 	mr	r4,r3
-	lfs 	f1,VersionX(textproperties) 		#X offset of text
-	lfs 	f2,VersionY(textproperties)	  	#Y offset of text
+	lfs 	f1,PageX(textproperties) 		#X offset of text
+	lfs 	f2,PageY(textproperties)	  	#Y offset of text
 	mr 	r3,text		#struct pointer
 	branchl r12,0x803a6b98
 
@@ -87,10 +87,10 @@ backup
 ##################
 
 #Initialize Subtext
-	lfs 	f1,ZX(textproperties) #X offset of text
-	lfs 	f2,ZY(textproperties) #Y offset of text
+	lfs 	f1,VersionX(textproperties) #X offset of text
+	lfs 	f2,VersionY(textproperties) #Y offset of text
 	mr 	r3,text       #struct pointer
-	bl 	ZText
+	bl 	VersionText
 	mflr 	r4		#pointer to ASCII
 	load r5,VersionString
 	branchl r12,0x803a6b98
@@ -99,8 +99,8 @@ backup
 #Change scale
 	mr	r4,r20
 	mr	r3,text
-	lfs	f1,ZScale(textproperties)
-	lfs	f2,ZScale(textproperties)
+	lfs	f1,VersionScale(textproperties)
+	lfs	f2,VersionScale(textproperties)
 	branchl r12,Text_UpdateSubtextSize
 
 #Change Color
@@ -110,6 +110,24 @@ backup
 	stw	r5,0xF0(sp)
 	addi r5,sp,0xF0
 	branchl r12,Text_ChangeTextColor
+
+#################
+## Z = Options ##
+#################
+
+#Initialize Subtext
+	lfs 	f1,OptionsX(textproperties) #X offset of text
+	lfs 	f2,OptionsY(textproperties) #Y offset of text
+	mr 	r3,text       #struct pointer
+	bl 	OptionsText
+	mflr 	r4		#pointer to ASCII
+	branchl r12,0x803a6b98
+#Change scale
+	mr	r4,r3
+	mr	r3,text
+	lfs	f1,OptionsScale(textproperties)
+	lfs	f2,OptionsScale(textproperties)
+	branchl r12,Text_UpdateSubtextSize
 
 ###############################
 ## Left Page Arrow Indicator ##
@@ -256,26 +274,29 @@ b end
 #**************************************************#
 TEXTPROPERTIES:
 blrl
-.set VersionX,0x0
-.set VersionY,0x4
+.set PageX,0x0
+.set PageY,0x4
 .set ZOffset,0x8
 .set RX,0xC
 .set RY,0x10
 .set RScale,0x14
 .set LX,0x18
 .set LY,0x1C
-.set ZX,0x20
-.set ZY,0x24
-.set ZScale,0x28
+.set VersionX,0x20
+.set VersionY,0x24
+.set VersionScale,0x28
 .set CanvasScaling,0x2C
 .set ArrowY,0x30
 .set LeftArrowX,0x34
 .set RightArrowX,0x38
 .set ArrowScale,0x3C
+.set OptionsX,0x40
+.set OptionsY,0x44
+.set OptionsScale,0x48
 
-#Version
+#Page
 .float 0      #text X pos
-.float -236   #text Y pos
+.float -240   #text Y pos
 .float 17     #Z offset
 
 #Press R
@@ -287,10 +308,10 @@ blrl
 .float -310   #text X pos
 .float -230   #text Y pos
 
-#Press Z
-.float 300    #text X pos
-.float -280   #text Y pos
-.float 0.85		#text scale
+#Version
+.float 0    #text X pos
+.float -212   #text Y pos
+.float 0.6		#text scale
 
 .float 0.035   #Canvas Scaling
 
@@ -299,6 +320,11 @@ blrl
 .float	-210		#left X
 .float   210    #Right X
 .float	 0.7		#Scale
+
+#Options
+.float 299    #text X pos
+.float -282   #text Y pos
+.float 0.8		#text scale
 
 NullString:
 blrl
@@ -325,9 +351,14 @@ blrl
 .string "L = OSD"
 .align 2
 
-ZText:
+VersionText:
 blrl
-.string "TM %s Beta"
+.string "Training Mode %s Beta1"
+.align 2
+
+OptionsText:
+blrl
+.string "Z = Options"
 .align 2
 
 #**************************************************#
