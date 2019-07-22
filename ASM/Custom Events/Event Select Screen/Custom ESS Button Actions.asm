@@ -94,7 +94,7 @@ blrl
 .float 0.85							#transparency
 .float 0.1							#scale X
 .float 0.15							#scale Y
-.float 7								#X Position
+.float 8								#X Position
 .float 3								#Y position
 .float 20								#Z Position
 .byte 13, 13, 46, 255		#Color
@@ -367,7 +367,7 @@ blrl
 .set YOffsetAddAfterTitle,0x18
 .set HighlightColor,0x1C
 .set NonHighlightColor,0x20
-.float 100      			#REG_TextGObj X pos
+.float 120      			#REG_TextGObj X pos
 .float -250  					#REG_TextGObj Y pos
 .float 21.9     			#Z offset
 .float 0.035   				#Canvas Scaling

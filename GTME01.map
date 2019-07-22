@@ -347,7 +347,7 @@
 8001b8c8 000000d4 8001b8c8 0 zz_001b8c8_
 8001b99c 000000a8 8001b99c 0 zz_001b99c_
 8001ba44 00000104 8001ba44 0 MemoryCard_DeleteGameData
-8001bb48 000000d0 8001bb48 0 MemoryCard_CreateSnapshot(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
+8001bb48 000000d0 8001bb48 0 MemoryCard_CreateSnapshot(r3=Slot?,r4=SaveID,r5=SaveStruct,r6=SaveStruct,r7=SaveName,r8=Icon,r9=Banner,r10=0)
 8001bc18 0000011c 8001bc18 0 MemoryCard_CreateMainSave(r3=Slot?,r4=SaveName,r5=SaveStruct,r6=StringSpace?,r7=Icon?,r8=Banner?,r9=0)
 8001bd34 000000fc 8001bd34 0 MemoryCard_LoadData
 8001be30 000000d4 8001be30 0 MemoryCard_SaveGameData
@@ -20855,7 +20855,7 @@
 803c5c10 00000060 803c5c10 0 CPU_DecideInputAngleJumpTable
 803c6c00 00000054 803c6c00 0 SwordTrail_PerCharacterBehaviorJumpTable
 803d5a4c 00000808 803d5a4c 0 ResultScreen_AccoladeDataStruct
-803d6258 000000A4 803d6258 0 ResultScreen_UnkStatJumpTable
+803d6258 000000a4 803d6258 0 ResultScreen_UnkStatJumpTable
 803d6300 00000150 803d6300 0 ResultScreen_StatDataStruct
 803df94c 000000cc 803df94c 0 EventMatch_ThinkFunctionTable
 803dfedc 000001bc 803dfedc 0 Stages_FileNameAndFunctionTable
