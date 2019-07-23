@@ -1,62 +1,6 @@
 #To be inserted at 80236b40
-.macro branchl reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctrl
-.endm
+.include "../../Globals.s"
 
-.macro branch reg, address
-lis \reg, \address @h
-ori \reg,\reg,\address @l
-mtctr \reg
-bctr
-.endm
-
-.macro load reg, address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-.endm
-
-.macro loadf regf,reg,address
-lis \reg, \address @h
-ori \reg, \reg, \address @l
-stw \reg,-0x4(sp)
-lfs \regf,-0x4(sp)
-.endm
-
-.macro backup
-mflr r0
-stw r0, 0x4(r1)
-stwu	r1,-0x100(r1)	# make space for 12 registers
-stmw  r20,0x8(r1)
-.endm
-
-.macro restore
-lmw  r20,0x8(r1)
-lwz r0, 0x104(r1)
-addi	r1,r1,0x100	# release the space
-mtlr r0
-.endm
-
-.macro intToFloat reg,reg2
-xoris    \reg,\reg,0x8000
-lis    r18,0x4330
-lfd    f16,-0x7470(rtoc)    # load magic number
-stw    r18,0(r2)
-stw    \reg,4(r2)
-lfd    \reg2,0(r2)
-fsubs    \reg2,\reg2,f16
-.endm
-
-.set ActionStateChange,0x800693ac
-.set HSD_Randi,0x80380580
-.set HSD_Randf,0x80380528
-.set Wait,0x8008a348
-.set Fall,0x800cc730
-
-.set entity,31
-.set player,31
 .set Text,30
 .set TextProp,28
 
@@ -146,6 +90,47 @@ addi	r5,sp,0xF0
 load	r6,0xff7575FF
 stw	r6,0x0(r5)
 branchl	r12,0x803a74f0
+
+#####################
+## Recommended OSD ##
+#####################
+
+#Get Options String
+	lwz	r3,-0x77C0(r13)			#Get Memcard Data
+  lbz	r3,OSDRecommended(r3)
+  bl  FDDRecommendedOptions
+  mflr  r4
+  branchl r12,SearchStringTable
+
+#Create Text
+	mr	r5,r3
+	mr	r3,r30
+	bl	FDDRecommended
+	mflr	r4
+	lfs	f1,RecommendedX(TextProp)
+	lfs	f2,RecommendedY(TextProp)
+	branchl r12,Text_InitializeSubtext
+	stb	r3,0x49(r31)			#Store Subtext ID
+
+#Change Color
+	mr	r4,r3
+	mr	r3,r30
+	addi	r5,TextProp,RecommendedColor
+	branchl	r12,Text_ChangeTextColor
+
+#Create Z Text
+	mr	r3,r30
+	bl	FDDRecommendedZ
+	mflr	r4
+	lfs	f1,RecommendedZX(TextProp)
+	lfs	f2,0x28(TextProp)
+	branchl r12,Text_InitializeSubtext
+
+#Change Color
+	mr	r4,r3
+	mr	r3,r30
+	addi	r5,TextProp,RecommendedColor
+	branchl	r12,Text_ChangeTextColor
 
 #########################
 ## Write Max OSD Count ##
@@ -250,34 +235,52 @@ b exit
 #f1= X Offset
 
 WriteText:
+.set REG_TextGObj,31
+.set REG_StringArray,30
+.set REG_StringID,29
+.set TextProp,28
 
-	#SEND ASCII TO TEXT STRUCT
+#Backup args
 	backup
-	mulli	r6,r5,0x10
-	add	r4,r4,r6		#get text
+	mr	REG_TextGObj,r3
+	mr	REG_StringArray,r4
+	mr	REG_StringID,r5
+	bl	TextProperties
+	mflr	TextProp
+	stfs	f1,0xB0(sp)
 
-		#GET Y VALUE
-		xoris	r0, r5, 0x8000
-		stw	r0, 0xF4 (sp)
-		lis	r0, 0x4330
-		stw	r0, 0xF0 (sp)
-		lfd	f0, 0xF0 (sp)
-		lfd	f3, -0x3B20 (rtoc)
-		fsubs	f0,f3,f0
-		lfs	f2,0x4(TextProp)		#Y Base
-		lfs	f3,0xC(TextProp)		#Y DIff
-		fmuls	f0,f0,f3
-		fsubs	f2,f2,f0
 
-	branchl r12,0x803a6b98
+	mr	r3,REG_StringID
+	mr	r4,REG_StringArray
+	branchl	r12,SearchStringTable
+
+#GET Y VALUE
+	xoris	r0, REG_StringID, 0x8000
+	stw	r0, 0xF4 (sp)
+	lis	r0, 0x4330
+	stw	r0, 0xF0 (sp)
+	lfd	f0, 0xF0 (sp)
+	lfd	f3, -0x3B20 (rtoc)
+	fsubs	f0,f3,f0
+	lfs	f2,0x4(TextProp)		#Y Base
+	lfs	f3,0xC(TextProp)		#Y DIff
+	fmuls	f0,f0,f3
+	fsubs	f2,f2,f0
+
+	mr	r4,r3
+	mr	r3,REG_TextGObj
+	lfs	f1,0xB0(sp)
+	branchl r12,Text_InitializeSubtext
 	restore
 	blr
 
 
-
-
 TextProperties:
 blrl
+.set RecommendedX,0x2C
+.set RecommendedY,0x30
+.set RecommendedColor,0x34
+.set RecommendedZX,0x38
 .long 0xC0900000	#Text X Location
 .long 0xC0E80000 #Text Y Base
 .long 0x3CB43958 #Text Scaling
@@ -289,205 +292,66 @@ blrl
 .long 0xC22C0000 #Max Windows Y
 .long 0xC3700000 #XYText X
 .long 0xC0E80000 #XYText Y
+.float 800
+.float -43.0
+.long 0x8dff6eff
+.float 630
+
+FDDRecommended:
+blrl
+.string "Suggested OSDs: %s"
+.align 2
+
+FDDRecommendedOptions:
+blrl
+.string "On"
+.string "Off"
+.align 2
+
+FDDRecommendedZ:
+blrl
+.string "(Z)"
+.align 2
 
 TextASCIILeft:
 blrl
-
-#Info Codes
-.long 0x496e666f
-.long 0x20436f64
-.long 0x65730000
-.long 0x00000000
-
-#Wavedash Timing
-.long 0x57617665
-.long 0x64617368
-.long 0x2054696d
-.long 0x696e6700
-
-#L-Cancel Timing and %
-.long 0x4c2d4361
-.long 0x6e63656c
-.long 0x00000000
-.long 0x00000000
-
-#Missed Tech Info
-.long 0x4d697373
-.long 0x65642054
-.long 0x65636800
-.long 0x00000000
-
-#Act OOS Frame
-.long 0x41637420
-.long 0x4f6f5320
-.long 0x4672616d
-.long 0x65000000
-
-#Meteor Cancel
-.long 0x4d657465
-.long 0x6f722043
-.long 0x616e6365
-.long 0x6c000000
-
-#Dashback
-.long 0x44617368
-.long 0x6261636b
-.long 0x00000000
-.long 0x00000000
-
-#Shield Drop
-.long 0x53686965
-.long 0x6c642044
-.long 0x726f7000
-.long 0x00000000
-
-#APM
-.long 0x496e7075
-.long 0x74732050
-.long 0x6572204d
-.long 0x696e2e00
-
-#Fox Tech Codes
-.long 0x53706163
-.long 0x69652054
-.long 0x65636800
-.long 0x00000000
-
-#Powershield
-.long 0x506f7765
-.long 0x72736869
-.long 0x656c6400
-.long 0x00000000
-
-#Shield Poke+ADT
-.long 0x53686965
-.long 0x6c64506f
-.long 0x6b65817B
-.long 0x41445400
-
-#SDI Display
-.long 0x53444920
-.long 0x44697370
-.long 0x6c617900
-.long 0x00000000
-
-#Grab Breakout
-.long 0x47726162
-.long 0x20427265
-.long 0x616b6f75
-.long 0x74000000
-
-#Ledgedash Codes
-.long 0x4c656467
-.long 0x65646173
-.long 0x6820436f
-.long 0x64657300
-
-#Act OoHitstun
-.long 0x41637420
-.long 0x4f6f4869
-.long 0x74737475
-.long 0x6e000000
-
-
+.string ""
+.string "Wavedash Timing"
+.string "L-Cancel"
+.string "Missed Tech"
+.string "Act OoS Frame"
+.string "Meteor Cancel"
+.string "Dashback"
+.string "Shield Drop"
+.string "Inputs Per Minute"
+.string "Spacie Tech"
+.string "Powershield Frame"
+.string "Shield Poke + ADT"
+.string "SDI Inputs"
+.string "Grab Breakout"
+.string "Ledgedash Info"
+.string "Act OoHitstun"
+.align 2
 
 TextASCIIRight:
 blrl
 
-#Labbing Codes
-.long 0x4c616262
-.long 0x696e6720
-.long 0x436f6465
-.long 0x73000000
-
-
-#Hitstun/Hitlag
-.long 0x48697473
-.long 0x74756e81
-.long 0x5e486974
-.long 0x6c616700
-
-
-#Shield Stun
-.long 0x53686965
-.long 0x6c642053
-.long 0x74756e00
-.long 0x00000000
-
-#AS Frames Left
-.long 0x41532046
-.long 0x72616d65
-.long 0x73204c65
-.long 0x66740000
-
-#Blank
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-
-#Act OoTech
-.long 0x41637420
-.long 0x4f6f5761
-.long 0x69740000
-.long 0x00000000
-
-#Crouch Cancel
-.long 0x43726f75
-.long 0x63682043
-.long 0x616e6365
-.long 0x6c000000
-
-#Act OoJump
-.long 0x41637420
-.long 0x4f6f4a75
-.long 0x6d700000
-.long 0x00000000
-
-#Act OoJumpSquat
-.long 0x41637420
-.long 0x4f6f4a75
-.long 0x6d705371
-.long 0x75617400
-
-#Fastfall Timing
-.long 0x46617374
-.long 0x66616c6c
-.long 0x2054696d
-.long 0x696e6700
-
-#Frame Advantage
-.long 0x4672616d
-.long 0x65204164
-.long 0x76616e74
-.long 0x61676500
-
-#Combo Count
-.long 0x436f6d62
-.long 0x6f20436f
-.long 0x756e7465
-.long 0x72000000
-
-#PlaceHolder
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-
-#PlaceHolder
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-.long 0x00000000
-
-#UCF
-.long 0x556e6976
-.long 0x65727361
-.long 0x6c436f6e
-.long 0x74726f6c
-.long 0x6c657246
-.long 0x69780000
-
+.string ""
+.string "Hitstun/Hitlag"
+.string "Shield Stun"
+.string "State Frames Left"
+.string ""
+.string "Act OoLag"
+.string "Crouch Cancel"
+.string "Act OoJump"
+.string "Act OoJumpSquat"
+.string "Fastfall Timing"
+.string "Frame Advantage"
+.string "Combo Counter"
+.string ""
+.string ""
+.string "UniversalControllerFix"
+.align 2
 
 FDDTitleText:
 blrl

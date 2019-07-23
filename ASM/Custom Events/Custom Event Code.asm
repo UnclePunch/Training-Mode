@@ -14826,11 +14826,16 @@ InitializeMatch:
 	mr REG_EventOSDs,r7
 	mr REG_UseSopo,r8
 
-#Store Events FDD Toggles
+#Check to override OSD Toggles
 	lwz	r4,-0x77C0(r13)
+	lbz	r3,0x1f2A(r4)
+	cmpwi r3,1
+	beq InitializeMatch_SkipOSDOverride
+#Store Events FDD Toggles
 	lwz	r3,0x1F24(r4)
 	or	r3,r3,REG_EventOSDs
 	stw	r3,0x1F24(r4)
+InitializeMatch_SkipOSDOverride:
 
 #SPAWN 2 PLAYERS
 	li	r3,0x40

@@ -1143,6 +1143,9 @@ InitSettings:
 #Set Initial Page Number
   li  r3,0x1
   stb r3,CurrentEventPage(r4)
+#Enable Recommended OSDs
+  li  r3,0
+  stb r3,OSDRecommended(r4)
 #Enable UCF by default
   load r3,0x08000000
   stw r3,OSDBitfield(r4)
@@ -1163,6 +1166,7 @@ InitSettings:
 .set OSDBitfield,0x1F24
 .set OSDMaxWindows,0x1F28
 .set CurrentEventPage,0x1F29
+.set OSDRecommended,0x1F2A
 
 #Custom rtoc offsets
 .set EventCPUBackup_CharID,-0xDA5     #byte
