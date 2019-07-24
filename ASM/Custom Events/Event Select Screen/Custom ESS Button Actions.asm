@@ -575,8 +575,15 @@ OptionMenu_AdjustCursor_SearchOptionsLoop:
 	extsb	r5,r4										#Check if none left
 	cmpwi	r5,-1
 	bne	OptionMenu_AdjustCursor_SearchOptionsNotLast
-	subi REG_Count,REG_Count,1
 	subi REG_OptionCount,REG_OptionCount,1
+OptionMenu_AdjustCursor_SearchOptionsGetLastValidOption:
+	subi REG_Count,REG_Count,1
+	addi r3,REG_MenuData,MenuData_OptionsStart
+	mulli	r4,REG_Count,MenuData_OptionDataLength
+	add	REG_OptionData,r3,r4
+	lwz	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_None
+	beq	OptionMenu_AdjustCursor_SearchOptionsGetLastValidOption
 	b	OptionMenu_AdjustCursor_SearchOptionsChangeColor
 #Get OnSelectType
 OptionMenu_AdjustCursor_SearchOptionsNotLast:
@@ -673,6 +680,14 @@ MenuData_CreateSave:
 	bl	MenuData_CreateSave_SlotB
 	.long	OnSelect_Function
 	.long 0#bl	CreateSave_SlotB
+#Space
+	bl	MenuData_CreateSave_Empty
+	.long	OnSelect_None
+	.long 0
+#Disabled
+	bl	MenuData_MainMenu_Disabled
+	.long	OnSelect_None
+	.long 0
 .long -1
 .align 2
 
@@ -684,6 +699,12 @@ MenuData_CreateSave_SlotA:
 .align 2
 MenuData_CreateSave_SlotB:
 .string "Save to Slot B"
+.align 2
+MenuData_CreateSave_Empty:
+.string ""
+.align 2
+MenuData_MainMenu_Disabled:
+.string "(Temp Disabled)"
 .align 2
 
 CreateSave_SlotA:
