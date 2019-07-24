@@ -12918,7 +12918,7 @@ backup
 
 #Get inputs
   load r4,0x804c21cc
-	lbz r3,0xC(r3)
+	lbz r3,0x618(r3)
   mulli r0,r3,68
   add r5,r4,r0
 #Make Sure L Is Held
