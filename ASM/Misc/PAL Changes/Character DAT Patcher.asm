@@ -260,7 +260,7 @@ diffNess:
 
 .long 0x00003a1c
 .long 0xb4940013
-.long 0x00001a64
+.long 0x00003a64
 .long 0x2c000015
 .long 0x00003a70
 .long 0xb4928013
