@@ -5,7 +5,6 @@
 
 #Init loop
   li  REG_LoopCount,0
-
 Loop:
 #Get players inputs
   mr  r3,REG_LoopCount

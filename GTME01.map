@@ -1608,7 +1608,7 @@
 8007ab80 00000050 8007ab80 0 zz_007ab80_
 8007abd0 00000098 8007abd0 0 Hitbox_ApplyDamageStalingAndMore
 8007ac68 00000034 8007ac68 0 Hitbox_MeteorAttackCheck
-8007ac9c 0000007c 8007ac9c 0 Hitbox_StoreAngle+MeteorAttackCheck
+8007ac9c 0000007c 8007ac9c 0 Hitbox_SakuraiAngle+MeteorAngleCheck
 8007ad18 00000168 8007ad18 0 Hitbox_UpdateHitboxPositions
 8007ae80 00000060 8007ae80 0 Hitbox_UpdateAllHitboxPositions
 8007aee0 00000018 8007aee0 0 Hitbox_EnableShieldFollowBit
