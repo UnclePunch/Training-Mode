@@ -1,4 +1,4 @@
-#To be inserted at 8022e8d8
+#To be inserted at 8022e630
 .include "../../Globals.s"
 
 #Check If First Boot
@@ -23,6 +23,5 @@ RestoreBackup:
   stw	r5,0x1F24(r6)
 
 Exit:
-
 #Original Line
-li	r4, 0
+  li	r3, 3

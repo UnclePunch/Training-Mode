@@ -1289,7 +1289,7 @@ InitSettings:
 .set Stage_DamageHazardCount,-0x5130
 
 .set TM_FrozenToggle,-0x4F8C
-.set TM_GameFrameCounter,-0x49ac
+.set TM_GameFrameCounter,-0x49a8
 
 #Scene Struct
 .set SceneController,0x80479D30
