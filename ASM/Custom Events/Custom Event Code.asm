@@ -923,7 +923,7 @@ b	exit
 		subi r3,r3,1
 		sth r3,OFST_ShineTimer(EventData)
 		cmpwi r3,0
-		bgt ReactionThinkExit
+		bgt ReactionThink_CheckIfActedEarly
 	#Perform down b
 		mr	r3,P2GObj
 		branchl r12,0x800e8560
@@ -931,7 +931,21 @@ b	exit
 		li	r3,0
 		sth	r3,OFST_ReactionTimer(EventData)
 		b	ReactionThinkExit
-	Reaction_SkipShineTimer:
+
+ReactionThink_CheckIfActedEarly:
+	#Check if P1 acted early
+		lwz	r3,0x10(P1Data)
+		cmpwi r3,ASID_Wait
+		beq ReactionThinkExit
+	#Play Error Noise
+		li	r3,0xAF
+		bl	PlaySFX
+	#Set Timer
+		li	r3,ResetTimer-40
+		sth r3,OFST_ResetTimer(EventData)
+		b	ReactionThinkExit
+
+Reaction_SkipShineTimer:
 
 	#Check reaction timer
 		lhz r3,OFST_ReactionTimer(EventData)
@@ -1805,6 +1819,16 @@ b	exit
 	bl	CreateEventThinkFunction
 
 	bl	InitializeHighScore
+
+#Remove randall
+	lwz	r3,StageID_External(r13)
+	cmpwi	r3,YoshiStory
+	bne	LedgedashLoad_SkipRemoveRandall
+#Get randall's map_gobj
+	li	r3,2				#randalls map_gobj is 2
+	branchl r12,Stage_map_gobj_Load
+	branchl r12,Stage_Destroy_map_gobj
+LedgedashLoad_SkipRemoveRandall:
 
 	b	LedgedashLoadExit
 
@@ -15183,10 +15207,12 @@ DisableHazards_Story:
 	stw r5,0xC(r4)
 */
 
+/*
 #Get randall's map_gobj
 	li	r3,2				#randalls map_gobj is 2
 	branchl r12,Stage_map_gobj_Load
 	branchl r12,Stage_Destroy_map_gobj
+*/
 
 #Get shyguy's map_gobj
 	li	r3,3				#shyguys map_gobj is
