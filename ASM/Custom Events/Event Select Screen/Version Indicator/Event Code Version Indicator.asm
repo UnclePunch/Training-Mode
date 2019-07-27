@@ -353,7 +353,7 @@ blrl
 
 VersionText:
 blrl
-.string "Training Mode %s Beta1"
+.string "Training Mode %s"
 .align 2
 
 OptionsText:
