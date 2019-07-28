@@ -137,7 +137,9 @@ backup
 #Load JObj
   branchl r12,HSD_JObjLoadJoint
 #Get child JObj (the black background)
+	mr	r22,r3
 	lwz r3,0x10(r3)
+
 #Remove parent and child (the message box)
 	li	r4,0
 	stw r4,0x0c(r3)
@@ -166,7 +168,7 @@ backup
 	lfs f1,BG_TransformZ(r5)
 	stfs f1,0x40(r3)
 #Store JObj to GObj
-  mr  r5,r3
+  mr  r5,r22
   mr  r3,REG_GObj
   lbz	r4, -0x3E57 (r13)
   branchl r12,GObj_StorePointerToJObj
