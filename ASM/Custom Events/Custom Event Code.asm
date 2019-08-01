@@ -9967,10 +9967,14 @@ EscapeSheikThink:
 		.set EventState_ThrowDelay,0x0
 		.set EventState_ThrowEndlag,0x1
 		.set EventState_Chase,0x2
-		.set EventState_Reset,0x3
-	.set Timer,0x1
-	.set ThrowTimer,0x2
-	.set JabFrame,0x4
+		.set EventState_Jab2,0x3
+		.set EventState_Reset,0x4
+	.set	Timer,0x1
+	.set	ThrowTimer,0x2
+	.set	JabFrame,0x4
+	.set	isJabTwice,0x5
+	.set	Jab2Frame,0x6
+	.set	Jab2Timer,0x7
 
 #Constants
 	.set ResetTimer,40
@@ -9980,7 +9984,9 @@ EscapeSheikThink:
 	.set ThrowTimerHi,60
 	.set ReactFrame,12
 	.set JabFrameLo,15
-	.set JabFrameHi,22
+	.set JabFrameHi,20
+	.set Jab2FrameLo,6
+	.set Jab2FrameHi,18
 
 backup
 
@@ -10061,6 +10067,9 @@ EscapeSheikThink_CheckIfCPUDamaged:
 #Maybe increment a high score or something idk
 EscapeSheikThink_CheckIfCPUDamaged_End:
 
+EscapeSheikThink_CheckForEarlyShine:
+EscapeSheikThink_CheckForEarlyShine_End:
+
 EscapeSheikThink_SwitchCase:
 #Switch Case
 	lbz r3,EventState(REG_EventData)
@@ -10072,6 +10081,8 @@ EscapeSheikThink_SwitchCase:
 	beq EscapeSheikThink_Chase
 	cmpwi r3,EventState_Reset
 	beq EscapeSheikThink_Reset
+	cmpwi	r3,EventState_Jab2
+	beq	EscapeSheikThink_Jab2
 	b	EscapeSheikThink_CheckTimer
 
 #region EscapeSheikThink_ThrowDelay
@@ -10236,7 +10247,7 @@ EscapeSheikThink_Chase_PassiveThink_HoldShieldSkip:
 #Start timer
 	li	r3,ResetTimer
 	stb r3,Timer(REG_EventData)
-	b	EscapeSheikThink_Reset
+	b	EscapeSheikThink_CheckTimer
 
 EscapeSheikThink_Chase_PassiveStandThink:
 #Check if facing P1
@@ -10368,7 +10379,7 @@ EscapeSheikThink_Chase_PassiveStandThink_HoldShieldSkip:
 #Start timer
 	li	r3,ResetTimer
 	stb r3,Timer(REG_EventData)
-	b	EscapeSheikThink_Reset
+	b	EscapeSheikThink_CheckTimer
 
 
 EscapeSheikThink_Chase_DownBoundThink:
@@ -10381,6 +10392,18 @@ EscapeSheikThink_Chase_DownBoundThink:
 	branchl r12,HSD_Randi
 	addi r3,r3,JabFrameLo
 	stb r3,JabFrame(REG_EventData)
+#Get chance to jab again
+	li	r3,2
+	branchl r12,HSD_Randi
+	stb r3,isJabTwice(REG_EventData)
+#Get frame to jab again
+	li	r3,Jab2FrameHi-Jab2FrameLo
+	branchl r12,HSD_Randi
+	addi r3,r3,Jab2FrameLo
+	stb r3,Jab2Frame(REG_EventData)
+#Init Jab 2 Timer
+	li	r3,0
+	stb	r3,Jab2Timer(REG_EventData)
 EscapeSheikThink_Chase_DownBoundThink_JabFrameInitSkip:
 #Check if facing P1
 	cmpwi REG_Direction,0
@@ -10435,17 +10458,65 @@ EscapeSheikThink_Chase_DownBoundThink_HaltSkip:
 	stw r3,CPU_HeldButtons(REG_P2Data)
 	li	r3,0
 	stb r3,CPU_AnalogX(REG_P2Data)
+#Check if sheik will double jab
+	lbz	r3,isJabTwice(REG_EventData)
+	cmpwi	r3,0
+	beq	EscapeSheikThink_Chase_DownBoundThink_SingleJab
+#Start Double Jab timer
+	lbz	r3,Jab2Frame(REG_EventData)
+	stb	r3,Jab2Timer(REG_EventData)
+#Change Event State
+	li	r3,EventState_Jab2
+	stb	r3,EventState(REG_EventData)
+	b	EscapeSheikThink_CheckTimer
+EscapeSheikThink_Chase_DownBoundThink_SingleJab:
 #Advance state
 	li	r3,EventState_Reset
 	stb r3,EventState(REG_EventData)
 #Start timer
 	li	r3,ResetTimer+30
 	stb r3,Timer(REG_EventData)
-	b	EscapeSheikThink_Reset
+	b	EscapeSheikThink_CheckTimer
+#endregion
+
+#region EscapeSheikThink_Jab2
+EscapeSheikThink_Jab2:
+#Check if waiting on jab 2
+	lbz	r3,Jab2Timer(REG_EventData)
+	cmpwi	r3,0
+	beq	EscapeSheikThink_Chase_DownBoundThink_Jab2Skip
+#But not during hitlag
+	lbz	r3,0x221A(REG_P2Data)
+	rlwinm.	r3,r3,0,26,26
+	bne	EscapeSheikThink_Chase_DownBoundThink_Jab2Skip
+#Decrement timer
+	lbz	r3,Jab2Timer(REG_EventData)
+	subi	r3,r3,1
+	stb	r3,Jab2Timer(REG_EventData)
+#Check if up
+	cmpwi	r3,0
+	bgt	EscapeSheikThink_CheckTimer
+#Enter jab
+	li	r3,PAD_BUTTON_A
+	stw r3,CPU_HeldButtons(REG_P2Data)
+	li	r3,0
+	stb r3,CPU_AnalogX(REG_P2Data)
+#Advance state
+	li	r3,EventState_Reset
+	stb r3,EventState(REG_EventData)
+#Start timer
+	li	r3,ResetTimer+30
+	stb r3,Timer(REG_EventData)
+	b	EscapeSheikThink_CheckTimer
+EscapeSheikThink_Chase_DownBoundThink_Jab2Skip:
+	b	EscapeSheikThink_CheckTimer
 #endregion
 
 #region EscapeSheikThink_Reset
 EscapeSheikThink_Reset:
+#Hold Shield
+	li	r3,PAD_TRIGGER_R
+	stw	r3,CPU_HeldButtons(REG_P2Data)
 	b	EscapeSheikThink_CheckTimer
 #endregion
 
@@ -14813,10 +14884,10 @@ RemoveFirstFrameInputs_CheckIfPlayerExists:
   lwz	r5,0x2C(r12)
 
 #Remove Input Flag
-  lbz	r0, 0x221D (r27)
+  lbz	r0, 0x221D (r5)
   li	r3,0x1
   rlwimi	r0,r3,4,27,27
-  stb	r0,0x221D (r27)
+  stb	r0,0x221D (r5)
 #Store Current Input
   lbz	r4, 0x0618 (r5)
   load r3,InputStructStart
