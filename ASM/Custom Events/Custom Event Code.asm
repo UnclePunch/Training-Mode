@@ -9007,6 +9007,16 @@ ArmadaShineLoad:
 	li	r4,3		#Priority (After EnvCOllision)
   li  r5,0
 	bl	CreateEventThinkFunction
+
+#Remove randall
+	lwz	r3,StageID_External(r13)
+	cmpwi	r3,YoshiStory
+	bne	LedgedashLoad_SkipRemoveRandall
+#Get randall's map_gobj
+	li	r3,2				#randalls map_gobj is 2
+	branchl r12,Stage_map_gobj_Load
+	branchl r12,Stage_Destroy_map_gobj
+	
 	b	ArmadaShineThink_Exit
 
 ###################################
