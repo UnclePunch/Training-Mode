@@ -717,7 +717,7 @@ with an Armada-Shine!"
 
     .macro Event_ArmadaShine_PlayableCharacters
       .byte Event_ArmadaShine
-      .long Fox_CSSID         #Player Characters
+      .long -1  #Fox_CSSID         #Player Characters
 			.long -1
     .endm
 
@@ -770,11 +770,11 @@ down-tilt and grab the ledge!"
   .set Event_EscapeSheik,3
   #Event Name
     .macro Event_EscapeSheik_Name
-      .string "Escape Sheik Tech-chase"
+      .string "Escape Sheik Techchase"
     .endm
 
     .macro Event_EscapeSheik_Description
-      .string "Practice escaping the tech-chase with a
+      .string "Practice escaping the techchase with a
 frame perfect shine or jab SDI!"
     .endm
 

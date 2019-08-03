@@ -9037,11 +9037,17 @@ ArmadaShineThink:
 
 #Event Data Offsets
 	.set EventState,0x0
-		.set EventState_Hitstun,0x0
-		.set EventState_Falling,0x1
-		.set EventState_RecoverStart,0x2
-		.set EventState_RecoverEnd,0x3
+		.set	EventState_Hitstun,0x0
+		.set	EventState_Falling,0x1
+		.set	EventState_RecoverStart,0x2
+		.set	EventState_RecoverEnd,0x3
+		.set	EventState_Reset,0x4
 	.set Timer,0x1
+
+.set ResetTimer,80
+.set	QuickResetTimer,30
+.set PercentLo,0
+.set PercentHi,60
 
 backup
 
@@ -9067,8 +9073,8 @@ backup
 	cmpwi	r3,0x0
 	beq	ArmadaShineThink_Start
 	#Init Positions
-		mr	r3,P1GObj
-		mr	r4,P2GObj
+		mr	r3,REG_P1GObj
+		mr	r4,REG_P2GObj
 		bl	ArmadaShine_InitializePositions
   #Clear Inputs
     bl  RemoveFirstFrameInputs
@@ -9078,7 +9084,7 @@ backup
   	bl	SaveState_Save
 	#Init State
 		li	r3,EventState_Hitstun
-		stb	r3,EventState(EventData)
+		stb	r3,EventState(REG_EventData)
 ArmadaShineThink_Start:
 
 #Reset if anyone died
@@ -9086,8 +9092,31 @@ ArmadaShineThink_Start:
 	cmpwi r3,0
 	bne ArmadaShineThink_Restore
 
+ArmadaShineThink_GroundCheck:
+#If P2 is grounded, reset quick
+	lwz	r3,0xE0(REG_P2Data)
+	cmpwi	r3,0
+	beq	ArmadaShineThink_GroundCheck_OnGround
+#If P2 is grabbing a cliff, reset quick
+	lwz	r3,0x10(REG_P2Data)
+	cmpwi	r3,ASID_CliffCatch
+	beq	ArmadaShineThink_GroundCheck_OnGround
+	b	ArmadaShineThink_GroundCheckSkip
+ArmadaShineThink_GroundCheck_OnGround:
+#Check if timer was set
+	lbz r3,Timer(REG_EventData)
+	cmpwi	r3,QuickResetTimer
+	ble	ArmadaShineThink_GroundCheckSkip
+#Set timer
+	li	r3,QuickResetTimer
+	stb r3,Timer(REG_EventData)
+#Change State
+	li	r3,EventState_Reset
+	stb	r3,EventState(REG_EventData)
+ArmadaShineThink_GroundCheckSkip:
+
 #Switch Case
-	lbz r3,EventState(EventData)
+	lbz r3,EventState(REG_EventData)
 	cmpwi r3,EventState_Hitstun
 	beq ArmadaShineThink_Hitstun
 	cmpwi r3,EventState_Falling
@@ -9096,24 +9125,26 @@ ArmadaShineThink_Start:
 	beq ArmadaShineThink_RecoverStart
 	cmpwi r3,EventState_RecoverEnd
 	beq ArmadaShineThink_RecoverEnd
+	cmpwi	r3,EventState_Reset
+	beq	ArmadaShineThink_Reset
 	b	ArmadaShineThink_Exit
 
 #region ArmadaShineThink_Hitstun
 ArmadaShineThink_Hitstun:
 #Check if still in hitstun
-	lbz	r3,0x221C(P2Data)
+	lbz	r3,0x221C(REG_P2Data)
 	rlwinm. r3,r3,0,30,30
 	bne	ArmadaShineThink_Hitstun_Exit
 #Change Event State
 	li	r3,EventState_Falling
-	stb	r3,EventState(EventData)
+	stb	r3,EventState(REG_EventData)
 #Run Next State Code
 	b	ArmadaShineThink_Falling
 
 ArmadaShineThink_Hitstun_Exit:
 #Always L-Cancel
 	li	r3,0
-	stb r3,0x67F(P1Data)
+	stb r3,0x67F(REG_P1Data)
 	b	ArmadaShineThink_Exit
 #endregion
 
@@ -9122,8 +9153,8 @@ ArmadaShineThink_Falling:
 .set FirefoxRadius,80
 .set FirefoxChance,8
 #Get distance from ledge
-	addi r3,P2Data,0xB0
-	addi r4,P2Data,0x1ADC
+	addi r3,REG_P2Data,0xB0
+	addi r4,REG_P2Data,0x1ADC
 	bl	GetDistance
 	stfs	f1,0x80(sp)
 #Fox travels approx 82 Mm during firefox, so ensure he is at least this far
@@ -9142,12 +9173,12 @@ ArmadaShineThink_Falling:
 ArmadaShineThink_Falling_EnterFirefox:
 #Enter Firefox
 	li	r3,127
-	stb r3,CPU_AnalogY(P2Data)
+	stb r3,CPU_AnalogY(REG_P2Data)
 	li	r3,PAD_BUTTON_B
-	stw r3,CPU_HeldButtons(P2Data)
+	stw r3,CPU_HeldButtons(REG_P2Data)
 #Change Event State
 	li	r3,EventState_RecoverStart
-	stb	r3,EventState(EventData)
+	stb	r3,EventState(REG_EventData)
 #Exit
 	b	ArmadaShineThink_Exit
 #endregion
@@ -9158,8 +9189,8 @@ ArmadaShineThink_RecoverStart:
 
 #Hold towards ledge
 #Get Angle Between Fox and Ledge
-	addi r3,P2Data,0xB0
-	addi r4,P2Data,0x1ADC
+	addi r3,REG_P2Data,0xB0
+	addi r4,REG_P2Data,0x1ADC
 	bl	GetAngleBetweenPoints
 
 #Convert this to an input
@@ -9186,13 +9217,13 @@ ArmadaShineThink_RecoverStart:
 	fctiwz f1,f1,
 	stfd f1,0x80(sp)
 	lwz r3,0x84(sp)
-	stb r3,0x1A8C(P2Data)
+	stb r3,0x1A8C(REG_P2Data)
 #Get Y input
 	fmuls f1,REG_YComp,REG_127
 	fctiwz f1,f1,
 	stfd f1,0x80(sp)
 	lwz r3,0x84(sp)
-	stb r3,0x1A8D(P2Data)
+	stb r3,0x1A8D(REG_P2Data)
 
 #Restore f28-f31
 	lfs f29,0xB0(sp)
@@ -9200,15 +9231,22 @@ ArmadaShineThink_RecoverStart:
 	lfs f31,0xB8(sp)
 
 #Check if no longer in SpecialHiStart
-	lwz r3,0x10(P2Data)
+	lwz r3,0x10(REG_P2Data)
 	cmpwi r3,354
 	beq ArmadaShineThink_RecoverStart_Exit
 #Start restart timer
+	lwz	r3,0x4(REG_P1Data)
+	cmpwi	r3,Fox.Int
+	bne	ArmadaShineThink_RecoverStart_NotFox
 	li	r3,RestartTimer
-	stb r3,Timer(EventData)
+	b	ArmadaShineThink_RecoverStart_StoreRestartTimer
+ArmadaShineThink_RecoverStart_NotFox:
+	li	r3,RestartTimer+60
+ArmadaShineThink_RecoverStart_StoreRestartTimer:
+	stb r3,Timer(REG_EventData)
 #Change Event State
 	li	r3,EventState_RecoverEnd
-	stb	r3,EventState(EventData)
+	stb	r3,EventState(REG_EventData)
 #Run Next State Code
 	b	ArmadaShineThink_RecoverEnd
 
@@ -9218,29 +9256,41 @@ ArmadaShineThink_RecoverStart_Exit:
 
 #region ArmadaShineThink_RecoverEnd
 ArmadaShineThink_RecoverEnd:
+#If CPU got hit, recover again
+	lbz	r3,0x221C(REG_P2Data)
+	rlwinm. r3,r3,0,30,30
+	beq	ArmadaShineThink_Reset
+#Enter Hitstun state
+	li	r3,EventState_Hitstun
+	stb	r3,EventState(REG_EventData)
+	b	ArmadaShineThink_Exit
+#endregion
+
+#region ArmadaShineThink_Reset
+ArmadaShineThink_Reset:
 #Get timer
-	lbz r3,Timer(EventData)
+	lbz r3,Timer(REG_EventData)
 	subi r3,r3,1
-	stb r3,Timer(EventData)
+	stb r3,Timer(REG_EventData)
 	cmpwi r3,0
 	ble ArmadaShineThink_Restore
+	b	ArmadaShineThink_Exit
 
-b	ArmadaShineThink_Exit
 #endregion
 
 ArmadaShineThink_Restore:
 #Restore State
-	addi r3,EventData,EventData_SaveStateStruct
+	addi r3,REG_EventData,EventData_SaveStateStruct
 	li	r4,1
 	bl	SaveState_Load
 #Init Positions Again
-	mr	r3,P1GObj
-	mr	r4,P2GObj
+	mr	r3,REG_P1GObj
+	mr	r4,REG_P2GObj
 	bl	ArmadaShine_InitializePositions
 #Reset Variables
 	li	r3,0
-	stb r3,EventState(EventData)
-	stb r3,Timer(EventData)
+	stb r3,EventState(REG_EventData)
+	stb r3,Timer(REG_EventData)
 
 ArmadaShineThink_Exit:
 	restore
@@ -9274,19 +9324,19 @@ ArmadaShine_InitializePositions_GetRightLedgeID:
  #Change Facing Direction
 	li	r3,-1
 	bl	IntToFloat
-	stfs	f1,0x2C(P1Data)
+	stfs	f1,0x2C(REG_P1Data)
   li	r3,-1
   bl	IntToFloat
-  stfs	f1,0x2C(P2Data)
+  stfs	f1,0x2C(REG_P2Data)
 	b	ArmadaShine_InitializePositions_DirectionChangeEnd
 ArmadaShine_InitializePositions_GetLeftLedgeID:
 #Change Facing Direction
 	li	r3,1
   bl	IntToFloat
-  stfs	f1,0x2C(P1Data)
+  stfs	f1,0x2C(REG_P1Data)
   li	r3,1
   bl	IntToFloat
-  stfs	f1,0x2C(P2Data)
+  stfs	f1,0x2C(REG_P2Data)
 ArmadaShine_InitializePositions_DirectionChangeEnd:
 
 #Get Ledge Coordinates
@@ -9298,63 +9348,63 @@ ArmadaShine_InitializePositions_DirectionChangeEnd:
 	li r3,ArmadaShine_P1X
 	bl	IntToFloat
 	lfs f2,0x80(sp)
-	lfs f3,0x2C(P1Data)
+	lfs f3,0x2C(REG_P1Data)
 	fmadds f1,f1,f3,f2
-	stfs f1,0xB0(P1Data)
+	stfs f1,0xB0(REG_P1Data)
 	li r3,ArmadaShine_P1Y
 	bl	IntToFloat
 	lfs f2,0x84(sp)
 	fadds f1,f1,f2
-	stfs f1,0xB4(P1Data)
-	mr	r3,P1GObj
+	stfs f1,0xB4(REG_P1Data)
+	mr	r3,REG_P1GObj
 	bl	UpdatePosition
 #Move P2
 	li r3,ArmadaShine_P2X
 	bl	IntToFloat
 	lfs f2,0x80(sp)
-	lfs f3,0x2C(P2Data)
+	lfs f3,0x2C(REG_P2Data)
 	fmadds f1,f1,f3,f2
-	stfs f1,0xB0(P2Data)
+	stfs f1,0xB0(REG_P2Data)
 	li r3,ArmadaShine_P2Y
 	bl	IntToFloat
 	lfs f2,0x84(sp)
 	fadds f1,f1,f2
-	stfs f1,0xB4(P2Data)
-	mr	r3,P2GObj
+	stfs f1,0xB4(REG_P2Data)
+	mr	r3,REG_P2GObj
 	bl	UpdatePosition
 #P1 enters Bair
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	li	r4,ASID_AttackAirB
 	branchl r12,0x8008cfac
 #Fastforward to frame 7
 	li	r3,7
 	bl	IntToFloat
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	lfs	f2, -0x67D8 (rtoc)
 	lfs	f3, -0x67E4 (rtoc)
 	branchl r12,0x8006ebe8
 	li	r3,7
 	bl	IntToFloat
-	stfs f1,0x894(P1Data)
+	stfs f1,0x894(REG_P1Data)
 	li	r3,0
-	stw r3,0x3E4(P1Data)
-	mr	r3,P1GObj
+	stw r3,0x3E4(REG_P1Data)
+	mr	r3,REG_P1GObj
 	branchl r12,0x80073354
 #Update Animation
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	branchl r12,0x8006e9b4
 #Remove all hitboxes
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	branchl r12,0x8007aff8
 #Stop subaction script from being updated
 	li	r3,0
-	stw r3,0x3EC(P1Data)
+	stw r3,0x3EC(REG_P1Data)
 #Update Camera
-	mr	r3,P1GObj
+	mr	r3,REG_P1GObj
 	bl	UpdateCameraBox
 
 #P2 enters DamageFlyN
-	mr	r3,P2GObj
+	mr	r3,REG_P2GObj
 	li	r4,ASID_DamageFlyN
 	li	r5,0x40
 	li	r6,0
@@ -9363,13 +9413,13 @@ ArmadaShine_InitializePositions_DirectionChangeEnd:
 	lfs	f3, -0x750C (rtoc)
 	branchl r12,ActionStateChange
 #Update Animation
-	mr	r3,P2GObj
+	mr	r3,REG_P2GObj
 	branchl r12,0x8006e9b4
 #Remove Jump
-	lwz r3,0x168(P2Data)
-	stb r3,0x1968(P2Data)
+	lwz r3,0x168(REG_P2Data)
+	stb r3,0x1968(REG_P2Data)
 #Update Camera
-	mr	r3,P2GObj
+	mr	r3,REG_P2GObj
 	bl	UpdateCameraBox
 
 .set AngleLo,45
@@ -9377,7 +9427,7 @@ ArmadaShine_InitializePositions_DirectionChangeEnd:
 .set MagLo,106
 .set MagHi,120
 #Enter into knockback
-	mr	r3,P2GObj
+	mr	r3,REG_P2GObj
 	li	r4,AngleLo
 	li	r5,AngleHi
 	li	r6,MagLo
@@ -9387,26 +9437,33 @@ ArmadaShine_InitializePositions_DirectionChangeEnd:
 #Give 7 Frames of Hitlag to Each
 	li	r3,HitlagFrames
 	bl	IntToFloat
-	stfs f1,0x195C(P1Data)
-	lbz r0,0x221A(P1Data)
+	stfs f1,0x195C(REG_P1Data)
+	lbz r0,0x221A(REG_P1Data)
 	li	r3,1
 	rlwimi r0,r3,5,26,26
-	stb r0,0x221A(P1Data)
-	lbz r0,0x2219(P1Data)
+	stb r0,0x221A(REG_P1Data)
+	lbz r0,0x2219(REG_P1Data)
 	li	r3,1
 	rlwimi r0,r3,2,29,29
-	stb r0,0x2219(P1Data)
+	stb r0,0x2219(REG_P1Data)
 	li	r3,HitlagFrames
 	bl	IntToFloat
-	stfs f1,0x195C(P2Data)
-	lbz r0,0x221A(P2Data)
+	stfs f1,0x195C(REG_P2Data)
+	lbz r0,0x221A(REG_P2Data)
 	li	r3,1
 	rlwimi r0,r3,5,26,26
-	stb r0,0x221A(P2Data)
-	lbz r0,0x2219(P2Data)
+	stb r0,0x221A(REG_P2Data)
+	lbz r0,0x2219(REG_P2Data)
 	li	r3,1
 	rlwimi r0,r3,2,29,29
-	stb r0,0x2219(P2Data)
+	stb r0,0x2219(REG_P2Data)
+
+#Random percent
+	li	r3,PercentHi-PercentLo
+	branchl r12,HSD_Randi
+	addi r4,r3,PercentLo
+	lbz r3,0xC(REG_P2Data)
+	branchl r12,PlayerBlock_SetDamage
 
 ArmadaShine_InitializePositions_Exit:
 	restore
