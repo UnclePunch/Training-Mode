@@ -963,7 +963,7 @@ Reaction_SkipShineTimer:
 		cmpwi r3,0
 		beq Reaction_SkipReactionTimer
 	#Output reaction time
-		mr	r3,r27			#p1 (no offsetting window)
+		mr	r3,P1Data			#p1 (no offsetting window)
 		li	r4,120			#text timeout
 		li	r5,0			#Area to Display (0-2)
 		li	r6,OSD.Miscellaneous			#Window ID (Unique to This Display)
@@ -9016,7 +9016,7 @@ ArmadaShineLoad:
 	li	r3,2				#randalls map_gobj is 2
 	branchl r12,Stage_map_gobj_Load
 	branchl r12,Stage_Destroy_map_gobj
-	
+
 	b	ArmadaShineThink_Exit
 
 ###################################
@@ -9985,6 +9985,7 @@ EscapeSheikThink:
 	.set	isJabTwice,0x5
 	.set	Jab2Frame,0x6
 	.set	Jab2Timer,0x7
+	.set	isDisplayedTiming,0x8
 
 #Constants
 	.set ResetTimer,40
@@ -10054,7 +10055,7 @@ EscapeSheikThink_CheckIfFailed:
 #Check if timer has started
 	lbz r3,Timer(REG_EventData)
 	cmpwi r3,0
-	bgt EscapeSheikThink_CheckTimer
+	bgt EscapeSheikThink_CheckIfFailed_End
 #Start Timer
 	li	r3,ResetTimer
 	stb r3,Timer(REG_EventData)
@@ -10077,8 +10078,122 @@ EscapeSheikThink_CheckIfCPUDamaged:
 #Maybe increment a high score or something idk
 EscapeSheikThink_CheckIfCPUDamaged_End:
 
-EscapeSheikThink_CheckForEarlyShine:
-EscapeSheikThink_CheckForEarlyShine_End:
+EscapeSheikThink_CheckForMistimedShine:
+#Check if event state is in chase
+	lbz	r3,EventState(REG_EventData)
+	cmpwi	r3,EventState_Chase
+	blt	EscapeSheikThink_CheckForMistimedShine_End
+#Check if displayed already
+	lbz	r3,isDisplayedTiming(REG_EventData)
+	cmpwi	r3,0
+	bne	EscapeSheikThink_CheckForMistimedShine_End
+#Get this frames inputs
+  lbz	r4, 0x0618 (REG_P1Data)
+  load r3,InputStructStart
+  mulli	r0, r4, 68
+  add	r5, r0, r3
+#Check B Button
+	lwz	r3,InputStruct_InstantButtons(r5)
+	rlwinm.	r0,r3,0,22,22
+	beq	EscapeSheikThink_CheckForMistimedShine_End
+#Check if pushing down
+	lbz	r3,InputStruct_LeftAnalogY(r5)
+	extsb	r3,r3
+	cmpwi	r3,-44
+	bgt	EscapeSheikThink_CheckForMistimedShine_End
+#Check if in any missed tech state
+	lwz	r3,0x10(REG_P1Data)
+	cmpwi	r3,ASID_Passive
+	beq	EscapeSheikThink_CheckForMistimedShine_Early
+	cmpwi	r3,ASID_PassiveStandB
+	beq	EscapeSheikThink_CheckForMistimedShine_Early
+	cmpwi	r3,ASID_PassiveStandF
+	beq	EscapeSheikThink_CheckForMistimedShine_Early
+#Check if being grabbed
+	cmpwi	r3,ASID_CapturePulledLw
+	beq	EscapeSheikThink_CheckForMistimedShine_Late
+	cmpwi	r3,ASID_CapturePulledHi
+	beq	EscapeSheikThink_CheckForMistimedShine_Late
+	cmpwi	r3,ASID_CaptureWaitLw
+	beq	EscapeSheikThink_CheckForMistimedShine_Late
+	cmpwi	r3,ASID_CaptureWaitHi
+	beq	EscapeSheikThink_CheckForMistimedShine_Late
+	b	EscapeSheikThink_CheckForMistimedShine_End
+.set	REG_String,20
+.set	REG_Frames,21
+EscapeSheikThink_CheckForMistimedShine_Early:
+#Get early string
+	bl	EscapeSheikThink_EarlyText
+	mflr	REG_String
+#Get frames early
+	mr	r3,REG_P1Data
+	lwz	r4,0x14(REG_P1Data)
+	branchl	r12,0x80085e50
+	lfs	f1,0x8(r3)
+	fctiwz	f1,f1
+	stfd	f1,0x80(sp)
+	lwz	r3,0x84(sp)
+	lhz	r4,FramesinCurrentAS(REG_P1Data)
+	sub	REG_Frames,r3,r4
+	b	EscapeSheikThink_CheckForMistimedShine_Display
+EscapeSheikThink_CheckForMistimedShine_Late:
+#Get late string
+	bl	EscapeSheikThink_LateText
+	mflr	REG_String
+#Get frames late
+EscapeSheikThink_CheckForMistimedShine_LateSearchInitLoop:
+.set	REG_Count,22
+	li	REG_Count,0
+	lhz	REG_Frames,FramesinCurrentAS(REG_P1Data)
+EscapeSheikThink_CheckForMistimedShine_LateSearchLoop:
+#Get previous action state
+	addi	r3,REG_P1Data,PrevASStart
+	mulli	r4,REG_Count,0x2
+	add	r5,r3,r4
+#Check if wait
+	lhz	r3,0x0(r5)
+	cmpwi	r3,ASID_Wait
+	beq	EscapeSheikThink_CheckForMistimedShine_LateSearchFoundWait
+#Add frames spent in this state
+	lhz	r3,0xC(r5)
+	add	REG_Frames,REG_Frames,r3
+EscapeSheikThink_CheckForMistimedShine_LateSearchIncLoop:
+	addi	REG_Count,REG_Count,1
+	cmpwi	REG_Count,6
+	blt	EscapeSheikThink_CheckForMistimedShine_LateSearchLoop
+	b	EscapeSheikThink_CheckForMistimedShine_End
+
+EscapeSheikThink_CheckForMistimedShine_LateSearchFoundWait:
+
+EscapeSheikThink_CheckForMistimedShine_Display:
+#Output reaction time
+	mr	r3,REG_P1Data		#p1 (no offsetting window)
+	li	r4,120					#text timeout
+	li	r5,0						#Area to Display (0-2)
+	li	r6,OSD.Miscellaneous			#Window ID (Unique to This Display)
+	branchl	r12,TextCreateFunction			#create text custom function
+	mr	r22,r3			#backup text pointer
+
+#Create Text 1
+	mr 	r3,r22			#text pointer
+	bl	EscapeSheikThink_TopText
+	mflr	r4
+	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
+	branchl r12,Text_InitializeSubtext
+#Create Text 2
+	mr 	r3,r22			#text pointer
+	bl	EscapeSheikThink_BottomText
+	mflr	r4
+	mr	r5,REG_Frames
+	mr	r6,REG_String
+	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
+	lfs	f2, -0x37B0 (rtoc)			#default text X/Y
+	branchl r12,Text_InitializeSubtext
+#Set as displayed
+	li	r3,1
+	stb	r3,isDisplayedTiming(REG_EventData)
+EscapeSheikThink_CheckForMistimedShine_End:
 
 EscapeSheikThink_SwitchCase:
 #Switch Case
@@ -10575,6 +10690,29 @@ blrl
 .float 14		#16
 .float 1.1
 .float 23
+
+###########################################
+
+EscapeSheikThink_TopText:
+blrl
+.string "Down B Input"
+.align 2
+
+EscapeSheikThink_BottomText:
+blrl
+.string "%df %s"
+.align 2
+
+EscapeSheikThink_EarlyText:
+blrl
+.string "Early"
+.align 2
+
+EscapeSheikThink_LateText:
+blrl
+.string "Late"
+.align 2
+
 ###########################################
 
 EscapeSheik_InitializePositions:
@@ -10685,6 +10823,9 @@ EscapeSheik_InitializePositions_P2FacingRight:
 	branchl r12,HSD_Randi
 	addi r3,r3,ThrowTimerLo
 	sth r3,ThrowTimer(REG_EventData)
+#Init isDisplayedTiming
+	li	r3,0
+	stb	r3,isDisplayedTiming(REG_EventData)
 
 EscapeSheik_InitializePositions_Exit:
 	restore

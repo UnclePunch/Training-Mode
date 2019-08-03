@@ -1262,6 +1262,18 @@ InitSettings:
 #Static Memory Locations
 .set pdLoadCommonData,0x803bcde0
 .set InputStructStart,0x804c21cc
+  .set InputStruct_HeldButtons,0x0
+  .set InputStruct_HeldButtonsPrevFrame,0x4
+  .set InputStruct_InstantButtons,0x8
+  .set InputStruct_RapidFireButtons,0xC
+  .set InputStruct_InstantReleasedButtons,0x10
+  .set InputStruct_RapidFireCounter,0x14
+  .set InputStruct_LeftAnalogX,0x18
+  .set InputStruct_LeftAnalogY,0x19
+  .set InputStruct_RightAnalogX,0x1A
+  .set InputStruct_RightAnalogY,0x1B
+  .set InputStruct_LeftTrigger,0x1C
+  .set InputStruct_RightTrigger,0x1D
 .set PreloadTable,0x80432078
   .set Preload_Stage,0x10
 .set CSS_CursorPointers,0x804a0bc0
