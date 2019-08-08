@@ -677,12 +677,12 @@ MenuData_CreateSave:
 #Play
 	bl	MenuData_CreateSave_SlotA
 	.long	OnSelect_Function
-	bl	CreateSave_SlotA
+	.long 0#bl	CreateSave_SlotA
 #Create Save File
 	bl	MenuData_CreateSave_SlotB
 	.long	OnSelect_Function
-	bl	CreateSave_SlotB
-/*
+	.long 0#bl	CreateSave_SlotB
+
 #Space
 	bl	MenuData_CreateSave_Empty
 	.long	OnSelect_None
@@ -691,7 +691,7 @@ MenuData_CreateSave:
 	bl	MenuData_MainMenu_Disabled
 	.long	OnSelect_None
 	.long 0
-*/
+
 .long -1
 .align 2
 
