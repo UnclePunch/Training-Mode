@@ -52,6 +52,11 @@
           "address": "803edc1c",
           "sourceFile": "..\\ASM\\Additional Codes\\QWERTY Keyboard.s",
           "annotation": "QWERTY Keyboard"
+        },
+        {
+          "type": "binary",
+          "sourceFile": "..\\ASM\\Additional Codes\\PRIM LITE\\main.bin",
+          "annotation": "PRIM LITE [Punkline]"
         }
       ]
     }

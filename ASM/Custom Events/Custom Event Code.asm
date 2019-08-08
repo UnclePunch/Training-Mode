@@ -9044,6 +9044,7 @@ ArmadaShineThink:
 		.set	EventState_Reset,0x4
 	.set Timer,0x1
 
+#Constants
 .set ResetTimer,80
 .set	QuickResetTimer,30
 .set PercentLo,0
@@ -9091,6 +9092,13 @@ ArmadaShineThink_Start:
 	bl	IsAnyoneDead
 	cmpwi r3,0
 	bne ArmadaShineThink_Restore
+
+#DPad left to instant reset
+  lbz	r3, 0x0618 (REG_P1Data)
+  bl	GetInputStruct
+	lwz	r4,InputStruct_InstantButtons(r3)
+	rlwinm. r0,r4,0,31,31
+	bne	ArmadaShineThink_Restore
 
 ArmadaShineThink_GroundCheck:
 #If P2 is grounded, reset quick
@@ -9186,6 +9194,46 @@ ArmadaShineThink_Falling_EnterFirefox:
 #region ArmadaShineThink_RecoverStart
 ArmadaShineThink_RecoverStart:
 .set RestartTimer,30
+.set FirefoxHoldFrames,43
+
+ArmadaShineThink_RecoverStart_CheckIfDone:
+#Check if no longer in SpecialHiStart
+	lwz r3,0x10(REG_P2Data)
+	cmpwi r3,354
+	beq ArmadaShineThink_RecoverStart_CheckIfDoneSkip
+#Start restart timer
+	lwz	r3,0x4(REG_P1Data)
+	cmpwi	r3,Fox.Int
+	bne	ArmadaShineThink_RecoverStart_NotFox
+	li	r3,RestartTimer
+	b	ArmadaShineThink_RecoverStart_StoreRestartTimer
+ArmadaShineThink_RecoverStart_NotFox:
+	li	r3,RestartTimer+60
+ArmadaShineThink_RecoverStart_StoreRestartTimer:
+	stb r3,Timer(REG_EventData)
+#Change Event State
+	li	r3,EventState_RecoverEnd
+	stb	r3,EventState(REG_EventData)
+#Run Next State Code
+	b	ArmadaShineThink_RecoverEnd
+ArmadaShineThink_RecoverStart_CheckIfDoneSkip:
+
+#Wait until last frame of firefox
+	lhz	r3,FramesinCurrentAS(REG_P2Data)
+	cmpwi	r3,FirefoxHoldFrames-2
+	beq	ArmadaShineThink_RecoverStart_InputAngle
+#Input Up
+	li	r3,127
+	stb	r3,CPU_AnalogY(REG_P2Data)
+	b	ArmadaShineThink_RecoverStart_Exit
+
+ArmadaShineThink_RecoverStart_InputAngle:
+#Backup f28-f31
+	stfs f29,0xB0(sp)
+	stfs f30,0xB4(sp)
+	stfs f31,0xB8(sp)
+	stfs f28,0xBC(sp)
+	stfs f27,0xC0(sp)
 
 #Hold towards ledge
 #Get Angle Between Fox and Ledge
@@ -9225,30 +9273,128 @@ ArmadaShineThink_RecoverStart:
 	lwz r3,0x84(sp)
 	stb r3,0x1A8D(REG_P2Data)
 
+#region ecb test code
+.set REG_XPerFrame,29
+.set REG_YPerFrame,28
+.set REG_CurrXPos,27
+.set REG_CurrYPos,26
+.set REG_ECBStruct,20
+.set REG_ECBBoneStruct,21
+.set REG_LoopCount,22
+.set FirefoxFrames,30
+.set RandomAngleRange,20
+
+#Get Per Frame Velocity
+	mr	r3,REG_P2Data
+	branchl	r12,0x800a17e4
+	fmr	REG_XComp,f1
+	mr	r3,REG_P2Data
+	branchl	r12,0x800a1874
+	fmr	REG_YComp,f1
+#Get atan2
+	fmr	f1,REG_YComp
+	lfs	f2,0x2C(REG_P2Data)
+	fmuls	f2,f2,REG_XComp
+	branchl	r12,0x80022c30
+	fmr	REG_arctan,f1
+#Get XComp
+	fmr	f1,REG_arctan
+	branchl	r12,0x80326240
+	fmr	REG_XComp,f1
+	fmr	f1,REG_arctan
+	branchl	r12,0x803263d4
+	fmr	REG_YComp,f1
+#Get Firefox distance per frame
+	lwz	r3, 0x02D4 (REG_P2Data)
+	lfs	f1, 0x0074 (r3)
+	lfs	f0, 0x002C (REG_P2Data)
+	fmuls	f1,f1,REG_XComp
+	fmuls	REG_XPerFrame,f1,f0
+	lfs	f1, 0x0074 (r3)
+	fmuls	REG_YPerFrame,f1,REG_YComp
+#Create an ECB struct on the stack
+	subi	sp,sp,0x1d0
+	addi	REG_ECBBoneStruct,sp,0xC
+	addi	REG_ECBStruct,sp,0x24
+	mr	r3,REG_ECBStruct
+	branchl	r12,0x80041ee4
+#Create ECB Bone struct
+/*
+0x00 = ECB Current Top Y Offset scale * value
+0x04 = ECB Current Bottom Y Offset neg(scale * vlaue)
+0x08 = ECB Current Left X Offset neg(scale * vlaue)
+0x0C = ECB Current Left Y Offset 0
+0x10 = ECB Current Right X Offset scale * value
+0x14 = ECB Current Right Y Offset 0
+*/
+#Copy Struct
+	mr	r3,REG_ECBBoneStruct
+	addi	r4,REG_EventConstants,ECB_TopY
+	li	r5,0x18
+	branchl	r12,memcpy
+#Place Current XY into struct
+	lfs	REG_CurrXPos,0xB0(REG_P2Data)
+	lfs	REG_CurrYPos,0xB4(REG_P2Data)
+#Subtract 0.4 to account for the frame of animation left in this state
+	lfs	f1,FinalAnimYDifference(REG_EventConstants)
+	fsubs	REG_CurrYPos,REG_CurrYPos,f1
+	lfs	f1,0xB8(REG_P2Data)
+	stfs	f1,0x24(REG_ECBStruct)
+#Init Loop
+	li	REG_LoopCount,0
+ArmadaShineThink_RecoverStart_CollisionLoop:
+#Store current position
+	stfs	REG_CurrXPos,0x1C(REG_ECBStruct)
+	stfs	REG_CurrYPos,0x20(REG_ECBStruct)
+#Check if frame X or greater
+  lwz	r5, 0x02D4 (REG_P2Data)
+  lfs f1,0x70(r5)
+  fctiwz  f1,f1
+  stfd  f1,-0x10(sp)
+  lwz r3,-0x0C(sp)
+	cmpw	REG_LoopCount,r3
+	blt	ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay
+ArmadaShineThink_RecoverStart_CollisionLoop_Decay:
+	lfs	f1,0x78(r5)
+	fmuls	f1,f1,REG_XComp
+	lfs	f2, 0x002C (REG_P2Data)
+	fmuls	f1,f1,f2
+	fsubs	REG_XPerFrame,REG_XPerFrame,f1
+	lfs	f1,0x78(r5)
+	fmuls	f1,f1,REG_YComp
+	fsubs	REG_YPerFrame,REG_YPerFrame,f1
+ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
+#Store next position
+	fadds	f1,REG_CurrXPos,REG_XPerFrame
+	stfs	f1,0x4(REG_ECBStruct)
+	fadds	f1,REG_CurrYPos,REG_YPerFrame
+	stfs	f1,0x8(REG_ECBStruct)
+	lfs	f1,0x24(REG_ECBStruct)
+	stfs	f1,0xC(REG_ECBStruct)
+	mr	r3,REG_ECBStruct
+	mr	r4,REG_ECBBoneStruct
+	branchl	r12,0x8004730c
+	lfs	REG_CurrXPos,0x4(REG_ECBStruct)
+	lfs	REG_CurrYPos,0x8(REG_ECBStruct)
+#Inc Loop
+	addi	REG_LoopCount,REG_LoopCount,1
+  lwz	r5, 0x02D4 (REG_P2Data)
+  lfs	f1, 0x0068 (r5)
+  fctiwz  f1,f1
+  stfd  f1,-0x10(sp)
+  lwz r3,-0x0C(sp)
+	cmpw	REG_LoopCount,r3
+	blt	ArmadaShineThink_RecoverStart_CollisionLoop
+#End Loop
+	addi	sp,sp,0x1d0
+#endregion
+
 #Restore f28-f31
 	lfs f29,0xB0(sp)
 	lfs f30,0xB4(sp)
 	lfs f31,0xB8(sp)
-
-#Check if no longer in SpecialHiStart
-	lwz r3,0x10(REG_P2Data)
-	cmpwi r3,354
-	beq ArmadaShineThink_RecoverStart_Exit
-#Start restart timer
-	lwz	r3,0x4(REG_P1Data)
-	cmpwi	r3,Fox.Int
-	bne	ArmadaShineThink_RecoverStart_NotFox
-	li	r3,RestartTimer
-	b	ArmadaShineThink_RecoverStart_StoreRestartTimer
-ArmadaShineThink_RecoverStart_NotFox:
-	li	r3,RestartTimer+60
-ArmadaShineThink_RecoverStart_StoreRestartTimer:
-	stb r3,Timer(REG_EventData)
-#Change Event State
-	li	r3,EventState_RecoverEnd
-	stb	r3,EventState(REG_EventData)
-#Run Next State Code
-	b	ArmadaShineThink_RecoverEnd
+	lfs f28,0xBC(sp)
+	lfs f27,0xC0(sp)
 
 ArmadaShineThink_RecoverStart_Exit:
 	b	ArmadaShineThink_Exit
@@ -9298,6 +9444,21 @@ ArmadaShineThink_Exit:
 
 ArmadaShineThink_Constants:
 blrl
+
+.set	ECB_TopY,0x0 #scale * value
+.set	ECB_BottomY,0x4 #neg(scale * vlaue)
+.set	ECB_LeftX,0x8 #neg(scale * vlaue)
+.set	ECB_LeftY,0xC #0
+.set	ECB_RightX,0x10 #scale * value
+.set	ECB_RightY,0x14 #0
+.set	FinalAnimYDifference,0x18
+.float 9
+.float 2.5
+.float -3.3
+.float 5.7
+.float 3.3
+.float 5.7
+.float 0.4
 
 ArmadaShine_InitializePositions:
 backup
@@ -10146,9 +10307,8 @@ EscapeSheikThink_CheckForMistimedShine:
 	bne	EscapeSheikThink_CheckForMistimedShine_End
 #Get this frames inputs
   lbz	r4, 0x0618 (REG_P1Data)
-  load r3,InputStructStart
-  mulli	r0, r4, 68
-  add	r5, r0, r3
+  bl	GetInputStruct
+	mr	r5,r3
 #Check B Button
 	lwz	r3,InputStruct_InstantButtons(r5)
 	rlwinm.	r0,r3,0,22,22
@@ -15720,6 +15880,13 @@ PlaceOnLedge_StoreLedgeIDAndPosition:
 
 	restore
 	blr
+###########################################
+GetInputStruct:
+  load r4,InputStructStart
+  mulli	r0, r3, 68
+  add	r3, r0, r4
+	blr
+
 ###########################################
 exit:
 li	r0, 3
