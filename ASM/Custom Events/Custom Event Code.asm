@@ -9218,6 +9218,7 @@ ArmadaShineThink_RecoverStart_StoreRestartTimer:
 	b	ArmadaShineThink_RecoverEnd
 ArmadaShineThink_RecoverStart_CheckIfDoneSkip:
 
+/*
 #Wait until last frame of firefox
 	lhz	r3,FramesinCurrentAS(REG_P2Data)
 	cmpwi	r3,FirefoxHoldFrames-2
@@ -9226,6 +9227,7 @@ ArmadaShineThink_RecoverStart_CheckIfDoneSkip:
 	li	r3,127
 	stb	r3,CPU_AnalogY(REG_P2Data)
 	b	ArmadaShineThink_RecoverStart_Exit
+*/
 
 ArmadaShineThink_RecoverStart_InputAngle:
 #Backup f28-f31

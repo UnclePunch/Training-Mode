@@ -1,4 +1,4 @@
-#To be inserted at 800e7418
+#To be inserted at 80080e40
 .include "../../Globals.s"
 
 .set StackSize,0x300
@@ -12,18 +12,42 @@
   .set Stack_ECBStruct_Length,0x1AC
 .set Stack_MiscSpace, (Stack_ECBStruct+Stack_ECBStruct_Length)
 
-.set  REG_P2Data,31
-.set  REG_EventConstants,30
+.set  REG_P2Data,30
+.set  REG_EventConstants,31
 
 mflr r0
 stw r0, 0x4(r1)
 stwu	r1,-StackSize(r1)	# make space for 12 registers
 stmw  r20,Stack_BackedUpReg(r1)
 
-lwz REG_P2Data,0x2c(r3)
-bl  ArmadaShineThink_Constants
-mflr  REG_EventConstants
+#Get Floats
+  bl  ArmadaShineThink_Constants
+  mflr  REG_EventConstants
 
+#Check if fox or falco
+  lwz r3,0x4(REG_P2Data)
+  cmpwi r3,Fox.Int
+  beq isSpacie
+  cmpwi r3,Falco.Int
+  beq isSpacie
+  b Exit
+isSpacie:
+#Check if in up b hold
+  lwz r3,0x10(REG_P2Data)
+  cmpwi r3,353
+  beq isFirefoxHold
+  cmpwi r3,354
+  beq isFirefoxHold
+  b Exit
+isFirefoxHold:
+#Check if spacie codes are enabled
+	li	r0,OSD.SpacieTech			#Fox Training Codes ID
+	lwz	r4,-0x77C0(r13)
+	lwz	r4,0x1F24(r4)
+	li	r3, 1
+	slw	r0, r3, r0
+	and.	r0, r0, r4
+	beq	Exit
 #region ecb test code
 .set REG_arctan,31
 .set REG_XComp,30
@@ -105,7 +129,7 @@ mflr  REG_EventConstants
   fctiwz  f1,f1
   stfd  f1,-0x10(sp)
   lwz r3,-0x0C(sp)
-  load  r4,0x00101306
+  load  r4,0x001F1306
   load  r5,0x00001455
   branchl r12,prim.new
   mr  REG_GX,r3
@@ -147,10 +171,10 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
   lfs f1,0x84(REG_ECBStruct)
   fadds f1,REG_CurrXPos,f1
   lfs f2,0x88(REG_ECBStruct)
+  lfs f3,Float2(REG_EventConstants)
+  fdivs f2,f2,f3
   fadds f2,REG_CurrYPos,f2
-  li  r3,0
-  stw r3,Stack_MiscSpace(sp)
-  lfs f3,Stack_MiscSpace(sp)
+  lfs f3,FirefoxDrawZ(REG_EventConstants)
   load  r4,0x4B75FFFF
   mr  r3,REG_GX
   stfs  f1,0x0(r3)
@@ -170,14 +194,8 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
   branchl r12,prim.close
   mr  r3,REG_CObjBackup
   branchl r12,0x80368458
+  b Exit
 #endregion
-  Exit:
-  lmw  r20,Stack_BackedUpReg(r1)
-  lwz r0, StackSize+4(r1)
-  addi	r1,r1,StackSize	# release the space
-  mtlr r0
-  blr
-
 
 
 ArmadaShineThink_Constants:
@@ -190,6 +208,8 @@ blrl
 .set	ECB_RightX,0x10 #scale * value
 .set	ECB_RightY,0x14 #0
 .set	FinalAnimYDifference,0x18
+.set  Float2,0x1C
+.set  FirefoxDrawZ,0x20
 .float 9
 .float 2.5
 .float -3.3
@@ -197,3 +217,12 @@ blrl
 .float 3.3
 .float 5.7
 .float 0.4
+.float 2
+.float 10
+
+Exit:
+  lmw  r20,Stack_BackedUpReg(r1)
+  lwz r0, StackSize+4(r1)
+  addi	r1,r1,StackSize	# release the space
+  mtlr r0
+  mr	r3, r28
