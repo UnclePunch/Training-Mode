@@ -117,12 +117,6 @@ isFirefoxHold:
 	stfs	f1,0x24(REG_ECBStruct)
 #Init Loop
 	li	REG_LoopCount,0
-#Change current CObj
-  lwz	REG_CObjBackup, -0x4044 (r13)
-  load  r3,0x80452C68
-  lwz r3,0x0(r3)
-  lwz r3,0x28(r3)
-  branchl r12,0x80368458
 #Init GX Prim
   lwz	r5, 0x02D4 (REG_P2Data)
   lfs	f1, 0x0068 (r5)
@@ -192,8 +186,6 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
 	blt	ArmadaShineThink_RecoverStart_CollisionLoop
 #End Loop
   branchl r12,prim.close
-  mr  r3,REG_CObjBackup
-  branchl r12,0x80368458
   b Exit
 #endregion
 
