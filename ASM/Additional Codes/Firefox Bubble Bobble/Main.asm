@@ -3,7 +3,7 @@
 
 .set StackSize,0x300
 .set Stack_BackedUpReg,0x8
-  .set Stack_BackedUpReg_Length,0x2C
+  .set Stack_BackedUpReg_Length,0x30
 .set Stack_BackedUpFloats, (Stack_BackedUpReg+Stack_BackedUpReg_Length)
   .set Stack_BackedUpFloats_Length,0x14
 .set Stack_ECBBoneStruct, (Stack_BackedUpFloats+Stack_BackedUpFloats_Length)
@@ -19,6 +19,10 @@ mflr r0
 stw r0, 0x4(r1)
 stwu	r1,-StackSize(r1)	# make space for 12 registers
 stmw  r20,Stack_BackedUpReg(r1)
+
+#check for renderpass 2
+  cmpwi r29,2
+  bne Exit
 
 #Get Floats
   bl  ArmadaShineThink_Constants
@@ -48,6 +52,7 @@ isFirefoxHold:
 	slw	r0, r3, r0
 	and.	r0, r0, r4
 	beq	Exit
+
 #region ecb test code
 .set REG_arctan,31
 .set REG_XComp,30
@@ -61,12 +66,49 @@ isFirefoxHold:
 .set REG_LoopCount,22
 .set REG_GX,23
 .set REG_CObjBackup,24
+.set REG_Interrupt,25
 
 .set RandomAngleRange,20
 
-#Get Per Frame Velocity
+#If game is paused or this is a CPU, use playerblock inputs
+  li  r3,1
+  branchl r12,0x801a45e8
+  cmpwi r3,2
+  beq PBInputs
+  lbz r3,0xC(REG_P2Data)
+  branchl r12,0x8003241c
+  cmpwi r3,0x0
+  bne PBInputs
+HWInputs:
+  load  r3,HSD_InputStructStart
+  lbz r4,0x618(REG_P2Data)
+  mulli r4,r4,68
+  add r3,r3,r4
+	lfs	REG_XComp,InputStruct_LeftAnalogXFloat(r3)
+	lfs	REG_YComp,InputStruct_LeftAnalogYFloat(r3)
+#Now apply deadzone
+  lfs	f0, -0x778C (rtoc)
+  lwz	r3, -0x514C (r13)
+  lfs	f1, 0 (r3)
+  fmr f2,REG_XComp
+  fcmpo cr0,f2,f0
+  bge 0x8
+  fneg  f2,f2
+  fcmpo cr0,f2,f1
+  bge 0x8
+  lfs	REG_XComp, -0x778C (rtoc)
+  fmr f2,REG_YComp
+  fcmpo cr0,f2,f0
+  bge 0x8
+  fneg  f2,f2
+  fcmpo cr0,f2,f1
+  bge 0x8
+  lfs	REG_YComp, -0x778C (rtoc)
+  b GetInputsEnd
+PBInputs:
 	lfs	REG_XComp,0x620(REG_P2Data)
 	lfs	REG_YComp,0x624(REG_P2Data)
+GetInputsEnd:
 #Get atan2
 	fmr	f1,REG_YComp
 	lfs	f2,0x2C(REG_P2Data)
@@ -115,15 +157,18 @@ isFirefoxHold:
 	fsubs	REG_CurrYPos,REG_CurrYPos,f1
 	lfs	f1,0xB8(REG_P2Data)
 	stfs	f1,0x24(REG_ECBStruct)
+#Disable Interrupts
+  branchl r12,0x80347364
+  mr  REG_Interrupt,r3
 #Init Loop
 	li	REG_LoopCount,0
 #Init GX Prim
   lwz	r5, 0x02D4 (REG_P2Data)
   lfs	f1, 0x0068 (r5)
   fctiwz  f1,f1
-  stfd  f1,-0x10(sp)
-  lwz r3,-0x0C(sp)
-  load  r4,0x001F1306
+  stfd  f1,Stack_MiscSpace(sp)
+  lwz r3,Stack_MiscSpace+4(sp)
+  load  r4,0x001F1305
   load  r5,0x00001455
   branchl r12,prim.new
   mr  REG_GX,r3
@@ -135,8 +180,8 @@ ArmadaShineThink_RecoverStart_CollisionLoop:
   lwz	r5, 0x02D4 (REG_P2Data)
   lfs f1,0x70(r5)
   fctiwz  f1,f1
-  stfd  f1,-0x10(sp)
-  lwz r3,-0x0C(sp)
+  stfd  f1,Stack_MiscSpace(sp)
+  lwz r3,Stack_MiscSpace+4(sp)
 	cmpw	REG_LoopCount,r3
 	blt	ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay
 ArmadaShineThink_RecoverStart_CollisionLoop_Decay:
@@ -180,12 +225,15 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
   lwz	r5, 0x02D4 (REG_P2Data)
   lfs	f1, 0x0068 (r5)
   fctiwz  f1,f1
-  stfd  f1,-0x10(sp)
-  lwz r3,-0x0C(sp)
+  stfd  f1,Stack_MiscSpace(sp)
+  lwz r3,Stack_MiscSpace+4(sp)
 	cmpw	REG_LoopCount,r3
 	blt	ArmadaShineThink_RecoverStart_CollisionLoop
 #End Loop
   branchl r12,prim.close
+#Restore Interrupts
+  mr  r3,REG_Interrupt
+  branchl r12,0x8034738c
   b Exit
 #endregion
 
