@@ -25,7 +25,7 @@ stmw  r20,Stack_BackedUpReg(r1)
   bne Exit
 
 #Get Floats
-  bl  ArmadaShineThink_Constants
+  bl  Constants
   mflr  REG_EventConstants
 
 #Check if fox or falco
@@ -172,10 +172,12 @@ GetInputsEnd:
   load  r5,0x00001455
   branchl r12,prim.new
   mr  REG_GX,r3
-ArmadaShineThink_RecoverStart_CollisionLoop:
+CollisionLoop:
 #Store current position
-	stfs	REG_CurrXPos,0x1C(REG_ECBStruct)
-	stfs	REG_CurrYPos,0x20(REG_ECBStruct)
+	stfs	REG_CurrXPos,0x4(REG_ECBStruct)
+	stfs	REG_CurrYPos,0x8(REG_ECBStruct)
+  lfs	f1, -0x778C (rtoc)
+  stfs	f1,0xC(REG_ECBStruct)
 #Check if frame X or greater
   lwz	r5, 0x02D4 (REG_P2Data)
   lfs f1,0x70(r5)
@@ -183,8 +185,8 @@ ArmadaShineThink_RecoverStart_CollisionLoop:
   stfd  f1,Stack_MiscSpace(sp)
   lwz r3,Stack_MiscSpace+4(sp)
 	cmpw	REG_LoopCount,r3
-	blt	ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay
-ArmadaShineThink_RecoverStart_CollisionLoop_Decay:
+	blt	CollisionLoop_SkipDecay
+CollisionLoop_Decay:
 	lfs	f1,0x78(r5)
 	fmuls	f1,f1,REG_XComp
 	lfs	f2, 0x002C (REG_P2Data)
@@ -193,19 +195,68 @@ ArmadaShineThink_RecoverStart_CollisionLoop_Decay:
 	lfs	f1,0x78(r5)
 	fmuls	f1,f1,REG_YComp
 	fsubs	REG_YPerFrame,REG_YPerFrame,f1
-ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
+CollisionLoop_SkipDecay:
+#Shift previous positions down
+  lfs f1,0x4(REG_ECBStruct)
+  lfs f2,0x8(REG_ECBStruct)
+  lfs f3,0xC(REG_ECBStruct)
+  stfs f1,0x1C(REG_ECBStruct)
+  stfs f2,0x20(REG_ECBStruct)
+  stfs f3,0x24(REG_ECBStruct)
 #Store next position
 	fadds	f1,REG_CurrXPos,REG_XPerFrame
 	stfs	f1,0x4(REG_ECBStruct)
 	fadds	f1,REG_CurrYPos,REG_YPerFrame
 	stfs	f1,0x8(REG_ECBStruct)
-	lfs	f1,0x24(REG_ECBStruct)
+	lfs	f1, -0x778C (rtoc)
 	stfs	f1,0xC(REG_ECBStruct)
+#Run collision
 	mr	r3,REG_ECBStruct
 	mr	r4,REG_ECBBoneStruct
-	branchl	r12,0x8004730c
+	branchl	r12,0x800475f4#0x800473cc
+#Drop through platforms
+  cmpwi r3,0
+  beq CollisionLoop_SkipPlatform
+  mr  r3,REG_ECBStruct
+  branchl r12,0x8004cbc0
+  cmpwi r3,0
+  beq CollisionLoop_SkipPlatform
+  lwz	r0, 0x014C (REG_ECBStruct)
+  stw	r0, 0x003C (REG_ECBStruct)
+CollisionLoop_SkipPlatform:
+#Get new position
 	lfs	REG_CurrXPos,0x4(REG_ECBStruct)
 	lfs	REG_CurrYPos,0x8(REG_ECBStruct)
+#Inc Collision ID
+  lwz r3,0x38(REG_ECBStruct)
+  addi  r3,r3,1
+  stw r3,0x38(REG_ECBStruct)
+#Determine line color
+  lwz r3,0x134(REG_ECBStruct)
+  rlwinm. r0,r3,0,0x8000
+  bne CollisionLoop_TouchingGround
+  rlwinm. r0,r3,0,0x6000
+  bne CollisionLoop_TouchingCeiling
+  rlwinm. r0,r3,0,0x20
+  bne CollisionLoop_TouchingLeftWall
+  rlwinm. r0,r3,0,0x40
+  bne CollisionLoop_TouchingLRightWall
+CollisionLoop_TouchingNothing:
+  lwz r4,LineColor(REG_EventConstants)
+  b CollisionLoop_GetColorEnd
+CollisionLoop_TouchingGround:
+  lwz r4,GroundColor(REG_EventConstants)
+  b CollisionLoop_GetColorEnd
+CollisionLoop_TouchingCeiling:
+  lwz r4,CeilingColor(REG_EventConstants)
+  b CollisionLoop_GetColorEnd
+CollisionLoop_TouchingLeftWall:
+  lwz r4,LeftWallColor(REG_EventConstants)
+  b CollisionLoop_GetColorEnd
+CollisionLoop_TouchingLRightWall:
+  lwz r4,RightWallColor(REG_EventConstants)
+  b CollisionLoop_GetColorEnd
+CollisionLoop_GetColorEnd:
 #Draw this point
   lfs f1,0x84(REG_ECBStruct)
   fadds f1,REG_CurrXPos,f1
@@ -214,7 +265,6 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
   fdivs f2,f2,f3
   fadds f2,REG_CurrYPos,f2
   lfs f3,FirefoxDrawZ(REG_EventConstants)
-  load  r4,0x4B75FFFF
   mr  r3,REG_GX
   stfs  f1,0x0(r3)
   stfs  f2,0x0(r3)
@@ -228,7 +278,7 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
   stfd  f1,Stack_MiscSpace(sp)
   lwz r3,Stack_MiscSpace+4(sp)
 	cmpw	REG_LoopCount,r3
-	blt	ArmadaShineThink_RecoverStart_CollisionLoop
+	blt	CollisionLoop
 #End Loop
   branchl r12,prim.close
 #Restore Interrupts
@@ -238,7 +288,7 @@ ArmadaShineThink_RecoverStart_CollisionLoop_SkipDecay:
 #endregion
 
 
-ArmadaShineThink_Constants:
+Constants:
 blrl
 
 .set	ECB_TopY,0x0 #scale * value
@@ -250,6 +300,11 @@ blrl
 .set	FinalAnimYDifference,0x18
 .set  Float2,0x1C
 .set  FirefoxDrawZ,0x20
+.set  LineColor,0x24
+.set  LeftWallColor,0x28
+.set  RightWallColor,0x2C
+.set  CeilingColor,0x30
+.set  GroundColor,0x34
 .float 9
 .float 2.5
 .float -3.3
@@ -259,6 +314,11 @@ blrl
 .float 0.4
 .float 2
 .float 10
+.byte 0, 138, 255, 255
+.byte 12, 255, 41, 255
+.byte 12, 255, 41, 255
+.byte 255, 55, 55, 255
+.byte 255, 255, 255, 255
 
 Exit:
   lmw  r20,Stack_BackedUpReg(r1)
