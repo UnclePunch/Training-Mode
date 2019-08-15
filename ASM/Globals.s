@@ -1445,6 +1445,7 @@ InitSettings:
 .set cos,0x80326240
 .set sin,0x803263d4
 .set fmod,0x80364340
+.set sqrt,0x8000d5bc
 .set HSD_Free,0x8037f1b0
 .set GObj_Create,0x803901f0
 .set GObj_AddUserData,0x80390b68
