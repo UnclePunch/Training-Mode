@@ -15861,8 +15861,11 @@ PlaceOnLedge_StoreLedgeIDAndPosition:
 	mr r3,REG_P1Data
 	branchl r12,Air_StoreBool_LoseGroundJump_NoECBfor10Frames
 #Set ECB Update Flag
-	mr  r3,P1Data
+	mr  r3,REG_P1Data
 	branchl r12,DataOffset_ECBBottomUpdateEnable
+#Update ECB Corner Positions
+	addi	r3,REG_P1Data,0x6F0
+	branchl	r12,0x80048160
 #Move Player To Ledge
 	mr	r3,REG_P1GObj
 	branchl r12,MovePlayerToLedge
