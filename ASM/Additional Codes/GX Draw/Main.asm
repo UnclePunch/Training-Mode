@@ -6,33 +6,12 @@
 
 backup
 
-#Disable Interrupts
-  branchl r12,0x80347364
-  mr  REG_Interrupt,r3
 #check for renderpass 2
   cmpwi r29,2
   bne Exit
 
-#Check for firefox trajectory
-  lwz r3,0x4(REG_PlayerData)
-  cmpwi r3,Fox.Int
-  beq CallFirefoxTrajectory
-  cmpwi r3,Falco.Int
-  beq CallFirefoxTrajectory
-  b SkipCallFirefoxTrajectory
-CallFirefoxTrajectory:
   bl  FirefoxTrajectory
-SkipCallFirefoxTrajectory:
-#Check for DI Draw
-	lbz	r3,0x221A(REG_PlayerData)			#Check If in Hitlag
-	rlwinm.	r3,r3,0,0x20
-  beq SkipCallDIDraw
-	lbz	r3, 0x221C (REG_PlayerData)
-	rlwinm.	r0,r3,0,0x2
-  beq SkipCallDIDraw
-CallDIDraw:
   bl  DIDraw
-SkipCallDIDraw:
   b Exit
 
 #region Firefox Trajectory
@@ -105,6 +84,14 @@ FirefoxTrajectory:
   stwu	r1,-StackSize(r1)	# make space for 12 registers
   stmw  r20,Stack_BackedUpReg(r1)
 
+#Check for firefox trajectory
+  lwz r3,0x4(REG_PlayerData)
+  cmpwi r3,Fox.Int
+  beq FirefoxTrajectory_isSpacie
+  cmpwi r3,Falco.Int
+  beq FirefoxTrajectory_isSpacie
+  b FirefoxTrajectory_Exit
+
 FirefoxTrajectory_isSpacie:
 #Check if in up b hold
   lwz r3,0x10(REG_PlayerData)
@@ -121,7 +108,7 @@ FirefoxTrajectory_isFirefoxHold:
 	li	r3, 1
 	slw	r0, r3, r0
 	and.	r0, r0, r4
-	beq	FirefoxTrajectory_Exit
+	#beq	FirefoxTrajectory_Exit
 
 #Get Floats
   bl  FirefoxTrajectory_Constants
@@ -143,6 +130,10 @@ FirefoxTrajectory_HWInputs:
   add r3,r3,r4
 	lfs	REG_XComp,InputStruct_LeftAnalogXFloat(r3)
 	lfs	REG_YComp,InputStruct_LeftAnalogYFloat(r3)
+#If Holding A, override and use PB Inputs
+  lwz r0,InputStruct_HeldButtons(r3)
+  rlwinm. r0,r0,0,0x100
+  bne FirefoxTrajectory_PBInputs
 #Now apply deadzone
   lfs	f0, -0x778C (rtoc)
   lwz	r3, -0x514C (r13)
@@ -408,6 +399,10 @@ blrl
 .set REG_CurrYPos,25
 .set REG_DIInput,24
 .set REG_KnockbackMag,23
+.set REG_CStickX,22
+.set REG_CStickY,21
+.set REG_ASDIX,22
+.set REG_ASDIY,21
 .set REG_Gravity,30
 
 #constants
@@ -418,6 +413,14 @@ DIDraw:
   stw r0, 0x4(r1)
   stwu	r1,-StackSize(r1)	# make space for 12 registers
   stmw  r20,Stack_BackedUpReg(r1)
+
+#Check for DI Draw
+	lbz	r3,0x221A(REG_PlayerData)			#Check If in Hitlag
+	rlwinm.	r3,r3,0,0x20
+  beq DIDraw_Exit
+	lbz	r3, 0x221C (REG_PlayerData)
+	rlwinm.	r0,r3,0,0x2
+  beq DIDraw_Exit
 
 #Get Floats
   bl  DIDraw_Constants
@@ -442,6 +445,8 @@ DIDraw_HWInputs:
   bne DIDraw_PBInputs
 	lfs	REG_XComp,InputStruct_LeftAnalogXFloat(r3)
 	lfs	REG_YComp,InputStruct_LeftAnalogYFloat(r3)
+  lfs	REG_CStickX,InputStruct_RightAnalogXFloat(r3)
+  lfs	REG_CStickY,InputStruct_RightAnalogYFloat(r3)
 #Get L/R input
   lwz REG_HeldInputs,InputStruct_HeldButtons(r3)
   rlwinm. r0,REG_HeldInputs,0,0x20
@@ -453,7 +458,7 @@ DIDraw_HWInputs_NoLR:
   b 0x8
 DIDraw_HWInputs_PressingLR:
   lis REG_HeldInputs,0x8000
-#Now apply deadzone
+#Now apply analog deadzone
   lfs	f0, -0x778C (rtoc)
   lwz	r3, -0x514C (r13)
   lfs	f1, 0 (r3)
@@ -471,11 +476,31 @@ DIDraw_HWInputs_PressingLR:
   fcmpo cr0,f2,f1
   bge 0x8
   lfs	REG_YComp, -0x778C (rtoc)
+#Now apply cstick deadzone
+  lfs	f0, -0x778C (rtoc)
+  lwz	r3, -0x514C (r13)
+  lfs	f1, 0 (r3)
+  fmr f2,REG_CStickX
+  fcmpo cr0,f2,f0
+  bge 0x8
+  fneg  f2,f2
+  fcmpo cr0,f2,f1
+  bge 0x8
+  lfs	REG_CStickX, -0x778C (rtoc)
+  fmr f2,REG_CStickY
+  fcmpo cr0,f2,f0
+  bge 0x8
+  fneg  f2,f2
+  fcmpo cr0,f2,f1
+  bge 0x8
+  lfs	REG_CStickY, -0x778C (rtoc)
   b DIDraw_GetInputsEnd
 DIDraw_PBInputs:
 	lfs	REG_XComp,0x620(REG_PlayerData)
 	lfs	REG_YComp,0x624(REG_PlayerData)
   lwz REG_HeldInputs,0x65C(REG_PlayerData)
+	lfs	REG_CStickX,0x638(REG_PlayerData)
+	lfs	REG_CStickY,0x63C(REG_PlayerData)
 DIDraw_GetInputsEnd:
 #Get original KB vector
   lfs REG_KnockbackX,0x8C(REG_PlayerData)
@@ -512,6 +537,26 @@ DIDraw_GetArctan:
   frsp	f0,f0
   fmr REG_KnockbackMag,f0
 DIDraw_SkipUnk:
+DIDraw_CalculateASDI:
+#Check if cstick magnitude > 0.7
+  fmuls f1,REG_CStickX,REG_CStickX
+  fmuls f0,REG_CStickY,REG_CStickY
+  lwz	r3, -0x514C (r13)
+  lfs	f2, 0x04B0 (r3)
+  fadds	f1,f1,f0
+  fmuls	f0,f2,f2
+  fcmpo	cr0,f1,f0
+  bge DIDraw_CalculateASDIApply
+#Null ASDI
+  lfs	REG_ASDIX, -0x750C (rtoc)
+  lfs	REG_ASDIY, -0x750C (rtoc)
+  b DIDraw_CalculateASDIEnd
+DIDraw_CalculateASDIApply:
+#Multiply by 3
+  lfs	f1, 0x04BC (r3)
+  fmuls REG_ASDIX,REG_CStickX,f1
+  fmuls REG_ASDIY,REG_CStickY,f1
+DIDraw_CalculateASDIEnd:
 DIDraw_CalculateKBReduction:
 #Check if holding L/R/Z
   rlwinm. r0,REG_HeldInputs,0,0x80000000
@@ -531,12 +576,17 @@ DIDraw_CalculateKBReduction:
 	branchl	r12,0x80022c30
 	fmr	REG_arctan,f1
 DIDraw_CalculateKBReductionEnd:
+DIDraw_CalculateDI:
+#If grounded, skip DI
+  lwz r3,0xE0(REG_PlayerData)
+  cmpwi r3,0
+  beq DIDraw_CalculateDIEnd
 #If both inputting nothing, skip DI
   lfs	f1, -0x750C (rtoc)
   fcmpo cr0,f1,REG_XComp
   bne DIDraw_IsInputting
   fcmpo cr0,f1,REG_YComp
-  beq DIDraw_DrawTrajectory
+  beq DIDraw_CalculateDIEnd
 DIDraw_IsInputting:
 #If some condition is met, skip DI
   lfs	f0, -0x74E8 (rtoc)
@@ -545,7 +595,7 @@ DIDraw_IsInputting:
   fmuls f2,REG_KnockbackY,REG_KnockbackY
   fadds f1,f1,f2
   fcmpo cr0,f1,f0
-  blt DIDraw_DrawTrajectory
+  blt DIDraw_CalculateDIEnd
 #Get DI value
   fneg  f2,REG_KnockbackX
   fmuls f2,f2,REG_YComp
@@ -569,7 +619,7 @@ DIDraw_IsInputting:
   fcmpo cr0,f1,f0
   bge 0x8
   fneg  REG_DIInput,REG_DIInput
-DIDraw_CalculateDI:
+#Apply new angle
   lwz	r3, -0x514C (r13)
   lfs	f2, -0x7510 (rtoc)
   lfs	f0, 0x01A8 (r3)
@@ -581,27 +631,29 @@ DIDraw_CalculateDI:
   fmr f1,REG_arctan
   branchl r12,sin
   fmuls REG_KnockbackY,REG_KnockbackMag,f1
+DIDraw_CalculateDIEnd:
+
 DIDraw_DrawTrajectory:
 #Create an ECB struct on the stack
 	addi	REG_ECBBoneStruct,sp,Stack_ECBBoneStruct
 	addi	REG_ECBStruct,sp,Stack_ECBStruct
 	mr	r3,REG_ECBStruct
 	branchl	r12,0x80041ee4
-#Create ECB Bone struct
-#Copy Struct
-	mr	r3,REG_ECBBoneStruct
-	addi	r4,REG_EventConstants,ECB_TopY
-	li	r5,0x18
-	branchl	r12,memcpy
 #Get Current XY
 	lfs	REG_CurrXPos,0xB0(REG_PlayerData)
 	lfs	REG_CurrYPos,0xB4(REG_PlayerData)
-	lfs	f1,0xB8(REG_PlayerData)
-	stfs	f1,0xC(REG_ECBStruct)
 #Init Loop
 	li	REG_LoopCount,0
   lfs REG_Gravity,-0x750C (rtoc)
-  li  REG_GroundState,1
+  lwz  REG_GroundState,0xE0(REG_PlayerData)
+#If grounded, copy over ground ECB data
+  cmpwi REG_GroundState,0
+  bne DIDraw_DrawTrajectory_SkipCopyGroundData
+  addi  r3,REG_ECBStruct,0x130
+  addi  r4,REG_PlayerData,0x820
+  li  r5,0x28
+  branchl r12,memcpy
+DIDraw_DrawTrajectory_SkipCopyGroundData:
 #Init GX Prim
   lfs f1,0x2340(REG_PlayerData)
   fctiwz  f1,f1
@@ -611,29 +663,66 @@ DIDraw_DrawTrajectory:
   load  r5,0x00001455
   branchl r12,prim.new
   mr  REG_GX,r3
+
 DIDraw_CollisionLoop:
+#Create ECB Bone struct
+#If loop count < noECBUpdate, use current ECB bottom Y offset
+  lwz r3,0x88C(REG_PlayerData)
+  cmpw  REG_LoopCount,r3
+  blt DIDraw_CollisionLoop_ECBBonesUseCurrent
+#Copy Struct
+	mr	r3,REG_ECBBoneStruct
+	addi	r4,REG_EventConstants,ECB_TopY
+	li	r5,0x18
+	branchl	r12,memcpy
+#If the player is grounded, ECB bottom is 0
+  cmpwi REG_GroundState,0
+  bne DIDraw_CollisionLoop_ECBBonesEnd
+  lfs	f1, -0x750C (rtoc)
+  stfs f1,0x04(REG_ECBBoneStruct)
+  b DIDraw_CollisionLoop_ECBBonesEnd
+DIDraw_CollisionLoop_ECBBonesUseCurrent:
+#Use Current Bone Positions
+  lfs f1,0x778(REG_PlayerData)
+  stfs f1,0x00(REG_ECBBoneStruct)
+  lfs f1,0x780(REG_PlayerData)
+  stfs f1,0x04(REG_ECBBoneStruct)
+  lfs f1,0x78C(REG_PlayerData)
+  stfs f1,0x08(REG_ECBBoneStruct)
+  lfs f1,0x790(REG_PlayerData)
+  stfs f1,0x0C(REG_ECBBoneStruct)
+  lfs f1,0x784(REG_PlayerData)
+  stfs f1,0x10(REG_ECBBoneStruct)
+  lfs f1,0x788(REG_PlayerData)
+  stfs f1,0x14(REG_ECBBoneStruct)
+  b DIDraw_CollisionLoop_ECBBonesEnd
+DIDraw_CollisionLoop_ECBBonesEnd:
 #Store current position
+  lfs	f1, -0x750C (rtoc)
 	stfs	REG_CurrXPos,0x4(REG_ECBStruct)
 	stfs	REG_CurrYPos,0x8(REG_ECBStruct)
-DIDraw_CollisionLoop_Decay:
-#Get arctan of the KB vector
-  fmr f1,REG_KnockbackY
-  fmr f2,REG_KnockbackX
-  branchl r12,0x80022c30
-  fmr  REG_arctan,f1
-#Get cos of the atan
-  branchl r12,cos
-  lwz	r3, -0x514C (r13)
-  lfs	f2, 0x0204 (r3)
-  fnmsubs	REG_KnockbackX,f2,f1,REG_KnockbackX
-#Get sin of the atan
-  fmr f1,REG_arctan
-  branchl r12,sin
-  lwz	r3, -0x514C (r13)
-  lfs	f2, 0x0204 (r3)
-  fnmsubs	REG_KnockbackY,f2,f1,REG_KnockbackY
-DIDraw_CollisionLoop_SkipDecay:
-#Now account for gravity
+  stfs	f1,0xC(REG_ECBStruct)
+	stfs	REG_CurrXPos,0x10(REG_ECBStruct)
+	stfs	REG_CurrYPos,0x14(REG_ECBStruct)
+  stfs	f1,0x18(REG_ECBStruct)
+
+DIDraw_CollisionLoop_ApplyASDI:
+#Apply ASDI X
+  fadds REG_CurrXPos,REG_CurrXPos,REG_ASDIX
+#Only apply ASDI Y if in the air
+  cmpwi REG_GroundState,0
+  beq 0x8
+  fadds REG_CurrYPos,REG_CurrYPos,REG_ASDIY
+#Null ASDI
+  lfs	REG_ASDIX, -0x750C (rtoc)
+  lfs	REG_ASDIY, -0x750C (rtoc)
+
+#region Decay Knockback
+#Apply either gravity or traction
+  cmpwi REG_GroundState,1
+  bne DIDraw_CollisionLoop_DecayGrounded
+DIDraw_CollisionLoop_DecayAerial:
+#Account for gravity
   lfs	f1, 0x016C (REG_PlayerData)
   lfs	f2, 0x0170 (REG_PlayerData)
   fneg  f2,f2
@@ -641,6 +730,65 @@ DIDraw_CollisionLoop_SkipDecay:
   fcmpo	cr0,REG_Gravity,f2
   bge 0x8
   fmr REG_Gravity,f2
+#Decay KB Vector
+  fmr f1,REG_KnockbackY
+  fmr f2,REG_KnockbackX
+  branchl r12,0x80022c30    #Get arctan of the KB vector
+  fmr  REG_arctan,f1
+#Decay X KB
+  branchl r12,cos
+  lwz	r3, -0x514C (r13)
+  lfs	f2, 0x0204 (r3)
+  fnmsubs	REG_KnockbackX,f2,f1,REG_KnockbackX
+#Decay Y KB
+  fmr f1,REG_arctan
+  branchl r12,sin
+  lwz	r3, -0x514C (r13)
+  lfs	f2, 0x0204 (r3)
+  fnmsubs	REG_KnockbackY,f2,f1,REG_KnockbackY
+  b DIDraw_CollisionLoop_DecayEnd
+DIDraw_CollisionLoop_DecayGrounded:
+#Get Ground Friction's multipllier
+  lwz r3,0x4(REG_PlayerData)
+  cmpwi r3,Popo.Int
+  beq DIDraw_CollisionLoop_DecayGrounded_isICs
+  cmpwi r3,Nana.Int
+  beq DIDraw_CollisionLoop_DecayGrounded_isICs
+#Get grounds friction multiplier
+  lfs	f1, -0x7A38 (rtoc)
+  lwz	r0, 0x014C (REG_ECBStruct)
+  cmpwi r0,-1
+  beq DIDraw_CollisionLoop_DecayGrounded_isICs
+  lwz r3,0x150(REG_ECBStruct)
+  branchl r12,0x800569ec    #Get ground's friction multiplier
+  b 0x8
+DIDraw_CollisionLoop_DecayGrounded_isICs:
+  lfs	f1, -0x7A38 (rtoc)
+#Account for friction
+  lfs	f0, 0x128 (REG_PlayerData)
+  fmuls	f1,f0,f1
+  lwz	r4, -0x514C (r13)
+  lfs	f0, 0x0200 (r4)
+  fmuls f0,f1,f0
+#Apply Friction to knockback
+  lfs	f2, -0x76B0 (rtoc)
+  fcmpo cr0,REG_KnockbackX,f2
+  bge DIDraw_CollisionLoop_DecayGrounded_Subtract
+  fadds f0,f0,REG_KnockbackX
+  fmr REG_KnockbackX,f0
+  fcmpo cr0,f0,f2
+  ble DIDraw_CollisionLoop_DecayGroundedEnd
+  fmr REG_KnockbackX,f2
+  b DIDraw_CollisionLoop_DecayGroundedEnd
+DIDraw_CollisionLoop_DecayGrounded_Subtract:
+  fsubs	f0,f0,REG_KnockbackX
+  fmr REG_KnockbackX,f0
+  fcmpo cr0,f0,f2
+  bge DIDraw_CollisionLoop_DecayGroundedEnd
+  fmr REG_KnockbackX,f2
+  b DIDraw_CollisionLoop_DecayGroundedEnd
+DIDraw_CollisionLoop_DecayGroundedEnd:
+DIDraw_CollisionLoop_DecayEnd:
 #Shift previous positions down
   lfs f1,0x4(REG_ECBStruct)
   lfs f2,0x8(REG_ECBStruct)
@@ -656,10 +804,26 @@ DIDraw_CollisionLoop_SkipDecay:
 	stfs	f1,0x8(REG_ECBStruct)
 	lfs	f1, -0x778C (rtoc)
 	stfs	f1,0xC(REG_ECBStruct)
+#endregion
+
 #Run collision
+  cmpwi REG_GroundState,1
+  beq DIDraw_CollisionLoop_AerialCollision
+DIDraw_CollisionLoop_GroundCollision:
+#Grounded Collision
 	mr	r3,REG_ECBStruct
 	mr	r4,REG_ECBBoneStruct
-	branchl	r12,0x800475f4#0x800473cc
+	branchl	r12,0x8004b21c
+  xori  REG_GroundState,r3,0x1
+  b DIDraw_CollisionLoop_CollisionEnd
+DIDraw_CollisionLoop_AerialCollision:
+#Aerial Collision
+	mr	r3,REG_ECBStruct
+	mr	r4,REG_ECBBoneStruct
+	branchl	r12,0x800475f4
+  xori  REG_GroundState,r3,0x1
+DIDraw_CollisionLoop_CollisionEnd:
+
 #Get new position
 	lfs	REG_CurrXPos,0x4(REG_ECBStruct)
 	lfs	REG_CurrYPos,0x8(REG_ECBStruct)
@@ -681,6 +845,7 @@ DIDraw_CollisionLoop_TouchingNothing:
   lwz r4,LineColor(REG_EventConstants)
   b DIDraw_CollisionLoop_GetColorEnd
 
+#region Touching Ground
 DIDraw_CollisionLoop_TouchingGround:
 #If grounded, dont run KB manip code
   cmpwi REG_GroundState,0
@@ -701,13 +866,15 @@ DIDraw_CollisionLoop_TouchingGround:
   lfs f1,0x154(REG_ECBStruct)
   fneg  f1,f1
   fmuls REG_KnockbackY,REG_KnockbackX,f1
+#REMOVE ALL Y KB?
 #Set as grounded
   li  REG_GroundState,0
 DIDraw_CollisionLoop_TouchingGround_GetColor:
 #Get ground color
   lwz r4,GroundColor(REG_EventConstants)
   b DIDraw_CollisionLoop_GetColorEnd
-
+#endregion
+#region Touching Ceiling
 DIDraw_CollisionLoop_TouchingCeiling:
 #If grounded, dont run KB manip code
   cmpwi REG_GroundState,0
@@ -738,7 +905,8 @@ DIDraw_CollisionLoop_TouchingCeiling_GetColor:
 #Get ceil color
   lwz r4,CeilingColor(REG_EventConstants)
   b DIDraw_CollisionLoop_GetColorEnd
-
+#endregion
+#region Touching Wall
 DIDraw_CollisionLoop_TouchingWall:
 #If grounded, dont run KB manip code
   cmpwi REG_GroundState,0
@@ -776,6 +944,7 @@ DIDraw_CollisionLoop_LeftWallsData:
   lfs f3,Stack_MiscSpace+0x4(sp)
   fmuls REG_KnockbackX,f1,f2
   fmuls REG_KnockbackY,f1,f3
+  lfs	REG_Gravity, -0x6DA0 (rtoc)
 DIDraw_CollisionLoop_TouchingWall_GetColor:
   lwz r3,0x134(REG_ECBStruct)
   rlwinm. r0,r3,0,0x20
@@ -788,6 +957,7 @@ DIDraw_CollisionLoop_TouchingLeftWall:
 DIDraw_CollisionLoop_TouchingRightWall:
   lwz r4,RightWallColor(REG_EventConstants)
   b DIDraw_CollisionLoop_GetColorEnd
+#endregion
 
 DIDraw_CollisionLoop_GetColorEnd:
 #Draw this point
@@ -825,9 +995,6 @@ DIDraw_Exit:
 #endregion
 
 Exit:
-#Restore Interrupts
-  mr  r3,REG_Interrupt
-  branchl r12,0x8034738c
 #Return
   restore
   mr	r3, r28

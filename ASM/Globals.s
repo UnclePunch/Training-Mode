@@ -1276,6 +1276,8 @@ InitSettings:
   .set InputStruct_RightTrigger,0x1D
   .set InputStruct_LeftAnalogXFloat,0x20
   .set InputStruct_LeftAnalogYFloat,0x24
+  .set InputStruct_RightAnalogXFloat,0x28
+  .set InputStruct_RightAnalogYFloat,0x2C
 .set HSD_InputStructStart,0x804c1fac
 .set PreloadTable,0x80432078
   .set Preload_Stage,0x10
