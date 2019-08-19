@@ -1,5 +1,5 @@
-#To be inserted at 8005fe30
-.include "../Globals.s"
+#To be inserted at 8007a430
+.include "../../Globals.s"
 
 #Check if a GObj was sent as an arg
   cmpwi r4,0
