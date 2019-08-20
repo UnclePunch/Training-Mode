@@ -8212,7 +8212,7 @@ backup
 	bl	EnterKnockback
 
 #Override hitstun amount
-	li	r3,255
+	li	r3,50
 	bl	IntToFloat
 	stfs f1,0x2340(REG_P1Data)
 
