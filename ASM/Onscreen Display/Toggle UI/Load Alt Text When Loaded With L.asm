@@ -316,7 +316,7 @@ blrl
 TextASCIILeft:
 blrl
 .string ""
-.string "Wavedash Timing"
+.string "Wavedash Info"
 .string "L-Cancel"
 .string "Missed Tech"
 .string "Act OoS Frame"
