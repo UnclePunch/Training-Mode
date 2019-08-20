@@ -1364,6 +1364,7 @@ InitSettings:
 .set Scene.SingleButton,0x2C
 
 #Playerdata offsets
+#Dedicated
 .set PrevASStart,0x23F0
 .set CurrentAS,0x10
 .set OneASAgo,PrevASStart+0x0
@@ -1373,10 +1374,11 @@ InitSettings:
 .set FiveASAgo,PrevASStart+0x8
 .set SixASAgo,PrevASStart+0xA
 .set PreviousMoveInstanceHitBy,0x2418
+#Volatile
 .set AirdodgeAngle,0x241C
-.set SDIInputs,0x2350
-.set SuccessfulSDIInputs,0x2350
-.set TotalSDIInputs,0x2352
+.set SDIInputs,0x241C
+.set SuccessfulSDIInputs,0x241C
+.set TotalSDIInputs,0x241E
 
 ####################
 ## Function Names ##
