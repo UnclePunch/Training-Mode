@@ -14,8 +14,8 @@ backup
   bne Original
 
 #Create GObj
-  li  r3,22
-  li  r4,23
+  li  r3,4
+  li  r4,5
   li  r5,0
   branchl r12,GObj_Create
   mr  REG_GObj,r3
