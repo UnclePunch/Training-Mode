@@ -348,7 +348,7 @@ blrl
 .string "Fastfall Timing"
 .string "Frame Advantage"
 .string "Combo Counter"
-.string ""
+.string "DI Draw"
 .string ""
 .string "UniversalControllerFix"
 .align 2

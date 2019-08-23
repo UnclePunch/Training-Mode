@@ -1204,6 +1204,7 @@ InitSettings:
 .set OSD.Ledge,26
 .set OSD.UCF,27
 .set OSD.ActOoHitstun,28
+.set OSD.DIDraw,0x800000
 
 #Event OSDs
 .set EventOSD_Eggs,0x00000000
@@ -1287,9 +1288,14 @@ InitSettings:
 .set MemcardData,-0x77C0
 .set DEBUGLV,-0x6C98
 .set CSS_Data,-0x49F0
+.set CSS_UnkGObj,-0x49E4
+.set CSS_UnkJObj,-0x49E0
+.set CSS_PointerToDatNodes,-0x49C8    #these are initialized to at 80266970
 .set CSS_MainPlayerPort,-0x49B0
 .set CSS_CPUPlayerPort,-0x49AF
+.set CSS_Unk,-0x49AC
 .set CSS_MaxPlayers,-0x49AB
+.set CSS_Unk,-0x49AA
 .set CSS_SinglePlayerPortNumber,-0x4DE0
 .set HPS_Unk,-0x3F44
 .set HPS_CurrentSongEntryNum,-0x3F3C

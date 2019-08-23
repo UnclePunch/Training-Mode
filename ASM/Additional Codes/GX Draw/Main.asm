@@ -354,6 +354,7 @@ blrl
 .set  RightWallColor,0x28
 .set  CeilingColor,0x2C
 .set  GroundColor,0x30
+.set  ASDIColor,0x34
 .float 9
 .float 2.5
 .float -3.3
@@ -367,6 +368,7 @@ blrl
 .byte 12, 255, 41, 255
 .byte 255, 0, 255, 255
 .byte 255, 255, 255, 255
+.byte 255, 86, 20, 255
 
 .set StackSize,0x300
 .set Stack_BackedUpReg,0x8
@@ -377,7 +379,9 @@ blrl
   .set Stack_ECBBoneStruct_Length,0x18
 .set Stack_ECBStruct, (Stack_ECBBoneStruct+Stack_ECBBoneStruct_Length)
   .set Stack_ECBStruct_Length,0x1AC
-.set Stack_MiscSpace, (Stack_ECBStruct+Stack_ECBStruct_Length)
+.set Stack_ASDIBackup, (Stack_ECBStruct+Stack_ECBStruct_Length)
+  .set  Stack_ASDIBackup_Length,0x8
+.set Stack_MiscSpace, (Stack_ASDIBackup+Stack_ASDIBackup_Length)
 
 #gprs
 .set REG_EventConstants,31
@@ -389,6 +393,7 @@ blrl
 .set REG_GroundState,24
 .set REG_CollisionInfo,25
 .set REG_Temp,26            #this register is used for the draw loop, make sure to change both
+.set REG_OverrideRemainingFrames,27
 
 #fprs
 .set REG_arctan,31
@@ -414,6 +419,12 @@ DIDraw:
   stw r0, 0x4(r1)
   stwu	r1,-StackSize(r1)	# make space for 12 registers
   stmw  r20,Stack_BackedUpReg(r1)
+
+#CHECK IF ENABLED
+	lwz	r3,-0x77C0(r13)
+	lwz	r3,0x1F24(r3)
+  rlwinm. r0,r3,0,OSD.DIDraw
+	beq	DIDraw_Exit
 
 #Check for DI Draw
 	lbz	r3,0x221A(REG_PlayerData)			#Check If in Hitlag
@@ -584,6 +595,9 @@ DIDraw_CalculateASDICStickApply:
   fmuls REG_ASDIX,REG_CStickX,f1
   fmuls REG_ASDIY,REG_CStickY,f1
 DIDraw_CalculateASDIEnd:
+#Save these values for later
+  stfs  REG_ASDIX,Stack_ASDIBackup+0(sp)
+  stfs  REG_ASDIY,Stack_ASDIBackup+4(sp)
 #endregion
 #region CalculateKBReduction
 DIDraw_CalculateKBReduction:
@@ -682,6 +696,7 @@ DIDraw_CollisionLoop_Init:
 	li	REG_LoopCount,0
   lfs REG_Gravity,-0x750C (rtoc)
   lwz  REG_GroundState,0xE0(REG_PlayerData)
+  li  REG_OverrideRemainingFrames,0
 #Allocate collision info struct
   lfs f1,0x2340(REG_PlayerData)
   fctiwz  f1,f1
@@ -839,6 +854,9 @@ DIDraw_CollisionLoop_DecayGrounded_Subtract:
   b DIDraw_CollisionLoop_DecayGroundedEnd
 DIDraw_CollisionLoop_DecayGroundedEnd:
 DIDraw_CollisionLoop_DecayEnd:
+#endregion
+
+#region Shift Positions
 #Shift previous positions down
   lfs f1,0x4(REG_ECBStruct)
   lfs f2,0x8(REG_ECBStruct)
@@ -867,6 +885,10 @@ DIDraw_CollisionLoop_DecayEnd:
   stw r3,0x134(REG_ECBStruct)
 	lfs	REG_CurrXPos,0x4(REG_ECBStruct)
 	lfs	REG_CurrYPos,0x8(REG_ECBStruct)
+#If grounded and max collision checks, just stop updating position
+  cmpwi REG_GroundState,0
+  bne  DIDraw_CollisionLoop_StageBehaviorEnd
+  li  REG_OverrideRemainingFrames,1
   b DIDraw_CollisionLoop_StageBehaviorEnd
 .endif
 
@@ -1010,6 +1032,30 @@ DIDraw_CollisionLoop_LeftWallsData:
 DIDraw_CollisionLoop_StageBehaviorEnd:
 #endregion
 
+#region Ground to Air Check
+.if MaxColl>=0
+DIDraw_CollisionLoop_GroundToAirCheck:
+.set  GroundToAirRemainingFrames,5
+#Ensure not touching ground this frame
+  lwz r3,0x134(REG_ECBStruct)
+  rlwinm. r0,r3,0,0x8000
+  bne DIDraw_CollisionLoop_GroundToAirCheckEnd
+#Ensure was touching ground last frame
+  lwz r3,0x138(REG_ECBStruct)
+  rlwinm. r0,r3,0,0x8000
+  beq DIDraw_CollisionLoop_GroundToAirCheckEnd
+#Check if over MaxColl
+  cmpwi REG_LoopCount,MaxColl
+  blt DIDraw_CollisionLoop_GroundToAirCheckEnd
+#Check if REG_OverrideRemainingFrames is already set
+  cmpwi REG_OverrideRemainingFrames,0
+  bgt DIDraw_CollisionLoop_GroundToAirCheckEnd
+#Set REG_OverrideRemainingFrames
+  li  REG_OverrideRemainingFrames,GroundToAirRemainingFrames
+DIDraw_CollisionLoop_GroundToAirCheckEnd:
+.endif
+#endregion
+
 #region Save Collision Info
 .set  CollInfo_Length,0x18
 .set  CollInfo_XPos,0x0
@@ -1037,6 +1083,16 @@ DIDraw_CollisionLoop_StageBehaviorEnd:
 #endregion
 
 DIDraw_CollisionLoop_IncLoop:
+#Check override frames first
+  cmpwi REG_OverrideRemainingFrames,0
+  ble DIDraw_CollisionLoop_IncLoopNoOverride
+#Decrement override frames
+  subi  REG_OverrideRemainingFrames,REG_OverrideRemainingFrames,1
+  cmpwi REG_OverrideRemainingFrames,0
+  bgt DIDraw_CollisionLoop_IncLoopNoOverride
+#Override and exit loop prematurely
+  b DIDraw_CollisionLoop_IncLoopEnd
+DIDraw_CollisionLoop_IncLoopNoOverride:
 #Inc Loop
 	addi	REG_LoopCount,REG_LoopCount,1
   lfs f1,0x2340(REG_PlayerData)
@@ -1045,7 +1101,7 @@ DIDraw_CollisionLoop_IncLoop:
   lwz  r3,Stack_MiscSpace+4(sp)
 	cmpw	REG_LoopCount,r3
 	blt	DIDraw_CollisionLoop
-
+DIDraw_CollisionLoop_IncLoopEnd:
 .if MaxColl>=0
 #Output collision checks count
   bl  DIDraw_CollisionLoop_Text
@@ -1056,7 +1112,7 @@ DIDraw_CollisionLoop_IncLoop:
   b DIDraw_CollisionLoop_TextEnd
 DIDraw_CollisionLoop_Text:
 blrl
-.string "frame %d performed %d collision checks"
+.string "frame %d performed %d collision checks\n"
 .align 2
 DIDraw_CollisionLoop_TextEnd:
 .endif
@@ -1075,11 +1131,11 @@ DIDraw_DrawLoop_Init:
 	li	REG_LoopCount,0
 #Init GX Prim
   lwz r3,0x0(REG_CollisionInfo)
+  addi  r3,r3,2        #collision frames + 2 for ASDI frames
   load  r4,0x001F1306
   load  r5,0x00000C55
   branchl r12,prim.new
   mr  REG_GX,r3
-
 #Get line color (check if results in death)
 .set REG_DeathLoopCount,28
   li  REG_DeathLoopCount,0
@@ -1119,6 +1175,43 @@ DIDraw_DrawLoop_Init_DeathLoop_Inc:
 #Is alive, make blue
   lwz REG_LineColor,AliveLineColor(REG_EventConstants)
 DIDraw_DrawLoop_Init_DeathLoop_Exit:
+#Draw the ASDI
+#Get original ASDI values
+  lfs  REG_ASDIX,Stack_ASDIBackup+0(sp)
+  lfs  REG_ASDIY,Stack_ASDIBackup+4(sp)
+#If no ASDI, use blue
+  lfs	f0, -0x750C (rtoc)
+  fcmpo cr0,REG_ASDIX,f0
+  bne DIDraw_DrawLoop_Init_HasASDI
+  lfs	f0, -0x750C (rtoc)
+  fcmpo cr0,REG_ASDIY,f0
+  bne DIDraw_DrawLoop_Init_HasASDI
+  mr  r4,REG_LineColor
+  b 0x8
+DIDraw_DrawLoop_Init_HasASDI:
+  lwz r4,ASDIColor(REG_EventConstants)
+#Draw starting point
+  lfs f1,0x6F4(REG_PlayerData)      #X = TopN X
+  lfs f2,0x790(REG_PlayerData)      #Y = ECBLeftY + TopN Y
+  lfs f3,0x6F8(REG_PlayerData)
+  fadds f2,f2,f3
+  lfs f3,FirefoxDrawZ(REG_EventConstants)
+  stfs  f1,0x0(REG_GX)
+  stfs  f2,0x0(REG_GX)
+  stfs  f3,0x0(REG_GX)
+  stw   r4,0x0(REG_GX)
+#Draw end point
+  lfs f1,0x6F4(REG_PlayerData)      #X = TopN X
+  fadds f1,f1,REG_ASDIX
+  lfs f2,0x790(REG_PlayerData)      #Y = ECBLeftY + TopN Y
+  lfs f3,0x6F8(REG_PlayerData)
+  fadds f2,f2,f3
+  fadds f2,f2,REG_ASDIY
+  lfs f3,FirefoxDrawZ(REG_EventConstants)
+  stfs  f1,0x0(REG_GX)
+  stfs  f2,0x0(REG_GX)
+  stfs  f3,0x0(REG_GX)
+  stw   r4,0x0(REG_GX)
 
 #endregion
 #region DIDraw_DrawLoop_Start
@@ -1159,7 +1252,12 @@ DIDraw_DrawLoop_GetColorEnd:
 
 #Draw this point
   lfs f1,CollInfo_XPos(REG_FramesCollisionInfo)      #X = TopN X
+  /*
   lfs f2,CollInfo_ECBLeftY(REG_FramesCollisionInfo)  #Y = ECBLeftY + TopN Y
+  lfs f3,CollInfo_YPos(REG_FramesCollisionInfo)
+  fadds f2,f2,f3
+  */
+  lfs f2,0x790(REG_PlayerData)
   lfs f3,CollInfo_YPos(REG_FramesCollisionInfo)
   fadds f2,f2,f3
   lfs f3,FirefoxDrawZ(REG_EventConstants)

@@ -196,7 +196,7 @@
 80011ac4 000000b0 80011ac4 0 zz_0011ac4_
 80011b74 000000a4 80011b74 0 zz_0011b74_
 80011c18 0000020c 80011c18 0 zz_0011c18_
-80011e24 00000228 80011e24 0 Texture_ToggleActiveTexture_GetTextureData(r3=textureObject,r4=ReturnStruct,r5=typedef,r6=typedef
+80011e24 00000228 80011e24 0 JObj_GetUnkJObjData(r3=textureObject,r4=ReturnStruct,r5=typedef,r6=typedef
 8001204c 000001b0 8001204c 0 zz_001204c_
 800121fc 000000cc 800121fc 0 GX_CreateGXTexImageBuffer(r3=UnkPointer,r4=XRes,r5=YRes,r6=ColorType,r7=AllocationType)
 800122c8 00000028 800122c8 0 HSD_ImageDescCopyFromEFB_Prefunction
@@ -6039,7 +6039,7 @@
 8011cd30 00000118 8011cd30 0 AS_PeachBomberHit
 8011cd80 000000c8 8011cd80 0 AS_PeachBomberHit
 8011cd90 000000b8 8011cd90 0 AS_PeachBomberHit
-8011ce48 0000013c 8011ce48 0 Peach_DownB_SpawnSaturnOrBomb?
+8011ce48 0000013c 8011ce48 0 Peach_DecideSpecialItemPull
 8011cf84 0000001c 8011cf84 0 zz_011cf84_
 8011cfa0 00000078 8011cfa0 0 OnHit_PeachDownB_CheckIfHoldingTurnip
 8011d018 00000104 8011d018 0 GFX_PeachDownBThink
@@ -13371,15 +13371,15 @@
 8025bbd4 00000034 8025bbd4 0 RandomStage_GetRandomInternalStageID
 8025bc08 00000018 8025bc08 0 zz_025bc08_
 8025bc20 00000110 8025bc20 0 zz_025bc20_
-8025bd30 000002f0 8025bd30 0 CSS_LoadRules?
+8025bd30 000002f0 8025bd30 0 CSS_UpdateRulesText
 8025c020 000011a4 8025c020 0 CSS_UpdateMaxComboText
 8025d1c4 000003e8 8025d1c4 0 CSS_UpdateKOStarCount
 8025d364 00000248 8025d364 0 CSS_UpdateKOStarCount
 8025d5ac 000004f4 8025d5ac 0 CheckToUpdateMaxComboText
 8025daa0 00000094 8025daa0 0 zz_025daa0_
-8025db34 00001358 8025db34 0 CSS_CursorHighlightUpdateCSPInfo
+8025db34 00001358 8025db34 0 CSS_CursorHighlightUpdateCSPInfo (r3=PlayerID)
 8025e0ac 00000de0 8025e0ac 0 CSS_CursorHighlightUpdateCSPInfo
-8025ee8c 00000254 8025ee8c 0 CSS_Initialization_CSPTextAndTextures
+8025ee8c 00000254 8025ee8c 0 CSS_AdjustModeTextures
 8025f0e0 000009e0 8025f0e0 0 zz_025f0e0_
 8025fac0 0000006c 8025fac0 0 zz_025fac0_
 8025fb2c 00000024 8025fb2c 0 zz_025fb2c_
@@ -18496,8 +18496,8 @@
 80322714 00000048 80322714 0 __destroy_global_chain
 8032275c 00000034 8032275c 0 __unregister_fragment
 80322790 0000003c 80322790 0 __register_fragment
-803227cc 00000074 803227cc 0 zz_03227cc_
-80322840 00000080 80322840 0 zz_0322840_
+803227cc 00000074 803227cc 0 _register_save
+80322840 00000080 80322840 0 _register_restore
 803228c0 0000005c 803228c0 0 __cvt_fp2unsigned
 8032291c 000000ec 8032291c 0 __div2u
 80322a08 00000138 80322a08 0 __div2i
