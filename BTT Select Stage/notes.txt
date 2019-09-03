@@ -1,0 +1,58 @@
+TO-DO
+-remove rules TEXT, 80266310
+-remove rules UI, unsure still need to look into
+-remove teams toggle
+-remove ability to open rules
+-add text to rules displaying the target stage
+-left and right dpad changes target stage
+-allow 1p to start match
+-load all players into the match
+-cant change top left texture, relies on too much stuff. leaving as is
+
+
+
+CSS load notes
+-0x49E0 = pointer to a jobj from MnSlChr.usd. the jobj pointed to depends on
+the max allowed players for the CSS type.
+
+-0x49AB = max allowed players for the CSS type.
+
+-there are a ton of conditionals throughout CSS_LoadFunction that check the max players
+to determine which jobj pointer exists at -0x49E0. apparently a lot of UI elements
+are exclusive to the jobj at this pointer. it is referenced in most every CSS
+function, onload and per frame.
+
+
+CSS Codelines
+80264210 - checks main player port for something, training mode related i think, to get CPU port
+8026451c - loads single player jobj
+80264e6c - some training mode CPU init check
+8026461c - loads some unknown jobj based on player count
+80264700 - adjust luigis CSS icon position, based on player count? for some reason
+80264818 - loads CSS icons jobj? based on player count
+
+Single Player CSS Codelines
+8026507c - unk
+802655b0 - single player CSS setup case switch. Creates text for BTT, and displays stock icon and difficulty for regular modes
+
+
+VS Mode CSS Codelines
+80264bd4 - uses maxplayers to init loop count for creating CSS cursors
+80266310 - creates text object for rules
+80266314 - updates rules text according to current rules
+8026636c -> 802663e0 - loops through players and creates KO star stuff
+
+
+
+
+
+
+COLLISION DEBUG BPs
+
+[BreakPoints]
+8065e294 n
+80081ea4 n
+80081e70 n
+80081e30 n
+80081e3c n
+8065e298 n
