@@ -1279,6 +1279,7 @@ InitSettings:
   .set InputStruct_LeftAnalogYFloat,0x24
   .set InputStruct_RightAnalogXFloat,0x28
   .set InputStruct_RightAnalogYFloat,0x2C
+  .set InputStruct_Length,68
 .set HSD_InputStructStart,0x804c1fac
 .set PreloadTable,0x80432078
   .set Preload_Stage,0x10
@@ -1310,6 +1311,9 @@ InitSettings:
 .set Stage_PositionHazardCount,-0x5128
 .set Stage_GrabHazardCount,-0x512C
 .set Stage_DamageHazardCount,-0x5130
+.set Audio_NextAreaInSSMHeap,-0x5258
+.set Audio_UnkConstant,-0x5250
+.set Audio_TotalSSMMemory,-0x5268
 
 .set TM_FrozenToggle,-0x4F8C
 .set TM_GameFrameCounter,-0x49a8

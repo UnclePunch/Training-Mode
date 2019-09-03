@@ -1102,6 +1102,7 @@ DIDraw_CollisionLoop_IncLoopNoOverride:
 	cmpw	REG_LoopCount,r3
 	blt	DIDraw_CollisionLoop
 DIDraw_CollisionLoop_IncLoopEnd:
+/*
 .if MaxColl>=0
 #Output collision checks count
   bl  DIDraw_CollisionLoop_Text
@@ -1116,7 +1117,7 @@ blrl
 .align 2
 DIDraw_CollisionLoop_TextEnd:
 .endif
-
+*/
 #endregion
 #endregion
 
