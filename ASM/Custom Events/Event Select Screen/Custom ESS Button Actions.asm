@@ -677,11 +677,11 @@ MenuData_CreateSave:
 #Play
 	bl	MenuData_CreateSave_SlotA
 	.long	OnSelect_Function
-	.long 0#bl	CreateSave_SlotA
+	bl	CreateSave_SlotA
 #Create Save File
 	bl	MenuData_CreateSave_SlotB
 	.long	OnSelect_Function
-	.long 0#bl	CreateSave_SlotB
+	bl	CreateSave_SlotB
 
 #Space
 	bl	MenuData_CreateSave_Empty
@@ -801,7 +801,9 @@ ExploitFillLoop:
   addi r3,REG_Memcard,0x3270             #exploit code destination
   bl  ExploitCode102
   mflr r4
-  li  r5,0xD30                  #length of code
+	bl	ExploitCode102_End
+	mflr	r5
+	sub	r5,r5,r4									#length of code
   branchl r12,memcpy
 #Place exploit code for 1.00
   addi r3,REG_Memcard,0x5238             #exploit code destination
@@ -1050,324 +1052,1908 @@ blrl
 #region ExploitCode102
 ExploitCode102:
 blrl
-.set InjectionPoint,0x80375510 #0x803754e4
-.set InjectionReturn,0x803754dc #0x803754e8
+
+.set	TournamentMode,0x801910E0	#PAL is 80191C24
+
+#First thing to do is relocate ALL of the exploit code to tournament mode
+	bl	ExploitCode102_End
+	mflr	r3
+	bl	ExploitCode102_Start
+	mflr	r4
+	sub	r5,r3,r4
+	load	r3,TournamentMode
+	branchl	r12,memcpy
+
+#Flush cache to ensure these instructions are up to date
+  load r3,TournamentMode
+	bl	ExploitCode102_Start
+	mflr	r4
+	bl	ExploitCode102_End
+	mflr	r5
+	sub	r4,r5,r4
+  branchl r12,0x80328f50
+
+#Now run from the tournament mode code region
+	branch	r12,TournamentMode
+
+ExploitCode102_Start:
+blrl
+#Overwriting the debug CSS with a lag reduction prompt
+#it crashes anyway so nothing of substance is being lost
+
+#Parameters
+.set  PromptSceneID,8 #0
+.set  CodesSceneID,9
+.set  ExitSceneID,2
+.set  PromptCommonSceneID,10
+.set  CodesCommonSceneID,10
+.set  InitialSelection,0
+.set  MaxCodesOnscreen,9
+#Function Addresses
+.set  PostRetraceCallback,0x800195fc
+.set  UnkPadStruct,0x804329f0
+
+#region Init New Scenes
+.set  REG_MinorSceneStruct,31
+
+#Init and backup
+  backup
+
+#Init LagPrompt major struct
+  li  r3,PromptSceneID
+  bl  LagPrompt_MinorSceneStruct
+  mflr  r4
+  bl  LagPrompt_SceneLoad
+  mflr  r5
+  bl  InitializeMajorSceneStruct
+#Init Codes major struct
+  li  r3,CodesSceneID
+  bl  Codes_MinorSceneStruct
+  mflr  r4
+  bl  Codes_SceneLoad
+  mflr  r5
+  bl  InitializeMajorSceneStruct
+
+  b CheckProgressive
+
+#region PointerConvert
+PointerConvert:
+  lwz r4,0x0(r3)          #Load bl instruction
+  rlwinm r5,r4,8,25,29    #extract opcode bits
+  cmpwi r5,0x48           #if not a bl instruction, exit
+  bne PointerConvert_Exit
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+  extsh r4,r4
+  add r4,r4,r3
+  stw r4,0x0(r3)
+PointerConvert_Exit:
+  blr
+#endregion
+#region InitializeMajorSceneStruct
+InitializeMajorSceneStruct:
+.set  REG_MajorScene,31
+.set  REG_MinorStruct,30
+.set  REG_SceneLoad,29
+
+#Init
+  backup
+  mr  REG_MajorScene,r3
+  mr  REG_MinorStruct,r4
+  mr  REG_SceneLoad,r5
+
+#Get major scene struct
+  branchl r12,0x801a50ac
+GetMajorStruct_Loop:
+  lbz	r4, 0x0001 (r3)
+  cmpw r4,REG_MajorScene
+  beq GetMajorStruct_Exit
+  addi  r3,r3,20
+  b GetMajorStruct_Loop
+GetMajorStruct_Exit:
+
+InitMinorSceneStruct:
+.set  REG_MinorStructParse,20
+  stw REG_MinorStruct,0x10(r3)
+  mr  REG_MinorStructParse,REG_MinorStruct
+InitMinorSceneStruct_Loop:
+#Check if valid entry
+  lbz r3,0x0(REG_MinorStructParse)
+  extsb r3,r3
+  cmpwi r3,-1
+  beq InitMinorSceneStruct_Exit
+#Convert Pointers
+  addi  r3,REG_MinorStructParse,0x4
+  bl  PointerConvert
+  addi  r3,REG_MinorStructParse,0x8
+  bl  PointerConvert
+  addi  REG_MinorStructParse,REG_MinorStructParse,0x18
+  b InitMinorSceneStruct_Loop
+InitMinorSceneStruct_Exit:
+
+  restore
+  blr
+#endregion
+#endregion
+
+#region LagPrompt
+
+#region LagPrompt_SceneLoad
+############################################
+
+#region LagPrompt_SceneLoad_Data
+LagPrompt_SceneLoad_TextProperties:
+blrl
+.set PromptX,0x0
+.set PromptY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YesX,0x14
+.set YesY,0x18
+.set YesScale,0x1C
+.set NoX,0x20
+.set NoY,0x24
+.set NoScale,0x28
+.set HighlightColor,0x2C
+.set NonHighlightColor,0x30
+.float 315     			   #REG_TextGObj X pos
+.float 200  					   #REG_TextGObj Y pos
+.float 0     		     	 #Z offset
+.float 1   				     #Canvas Scaling
+.float 1					    	#Text scale
+.float 265              #Yes X pos
+.float 300              #Yes Y pos
+.float 1              #Yes scale
+.float 365              #No X pos
+.float 300              #No Y pos
+.float 1              #No scale
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+
+LagPrompt_SceneLoad_TopText:
+blrl
+.ascii "Are you using HDMI"
+.short 0x8148
+.byte 0
+.align 2
+
+LagPrompt_SceneLoad_Yes:
+blrl
+.string "Yes"
+.align 2
+
+LagPrompt_SceneLoad_No:
+blrl
+.string "No"
+.align 2
+
+#GObj Offsets
+  .set OFST_TextGObj,0x0
+  .set OFST_Selection,0x4
+
+#endregion
+#region LagPrompt_SceneLoad
+LagPrompt_SceneLoad:
+blrl
+
+#Init
+  backup
+
+LagPrompt_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl LagPrompt_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,0x803a611c
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,0x0(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl LagPrompt_SceneLoad_TopText
+  mflr  r4
+	lfs	f1,PromptX(REG_TextProp)
+  lfs	f2,PromptY(REG_TextProp)
+	branchl r12,0x803a6b98
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create Yes
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl LagPrompt_SceneLoad_Yes
+  mflr  r4
+	lfs	f1,YesX(REG_TextProp)
+  lfs	f2,YesY(REG_TextProp)
+	branchl r12,0x803a6b98
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create No
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl LagPrompt_SceneLoad_No
+  mflr  r4
+	lfs	f1,NoX(REG_TextProp)
+  lfs	f2,NoY(REG_TextProp)
+	branchl r12,0x803a6b98
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,0x8037f1b0
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  LagPrompt_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+
+#Store text gobj pointer
+  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
+#Init Selection value
+  li  r3,InitialSelection
+  stb r3,OFST_Selection(REG_GObjData)
+
+#Highlight selection
+  mr  r3,REG_TextGObj
+  li  r4,InitialSelection+1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+
+LagPrompt_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region LagPrompt_SceneThink
+LagPrompt_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  LagPrompt_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,0x801a36c0
+  mr  REG_Inputs,r3
+#Check for movement to the right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq LagPrompt_SceneThink_SkipRight
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  addi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,1
+  ble LagPrompt_SceneThink_HighlightSelection
+  li  r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  b LagPrompt_SceneThink_CheckForA
+LagPrompt_SceneThink_SkipRight:
+#Check for movement to the left
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq LagPrompt_SceneThink_CheckForA
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  subi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge LagPrompt_SceneThink_HighlightSelection
+  li  r3,0
+  stb r3,OFST_Selection(REG_GObjData)
+  b LagPrompt_SceneThink_CheckForA
+
+LagPrompt_SceneThink_HighlightSelection:
+#Unhighlight both options
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,1
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,2
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+#Highlight selection
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  lbz r4,OFST_Selection(REG_GObjData)
+  addi  r4,r4,1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Play SFX
+  branchl r12,0x80174380
+#endregion
+#region Check for Confirmation
+LagPrompt_SceneThink_CheckForA:
+  li  r3,4
+  branchl r12,0x801a36a0
+  rlwinm. r0,r4,0,0x100
+  bne LagPrompt_SceneThink_Confirmed
+  rlwinm. r0,r4,0,0x1000
+  bne LagPrompt_SceneThink_Confirmed
+  b LagPrompt_SceneThink_Exit
+LagPrompt_SceneThink_Confirmed:
+#Play Menu Sound
+  branchl r12,0x80174338
+#If yes, apply lag reduction
+  lbz r3,OFST_Selection(REG_GObjData)
+  cmpwi r3,0
+  bne LagPrompt_SceneThink_ExitScene
+#endregion
+#region Apply Code
+.set  REG_GeckoCode,12
+#Apply lag reduction
+  bl  LagReductionGeckoCode
+  mflr  r3
+  bl  ApplyGeckoCode
+#Reset some pad variables
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+#Set new post retrace callback
+  load  r3,PostRetraceCallback
+  branchl r12,0x80375934
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,0x80328f50
+#endregion
+
+LagPrompt_SceneThink_ExitScene:
+  branchl r12,0x801a4b60
+
+LagPrompt_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region LagPrompt_SceneDecide
+LagPrompt_SceneDecide:
+
+  backup
+
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,0x801a4ce0
+  bl  Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+
+#Enter Codes Scene
+  li  r3,CodesSceneID
+  branchl r12,0x801a42e8
+#Change Major
+  branchl r12,0x801a42d4
+
+LagPrompt_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region LagReductionGeckoCode
+LagReductionGeckoCode:
+blrl
+.long 0x041A4D98
+.long 0x481AA57D
+.long 0x04019860
+.long 0x4BFFFD9D
+.long 0x0415FFB8
+.long 0x3C808001
+.long 0x0415FFBC
+.long 0x608395FC
+.long 0xFF000000
+#endregion
+
+#endregion
+
+#region Codes
+
+#region Codes_SceneLoad
+############################################
+
+#region Codes_SceneLoad_Data
+Codes_SceneLoad_TextProperties:
+blrl
+.set TitleX,0x0
+.set TitleY,0x4
+.set CanvasScaling,0x8
+.set TitleScale,0xC
+.set CodesX,0x10
+.set CodesInitialY,0x14
+.set CodesYDiff,0x18
+.set CodesScale,0x1C
+.set OptionsX,0x20
+.set HighlightColor,0x24
+.set NonHighlightColor,0x28
+.float 30     			   #REG_TextGObj X pos
+.float 30  					   #REG_TextGObj Y pos
+.float 1   				     #Canvas Scaling
+.float 1.2					    	#Text scale
+.float 320              #CodesX
+.float 100              #CodesInitialY
+.float 30              #CodesYDiff
+.float 0.8             #CodesScale
+.float 335              #OptionsX
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
 
 
-##################################
-## PLACE AT 0xb6f3d0 IN state FILE ##
-##################################
+.set CodeAmount,5
+#region Code Names Order
+CodeNames_Order:
+blrl
+bl  CodeNames_UCF
+bl  CodeNames_Frozen
+bl  CodeNames_Spawns
+bl  CodeNames_Wobbling
+bl  CodeNames_Ledgegrab
+.align 2
+#endregion
+#region Code Names
+CodeNames_Title:
+blrl
+.string "Select Codes:"
+.align 2
+CodeNames_UCF:
+.string "UCF:"
+.align 2
+CodeNames_Frozen:
+.string "Frozen Stages:"
+.align 2
+CodeNames_Spawns:
+.string "Neutral Spawns:"
+.align 2
+CodeNames_Wobbling:
+.string "Wobbling:"
+.align 2
+CodeNames_Ledgegrab:
+.string "Ledge Grab Limit:"
+.align 2
+#endregion
+#region Code Options Order
+CodeOptions_Order:
+blrl
+bl  CodeOptions_UCF
+bl  CodeOptions_Frozen
+bl  CodeOptions_Spawns
+bl  CodeOptions_Wobbling
+bl  CodeOptions_Ledgegrab
+.align 2
+#endregion
+#region Code Options
+.set  CodeOptions_OptionCount,0x0
+.set  CodeOptions_GeckoCodePointers,0x4
+CodeOptions_Wrapper:
+blrl
+.short 0x8183
+.ascii "%s"
+.short 0x8184
+.byte 0
+.align 2
+CodeOptions_UCF:
+.long 3 -1           #number of options
+bl  UCF_Off
+bl  UCF_On
+bl  UCF_Stealth
+.string "Off"
+.string "On"
+.string "Stealth"
+.align 2
+CodeOptions_Frozen:
+.long 3 -1           #number of options
+bl  Frozen_Off
+bl  Frozen_Stadium
+bl  Frozen_All
+.string "Off"
+.string "Stadium Only"
+.string "All"
+.align 2
+CodeOptions_Spawns:
+.long 2 -1           #number of options
+bl  Spawns_Off
+bl  Spawns_On
+.string "Off"
+.string "On"
+.align 2
+CodeOptions_Wobbling:
+.long 2 -1           #number of options
+bl  Wobbling_On
+bl  Wobbling_Off
+.string "On"
+.string "Off"
+.align 2
+CodeOptions_Ledgegrab:
+.long 2 -1           #number of options
+bl  Ledgegrab_Off
+bl  Ledgegrab_On
+.string "Off"
+.string "On"
+.align 2
+#endregion
+#region Gecko Codes
+DefaultCodes:
+  blrl
+  .long 0x0445BF28  #Chars
+  .long 0xFFFFFFFF
+  .long 0x0445BF2C  #Stages
+  .long 0xFFFFFFFF
+  .long 0x0445bf10  #Game Mode
+  .long 0x00340102
+  .long 0x0445bf14  #Stock count
+  .long 0x04000a00
+  .long 0x0445bf18  #Timer
+  .long 0x08010100
+  .long 0x0445c388  #Random Stages
+  .long 0xe70000b0
+  .long 0x0445c370  #Item Switch
+  .long 0xff000000
+  .long 0x0445C394  #Unlock Trophies
+  .long 0x01266363
+  .long 0x0415D94C  #Disable Special Messages
+  .long 0x4E800020
+  .long 0x0415D984  #Disable Trophy Messages
+  .long 0x4E800020
+	.long 0xC201AE8C	#Dont save nametags
+	.long 0x00000008
+	.long 0x2C190002
+	.long 0x41820010
+	.long 0x2C190003
+	.long 0x41820008
+	.long 0x48000024
+	.long 0x3C608000
+	.long 0x80630000
+	.long 0x3C804741
+	.long 0x60844C45
+	.long 0x7C032000
+	.long 0x4082000C
+	.long 0x38000000
+	.long 0x48000008
+	.long 0x801F00F4
+	.long 0x60000000
+	.long 0x00000000
+  .long 0xFF000000
 
+UCF_Off:
+  .long 0x040c9a44
+  .long 0xd01f002c
+  .long 0x040998A4
+  .long 0x8083002c
+  .long 0x042662D0
+  .long 0x38980000
+  .long 0xFF000000
+UCF_On:
+  .long 0xC20C9A44
+  .long 0x00000022
+  .long 0xA09F03E8
+  .long 0x2C044000
+  .long 0x40820100
+  .long 0x808DAEB4
+  .long 0xC03F0620
+  .long 0xC05F2344
+  .long 0xEC2100B2
+  .long 0xC044003C
+  .long 0xFC011040
+  .long 0x4C411382
+  .long 0x408200E0
+  .long 0x88BF0670
+  .long 0x2C050002
+  .long 0x408000D4
+  .long 0x889F221F
+  .long 0x54840739
+  .long 0x41A20008
+  .long 0x480000C4
+  .long 0x3C80804C
+  .long 0x60841F78
+  .long 0x88A40001
+  .long 0x98A1FFF8
+  .long 0x4800003C
+  .long 0x38A5FFFF
+  .long 0x2C050000
+  .long 0x40800008
+  .long 0x38A50005
+  .long 0x3C808046
+  .long 0x6084B108
+  .long 0x1CA50030
+  .long 0x7C842A14
+  .long 0x88BF000C
+  .long 0x1CA5000C
+  .long 0x7C842A14
+  .long 0x88A40002
+  .long 0x7CA50774
+  .long 0x4E800020
+  .long 0x38A5FFFE
+  .long 0x4BFFFFC5
+  .long 0x90A1FFF4
+  .long 0x88A1FFF8
+  .long 0x4BFFFFB9
+  .long 0x8081FFF4
+  .long 0x7CA42850
+  .long 0x7CA529D6
+  .long 0x2C0515F9
+  .long 0x40810050
+  .long 0x38000001
+  .long 0x901F2358
+  .long 0x901F2340
+  .long 0x889F0007
+  .long 0x2C04000A
+  .long 0x40A20038
+  .long 0x80830010
+  .long 0x8084002C
+  .long 0x80841ECC
+  .long 0xD0040018
+  .long 0x80A40018
+  .long 0x3D803F80
+  .long 0x7C056000
+  .long 0x41820010
+  .long 0x38A00080
+  .long 0x98A40006
+  .long 0x4800000C
+  .long 0x38A0007F
+  .long 0x98A40006
+  .long 0xD01F002C
+  .long 0x00000000
+  .long 0xC20998A4
+  .long 0x0000001E
+  .long 0x8063002C
+  .long 0xC023063C
+  .long 0xC0050314
+  .long 0xFC010040
+  .long 0x408100D4
+  .long 0x3C8042A0
+  .long 0x9081FFF4
+  .long 0x3C803727
+  .long 0x9081FFF8
+  .long 0x3C804330
+  .long 0x9081FFE4
+  .long 0xC0030620
+  .long 0x38000000
+  .long 0xFC000210
+  .long 0xC021FFF4
+  .long 0xEC000072
+  .long 0xC021FFF8
+  .long 0xEC000828
+  .long 0xFC00001E
+  .long 0xD801FFEC
+  .long 0x8081FFF0
+  .long 0x38840002
+  .long 0x6C848000
+  .long 0x9081FFE8
+  .long 0xC801FFE4
+  .long 0xC8228B90
+  .long 0xEC000828
+  .long 0xC021FFF4
+  .long 0xEC000824
+  .long 0x2C000000
+  .long 0x40820014
+  .long 0x38000001
+  .long 0xD001FFE0
+  .long 0xC0030624
+  .long 0x4BFFFFAC
+  .long 0xC021FFE0
+  .long 0xEC210072
+  .long 0xEC000032
+  .long 0xEC00082A
+  .long 0xC0228954
+  .long 0xFC000840
+  .long 0x4C411382
+  .long 0x4082003C
+  .long 0x88830670
+  .long 0x2C040003
+  .long 0x40810030
+  .long 0xC005002C
+  .long 0xFC000050
+  .long 0xC0230624
+  .long 0xFC000840
+  .long 0x4080001C
+  .long 0x8061001C
+  .long 0x38630008
+  .long 0x83E10014
+  .long 0x38210018
+  .long 0x7C6803A6
+  .long 0x4E800020
+  .long 0x7FC3F378
+  .long 0x8083002C
+  .long 0x00000000
+  .long 0xC22662D0
+  .long 0x00000018
+  .long 0x9421FFBC
+  .long 0xBE810008
+  .long 0x7C0802A6
+  .long 0x90010040
+  .long 0x38600000
+  .long 0x38800000
+  .long 0x3DC0803A
+  .long 0x61CE6754
+  .long 0x7DC903A6
+  .long 0x4E800421
+  .long 0x7C7F1B78
+  .long 0x4800005D
+  .long 0x7FC802A6
+  .long 0x7FE3FB78
+  .long 0xC03E0000
+  .long 0xC05E0004
+  .long 0x48000059
+  .long 0x7C8802A6
+  .long 0x3DC0803A
+  .long 0x61CE6B98
+  .long 0x7DC903A6
+  .long 0x4E800421
+  .long 0x807F005C
+  .long 0x3C80FFFF
+  .long 0x6084FF0E
+  .long 0x90830006
+  .long 0x38800001
+  .long 0x989F0049
+  .long 0x38800001
+  .long 0x989F004A
+  .long 0xC03E0008
+  .long 0xD03F0024
+  .long 0xD03F0028
+  .long 0x48000024
+  .long 0x4E800021
+  .long 0x42820000
+  .long 0xC40F4000
+  .long 0x3D3851EC
+  .long 0x4E800021
+  .long 0x55434620
+  .long 0x76302E37
+  .long 0x33000000
+  .long 0x80010040
+  .long 0x7C0803A6
+  .long 0xBA810008
+  .long 0x38210044
+  .long 0x38980000
+  .long 0x00000000
+  .long 0xFF000000
+UCF_Stealth:
+  .long 0xC20C9A44
+  .long 0x00000022
+  .long 0xA09F03E8
+  .long 0x2C044000
+  .long 0x40820100
+  .long 0x808DAEB4
+  .long 0xC03F0620
+  .long 0xC05F2344
+  .long 0xEC2100B2
+  .long 0xC044003C
+  .long 0xFC011040
+  .long 0x4C411382
+  .long 0x408200E0
+  .long 0x88BF0670
+  .long 0x2C050002
+  .long 0x408000D4
+  .long 0x889F221F
+  .long 0x54840739
+  .long 0x41A20008
+  .long 0x480000C4
+  .long 0x3C80804C
+  .long 0x60841F78
+  .long 0x88A40001
+  .long 0x98A1FFF8
+  .long 0x4800003C
+  .long 0x38A5FFFF
+  .long 0x2C050000
+  .long 0x40800008
+  .long 0x38A50005
+  .long 0x3C808046
+  .long 0x6084B108
+  .long 0x1CA50030
+  .long 0x7C842A14
+  .long 0x88BF000C
+  .long 0x1CA5000C
+  .long 0x7C842A14
+  .long 0x88A40002
+  .long 0x7CA50774
+  .long 0x4E800020
+  .long 0x38A5FFFE
+  .long 0x4BFFFFC5
+  .long 0x90A1FFF4
+  .long 0x88A1FFF8
+  .long 0x4BFFFFB9
+  .long 0x8081FFF4
+  .long 0x7CA42850
+  .long 0x7CA529D6
+  .long 0x2C0515F9
+  .long 0x40810050
+  .long 0x38000001
+  .long 0x901F2358
+  .long 0x901F2340
+  .long 0x889F0007
+  .long 0x2C04000A
+  .long 0x40A20038
+  .long 0x80830010
+  .long 0x8084002C
+  .long 0x80841ECC
+  .long 0xD0040018
+  .long 0x80A40018
+  .long 0x3D803F80
+  .long 0x7C056000
+  .long 0x41820010
+  .long 0x38A00080
+  .long 0x98A40006
+  .long 0x4800000C
+  .long 0x38A0007F
+  .long 0x98A40006
+  .long 0xD01F002C
+  .long 0x00000000
+  .long 0xC20998A4
+  .long 0x0000001E
+  .long 0x8063002C
+  .long 0xC023063C
+  .long 0xC0050314
+  .long 0xFC010040
+  .long 0x408100D4
+  .long 0x3C8042A0
+  .long 0x9081FFF4
+  .long 0x3C803727
+  .long 0x9081FFF8
+  .long 0x3C804330
+  .long 0x9081FFE4
+  .long 0xC0030620
+  .long 0x38000000
+  .long 0xFC000210
+  .long 0xC021FFF4
+  .long 0xEC000072
+  .long 0xC021FFF8
+  .long 0xEC000828
+  .long 0xFC00001E
+  .long 0xD801FFEC
+  .long 0x8081FFF0
+  .long 0x38840002
+  .long 0x6C848000
+  .long 0x9081FFE8
+  .long 0xC801FFE4
+  .long 0xC8228B90
+  .long 0xEC000828
+  .long 0xC021FFF4
+  .long 0xEC000824
+  .long 0x2C000000
+  .long 0x40820014
+  .long 0x38000001
+  .long 0xD001FFE0
+  .long 0xC0030624
+  .long 0x4BFFFFAC
+  .long 0xC021FFE0
+  .long 0xEC210072
+  .long 0xEC000032
+  .long 0xEC00082A
+  .long 0xC0228954
+  .long 0xFC000840
+  .long 0x4C411382
+  .long 0x4082003C
+  .long 0x88830670
+  .long 0x2C040003
+  .long 0x40810030
+  .long 0xC005002C
+  .long 0xFC000050
+  .long 0xC0230624
+  .long 0xFC000840
+  .long 0x4080001C
+  .long 0x8061001C
+  .long 0x38630008
+  .long 0x83E10014
+  .long 0x38210018
+  .long 0x7C6803A6
+  .long 0x4E800020
+  .long 0x7FC3F378
+  .long 0x8083002C
+  .long 0x00000000
+  .long 0x042662D0
+  .long 0x38980000
+  .long 0xFF000000
+Frozen_Off:
+  .long 0x041D1548
+  .long 0x48003001
+  .long 0x04211444
+  .long 0x4800059c
+  .long 0x041E3348
+  .long 0x480000d1
+  .long 0x0421AAE4
+  .long 0x48000805
+  .long 0xFF000000
+Frozen_Stadium:
+  .long 0x041D1548
+  .long 0x60000000
+  .long 0x04211444
+  .long 0x4800059c
+  .long 0x041E3348
+  .long 0x480000d1
+  .long 0x0421AAE4
+  .long 0x48000805
+  .long 0xFF000000
+Frozen_All:
+  .long 0x041D1548
+  .long 0x60000000
+  .long 0x04211444
+  .long 0x60000000
+  .long 0x041E3348
+  .long 0x60000000
+  .long 0x0421AAE4
+  .long 0x60000000
+  .long 0xFF000000
 
-#*** Possibly inject into 801a4000, memcard stuff has already been reset, this might be the
-#neatest place to do this. destroy the heap, make a new one, load the snapshot and rerun this
-#function
+Spawns_Off:
+  .long 0x04263058
+  .long 0x38840001
+  .long 0x041c0a48
+  .long 0x7d8803a6
+  .long 0xFF000000
+Spawns_On:
+  .long 0xC2263058
+  .long 0x00000030
+  .long 0x39E00000
+  .long 0x3A000000
+  .long 0x3E408048
+  .long 0x625307FD
+  .long 0x91F206D8
+  .long 0x91F206DC
+  .long 0x8A3207C8
+  .long 0x625206D7
+  .long 0x2C110001
+  .long 0x4182004C
+  .long 0x39EF0001
+  .long 0x8E930024
+  .long 0x2C140003
+  .long 0x4182000C
+  .long 0x9A130004
+  .long 0x3A100001
+  .long 0x2C0F0004
+  .long 0x41A0FFE4
+  .long 0x48000130
+  .long 0x39E00000
+  .long 0x3A0000FF
+  .long 0x3E408048
+  .long 0x62520801
+  .long 0x39EF0001
+  .long 0x9E120024
+  .long 0x2C0F0004
+  .long 0x41A0FFF4
+  .long 0x4800010C
+  .long 0x3E208048
+  .long 0x623106DC
+  .long 0x39EF0001
+  .long 0x3A520001
+  .long 0x8E930024
+  .long 0x89D30008
+  .long 0x2C140003
+  .long 0x41A2FFC0
+  .long 0x2C0E0000
+  .long 0x40820010
+  .long 0x3A000000
+  .long 0x8A910000
+  .long 0x48000024
+  .long 0x2C0E0001
+  .long 0x40820010
+  .long 0x3A000001
+  .long 0x8E910001
+  .long 0x48000010
+  .long 0x3A000002
+  .long 0x8E910002
+  .long 0x48000004
+  .long 0x3A940001
+  .long 0x2C140003
+  .long 0x40A0FF80
+  .long 0x9A910000
+  .long 0x9A120000
+  .long 0x2C0F0004
+  .long 0x41A0FF94
+  .long 0x39E00000
+  .long 0x3E208048
+  .long 0x623106DB
+  .long 0x3AA00000
+  .long 0x39EF0001
+  .long 0x8E910001
+  .long 0x2C140001
+  .long 0x40800008
+  .long 0x48000010
+  .long 0x3AB50001
+  .long 0x2C150003
+  .long 0x40A0FF40
+  .long 0x2C0F0003
+  .long 0x41A0FFDC
+  .long 0x39E00000
+  .long 0x3A310127
+  .long 0x39C000FF
+  .long 0x3A8000FF
+  .long 0x39EF0001
+  .long 0x8E110024
+  .long 0x2C0E00FF
+  .long 0x40820010
+  .long 0x7E128378
+  .long 0x39C00000
+  .long 0x4800002C
+  .long 0x7C109000
+  .long 0x4082000C
+  .long 0x39C00003
+  .long 0x4800001C
+  .long 0x2C1400FF
+  .long 0x40820010
+  .long 0x39C00001
+  .long 0x3A800000
+  .long 0x48000008
+  .long 0x39C00002
+  .long 0x99D1FFFC
+  .long 0x2C0F0004
+  .long 0x41A0FFB4
+  .long 0x38840001
+  .long 0x00000000
+  .long 0xC21C0A48
+  .long 0x0000001A
+  .long 0x3DE0801B
+  .long 0x61EFFFA8
+  .long 0x7C0F6000
+  .long 0x418200BC
+  .long 0x3DC08048
+  .long 0xA1CE0686
+  .long 0x3DE08049
+  .long 0x61EFED70
+  .long 0x81EF0000
+  .long 0x2C0E001F
+  .long 0x4082001C
+  .long 0x3E00C242
+  .long 0x3E204242
+  .long 0x3E404230
+  .long 0x3A600000
+  .long 0x960F0598
+  .long 0x4800002C
+  .long 0x2C0E001C
+  .long 0x40820040
+  .long 0x3E00C23A
+  .long 0x62106666
+  .long 0x3E20423D
+  .long 0x62318E70
+  .long 0x3E404214
+  .long 0x3A600000
+  .long 0x960F0854
+  .long 0x48000004
+  .long 0x924F0004
+  .long 0x962F0040
+  .long 0x924F0004
+  .long 0x962F0040
+  .long 0x926F0004
+  .long 0x960F0040
+  .long 0x926F0004
+  .long 0x2C0E0020
+  .long 0x40820014
+  .long 0x3A000041
+  .long 0x9E0F0650
+  .long 0x3A0000C1
+  .long 0x9A0F0040
+  .long 0x2C0E0008
+  .long 0x40820024
+  .long 0x3E004270
+  .long 0x3E20C270
+  .long 0x3A400000
+  .long 0x39EF4748
+  .long 0x960F4748
+  .long 0x924F0004
+  .long 0x962F0040
+  .long 0x924F0004
+  .long 0x7D8803A6
+  .long 0x00000000
+  .long 0xFF000000
 
+Wobbling_On:
+  .long 0x0408EE48
+  .long 0x2c000000
+  .long 0xFF000000
+Wobbling_Off:
+  .long 0xC208EE48
+  .long 0x0000000C
+  .long 0x807B0010
+  .long 0x2C0300D9
+  .long 0x4182004C
+  .long 0x2C030163
+  .long 0x40A20018
+  .long 0x807B0004
+  .long 0x2C030002
+  .long 0x2C830019
+  .long 0x4C423382
+  .long 0x41820030
+  .long 0x887D2226
+  .long 0x70630020
+  .long 0x40820024
+  .long 0xC01D1A4C
+  .long 0x38600000
+  .long 0x9061FFF0
+  .long 0xC021FFF0
+  .long 0xFC000840
+  .long 0x4C401382
+  .long 0x40820008
+  .long 0x38000000
+  .long 0x2C000000
+  .long 0x60000000
+  .long 0x00000000
+  .long 0xFF000000
+Ledgegrab_Off:
+  .long 0x0408ee54
+  .long 0xc0028af4
+  .long 0xFF000000
+Ledgegrab_On:
+  .long 0x0408ee54
+  .long 0xc0028af4
+  .long 0xFF000000
 
-##################
-## Change Major ##
-##################
+#endregion
 
-#request to change screen
- branchl r3,0x801A4B60
+#endregion
+#region Codes_SceneLoad
+Codes_SceneLoad:
+#GObj Offsets
+  .set OFST_CodeNamesTextGObj,0x0
+  .set OFST_CodeOptionsTextGObj,0x4
+  .set OFST_CursorLocation,0x8
+  .set OFST_ScrollAmount,0xA
+  .set OFST_OptionSelections,0xC
+blrl
 
-#Set Next Scene Byte (Main Menu) for sceneDecide_Menu
-#Check For X Button Held
-li	r3,4
-branchl	r12,0x801a3680
-rlwinm.	r4,r4,0,21,21
-beq	ExploitCode102_GoToEventSS
+#Init
+  backup
 
-ExploitCode102_GoToCSS:
-li	r3,2
-b	ExploitCode102_StoreNewScene
+Codes_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
 
-#Spoof current (soon to be previous) screen
-ExploitCode102_GoToEventSS:
- li	r3,0x2b
- load	r4,0x80479d30
- stb	r3,0x0(r4)
- li r3,0x1
+#GET PROPERTIES TABLE
+	bl Codes_SceneLoad_TextProperties
+	mflr REG_TextProp
 
-ExploitCode102_StoreNewScene:
- lis r4,0x804d
- stb r3,0x68bC(r4)
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,0x803a611c
 
-################################
-## Disable memory card saving ##
-################################
+########################
+## Create Text Object ##
+########################
 
-#lis 	r5,0x8043		#v1.0=80431360
-#li	r6,4
-#stw	r6,0x3320(r5)	# store 4 to disable memory card saving henceforth
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
 
-#########################
-## Tournament Settings ##
-#########################
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl CodeNames_Title
+  mflr  r4
+	lfs	f1,TitleX(REG_TextProp)
+  lfs	f2,TitleY(REG_TextProp)
+	branchl r12,0x803a6b98
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
 
-lwz	r4, -0x77C0 (r13)
-load r3,0x00340102
-stw r3,0x1850(r4)			#store stock mode
-load r3,0x04000A00
-stw r3,0x1854(r4)			#store 4 stocks
-load r3,0x08010100
-stw r3,0x1858(r4)			#store 8 minutes
+#Init Menu
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,0x8037f1b0
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Codes_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+#Create Menu
+  mr  r3,REG_GObjData
+  bl  Codes_CreateMenu
 
-load r3,0xFF000000
-stw r3,0x1CB0(r4)			#store items off
-load r3,0xE70000B0
-stw r3,0x1CC8(r4)			#store stages
+Codes_SceneLoad_Exit:
+  restore
+  blr
+#endregion
 
-#################################
-## Place Branch To Heap Hijack ##
-#################################
+############################################
+#endregion
+#region Codes_SceneThink
+Codes_SceneThink:
+blrl
 
-#Get Function To Branch To
-  bl	ExploitCode102_HeapHijack
-  mflr	r3
-#Get Where to Place Branch
-  load	r4,InjectionPoint
-#Make a Branch Instruction out of This (FunctionAddress - BranchPoint)
-  sub	r3,r3,r4		#r3 contains difference between
-  rlwinm	r3,r3,0,6,29		#Mask Out bits 6 through 29
-  oris	r3,r3,0x4800		#Place 0x48 at the start (opcode)
-  stw	r3,0x0(r4)
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
 
-#####################
-## TRK_flush_cache ##
-#####################
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
 
-load r3,InjectionPoint
-lis	r4,0x4
-branchl	r12,0x80328F50
+#region Adjust Code Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,0x801a36c0
+  mr  REG_Inputs,r3
+#Check for movement up
+  rlwinm. r0,REG_Inputs,0,0x10
+  beq Codes_SceneThink_SkipUp
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Codes_SceneThink_UpdateMenu
+#Cursor stays at top
+  li  r3,0
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll up
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Codes_SceneThink_UpdateMenu
+#Scroll stays at top
+  li  r3,0
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Codes_SceneThink_Exit
+Codes_SceneThink_SkipUp:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x20
+  beq Codes_SceneThink_AdjustOptionSelection
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Check if exceeds total amount of codes
+  extsb r3,r3
+  cmpwi r3,CodeAmount-1
+  ble 0x10
+#Cursor stays at the last code
+  li  r3,CodeAmount-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  b Codes_SceneThink_Exit
+#Check if exceeds max amount of codes per page
+  cmpwi r3,MaxCodesOnscreen-1
+  ble Codes_SceneThink_UpdateMenu
+#Cursor stays at bottom
+  li  r3,MaxCodesOnscreen-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll down
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,CodeAmount-MaxCodesOnscreen
+  ble Codes_SceneThink_UpdateMenu
+#Scroll stays at bottom
+  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Codes_SceneThink_Exit
+#endregion
+#region Adjust Option Selection
+Codes_SceneThink_AdjustOptionSelection:
+.set  REG_MaxOptions,20
+.set  REG_OptionValuePtr,21
+#Check for movement right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Codes_SceneThink_SkipRight
+#Get amount of options for this code
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  bl  CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+  bl  ConvertBlPointer
+  lwz REG_MaxOptions,CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Increment value
+  lbz r3,0x0(REG_OptionValuePtr)
+  addi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpw r3,REG_MaxOptions
+  ble Codes_SceneThink_UpdateMenu
+#Option stays maxxed out
+  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
+  b Codes_SceneThink_Exit
+Codes_SceneThink_SkipRight:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Codes_SceneThink_CheckToExit
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Decrement value
+  lbz r3,0x0(REG_OptionValuePtr)
+  subi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Codes_SceneThink_UpdateMenu
+#Option stays at 0
+  li  r3,0
+  stb r3,0x0(REG_OptionValuePtr)
+  b Codes_SceneThink_Exit
+#endregion
+#region Check to Exit
+Codes_SceneThink_CheckToExit:
+#Check for start input
+  li  r3,4
+  branchl r12,0x801a36a0
+  rlwinm. r0,r4,0,0x1000
+  beq Codes_SceneThink_Exit
+#Apply codes
+  mr  r3,REG_GObjData
+  bl  ApplyAllGeckoCodes
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,0x80328f50
+#Play SFX
+  branchl r12,0x80174338
+#Exit Scene
+  branchl r12,0x801a4b60
+  b Codes_SceneThink_Exit
+#endregion
+
+Codes_SceneThink_UpdateMenu:
+#Redraw Menu
+  mr  r3,REG_GObjData
+  bl  Codes_CreateMenu
+#Play SFX
+  branchl r12,0x80174380
+  b Codes_SceneThink_Exit
+
+Codes_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Codes_SceneDecide
+Codes_SceneDecide:
+  backup
+
+#Change Major
+  li  r3,ExitSceneID
+  branchl r12,0x801a42e8
+#Leave Major
+  branchl r12,0x801a42d4
+
+Codes_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region Codes_CreateMenu
+Codes_CreateMenu:
+.set  REG_GObjData,31
+.set  REG_TextGObj,30
+.set  REG_TextProp,29
+
+#Init
+  backup
+  mr  REG_GObjData,r3
+  bl  Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#Remove old text gobjs if they exist
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Codes_CreateMenu_SkipNameRemoval
+  branchl r12,Text_RemoveText
+Codes_CreateMenu_SkipNameRemoval:
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Codes_CreateMenu_SkipOptionRemoval
+  branchl r12,Text_RemoveText
+Codes_CreateMenu_SkipOptionRemoval:
+
+#region CreateTextGObjs
+Codes_CreateMenu_CreateTextGObjs:
+#Create Code Mames Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#Create Code Options Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#endregion
+#region Codes_CreateMenu_CreateNames
+Codes_CreateMenu_CreateNamesInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+  li  REG_Count,0
+Codes_CreateMenu_CreateNamesLoop:
+#Next name to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,REG_Count
+#Get the string bl pointer
+  bl  CodeNames_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  ConvertBlPointer
+  mr  r4,r3
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, -0x6758 (rtoc)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lfs f1,CodesX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Codes_CreateMenu_CreateNamesIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Codes_CreateMenu_CreateNameLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Codes_CreateMenu_CreateNamesLoop
+Codes_CreateMenu_CreateNameLoopEnd:
+#endregion
+#region Codes_CreateMenu_CreateOptions
+Codes_CreateMenu_CreateOptionsInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+.set  REG_CurrentOptionID,22
+.set  REG_CurrentOptionSelection,23
+.set  REG_OptionStrings,24
+.set  REG_StringLoopCount,25
+  li  REG_Count,0
+Codes_CreateMenu_CreateOptionsLoop:
+#Next option to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add REG_CurrentOptionID,r3,REG_Count
+#Get the bl pointer
+  mr  r3,REG_CurrentOptionID
+  bl  CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  ConvertBlPointer
+  lwz r4,CodeOptions_OptionCount(r3)
+  addi  r4,r4,1
+  addi  REG_OptionStrings,r3,CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
+  mulli r4,r4,0x4                                           #pointer length
+  add REG_OptionStrings,REG_OptionStrings,r4
+#Get this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
+
+#Loop through strings and get the current one
+  li  REG_StringLoopCount,0
+Codes_CreateMenu_CreateOptionsLoop_StringSearch:
+  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
+  beq Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
+#Get next string
+  mr  r3,REG_OptionStrings
+  branchl r12,strlen
+  add REG_OptionStrings,REG_OptionStrings,r3
+  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
+  addi  REG_StringLoopCount,REG_StringLoopCount,1
+  b Codes_CreateMenu_CreateOptionsLoop_StringSearch
+
+Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, -0x6758 (rtoc)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  bl  CodeOptions_Wrapper
+  mflr  r4
+  mr  r5,REG_OptionStrings
+  lfs f1,OptionsX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Codes_CreateMenu_CreateOptionsIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Codes_CreateMenu_CreateOptionsLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Codes_CreateMenu_CreateOptionsLoop
+Codes_CreateMenu_CreateOptionsLoopEnd:
+#endregion
+#region Codes_CreateMenu_HighlightCursor
+#Name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Option
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#endregion
+
+Codes_CreateMenu_Exit:
+  restore
+  blr
+
+###############################################
+
+ConvertBlPointer:
+  lwz r4,0x0(r3)        #Load bl instruction
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+  extsh r4,r4
+  add r3,r4,r3
+  blr
+
+#endregion
+#region ApplyAllGeckoCodes
+ApplyAllGeckoCodes:
+.set  REG_GObjData,31
+.set  REG_Count,30
+.set  REG_OptionSelection,29
+#Init
+  backup
+  mr  REG_GObjData,r3
+
+#Default Codes
+  bl  DefaultCodes
+  mflr  r3
+  bl  ApplyGeckoCode
+
+#Init Loop
+  li  REG_Count,0
+ApplyAllGeckoCodes_Loop:
+#Load this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's gecko code pointers
+  bl  CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  ConvertBlPointer
+  addi  r3,r3,CodeOptions_GeckoCodePointers
+  mulli r4,REG_OptionSelection,0x4
+  add  r3,r3,r4
+  bl  ConvertBlPointer
+  bl  ApplyGeckoCode
+
+ApplyAllGeckoCodes_IncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  blt ApplyAllGeckoCodes_Loop
+
+ApplyAllGeckoCodes_Exit:
+  restore
+  blr
+
+####################################
+
+ApplyGeckoCode:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+ApplyGeckoCode_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq ApplyGeckoCode_C2
+  cmpwi r3,0x4
+  beq ApplyGeckoCode_04
+  cmpwi r3,0xFF
+  beq ApplyGeckoCode_Exit
+  b ApplyGeckoCode_Exit
+ApplyGeckoCode_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b ApplyGeckoCode_Loop
+ApplyGeckoCode_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b ApplyGeckoCode_Loop
+ApplyGeckoCode_Exit:
+blr
+
+#endregion
+
+#endregion
+
+#region MinorSceneStruct
+LagPrompt_MinorSceneStruct:
+blrl
+#Lag Prompt
+.byte 0                     #Minor Scene ID
+.byte 00                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  LagPrompt_SceneDecide   #SceneDecide
+.byte PromptCommonSceneID   #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+Codes_MinorSceneStruct:
+blrl
+#Codes Prompt
+.byte 0                     #Minor Scene ID
+.byte 00                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Codes_SceneDecide       #SceneDecide
+.byte CodesCommonSceneID    #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+#endregion
+
+CheckProgressive:
+#Check if progressive is enabled
+  branchl r12,0x80349278
+  cmpwi r3,0
+  beq NoProgressive
+IsProgressive:
+#Override SceneLoad
+  li  r3,PromptCommonSceneID
+  branchl r12,0x801a4ce0
+  bl  LagPrompt_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Load LagPrompt
+  li	r3, PromptSceneID
+  b ExploitCode102_Exit
+NoProgressive:
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,0x801a4ce0
+  bl  Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Load Codes
+  li  r3,CodesSceneID
+
+ExploitCode102_Exit:
+#Store as next scene
+	load	r4,0x804d68bc
+	stb	r3,0x0(r4)
+#request to change scenes
+	branchl	r12,0x801a4b60
+  restore
 
 ##########
 ## Exit ##
 ##########
 
-lis r12,0x8023
-ori r12,r12,0x9e9c
-mtctr r12
-bctr
-
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-#########################################################
-
-
-######################
-## Heap Hijack Code ##
-######################
-ExploitCode102_HeapHijack:
-blrl
-
-backup
-
-###################
-## Load Snapshot ##
-###################
-
-#Update list of present memcard snapshots
-  li  r3,0
-  branchl r12,0x80253e90
-
-.set MemcardFileList,0x804333c8
-.set REG_Count,31
-.set REG_Index,30
-.set REG_SnapshotStruct,29
-.set REG_SnapshotID,28
-#Check if file exists on card
-  load  r3,MemcardFileList                            #go to pointer location
-  lwz REG_SnapshotStruct,0x0(r3)                      #access pointer to snapshot file list
-  lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
-  addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
-  bl  ExploitCode102_HeapHijack_SnapshotIDInt                                      #get ID we are looking for
-  mflr r3
-  lwz REG_SnapshotID,0x0(r3)
-  li  REG_Count,0                                     #init count
-ExploitCode102_HeapHijack_SnapshotSearchLoop:
-  cmpw REG_Count,REG_Index
-  bge ExploitCode102_HeapHijack_SnapshotSearchLoop_NotFound
-#Get the next snapshots ID
-  mulli r3,REG_Count,0x8          #each snapshots data is 0x8 long
-  add r3,r3,REG_SnapshotStruct
-  lwz r4,0x0(r3)                  #get the snaps ID
-  cmpw r4,REG_SnapshotID
-  bne ExploitCode102_HeapHijack_SnapshotSearchLoop_IncLoop
-  b ExploitCode102_HeapHijack_SnapshotSearchLoop_Found
-ExploitCode102_HeapHijack_SnapshotSearchLoop_IncLoop:
-  addi REG_Count,REG_Count,1
-  b ExploitCode102_HeapHijack_SnapshotSearchLoop
-
-ExploitCode102_HeapHijack_SnapshotSearchLoop_NotFound:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,0x80024030
-  li	r3, 3
-  branchl	r12,0x80024030
-#Disable Saving
-  lis     r4,0x8043
-  li     r3,4
-  stw    r3,0x3320(r4)    # store 4 to disable memory card saving
-  b ExploitCode102_HeapHijack_CleanUpHijack
-
-ExploitCode102_HeapHijack_SnapshotSearchLoop_Found:
-.set REG_CodesetSize,31
-.set REG_CodesetPointer,30
-#Convert blocks to bytes
-  lhz r3,0x6(r3)
-  mulli REG_CodesetSize,r3,0x2000
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,0x8037f1e4			       #HSD_Alloc
-  mr  REG_CodesetPointer,r3
-  load	r5,0x803bacdc			           #Snapshot Data Struct
-  stw	REG_CodesetPointer,0x8(r5)     #Store Pointer to this area
-
-#Remove Pointer To Current Memcard Stuff
-  branchl	r12,0x8001c5a4
-#Alloc Space For Memcard Stuff
-  branchl	r12,0x8001c550
-
-#Load File
-  li	r3,0x0		#Slot A?
-  bl	ExploitCode102_HeapHijack_SnapshotID
-  mflr	r4
-  load	r5,0x803bacdc		#Snapshot Data Struct
-  load	r6,0x80433384		#String Space?
-  load	r9,0x80433380
-  lwz	r9,0x44(r9)
-  lwz	r7,0x0(r9)		#Weird Char Pointer, Maybe Icon Image
-  lwz	r8,0x4(r9)		#Banner Image
-  li	r9,0		#Unk
-  branchl	r12,0x8001bf04
-#Store Result
-  load	r4,0x804A0B6C
-  stw	r3,0x0(r4)
-
-ExploitCode102_HeapHijack_WaitToLoadLoop:
-  branchl	r12,0x8001b6f8
-  cmpwi	r3,0xB
-  beq	ExploitCode102_HeapHijack_WaitToLoadLoop
-#If Exists
-  cmpwi	r3,0x0
-  beq	ExploitCode102_HeapHijack_Success
-  cmpwi	r3,0x9
-  beq	ExploitCode102_HeapHijack_Success
-  b	ExploitCode102_HeapHijack_Failure
-
-ExploitCode102_HeapHijack_SnapshotIDInt:
-blrl
-.long 0x00D0C0DE
-.align 2
-ExploitCode102_HeapHijack_SnapshotID:
-blrl
-.string "13680862"
-.align 2
-
-#############
-## Failure ##
-#############
-
-ExploitCode102_HeapHijack_Failure:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,0x80024030
-  li	r3, 3
-  branchl	r12,0x80024030
-#Disable Saving
-  lis     r4,0x8043
-  li     r3,4
-  stw    r3,0x3320(r4)    # store 4 to disable memory card saving
-
-b	ExploitCode102_Exit
-
-
-#############
-## Success ##
-#############
-ExploitCode102_HeapHijack_Success:
-#Store codeset pointer and length
-  stw REG_CodesetPointer,CodesetPointer(rtoc)
-
-#Play SFX
-  li	r3,0xAA
-  branchl	r12,0x801c53ec
-
-#Boot up tasks
-  OnBootup
-
-#####################
-## Run Codehandler ##
-#####################
-
-ExploitCode102_HeapHijack_RunCodehandler:
-  addi r4,REG_CodesetPointer,32
-  bl	GeckoCodehandler
-
-###################################
-## Change Start Of Original Heap ##
-###################################
-
-  load	r3,0x8043200c			#Heap Start
-  mr	r4,REG_CodesetSize			#Space to Add
-  lwz	r5,0x4(r3)			#Get Heap Start
-  add	r4,r4,r5			#Add
-  stw	r4,0x4(r3)			#Store New Heap Start
-
-##################
-## Destroy Heap ##
-##################
-
-  lwz	r3, -0x58A0 (r13)
-  branchl	r12,0x80344154
-
-#####################
-## Exit HeapHijack ##
-#####################
-
-#Adjust Heap Start
-  lwz	r3, -0x3FE8 (r13)
-  mr	r4,REG_CodesetSize
-  add	r3,r3,r4
-  stw	r3,-0x3FE8 (r13)
-
-
-ExploitCode102_HeapHijack_CleanUpHijack:
-
-################################
-## Remove Branch To This Code ##
-################################
-
-load	r3,0x806da760
-load	r4,InjectionPoint
-stw	r3,0x0(r4)
-
-#############################
-## Flush Instruction Cache ##
-#############################
-ExploitCode102_Exit:
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,0x80328f50
-
-###################################
-## Zero fill entire nametag area ##
-###################################
-
-restore
-
-load	r3,InjectionReturn
+load	r3,0x80239e9c
 mtlr	r3
 
 lis r3,0x8045
@@ -1380,6 +2966,8 @@ ori r12,r12,0x3130			#v1.0 = 8045b888
 mtctr r12
 bctr
 
+ExploitCode102_End:
+blrl
 
 #########################################################
 #########################################################
@@ -1395,992 +2983,6 @@ bctr
 #########################################################
 
 
-#######################
-## Gecko Codehandler ##
-#######################
-
-.text
-
-.set r0,0;   .set r1,1;   .set r2,2; .set r3,3;   .set r4,4
-.set r5,5;   .set r6,6;   .set r7,7;   .set r8,8;   .set r9,9
-.set r10,10; .set r11,11; .set r12,12; .set r13,13; .set r14,14
-.set r15,15; .set r16,16; .set r17,17; .set r18,18; .set r19,19
-.set r20,20; .set r21,21; .set r22,22; .set r23,23; .set r24,24
-.set r25,25; .set r26,26; .set r27,27; .set r28,28; .set r29,29
-.set r30,30; .set r31,31; .set f0,0; .set f2,2; .set f3,3
-
-.globl _start
-
-cheatdata:
-.long	frozenvalue
-.space 39*4
-
-GeckoCodehandler:
-_start:
-	stwu	r1,-168(r1)		# stores sp
-	stw	r0,8(r1)		# stores r0
-
-	mflr	r0
-	stw	r0,172(r1)		# stores lr
-
-	mfcr	r0
-	stw	r0,12(r1)		# stores cr
-
-	mfctr	r0
-	stw	r0,16(r1)		# stores ctr
-
-	mfxer	r0
-	stw	r0,20(r1)		# stores xer
-
-	stmw	r3,24(r1)		# saves r3-r31
-
-	mfmsr	r20
-	ori	r26,r20,0x2000		#enable floating point ?
-	andi.	r26,r26,0xF9FF
-	mtmsr	r26
-
-	stfd	f2,152(r1)		# stores f2
-	stfd	f3,160(r1)		# stores f3
-
-    lis	r31,0x8000
-
-    lis r3, 0xCC00
-    lhz r28, 0x4010(r3)
-    ori r21, r28, 0xFF
-    sth r21, 0x4010(r3) # disable MP3 memory protection
-
-	mflr	r29
-	mr	r15,r4
-
-	ori	r7, r31, cheatdata@l	# set pointer for storing data (before the codelist)
-
-	lis	r6,0x8000		# default base address = 0x80000000 (code handler)
-
-	mr	r16,r6			# default pointer =0x80000000 (code handler)
-
-	li	r8,0			# code execution status set to true (code handler)
-
-	lis	r3,0x00D0
-    ori	r3,r3,0xC0DE
-
-	lwz	r4,0(r15)
-	cmpw	r3,r4
-	bne-	_exitcodehandler
-	lwz	r4,4(r15)
-	cmpw	r3,r4
-    bne-	_exitcodehandler	# lf no code list skip code handler
-    addi	r15,r15,8
-	b	_readcodes
-
-_exitcodehandler:
-	mtlr	r29
-
-resumegame:
-    lis r3, 0xCC00
-    sth r28,0x4010(r3)  # restore memory protection value
-
-	lfd	f2,152(r1)		# loads f2
-	lfd	f3,160(r1)		# loads f3
-
-	mtmsr	r20         # restore msr
-
-	lwz	r0,172(r1)
-	mtlr	r0			# restores lr
-
-	lwz	r0,12(r1)
-	mtcr	r0			# restores cr
-
-	lwz	r0,16(r1)
-	mtctr	r0			# restores ctr
-
-	lwz	r0,20(r1)
-	mtxer	r0			# restores xer
-
-	lmw	r3,24(r1)		# restores r3-r31
-
-	lwz	r0,8(r1)		# loads r0
-
-	addi	r1,r1,168
-
-	isync
-
-    blr				# return back to game
-
-_readcodes:
-	lwz	r3,0(r15)		#load code address
-	lwz	r4,4(r15)		#load code value
-
-	addi	r15,r15,8		#r15 points to next code
-
-	andi.	r9,r8,1
-	cmpwi	cr7,r9,0		#check code execution status in cr7. eq = true, ne = false
-
-	li	r9,0			#Clears r9
-
-	rlwinm	r10,r3,3,29,31		#r10 = extract code type, 3 bits
-	rlwinm 	r5,r3,7,29,31		#r5  = extract sub code type 3 bits
-
-	andis.	r11,r3,0x1000		#test pointer
-	rlwinm	r3,r3,0,7,31		#r3  = extract address in r3 (code type 0/1/2) #0x01FFFFFF
-
-	bne	+12			#jump lf the pointer is used
-
-	rlwinm	r12,r6,0,0,6		#lf pointer is not used, address = base address
-	b	+8
-
-	mr	r12,r16			#lf pointer is used, address = pointer
-
-	cmpwi	cr4,r5,0		#compares sub code type with 0 in cr4
-
-	cmpwi	r10,1
-	blt+	_write			#code type 0 : write
-	beq+	_conditional		#code type 1 : conditional
-
-	cmpwi	r10,3
-	blt+	_ba_pointer		#Code type 2 : base address operation
-
-	beq-	_repeat_goto		#Code type 3 : Repeat & goto
-
-	cmpwi	r10,5
-	blt-	_operation_rN		#Code type 4 : rN Operation
-	beq+	_compare16_NM_counter	#Code type 5 : compare [rN] with [rM]
-
-	cmpwi	r10,7
-	blt+	_hook_execute		#Code type 6 : hook, execute code
-
-	b	_terminator_onoff_	#code type 7 : End of code list
-
-#CT0=============================================================================
-#write  8bits (0): 00XXXXXX YYYY00ZZ
-#write 16bits (1): 02XXXXXX YYYYZZZZ
-#write 32bits (2): 04XXXXXX ZZZZZZZZ
-#string code  (3): 06XXXXXX YYYYYYYY, d1d1d1d1 d2d2d2d2, d3d3d3d3 ....
-#Serial Code  (4): 08XXXXXX YYYYYYYY TNNNZZZZ VVVVVVVV
-
-_write:
-	add	r12,r12,r3		#address = (ba/po)+(XXXXXX)
-	cmpwi	r5,3
-	beq-	_write_string		#r5  == 3, goto string code
-	bgt-	_write_serial		#r5  >= 4, goto serial code
-
-	bne-	cr7,_readcodes		#lf code execution set to false skip code
-
-	cmpwi	cr4,r5,1		#compares sub code type and 1 in cr4
-
-	bgt-	cr4,_write32		#lf sub code type == 2, goto write32
-
-	#lf sub code type = 0 or 1 (8/16bits)
-	rlwinm	r10,r4,16,16,31		#r10 = extract number of times to write (16bits value)
-
-_write816:
-	beq	cr4,+16			#lf r5 = 1 then 16 bits write
-	stbx	r4,r9,r12		#write byte
-	addi	r9,r9,1
-	b	+12
-	sthx	r4,r9,r12		#write halfword
-	addi	r9,r9,2
-	subic.	r10,r10,1		#number of times to write -1
-	bge-	_write816
-	b	_readcodes
-
-_write32:
-	rlwinm	r12,r12,0,0,29		#32bits align adress
-    stw	r4,0(r12)		#write word to address
-    b	_readcodes
-
-_write_string:				#endianess ?
-	mr	r9,r4
-	bne-	cr7,_skip_and_align	#lf code execution is false, skip string code data
-
-	_stb:
-	subic.	r9,r9,1			#r9 -= 1 (and compares r9 with 0)
-	blt-	_skip_and_align		#lf r9 < 0 then ExploitCode102_Exit
-	lbzx	r5,r9,r15
-	stbx	r5,r9,r12		#loop until all the data has been written
-	b	_stb
-
-_write_serial:
-	addi	r15,r15,8		#r15 points to the code after the serial code
-	bne-	cr7,_readcodes		#lf code execution is false, skip serial code
-
-	lwz	r5,-8(r15)		#load TNNNZZZZ
-	lwz	r11,-4(r15)		#r11 = load VVVVVVVV
-
-	rlwinm	r17,r5,0,16,31		#r17 = ZZZZ
-	rlwinm	r10,r5,16,20,31		#r10 = NNN (# of times to write -1)
-	rlwinm	r5,r5,4,28,31		#r5  = T (0:8bits/1:16bits/2:32bits)
-
-_loop_serial:
-	cmpwi	cr5,r5,1
-	beq-	cr5,+16			#lf 16bits
-	bgt+	cr5,+20			#lf 32bits
-
-	stbx	r4,r9,r12		#write serial byte (CT04,T=0)
-	b	+16
-
-	sthx	r4,r9,r12		#write serial halfword (CT04,T=1)
-	b	+8
-
-	stwx	r4,r9,r12		#write serial word (CT04,T>=2)
-
-	add	r4,r4,r11		#value +=VVVVVVVV
-	add	r9,r9,r17		#address +=ZZZZ
-	subic.	r10,r10,1
-	bge+	_loop_serial		#loop until all the data has been written
-
-	b	_readcodes
-
-#CT1=============================================================================
-#32bits conditional (0,1,2,3): 20XXXXXX YYYYYYYY
-#16bits conditional (4,5,6,7): 28XXXXXX ZZZZYYYY
-
-#PS : 31 bit of address = endlf.
-
-_conditional:
-	rlwinm.	r9,r3,0,31,31		#r10 = (bit31 & 1) (endlf enabled?)
-
-	beq	+16			#jump lf endlf is not enabled
-
-	rlwinm	r8,r8,31,1,31		#Endlf (r8>>1)
-	andi.	r9,r8,1			#r9=code execution status
-	cmpwi	cr7,r9,0		#check code execution status in cr7
-	cmpwi	cr5,r5,4		#compares sub code type and 4 in cr5
-	cmpwi	cr3,r10,5		#compares code type and 5 in cr3
-
-	rlwimi	r8,r8,1,0,30		#r8<<1 and current execution status = old execution status
-	bne-	cr7,_true_end		#lf code execution is set to false -> ExploitCode102_Exit
-
-	bgt	cr3,_addresscheck2	#lf code type==6 -> address check
-	add	r12,r12,r3		#address = (ba/po)+(XXXXXX)
-
-	blt	cr3,+12			#jump lf code type <5 (==1)
-	blt	cr5,_condition_sub	#compare [rN][rM]
-	b	_conditional16_2	#counter compare
-	bge	cr5,_conditional16	#lf sub code type>=4 -> 16 bits conditional
-
-_conditional32:
-	rlwinm	r12,r12,0,0,29		#32bits align
-	lwz	r11,0(r12)
-	b	_condition_sub
-
-_conditional16:
-	rlwinm	r12,r12,0,0,30		#16bits align
-	lhz	r11,0(r12)
-_conditional16_2:
-	nor	r9,r4,r4
-	rlwinm	r9,r9,16,16,31		#r9  = extract mask
-	and	r11,r11,r9		#r11 &= r9
-	rlwinm	r4,r4,0,16,31		#r4  = extract data to check against
-
-_condition_sub:
-	cmpl	cr6,r11,r4		#Unsigned compare. r11=data at address, r4=YYYYYYYY
-	andi.	r9,r5,3
-	beq	_skip_NE		#lf sub code (type & 3) == 0
-	cmpwi	r9,2
-	beq	_skip_LE		#lf sub code (type & 3) == 2
-	bgt	_skip_GE		#lf sub code (type & 3) == 3
-
-_skip_EQ:#1
-	bne-	cr6,_true_end		#CT21, CT25, CT29 or CT2D (lf !=)
-	b	_skip
-
-_skip_NE:#0
-	beq-	cr6,_true_end		#CT20, CT24, CT28 or CT2C (lf==)
-	b	_skip
-
-_skip_LE:#2
-	bgt-	cr6,_true_end		#CT22, CT26, CT2A or CT2E (lf r4>[])
-	b	_skip
-
-_skip_GE:#3
-	blt-	cr6,_true_end		#CT23, CT27, CT2B or CT2F (lf r4<r4)
-
-_skip:
-	ori	r8,r8,1			#r8|=1 (execution status set to false)
-_true_end:
-	bne+	cr3,_readcodes		#lf code type <> 5
-	blt	cr5,_readcodes
-	lwz	r11,-8(r15)		#load counter
-	bne	cr7,_clearcounter	#lf previous code execution false clear counter
-	andi.	r12,r3,0x8		#else lf clear counter bit not set increase counter
-	beq	_increase_counter
-	andi.	r12,r8,0x1		#else lf.. code result true clear counter
-	beq	_clearcounter
-
-_increase_counter:
-	addi	r12,r11,0x10		#else increase the counter
-	rlwimi	r11,r12,0,12,27		#update counter
-	b	_savecounter
-
-_clearcounter:
-	rlwinm	r11,r11,0,28,11		#clear the counter
-_savecounter:
-	stw	r11,-8(r15)		#save counter
-	b _readcodes
-
-
-#CT2============================================================================
-
-#load base adress    (0): 40TYZ00N XXXXXXXX = (load/add:T) ba from [(ba/po:Y)+XXXXXXXX(+rN:Z)]
-
-#set base address    (1): 42TYZ00N XXXXXXXX = (set/add:T) ba to (ba/po:Y)+XXXXXXXX(+rN:Z)
-
-#store base address  (2): 440Y0000 XXXXXXXX = store base address to [(ba/po)+XXXXXXXX]
-#set base address to (3): 4600XXXX 00000000 = set base address to code address+XXXXXXXX
-#load pointer        (4): 48TYZ00N XXXXXXXX = (load/add:T) po from [(ba/po:Y)+XXXXXXXX(+rN:Z)]
-
-#set pointer         (5): 4ATYZ00N XXXXXXXX = (set/add:T) po to (ba/po:Y)+XXXXXXXX(+rN:Y)
-
-#store pointer       (6): 4C0Y0000 XXXXXXXX = store pointer to [(ba/po)+XXXXXXXX]
-#set pointer to      (7): 4E00XXXX 00000000 = set pointer to code address+XXXXXXXX
-
-_ba_pointer:
-	bne-	cr7,_readcodes
-
-	rlwinm	r9,r3,2,26,29		#r9  = extract N, makes N*4
-
-	rlwinm	r14,r3,16,31,31		#r3 = add ba/po flag bit (Y)
-	cmpwi	cr3,r14,0
-
-	cmpwi	cr4,r5,4		#cr4 = compare sub code type with 4 (ba/po)
-	andi.	r14,r5,3		#r14 = sub code type and 3
-
-	cmpwi	cr5,r14,2		#compares sub code type and 2
-
-	blt-	cr5,_p01
-	beq-	cr5,_p2			#sub code type 2
-
-_p3:
-	extsh	r4,r3
-	add	r4,r4,r15		#r4=XXXXXXXX+r15 (code location in memory)
-	b	_pend
-
-_p01:
-	rlwinm.	r5,r3,20,31,31		#r3 = rN use bit (Z)
-	beq	+12			#flag is not set(=0), address = XXXXXXXX
-
-	lwzx	r9,r7,r9		#r9 = load register N
-	add	r4,r4,r9		#flag is set (=1), address = XXXXXXXX+rN
-
-	beq	cr3,+8			#(Y) flag is not set(=0), address = XXXXXXXX (+rN)
-
-  	add	r4,r12,r4		#address = XXXXXXXX (+rN) + (ba/po)
-
-	cmpwi	cr5,r14,1
-	beq	cr5,+8			#address = (ba/po)+XXXXXXXX(+rN)
-	lwz	r4,0(r4)		#address = [(ba/po)+XXXXXXXX(+rN)]
-
-	rlwinm.	r3,r3,12,31,31		#r5 = add/replace flag (T)
-	beq	_pend			#flag is not set (=0), (ba/po)= XXXXXXXX (+rN) + (ba/po)
-	bge	cr4,+12
-	add	r4,r4,r6		#ba += XXXXXXXX (+rN) + (ba/po)
-	b	_pend
-	add	r4,r4,r16		#po += XXXXXXXX (+rN) + (ba/po)
-	b	_pend
-
-_p2:
-	rlwinm.	r5,r3,20,31,31		#r3 = rN use bit (Z)
-	beq	+12			#flag is not set(=0), address = XXXXXXXX
-
-	lwzx	r9,r7,r9		#r9 = load register N
-	add	r4,r4,r9		#flag is set (=1), address = XXXXXXXX+rN
-
-	bge	cr4,+12
-	stwx	r6,r12,r4		#[(ba/po)+XXXXXXXX] = base address
-	b	_readcodes
-	stwx	r16,r12,r4		#[(ba/po)+XXXXXXXX] = pointer
-	b	_readcodes
-
-_pend:
-	bge	cr4,+12
-	mr	r6,r4			#store result to base address
-	b	_readcodes
-	mr	r16,r4			#store result to pointer
-	b	_readcodes
-
-
-#CT3============================================================================
-#set repeat     (0): 6000ZZZZ 0000000P = set repeat
-#execute repeat (1): 62000000 0000000P = execute repeat
-#return		(2): 64S00000 0000000P = return (lf true/false/always)
-#goto		(3): 66S0XXXX 00000000 = goto (lf true/false/always)
-#gosub		(4): 68S0XXXX 0000000P = gosub (lf true/false/always)
-
-_repeat_goto:
-	rlwinm	r9,r4,3,25,28		#r9  = extract P, makes P*8
-	addi	r9,r9,0x40		#offset that points to block P's
-	cmpwi	r5,2			#compares sub code type with 2
-	blt-	_repeat
-
-	rlwinm.	r11,r3,10,0,1		#extract (S&3)
-	beq	+20			#S=0, skip lf true, don't skip lf false
-	bgt	+8
-	b	_b_bl_blr_nocheck	#S=2/3, always skip (code exec status turned to true)
-	beq-	cr7,_readcodes		#S=1, skip lf false, don't skip lf true
-	b	_b_bl_blr_nocheck
-
-_b_bl_blr:
-	bne-	cr7,_readcodes		#lf code execution set to false skip code
-
-_b_bl_blr_nocheck:
-	cmpwi	r5,3
-
-	bgt-	_bl			#sub code type >=4, bl
-	beq+	_b			#sub code type ==3, b
-
-_blr:
-	lwzx	r15,r7,r9		#loads the next code address
-	b	_readcodes
-
-_bl:
-	stwx	r15,r7,r9		#stores the next code address in block P's address
-_b:
-	extsh	r4,r3			#XXXX becomes signed
-	rlwinm	r4,r4,3,9,28
-
-	add	r15,r15,r4		#next code address +/-=line XXXX
-	b	_readcodes
-
-_repeat:
-	bne-	cr7,_readcodes		#lf code execution set to false skip code
-
-	add	r5,r7,r9		#r5 points to P address
-	bne-	cr4,_execute_repeat	#branch lf sub code type == 1
-
-_set_repeat:
-	rlwinm	r4,r3,0,16,31		#r4  = extract NNNNN
-	stw	r15,0(r5)		#store current code address to [bP's address]
-	stw	r4,4(r5)		#store NNNN to [bP's address+4]
-
-	b	_readcodes
-
-_execute_repeat:
-	lwz	r9,4(r5)		#load NNNN from [M+4]
-	cmpwi	r9,0
-	beq-	_readcodes
-	subi	r9,r9,1
-	stw	r9,4(r5)		#saves (NNNN-1) to [bP's address+4]
-	lwz	r15,0(r5)		#load next code address from [bP's address]
-	b	_readcodes
-
-#CT4============================================================================
-#set/add to rN(0) : 80SY000N XXXXXXXX = rN = (ba/po) + XXXXXXXX
-#load rN      (1) : 82UY000N XXXXXXXX = rN = [XXXXXXXX] (offset support) (U:8/16/32)
-#store rN     (2) : 84UYZZZN XXXXXXXX = store rN in [XXXXXXXX] (offset support) (8/16/32)
-
-#operation 1  (3) : 86TY000N XXXXXXXX = operation rN?XXXXXXXX ([rN]?XXXXXXXX)
-#operation 2  (4) : 88TY000N 0000000M = operation rN?rM ([rN]?rM, rN?[rM], [rN]?[rM])
-
-#copy1        (5) : 8AYYYYNM XXXXXXXX = copy YYYY bytes from [rN] to ([rM]+)XXXXXXXX
-#copy2        (6) : 8CYYYYNM XXXXXXXX = copy YYYY bytes from ([rN]+)XXXXXX to [rM]
-
-
-#for copy1/copy2, lf register == 0xF, base address is used.
-
-#of course, sub codes types 0/1, 2/3 and 4/5 can be put together lf we need more subtypes.
-
-
-_operation_rN:
-	bne-	cr7,_readcodes
-
-	rlwinm	r11,r3,2,26,29		#r11  = extract N, makes N*4
-	add	r26,r7,r11		#1st value address = rN's address
-	lwz	r9,0(r26)		#r9 = rN
-
-	rlwinm	r14,r3,12,30,31		#extracts S, U, T (3bits)
-
-	beq-	cr4,_op0		#lf sub code type = 0
-
-	cmpwi	cr4,r5,5
-	bge-	cr4,_op56			#lf sub code type = 5/6
-
-	cmpwi	cr4,r5,3
-	bge-	cr4,_op34			#lf sub code type = 3/4
-
-	cmpwi	cr4,r5,1
-
-_op12:	#load/store
-	rlwinm.	r5,r3,16,31,31		#+(ba/po) flag : Y
-	beq	+8			#address = XXXXXXXX
-	add	r4,r12,r4
-
-	cmpwi	cr6,r14,1
-	bne-	cr4,_store
-
-_load:
-	bgt+	cr6,+24
-	beq-	cr6,+12
-
-	lbz	r4,0(r4)		#load byte at address
-	b	_store_reg
-
-	lhz	r4,0(r4)		#load halfword at address
-	b	_store_reg
-
-	lwz	r4,0(r4)		#load word at address
-	b	_store_reg
-
-_store:
-	rlwinm	r19,r3,28,20,31		#r9=r3 ror 12 (N84UYZZZ)
-
-_storeloop:
-	bgt+	cr6,+32
-	beq-	cr6,+16
-
-	stb	r9,0(r4)		#store byte at address
-	addi	r4,r4,1
-	b	_storeloopend
-
-	sth	r9,0(r4)		#store byte at address
-	addi	r4,r4,2
-	b	_storeloopend
-
-	stw	r9,0(r4)		#store byte at address
-	addi	r4,r4,4
-_storeloopend:
-	subic.	r19,r19,1
-	bge 	_storeloop
-	b	_readcodes
-
-_op0:
-	rlwinm.	r5,r3,16,31,31		#+(ba/po) flag : Y
-	beq	+8			#value = XXXXXXXX
-	add	r4,r4,r12		#value = XXXXXXXX+(ba/po)
-
-	andi.	r5,r14,1		#add flag : S
-	beq	_store_reg		#add flag not set (=0), rN=value
-	add	r4,r4,r9		#add flag set (=1), rN=rN+value
-	b	_store_reg
-
-_op34:	#operation 1 & 2
-	rlwinm	r10,r3,16,30,31		#extracts Y
-
-	rlwinm	r14,r4,2,26,29		#r14  = extract M (in r4), makes M*=4
-
-	add	r19,r7,r14		#2nd value address = rM's address
-	bne	cr4,+8
-	subi	r19,r15,4		#lf CT3, 2nd value address = XXXXXXXX's address
-
-	lwz	r4,0(r26)		#1st value = rN
-	lwz	r9,0(r19)		#2nd value = rM/XXXXXXXX
-
-	andi.	r11,r10,1		#lf [] for 1st value
-	beq	+8
-	mr	r26,r4
-
-	andi.	r11,r10,2		#lf [] for 2nd value
-	beq	+16
-	mr	r19,r9
-	bne+	cr4,+8
-	add	r19,r12,r19		#lf CT3, 2nd value address = XXXXXXXX+(ba/op)
-
-	rlwinm.	r5,r3,12,28,31		#operation # flag : T
-
-	cmpwi	r5,9
-	bge	_op_float
-
-_operation_bl:
-	bl	_operation_bl_return
-
-_op450:
-	add	r4,r9,r4		#N + M
-	b	_store_reg
-
-_op451:
-	mullw	r4,r9,r4		#N * M
-	b	_store_reg
-
-_op452:
-	or	r4,r9,r4		#N | M
-	b	_store_reg
-
-_op453:
-	and	r4,r9,r4		#N & M
-	b	_store_reg
-
-_op454:
-	xor	r4,r9,r4		#N ^ M
-	b	_store_reg
-
-_op455:
-	slw	r4,r9,r4		#N << M
-	b	_store_reg
-
-_op456:
-	srw	r4,r9,r4		#N >> M
-	b	_store_reg
-
-_op457:
-	rlwnm	r4,r9,r4,0,31		#N rol M
-	b	_store_reg
-
-_op458:
-	sraw	r4,r9,r4		#N asr M
-
-_store_reg:
-	stw	r4,0(r26)		#Store result in rN/[rN]
-	b	_readcodes
-
-_op_float:
-	cmpwi	r5,0xA
-	bgt	_readcodes
-
-	lfs	f2,0(r26)		#f2 = load 1st value
-	lfs	f3,0(r19)		#f3 = load 2nd value
-	beq-	_op45A
-
-_op459:
-	fadds	f2,f3,f2		#N = N + M (float)
-	b	_store_float
-
-_op45A:
-	fmuls	f2,f3,f2		#N = N * M (float)
-
-_store_float:
-	stfs	f2,0(r26)		#Store result in rN/[rN]
-	b	_readcodes
-
-_operation_bl_return:
-	mflr	r10
-	rlwinm	r5,r5,3,25,28		#r5 = T*8
-	add	r10,r10,r5		#jumps to _op5: + r5
-
-	lwz	r4,0(r26)		#load [rN]
-	lwz	r9,0(r19)		#2nd value address = rM/XXXXXXXX
-
-	mtlr	r10
-	blr
-
-#copy1        (5) : 8AYYYYNM XXXXXXXX = copy YYYY bytes from [rN] to ([rM]+)XXXXXXXX
-#copy2        (6) : 8CYYYYNM XXXXXXXX = copy YYYY bytes from ([rN]+)XXXXXX to [rM]
-
-_op56:
-	bne-	cr7,_readcodes		#lf code execution set to false skip code
-
-	rlwinm	r9,r3,24,0,31		#r9=r3 ror 8 (NM8AYYYY, NM8CYYYY)
-	mr	r14,r12			#r14=(ba/po)
-	bl	_load_NM
-
-	beq-	cr4,+12
-	add	r17,r17,r4		#lf sub code type==0 then source+=XXXXXXXX
-	b	+8
-	add	r9,r9,r4		#lf sub code type==1 then destination+=XXXXXXXX
-
-	rlwinm.	r4,r3,24,16,31		#Extracts YYYY, compares it with 0
-	li	r5,0
-
-	_copy_loop:
-	beq 	_readcodes		#Loop until all bytes have been copied.
-	lbzx 	r10,r5,r17
-	stbx 	r10,r5,r9
-	addi	r5,r5,1
-	cmpw	r5,r4
-	b 	_copy_loop
-
-
-#===============================================================================
-#This is a routine called by _memory_copy and _compare_NM_16
-
-_load_NM:
-	cmpwi	cr5,r10,4		#compare code type and 4(rn Operations) in cr5
-
-	rlwinm 	r17,r9,6,26,29		#Extracts N*4
-	cmpwi 	r17,0x3C
-	lwzx	r17,r7,r17		#Loads rN value in r17
-	bne 	+8
-	mr	r17,r14			#lf N==0xF then source address=(ba/po)(+XXXXXXXX, CT5)
-
-	beq	cr5,+8
-	lhz	r17,0(r17)		#...and lf CT5 then N = 16 bits at [XXXXXX+base address]
-
-	rlwinm 	r9,r9,10,26,29		#Extracts M*4
-	cmpwi 	r9,0x3C
-	lwzx	r9,r7,r9		#Loads rM value in r9
-	bne 	+8
-	mr	r9,r14			#lf M==0xF then dest address=(ba/po)(+XXXXXXXX, CT5)
-
-	beq	cr5,+8
-	lhz	r9,0(r9)		#...and lf CT5 then M = 16 bits at [XXXXXX+base address]
-
-	blr
-
-#CT5============================================================================
-#16bits conditional (0,1,2,3): A0XXXXXX NM00YYYY (unknown values)
-#16bits conditional (4,5,6,7): A8XXXXXX ZZZZYYYY (counter)
-
-#sub codes types 0,1,2,3 compare [rN] with [rM] (both 16bits values)
-#lf register == 0xF, the value at [base address+XXXXXXXX] is used.
-
-_compare16_NM_counter:
-	cmpwi 	r5,4
-	bge	_compare16_counter
-
-_compare16_NM:
-	mr	r9,r4			#r9=NM00YYYY
-
-	add	r14,r3,r12		#r14 = XXXXXXXX+(ba/po)
-
-	rlwinm	r14,r14,0,0,30		#16bits align (base address+XXXXXXXX)
-
-	bl	_load_NM		#r17 = N's value, r9 = M's value
-
-	nor	r4,r4,r4		#r4=!r4
-	rlwinm	r4,r4,0,16,31		#Extracts !YYYY
-
-	and	r11,r9,r4		#r3 = (M AND !YYYY)
-	and	r4,r17,r4		#r4 = (N AND !YYYY)
-
-	b _conditional
-
-_compare16_counter:
-	rlwinm	r11,r3,28,16,31		#extract counter value from r3 in r11
-	b _conditional
-
-#===============================================================================
-#execute     (0) : C0000000 NNNNNNNN = execute
-#hook1       (2) : C4XXXXXX NNNNNNNN = insert instructions at XXXXXX
-#hook2       (3) : C6XXXXXX YYYYYYYY = branch from XXXXXX to YYYYYY
-#on/off      (6) : CC000000 00000000 = on/off switch
-#range check (7) : CE000000 XXXXYYYY = is ba/po in XXXX0000-YYYY0000
-
-_hook_execute:
-	mr	r26,r4			#r18 = 0YYYYYYY
-	rlwinm	r4,r4,3,0,28		#r4  = NNNNNNNN*8 = number of lines (and not number of bytes)
-	bne-	cr4,_hook_addresscheck	#lf sub code type != 0
-	bne-	cr7,_skip_and_align
-
-_execute:
-	mtlr	r15
-	blrl
-
-_skip_and_align:
-	add	r15,r4,r15
-	addi	r15,r15,7
-	rlwinm	r15,r15,0,0,28		#align 64-bit
-	b	_readcodes
-
-_hook_addresscheck:
-
-	cmpwi	cr4,r5,3
-	bgt-	cr4,_addresscheck1	#lf sub code type ==6 or 7
-	lis	r5,0x4800
-	add	r12,r3,r12
-	rlwinm	r12,r12,0,0,29		#align address
-
-	bne-	cr4,_hook1		#lf sub code type ==2
-
-_hook2:
-	bne-	cr7,_readcodes
-
-	rlwinm	r4,r26,0,0,29		#address &=0x01FFFFFC
-
-	sub	r4,r4,r12		#r4 = to-from
-	rlwimi	r5,r4,0,6,29		#r5  = (r4 AND 0x03FFFFFC) OR 0x48000000
-	rlwimi	r5,r3,0,31,31		#restore lr bit
-	stw	r5,0(r12)		#store opcode
-	b	_readcodes
-
-_hook1:
-	bne-	cr7,_skip_and_align
-
-	sub	r9,r15,r12		#r9 = to-from
-	rlwimi	r5,r9,0,6,29		#r5  = (r9 AND 0x03FFFFFC) OR 0x48000000
-	stw	r5,0(r12)		#stores b at the hook place (over original instruction)
-	addi	r12,r12,4
-	add	r11,r15,r4
-	subi	r11,r11,4		#r11 = address of the last work of the hook1 code
-	sub	r9,r12,r11
-	rlwimi	r5,r9,0,6,29		#r5  = (r9 AND 0x03FFFFFC) OR 0x48000000
-	stw	r5,0(r11)		#stores b at the last word of the hook1 code
-	b	_skip_and_align
-
-_addresscheck1:
-	cmpwi	cr4,r5,6
-	beq	cr4,_onoff
-	b	_conditional
-_addresscheck2:
-	rlwinm	r12,r12,16,16,31
-	rlwinm	r4,r26,16,16,31
-	rlwinm	r26,r26,0,16,31
-	cmpw	r12,r4
-	blt	_skip
-	cmpw	r12,r26
-	bge	_skip
-	b	_readcodes
-
-_onoff:
-	rlwinm	r5,r26,31,31,31		#extracts old exec status (x b a)
-	xori	r5,r5,1
-	andi.	r3,r8,1			#extracts current exec status
-	cmpw	r5,r3
-	beq	_onoff_end
-	rlwimi	r26,r8,1,30,30
-	xori	r26,r26,2
-
-	rlwinm.	r5,r26,31,31,31		#extracts b
-	beq	+8
-
-	xori	r26,r26,1
-
-	stw	r26,-4(r15)		#updates the code value in the code list
-
-_onoff_end:
-	rlwimi	r8,r26,0,31,31		#current execution status = a
-
-	b _readcodes
-
-#===============================================================================
-#Full terminator  (0) = E0000000 XXXXXXXX = full terminator
-#Endlfs/Else      (1) = E2T000VV XXXXXXXX = endlfs (+else)
-#End code handler     = F0000000 00000000
-
-_terminator_onoff_:
-	cmpwi	r11,0			#lf code type = 0xF
-    beq _notTerminator
-    cmpwi r5,1
-    beq _asmTypeba
-    cmpwi r5,2
-    beq _asmTypepo
-    cmpwi r5,3
-    beq _patchType
-    b _exitcodehandler
-_asmTypeba:
-    rlwinm r12,r6,0,0,6 # use base address
-_asmTypepo:
-    rlwinm r23,r4,8,24,31 # extract number of half words to XOR
-    rlwinm r24,r4,24,16,31 # extract XOR checksum
-    rlwinm r4,r4,0,24,31 # set code value to number of ASM lines only
-    bne cr7,_goBackToHandler #skip code if code execution is set to false
-    rlwinm. r25,r23,0,24,24 # check for negative number of half words
-    mr r26,r12 # copy ba/po address
-    add r26,r3,r26 # add code offset to ba/po code address
-    rlwinm r26,r26,0,0,29 # clear last two bits to align address to 32-bit
-    beq _positiveOffset # if number of half words is negative, extra setup needs to be done
-    extsb r23,r23
-    neg r23,r23
-    mulli r25,r23,2
-    addi r25,r25,4
-    subf r26,r25,r26
-_positiveOffset:
-    cmpwi r23,0
-    beq _endXORLoop
-    li r25,0
-    mtctr r23
-_XORLoop:
-    lhz r27,4(r26)
-    xor r25,r27,r25
-    addi r26,r26,2
-    bdnz _XORLoop
-_endXORLoop:
-    cmpw r24,r25
-    bne _goBackToHandler
-    b _hook_execute
-_patchType:
-    rlwimi	r8,r8,1,0,30		#r8<<1 and current execution status = old execution status
-    bne	cr7,_exitpatch		#lf code execution is set to false -> ExploitCode102_Exit
-    rlwinm. r23,r3,22,0,1
-    bgt _patchfail
-    blt _copytopo
-_runpatch:
-    rlwinm r30,r3,0,24,31
-    mulli r30,r30,2
-    rlwinm r23,r4,0,0,15
-    xoris r24,r23,0x8000
-    cmpwi r24,0
-    bne- _notincodehandler
-    ori r23,r23,0x3000
-_notincodehandler:
-    rlwinm r24,r4,16,0,15
-    mulli r25,r30,4
-    subf r24,r25,r24
-_patchloop:
-    li r25,0
-_patchloopnext:
-    mulli r26,r25,4
-    lwzx r27,r15,r26
-    lwzx r26,r23,r26
-    addi r25,r25,1
-    cmplw r23,r24
-    bgt _failpatchloop
-    cmpw r25,r30
-    bgt _foundaddress
-    cmpw r26,r27
-    beq _patchloopnext
-    addi r23,r23,4
-    b _patchloop
-_foundaddress:
-    lwz r3,-8(r15)
-    ori r3,r3,0x300
-    stw r3,-8(r15)
-    stw r23,-4(r15)
-    mr r16,r23
-    b _exitpatch
-_failpatchloop:
-    lwz r3,-8(r15)
-    ori r3,r3,0x100
-    stw r3,-8(r15)
-_patchfail:
-    ori	r8,r8,1			#r8|=1 (execution status set to false)
-    b _exitpatch
-_copytopo:
-    mr r16,r4
-_exitpatch:
-    rlwinm r4,r3,0,24,31 # set code to number of lines only
-_goBackToHandler:
-    mulli r4,r4,8
-    add r15,r4,r15 # skip the lines of the code
-    b _readcodes
-
-_notTerminator:
-
-_terminator:
-	bne	cr4,+12			#check lf sub code type == 0
-	li	r8,0			#clear whole code execution status lf T=0
-	b	+20
-
-	rlwinm.	r9,r3,0,27,31		#extract VV
-#	bne 	+8			#lf VV!=0
-#	bne-	cr7,+16
-
-	rlwinm	r5,r3,12,31,31		#extract "else" bit
-
-	srw	r8,r8,r9		#r8>>VV, meaning endlf VV lfs
-
-    rlwinm. r23,r8,31,31,31
-    bne +8 # execution is false if code execution >>, so don't invert code status
-	xor	r8,r8,r5		#lf 'else' is set then invert current code status
-
-_load_baseaddress:
-	rlwinm.	r5,r4,0,0,15
-	beq	+8
-	mr	r6,r5			#base address = r4
-	rlwinm.	r5,r4,16,0,15
-	beq	+8
-	mr	r16,r5			#pointer = r4
-	b	_readcodes
-
-#===============================================================================
-
-frozenvalue:	#frozen value, then LR
-.long        0,0
-dwordbuffer:
-.long        0,0
-rem:
-.long        0
-bpbuffer:
-.long 0		#int address to bp on
-.long 0		#data address to bp on
-.long 0		#alignement check
-.long 0		#counter for alignement
-
-regbuffer:
-#.space 72*4
-
-#.align 3
-
-#codelist:
-#.space 2*4
-#.end
 #endregion
 #region ExploitCode101
 ExploitCode101:
