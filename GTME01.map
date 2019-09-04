@@ -9557,7 +9557,7 @@
 801a427c 00000008 801a427c 0 GetMinorSceneData1 (MatchStruct)
 801a4284 00000008 801a4284 0 GetMinorSceneData2 (MatchThinkData)
 801a428c 00000014 801a428c 0 MenuController_StoreR3to0x3&0x4
-801a42a0 00000014 801a42a0 0 MenuController_StoreR3+1to0x5
+801a42a0 00000014 801a42a0 0 MenuController_WriteToPendingMinor
 801a42b4 00000010 801a42b4 0 MenuController_LoadByte4
 801a42c4 00000010 801a42c4 0 MenuController_LoadMinor
 801a42d4 00000014 801a42d4 0 MenuController_ChangeScreenMajor
