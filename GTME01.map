@@ -193,7 +193,7 @@
 800119dc 00000074 800119dc 0 AestheticWindEffect(r3=sourcelocation,r4=duration,f1=radiusSize,f2=effectdegradation,f3=unk)
 80011a50 0000006c 80011a50 0 AestheticWindEffect_Stage?(r3=sourcelocation,r4=duration,f1=radiusSize,f2=effectdegradation,f3=unk)
 80011abc 00000008 80011abc 0 zz_0011abc_
-80011ac4 000000b0 80011ac4 0 zz_0011ac4_
+80011ac4 000000b0 80011ac4 0 HSD_LObjUnk
 80011b74 000000a4 80011b74 0 zz_0011b74_
 80011c18 0000020c 80011c18 0 zz_0011c18_
 80011e24 00000228 80011e24 0 JObj_GetUnkJObjData(r3=textureObject,r4=ReturnStruct,r5=typedef,r6=typedef
@@ -373,7 +373,7 @@
 8001cc84 00000130 8001cc84 0 MemoryCard_CheckToSaveData
 8001cdb4 0000004c 8001cdb4 0 MemoryCard_CheckSaveBool?
 8001ce00 00000078 8001ce00 0 MemoryCard_UpdateTotalInGameTimeCount
-8001ce78 00000048 8001ce78 0 EveryMajorChange_SaveToMemcard
+8001ce78 00000048 8001ce78 0 MemoryCard_CheckIfMemcardPresentEveryMinorChange
 8001cec0 00000024 8001cec0 0 zz_001cec0_
 8001cee4 00000034 8001cee4 0 zz_001cee4_
 8001cf18 0000024c 8001cf18 0 DisplayMemcardSaveBanner
@@ -877,7 +877,7 @@
 80037b08 00000024 80037b08 0 GenerateNewMoveInstance
 80037b2c 00000094 80037b2c 0 zz_0037b2c_
 80037bc0 000000a0 80037bc0 0 PlayerBlock_IncrementAttacksLanded
-80037c60 00000194 80037c60 0 PlayerBlock_IncrementTotalAttacks
+80037c60 00000194 80037c60 0 PlayerBlock_IncrementAttackCountStatsOnASC
 80037df4 000000d8 80037df4 0 zz_0037df4_
 80037ecc 00000034 80037ecc 0 PlayerBlock_MeteorAttackCounter_Increment
 80037f00 00000244 80037f00 0 zz_0037f00_
@@ -8693,7 +8693,7 @@
 80166ccc 00000474 80166ccc 0 zz_0166ccc_
 80166f50 000001f0 80166f50 0 zz_0166f50_
 80167140 00000054 80167140 0 PostMatch_CheckForSuddenDeath
-80167194 00000008 80167194 0 zz_0167194_
+80167194 00000008 80167194 0 PostMatch_CheckNumberOfWinners
 8016719c 00000184 8016719c 0 RespawnStart(r3=PlayerSlot,r4=FollowBool)
 80167320 00000150 80167320 0 DeathAfterSleep
 80167470 00000054 80167470 0 StaminaMode_CheckForStamina
@@ -9616,7 +9616,7 @@
 801a57a8 00000094 801a57a8 0 copyStageInfoToMatch
 801a583c 000002b4 801a583c 0 VS/SpecialMelee_Start_CopyCSSInfo/RunSpecialModeFunctions(r6)
 801a5af0 0000014c 801a5af0 0 PostMatch_StoreNextScene
-801a5c3c 0000028c 801a5c3c 0 zz_01a5c3c_
+801a5c3c 0000028c 801a5c3c 0 SuddenDeath_CopyMatchInfoToStartMeleeStruct
 801a5ec8 00000038 801a5ec8 0 zz_01a5ec8_
 801a5f00 00000064 801a5f00 0 CopyMatchInfoToResultScreenMatchInfo(8047c028)
 801a5f64 000002f0 801a5f64 0 MatchStats_CalculateKOStars
@@ -9724,7 +9724,7 @@
 801b0264 000000a0 801b0264 0 SceneLoad_MemcardPrompt
 801b0304 00000044 801b0304 0 SceneLeave_MemcardPrompt
 801b0348 0000012c 801b0348 0 zz_01b0348_
-801b0474 00000180 801b0474 0 zz_01b0474_
+801b0474 00000180 801b0474 0 SuddenDeath_ModifyStartingPercents
 801b05f4 0000002c 801b05f4 0 zz_01b05f4_
 801b0620 00000044 801b0620 0 zz_01b0620_
 801b0664 0000004c 801b0664 0 zz_01b0664_
@@ -12947,7 +12947,7 @@
 8022bd6c 00000020 8022bd6c 0 MainMenu_HideAllElements
 8022bd8c 00000028 8022bd8c 0 MainMenu_ShowAllElements
 8022bdb4 00000080 8022bdb4 0 zz_022bdb4_
-8022be34 000000a8 8022be34 0 Rules_RenderMainUITextures
+8022be34 000000a8 8022be34 0 Rules_CreateCObj
 8022bedc 000000e0 8022bedc 0 Rules_LoadMessageBoxText
 8022bf70 0000004c 8022bf70 0 zz_022bf70_
 8022bfbc 00000054 8022bfbc 0 zz_022bfbc_

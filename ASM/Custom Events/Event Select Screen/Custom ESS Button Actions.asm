@@ -805,27 +805,46 @@ ExploitFillLoop:
 	mflr	r5
 	sub	r5,r5,r4									#length of code
   branchl r12,memcpy
+/*
 #Place exploit code for 1.00
   addi r3,REG_Memcard,0x5238             #exploit code destination
   bl  ExploitCode100
   mflr r4
   li  r5,0x80                  #length of code
   branchl r12,memcpy
+*/
+/*
 #Place exploit code for 1.01
   addi r3,REG_Memcard,0x3f50            #exploit code destination
   bl  ExploitCode101
   mflr r4
   li  r5,0x80                  #length of code
   branchl r12,memcpy
+*/
 
-#Run onSaveCreate functions (enable UCF and unlock trophies)
-  OnSaveCreate
+#Init Mod Preferences
+	addi r3,REG_Memcard,0x1f24
+  li  r4,0x0
+  li  r5,0x18
+  branchl r12,0x80003100
 
 #Unlock All Messages
   addi r3,REG_Memcard,0x1B4C
   li  r4,0xFF
   li  r5,0x34
   branchl r12,0x80003100
+  addi r3,REG_Memcard,0x1C88
+	li  r4,0xFF
+	li	r5,0x24
+  branchl r12,0x80003100
+
+#Unlock All Trophies
+	li	r3,0x125
+	sth	r3,7376(REG_Memcard)		#unlocked count
+	addi	r3,REG_Memcard,7378
+	li	r4,0x63
+	li	r5,0x24E
+	branchl r12,0x80003100
 
 #Only Mewtwo Unlocked
   li  r3,0x8
@@ -868,7 +887,7 @@ ExploitFillLoop:
 ##########################
 ## Create Snapshot File ##
 ##########################
-
+/*
 #Update list of present memcard snapshots
   mr	r3,REG_MemcardSlot
   branchl r12,0x80253e90
@@ -948,12 +967,6 @@ CreateSnapshot:
   load r6,0x803bacc8
   bl  SnapshotSaveName
   mflr r7
-	/*
-  load r8,0x80433380
-  lwz	r8,0x44(r8)
-  lwz	r9,0x4(r8)        #icon data
-  lwz	r8,0x0(r8)        #banner data
-	*/
 	bl	SnapshotBanner
 	mflr r8
 	bl	SnapshotIcon
@@ -984,7 +997,7 @@ Failure:
   li	r3, 3
   branchl	r12,0x80024030
   b CreateSnapshot_End
-
+*/
 CreateSnapshot_End:
 #Change Game ID back
   lis r3,0x8000
@@ -1008,7 +1021,7 @@ SaveError:
 MainSaveName:
 blrl
 .ascii "Super Smash Bros. Melee         "
-.ascii "Mod Launcher (1 of 2)           "
+.ascii "Multi-Mod Launcher              "
 ###################
 SnapshotID:
 blrl
@@ -1088,7 +1101,7 @@ blrl
 .set  PromptCommonSceneID,10
 .set  CodesCommonSceneID,10
 .set  InitialSelection,0
-.set  MaxCodesOnscreen,9
+.set  MaxCodesOnscreen,6
 #Function Addresses
 .set  PostRetraceCallback,0x800195fc
 .set  UnkPadStruct,0x804329f0
@@ -1471,7 +1484,7 @@ LagPrompt_SceneThink_Confirmed:
   bl  LagReductionGeckoCode
   mflr  r3
   bl  ApplyGeckoCode
-#Reset some pad variables
+#Reset some pad variables to cancel the current alarm
   load  r3,UnkPadStruct
   li  r4,0
   stw r4,0x4(r3)
@@ -1518,8 +1531,6 @@ LagPrompt_SceneDecide_Exit:
 #region LagReductionGeckoCode
 LagReductionGeckoCode:
 blrl
-.long 0x041A4D98
-.long 0x481AA57D
 .long 0x04019860
 .long 0x4BFFFD9D
 .long 0x0415FFB8
@@ -1550,8 +1561,16 @@ blrl
 .set OptionsX,0x20
 .set HighlightColor,0x24
 .set NonHighlightColor,0x28
-.float 30     			   #REG_TextGObj X pos
-.float 30  					   #REG_TextGObj Y pos
+.set ModNameX,0x2C
+.set ModNameY,0x30
+.set ModnameScale,0x34
+.set DescriptionX,0x38
+.set DescriptionY,0x3C
+.set DescriptionZ,0x40
+.set DescriptionMaxX,0x44
+.set DescriptionUnk,0x48
+.float 30     			   #Title X pos
+.float 30  					   #Title Y pos
 .float 1   				     #Canvas Scaling
 .float 1.2					    	#Text scale
 .float 320              #CodesX
@@ -1561,9 +1580,16 @@ blrl
 .float 335              #OptionsX
 .byte 251,199,57,255		#highlighted color
 .byte 170,170,170,255	  #nonhighlighted color
+.float	600							#ModName X
+.float	30							#ModName Y
+.float	0.5							#ModName Scale
+.float	30							#Desc X
+.float	370							#Desc Y
+.float	0								#Desc Z
+.float	560							#Desc Max X
+.float	0								#Desc Unk
 
-
-.set CodeAmount,5
+.set CodeAmount,6
 #region Code Names Order
 CodeNames_Order:
 blrl
@@ -1572,12 +1598,17 @@ bl  CodeNames_Frozen
 bl  CodeNames_Spawns
 bl  CodeNames_Wobbling
 bl  CodeNames_Ledgegrab
+bl	CodeNames_QoL
 .align 2
 #endregion
 #region Code Names
 CodeNames_Title:
 blrl
 .string "Select Codes:"
+.align 2
+CodeNames_ModName:
+blrl
+.string "Multi-Mod Launcher v1"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -1592,7 +1623,10 @@ CodeNames_Wobbling:
 .string "Wobbling:"
 .align 2
 CodeNames_Ledgegrab:
-.string "Ledge Grab Limit:"
+.string "Ledgegrab Limit:"
+.align 2
+CodeNames_QoL:
+.string "Quality of Life"
 .align 2
 #endregion
 #region Code Options Order
@@ -1603,65 +1637,84 @@ bl  CodeOptions_Frozen
 bl  CodeOptions_Spawns
 bl  CodeOptions_Wobbling
 bl  CodeOptions_Ledgegrab
+bl  CodeOptions_QoL
 .align 2
 #endregion
 #region Code Options
 .set  CodeOptions_OptionCount,0x0
-.set  CodeOptions_GeckoCodePointers,0x4
+.set	CodeOptions_CodeDescription,0x4
+.set  CodeOptions_GeckoCodePointers,0x8
 CodeOptions_Wrapper:
-blrl
-.short 0x8183
-.ascii "%s"
-.short 0x8184
-.byte 0
-.align 2
+	blrl
+	.short 0x8183
+	.ascii "%s"
+	.short 0x8184
+	.byte 0
+	.align 2
 CodeOptions_UCF:
-.long 3 -1           #number of options
-bl  UCF_Off
-bl  UCF_On
-bl  UCF_Stealth
-.string "Off"
-.string "On"
-.string "Stealth"
-.align 2
+	.long 3 -1           #number of options
+	bl	UCF_Description
+	bl  UCF_Off
+	bl  UCF_On
+	bl  UCF_Stealth
+	.string "Off"
+	.string "On"
+	.string "Stealth"
+	.align 2
 CodeOptions_Frozen:
-.long 3 -1           #number of options
-bl  Frozen_Off
-bl  Frozen_Stadium
-bl  Frozen_All
-.string "Off"
-.string "Stadium Only"
-.string "All"
-.align 2
+	.long 3 -1           #number of options
+	bl	Frozen_Description
+	bl  Frozen_Off
+	bl  Frozen_Stadium
+	bl  Frozen_All
+	.string "Off"
+	.string "Stadium Only"
+	.string "All"
+	.align 2
 CodeOptions_Spawns:
-.long 2 -1           #number of options
-bl  Spawns_Off
-bl  Spawns_On
-.string "Off"
-.string "On"
-.align 2
+	.long 2 -1           #number of options
+	bl	Spawns_Description
+	bl  Spawns_Off
+	bl  Spawns_On
+	.string "Off"
+	.string "On"
+	.align 2
 CodeOptions_Wobbling:
-.long 2 -1           #number of options
-bl  Wobbling_On
-bl  Wobbling_Off
-.string "On"
-.string "Off"
-.align 2
+	.long 2 -1           #number of options
+	bl	Wobbling_Description
+	bl  Wobbling_On
+	bl  Wobbling_Off
+	.string "On"
+	.string "Off"
+	.align 2
 CodeOptions_Ledgegrab:
-.long 2 -1           #number of options
-bl  Ledgegrab_Off
-bl  Ledgegrab_On
-.string "Off"
-.string "On"
-.align 2
+	.long 2 -1           #number of options
+	bl	Ledgegrab_Description
+	bl  Ledgegrab_Off
+	bl  Ledgegrab_On
+	.string "Off"
+	.string "On"
+	.align 2
+CodeOptions_QoL:
+	.long 2 -1           #number of options
+	bl	QoL_Description
+	bl  QoL_Off
+	bl  QoL_On
+	.string "Off"
+	.string "On"
+	.align 2
 #endregion
 #region Gecko Codes
 DefaultCodes:
   blrl
-  .long 0x0445BF28  #Chars
-  .long 0xFFFFFFFF
-  .long 0x0445BF2C  #Stages
-  .long 0xFFFFFFFF
+	.long 0x04164B14	#Chars
+	.long 0x38600001
+	.long 0x041648F4
+	.long 0x38600001
+  .long 0x04164658  #Stages
+  .long 0x38600001
+  .long 0x041644E8
+  .long 0x38600001
   .long 0x0445bf10  #Game Mode
   .long 0x00340102
   .long 0x0445bf14  #Stock count
@@ -1672,12 +1725,38 @@ DefaultCodes:
   .long 0xe70000b0
   .long 0x0445c370  #Item Switch
   .long 0xff000000
-  .long 0x0445C394  #Unlock Trophies
-  .long 0x01266363
-  .long 0x0415D94C  #Disable Special Messages
-  .long 0x4E800020
-  .long 0x0415D984  #Disable Trophy Messages
-  .long 0x4E800020
+  .long 0x04397878	#Enable OSReport
+	.long 0x4800020C
+	.long 0x0422D638	#Tournament Mode -> VS Mode
+	.long 0x38000002
+	.long 0xC201c7f8	#Save Description
+	.long 0x00000009
+	.long 0x4800000D
+	.long 0x7C8802A6
+	.long 0x4800003C
+	.long 0x4E800021
+	.long 0x53757065
+	.long 0x7220536D
+	.long 0x61736820
+	.long 0x42726F73
+	.long 0x2E204D65
+	.long 0x6C656520
+	.long 0x20202020
+	.long 0x20202020
+	.long 0x4D756C74
+	.long 0x694D6F64
+	.long 0x204C6175
+	.long 0x6E636865
+	.long 0x72000000
+	.long 0x00000000
+	.long 0x041bfa1c	#Disable memcard check callback on reset
+	.long 0x60000000
+	.long 0x04479d40	#Disable memcard check callback currently
+	.long 0x00000000
+	.long 0x041a4258	#Reboot to title screen (skips memcard load)
+	.long 0x38600000
+	.long 0x041a4234	#Dont clear save data on reboot
+	.long 0x60000000
 	.long 0xC201AE8C	#Dont save nametags
 	.long 0x00000008
 	.long 0x2C190002
@@ -2023,39 +2102,124 @@ UCF_Stealth:
   .long 0x7FC3F378
   .long 0x8083002C
   .long 0x00000000
-  .long 0x042662D0
-  .long 0x38980000
   .long 0xFF000000
+
 Frozen_Off:
-  .long 0x041D1548
-  .long 0x48003001
-  .long 0x04211444
-  .long 0x4800059c
-  .long 0x041E3348
-  .long 0x480000d1
-  .long 0x0421AAE4
-  .long 0x48000805
-  .long 0xFF000000
+	.long 0x041D1548
+	.long 0x48003001
+	.long 0x04211444
+	.long 0x4800059c
+	.long 0x041E3348
+	.long 0x480000d1
+	.long 0x0421AAE4
+	.long 0x48000805
+	.long 0x0425a530
+	.long 0x9bcdb60e
+	.long 0x0425B718
+	.long 0x7c771b78
+	.long 0xFF000000
 Frozen_Stadium:
-  .long 0x041D1548
-  .long 0x60000000
-  .long 0x04211444
-  .long 0x4800059c
-  .long 0x041E3348
-  .long 0x480000d1
-  .long 0x0421AAE4
-  .long 0x48000805
-  .long 0xFF000000
+	.long 0x041D1548
+	.long 0x60000000
+	.long 0xC225A530
+	.long 0x00000011
+	.long 0x886DB60E
+	.long 0x7C03F000
+	.long 0x41820078
+	.long 0x806DB5F4
+	.long 0x80630020
+	.long 0x3C800006
+	.long 0x6084F1E8
+	.long 0x7CC32214
+	.long 0x2C1E0012
+	.long 0x4182002C
+	.long 0x38600080
+	.long 0x98660001
+	.long 0x98660021
+	.long 0x38600000
+	.long 0x98660015
+	.long 0x98660035
+	.long 0x38600033
+	.long 0x98660017
+	.long 0x98660037
+	.long 0x48000024
+	.long 0x38600000
+	.long 0x98660001
+	.long 0x98660021
+	.long 0x38600080
+	.long 0x98660015
+	.long 0x98660017
+	.long 0x98660035
+	.long 0x98660037
+	.long 0x806DB8D4
+	.long 0x8063002C
+	.long 0x38800009
+	.long 0x90830000
+	.long 0x9BCDB60E
+	.long 0x00000000
+	.long 0xC225B718
+	.long 0x00000002
+	.long 0x906DB8D4
+	.long 0x7C771B78
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xFF000000
 Frozen_All:
-  .long 0x041D1548
-  .long 0x60000000
-  .long 0x04211444
-  .long 0x60000000
-  .long 0x041E3348
-  .long 0x60000000
-  .long 0x0421AAE4
-  .long 0x60000000
-  .long 0xFF000000
+	.long 0x041D1548
+	.long 0x60000000
+	.long 0x04211444
+	.long 0x60000000
+	.long 0x041E3348
+	.long 0x60000000
+	.long 0x0421AAE4
+	.long 0x60000000
+	.long 0xC225A530
+	.long 0x00000013
+	.long 0x886DB60E
+	.long 0x7C03F000
+	.long 0x41820088
+	.long 0x806DB5F4
+	.long 0x80630020
+	.long 0x3C800006
+	.long 0x6084F1E8
+	.long 0x7CC32214
+	.long 0x2C1E0012
+	.long 0x4182003C
+	.long 0x2C1E001A
+	.long 0x41820034
+	.long 0x2C1E0006
+	.long 0x4182002C
+	.long 0x38600080
+	.long 0x98660001
+	.long 0x98660021
+	.long 0x38600000
+	.long 0x98660015
+	.long 0x98660035
+	.long 0x38600033
+	.long 0x98660017
+	.long 0x98660037
+	.long 0x48000024
+	.long 0x38600000
+	.long 0x98660001
+	.long 0x98660021
+	.long 0x38600080
+	.long 0x98660015
+	.long 0x98660017
+	.long 0x98660035
+	.long 0x98660037
+	.long 0x806DB8D4
+	.long 0x8063002C
+	.long 0x38800009
+	.long 0x90830000
+	.long 0x9BCDB60E
+	.long 0x00000000
+	.long 0xC225B718
+	.long 0x00000002
+	.long 0x906DB8D4
+	.long 0x7C771B78
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xFF000000
 
 Spawns_Off:
   .long 0x04263058
@@ -2250,14 +2414,750 @@ Wobbling_Off:
   .long 0x60000000
   .long 0x00000000
   .long 0xFF000000
+
 Ledgegrab_Off:
-  .long 0x0408ee54
-  .long 0xc0028af4
+	.long 0x0416EBD8
+	.long 0x98030006
+	.long 0x041B0498
+	.long 0x98030000
+	.long 0x041B05CC
+	.long 0x3800012c
+	.long 0x041B05C8
+	.long 0x38c00001
+  .long 0x04165c48
+  .long 0x8803000f
+	.long 0x041A5E90
+	.long 0x7fe3fb78
   .long 0xFF000000
 Ledgegrab_On:
-  .long 0x0408ee54
-  .long 0xc0028af4
+	.long 0xC21A5E90
+	.long 0x00000002
+	.long 0x386000B4
+	.long 0x907F0010
+	.long 0x7FE3FB78
+	.long 0x00000000
+	.long 0x0416EBD8
+	.long 0x60000000
+	.long 0x041B0498
+	.long 0x60000000
+	.long 0x041B05CC
+	.long 0x38000000
+	.long 0x041B05C8
+	.long 0x38C00001
+	.long 0xC2165C48
+	.long 0x0000005C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBC610008
+	.long 0x7C7F1B78
+	.long 0x887F0004
+	.long 0x2C030001
+	.long 0x408202AC
+	.long 0x3BC10080
+	.long 0x3BA00000
+	.long 0x38600000
+	.long 0x907E0000
+	.long 0x907E0004
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x41820028
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x4082001C
+	.long 0x887E0000
+	.long 0x38630001
+	.long 0x987E0000
+	.long 0x389E0001
+	.long 0x3863FFFF
+	.long 0x7FA321AE
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FFC0
+	.long 0x887E0000
+	.long 0x2C030001
+	.long 0x40810118
+	.long 0x3BA00000
+	.long 0x387E0001
+	.long 0x7C63E8AE
+	.long 0x3D808003
+	.long 0x618C42B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C7C1B78
+	.long 0x3B600000
+	.long 0x7C1BE800
+	.long 0x4182002C
+	.long 0x387E0001
+	.long 0x7C63D8AE
+	.long 0x3D808003
+	.long 0x618C42B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03E000
+	.long 0x4080000C
+	.long 0x7F7DDB78
+	.long 0x4BFFFFB4
+	.long 0x3B7B0001
+	.long 0x887E0000
+	.long 0x7C1B1800
+	.long 0x4180FFC4
+	.long 0x4800000C
+	.long 0x3BBD0001
+	.long 0x4BFFFF98
+	.long 0x3B600000
+	.long 0x387E0001
+	.long 0x7C83D8AE
+	.long 0x1C6400A8
+	.long 0x7C63FA14
+	.long 0x38BE0001
+	.long 0x7CA5E8AE
+	.long 0x7C042800
+	.long 0x4182000C
+	.long 0x38800001
+	.long 0x48000008
+	.long 0x38800000
+	.long 0x9883005D
+	.long 0x9883005E
+	.long 0x3B7B0001
+	.long 0x887E0000
+	.long 0x7C1B1800
+	.long 0x4180FFC0
+	.long 0x3B600000
+	.long 0x387E0001
+	.long 0x7F43D8AE
+	.long 0x387E0001
+	.long 0x7C63E8AE
+	.long 0x7C1A1800
+	.long 0x41820034
+	.long 0x7F43D378
+	.long 0x3D808003
+	.long 0x618C42B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03E000
+	.long 0x40820018
+	.long 0x1C7A00A8
+	.long 0x7C63FA14
+	.long 0x38800000
+	.long 0x9883005D
+	.long 0x9883005E
+	.long 0x3B7B0001
+	.long 0x887E0000
+	.long 0x7C1B1800
+	.long 0x4180FFAC
+	.long 0x3BA00000
+	.long 0x3B800000
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x41820030
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x40820024
+	.long 0x7FA3EB78
+	.long 0x3D808004
+	.long 0x618C0AF0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03003C
+	.long 0x41800008
+	.long 0x3B9C0001
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FFB8
+	.long 0x2C1C0001
+	.long 0x418100D8
+	.long 0x2C1C0000
+	.long 0x418200D0
+	.long 0x3BA00000
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x4182004C
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x41820010
+	.long 0x2C030001
+	.long 0x41820008
+	.long 0x48000034
+	.long 0x7FA3EB78
+	.long 0x3D808004
+	.long 0x618C0AF0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03003C
+	.long 0x40800018
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x38600000
+	.long 0x9864005D
+	.long 0x9864005E
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FF9C
+	.long 0x3BA00000
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x41820040
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x40820034
+	.long 0x7FA3EB78
+	.long 0x3D808004
+	.long 0x618C0AF0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03003C
+	.long 0x41800018
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x38600001
+	.long 0x9864005D
+	.long 0x9864005E
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FFA8
+	.long 0xB8610008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x8803000F
+	.long 0x00000000
   .long 0xFF000000
+
+QoL_Off:
+	.long 0x04259C40
+	.long 0x28000000
+	.long 0x041a5b14
+	.long 0x3ba00000
+	.long 0x042605FC
+	.long 0x38c00001
+	.long 0x04266ce0
+	.long 0x38600001
+	.long 0x042608d8
+	.long 0x889f0004
+	.long 0x04265220
+	.long 0x880db655
+	.long 0x0416EA30
+	.long 0x981e0010
+  .long 0xFF000000
+QoL_On:
+	.long 0xC2259C40	#Stage Striking
+	.long 0x0000001F
+	.long 0x39600000
+	.long 0x3D408045
+	.long 0x614AC388
+	.long 0x38600000
+	.long 0x3C80803F
+	.long 0x608406D0
+	.long 0x28000013
+	.long 0x4082000C
+	.long 0x39600001
+	.long 0x48000010
+	.long 0x28000000
+	.long 0x408200C0
+	.long 0x48000034
+	.long 0x2C03001D
+	.long 0x408000B4
+	.long 0x2C0B0002
+	.long 0x4182004C
+	.long 0x1CA3001C
+	.long 0x7CA52214
+	.long 0x88C5000A
+	.long 0x80AA0000
+	.long 0x7CA53430
+	.long 0x54A507FF
+	.long 0x40820088
+	.long 0x4800002C
+	.long 0x806DB600
+	.long 0x5460056B
+	.long 0x4082001C
+	.long 0x546006F7
+	.long 0x40820008
+	.long 0x48000074
+	.long 0x39600002
+	.long 0x38600000
+	.long 0x4BFFFFB0
+	.long 0x886DB60E
+	.long 0x2C03001D
+	.long 0x4080005C
+	.long 0x1CA3001C
+	.long 0x7CA52214
+	.long 0x38C00000
+	.long 0x2C0B0002
+	.long 0x40820008
+	.long 0x38C00002
+	.long 0x98C50008
+	.long 0x80A50000
+	.long 0x2C030016
+	.long 0x41800008
+	.long 0x80A50010
+	.long 0x3CC04400
+	.long 0x2C0B0002
+	.long 0x40820008
+	.long 0x38C00000
+	.long 0x90C50038
+	.long 0x38C0001E
+	.long 0x98CDB60E
+	.long 0x2C0B0000
+	.long 0x4182000C
+	.long 0x38630001
+	.long 0x4BFFFF4C
+	.long 0x800DB604
+	.long 0x28000000
+	.long 0x00000000
+	.long 0xC21A5B14	#Salty Runback + Skip Result
+	.long 0x00000015
+	.long 0x3BA00000
+	.long 0x7FA3EB78
+	.long 0x3D80801A
+	.long 0x618C3680
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x548005EF
+	.long 0x41820014
+	.long 0x548005AD
+	.long 0x4082001C
+	.long 0x5480056B
+	.long 0x4082001C
+	.long 0x3BBD0001
+	.long 0x2C1D0004
+	.long 0x4180FFCC
+	.long 0x48000060
+	.long 0x3B600002
+	.long 0x4800005C
+	.long 0x3D808025
+	.long 0x618C99EC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3C80803F
+	.long 0x608406D0
+	.long 0x1C63001C
+	.long 0x7C841A14
+	.long 0x8864000B
+	.long 0x3C808045
+	.long 0x6084AC64
+	.long 0xB0640002
+	.long 0x3C808043
+	.long 0x6084207C
+	.long 0x9064000C
+	.long 0x3D808001
+	.long 0x618C8254
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3B600002
+	.long 0x48000008
+	.long 0x3B600000
+	.long 0x3BA00000
+	.long 0x00000000
+	.long 0x042605FC	#Unplugged closes CSS Door
+	.long 0x38C00003
+	.long 0xC2266CE0	#FoD Disabled in Doubles
+	.long 0x0000000C
+	.long 0x80CD8840
+	.long 0x38C61CB0
+	.long 0x80A60018
+	.long 0x3C60E700
+	.long 0x606300B0
+	.long 0x7C632A79
+	.long 0x41820010
+	.long 0x2C030020
+	.long 0x41820008
+	.long 0x48000034
+	.long 0x806DB610
+	.long 0x88630018
+	.long 0x2C030001
+	.long 0x41820014
+	.long 0x38600001
+	.long 0x50652EB4
+	.long 0x90A60018
+	.long 0x48000014
+	.long 0x38600000
+	.long 0x50652EB4
+	.long 0x90A60018
+	.long 0x48000004
+	.long 0x38600001
+	.long 0x00000000
+	.long 0xC22608D8	#Toggle rumble from CSS
+	.long 0x0000001D
+	.long 0x887F0007
+	.long 0x2C030000
+	.long 0x40820090
+	.long 0x889F0004
+	.long 0x7C972378
+	.long 0x800D8840
+	.long 0x7C602214
+	.long 0x88A31CC0
+	.long 0x57800739
+	.long 0x40820010
+	.long 0x5780077B
+	.long 0x4082003C
+	.long 0x480000AC
+	.long 0x28050001
+	.long 0x418200A4
+	.long 0x7EE3BB78
+	.long 0x38800000
+	.long 0x38A0000E
+	.long 0x38C00000
+	.long 0x38ED9950
+	.long 0x3D808037
+	.long 0x618C8430
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x38800001
+	.long 0x48000010
+	.long 0x28050000
+	.long 0x41820070
+	.long 0x38800000
+	.long 0x7EE3BB78
+	.long 0x3D808015
+	.long 0x618CED4C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x38800001
+	.long 0x989F0007
+	.long 0x3C80C040
+	.long 0x909F0014
+	.long 0xC03F0014
+	.long 0xC0428E0C
+	.long 0xC01F000C
+	.long 0xEC01002A
+	.long 0xD01F000C
+	.long 0xFC600850
+	.long 0xFC030840
+	.long 0x41810008
+	.long 0xEC6300B2
+	.long 0xD07F0014
+	.long 0x4180001C
+	.long 0xC0828258
+	.long 0xFC032040
+	.long 0x41810010
+	.long 0x38800000
+	.long 0x909F0014
+	.long 0x989F0007
+	.long 0x889F0004
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC2265220	#Winners names are gold
+	.long 0x00000028
+	.long 0x7FA3EB78
+	.long 0x48000039
+	.long 0x2C030000
+	.long 0x4182012C
+	.long 0x807B0000
+	.long 0x38800000
+	.long 0x3CA0FFD7
+	.long 0x60A50000
+	.long 0x90A10100
+	.long 0x38A10100
+	.long 0x3D80803A
+	.long 0x618C74F0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000100
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7D1B78
+	.long 0x3FE08047
+	.long 0x63FF9DA4
+	.long 0x1FDD00A8
+	.long 0x7FDEFA14
+	.long 0x887F0004
+	.long 0x2C030000
+	.long 0x418200B0
+	.long 0x3C608046
+	.long 0x6063B6A0
+	.long 0x886324D0
+	.long 0x889F0006
+	.long 0x7C032000
+	.long 0x40820098
+	.long 0x887E0058
+	.long 0x2C030003
+	.long 0x4182008C
+	.long 0x887F0004
+	.long 0x2C030007
+	.long 0x40820040
+	.long 0x887F0006
+	.long 0x2C030001
+	.long 0x40820024
+	.long 0x887F0000
+	.long 0x1C6300A8
+	.long 0x7C63FA14
+	.long 0x8863005F
+	.long 0x889E005F
+	.long 0x7C032000
+	.long 0x41820058
+	.long 0x4800005C
+	.long 0x887F0000
+	.long 0x7C03E800
+	.long 0x41820048
+	.long 0x4800004C
+	.long 0x887F0006
+	.long 0x2C030001
+	.long 0x40820028
+	.long 0x7FE3FB78
+	.long 0x3D808016
+	.long 0x618C54A0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x889E005F
+	.long 0x7C032000
+	.long 0x41820020
+	.long 0x48000014
+	.long 0x887E005D
+	.long 0x2C030000
+	.long 0x41820010
+	.long 0x48000004
+	.long 0x38600000
+	.long 0x48000008
+	.long 0x38600001
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x4E800020
+	.long 0x880DB655
+	.long 0x00000000
+	.long 0xC216EA30
+	.long 0x00000004
+	.long 0x981E0010
+	.long 0x2C000007
+	.long 0x40820014
+	.long 0x3C808046
+	.long 0x6084B6A0
+	.long 0x88840001
+	.long 0x989E000C
+	.long 0x00000000
+  .long 0xFF000000
+
+#endregion
+#region Code Descriptions
+UCF_Description:
+	.long 0x160cffff
+	.long 0xff0e00ac
+	.long 0x00b31220
+	.long 0x0f202c20
+	.long 0x3b202820
+	.long 0x361a2026
+	.long 0x20322031
+	.long 0x20372035
+	.long 0x2032202f
+	.long 0x202f2028
+	.long 0x20351a20
+	.long 0x27202c20
+	.long 0x36203320
+	.long 0x24203520
+	.long 0x2c203720
+	.long 0x2c202820
+	.long 0x361a203a
+	.long 0x202c2037
+	.long 0x202b1a20
+	.long 0x27202420
+	.long 0x36202b20
+	.long 0x25202420
+	.long 0x26202e1a
+	.long 0x20242031
+	.long 0x20271a03
+	.long 0x2036202b
+	.long 0x202c2028
+	.long 0x202f2027
+	.long 0x1a202720
+	.long 0x35203220
+	.long 0x3320e719
+	.long 0x0F0D0000
+	.align 2
+Frozen_Description:
+	.long 0x160cffff
+	.long 0xff0e00ac
+	.long 0x00b31220
+	.long 0x0d202c20
+	.long 0x36202420
+	.long 0x25202f20
+	.long 0x2820361a
+	.long 0x202b2024
+	.long 0x203d2024
+	.long 0x20352027
+	.long 0x20361a20
+	.long 0x3220311a
+	.long 0x20372032
+	.long 0x20382035
+	.long 0x20312024
+	.long 0x20302028
+	.long 0x20312037
+	.long 0x1a203620
+	.long 0x37202420
+	.long 0x2a202820
+	.long 0x3620e61a
+	.long 0x03202c20
+	.long 0x31202720
+	.long 0x2c202620
+	.long 0x24203720
+	.long 0x2820271a
+	.long 0x2025203c
+	.long 0x1a20241a
+	.long 0x2025202f
+	.long 0x20382028
+	.long 0x1a202520
+	.long 0x32203520
+	.long 0x27202820
+	.long 0x351a2032
+	.long 0x20311a20
+	.long 0x37202b20
+	.long 0x281a201c
+	.long 0x201c201c
+	.long 0x20e7190F
+	.long 0x0D000000
+Spawns_Description:
+	.long 0x160cffff
+	.long 0xff0e00ac
+	.long 0x00b31220
+	.long 0x19202f20
+	.long 0x24203c20
+	.long 0x28203520
+	.long 0x361a2036
+	.long 0x20332024
+	.long 0x203a2031
+	.long 0x1a202c20
+	.long 0x311a2031
+	.long 0x20282038
+	.long 0x20372035
+	.long 0x2024202f
+	.long 0x1a203320
+	.long 0x32203620
+	.long 0x2c203720
+	.long 0x2c203220
+	.long 0x3120361a
+	.long 0x20352028
+	.long 0x202a2024
+	.long 0x20352027
+	.long 0x202f2028
+	.long 0x20362036
+	.long 0x1a032032
+	.long 0x20291a20
+	.long 0x33203220
+	.long 0x35203720
+	.long 0xe7190F0D
+	.long 0x00000000
+Wobbling_Description:
+	.long 0x160cffff
+	.long 0xff0e00ac
+	.long 0x00b31220
+	.long 0x0d202c20
+	.long 0x36202420
+	.long 0x25202f20
+	.long 0x281a2012
+	.long 0x20262028
+	.long 0x1a200c20
+	.long 0x2f202c20
+	.long 0x30202520
+	.long 0x28203520
+	.long 0x3620f31a
+	.long 0x202a2035
+	.long 0x20242025
+	.long 0x1a202c20
+	.long 0x31202920
+	.long 0x2c203120
+	.long 0x2c203720
+	.long 0x2820e719
+	.long 0x0F0D0000
+Ledgegrab_Description:
+	.long 0x160cffff
+	.long 0xff0e00ac
+	.long 0x00b31220
+	.long 0x1d202c20
+	.long 0x30202820
+	.long 0xfc203220
+	.long 0x3820371a
+	.long 0x2039202c
+	.long 0x20262037
+	.long 0x20322035
+	.long 0x202c2028
+	.long 0x20361a20
+	.long 0x24203520
+	.long 0x281a2024
+	.long 0x203a2024
+	.long 0x20352027
+	.long 0x20282027
+	.long 0x1a203720
+	.long 0x321a2037
+	.long 0x202b2028
+	.long 0x1a203320
+	.long 0x2f202420
+	.long 0x3c202820
+	.long 0x351a0320
+	.long 0x3a202c20
+	.long 0x37202b1a
+	.long 0x20382031
+	.long 0x20272028
+	.long 0x20351a20
+	.long 0x0620001a
+	.long 0x202f2028
+	.long 0x2027202a
+	.long 0x2028202a
+	.long 0x20352024
+	.long 0x20252036
+	.long 0x20e7190F
+	.long 0x0D000000
+QoL_Description:
+	.long 0x160cffff
+	.long 0xff0e00a4
+	.long 0x00b31220
+	.long 0x1c202e20
+	.long 0x2c20331a
+	.long 0x20352028
+	.long 0x20362038
+	.long 0x202f2037
+	.long 0x1a203620
+	.long 0x26203520
+	.long 0x28202820
+	.long 0x3120e61a
+	.long 0x20362024
+	.long 0x202f2037
+	.long 0x203c1a20
+	.long 0x35203820
+	.long 0x31202520
+	.long 0x24202620
+	.long 0x2e20e61a
+	.long 0x20362037
+	.long 0x2024202a
+	.long 0x20281a20
+	.long 0x36203720
+	.long 0x35202c20
+	.long 0x2e202c20
+	.long 0x31202a20
+	.long 0xe61a0320
+	.long 0x27202c20
+	.long 0x36202420
+	.long 0x25202f20
+	.long 0x281a200f
+	.long 0x2032200d
+	.long 0x1a202c20
+	.long 0x311a2027
+	.long 0x20322038
+	.long 0x2025202f
+	.long 0x20282036
+	.long 0x20e61a20
+	.long 0x37203220
+	.long 0x2a202a20
+	.long 0x2f20281a
+	.long 0x20352038
+	.long 0x20302025
+	.long 0x202f2028
+	.long 0x1a202920
+	.long 0x35203220
+	.long 0x301a200c
+	.long 0x201c201c
+	.long 0x20e7190F
+	.long 0x0D000000
 
 #endregion
 
@@ -2267,9 +3167,10 @@ Codes_SceneLoad:
 #GObj Offsets
   .set OFST_CodeNamesTextGObj,0x0
   .set OFST_CodeOptionsTextGObj,0x4
-  .set OFST_CursorLocation,0x8
-  .set OFST_ScrollAmount,0xA
-  .set OFST_OptionSelections,0xC
+	.set OFST_CodeDescTextGObj,0x8
+  .set OFST_CursorLocation,0xC
+  .set OFST_ScrollAmount,0xE
+  .set OFST_OptionSelections,0x10
 blrl
 
 #Init
@@ -2318,7 +3219,7 @@ Codes_SceneLoad_CreateText:
   stfs f1,0x24(REG_TextGObj)
   stfs f1,0x28(REG_TextGObj)
 
-#Create Prompt
+#Create Title
 #Initialize Subtext
 	mr 	r3,REG_TextGObj		#struct pointer
 	bl CodeNames_Title
@@ -2332,6 +3233,39 @@ Codes_SceneLoad_CreateText:
 	mr	r4,REG_SubtextID
 	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
 	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Modname + version
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl CodeNames_ModName
+  mflr  r4
+	lfs	f1,ModNameX(REG_TextProp)
+  lfs	f2,ModNameY(REG_TextProp)
+	branchl r12,0x803a6b98
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
 	branchl r12,Text_UpdateSubtextSize
 
 #Init Menu
@@ -2360,6 +3294,37 @@ Codes_SceneLoad_CreateText:
   mflr  r4      #Function to Run
   li  r5,0      #Priority
   branchl r12, GObj_AddProc
+#Copy Saved Menu Options
+	addi	r3,REG_GObjData,OFST_OptionSelections
+	lwz	r4, -0x77C0 (r13)
+	addi r4,r4,0x1f24
+	li	r5,0x18
+	branchl	r12,memcpy
+
+#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	lfs	f1,DescriptionX(REG_TextProp)
+	lfs	f2,DescriptionY(REG_TextProp)
+	lfs	f3,DescriptionZ(REG_TextProp)
+	lfs	f4,DescriptionMaxX(REG_TextProp)
+	lfs	f5,DescriptionUnk(REG_TextProp)
+	branchl r12,0x803a5acc
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+
 #Create Menu
   mr  r3,REG_GObjData
   bl  Codes_CreateMenu
@@ -2524,6 +3489,20 @@ Codes_SceneThink_CheckToExit:
   branchl r12,0x80174338
 #Exit Scene
   branchl r12,0x801a4b60
+#Save Menu Options
+	lwz	r3, -0x77C0 (r13)
+	addi r3,r3,0x1f24
+	addi	r4,REG_GObjData,OFST_OptionSelections
+	li	r5,0x18
+	branchl	r12,memcpy
+#Request a memcard save
+	branchl	r12,0x8001c550
+	li	r3,0
+	branchl	r12,0x8001d164
+	load	r3,0x80433318
+	li	r4,1
+	stw	r4,0xC(r3)
+
   b Codes_SceneThink_Exit
 #endregion
 
@@ -2767,6 +3746,24 @@ Codes_CreateMenu_CreateOptionsLoopEnd:
   addi  r5,REG_TextProp,HighlightColor
   branchl r12,Text_ChangeTextColor
 #endregion
+#region Codes_CreateMenu_ChangeCodeDescription
+#Get highlighted code ID
+	lhz r3,OFST_ScrollAmount(REG_GObjData)
+	lhz r4,OFST_CursorLocation(REG_GObjData)
+	add	r3,r3,r4
+#Get this codes options
+	bl	CodeOptions_Order
+	mflr	r4
+	mulli	r3,r3,0x4
+	add	r3,r3,r4
+	bl	ConvertBlPointer
+#Get this codes description
+	addi	r3,r3,CodeOptions_CodeDescription
+	bl	ConvertBlPointer
+	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
+#Store to text gobj
+	stw	r3,0x5C(r4)
+#endregion
 
 Codes_CreateMenu_Exit:
   restore
@@ -2802,6 +3799,15 @@ ApplyAllGeckoCodes_Loop:
 #Load this options value
   addi  r3,REG_GObjData,OFST_OptionSelections
   lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's default gecko code pointer
+  bl  CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  ConvertBlPointer
+  addi  r3,r3,CodeOptions_GeckoCodePointers
+  bl  ConvertBlPointer
+  bl  ApplyGeckoCode
 #Get this code's gecko code pointers
   bl  CodeOptions_Order
   mflr  r3
