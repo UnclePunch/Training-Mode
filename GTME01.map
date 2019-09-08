@@ -193,7 +193,7 @@
 800119dc 00000074 800119dc 0 AestheticWindEffect(r3=sourcelocation,r4=duration,f1=radiusSize,f2=effectdegradation,f3=unk)
 80011a50 0000006c 80011a50 0 AestheticWindEffect_Stage?(r3=sourcelocation,r4=duration,f1=radiusSize,f2=effectdegradation,f3=unk)
 80011abc 00000008 80011abc 0 zz_0011abc_
-80011ac4 000000b0 80011ac4 0 zz_0011ac4_
+80011ac4 000000b0 80011ac4 0 HSD_LObjUnk
 80011b74 000000a4 80011b74 0 zz_0011b74_
 80011c18 0000020c 80011c18 0 zz_0011c18_
 80011e24 00000228 80011e24 0 JObj_GetUnkJObjData(r3=textureObject,r4=ReturnStruct,r5=typedef,r6=typedef
@@ -236,20 +236,20 @@
 80014bd0 0000015c 80014bd0 0 Animation_CopyAnimationDataFromARAMToPointerIn0x59C(r3=requestAddress,r4=Destination,r5=Length
 80014d2c 000000f8 80014d2c 0 zz_0014d2c_
 80014e24 000000c8 80014e24 0 Heap_CreatePersistentHeap(r3=Lo,r4=Hi // r3 = HeapStruct)
-80014eec 00000090 80014eec 0 Heap_DestroyPersistentHeap(r3=handle)
+80014eec 00000090 80014eec 0 zz_0014eec_
 80014f7c 0000004c 80014f7c 0 zz_0014f7c_
 80014fc8 00000128 80014fc8 0 Heap_StoreFileEntryToFileSlotStruct(r3=Pointer,r4=FileLength)
 800150f0 00000094 800150f0 0 Preload_UpdateNextPreloadPointer
-80015184 00000118 80015184 0 Preload_ShiftCharacterFiles
+80015184 00000118 80015184 0 CopyFiles?
 8001529c 00000084 8001529c 0 Heap_UpdatePersistentHeapTable
-80015320 0000019c 80015320 0 Heap_BeginPersistentHeapFileShift
+80015320 0000019c 80015320 0 zz_0015320_
 800154bc 00000018 800154bc 0 Heap_StoreARAMBoundsToPersistentHeapTable
 800154d4 000000d0 800154d4 0 Heap_InitializeARAMPersistentHeapAgain?
 800155a4 000000a8 800155a4 0 Heap_ResetPersistentHeapManager
 8001564c 00000284 8001564c 0 Heap_InitalizePreloadFileSlotStructs/CreateLinkedList
 800158d0 00000018 800158d0 0 Heap_SetPersistentHeapsXValue
 800158e8 00000018 800158e8 0 Heap_GetPersistentHeapsXValue
-80015900 000002b8 80015900 0 Preload_UpdateStatusOfPersistentHeaps
+80015900 000002b8 80015900 0 Preload_MarkPersistentHeapsAsActive
 80015bb8 00000018 80015bb8 0 Preload_CheckPersistentHeapSomething(r3=HeapID)
 80015bd0 000000d8 80015bd0 0 Preload_AllocNextPersistentSlot(r3=HeapID,r4=Size)
 80015ca8 000000c4 80015ca8 0 zz_0015ca8_
@@ -317,7 +317,7 @@
 80019900 00000130 80019900 0 ButtonPresses_CopyInputsToStruct
 80019a30 00000018 80019a30 0 Pad_CheckToProcessFrame?
 80019a48 00000064 80019a48 0 zz_0019a48_
-80019aac 0000010c 80019aac 0 Pad_InitSomething
+80019aac 0000010c 80019aac 0 zz_0019aac_
 80019bb8 00000080 80019bb8 0 CARD_GetReturnValue?
 80019c38 00000078 80019c38 0 zz_0019c38_
 80019cb0 00000240 80019cb0 0 MemoryCard_OperationThink
@@ -373,7 +373,7 @@
 8001cc84 00000130 8001cc84 0 MemoryCard_CheckToSaveData
 8001cdb4 0000004c 8001cdb4 0 MemoryCard_CheckSaveBool?
 8001ce00 00000078 8001ce00 0 MemoryCard_UpdateTotalInGameTimeCount
-8001ce78 00000048 8001ce78 0 EveryMajorChange_SaveToMemcard
+8001ce78 00000048 8001ce78 0 MemoryCard_CheckIfMemcardPresentEveryMinorChange
 8001cec0 00000024 8001cec0 0 zz_001cec0_
 8001cee4 00000034 8001cee4 0 zz_001cee4_
 8001cf18 0000024c 8001cf18 0 DisplayMemcardSaveBanner
@@ -558,19 +558,19 @@
 80026e58 0000002c 80026e58 0 zz_0026e58_
 80026e84 00000038 80026e84 0 CharExternalID->SSMBit
 80026ebc 00000070 80026ebc 0 GetStageAudioBitID
-80026f2c 00000100 80026f2c 0 Audio_UnloadAudioFile
+80026f2c 00000100 80026f2c 0 resetAudioCache?
 8002702c 0000013c 8002702c 0 Audio_RequestAudioFileLoad? (r3=bit ID for audio file)
 80027168 00000320 80027168 0 Audio_CompareAndUpdateAudioCache
 80027488 000001c0 80027488 0 zz_0027488_
-80027648 00000214 80027648 0 Audio_BlockForSSMLoads
+80027648 00000214 80027648 0 ClassicMode_LoadAudioSomething
 8002785c 00000254 8002785c 0 loadStageAndCharAudio
 80027ab0 0000030c 80027ab0 0 Language_OverwriteAudioFolderName
 80027cc4 000000f8 80027cc4 0 zz_0027cc4_
-80027dbc 00000038 80027dbc 0 Audio_KillAllSFX
+80027dbc 00000038 80027dbc 0 zz_0027dbc_
 80027df4 00000004 80027df4 0 zz_0027df4_
 80027df8 00000564 80027df8 0 HPS_ProcessVolume
 8002835c 00000030 8002835c 0 zz_002835c_
-8002838c 00000304 8002838c 0 Audio_InitAudioCache
+8002838c 00000304 8002838c 0 ZeroOutAudioCache?
 80028690 0000049c 80028690 0 loadImportantAudioFiles_main.ssm and others
 80028b2c 00000020 80028b2c 0 zz_0028b2c_
 80028b4c 00000020 80028b4c 0 zz_0028b4c_
@@ -877,7 +877,7 @@
 80037b08 00000024 80037b08 0 GenerateNewMoveInstance
 80037b2c 00000094 80037b2c 0 zz_0037b2c_
 80037bc0 000000a0 80037bc0 0 PlayerBlock_IncrementAttacksLanded
-80037c60 00000194 80037c60 0 PlayerBlock_IncrementTotalAttacks
+80037c60 00000194 80037c60 0 PlayerBlock_IncrementAttackCountStatsOnASC
 80037df4 000000d8 80037df4 0 zz_0037df4_
 80037ecc 00000034 80037ecc 0 PlayerBlock_MeteorAttackCounter_Increment
 80037f00 00000244 80037f00 0 zz_0037f00_
@@ -1337,7 +1337,7 @@
 8005fbe4 000000f4 8005fbe4 0 zz_005fbe4_
 8005fcd8 00000104 8005fcd8 0 zz_005fcd8_
 8005fddc 00001f94 8005fddc 0 Textures_DisplayEffectTextures
-80061d70 00001bc0 80061d70 0 Textures_DisplaySpecialEffectTextures
+80061d70 00001bc0 80061d70 0 zz_0061d70_
 80063930 0000396c 80063930 0 applyColorToTexture?
 8006729c 00000070 8006729c 0 LoadCharacterEffectFIle
 8006730c 00000070 8006730c 0 zz_006730c_
@@ -1645,7 +1645,7 @@
 8007be3c 000002d8 8007be3c 0 zz_007be3c_
 8007c114 00000068 8007c114 0 Items_HammerCheck_RunFunc
 8007c17c 000000a8 8007c17c 0 zz_007c17c_
-8007c224 000000bc 8007c224 0 Hitbox_UpdateCenterBubblePosition
+8007c224 000000bc 8007c224 0 zz_007c224_
 8007c2e0 000001dc 8007c2e0 0 zz_007c2e0_
 8007c4bc 00000174 8007c4bc 0 zz_007c4bc_
 8007c630 000000ac 8007c630 0 zz_007c630_
@@ -6040,7 +6040,7 @@
 8011cd80 000000c8 8011cd80 0 AS_PeachBomberHit
 8011cd90 000000b8 8011cd90 0 AS_PeachBomberHit
 8011ce48 0000013c 8011ce48 0 Peach_DecideSpecialItemPull
-8011cf84 0000001c 8011cf84 0 Peach_NullPullingTurnipPointer
+8011cf84 0000001c 8011cf84 0 zz_011cf84_
 8011cfa0 00000078 8011cfa0 0 OnHit_PeachDownB_CheckIfHoldingTurnip
 8011d018 00000104 8011d018 0 GFX_PeachDownBThink
 8011d11c 000000a8 8011d11c 0 AS_PeachDownBGround
@@ -6048,7 +6048,7 @@
 8011d1c4 00000050 8011d1c4 0 AS_PeachDownBAir
 8011d214 0000006c 8011d214 0 zz_011d214_
 8011d280 0000006c 8011d280 0 zz_011d280_
-8011d2ec 00000054 8011d2ec 0 Animation_PeachTurnipPull
+8011d2ec 00000054 8011d2ec 0 zz_011d2ec_
 8011d340 00000054 8011d340 0 zz_011d340_
 8011d380 00000014 8011d380 0 zz_011d380_
 8011d394 00000020 8011d394 0 zz_011d394_
@@ -8365,14 +8365,14 @@
 8015c530 000000c8 8015c530 0 zz_015c530_
 8015c5f8 000000c4 8015c5f8 0 zz_015c5f8_
 8015c6bc 00000090 8015c6bc 0 zz_015c6bc_
-8015c74c 000000a0 8015c74c 0 MasterHand_GetKillFreezeTimer
-8015c7ec 000000a0 8015c7ec 0 MasterHand_GetSloMoTimer
+8015c74c 000000a0 8015c74c 0 zz_015c74c_
+8015c7ec 000000a0 8015c7ec 0 zz_015c7ec_
 8015c88c 000000a0 8015c88c 0 zz_015c88c_
 8015c92c 000000a0 8015c92c 0 zz_015c92c_
 8015c9cc 000000a0 8015c9cc 0 zz_015c9cc_
 8015ca6c 00000110 8015ca6c 0 zz_015ca6c_
 8015cb7c 00000020 8015cb7c 0 zz_015cb7c_
-8015cb9c 00000078 8015cb9c 0 Camera_ZoomInOnPlayer(r3=PlayerSlot)
+8015cb9c 00000078 8015cb9c 0 zz_015cb9c_
 8015cc14 00000020 8015cc14 0 zz_015cc14_
 8015cc34 0000000c 8015cc34 0 LoadRulesSettingsPointer1
 8015cc40 0000000c 8015cc40 0 LoadRulesSettingsPointer2
@@ -8693,7 +8693,7 @@
 80166ccc 00000474 80166ccc 0 zz_0166ccc_
 80166f50 000001f0 80166f50 0 zz_0166f50_
 80167140 00000054 80167140 0 PostMatch_CheckForSuddenDeath
-80167194 00000008 80167194 0 zz_0167194_
+80167194 00000008 80167194 0 PostMatch_CheckNumberOfWinners
 8016719c 00000184 8016719c 0 RespawnStart(r3=PlayerSlot,r4=FollowBool)
 80167320 00000150 80167320 0 DeathAfterSleep
 80167470 00000054 80167470 0 StaminaMode_CheckForStamina
@@ -9557,7 +9557,7 @@
 801a427c 00000008 801a427c 0 GetMinorSceneData1 (MatchStruct)
 801a4284 00000008 801a4284 0 GetMinorSceneData2 (MatchThinkData)
 801a428c 00000014 801a428c 0 MenuController_StoreR3to0x3&0x4
-801a42a0 00000014 801a42a0 0 MenuController_StoreR3+1to0x5
+801a42a0 00000014 801a42a0 0 MenuController_WriteToPendingMinor
 801a42b4 00000010 801a42b4 0 MenuController_LoadByte4
 801a42c4 00000010 801a42c4 0 MenuController_LoadMinor
 801a42d4 00000014 801a42d4 0 MenuController_ChangeScreenMajor
@@ -9613,10 +9613,10 @@
 801a5618 00000068 801a5618 0 CSS_Vs_ReturnWriteOverCurrentCharData
 801a5680 000000d4 801a5680 0 SceneDecide_CSS
 801a5754 00000054 801a5754 0 SSS_CopyMatchStruct
-801a57a8 00000094 801a57a8 0 SSS_CopyStageInfoToMatch
+801a57a8 00000094 801a57a8 0 copyStageInfoToMatch
 801a583c 000002b4 801a583c 0 VS/SpecialMelee_Start_CopyCSSInfo/RunSpecialModeFunctions(r6)
 801a5af0 0000014c 801a5af0 0 PostMatch_StoreNextScene
-801a5c3c 0000028c 801a5c3c 0 zz_01a5c3c_
+801a5c3c 0000028c 801a5c3c 0 SuddenDeath_CopyMatchInfoToStartMeleeStruct
 801a5ec8 00000038 801a5ec8 0 zz_01a5ec8_
 801a5f00 00000064 801a5f00 0 CopyMatchInfoToResultScreenMatchInfo(8047c028)
 801a5f64 000002f0 801a5f64 0 MatchStats_CalculateKOStars
@@ -9724,7 +9724,7 @@
 801b0264 000000a0 801b0264 0 SceneLoad_MemcardPrompt
 801b0304 00000044 801b0304 0 SceneLeave_MemcardPrompt
 801b0348 0000012c 801b0348 0 zz_01b0348_
-801b0474 00000180 801b0474 0 zz_01b0474_
+801b0474 00000180 801b0474 0 SuddenDeath_ModifyStartingPercents
 801b05f4 0000002c 801b05f4 0 zz_01b05f4_
 801b0620 00000044 801b0620 0 zz_01b0620_
 801b0664 0000004c 801b0664 0 zz_01b0664_
@@ -9733,7 +9733,7 @@
 801b07b4 00000034 801b07b4 0 CSS_RestoreCPUCharChoices(r3=CSSData,r4=CharID,r5=Unk,r6=CostumeID,r7=NametagID,r8=Unk,r9=PlayerWhoAccessedCSS)
 801b07e8 00000094 801b07e8 0 CSS_SaveCPUCharacterChoices(r3=CSSData,r4=StoreCharacter,r5=Store?,r6=StoreCostume,r7=StoreNametag,r8=Store?)
 801b087c 00000020 801b087c 0 ScenePrep_OpeningMovie_MinID0x2
-801b089c 00000100 801b089c 0 SceneDecide_TitleScreen
+801b089c 00000100 801b089c 0 SceneDecide_StartScreen
 801b099c 00000024 801b099c 0 SceneDecide_MainDebugMenu_KIM_exit?
 801b09c0 00000038 801b09c0 0 ScenePrep_MainDebugMenu_MinID0x0
 801b09f8 0000003c 801b09f8 0 DebugMenu_MainMenuExit
@@ -10054,7 +10054,7 @@
 801be37c 00000020 801be37c 0 zz_01be37c_
 801be39c 0000027c 801be39c 0 zz_01be39c_
 801be618 00000020 801be618 0 zz_01be618_
-801be638 000003d8 801be638 0 EventMatchThink_FinalShowdown
+801be638 000003d8 801be638 0 zz_01be638_
 801bea10 0000003c 801bea10 0 zz_01bea10_
 801bea4c 0000003c 801bea4c 0 zz_01bea4c_
 801bea88 00000068 801bea88 0 zz_01bea88_
@@ -12939,7 +12939,7 @@
 8022add8 00000138 8022add8 0 MainMenu_CheckToDisplayAllStarTexture
 8022af10 000000dc 8022af10 0 zz_022af10_
 8022afec 000003b4 8022afec 0 MainMenuThink
-8022b3a0 0000067c 8022b3a0 0 MainMenu_SwitchMenu(r3=MenuAnimation)
+8022b3a0 0000067c 8022b3a0 0 MainMenu_SwitchMenu
 8022ba1c 000002b8 8022ba1c 0 Menu_CameraRotateThink
 8022bacc 00000208 8022bacc 0 Menu_CameraRotateThink
 8022bcd4 00000024 8022bcd4 0 zz_022bcd4_
@@ -12947,7 +12947,7 @@
 8022bd6c 00000020 8022bd6c 0 MainMenu_HideAllElements
 8022bd8c 00000028 8022bd8c 0 MainMenu_ShowAllElements
 8022bdb4 00000080 8022bdb4 0 zz_022bdb4_
-8022be34 000000a8 8022be34 0 Rules_RenderMainUITextures
+8022be34 000000a8 8022be34 0 Rules_CreateCObj
 8022bedc 000000e0 8022bedc 0 Rules_LoadMessageBoxText
 8022bf70 0000004c 8022bf70 0 zz_022bf70_
 8022bfbc 00000054 8022bfbc 0 zz_022bfbc_
@@ -15839,7 +15839,7 @@
 802bd30c 00000020 802bd30c 0 zz_02bd30c_
 802bd32c 00000130 802bd32c 0 Peach_TurnipTypeDecide
 802bd45c 00000020 802bd45c 0 zz_02bd45c_
-802bd47c 00000030 802bd47c 0 Turnip_CheckToNullPullingTurnipPointer
+802bd47c 00000030 802bd47c 0 zz_02bd47c_
 802bd4ac 0000017c 802bd4ac 0 Peach_SpawnAndGiveTurnip
 802bd628 000000ac 802bd628 0 ItemOnSpawn_Turnip
 802bd6d4 00000008 802bd6d4 0 zz_02bd6d4_
@@ -20398,7 +20398,7 @@
 803887dc 00000160 803887dc 0 synth.c?
 8038893c 0000007c 8038893c 0 zz_038893c_
 803889b8 00000154 803889b8 0 loadCharAudioFile (r3=string, r4=bankID, r5=callback function, r6=typedef)
-80388b0c 00000044 80388b0c 0 Audio_WaitForSSMsToFinishLoading
+80388b0c 00000044 80388b0c 0 zz_0388b0c_
 80388b50 00000010 80388b50 0 glx_GetFreeMemory
 80388b60 00000150 80388b60 0 zz_0388b60_
 80388cb0 00000080 80388cb0 0 zz_0388cb0_
