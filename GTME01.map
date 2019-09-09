@@ -8886,9 +8886,9 @@
 8016d800 000000ac 8016d800 0 SceneThink_InGame
 8016d8ac 00000414 8016d8ac 0 Playerblock_Initialize
 8016dcc0 0000022c 8016dcc0 0 InitializeMatchInfo+ThinkStruct
-8016deec 00000238 8016deec 0 Player_InitializeSpawnPositions?
+8016deec 00000238 8016deec 0 Player_InitializeFacingDirectionBasedOnSpawn
 8016e124 00000198 8016e124 0 PlayerBlock_LoadPlayers_CheckForLoadedKirby+LoadHats
-8016e2bc 00000304 8016e2bc 0 PlayerBlock_LoadPlayers / MatchStartRead/WriteValues
+8016e2bc 00000304 8016e2bc 0 PlayerBlock_InitSpawnPositionsAndCreatePlayers
 8016e5c0 00000170 8016e5c0 0 Music_GetSomeValue
 8016e730 00000204 8016e730 0 StartMelee
 8016e92c 00000008 8016e92c 0 zz_016e92c_
