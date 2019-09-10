@@ -42,20 +42,18 @@ Note: I haven't tested this on Linux.
 
 Note: `$PROJECTROOT` prefers to the root of this project
 
-1.) `cd` into wherever you downloaded the JLaferri/gecko repo (e.x `~/Downloads/gecko`)
-
-2.) Run `go build`. This will generate a an executable called `gecko`. Place that executable in the `$PROJECTROOT/Build TM Codeset/mac` directory of this project
-
-3.) You'll need to extract the files from your Melee iso, this is where `wine` comes in handy.
-  1.) Before running wine, you will need to set up a fake drive to share files between wine<>mac. Navigate to `~/.wine/dosdevices` and create a symlink to a folder where you want to share files. e.g. `ln -s ~/winefiles w:`
-  2.) Move your melee .iso file to `~/winefiles` or whatever folder you created.
-  3.) Run `wine $PATH_TO_GCREBUILDER.exe` and GCRebuilder should open its own window.
-  4.) From there, Click Image -> Open and select your Melee iso. **Your Melee iso md5 hash should be equal to 0e63d4223b01d9aba596259dc155a174**.
-  5.) In the file explorer, right click "root" and select export. Choose a location to export the root folder to, likely the new `W:/` drive that you created earlier.
+1. `cd` into wherever you downloaded the JLaferri/gecko repo (e.x `~/Downloads/gecko`)
+2. Run `go build`. This will generate a an executable called `gecko`. Place that executable in the `$PROJECTROOT/Build TM Codeset/mac` directory of this project
+3. You'll need to extract the files from your Melee iso, this is where `wine` comes in handy.
+    1. Before running wine, you will need to set up a fake drive to share files between wine<>mac. Navigate to `~/.wine/dosdevices` and create a symlink to a folder where you want to share files. e.g. `ln -s ~/winefiles w:`
+    2. Move your melee .iso file to `~/winefiles` or whatever folder you created.
+    3. Run `wine $PATH_TO_GCREBUILDER.exe` and GCRebuilder should open its own window.
+    4. From there, Click Image -> Open and select your Melee iso. **Your Melee iso md5 hash should be equal to 0e63d4223b01d9aba596259dc155a174**.
+    5. In the file explorer, right click "root" and select export. Choose a location to export the root folder to, likely the new `W:/` drive that you created earlier.
 
 ### Building
 
-1.) cd into `$PROJECTROOT/Build TM Codeset/mac`, and run `./gecko build` (you may need to run as sudo). This will mass assemble the `.asm` files in the `$PROJECTDIR/ASM` directory, you should end up with a `codes.gct` file in `$PROJECTDIR/Additional ISO files`.
+1. cd into `$PROJECTROOT/Build TM Codeset/mac`, and run `./gecko build` (you may need to run as sudo). This will mass assemble the `.asm` files in the `$PROJECTDIR/ASM` directory, you should end up with a `codes.gct` file in `$PROJECTDIR/Additional ISO files`.
 
 Example output:
 
@@ -65,18 +63,18 @@ Successfuly wrote codes to ../../Additional ISO Files//codes.gct
 Process time was 25.577666254s
 ```
 
-2.) Run `./modifyStartDol.sh $PATH_TO_YOUR_START.DOL`, where `$PATH_TO_YOUR_START.DOL` is at the `root/&&systemdata/Start.dol` in the location where you extracted the root folder before. This will generate a new `Start.dol` at `$PROJECTROOT/Additional ISO Files/Start.dol`
+2. Run `./modifyStartDol.sh $PATH_TO_YOUR_START.DOL`, where `$PATH_TO_YOUR_START.DOL` is at the `root/&&systemdata/Start.dol` in the location where you extracted the root folder before. This will generate a new `Start.dol` at `$PROJECTROOT/Additional ISO Files/Start.dol`
 
-3.) You can now copy the contents of `$PROJECTROOT/Additional ISO Files` to an NTSC 1.02 Melee root folder and rebuild the ISO, using GCRebuilder as we did in Step 3 in _Before your first build_.
-  1.) Manually copy `Start.dol` back into `root/&&systemdata`
-  2.) Manaully copy the contents of `audio` into `root/audio`, do not overwrite the whole folder as this will delete mandatory files
-  3.) Copy `codes.gct` and all the `.mth` files into `root/`
-  4.) Start up GCRebuilder again
-  5.) Before doing anything, click the options menu and select both options which should be `don't use game.toc` and `modify system files`
-  6.) Click 'root' -> 'open' and select the root folder you created before.
-  7.) Click 'root' -> 'save' and select a place to store a new `.iso` file
-  8.) Click rebuild!
-    1.) If you hit errors here about file size, close GCRebuilder, copy something like `MvMarth.mth` to overwrite `MvOMake15.mth` and/or `MvHowTo.mth` in the root folder, re-open GCRebuilder and try the steps again.
+3. You can now copy the contents of `$PROJECTROOT/Additional ISO Files` to an NTSC 1.02 Melee root folder and rebuild the ISO, using GCRebuilder as we did in Step 3 in _Before your first build_.
+    1. Manually copy `Start.dol` back into `root/&&systemdata`
+    2. Manaully copy the contents of `audio` into `root/audio`, do not overwrite the whole folder as this will delete mandatory files
+    3. Copy `codes.gct` and all the `.mth` files into `root/`
+    4. Start up GCRebuilder again
+    5. Before doing anything, click the options menu and select both options which should be `don't use game.toc` and `modify system files`
+    6. Click 'root' -> 'open' and select the root folder you created before.
+    7. Click 'root' -> 'save' and select a place to store a new `.iso` file
+    8. Click rebuild!
+        1. If you hit errors here about file size, close GCRebuilder, copy something like `MvMarth.mth` to overwrite `MvOMake15.mth` and/or `MvHowTo.mth` in the root folder, re-open GCRebuilder and try the steps again.
 
 ### Common Errors
 
