@@ -1101,7 +1101,7 @@ blrl
 .set  PromptCommonSceneID,10
 .set  CodesCommonSceneID,10
 .set  InitialSelection,0
-.set  MaxCodesOnscreen,6
+.set  MaxCodesOnscreen,8
 #Function Addresses
 .set  PostRetraceCallback,0x800195fc
 .set  UnkPadStruct,0x804329f0
@@ -1584,12 +1584,12 @@ blrl
 .float	30							#ModName Y
 .float	0.5							#ModName Scale
 .float	30							#Desc X
-.float	370							#Desc Y
+.float	400							#Desc Y
 .float	0								#Desc Z
 .float	560							#Desc Max X
 .float	0								#Desc Unk
 
-.set CodeAmount,6
+.set CodeAmount,8
 #region Code Names Order
 CodeNames_Order:
 blrl
@@ -1598,7 +1598,9 @@ bl  CodeNames_Frozen
 bl  CodeNames_Spawns
 bl  CodeNames_Wobbling
 bl  CodeNames_Ledgegrab
-bl	CodeNames_QoL
+bl	CodeNames_TournamentQoL
+bl	CodeNames_FriendliesQoL
+bl	CodeNames_Widescreen
 .align 2
 #endregion
 #region Code Names
@@ -1625,8 +1627,14 @@ CodeNames_Wobbling:
 CodeNames_Ledgegrab:
 .string "Ledgegrab Limit:"
 .align 2
-CodeNames_QoL:
-.string "Quality of Life"
+CodeNames_TournamentQoL:
+.string "Tournament QoL"
+.align 2
+CodeNames_FriendliesQoL:
+.string "Friendlies QoL"
+.align 2
+CodeNames_Widescreen:
+.string "Widescreen"
 .align 2
 #endregion
 #region Code Options Order
@@ -1637,7 +1645,9 @@ bl  CodeOptions_Frozen
 bl  CodeOptions_Spawns
 bl  CodeOptions_Wobbling
 bl  CodeOptions_Ledgegrab
-bl  CodeOptions_QoL
+bl	CodeOptions_TournamentQoL
+bl  CodeOptions_FriendliesQoL
+bl  CodeOptions_Widescreen
 .align 2
 #endregion
 #region Code Options
@@ -1695,11 +1705,27 @@ CodeOptions_Ledgegrab:
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_QoL:
+CodeOptions_TournamentQoL:
 	.long 2 -1           #number of options
-	bl	QoL_Description
-	bl  QoL_Off
-	bl  QoL_On
+	bl	TournamentQoL_Description
+	bl  TournamentQoL_Off
+	bl  TournamentQoL_On
+	.string "Off"
+	.string "On"
+	.align 2
+CodeOptions_FriendliesQoL:
+	.long 2 -1           #number of options
+	bl	FriendliesQoL_Description
+	bl  FriendliesQoL_Off
+	bl  FriendliesQoL_On
+	.string "Off"
+	.string "On"
+	.align 2
+CodeOptions_Widescreen:
+	.long 2 -1           #number of options
+	bl	Widescreen_Description
+	bl  Widescreen_Off
+	bl  Widescreen_On
 	.string "Off"
 	.string "On"
 	.align 2
@@ -2222,164 +2248,318 @@ Frozen_All:
 	.long 0xFF000000
 
 Spawns_Off:
-  .long 0x04263058
-  .long 0x38840001
-  .long 0x041c0a48
-  .long 0x7d8803a6
+  .long 0x0416E510
+  .long 0x881f24d0
   .long 0xFF000000
 Spawns_On:
-  .long 0xC2263058
-  .long 0x00000030
-  .long 0x39E00000
-  .long 0x3A000000
-  .long 0x3E408048
-  .long 0x625307FD
-  .long 0x91F206D8
-  .long 0x91F206DC
-  .long 0x8A3207C8
-  .long 0x625206D7
-  .long 0x2C110001
-  .long 0x4182004C
-  .long 0x39EF0001
-  .long 0x8E930024
-  .long 0x2C140003
-  .long 0x4182000C
-  .long 0x9A130004
-  .long 0x3A100001
-  .long 0x2C0F0004
-  .long 0x41A0FFE4
-  .long 0x48000130
-  .long 0x39E00000
-  .long 0x3A0000FF
-  .long 0x3E408048
-  .long 0x62520801
-  .long 0x39EF0001
-  .long 0x9E120024
-  .long 0x2C0F0004
-  .long 0x41A0FFF4
-  .long 0x4800010C
-  .long 0x3E208048
-  .long 0x623106DC
-  .long 0x39EF0001
-  .long 0x3A520001
-  .long 0x8E930024
-  .long 0x89D30008
-  .long 0x2C140003
-  .long 0x41A2FFC0
-  .long 0x2C0E0000
-  .long 0x40820010
-  .long 0x3A000000
-  .long 0x8A910000
-  .long 0x48000024
-  .long 0x2C0E0001
-  .long 0x40820010
-  .long 0x3A000001
-  .long 0x8E910001
-  .long 0x48000010
-  .long 0x3A000002
-  .long 0x8E910002
-  .long 0x48000004
-  .long 0x3A940001
-  .long 0x2C140003
-  .long 0x40A0FF80
-  .long 0x9A910000
-  .long 0x9A120000
-  .long 0x2C0F0004
-  .long 0x41A0FF94
-  .long 0x39E00000
-  .long 0x3E208048
-  .long 0x623106DB
-  .long 0x3AA00000
-  .long 0x39EF0001
-  .long 0x8E910001
-  .long 0x2C140001
-  .long 0x40800008
-  .long 0x48000010
-  .long 0x3AB50001
-  .long 0x2C150003
-  .long 0x40A0FF40
-  .long 0x2C0F0003
-  .long 0x41A0FFDC
-  .long 0x39E00000
-  .long 0x3A310127
-  .long 0x39C000FF
-  .long 0x3A8000FF
-  .long 0x39EF0001
-  .long 0x8E110024
-  .long 0x2C0E00FF
-  .long 0x40820010
-  .long 0x7E128378
-  .long 0x39C00000
-  .long 0x4800002C
-  .long 0x7C109000
-  .long 0x4082000C
-  .long 0x39C00003
-  .long 0x4800001C
-  .long 0x2C1400FF
-  .long 0x40820010
-  .long 0x39C00001
-  .long 0x3A800000
-  .long 0x48000008
-  .long 0x39C00002
-  .long 0x99D1FFFC
-  .long 0x2C0F0004
-  .long 0x41A0FFB4
-  .long 0x38840001
-  .long 0x00000000
-  .long 0xC21C0A48
-  .long 0x0000001A
-  .long 0x3DE0801B
-  .long 0x61EFFFA8
-  .long 0x7C0F6000
-  .long 0x418200BC
-  .long 0x3DC08048
-  .long 0xA1CE0686
-  .long 0x3DE08049
-  .long 0x61EFED70
-  .long 0x81EF0000
-  .long 0x2C0E001F
-  .long 0x4082001C
-  .long 0x3E00C242
-  .long 0x3E204242
-  .long 0x3E404230
-  .long 0x3A600000
-  .long 0x960F0598
-  .long 0x4800002C
-  .long 0x2C0E001C
-  .long 0x40820040
-  .long 0x3E00C23A
-  .long 0x62106666
-  .long 0x3E20423D
-  .long 0x62318E70
-  .long 0x3E404214
-  .long 0x3A600000
-  .long 0x960F0854
-  .long 0x48000004
-  .long 0x924F0004
-  .long 0x962F0040
-  .long 0x924F0004
-  .long 0x962F0040
-  .long 0x926F0004
-  .long 0x960F0040
-  .long 0x926F0004
-  .long 0x2C0E0020
-  .long 0x40820014
-  .long 0x3A000041
-  .long 0x9E0F0650
-  .long 0x3A0000C1
-  .long 0x9A0F0040
-  .long 0x2C0E0008
-  .long 0x40820024
-  .long 0x3E004270
-  .long 0x3E20C270
-  .long 0x3A400000
-  .long 0x39EF4748
-  .long 0x960F4748
-  .long 0x924F0004
-  .long 0x962F0040
-  .long 0x924F0004
-  .long 0x7D8803A6
-  .long 0x00000000
+	.long 0xC216E510
+	.long 0x00000099
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x3D808016
+	.long 0x618CB41C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x4082048C
+	.long 0x2C1C0005
+	.long 0x40800484
+	.long 0x887F24D0
+	.long 0x2C030001
+	.long 0x41820054
+	.long 0x3B200000
+	.long 0x3B400000
+	.long 0x7F43D378
+	.long 0x3D808003
+	.long 0x618C241C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030003
+	.long 0x41820010
+	.long 0x7C1CD000
+	.long 0x41820014
+	.long 0x3B390001
+	.long 0x3B5A0001
+	.long 0x2C1A0004
+	.long 0x4081FFD0
+	.long 0x7F83E378
+	.long 0x7F24CB78
+	.long 0x88BF24D0
+	.long 0x48000115
+	.long 0x48000428
+	.long 0x3B400000
+	.long 0x3B000000
+	.long 0x3B200000
+	.long 0x7F23CB78
+	.long 0x3D808003
+	.long 0x618C241C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030003
+	.long 0x41820024
+	.long 0x7F23CB78
+	.long 0x3D808003
+	.long 0x618C3370
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03D000
+	.long 0x40820008
+	.long 0x3B180001
+	.long 0x3B390001
+	.long 0x2C190004
+	.long 0x4180FFBC
+	.long 0x2C180001
+	.long 0x418203CC
+	.long 0x2C180002
+	.long 0x418103C4
+	.long 0x3B5A0001
+	.long 0x2C1A0003
+	.long 0x4180FF98
+	.long 0x3B200000
+	.long 0x3B410080
+	.long 0x3B000000
+	.long 0x3AC00000
+	.long 0x3AE00000
+	.long 0x7EE3BB78
+	.long 0x3D808003
+	.long 0x618C241C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030003
+	.long 0x41820028
+	.long 0x7EE3BB78
+	.long 0x3D808003
+	.long 0x618C3370
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03C800
+	.long 0x4082000C
+	.long 0x7EF8D1AE
+	.long 0x3B180001
+	.long 0x3AF70001
+	.long 0x2C170004
+	.long 0x4180FFB8
+	.long 0x3B390001
+	.long 0x2C190003
+	.long 0x4180FFA4
+	.long 0x3B200000
+	.long 0x7C79D0AE
+	.long 0x7C03E000
+	.long 0x41820010
+	.long 0x3B390001
+	.long 0x2C190004
+	.long 0x4180FFEC
+	.long 0x7F83E378
+	.long 0x7F24CB78
+	.long 0x88BF24D0
+	.long 0x48000009
+	.long 0x4800031C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7F1B78
+	.long 0x7C9E2378
+	.long 0x7CBD2B78
+	.long 0x4800009D
+	.long 0x7F8802A6
+	.long 0x80CD9348
+	.long 0x38A00000
+	.long 0x807C0000
+	.long 0x2C03FFFF
+	.long 0x41820070
+	.long 0x7C033000
+	.long 0x4182000C
+	.long 0x3B9C0064
+	.long 0x4BFFFFE8
+	.long 0x3B9C0004
+	.long 0x1C7D0030
+	.long 0x7F9C1A14
+	.long 0x1C7E000C
+	.long 0x7F9C1A14
+	.long 0x38810080
+	.long 0xC03C0000
+	.long 0xD0240000
+	.long 0xC03C0004
+	.long 0xD0240004
+	.long 0x38600000
+	.long 0x90640008
+	.long 0x7FE3FB78
+	.long 0x3D808003
+	.long 0x618C2768
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FE3FB78
+	.long 0xC03C0008
+	.long 0x3D808003
+	.long 0x618C3094
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x00000020
+	.long 0xC2700000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0x42700000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0xC1A00000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0x41A00000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0xC1A00000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0xC2700000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0x41A00000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0x42700000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0x0000001F
+	.long 0xC21B3333
+	.long 0x420CCCCD
+	.long 0x3F800000
+	.long 0x421B3333
+	.long 0x420CCCCD
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x41000000
+	.long 0x3F800000
+	.long 0x00000000
+	.long 0x4279999A
+	.long 0xBF800000
+	.long 0xC21B3333
+	.long 0x420CCCCD
+	.long 0x3F800000
+	.long 0xC21B3333
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x421B3333
+	.long 0x420CCCCD
+	.long 0xBF800000
+	.long 0x421B3333
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x00000008
+	.long 0xC2280000
+	.long 0x41D4CCCD
+	.long 0x3F800000
+	.long 0x42280000
+	.long 0x41E00000
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x423B999A
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x409CCCCD
+	.long 0x3F800000
+	.long 0xC2280000
+	.long 0x41D4CCCD
+	.long 0x3F800000
+	.long 0xC2280000
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x42280000
+	.long 0x41E00000
+	.long 0xBF800000
+	.long 0x42280000
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x0000001C
+	.long 0xC23A6666
+	.long 0x4214CCCD
+	.long 0x3F800000
+	.long 0x423D999A
+	.long 0x42153333
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x40E00000
+	.long 0x3F800000
+	.long 0x00000000
+	.long 0x426A0000
+	.long 0xBF800000
+	.long 0xC23A6666
+	.long 0x4214CCCD
+	.long 0x3F800000
+	.long 0xC23A6666
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x423D999A
+	.long 0x42153333
+	.long 0xBF800000
+	.long 0x423D999A
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x00000002
+	.long 0xC2250000
+	.long 0x41A80000
+	.long 0x3F800000
+	.long 0x42250000
+	.long 0x41D80000
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x40A80000
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x42400000
+	.long 0x3F800000
+	.long 0xC2250000
+	.long 0x41A80000
+	.long 0x3F800000
+	.long 0xC2250000
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x42250000
+	.long 0x41D80000
+	.long 0xBF800000
+	.long 0x42250000
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x00000003
+	.long 0xC2200000
+	.long 0x42000000
+	.long 0x3F800000
+	.long 0x42200000
+	.long 0x42000000
+	.long 0xBF800000
+	.long 0x428C0000
+	.long 0x40E00000
+	.long 0xBF800000
+	.long 0xC28C0000
+	.long 0x40E00000
+	.long 0x3F800000
+	.long 0xC2200000
+	.long 0x42000000
+	.long 0x3F800000
+	.long 0xC2200000
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x42200000
+	.long 0x42000000
+	.long 0xBF800000
+	.long 0x42200000
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0xFFFFFFFF
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x881F24D0
+	.long 0x00000000
   .long 0xFF000000
 
 Wobbling_On:
@@ -2632,23 +2812,17 @@ Ledgegrab_On:
 	.long 0x00000000
   .long 0xFF000000
 
-QoL_Off:
+TournamentQoL_Off:
 	.long 0x04259C40
 	.long 0x28000000
-	.long 0x041a5b14
-	.long 0x3ba00000
 	.long 0x042605FC
 	.long 0x38c00001
 	.long 0x04266ce0
 	.long 0x38600001
 	.long 0x042608d8
 	.long 0x889f0004
-	.long 0x04265220
-	.long 0x880db655
-	.long 0x0416EA30
-	.long 0x981e0010
   .long 0xFF000000
-QoL_On:
+TournamentQoL_On:
 	.long 0xC2259C40	#Stage Striking
 	.long 0x0000001F
 	.long 0x39600000
@@ -2713,52 +2887,58 @@ QoL_On:
 	.long 0x800DB604
 	.long 0x28000000
 	.long 0x00000000
-	.long 0xC21A5B14	#Salty Runback + Skip Result
-	.long 0x00000015
-	.long 0x3BA00000
-	.long 0x7FA3EB78
-	.long 0x3D80801A
-	.long 0x618C3680
-	.long 0x7D8903A6
-	.long 0x4E800421
-	.long 0x548005EF
-	.long 0x41820014
-	.long 0x548005AD
-	.long 0x4082001C
-	.long 0x5480056B
-	.long 0x4082001C
-	.long 0x3BBD0001
-	.long 0x2C1D0004
-	.long 0x4180FFCC
-	.long 0x48000060
-	.long 0x3B600002
-	.long 0x4800005C
-	.long 0x3D808025
-	.long 0x618C99EC
-	.long 0x7D8903A6
-	.long 0x4E800421
-	.long 0x3C80803F
-	.long 0x608406D0
-	.long 0x1C63001C
-	.long 0x7C841A14
-	.long 0x8864000B
-	.long 0x3C808045
-	.long 0x6084AC64
-	.long 0xB0640002
-	.long 0x3C808043
-	.long 0x6084207C
-	.long 0x9064000C
-	.long 0x3D808001
-	.long 0x618C8254
-	.long 0x7D8903A6
-	.long 0x4E800421
-	.long 0x3B600002
-	.long 0x48000008
-	.long 0x3B600000
-	.long 0x3BA00000
+	.long 0xC225B8BC	#LRA on SSS goes to CSS
+	.long 0x00000002
+	.long 0x3C608047
+	.long 0x60639D30
+	.long 0x88630000
 	.long 0x00000000
-	.long 0x042605FC	#Unplugged closes CSS Door
+	.long 0x042605FC	#Unplugging closes CSS Door
 	.long 0x38C00003
+	.long 0xC23775A4	#Unplugging removes nametag
+	.long 0x00000013
+	.long 0x8879000A
+	.long 0x7C600774
+	.long 0x2C00FFFF
+	.long 0x40820084
+	.long 0x881A0041
+	.long 0x7C030000
+	.long 0x41820078
+	.long 0x3C608048
+	.long 0x60630820
+	.long 0x1C98000C
+	.long 0x7C832214
+	.long 0x38600078
+	.long 0x9864000A
+	.long 0x808D8840
+	.long 0x388405F8
+	.long 0x1CB80024
+	.long 0x7C842A14
+	.long 0x9864000A
+	.long 0x3C808047
+	.long 0x60849D30
+	.long 0x88640000
+	.long 0x2C030002
+	.long 0x40820038
+	.long 0x88640003
+	.long 0x2C030000
+	.long 0x4082002C
+	.long 0x886DB656
+	.long 0x2C030000
+	.long 0x40820020
+	.long 0x3C80803F
+	.long 0x60840E8C
+	.long 0x1C78000C
+	.long 0x7C632214
+	.long 0x80830000
+	.long 0x38600000
+	.long 0x9864001B
+	.long 0x8819000A
+	.long 0x00000000
+	.long 0x04261b30	#Preserve nametag when closing window
+	.long 0x60000000
+	.long 0x04261b1c
+	.long 0x60000000
 	.long 0xC2266CE0	#FoD Disabled in Doubles
 	.long 0x0000000C
 	.long 0x80CD8840
@@ -2844,6 +3024,61 @@ QoL_On:
 	.long 0x989F0007
 	.long 0x889F0004
 	.long 0x60000000
+	.long 0x00000000
+  .long 0xFF000000
+
+FriendliesQoL_Off:
+	.long 0x041A5B14
+	.long 0x3ba00000
+	.long 0x04265220
+	.long 0x880db655
+	.long 0x0416EA30
+	.long 0x981e0010
+	.long 0xFF000000
+FriendliesQoL_On:
+	.long 0xC21A5B14	#Salty Runback + Skip Result
+	.long 0x00000015
+	.long 0x3BA00000
+	.long 0x7FA3EB78
+	.long 0x3D80801A
+	.long 0x618C3680
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x548005EF
+	.long 0x41820014
+	.long 0x548005AD
+	.long 0x4082001C
+	.long 0x5480056B
+	.long 0x4082001C
+	.long 0x3BBD0001
+	.long 0x2C1D0004
+	.long 0x4180FFCC
+	.long 0x48000060
+	.long 0x3B600002
+	.long 0x4800005C
+	.long 0x3D808025
+	.long 0x618C99EC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3C80803F
+	.long 0x608406D0
+	.long 0x1C63001C
+	.long 0x7C841A14
+	.long 0x8864000B
+	.long 0x3C808045
+	.long 0x6084AC64
+	.long 0xB0640002
+	.long 0x3C808043
+	.long 0x6084207C
+	.long 0x9064000C
+	.long 0x3D808001
+	.long 0x618C8254
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3B600002
+	.long 0x48000008
+	.long 0x3B600000
+	.long 0x3BA00000
 	.long 0x00000000
 	.long 0xC2265220	#Winners names are gold
 	.long 0x00000028
@@ -2937,7 +3172,53 @@ QoL_On:
 	.long 0x88840001
 	.long 0x989E000C
 	.long 0x00000000
-  .long 0xFF000000
+
+	.long 0xFF000000
+
+Widescreen_Off:
+	.long 0x043BB05C
+	.long 0x3FAAAAAA
+	.long 0x0436A4A8
+	.long 0xc03f0034
+	.long 0x042FCFC4
+	.long 0xc002e19c
+	.long 0x044DDB84
+	.long 0x3ecccccd
+	.long 0x044DDB48
+	.long 0x3dbae148
+	.long 0xFF000000
+Widescreen_On:
+	.long 0x043BB05C
+	.long 0x3EB00000
+	.long 0xC236A4A8
+	.long 0x00000006
+	.long 0xC03F0034
+	.long 0x4800001D
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xC0630004
+	.long 0xEC2100B2
+	.long 0xEC211824
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x40800000
+	.long 0x40400000
+	.long 0x00000000
+	.long 0xC22FCFC4
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40F00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x044DDB84
+	.long 0x3E99999A
+	.long 0x044DDB48
+	.long 0x3DF92C8C
+	.long 0xFF000000
 
 #endregion
 #region Code Descriptions
@@ -3107,9 +3388,75 @@ Ledgegrab_Description:
 	.long 0x20252036
 	.long 0x20e7190F
 	.long 0x0D000000
-QoL_Description:
+TournamentQoL_Description:
 	.long 0x160cffff
-	.long 0xff0e00a4
+	.long 0xff0e0075
+	.long 0x00b31220
+	.long 0x1c203720
+	.long 0x24202a20
+	.long 0x281a2036
+	.long 0x20372035
+	.long 0x202c202e
+	.long 0x202c2031
+	.long 0x202a20e6
+	.long 0x1a202b20
+	.long 0x2c202720
+	.long 0x281a2031
+	.long 0x20242030
+	.long 0x20282037
+	.long 0x2024202a
+	.long 0x20361a20
+	.long 0x3a202b20
+	.long 0x2c202f20
+	.long 0x281a202c
+	.long 0x20312039
+	.long 0x202c2036
+	.long 0x202c2025
+	.long 0x202f2028
+	.long 0x1a202720
+	.long 0x38203520
+	.long 0x2c203120
+	.long 0x2a1a2036
+	.long 0x202c2031
+	.long 0x202a202f
+	.long 0x20282036
+	.long 0x20e61a03
+	.long 0x20372032
+	.long 0x202a202a
+	.long 0x202f2028
+	.long 0x1a203520
+	.long 0x38203020
+	.long 0x25202f20
+	.long 0x281a2029
+	.long 0x20352032
+	.long 0x20301a20
+	.long 0x0c201c20
+	.long 0x1c20e61a
+	.long 0x2026202f
+	.long 0x20322036
+	.long 0x20281a20
+	.long 0x33203220
+	.long 0x3520371a
+	.long 0x20322031
+	.long 0x1a203820
+	.long 0x31203320
+	.long 0x2f203820
+	.long 0x2a20e61a
+	.long 0x2027202c
+	.long 0x20362024
+	.long 0x2025202f
+	.long 0x20281a20
+	.long 0x0f203220
+	.long 0x0d1a202c
+	.long 0x20311a20
+	.long 0x27203220
+	.long 0x38202520
+	.long 0x2f202820
+	.long 0x3620e719
+	.long 0x0F0D0000
+FriendliesQoL_Description:
+	.long 0x160cffff
+	.long 0xff0e0075
 	.long 0x00b31220
 	.long 0x1c202e20
 	.long 0x2c20331a
@@ -3120,44 +3467,56 @@ QoL_Description:
 	.long 0x26203520
 	.long 0x28202820
 	.long 0x3120e61a
-	.long 0x20362024
-	.long 0x202f2037
-	.long 0x203c1a20
-	.long 0x35203820
-	.long 0x31202520
-	.long 0x24202620
-	.long 0x2e20e61a
-	.long 0x20362037
-	.long 0x2024202a
-	.long 0x20281a20
-	.long 0x36203720
-	.long 0x35202c20
-	.long 0x2e202c20
-	.long 0x31202a20
-	.long 0xe61a0320
-	.long 0x27202c20
-	.long 0x36202420
-	.long 0x25202f20
-	.long 0x281a200f
-	.long 0x2032200d
-	.long 0x1a202c20
-	.long 0x311a2027
-	.long 0x20322038
-	.long 0x2025202f
-	.long 0x20282036
-	.long 0x20e61a20
-	.long 0x37203220
-	.long 0x2a202a20
-	.long 0x2f20281a
-	.long 0x20352038
-	.long 0x20302025
-	.long 0x202f2028
+	.long 0x200a20fb
+	.long 0x200b1a20
+	.long 0x29203220
+	.long 0x351a2036
+	.long 0x2024202f
+	.long 0x2037203c
+	.long 0x1a203520
+	.long 0x38203120
+	.long 0x25202420
+	.long 0x26202e20
+	.long 0xe61a200a
+	.long 0x20fb2021
 	.long 0x1a202920
-	.long 0x35203220
-	.long 0x301a200c
-	.long 0x201c201c
-	.long 0x20e7190F
-	.long 0x0D000000
+	.long 0x3220351a
+	.long 0x20352024
+	.long 0x20312027
+	.long 0x20322030
+	.long 0x1a203620
+	.long 0x37202420
+	.long 0x2a202820
+	.long 0xe603202b
+	.long 0x202c202a
+	.long 0x202b202f
+	.long 0x202c202a
+	.long 0x202b2037
+	.long 0x1a203a20
+	.long 0x2c203120
+	.long 0x31202820
+	.long 0x3520f320
+	.long 0x361a2031
+	.long 0x20242030
+	.long 0x202820e7
+	.long 0x190F0D00
+	.long 0x00000000
+Widescreen_Description:
+	.long 0x160cffff
+	.long 0xff0e00ac
+	.long 0x00b31220
+	.long 0x0e203120
+	.long 0x24202520
+	.long 0x2f20281a
+	.long 0x20012006
+	.long 0x20e92009
+	.long 0x1a203a20
+	.long 0x2c202720
+	.long 0x28203620
+	.long 0x26203520
+	.long 0x28202820
+	.long 0x3120e719
+	.long 0x0F0D0000
 
 #endregion
 
