@@ -1838,7 +1838,7 @@ LedgedashLoad_SkipRemoveRandall:
 		#########################
 
     #Registers
-    .set EventData,31
+    .set REG_EventData,31
     .set MenuData,27
     .set P1GObj,30
     .set P1Data,29
@@ -1860,8 +1860,8 @@ LedgedashLoad_SkipRemoveRandall:
 		backup
 
 		#INIT FUNCTION VARIABLES
-		lwz		EventData,0x2c(r3)			#backup data pointer in r31
-		lwz   MenuData,EventData_MenuDataPointer(EventData)
+		lwz		REG_EventData,0x2c(r3)			#backup data pointer in r31
+		lwz   MenuData,EventData_MenuDataPointer(REG_EventData)
 
     bl    GetAllPlayerPointers
 		mr		P1GObj,r3			#player block in r30
@@ -1877,7 +1877,8 @@ LedgedashLoad_SkipRemoveRandall:
 				branchl	r12,CreateCameraBox
 				stw r3,CameraBox(r31)
 			#Place on Ledge
-				lbz r3,currentLedge(EventData)		#Left Ledge
+				mr r3,REG_EventData
+				li	r4,0
 				bl	Ledgedash_PlaceOnLedge
 			#Set Camera To Be Zoomed Out More
 				load	r4,0x8049e6c8
@@ -1889,7 +1890,7 @@ LedgedashLoad_SkipRemoveRandall:
       #Clear Inputs
         bl  RemoveFirstFrameInputs
 			#Save State
-				addi r3,EventData,EventData_SaveStateStruct
+				addi r3,REG_EventData,EventData_SaveStateStruct
 				li	r4,1			#Override failsafe code
 				bl	SaveState_Save
 
@@ -1944,14 +1945,14 @@ LedgedashLoad_SkipRemoveRandall:
 			rlwinm.	r0,r3,0,30,30
 			beq	Ledgedash_CheckLeft
 		#Load Most Recent State
-			addi r3,EventData,EventData_SaveStateStruct
+			addi r3,REG_EventData,EventData_SaveStateStruct
 			bl		SaveState_Load
 		#Place on Right Ledge
-      li	r3,1
-      stb r3,currentLedge(EventData)
+			mr r3,REG_EventData
+			li	r4,1
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
-			addi r3,EventData,EventData_SaveStateStruct
+			addi r3,REG_EventData,EventData_SaveStateStruct
 			li	r4,1			#Override failsafe code
 			bl		SaveState_Save
 			b	Ledgedash_LoadState
@@ -1959,14 +1960,14 @@ LedgedashLoad_SkipRemoveRandall:
 			rlwinm.	r0,r3,0,31,31
 			beq	GetProgressAndAS
 		#Load Most Recent State
-			addi r3,EventData,EventData_SaveStateStruct
+			addi r3,REG_EventData,EventData_SaveStateStruct
 			bl		SaveState_Load
 		#Place on Left Ledge
-			li	r3,0
-      stb r3,currentLedge(EventData)
+			mr r3,REG_EventData
+			li	r4,0
 			bl	Ledgedash_PlaceOnLedge
 		#Save State
-			addi r3,EventData,EventData_SaveStateStruct
+			addi r3,REG_EventData,EventData_SaveStateStruct
 			li	r4,1			#Override failsafe code
 			bl		SaveState_Save
 			b	Ledgedash_LoadState
@@ -2111,6 +2112,9 @@ LedgedashLoad_SkipRemoveRandall:
 			li	r3,0xAF
 			Ledgedash_PlaySound:
 			bl PlaySFX
+		#Place on Ledge
+			mr r3,REG_EventData
+			lbz	r4,currentLedge(REG_EventData)
       bl Ledgedash_PlaceOnLedge
 			b	Ledgedash_LoadState
 
@@ -2143,12 +2147,14 @@ LedgedashLoad_SkipRemoveRandall:
 			cmpwi	r3,0x0
 			bgt	LedgedashThinkEnd
     #Load State (to cleanup volatile entities)
-      addi r3,EventData,EventData_SaveStateStruct
+      addi r3,REG_EventData,EventData_SaveStateStruct
       bl		SaveState_Load
 		#Place on Ledge
+			mr r3,REG_EventData
+			lbz	r4,currentLedge(REG_EventData)
       bl	Ledgedash_PlaceOnLedge
     #Save State
-      addi r3,EventData,EventData_SaveStateStruct
+      addi r3,REG_EventData,EventData_SaveStateStruct
 			li	r4,1							#Override failsafe code
       bl		SaveState_Save
 
@@ -2158,7 +2164,7 @@ LedgedashLoad_SkipRemoveRandall:
 			stb		r3,eventState(r31)				#Progress Byte
 			stb		r3,hitboxFoundFlag(r31)		#Invincible Move Bool
 			stb		r3,timer(r31)							#Timer
-			addi r3,EventData,EventData_SaveStateStruct
+			addi r3,REG_EventData,EventData_SaveStateStruct
 			bl		SaveState_Load
 		#Create Respawn Platform If Enabled
 			lbz		r3,StartingLocation(MenuData)
@@ -2250,21 +2256,30 @@ LedgedashLoad_SkipRemoveRandall:
 		Ledgedash_PlaceOnLedge:
     backup
 
-		.set REG_LedgeID,28
-		.set REG_P1GObj,30
-		.set REG_P1Data,29
+		.set	REG_EventData,31
+		.set	REG_P1GObj,30
+		.set	REG_P1Data,29
+		.set	REG_LedgeID,28
+		.set	REG_CameraBox,28
 
-		#Get Ledge Choice (0 = Left, 1 = Right)
-			lbz r20,currentLedge(EventData)
+		#Init
+			mr	REG_EventData,r3
+			mr	REG_LedgeID,r4
+			stb	REG_LedgeID,currentLedge(REG_EventData)
+		#Get P1 data
+			li	r3,0
+			branchl	r12,PlayerBlock_LoadMainCharDataOffset
+			mr	REG_P1GObj,r3
+			lwz	REG_P1Data,0x2C(REG_P1GObj)
 
 		#Place on ledge
 			mr	r3,REG_P1GObj
-			mr	r4,r20
+			mr	r4,REG_LedgeID
 			bl	PlaceOnLedge
 
 		#RESET PROGRESS
 			li		r3,0x0
-			stb		r3,eventState(r31)
+			stb		r3,eventState(REG_EventData)
 
 		#Get Stage's Ledge IDs
 			lwz		r3,-0x6CB8 (r13)			#External Stage ID
@@ -2273,7 +2288,7 @@ LedgedashLoad_SkipRemoveRandall:
 			mulli	r3,r3,0x2
 			lhzx	r3,r3,r4
 		#Get Requested Ledge
-			cmpwi r20,0x0
+			cmpwi REG_LedgeID,0x0
 			beq	Ledgedash_PlaceOnLedge_GetLeftLedgeID
 		Ledgedash_PlaceOnLedge_GetRightLedgeID:
 			rlwinm	r21,r3,0,24,31
@@ -2286,7 +2301,7 @@ LedgedashLoad_SkipRemoveRandall:
 		#Get Ledge Coordinates
 			mr	r3,r21
 			addi	r4,sp,0xD0
-			lfs	f1, 0x002C (r29)
+			lfs	f1, 0x002C (REG_P1Data)
 			lfs	f0, -0x7660 (rtoc)
 			fcmpo	cr0,f1,f0
 			ble Ledgedash_PlaceOnLedge_CameraBoxRightLedge
@@ -2297,41 +2312,41 @@ LedgedashLoad_SkipRemoveRandall:
 			branchl r12,Stage_GetRightOfLineCoordinates
 		Ledgedash_PlaceOnLedge_UpdateCameraBox:
 		#Get CameraBox
-			lwz r20,CameraBox(r31)
+			lwz REG_CameraBox,CameraBox(REG_EventData)
 		#Position Base of CameraBox behind the ledge
 		.set CameraBoxXOffset,35
 		.set CameraBoxYOffset,20
 			li	r3,CameraBoxXOffset
 			bl	IntToFloat
 			lfs f2,0xD0(sp)		#Ledge X
-			lfs f3,0x2C(r29)
+			lfs f3,0x2C(REG_P1Data)
 			fmadds f1,f1,f3,f2
-			stfs f1,0x10(r20)  #Camera X Position
+			stfs f1,0x10(REG_CameraBox)  #Camera X Position
 			li	r3,CameraBoxYOffset
 			bl	IntToFloat
 			lfs f2,0xD4(sp)		#Ledge Y
 			fadds f1,f1,f2
-			stfs f1,0x14(r20)  #Camera Y Position
+			stfs f1,0x14(REG_CameraBox)  #Camera Y Position
 		#Make Boundaries around ledge position
 		#Left Bound
 			li	r3,-10
 			bl	IntToFloat
-			stfs	f1,0x40(r20)
+			stfs	f1,0x40(REG_CameraBox)
 		#Right Bound
 			li	r3,10
 			bl	IntToFloat
-			stfs	f1,0x44(r20)
+			stfs	f1,0x44(REG_CameraBox)
 		#Top Bound
 			li	r3,10
 			bl	IntToFloat
-			stfs	f1,0x48(r20)
+			stfs	f1,0x48(REG_CameraBox)
 		#Lower Bound
 			li	r3,-10
 			bl	IntToFloat
-			stfs	f1,0x4C(r20)
+			stfs	f1,0x4C(REG_CameraBox)
 
     #Update Camera Box
-      mr  r3,P1GObj
+      mr  r3,REG_P1GObj
       bl  UpdateCameraBox
 
 		restore
