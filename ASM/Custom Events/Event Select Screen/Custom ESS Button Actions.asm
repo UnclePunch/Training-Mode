@@ -1722,12 +1722,14 @@ CodeOptions_FriendliesQoL:
 	.string "On"
 	.align 2
 CodeOptions_Widescreen:
-	.long 2 -1           #number of options
+	.long 3 -1           #number of options
 	bl	Widescreen_Description
 	bl  Widescreen_Off
-	bl  Widescreen_On
+	bl  Widescreen_Standard
+	bl	Widescreen_True
 	.string "Off"
-	.string "On"
+	.string "Standard"
+	.string "True"
 	.align 2
 #endregion
 #region Gecko Codes
@@ -2939,6 +2941,20 @@ TournamentQoL_On:
 	.long 0x60000000
 	.long 0x04261b1c
 	.long 0x60000000
+	.long 0x044DC47C #Change Default Hand Position
+	.long 0xC0200000
+	.long 0xC2261A6C
+	.long 0x00000005
+	.long 0x88BF0005
+	.long 0x2C050002
+	.long 0x40820014
+	.long 0x3D808026
+	.long 0x618C1B6C
+	.long 0x7D8903A6
+	.long 0x4E800420
+	.long 0x1C130024
+	.long 0x60000000
+	.long 0x00000000
 	.long 0xC2266CE0	#FoD Disabled in Doubles
 	.long 0x0000000C
 	.long 0x80CD8840
@@ -3172,7 +3188,10 @@ FriendliesQoL_On:
 	.long 0x88840001
 	.long 0x989E000C
 	.long 0x00000000
-
+	.long 0x0416B480
+	.long 0x60000000
+	.long 0x0406AE90
+	.long 0x38000000
 	.long 0xFF000000
 
 Widescreen_Off:
@@ -3187,7 +3206,7 @@ Widescreen_Off:
 	.long 0x044DDB48
 	.long 0x3dbae148
 	.long 0xFF000000
-Widescreen_On:
+Widescreen_Standard:
 	.long 0x043BB05C
 	.long 0x3EB00000
 	.long 0xC236A4A8
@@ -3203,6 +3222,38 @@ Widescreen_On:
 	.long 0x4E800021
 	.long 0x40800000
 	.long 0x40400000
+	.long 0x00000000
+	.long 0xC22FCFC4
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40F00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x044DDB84
+	.long 0x3E99999A
+	.long 0x044DDB48
+	.long 0x3DF92C8C
+	.long 0xFF000000
+Widescreen_True:
+	.long 0x043BB05C
+	.long 0x3EB00000
+	.long 0xC236A4A8
+	.long 0x00000006
+	.long 0xC03F0034
+	.long 0x4800001D
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xC0630004
+	.long 0xEC2100B2
+	.long 0xEC211824
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x42B80000
+	.long 0x427C0000
 	.long 0x00000000
 	.long 0xC22FCFC4
 	.long 0x00000004
@@ -3503,20 +3554,60 @@ FriendliesQoL_Description:
 	.long 0x00000000
 Widescreen_Description:
 	.long 0x160cffff
-	.long 0xff0e00ac
+	.long 0xff0e0080
 	.long 0x00b31220
 	.long 0x0e203120
 	.long 0x24202520
 	.long 0x2f20281a
-	.long 0x20012006
-	.long 0x20e92009
-	.long 0x1a203a20
-	.long 0x2c202720
-	.long 0x28203620
-	.long 0x26203520
-	.long 0x28202820
-	.long 0x3120e719
-	.long 0x0F0D0000
+	.long 0x203a202c
+	.long 0x20272028
+	.long 0x20362026
+	.long 0x20352028
+	.long 0x20282031
+	.long 0x20e71a20
+	.long 0x1e203620
+	.long 0x281a201c
+	.long 0x20372024
+	.long 0x20312027
+	.long 0x20242035
+	.long 0x20271a20
+	.long 0x2c20291a
+	.long 0x2037202b
+	.long 0x202c2031
+	.long 0x1a202520
+	.long 0x2f202420
+	.long 0x26202e1a
+	.long 0x20252024
+	.long 0x20352036
+	.long 0x1a202420
+	.long 0x3520281a
+	.long 0x20332035
+	.long 0x20282036
+	.long 0x20282031
+	.long 0x203720e7
+	.long 0x03201e20
+	.long 0x3620281a
+	.long 0x201d2035
+	.long 0x20382028
+	.long 0x1a202c20
+	.long 0x291a2037
+	.long 0x202b2028
+	.long 0x1a202c20
+	.long 0x30202420
+	.long 0x2a20281a
+	.long 0x2029202c
+	.long 0x202f202f
+	.long 0x20361a20
+	.long 0x37202b20
+	.long 0x281a2028
+	.long 0x20312037
+	.long 0x202c2035
+	.long 0x20281a20
+	.long 0x36202620
+	.long 0x35202820
+	.long 0x28203120
+	.long 0xe7190F0D
+	.long 0x00000000
 
 #endregion
 
