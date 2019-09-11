@@ -3,7 +3,7 @@
 
 #Parameters
 .set  PromptSceneID,8 #0
-.set  ExitSceneID,2
+.set  ExitSceneID,40
 .set  PromptCommonSceneID,10
 .set  InitialSelection,0
 #Function Addresses
@@ -413,8 +413,8 @@ LagPrompt_SceneThink_Exit:
 LagPrompt_SceneDecide:
   backup
 
-#Enter VS Mode Scene
-  li  r3,2
+#Exit Scene
+  li  r3,ExitSceneID
   branchl r12,0x801a42e8
 #Change Major
   branchl r12,0x801a42d4
@@ -489,8 +489,8 @@ IsProgressive:
   li	r3, PromptSceneID
   b Injection_Exit
 NoProgressive:
-#Load CSS
-  li  r3,2
+#Exit Scene
+  li  r3,ExitSceneID
 
 Injection_Exit:
   restore
