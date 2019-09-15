@@ -3709,6 +3709,24 @@ Widescreen_Off:
 	.long 0x3ecccccd
 	.long 0x044DDB48
 	.long 0x3dbae148
+	.long 0x044DDB58
+	.long 0x3e000000
+	.long 0x04086B24
+	.long 0x4182000c
+	.long 0x04030C7C
+	.long 0xa0010020
+	.long 0x04030C88
+	.long 0xa0010022
+	.long 0x044DDB30
+	.long 0x3f24d31e
+	.long 0x044DDB34
+	.long 0xbf24d31e
+	.long 0x044DDB2C
+	.long 0xc322b333
+	.long 0x044DDB28
+	.long 0x4322b333
+	.long 0x044DDB4C
+	.long 0x3dcccccd
 	.long 0xFF000000
 Widescreen_Standard:
 	.long 0x043BB05C
@@ -3759,6 +3777,24 @@ Widescreen_True:
 	.long 0x42B80000
 	.long 0x427C0000
 	.long 0x00000000
+	.long 0x044DDB58
+	.long 0x3E4CCCCD
+	.long 0x04086B24
+	.long 0x60000000
+	.long 0x04030C7C
+	.long 0x38000064
+	.long 0x04030C88
+	.long 0x3800021C
+	.long 0x044DDB30
+	.long 0x3F666666
+	.long 0x044DDB34
+	.long 0xBF666666
+	.long 0x044DDB2C
+	.long 0xC3660000
+	.long 0x044DDB28
+	.long 0x43660000
+	.long 0x044DDB4C
+	.long 0x3D916873
 	.long 0xC22FCFC4
 	.long 0x00000004
 	.long 0x48000011
@@ -3771,8 +3807,6 @@ Widescreen_True:
 	.long 0x00000000
 	.long 0x044DDB84
 	.long 0x3E99999A
-	.long 0x044DDB48
-	.long 0x3DF92C8C
 	.long 0xFF000000
 
 #endregion
