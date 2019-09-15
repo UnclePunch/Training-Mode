@@ -168,7 +168,7 @@
 8000e19c 00000074 8000e19c 0 zz_000e19c_
 8000e210 00000320 8000e210 0 HUD_GetHUDPositionForPlayerOnscreenCoordinates
 8000e530 00000308 8000e530 0 zz_000e530_
-8000e838 000001b8 8000e838 0 zz_000e838_
+8000e838 000001b8 8000e838 0 Camera_Unk(r3=Interest,r4=EyePosition,r5=PlayerCameraData,r6=StoreResult)
 8000e9f0 00000364 8000e9f0 0 zz_000e9f0_
 8000ed54 00000138 8000ed54 0 Player_InitShadow
 8000ee8c 00000054 8000ee8c 0 zz_000ee8c_
@@ -679,7 +679,7 @@
 80030ba8 00000014 80030ba8 0 zz_0030ba8_
 80030bbc 0000011c 80030bbc 0 Camera_CheckIfOnscreen
 80030cd8 00000024 80030cd8 0 Camera_CheckIfOnscreenPrefunction
-80030cfc 000000e8 80030cfc 0 Camera_CheckToStopDrawingHighPoly
+80030cfc 000000e8 80030cfc 0 Camera_CheckToKeepDrawingHighPoly
 80030de4 00000014 80030de4 0 Camera_X&YTranslation_Store
 80030df8 00000018 80030df8 0 Camera_X&YTranslation_Store0
 80030e10 00000024 80030e10 0 Camera_GetAverageXCameraRange
@@ -1913,7 +1913,7 @@
 80086a0c 0000000c 80086a0c 0 DataOffset_PlayerScaleLoad
 80086a18 00000034 80086a18 0 zz_0086a18_
 80086a4c 0000000c 80086a4c 0 StoreFreezeFrames(r3=Player,f1=FramesToFreezePlayerFor)
-80086a58 00000034 80086a58 0 zz_0086a58_
+80086a58 00000034 80086a58 0 Player_GetCameraBasedPositions
 80086a8c 000000d8 80086a8c 0 Player_SetOffscreenBool+CheckToDrawHighPolyModel
 80086b64 00000010 80086b64 0 CheckIfPlayerIsOffscreen(r3=player)
 80086b74 0000000c 80086b74 0 LoadPlayersCameraInfoPointer(r3=player)
@@ -17967,17 +17967,17 @@
 802fb650 0000005c 802fb650 0 HUD_RemoveStockUpdateFunction
 802fb6ac 0000003c 802fb6ac 0 zz_02fb6ac_
 802fb6e8 00000054 802fb6e8 0 zz_02fb6e8_
-802fb73c 00000184 802fb73c 0 HUD_DrawMaginifyingBubbles
+802fb73c 00000184 802fb73c 0 HUD_DetermineBubblePosition
 802fb8c0 0000031c 802fb8c0 0 HUD_CheckForOffscreenPlayers
 802fbbdc 000007e0 802fbbdc 0 HUD_OffscreenThink
 802fc158 00000264 802fc158 0 HUD_OffscreenThink
 802fc3bc 00000004 802fc3bc 0 zz_02fc3bc_
-802fc3c0 00000258 802fc3c0 0 zz_02fc3c0_
+802fc3c0 00000258 802fc3c0 0 HUD_CreateBubbleGObj
 802fc618 00000138 802fc618 0 zz_02fc618_
 802fc6bc 00000094 802fc6bc 0 zz_02fc6bc_
 802fc750 00000070 802fc750 0 zz_02fc750_
 802fc7c0 000000b0 802fc7c0 0 zz_02fc7c0_
-802fc870 00000078 802fc870 0 zz_02fc870_
+802fc870 00000078 802fc870 0 HUD_CreateBubbleGObjs
 802fc8e8 00000058 802fc8e8 0 zz_02fc8e8_
 802fc940 00000058 802fc940 0 zz_02fc940_
 802fc998 0000001c 802fc998 0 zz_02fc998_
