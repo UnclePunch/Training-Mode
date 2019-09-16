@@ -888,9 +888,7 @@ b	exit
 		li	r3,-1
 		sth r3,OFST_ReactionTimer(EventData)
 	#Stop Music
-		li	r3,0
-		li	r4,2
-		branchl r12,0x80025064
+		branchl r12,0x800236dc
 	ReactionNotFirstFrame:
 
 		bl	StoreCPUTypeAndZeroInputs
