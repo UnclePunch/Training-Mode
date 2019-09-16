@@ -1586,7 +1586,7 @@ blrl
 .float	30							#ModName Y
 .float	0.5							#ModName Scale
 .float	30							#Desc X
-.float	400							#Desc Y
+.float	390							#Desc Y
 .float	0								#Desc Z
 .float	560							#Desc Max X
 .float	0								#Desc Unk
@@ -3745,6 +3745,24 @@ Widescreen_Standard:
 	.long 0x40800000
 	.long 0x40400000
 	.long 0x00000000
+	.long 0x044DDB58
+	.long 0x3E4CCCCD
+	.long 0x04086B24
+	.long 0x60000000
+	.long 0x04030C7C
+	.long 0x3800004E
+	.long 0x04030C88
+	.long 0x38000232
+	.long 0x044DDB30
+	.long 0x3F666666
+	.long 0x044DDB34
+	.long 0xBF666666
+	.long 0x044DDB2C
+	.long 0xC3660000
+	.long 0x044DDB28
+	.long 0x43660000
+	.long 0x044DDB4C
+	.long 0x3D916873
 	.long 0xC22FCFC4
 	.long 0x00000004
 	.long 0x48000011
@@ -3757,8 +3775,6 @@ Widescreen_Standard:
 	.long 0x00000000
 	.long 0x044DDB84
 	.long 0x3E99999A
-	.long 0x044DDB48
-	.long 0x3DF92C8C
 	.long 0xFF000000
 Widescreen_True:
 	.long 0x043BB05C
@@ -4115,7 +4131,7 @@ GameVersion_Description:
 	.long 0x0F0D0000
 Widescreen_Description:
 	.long 0x160cffff
-	.long 0xff0e0078
+	.long 0xff0e0088
 	.long 0x00b31220
 	.long 0x0e203120
 	.long 0x24202520
@@ -4126,61 +4142,74 @@ Widescreen_Description:
 	.long 0x20352028
 	.long 0x20282031
 	.long 0x20e71a20
-	.long 0x1c202820
-	.long 0x2f202820
-	.long 0x2620371a
-	.long 0x201c2037
-	.long 0x20242031
-	.long 0x20272024
-	.long 0x20352027
-	.long 0x1a202c20
-	.long 0x291a203c
-	.long 0x20322038
-	.long 0x20351a20
-	.long 0x27202c20
-	.long 0x36203320
-	.long 0x2f202420
-	.long 0x3c1a202b
-	.long 0x20242036
-	.long 0x1a203720
-	.long 0x2b202c20
-	.long 0x311a2025
-	.long 0x202f2024
-	.long 0x2026202e
-	.long 0x1a032025
-	.long 0x20242035
-	.long 0x20361a20
-	.long 0x3220311a
-	.long 0x2037202b
+	.long 0x19202f20
+	.long 0x24203c20
+	.long 0x28203520
+	.long 0x361a2037
+	.long 0x2024202e
 	.long 0x20281a20
-	.long 0x36202c20
-	.long 0x27202820
-	.long 0x3620e71a
-	.long 0x201c2028
-	.long 0x202f2028
-	.long 0x20262037
-	.long 0x1a201d20
-	.long 0x35203820
-	.long 0x281a202c
-	.long 0x20291a20
-	.long 0x37202b20
-	.long 0x281a202c
-	.long 0x20302024
-	.long 0x202a2028
-	.long 0x1a202920
-	.long 0x2c202f20
-	.long 0x2f20361a
-	.long 0x2037202b
-	.long 0x20281a20
-	.long 0x28203120
-	.long 0x37202c20
-	.long 0x3520281a
-	.long 0x20362026
-	.long 0x20352028
+	.long 0x27202420
+	.long 0x30202420
+	.long 0x2a20281a
+	.long 0x203a202b
 	.long 0x20282031
-	.long 0x20e7190F
-	.long 0x0D000000
-
+	.long 0x1a203220
+	.long 0x38203720
+	.long 0x36202c20
+	.long 0x2720281a
+	.long 0x20322029
+	.long 0x1a032037
+	.long 0x202b2028
+	.long 0x1a200420
+	.long 0xe920031a
+	.long 0x20352028
+	.long 0x202a202c
+	.long 0x20322031
+	.long 0x20e71a20
+	.long 0x1e203620
+	.long 0x281a201c
+	.long 0x20372024
+	.long 0x20312027
+	.long 0x20242035
+	.long 0x20271a20
+	.long 0x2c20291a
+	.long 0x2037202b
+	.long 0x202c2031
+	.long 0x1a202520
+	.long 0x2f202420
+	.long 0x26202e1a
+	.long 0x20252024
+	.long 0x20352036
+	.long 0x1a202420
+	.long 0x3520281a
+	.long 0x20332035
+	.long 0x20282036
+	.long 0x20282031
+	.long 0x203720e7
+	.long 0x03201e20
+	.long 0x3620281a
+	.long 0x201d2035
+	.long 0x20382028
+	.long 0x1a202c20
+	.long 0x291a2037
+	.long 0x202b2028
+	.long 0x1a202c20
+	.long 0x30202420
+	.long 0x2a20281a
+	.long 0x20322026
+	.long 0x20262038
+	.long 0x2033202c
+	.long 0x20282036
+	.long 0x1a203720
+	.long 0x2b20281a
+	.long 0x20282031
+	.long 0x2037202c
+	.long 0x20352028
+	.long 0x1a203620
+	.long 0x26203520
+	.long 0x28202820
+	.long 0x3120e719
+	.long 0x0F0D0000
 
 #endregion
 
