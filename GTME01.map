@@ -293,7 +293,7 @@
 80017ebc 000002e0 80017ebc 0 Preload_AllocateAndLoadFile (DATfile_StageFileLoad_CharFileLoad?)
 8001819c 00000090 8001819c 0 Preload_LoadGameEngineFiles
 800181dc 00000050 800181dc 0 Preload_LoadGameEngineFiles
-8001822c 00000010 8001822c 0 zz_001822c_
+8001822c 00000010 8001822c 0 Preload_GetTable
 8001823c 00000018 8001823c 0 Preload_IncrementResetCount(0x54 of table)
 80018254 000005a0 80018254 0 Preload_CompareGameCache
 800187f4 000001f8 800187f4 0 File_CheckIfFileIsDoneLoading
