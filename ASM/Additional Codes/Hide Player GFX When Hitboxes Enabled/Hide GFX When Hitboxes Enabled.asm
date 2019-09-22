@@ -1,4 +1,4 @@
-#To be inserted at 8007a430
+#To be inserted at 8005FE30
 .include "../../Globals.s"
 
 #Check if a GObj was sent as an arg
