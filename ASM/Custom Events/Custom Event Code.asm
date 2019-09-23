@@ -888,7 +888,9 @@ b	exit
 		li	r3,-1
 		sth r3,OFST_ReactionTimer(EventData)
 	#Stop Music
-		branchl r12,0x800236dc
+		li	r3,0
+		li	r4,2
+		branchl r12,0x80025064
 	ReactionNotFirstFrame:
 
 		bl	StoreCPUTypeAndZeroInputs
@@ -8068,7 +8070,7 @@ blrl
 
 .float -37.7		#p1 x
 .float 21.2			#p1 y
-.float -41.5		#p2 x
+.float -41.1		#p2 x
 .float 0				#p2 y
 .float 13				#marth upthrow starting frame
 .float 2				#p1 damageflytop starting frame
