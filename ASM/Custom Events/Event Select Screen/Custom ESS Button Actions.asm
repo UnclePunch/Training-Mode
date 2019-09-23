@@ -1023,7 +1023,7 @@ SaveError:
 MainSaveName:
 blrl
 .ascii "Super Smash Bros. Melee         "
-.ascii "Multi-Mod Launcher              "
+.ascii "Multi-Mod Launcher BETA         "
 ###################
 SnapshotID:
 blrl
@@ -4547,6 +4547,12 @@ Codes_SceneThink_CheckToExit:
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
+#Clear nametag region
+	load  r3,0x8045d850
+	li r4,0
+	li r5,0
+	ori r5,r5,0xda38
+	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,0x8001c550	#Allocate memory for something
 	li	r3,0
@@ -4555,12 +4561,6 @@ Codes_SceneThink_CheckToExit:
 	load	r3,0x80433318
 	li	r4,1
 	stw	r4,0xC(r3)
-	branchl	r12,0x8001cc84
-#Wait for save file to finish
-Codes_SceneThink_CheckToExit_Loop:
-	branchl	r12,0x8001b6f8
-	cmpwi	r3,0xB
-	beq	Codes_SceneThink_CheckToExit_Loop
 
   b Codes_SceneThink_Exit
 #endregion
@@ -5012,24 +5012,14 @@ ExploitCode102_Exit:
 	stb	r3,0x0(r4)
 #request to change scenes
 	branchl	r12,0x801a4b60
-  restore
 
 ##########
 ## Exit ##
 ##########
 
-load	r3,0x80239e9c
-mtlr	r3
-
-lis r3,0x8045
-ori r3,r3,0xd850			#v1.0 = 8045b888
-li r4,0
-li r5,0
-ori r5,r5,0xc344
-lis r12,0x8000
-ori r12,r12,0x3130			#v1.0 = 8045b888
-mtctr r12
-bctr
+#Return to the game
+  restore
+	branch	r12,0x80239e9c
 
 ExploitCode102_End:
 blrl
