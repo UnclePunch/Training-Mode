@@ -4548,12 +4548,19 @@ Codes_SceneThink_CheckToExit:
 	li	r5,0x18
 	branchl	r12,memcpy
 #Request a memcard save
-	branchl	r12,0x8001c550
+	branchl	r12,0x8001c550	#Allocate memory for something
 	li	r3,0
-	branchl	r12,0x8001d164
+	branchl	r12,0x8001d164	#load banner images
+#Set memcard save flag
 	load	r3,0x80433318
 	li	r4,1
 	stw	r4,0xC(r3)
+	branchl	r12,0x8001cc84
+#Wait for save file to finish
+Codes_SceneThink_CheckToExit_Loop:
+	branchl	r12,0x8001b6f8
+	cmpwi	r3,0xB
+	beq	Codes_SceneThink_CheckToExit_Loop
 
   b Codes_SceneThink_Exit
 #endregion
