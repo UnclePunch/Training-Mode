@@ -886,108 +886,6 @@ ExploitFillLoop:
 
 	b	Success
 
-##########################
-## Create Snapshot File ##
-##########################
-/*
-#Update list of present memcard snapshots
-  mr	r3,REG_MemcardSlot
-  branchl r12,0x80253e90
-
-.set REG_Count,31
-.set REG_Index,30
-.set REG_SnapshotStruct,29
-.set REG_SnapshotID,28
-#Check if file exists on card
-  load  r3,MemcardFileList                            #go to pointer location
-  lwz REG_SnapshotStruct,0x0(r3)                      #access pointer to snapshot file list
-	mulli	r3,REG_MemcardSlot,1032
-	add	REG_SnapshotStruct,REG_SnapshotStruct,r3
-  lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
-  addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
-  bl  SnapshotID                                      #get ID we are looking for
-  mflr r3
-  lwz REG_SnapshotID,0x0(r3)
-  li  REG_Count,0                                     #init count
-SnapshotSearchLoop:
-  cmpw REG_Count,REG_Index
-  bge SnapshotSearchLoop_NotFound
-#Get the next snapshots ID
-  mulli r3,REG_Count,0x8          #each snapshots data is 0x8 long
-  add r3,r3,REG_SnapshotStruct
-  lwz r4,0x0(r3)                  #get the snaps ID
-  cmpw r4,REG_SnapshotID
-  bne SnapshotSearchLoop_IncLoop
-  b SnapshotSearchLoop_Found
-SnapshotSearchLoop_IncLoop:
-  addi REG_Count,REG_Count,1
-  b SnapshotSearchLoop
-
-SnapshotSearchLoop_NotFound:
-  b CreateSnapshot
-
-SnapshotSearchLoop_Found:
-#Delete Snapshot
-  mr	r3,REG_MemcardSlot
-  mr  r4,REG_Count
-  branchl r12,0x8001d5fc
-WaitToDeleteLoop:
-  branchl	r12,0x8001b6f8
-  cmpwi	r3,0xB
-  beq	WaitToDeleteLoop
-#If Exists
-  cmpwi	r3,0x0
-  beq	CreateSnapshot
-  cmpwi	r3,0x9
-  bne	SaveError
-
-CreateSnapshot:
-.set REG_Codeset,31
-
-#Get codeset pointer and length
-  lwz REG_Codeset,CodesetPointer(rtoc)
-  bl  SnapshotSaveStruct
-  mflr r4
-  stw REG_Codeset,0x8(r4)
-#Store file size
-  lwz r3,0x0(REG_Codeset)
-  stw r3,0x0(r4)
-#Load banner and image
-#Convert ID to string
-  addi r3,sp,0x80
-  bl  SnapshotString
-  mflr r4
-  bl  SnapshotID
-  mflr r5
-  lwz r5,0x0(r5)
-  branchl r12,0x80323cf4
-#Create File
-  mr	r3,REG_MemcardSlot
-  addi r4,sp,0x80       #Snapshot ID
-  bl  SnapshotSaveStruct
-  mflr r5
-  load r6,0x803bacc8
-  bl  SnapshotSaveName
-  mflr r7
-	bl	SnapshotBanner
-	mflr r8
-	bl	SnapshotIcon
-	mflr r9
-  li  r10,0
-  branchl r12,0x8001bb48
-
-WaitToLoadLoop:
-  branchl	r12,0x8001b6f8
-  cmpwi	r3,0xB
-  beq	WaitToLoadLoop
-#If Exists
-  cmpwi	r3,0x0
-  beq	Success
-  cmpwi	r3,0x9
-  beq	Success
-  b	Failure
-*/
-
 Success:
   li	r3,0xAA
   branchl	r12,0x801c53ec
@@ -1625,22 +1523,22 @@ CodeNames_Spawns:
 .string "Neutral Spawns:"
 .align 2
 CodeNames_Wobbling:
-.string "Wobbling:"
+.string "Disable Wobbling:"
 .align 2
 CodeNames_Ledgegrab:
 .string "Ledgegrab Limit:"
 .align 2
 CodeNames_TournamentQoL:
-.string "Tournament QoL"
+.string "Tournament QoL:"
 .align 2
 CodeNames_FriendliesQoL:
-.string "Friendlies QoL"
+.string "Friendlies QoL:"
 .align 2
 CodeNames_GameVersion:
-.string "Game Version"
+.string "Game Version:"
 .align 2
 CodeNames_Widescreen:
-.string "Widescreen"
+.string "Widescreen:"
 .align 2
 #endregion
 #region Code Options Order
@@ -1698,11 +1596,11 @@ CodeOptions_Spawns:
 	.align 2
 CodeOptions_Wobbling:
 	.long 2 -1           #number of options
-	bl	Wobbling_Description
-	bl  Wobbling_On
-	bl  Wobbling_Off
-	.string "On"
+	bl	DisableWobbling_Description
+	bl  DisableWobbling_Off
+	bl  DisableWobbling_On
 	.string "Off"
+	.string "On"
 	.align 2
 CodeOptions_Ledgegrab:
 	.long 2 -1           #number of options
@@ -2637,11 +2535,11 @@ Spawns_On:
 	.long 0x00000000
   .long 0xFF000000
 
-Wobbling_On:
+DisableWobbling_Off:
   .long 0x0408EE48
   .long 0x2c000000
   .long 0xFF000000
-Wobbling_Off:
+DisableWobbling_On:
   .long 0xC208EE48
   .long 0x0000000C
   .long 0x807B0010
@@ -4003,7 +3901,7 @@ Spawns_Description:
 	.long 0x35203720
 	.long 0xe7190F0D
 	.long 0x00000000
-Wobbling_Description:
+DisableWobbling_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
 	.long 0x00b31220
