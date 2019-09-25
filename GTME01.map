@@ -10406,11 +10406,11 @@
 801cb9ec 00000198 801cb9ec 0 zz_01cb9ec_
 801cba2c 00000158 801cba2c 0 zz_01cba2c_
 801cbb84 00000004 801cbb84 0 zz_01cbb84_
-801cbb88 00000084 801cbb88 0 StageInitialization_FountainOfDreams
+801cbb88 00000084 801cbb88 0 FoD_Run_map_gobj_Functions
 801cbc0c 000000b0 801cbc0c 0 zz_01cbc0c_
 801cbcbc 00000024 801cbcbc 0 zz_01cbcbc_
 801cbce0 00000008 801cbce0 0 zz_01cbce0_
-801cbce8 000000ec 801cbce8 0 Stage_LoadObjects?
+801cbce8 000000ec 801cbce8 0 FoD_Create_map_gobj
 801cbdd4 0000002c 801cbdd4 0 zz_01cbdd4_
 801cbe00 00000008 801cbe00 0 zz_01cbe00_
 801cbe08 00000004 801cbe08 0 zz_01cbe08_
@@ -10426,7 +10426,7 @@
 801cc33c 00000014 801cc33c 0 zz_01cc33c_
 801cc350 00000008 801cc350 0 zz_01cc350_
 801cc358 000006b8 801cc358 0 Stages_FoDPlatformThink
-801cc96c 000000a4 801cc96c 0 zz_01cc96c_
+801cc96c 000000a4 801cc96c 0 Stages_FoDPlatformThink
 801cca10 00000004 801cca10 0 zz_01cca10_
 801cca14 00000040 801cca14 0 zz_01cca14_
 801cca54 00000008 801cca54 0 zz_01cca54_
@@ -10438,7 +10438,7 @@
 801ccb14 00000004 801ccb14 0 zz_01ccb14_
 801ccb18 00000078 801ccb18 0 zz_01ccb18_
 801ccb90 0000004c 801ccb90 0 zz_01ccb90_
-801ccbdc 000001bc 801ccbdc 0 Stages_Fountain_SidePlatformSpawn
+801ccbdc 000001bc 801ccbdc 0 FoD_CreatePlatform(f1=YPos)
 801ccd98 00000108 801ccd98 0 Stages_Fountain_InitReflection
 801ccea0 000001f0 801ccea0 0 Stages_Fountain_ReflectionThink
 801cd090 00000190 801cd090 0 getObjMemAddress?
