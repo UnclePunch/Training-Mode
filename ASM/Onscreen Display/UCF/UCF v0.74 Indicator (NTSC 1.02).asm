@@ -84,7 +84,7 @@ TEXT:
 blrl
 .long 0x55434620
 .long 0x76302e37
-.long 0x33000000
+.long 0x34000000
 
 
 

@@ -1,4 +1,4 @@
-#To be inserted at 8009986c
+#To be inserted at 800998a4
 .include "../../Globals.s"
 
 .set  REG_PlayerData,31
@@ -7,7 +7,13 @@
 
 backup
 
-	#CHECK IF ENABLED
+#Init
+  mr  REG_PlayerGObj,r3
+  lwz REG_PlayerData,0x2C(REG_PlayerGObj)
+  bl  Floats
+  mflr  REG_Floats
+
+#CHECK IF ENABLED
 	li	r0,OSD.UCF			#PowerShield ID
 	lwz	r4,-0x77C0(r13)
 	lwz	r4,0x1F24(r4)
@@ -15,12 +21,6 @@ backup
 	slw	r0, r5, r0
 	and.	r0, r0, r4
 	beq	EnterSpotdodge
-
-#Init
-  mr  REG_PlayerGObj,r31
-  lwz REG_PlayerData,0x2C(REG_PlayerGObj)
-  bl  Floats
-  mflr  REG_Floats
 
 #Check if cstick is
   lfs f1, 0x63C (REG_PlayerData)
@@ -77,8 +77,18 @@ backup
   lfs f1, 0x624(REG_PlayerData)
   fcmpo cr0, f0, f1
   bge- EnterSpotdodge
+
+#Exit spotdodge function without entering the state
+# this is very hacky and is how UCF 0.73 functions.
+# the reason this is in place is because the spotdodge function is called
+# from 2 different places, so instead of making 2 injections, this is done.
 	restore
-  branch  r12,0x8009987c
+  lwz	r3, 0x001C (sp)
+	lwz	r31, 0x0014 (sp)
+	addi	sp, sp, 24
+	addi	r3,r3,0x8			#skip to the end of the function we are coming from
+	mtlr	r3
+	blr
 
 Floats:
 blrl
@@ -97,4 +107,5 @@ blrl
 
 EnterSpotdodge:
   mr	r3, REG_PlayerGObj
+	mr	r4,	REG_PlayerData
   restore
