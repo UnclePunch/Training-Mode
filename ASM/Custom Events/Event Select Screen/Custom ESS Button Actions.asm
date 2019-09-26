@@ -1011,7 +1011,7 @@ blrl
 
 #Init and backup
   backup
-
+/*
 #Init LagPrompt major struct
   li  r3,PromptSceneID
   bl  LagPrompt_MinorSceneStruct
@@ -1019,6 +1019,7 @@ blrl
   bl  LagPrompt_SceneLoad
   mflr  r5
   bl  InitializeMajorSceneStruct
+*/
 #Init Codes major struct
   li  r3,CodesSceneID
   bl  Codes_MinorSceneStruct
@@ -1088,6 +1089,7 @@ InitMinorSceneStruct_Exit:
 #endregion
 #endregion
 
+/*
 #region LagPrompt
 
 #region LagPrompt_SceneLoad
@@ -1441,7 +1443,7 @@ blrl
 #endregion
 
 #endregion
-
+*/
 #region Codes
 
 #region Codes_SceneLoad
@@ -1717,8 +1719,8 @@ DefaultCodes:
 UCF_Off:
 	.long 0x040C9A44
 	.long 0xD01F002C
-	.long 0x0409986C
-	.long 0x7FE3FB78
+	.long 0x040998A4
+	.long 0x8083002C
 	.long 0x042662D0
 	.long 0x38980000
   .long 0xFF000000
@@ -1811,21 +1813,21 @@ UCF_On:
 	.long 0x7C0803A6
 	.long 0x60000000
 	.long 0x00000000
-	.long 0xC209986C
-	.long 0x00000023
+	.long 0xC20998A4
+	.long 0x00000024
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
 	.long 0xBE810008
-	.long 0x7FFEFB78
+	.long 0x7C7E1B78
 	.long 0x83FE002C
-	.long 0x480000C9
+	.long 0x480000D1
 	.long 0x7FA802A6
 	.long 0xC03F063C
 	.long 0x806DAEB4
 	.long 0xC0030314
 	.long 0xFC010040
-	.long 0x408100CC
+	.long 0x408100D4
 	.long 0xC01F0620
 	.long 0xFC000210
 	.long 0xC03D0000
@@ -1853,22 +1855,24 @@ UCF_On:
 	.long 0xEC00082A
 	.long 0xC03D0010
 	.long 0xFC000840
-	.long 0x4180005C
+	.long 0x41800064
 	.long 0x889F0670
 	.long 0x2C040003
-	.long 0x40810050
+	.long 0x40810058
 	.long 0xC01D0014
 	.long 0xC03F0624
 	.long 0xFC000840
-	.long 0x40800040
+	.long 0x40800048
 	.long 0xBA810008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
-	.long 0x3D808009
-	.long 0x618C987C
-	.long 0x7D8903A6
-	.long 0x4E800420
+	.long 0x8061001C
+	.long 0x83E10014
+	.long 0x38210018
+	.long 0x38630008
+	.long 0x7C6803A6
+	.long 0x4E800020
 	.long 0x4E800021
 	.long 0x42A00000
 	.long 0x37270000
@@ -1877,11 +1881,11 @@ UCF_On:
 	.long 0x3F800000
 	.long 0xBF4CCCCD
 	.long 0x7FC3F378
+	.long 0x7FE4FB78
 	.long 0xBA810008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
-	.long 0x60000000
 	.long 0x00000000
 	.long 0xC22662D0
 	.long 0x0000001B
@@ -2029,21 +2033,21 @@ UCF_Stealth:
 	.long 0x7C0803A6
 	.long 0x60000000
 	.long 0x00000000
-	.long 0xC209986C
-	.long 0x00000023
+	.long 0xC20998A4
+	.long 0x00000024
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
 	.long 0xBE810008
-	.long 0x7FFEFB78
+	.long 0x7C7E1B78
 	.long 0x83FE002C
-	.long 0x480000C9
+	.long 0x480000D1
 	.long 0x7FA802A6
 	.long 0xC03F063C
 	.long 0x806DAEB4
 	.long 0xC0030314
 	.long 0xFC010040
-	.long 0x408100CC
+	.long 0x408100D4
 	.long 0xC01F0620
 	.long 0xFC000210
 	.long 0xC03D0000
@@ -2071,22 +2075,24 @@ UCF_Stealth:
 	.long 0xEC00082A
 	.long 0xC03D0010
 	.long 0xFC000840
-	.long 0x4180005C
+	.long 0x41800064
 	.long 0x889F0670
 	.long 0x2C040003
-	.long 0x40810050
+	.long 0x40810058
 	.long 0xC01D0014
 	.long 0xC03F0624
 	.long 0xFC000840
-	.long 0x40800040
+	.long 0x40800048
 	.long 0xBA810008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
-	.long 0x3D808009
-	.long 0x618C987C
-	.long 0x7D8903A6
-	.long 0x4E800420
+	.long 0x8061001C
+	.long 0x83E10014
+	.long 0x38210018
+	.long 0x38630008
+	.long 0x7C6803A6
+	.long 0x4E800020
 	.long 0x4E800021
 	.long 0x42A00000
 	.long 0x37270000
@@ -2095,11 +2101,11 @@ UCF_Stealth:
 	.long 0x3F800000
 	.long 0xBF4CCCCD
 	.long 0x7FC3F378
+	.long 0x7FE4FB78
 	.long 0xBA810008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
-	.long 0x60000000
 	.long 0x00000000
 	.long 0xFF000000
 
@@ -4950,6 +4956,7 @@ bl  Codes_SceneDecide       #SceneDecide
 #endregion
 
 CheckProgressive:
+/*
 #Check if progressive is enabled
   branchl r12,0x80349278
   cmpwi r3,0
@@ -4964,6 +4971,7 @@ IsProgressive:
 #Load LagPrompt
   li	r3, PromptSceneID
   b ExploitCode102_Exit
+*/
 NoProgressive:
 #Override SceneLoad
   li  r3,CodesCommonSceneID
