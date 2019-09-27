@@ -15872,6 +15872,12 @@ PlaceOnLedge_StoreLedgeIDAndPosition:
 #Enter CliffWait
 	mr	r3,REG_P1GObj
 	branchl r12,AS_CliffWait
+#Init state variable (would be 1 at the start of the next frame if it ocurred naturally)
+	li	r3,1
+	stw	r3,0x2348(REG_P1Data)
+#Spoof in state for 1 frame
+	li	r3,1
+	sth	r3,FramesinCurrentAS(REG_P1Data)
 #Get Jump Back
 	mr r3,REG_P1Data
 	branchl r12,Air_StoreBool_LoseGroundJump_NoECBfor10Frames
