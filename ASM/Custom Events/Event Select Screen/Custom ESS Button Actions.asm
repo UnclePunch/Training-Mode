@@ -1513,7 +1513,7 @@ blrl
 .align 2
 CodeNames_ModName:
 blrl
-.string "Multi-Mod Launcher v1b"
+.string "MultiMod Launcher v0.1"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -3832,9 +3832,20 @@ UCF_Description:
 	.long 0x202f2027
 	.long 0x1a202720
 	.long 0x35203220
-	.long 0x3320e719
-	.long 0x0F0D0000
-	.align 2
+	.long 0x3320e71a
+	.long 0x200c2038
+	.long 0x20352035
+	.long 0x20282031
+	.long 0x20371a20
+	.long 0x39202820
+	.long 0x35203620
+	.long 0x2c203220
+	.long 0x311a202c
+	.long 0x20361a20
+	.long 0x0020e720
+	.long 0x07200420
+	.long 0xe7190F0D
+	.long 0x00000000
 Frozen_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
@@ -3856,26 +3867,8 @@ Frozen_Description:
 	.long 0x1a203620
 	.long 0x37202420
 	.long 0x2a202820
-	.long 0x3620e61a
-	.long 0x03202c20
-	.long 0x31202720
-	.long 0x2c202620
-	.long 0x24203720
-	.long 0x2820271a
-	.long 0x2025203c
-	.long 0x1a20241a
-	.long 0x2025202f
-	.long 0x20382028
-	.long 0x1a202520
-	.long 0x32203520
-	.long 0x27202820
-	.long 0x351a2032
-	.long 0x20311a20
-	.long 0x37202b20
-	.long 0x281a201c
-	.long 0x201c201c
-	.long 0x20e7190F
-	.long 0x0D000000
+	.long 0x3620e719
+	.long 0x0F0D0000
 Spawns_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
