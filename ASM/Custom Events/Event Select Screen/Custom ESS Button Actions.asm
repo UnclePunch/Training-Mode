@@ -1513,7 +1513,7 @@ blrl
 .align 2
 CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.1"
+.string "MultiMod Launcher v0.2"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -2114,8 +2114,8 @@ UCF_Stealth:
 	.long 0xFF000000
 
 Frozen_Off:
-	.long 0x04211444
-	.long 0x4800059C
+	.long 0x043e67e0
+	.long 0x00000002
 	.long 0x0421AAE4
 	.long 0x48000805
 	.long 0x041D1548
@@ -2130,8 +2130,8 @@ Frozen_Stadium:
 Frozen_All:
 	.long 0x041D1548
 	.long 0x60000000
-	.long 0x04211444
-	.long 0x60000000
+	.long 0x043e67e0
+	.long 0x00000000
 	.long 0x041E3348
 	.long 0x60000000
 	.long 0x0421AAE4
