@@ -1502,6 +1502,12 @@ InitSettings:
 .set Inputs_GetPlayerHeldInputs,0x801a3680
 .set Inputs_GetPlayerInstantInputs,0x801a36a0
 .set Inputs_GetPlayerRapidInputs,0x801a36c0
+.set DevelopText_CreateDataTable,0x80302834
+.set DevelopText_Activate,0x80302810
+.set DevelopText_AddString,0x80302be4
+.set DevelopText_EraseAllText,0x80302bb0
+.set DevelopMode_Text_ResetCursorXY,0x80302a3c
+.set sprintf,0x80323cf4
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
