@@ -1498,6 +1498,8 @@ InitSettings:
 .set Inputs_GetPlayerHeldInputs,0x801a3680
 .set Inputs_GetPlayerInstantInputs,0x801a36a0
 .set Inputs_GetPlayerRapidInputs,0x801a36c0
+.set ScreenDisplay_Adjust,0x8015f588
+.set ProgressiveStruct,0x8046b0f0
 
 #Custom Functions
 .set TextCreateFunction,0x80005928

@@ -1394,6 +1394,13 @@ LagPrompt_SceneThink_Confirmed:
 #Set new post retrace callback
   load  r3,PostRetraceCallback
   branchl r12,0x80375934
+#Enable 480p
+	load	r3,ProgressiveStruct
+	li	r4,1
+	stw	r4,0x8(r3)
+#Call VIConfigure
+	li	r3,0	#disables deflicker and will enable 480p
+	branchl	r12,ScreenDisplay_Adjust
 #Now flush the instruction cache
   lis r3,0x8000
   load r4,0x3b722c    #might be overkill but flush the entire dol file
@@ -1513,7 +1520,7 @@ blrl
 .align 2
 CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.2"
+.string "MultiMod Launcher v0.3"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -4949,8 +4956,9 @@ bl  Codes_SceneDecide       #SceneDecide
 CheckProgressive:
 #/*
 #Check if progressive is enabled
-  branchl r12,0x80349278
-  cmpwi r3,0
+  lis	r3,0xCC00
+	lhz	r3,0x206E(r3)
+	rlwinm.	r3,r3,0,0x1
   beq NoProgressive
 IsProgressive:
 #Override SceneLoad
