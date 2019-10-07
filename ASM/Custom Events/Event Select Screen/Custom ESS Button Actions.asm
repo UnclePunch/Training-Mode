@@ -4523,7 +4523,7 @@ Codes_SceneThink_CheckToExit:
 	load  r3,0x8045d850
 	li r4,0
 	li r5,0
-	ori r5,r5,0xda38
+	ori r5,r5,0xd894
 	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,0x8001c550	#Allocate memory for something
