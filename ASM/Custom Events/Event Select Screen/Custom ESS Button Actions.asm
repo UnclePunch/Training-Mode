@@ -1520,7 +1520,7 @@ blrl
 .align 2
 CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.3"
+.string "MultiMod Launcher v0.4"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -2745,6 +2745,8 @@ Ledgegrab_On:
 TournamentQoL_Off:
 	.long 0x04266CE0
 	.long 0x38600001
+	.long 0x042FCCD8
+	.long 0x281E0000
 	.long 0x0425B8BC
 	.long 0x38600001
 	.long 0x0445C380
@@ -2794,6 +2796,34 @@ TournamentQoL_On:
 	.long 0x90A60018
 	.long 0x48000004
 	.long 0x38600001
+	.long 0x00000000
+	.long 0xC22FCCD8
+	.long 0x0000000D
+	.long 0x3C608046
+	.long 0x6063B6A0
+	.long 0x886324D0
+	.long 0x2C030001
+	.long 0x41820050
+	.long 0x887F0000
+	.long 0x3D808003
+	.long 0x618C4110
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x8083002C
+	.long 0x80640004
+	.long 0x2C030010
+	.long 0x40820010
+	.long 0x80640010
+	.long 0x2C0300EC
+	.long 0x41820010
+	.long 0x8864221E
+	.long 0x54630631
+	.long 0x41820014
+	.long 0x3D80802F
+	.long 0x618CCCC8
+	.long 0x7D8903A6
+	.long 0x4E800420
+	.long 0x281E0000
 	.long 0x00000000
 	.long 0xC225B8BC
 	.long 0x00000002
