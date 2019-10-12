@@ -1500,6 +1500,7 @@ InitSettings:
 .set Inputs_GetPlayerRapidInputs,0x801a36c0
 .set ScreenDisplay_Adjust,0x8015f588
 .set ProgressiveStruct,0x8046b0f0
+.set TRK_flush_cache,0x80328f50
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
