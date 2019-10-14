@@ -3,724 +3,7 @@
 
 backup
 
-#Check For L
-	li	r3,4
-	branchl	r12,Inputs_GetPlayerInstantInputs
-	rlwinm.	r0, r4, 0, 25, 25			#CHECK FOR L
-	bne	OpenFDD
-	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
-	bne	OpenOptions
-
-#Check for Tutotial (R)
-#Check For Training Mode ISO Game ID First
-	lis	r5,0x8000
-	lwz	r5,0x0(r5)
-	load	r6,0x47544d45			#GTME
-	cmpw	r5,r6
-	bne	CheckToSwitchPage
-#Check for R
-	rlwinm.	r0, r4, 0, 26, 26			#CHECK FOR R
-	bne	PlayMovie
-
-CheckToSwitchPage:
-	li	r3,4
-	branchl	r12,Inputs_GetPlayerRapidInputs
-#Check For Left
-	li	r5,-1
-	rlwinm. r0,r3,0,25,25
-	bne	SwitchPage
-#Check For Right
-	li	r5,1
-	rlwinm. r0,r3,0,24,24
-	bne	SwitchPage
-	b	exit
-
-OpenFDD:
-
-	#PLAY SFX
-	li	r3, 1
-	branchl	r4,0x80024030
-
-	#SET FLAG IN RULES STRUCT
-	li	r0,3								#3 = frame data from event toggle
-	load	r3,0x804a04f0
-	stb	r0, 0x0011 (r3)
-
-	#SET SOMETHING
-	li	r0, 5
-	sth	r0, -0x4AD8 (r13)
-
-	#BACKUP CURRENT EVENT ID
-	lwz	r3, -0x4A40 (r13)
-	lwz	r5, 0x002C (r3)
-	lbz	r3,0x0(r5)
-	lwz	r4,0x4(r5)
-	add	r3,r3,r4
-	lwz	r4, -0x77C0 (r13)
-	stb	r3, 0x0535 (r4)
-
-	#LOAD RSS
-	branchl	r3,0x80237410
-
-	#REMOVE EVENT THINK FUNCTION
-	lwz	r3, -0x3E84 (r13)
-	branchl	r12,0x80390228
-
-	b	exit
-
-OpenOptions:
-
-#Create Background + GObj
-	bl	OptionMenu_CreateBackground
-#Display Menus Text
-	bl	MenuData_MainMenuBlrl
-	mflr r4
-	bl	OptionMenu_CreateText
-#Play SFX
-	li	r3,1
-	branchl r12,0x80024030
-	b	exit
-
-#region OptionMenu_CreateBackground
-BG_Constants:
-blrl
-.set BG_Transparency,0x0
-.set BG_ScaleX,0x4
-.set BG_ScaleY,0x8
-.set BG_TransformX,0xC
-.set BG_TransformY,0x10
-.set BG_TransformZ,0x14
-.set BG_Color,0x18
-.float 0.85							#transparency
-.float 0.1							#scale X
-.float 0.15							#scale Y
-.float 8								#X Position
-.float 3								#Y position
-.float 20								#Z Position
-.byte 13, 13, 46, 255		#Color
-
-OptionMenu_CreateBackground:
-.set	REG_GObj,20
-.set	REG_GObjData,21
-
-backup
-
-#Create Background GObj
-  li  r3,6
-  li  r4,7
-  li  r5,0x80
-  branchl r12,GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,0x8037f1b0
-	branchl r12,GObj_AddUserData
-#Add Process
-	mr	r3,REG_GObj
-	bl	OptionMenu_Think
-	mflr r4
-	li	r5,0
-	branchl r12,GObj_AddProc
-#Get JObj from archive
-  lwz	r3, -0x4AE8 (r13)
-  load r4,0x803efa0c
-  branchl r12,0x80380358
-#Load JObj
-  branchl r12,HSD_JObjLoadJoint
-#Get child JObj (the black background)
-	mr	r22,r3
-	lwz r3,0x10(r3)
-
-#Remove parent and child (the message box)
-	li	r4,0
-	stw r4,0x0c(r3)
-	stw r4,0x10(r3)
-#Adjust transparency
-	lwz r4,0x18(r3)
-	lwz r4,0x8(r4)
-	lwz r4,0xC(r4)
-	bl	BG_Constants
-	mflr r5
-	lfs f1,BG_Transparency(r5)
-	stfs f1,0xC(r4)
-#Adjust color
-	lwz r6,BG_Color(r5)
-	stw r6,0x4(r4)
-#Adjust Scale
-	lfs f1,BG_ScaleX(r5)
-	stfs f1,0x2C(r3)
-	lfs f1,BG_ScaleY(r5)
-	stfs f1,0x30(r3)
-#Adjust Position
-	lfs f1,BG_TransformX(r5)
-	stfs f1,0x38(r3)
-	lfs f1,BG_TransformY(r5)
-	stfs f1,0x3C(r3)
-	lfs f1,BG_TransformZ(r5)
-	stfs f1,0x40(r3)
-#Store JObj to GObj
-  mr  r5,r22
-  mr  r3,REG_GObj
-  lbz	r4, -0x3E57 (r13)
-  branchl r12,GObj_StorePointerToJObj
-#Add GX Link
-  mr  r3,REG_GObj
-  load r4,0x80391070
-  li  r5,7                    #layer id? higher = drawn later
-  li  r6,127                  #priority, higher = drawn later
-  branchl r12,GObj_AddGXLink
-
-#Return the GObj
-	mr	r3,REG_GObj
-
-#Exit
-	restore
-	blr
-#endregion
-
-#region OptionMenu_Think
-OptionMenu_Think:
-blrl
-.set REG_GObj,31
-backup
-
-#Backup
-	mr	REG_GObj,r3
-	lwz	REG_GObjData,0x2C(REG_GObj)
-
-#Disable Event Menu
-	li	r3,1
-	sth	r3, -0x4AD8 (r13)
-
-#Check for Z and close menu
-	li	r3,4
-	branchl r12,Inputs_GetPlayerInstantInputs
-	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
-	bne	OptionMenu_ThinkDestroy
-	rlwinm.	r0, r3, 0, 26, 26			#CHECK FOR Down
-	bne OptionMenu_ThinkDown
-	rlwinm.	r0, r3, 0, 27, 27			#CHECK FOR Up
-	bne OptionMenu_ThinkUp
-	rlwinm.	r0, r3, 0, 31, 31			#CHECK FOR A
-	bne OptionMenu_ThinkSelect
-	rlwinm.	r0, r3, 0, 30, 30			#CHECK FOR B
-	bne OptionMenu_ThinkBack
-	b	OptionMenu_ThinkExit
-
-OptionMenu_ThinkDown:
-#Down one cursor position
-	lwz	r3,Cursor(REG_GObjData)
-	addi r4,r3,1
-#Highlight current cursor
-	mr	r3,REG_GObjData
-	bl	OptionMenu_AdjustCursor
-#Play SFX
-	li	r3,2
-	branchl r12,0x80024030
-	b	OptionMenu_ThinkExit
-
-OptionMenu_ThinkUp:
-#Up one cursor position
-	lwz	r3,Cursor(REG_GObjData)
-	subi r4,r3,1
-#Highlight current cursor
-	mr	r3,REG_GObjData
-	bl	OptionMenu_AdjustCursor
-#Play SFX
-	li	r3,2
-	branchl r12,0x80024030
-	b	OptionMenu_ThinkExit
-
-OptionMenu_ThinkSelect:
-#Loop through current menu
-.set REG_Count,20
-.set REG_OptionData,22
-.set REG_OptionCount,23
-.set REG_MenuData,24
-.set REG_Cursor,25
-#Init
-	li	REG_Count,0														#loop count
-	li	REG_OptionCount,0											#Only incremented when an option is found
-	lwz	REG_MenuData,MenuData(REG_GObjData)
-	lwz	REG_Cursor,Cursor(REG_GObjData)
-
-OptionMenu_ThinkSelect_SearchOptionsLoop:
-#Get this option's text
-	addi r3,REG_MenuData,MenuData_OptionsStart
-	mulli	r4,REG_Count,MenuData_OptionDataLength
-	add	REG_OptionData,r3,r4
-#Get OnSelectType
-	lwz 	r3,MenuData_OnSelectType(REG_OptionData)
-	cmpwi	r3,OnSelect_None
-	beq	OptionMenu_ThinkSelect_SearchOptionsIncLoop
-#Check if this is the desired option
-	cmpw REG_OptionCount,REG_Cursor
-	beq OptionMenu_ThinkSelect_SelectOption
-#Increment Option Count
-	addi	REG_OptionCount,REG_OptionCount,1
-	b	OptionMenu_ThinkSelect_SearchOptionsIncLoop
-
-OptionMenu_ThinkSelect_SelectOption:
-#Play SFX
-	li	r3,1
-	branchl r12,0x80024030
-#Decide Selection Type
-	lwz	r3,MenuData_OnSelectType(REG_OptionData)
-	cmpwi	r3,OnSelect_Menu
-	beq	OptionMenu_ThinkSelect_GetNextMenu
-	cmpwi	r3,OnSelect_Function
-	beq	OptionMenu_ThinkSelect_GetFunction
-	b	OptionMenu_ThinkSelect_SearchOptionsEnd
-
-OptionMenu_ThinkSelect_GetNextMenu:
-#Convert bl instruction to mem address
-	addi	r4,REG_OptionData,MenuData_OnSelectData
-	lwz	r5,0x0(r4)
-  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-	extsh	r5,r5
-  add	r4,r4,r5						#Gets Address in r3
-#Create Text
-	mr	r3,REG_GObj
-	bl	OptionMenu_CreateText
-	b	OptionMenu_ThinkSelect_SearchOptionsEnd
-
-OptionMenu_ThinkSelect_GetFunction:
-#Convert bl instruction to mem address
-	addi	r4,REG_OptionData,MenuData_OnSelectData
-	lwz	r5,0x0(r4)
-  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-	extsh	r5,r5
-	cmpwi	r5,0
-	beq	OptionMenu_ThinkSelect_NoFunction
-  add	r4,r4,r5						#Gets Address in r3
-	mtctr	r4
-	mr	r3,REG_GObj
-	bctrl
-	b	OptionMenu_ThinkSelect_SearchOptionsEnd
-OptionMenu_ThinkSelect_NoFunction:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,0x80024030
-  li	r3, 3
-  branchl	r12,0x80024030
-	b	OptionMenu_ThinkSelect_SearchOptionsEnd
-
-OptionMenu_ThinkSelect_SearchOptionsIncLoop:
-	addi REG_Count,REG_Count,1
-	b	OptionMenu_ThinkSelect_SearchOptionsLoop
-
-OptionMenu_ThinkSelect_SearchOptionsEnd:
-	b	OptionMenu_ThinkExit
-
-OptionMenu_ThinkBack:
-.set REG_MenuData,24
-	lwz	r4,MenuData(REG_GObjData)
-#Convert bl instruction to mem address
-	addi	r4,r4,MenuData_ReturnMenu
-	lwz	r5,0x0(r4)
-  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-	extsh	r5,r5
-	cmpwi	r5,0
-	beq OptionMenu_ThinkDestroy
-  add	r4,r4,r5						#Gets Address in r4
-#Load Prev Menu
-	mr	r3,REG_GObj
-	bl	OptionMenu_CreateText
-#Play SFX
-	li	r3,0
-	branchl r12,0x80024030
-	b	OptionMenu_ThinkExit
-
-OptionMenu_ThinkDestroy:
-#Remove text
-	lwz	r3,0x2C(REG_GObj)
-	lwz	r3,TextGObj(r3)
-	branchl r12,Text_RemoveText
-#Remove GObj
-	mr	r3,REG_GObj
-	branchl r12,GObj_Destroy
-#Play SFX
-	li	r3,0
-	branchl r12,0x80024030
-
-OptionMenu_ThinkExit:
-	restore
-	blr
-#endregion
-
-#region OptionMenu_CreateText
-TextProperties:
-blrl
-.set VersionX,0x0
-.set VersionY,0x4
-.set ZOffset,0x8
-.set CanvasScaling,0xC
-.set Scale,0x10
-.set YOffset,0x14
-.set YOffsetAddAfterTitle,0x18
-.set HighlightColor,0x1C
-.set NonHighlightColor,0x20
-.float 120      			#REG_TextGObj X pos
-.float -250  					#REG_TextGObj Y pos
-.float 21.9     			#Z offset
-.float 0.035   				#Canvas Scaling
-.float 0.65						#Text scale
-.float 30							#Y offset difference
-.float 20							#Y Offset to Add After Title
-.byte 251,199,57,255		#highlighted color
-.byte 170,170,170,255	#nonhighlighted color
-
-OptionMenu_CreateText:
-.set REG_MenuData,28
-.set REG_GObjData,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GObj Data Struct
-.set Cursor,0x0
-.set TextGObj,0x4
-.set MenuData,0x8
-
-backup
-
-#Backup GObj and MenuData
-	lwz	REG_GObjData,0x2C(r3)
-	mr	REG_MenuData,r4
-
-#Check if a text gobj already
-	lwz r3,TextGObj(REG_GObjData)
-	cmpwi r3,0
-	beq OptionMenu_CreateText_SkipDestroyOldText
-#Destroy
-	branchl r12,Text_RemoveText
-	li	r3,0
-	stw r3,TextGObj(REG_GObjData)
-OptionMenu_CreateText_SkipDestroyOldText:
-
-#Store new menudata
-	stw	REG_MenuData,MenuData(REG_GObjData)
-
-#GET PROPERTIES TABLE
-	bl TextProperties
-	mflr REG_TextProp
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,1
-	branchl r12,Text_CreateTextStruct
-	stw r3,TextGObj(REG_GObjData)
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO CENTER AROUND X LOCATION
-	li r4,0x0
-	stb r4,0x4A(REG_TextGObj)
-#Store Base Z Offset
-	lfs f1,ZOffset(REG_TextProp) #Z offset
-	stfs f1,0x8(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-OptionMenu_CreateText_PrintOptions:
-.set REG_Count,20
-.set REG_ASCII,21
-.set REG_OptionData,22
-.set OFST_LastYPos,0x80
-#Init
-	li	REG_Count,0									#loop count
-	lfs	f1,VersionY(REG_TextProp)		#Last text's Y position
-	stfs	f1,OFST_LastYPos(sp)
-
-OptionMenu_CreateText_PrintOptionsLoop:
-#Get this option's text
-	addi r3,REG_MenuData,MenuData_OptionsStart
-	mulli	r4,REG_Count,MenuData_OptionDataLength
-	add	REG_OptionData,r3,r4
-#Convert bl instruction to mem address
-  lwz	r4,0x0(REG_OptionData)		#Get bl Instruction
-	extsb	r5,r4										#Check if none left
-	cmpwi	r5,-1
-	beq OptionMenu_CreateText_PrintOptionsEnd
-  rlwinm	r4,r4,0,6,29							#Mask Bits 6-29 (the offset)
-	extsh	r4,r4
-  add	REG_ASCII,REG_OptionData,r4		#Gets ASCII Address in r3
-
-#Get Y offset
-	lfs	f2,OFST_LastYPos(sp)		 	#Y base offset of REG_TextGObj
-	lfs	f3,YOffset(REG_TextProp)			#Y offset difference
-	fadds	f2,f2,f3
-#Check if this is the first option
-	cmpwi REG_Count,0
-	beq OptionMenu_CreateText_PrintOptions_SkipTitleAdjust
-#Check if last option was a title
-	lwz	r3,-MenuData_OptionDataLength + MenuData_OnSelectType(REG_OptionData)
-	cmpwi	r3,OnSelect_None
-	bne	OptionMenu_CreateText_PrintOptions_SkipTitleAdjust
-#Move down further
-	lfs	f1,YOffsetAddAfterTitle(REG_TextProp)
-	fadds	f2,f1,f2
-
-OptionMenu_CreateText_PrintOptions_SkipTitleAdjust:
-#Store as last Y position
-	stfs	f2,OFST_LastYPos(sp)
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_ASCII			#text
-	lfs	f1,VersionX(REG_TextProp) 		#X offset of REG_TextGObj
-	branchl r12,0x803a6b98
-
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_Count
-	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-OptionMenu_CreateText_PrintOptionsIncLoop:
-	addi REG_Count,REG_Count,1
-	b	OptionMenu_CreateText_PrintOptionsLoop
-
-OptionMenu_CreateText_PrintOptionsEnd:
-
-#Reset cursor position
-	li	r3,0
-#Highlight current cursor
-	mr	r4,r3
-	mr	r3,REG_GObjData
-	bl	OptionMenu_AdjustCursor
-
-
-
-#Exit
-	restore
-	blr
-#endregion
-
-#region OptionMenu_AdjustCursor
-OptionMenu_AdjustCursor:
-.set REG_GObjData,31
-.set REG_TextGObj,30
-.set REG_Cursor,29
-.set REG_TextProp,28
-
-backup
-
-#Backup
-	mr	REG_GObjData,r3
-	lwz	REG_TextGObj,TextGObj(REG_GObjData)
-	mr	REG_Cursor,r4
-	bl	TextProperties
-	mflr	REG_TextProp
-
-#Change all options to white
-OptionMenu_AdjustCursor_ResetColors:
-.set REG_Count,20
-#Init
-	li	REG_Count,0									#loop count
-OptionMenu_AdjustCursor_ResetColorsLoop:
-#Adjust Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_Count			#subtext text
-	addi	r5,REG_TextProp,NonHighlightColor
-	branchl r12,Text_ChangeTextColor
-
-OptionMenu_AdjustCursor_ResetColorsIncLoop:
-	addi	REG_Count,REG_Count,1
-#Get number of subtexts
-	lwz	r3,0x64(REG_TextGObj)
-	lwz	r3,0xC(r3)
-	cmpw REG_Count,r3
-	blt OptionMenu_AdjustCursor_ResetColorsLoop
-
-#Ensure this isnt below 0
-	cmpwi REG_Cursor,0
-	bge OptionMenu_AdjustCursor_SearchOptions
-#Adjust to be 0
-	li	REG_Cursor,0
-
-#Loop through current menu
-OptionMenu_AdjustCursor_SearchOptions:
-.set REG_Count,20
-.set REG_ASCII,21
-.set REG_OptionData,22
-.set REG_OptionCount,23
-.set REG_MenuData,24
-#Init
-	li	REG_Count,0									#loop count
-	li	REG_OptionCount,0						#Only incremented when an option is found
-	lwz	REG_MenuData,MenuData(REG_GObjData)
-
-OptionMenu_AdjustCursor_SearchOptionsLoop:
-#Get this option's text
-	addi r3,REG_MenuData,MenuData_OptionsStart
-	mulli	r4,REG_Count,MenuData_OptionDataLength
-	add	REG_OptionData,r3,r4
-#Convert bl instruction to mem address
-  lwz	r4,0x0(REG_OptionData)		#Get bl Instruction
-	extsb	r5,r4										#Check if none left
-	cmpwi	r5,-1
-	bne	OptionMenu_AdjustCursor_SearchOptionsNotLast
-	subi REG_OptionCount,REG_OptionCount,1
-OptionMenu_AdjustCursor_SearchOptionsGetLastValidOption:
-	subi REG_Count,REG_Count,1
-	addi r3,REG_MenuData,MenuData_OptionsStart
-	mulli	r4,REG_Count,MenuData_OptionDataLength
-	add	REG_OptionData,r3,r4
-	lwz	r3,MenuData_OnSelectType(REG_OptionData)
-	cmpwi	r3,OnSelect_None
-	beq	OptionMenu_AdjustCursor_SearchOptionsGetLastValidOption
-	b	OptionMenu_AdjustCursor_SearchOptionsChangeColor
-#Get OnSelectType
-OptionMenu_AdjustCursor_SearchOptionsNotLast:
-	lwz 	r3,MenuData_OnSelectType(REG_OptionData)
-	cmpwi	r3,OnSelect_None
-	beq	OptionMenu_AdjustCursor_SearchOptionsIncLoop
-#Check if this is the desired option
-	cmpw REG_OptionCount,REG_Cursor
-	beq OptionMenu_AdjustCursor_SearchOptionsChangeColor
-#Increment Option Count
-	addi	REG_OptionCount,REG_OptionCount,1
-	b	OptionMenu_AdjustCursor_SearchOptionsIncLoop
-
-OptionMenu_AdjustCursor_SearchOptionsChangeColor:
-#Adjust Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_Count			#subtext text
-	addi	r5,REG_TextProp,HighlightColor
-	branchl r12,Text_ChangeTextColor
-
-#Update Cursor Position
-	stw	REG_OptionCount,Cursor(REG_GObjData)
-	b	OptionMenu_AdjustCursor_SearchOptionsEnd
-
-OptionMenu_AdjustCursor_SearchOptionsIncLoop:
-	addi REG_Count,REG_Count,1
-	b	OptionMenu_AdjustCursor_SearchOptionsLoop
-
-OptionMenu_AdjustCursor_SearchOptionsEnd:
-#Exit
-	restore
-	blr
-#endregion
-
-#region MenuData
-
-#MenuData Structure
-.set MenuData_ReturnMenu,0x0
-.set MenuData_OptionsStart,0x4
-	.set MenuData_OptionName,0x0
-	.set MenuData_OnSelectType,0x4
-	.set MenuData_OnSelectData,0x8
-.set MenuData_OptionDataLength,0xC
-
-#OnSelect Definitions
-.set OnSelect_None,0
-.set OnSelect_Menu,1
-.set OnSelect_Function,2
-
-#region Options
-MenuData_MainMenuBlrl:
-blrl
-MenuData_MainMenu:
-#Return menu
-	.long 0
-#Options
-	bl	MenuData_MainMenu_OptionsTitleName
-	.long	OnSelect_None
-	.long 0
-#Create Save File
-	bl	MenuData_MainMenu_CreateSaveName
-	.long	OnSelect_Menu
-	bl	MenuData_CreateSave
-#Play
-	bl	MenuData_MainMenu_PlayCreditsName
-	.long	OnSelect_Function
-	bl	LoadCredits
-	.long -1
-.align 2
-
-MenuData_MainMenu_OptionsTitleName:
-.string "<Options>"
-.align 2
-MenuData_MainMenu_PlayCreditsName:
-.string "Show Credits"
-.align 2
-MenuData_MainMenu_CreateSaveName:
-.string "Create Save"
-.align 2
-#endregion
-#region Create Save
-MenuData_CreateSave:
-#Return menu
-	bl	MenuData_MainMenu
-#Create Save
-	bl	MenuData_MainMenu_CreateSaveTitleName
-	.long	OnSelect_None
-	.long 0
-#Play
-	bl	MenuData_CreateSave_SlotA
-	.long	OnSelect_Function
-	bl	CreateSave_SlotA
-#Create Save File
-	bl	MenuData_CreateSave_SlotB
-	.long	OnSelect_Function
-	bl	CreateSave_SlotB
-
-#Space
-	bl	MenuData_CreateSave_Empty
-	.long	OnSelect_None
-	.long 0
-#Disabled
-	bl	MenuData_MainMenu_Disabled
-	.long	OnSelect_None
-	.long 0
-
-.long -1
-.align 2
-
-MenuData_MainMenu_CreateSaveTitleName:
-.string "<Create Save>"
-.align 2
-MenuData_CreateSave_SlotA:
-.string "Save to Slot A"
-.align 2
-MenuData_CreateSave_SlotB:
-.string "Save to Slot B"
-.align 2
-MenuData_CreateSave_Empty:
-.string ""
-.align 2
-MenuData_MainMenu_Disabled:
-.string "(Temp Disabled)"
-.align 2
-
-CreateSave_SlotA:
-	li	r3,0
-	b	CreateSave
-
-CreateSave_SlotB:
-	li	r3,1
-	b	CreateSave
-#endregion
-
-#endregion
+b	CustomESSThink
 
 #region CreateSave
 CreateSave:
@@ -1057,7 +340,7 @@ blrl
 ###################
 SnapshotSaveName:
 blrl
-.ascii "MultiMod Launcher v1.0          "
+.ascii "MultiMod Launcher BETA          "
 .ascii "Mod Data (2 of 2)               "
 ###################
 CodeFileName:
@@ -1171,8 +454,6 @@ ExploitCode102_WaitToLoadLoop:
 #If Exists
   cmpwi	r3,0x0
   beq	ExploitCode102_Success
-  cmpwi	r3,0x9
-  beq	ExploitCode102_Success
   b	ExploitCode102_Failure
 
 ExploitCode102_SnapshotIDInt:
@@ -1208,8 +489,8 @@ b	ExploitCode102_Exit
 ExploitCode102_Success:
 #Restore this stack frame and jump to the MML code in the snapshot file
 	addi	r3,REG_CodesetPointer,0x0
-	mtctr r3
 	restore
+	mtctr r3
 	bctr
 
 ExploitCode102_Exit:
@@ -1336,7 +617,7 @@ blrl
 .set  PromptCommonSceneID,10
 .set  CodesCommonSceneID,10
 .set  InitialSelection,0
-.set  MaxCodesOnscreen,9
+.set  MaxCodesOnscreen,10
 #Function Addresses
 .set  PostRetraceCallback,0x800195fc
 .set  UnkPadStruct,0x804329f0
@@ -1344,8 +625,19 @@ blrl
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
+#good
+  load	r3,0x803d6900
+	crclr 6
+  branchl	r12,0x803456a8
+
 #Init and backup
   backup
+
+#good
+  load	r3,0x803d6900
+	crclr 6
+  branchl	r12,0x803456a8
+
 #/*
 #Init LagPrompt major struct
   li  r3,PromptSceneID
@@ -1818,7 +1110,7 @@ blrl
 .float 1   				     #Canvas Scaling
 .float 1.2					    	#Text scale
 .float 320              #CodesX
-.float 100              #CodesInitialY
+.float 85              #CodesInitialY
 .float 28              #CodesYDiff
 .float 0.7             #CodesScale
 .float 335              #OptionsX
@@ -1833,7 +1125,7 @@ blrl
 .float	560							#Desc Max X
 .float	0								#Desc Unk
 
-.set CodeAmount,9
+.set CodeAmount,10
 #region Code Names Order
 CodeNames_Order:
 blrl
@@ -1845,6 +1137,7 @@ bl  CodeNames_Ledgegrab
 bl	CodeNames_TournamentQoL
 bl	CodeNames_FriendliesQoL
 bl	CodeNames_GameVersion
+bl	CodeNames_StageExpansion
 bl	CodeNames_Widescreen
 .align 2
 #endregion
@@ -1855,7 +1148,7 @@ blrl
 .align 2
 CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.4"
+.string "MultiMod Launcher v0.5"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -1881,6 +1174,9 @@ CodeNames_FriendliesQoL:
 CodeNames_GameVersion:
 .string "Game Version:"
 .align 2
+CodeNames_StageExpansion:
+.string "Stage Expansion:"
+.align 2
 CodeNames_Widescreen:
 .string "Widescreen:"
 .align 2
@@ -1896,6 +1192,7 @@ bl  CodeOptions_Ledgegrab
 bl	CodeOptions_TournamentQoL
 bl  CodeOptions_FriendliesQoL
 bl	CodeOptions_GameVersion
+bl	CodeOptions_StageExpansion
 bl  CodeOptions_Widescreen
 .align 2
 #endregion
@@ -1977,6 +1274,14 @@ CodeOptions_GameVersion:
 	bl  GameVersion_PAL
 	.string "NTSC"
 	.string "PAL"
+	.align 2
+CodeOptions_StageExpansion:
+	.long 2 -1           #number of options
+	bl	StageExpansion_Description
+	bl  StageExpansion_Off
+	bl  StageExpansion_On
+	.string "Off"
+	.string "On"
 	.align 2
 CodeOptions_Widescreen:
 	.long 3 -1           #number of options
@@ -4018,6 +3323,3519 @@ GameVersion_PAL:
 	.long 0x48000084
 	.long 0xFF000000
 
+StageExpansion_Off:
+	.long 0x0421470c
+	.long 0x4bfac9ad
+	.long 0x043E52F4
+	.long 0x80202C24
+	.long 0x041FCFE8
+	.long 0x480003E5
+	.long 0x0416E800
+	.long 0x3C608047
+	.long 0x042021DC
+	.long 0x38A00004
+	.long 0x0445c388
+	.long 0xe70000b0
+	.long 0x041cd638
+	.long 0x48002179
+	.long 0x041cd640
+	.long 0x48000999
+	.long -1
+StageExpansion_On:
+	.long 0x0421470c
+	.long 0x60000000
+	.long 0x041fcfe8
+	.long 0x60000000
+	.long 0xC216E800
+	.long 0x000006CB
+	.long 0x48000089
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x480003CD
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x480000C1
+	.long 0x480026D1
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48002D2D
+	.long 0x48002985
+	.long 0x48000409
+	.long 0x480033A5
+	.long 0x480034CD
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x48000001
+	.long 0x7C6802A6
+	.long 0x808D9348
+	.long 0x2C040020
+	.long 0x4181005C
+	.long 0x1C840004
+	.long 0x7C832214
+	.long 0x80A40000
+	.long 0x54A501BA
+	.long 0x2C050000
+	.long 0x41820044
+	.long 0x7CA42A14
+	.long 0x3CC08049
+	.long 0x60C6EE10
+	.long 0x80C60000
+	.long 0x80C60020
+	.long 0x38C6FFE0
+	.long 0x80650000
+	.long 0x80850004
+	.long 0x7C600774
+	.long 0x2C00FFFF
+	.long 0x41820014
+	.long 0x7C633214
+	.long 0x90830000
+	.long 0x38A50008
+	.long 0x4BFFFFE0
+	.long 0x48000004
+	.long 0x4800355C
+	.long 0x0001A68C
+	.long 0x00000000
+	.long 0x0001A6E8
+	.long 0x3FC00000
+	.long 0x0001A6EC
+	.long 0x40000000
+	.long 0x0001A70C
+	.long 0x00000000
+	.long 0x0001A7CC
+	.long 0x00000000
+	.long 0x0001A828
+	.long 0x3FD9999A
+	.long 0x0001A834
+	.long 0x4038BFB1
+	.long 0x0001AA28
+	.long 0x3F170A3D
+	.long 0x0002C898
+	.long 0xC2960000
+	.long 0x0002C89C
+	.long 0x43160000
+	.long 0x0002CB54
+	.long 0xC1700000
+	.long 0x0002D4DC
+	.long 0xC1A00000
+	.long 0x0002D554
+	.long 0xC2BE0000
+	.long 0x00034574
+	.long 0x4038BFB1
+	.long 0x00036F58
+	.long 0xC3FA0000
+	.long 0x0003A2C8
+	.long 0xC27D6704
+	.long 0x0003A2CC
+	.long 0xC1970B44
+	.long 0x0003A2D0
+	.long 0xC27D6704
+	.long 0x0003A2D4
+	.long 0xC1970B44
+	.long 0x0003A2D8
+	.long 0xC286CF28
+	.long 0x0003A2E0
+	.long 0xC2659E4F
+	.long 0x0003A2E8
+	.long 0xC2710000
+	.long 0x0003A2EC
+	.long 0xC1C96595
+	.long 0x0003A2F0
+	.long 0x428D9ADB
+	.long 0x0003A2F4
+	.long 0xC1970B44
+	.long 0x0003A2F8
+	.long 0x428D9ADB
+	.long 0x0003A2FC
+	.long 0xC1970B44
+	.long 0x0003A300
+	.long 0x42876759
+	.long 0x0003A304
+	.long 0xC1C96595
+	.long 0x0003A308
+	.long 0x4211BDBF
+	.long 0x0003A30C
+	.long 0xC161EB85
+	.long 0x0003A310
+	.long 0xC1DB746E
+	.long 0x0003A314
+	.long 0xC161EB85
+	.long 0x0003A318
+	.long 0x421B6AB3
+	.long 0x0003A31C
+	.long 0xC1C96595
+	.long 0x0003A320
+	.long 0xC1E9D5EA
+	.long 0x0003A324
+	.long 0xC1C96595
+	.long 0x0003A328
+	.long 0x43FA0000
+	.long 0x0003A32C
+	.long 0x43FA0000
+	.long 0x0003A330
+	.long 0xC2659E4F
+	.long 0x0003A334
+	.long 0x00000000
+	.long 0x0003A338
+	.long 0x4281B681
+	.long 0x0003A33C
+	.long 0x00000000
+	.long 0x0003A340
+	.long 0x43FA0000
+	.long 0x0003A344
+	.long 0x43FA0000
+	.long 0x0003A348
+	.long 0x43FA0000
+	.long 0x0003A34C
+	.long 0x43FA0000
+	.long 0x0003A350
+	.long 0x4281B681
+	.long 0x0003A354
+	.long 0x00000000
+	.long 0x0003A358
+	.long 0x4295B681
+	.long 0x0003A35C
+	.long 0x00000000
+	.long 0x0003A360
+	.long 0x43FA0000
+	.long 0x0003A364
+	.long 0x43FA0000
+	.long 0x0003A368
+	.long 0xC18CD4FE
+	.long 0x0003A370
+	.long 0x41C872B0
+	.long 0x0003A37C
+	.long 0x00100001
+	.long 0x0003A38C
+	.long 0x00000002
+	.long 0x0003A394
+	.long 0x00010004
+	.long 0x0003A39C
+	.long 0x0001000D
+	.long 0x0003A408
+	.long 0x000F000F
+	.long 0x0003A40C
+	.long 0xFFFFFFFF
+	.long 0x0003A41C
+	.long 0xFFFFFFFF
+	.long 0x0003A448
+	.long 0x00120005
+	.long 0x0003A44C
+	.long 0x00020008
+	.long 0x0003A458
+	.long 0x000F000F
+	.long 0x0003A45C
+	.long 0xFFFFFFFF
+	.long 0x0003A468
+	.long 0x00130013
+	.long 0x0003A46C
+	.long 0xFFFFFFFF
+	.long 0x0003A4A8
+	.long 0x000C000C
+	.long 0x0003A4AC
+	.long 0xFFFFFFFF
+	.long 0x0003A4B8
+	.long 0x00100010
+	.long 0x0003A4BC
+	.long 0xFFFFFFFF
+	.long 0x0003A4C8
+	.long 0x00000003
+	.long 0x0003A4DC
+	.long 0xC28C0000
+	.long 0x0003A4E0
+	.long 0xC1F00000
+	.long 0x0003A4E4
+	.long 0x42980000
+	.long 0x00042268
+	.long 0x0000006E
+	.long 0x00042270
+	.long 0xFFFFFFF6
+	.long 0x00042278
+	.long 0x3CCCCCCD
+	.long 0x000424C4
+	.long 0xAEA8A2FF
+	.long 0x00042690
+	.long 0x42F68404
+	.long 0x000426D0
+	.long 0xC2700000
+	.long 0x00042710
+	.long 0x433C0000
+	.long 0x0004274C
+	.long 0x43630000
+	.long 0x00042750
+	.long 0xC2E40000
+	.long 0x0004298C
+	.long 0xC25C0000
+	.long 0x00042990
+	.long 0x40A00000
+	.long 0x000429CC
+	.long 0x4279999A
+	.long 0x000429D0
+	.long 0x40A00000
+	.long 0x00042A0C
+	.long 0x41EF999A
+	.long 0x00042A4C
+	.long 0xC1B40000
+	.long 0x00032558
+	.long 0xC3480000
+	.long 0x0004233C
+	.long 0xC3480000
+	.long 0xFFFFFFFF
+	.long 0x0002ED18
+	.long 0xC485C001
+	.long 0x0002ED58
+	.long 0xC45819A5
+	.long 0x0008B7B4
+	.long 0x42632666
+	.long 0x0008B7BC
+	.long 0x42584F5C
+	.long 0x0008B7C0
+	.long 0x41000000
+	.long 0x0008B7C4
+	.long 0x43286D71
+	.long 0x0008B7CC
+	.long 0x42584F5C
+	.long 0x0008B7D0
+	.long 0xC1000000
+	.long 0x0008B7D4
+	.long 0x43286D71
+	.long 0x0008B7EC
+	.long 0x42632666
+	.long 0x0008B7F4
+	.long 0x4289799A
+	.long 0x0008B7FC
+	.long 0x4285C3D7
+	.long 0x0008B804
+	.long 0x4285C3D7
+	.long 0x0008B80C
+	.long 0x4289799A
+	.long 0xFFFFFFFF
+	.long 0x00000640
+	.long 0xC2B50000
+	.long 0x0000064C
+	.long 0xC2B50000
+	.long 0x00000658
+	.long 0xC2B50000
+	.long 0x00000664
+	.long 0xC2B50000
+	.long 0x00000670
+	.long 0xC2B50000
+	.long 0x0000067C
+	.long 0xC2B50000
+	.long 0x00000688
+	.long 0xC2B50000
+	.long 0x00000694
+	.long 0xC2B50000
+	.long 0x000006A0
+	.long 0xC2B50000
+	.long 0x000006AC
+	.long 0xC2B50000
+	.long 0x000006B8
+	.long 0xC2B40000
+	.long 0x000006C4
+	.long 0xC2B50000
+	.long 0x000006D0
+	.long 0xC2B50000
+	.long 0x000006DC
+	.long 0xC2B40000
+	.long 0x000006E8
+	.long 0xC2B50000
+	.long 0x000006F4
+	.long 0xC2B50000
+	.long 0x00000700
+	.long 0xC2B40000
+	.long 0x0000070C
+	.long 0xC2B40000
+	.long 0x00000718
+	.long 0xC2B40000
+	.long 0x00000724
+	.long 0xC2B40000
+	.long 0x00000730
+	.long 0xC2B50000
+	.long 0x0000073C
+	.long 0xC2B50000
+	.long 0x00000748
+	.long 0xC2B40000
+	.long 0x00000754
+	.long 0xC2B40000
+	.long 0x00000760
+	.long 0xC2B30000
+	.long 0x0000076C
+	.long 0xC2B30000
+	.long 0x00000778
+	.long 0xC2B30000
+	.long 0x00000784
+	.long 0xC2B30000
+	.long 0x00000790
+	.long 0xC2B30000
+	.long 0x0000079C
+	.long 0xC2B30000
+	.long 0x000007A8
+	.long 0xC2B30000
+	.long 0x000007B4
+	.long 0xC2B30000
+	.long 0x000007C0
+	.long 0xC2B30000
+	.long 0x000007CC
+	.long 0xC2B30000
+	.long 0x000007D8
+	.long 0xC2B30000
+	.long 0x000007E4
+	.long 0xC2B30000
+	.long 0x000007F0
+	.long 0xC2B30000
+	.long 0x000007FC
+	.long 0xC2B30000
+	.long 0x00000808
+	.long 0xC2B30000
+	.long 0x00000814
+	.long 0xC2B30000
+	.long 0x00000820
+	.long 0xC2B30000
+	.long 0x0000082C
+	.long 0xC2B50000
+	.long 0x00000838
+	.long 0xC2B50000
+	.long 0x00000844
+	.long 0xC2B50000
+	.long 0x00000850
+	.long 0xC2B50000
+	.long 0x0000085C
+	.long 0xC2B50000
+	.long 0x00000868
+	.long 0xC2B50000
+	.long 0x00000874
+	.long 0xC2B50000
+	.long 0x00000880
+	.long 0xC2B50000
+	.long 0x0000088C
+	.long 0xC2B50000
+	.long 0x00000898
+	.long 0xC2B50000
+	.long 0x000008A4
+	.long 0xC2B40000
+	.long 0x000008B0
+	.long 0xC2B50000
+	.long 0x000008BC
+	.long 0xC2B50000
+	.long 0x000008C8
+	.long 0xC2B40000
+	.long 0x000008D4
+	.long 0xC2B50000
+	.long 0x000008E0
+	.long 0xC2B50000
+	.long 0x000008EC
+	.long 0xC2B40000
+	.long 0x000008F8
+	.long 0xC2B40000
+	.long 0x00000904
+	.long 0xC2B40000
+	.long 0x00000910
+	.long 0xC2B40000
+	.long 0x0000091C
+	.long 0xC2B50000
+	.long 0x00000928
+	.long 0xC2B50000
+	.long 0x00000934
+	.long 0xC2B40000
+	.long 0x00000940
+	.long 0xC2B40000
+	.long 0x0000094C
+	.long 0xC2B30000
+	.long 0x00000958
+	.long 0xC2B30000
+	.long 0x00000964
+	.long 0xC2B30000
+	.long 0x00000970
+	.long 0xC2B30000
+	.long 0x0000097C
+	.long 0xC2B30000
+	.long 0x00000988
+	.long 0xC2B30000
+	.long 0x00000994
+	.long 0xC2B30000
+	.long 0x000009A0
+	.long 0xC2B30000
+	.long 0x000009AC
+	.long 0xC2B30000
+	.long 0x000009B8
+	.long 0xC2B30000
+	.long 0x000009C4
+	.long 0xC2B30000
+	.long 0x000009D0
+	.long 0xC2B30000
+	.long 0x000009DC
+	.long 0xC2B30000
+	.long 0x000009E8
+	.long 0xC2B30000
+	.long 0x000009F4
+	.long 0xC2B30000
+	.long 0x00000A00
+	.long 0xC2B30000
+	.long 0x00000A0C
+	.long 0xC2B30000
+	.long 0x00000A18
+	.long 0xC2B30000
+	.long 0x00000A24
+	.long 0xC2B30000
+	.long 0x00000A30
+	.long 0xC2B30000
+	.long 0x00000A3C
+	.long 0xC2B30000
+	.long 0x00000A48
+	.long 0xC2B30000
+	.long 0x00000A54
+	.long 0xC2B30000
+	.long 0x00000A60
+	.long 0xC2B30000
+	.long 0x00000A6C
+	.long 0xC2B30000
+	.long 0x00000A78
+	.long 0xC2B30000
+	.long 0x00000A84
+	.long 0xC2B30000
+	.long 0x00000A90
+	.long 0xC2B30000
+	.long 0x00000A9C
+	.long 0xC2B30000
+	.long 0x00000AA8
+	.long 0xC2B30000
+	.long 0x00000AB4
+	.long 0xC2B30000
+	.long 0x00000AC0
+	.long 0xC2B30000
+	.long 0x00000ACC
+	.long 0xC2B30000
+	.long 0x00000AD8
+	.long 0xC2B30000
+	.long 0x00000AE4
+	.long 0xC2B40000
+	.long 0x00000AF0
+	.long 0xC2B40000
+	.long 0x00000AFC
+	.long 0xC2B50000
+	.long 0x00000B08
+	.long 0xC2B50000
+	.long 0x00000B14
+	.long 0xC2B40000
+	.long 0x00000B20
+	.long 0xC2B40000
+	.long 0x00000B2C
+	.long 0xC2B50000
+	.long 0x00000B38
+	.long 0xC2B50000
+	.long 0x00000B44
+	.long 0xC2B40000
+	.long 0x00000B50
+	.long 0xC2B40000
+	.long 0x00000B5C
+	.long 0xC2B50000
+	.long 0x00000B68
+	.long 0xC2B50000
+	.long 0x00000B74
+	.long 0xC2B40000
+	.long 0x00000B80
+	.long 0xC2B40000
+	.long 0x00000B8C
+	.long 0xC2B50000
+	.long 0x00000B98
+	.long 0xC2B50000
+	.long 0x00000BA4
+	.long 0xC2B50000
+	.long 0x00000BB0
+	.long 0xC2B50000
+	.long 0x00000BBC
+	.long 0xC2B50000
+	.long 0x00000BC8
+	.long 0xC2B50000
+	.long 0x00000BD4
+	.long 0xC2B50000
+	.long 0x00000BE0
+	.long 0xC2B50000
+	.long 0x00000BEC
+	.long 0xC2B50000
+	.long 0x00000BF8
+	.long 0xC2B50000
+	.long 0x00000C04
+	.long 0xC2B30000
+	.long 0x00000C10
+	.long 0xC2B30000
+	.long 0x00000C1C
+	.long 0xC2B30000
+	.long 0x00000C28
+	.long 0xC2B30000
+	.long 0x00000C34
+	.long 0xC2B30000
+	.long 0x00000C40
+	.long 0xC2B30000
+	.long 0x00000C4C
+	.long 0xC2B30000
+	.long 0x00000C58
+	.long 0xC2B30000
+	.long 0x00000C64
+	.long 0xC2B30000
+	.long 0x00000C70
+	.long 0xC2B30000
+	.long 0x00000C7C
+	.long 0xC2B30000
+	.long 0x00000C88
+	.long 0xC2B30000
+	.long 0x00000C94
+	.long 0xC2B30000
+	.long 0x00000CA0
+	.long 0xC2B30000
+	.long 0x00000CAC
+	.long 0xC2B30000
+	.long 0x00000CB8
+	.long 0xC2B30000
+	.long 0x00000CC4
+	.long 0xC2B30000
+	.long 0x00000CD0
+	.long 0xC2B40000
+	.long 0x00000CDC
+	.long 0xC2B40000
+	.long 0x00000CE8
+	.long 0xC2B50000
+	.long 0x00000CF4
+	.long 0xC2B50000
+	.long 0x00000D00
+	.long 0xC2B40000
+	.long 0x00000D0C
+	.long 0xC2B40000
+	.long 0x00000D18
+	.long 0xC2B50000
+	.long 0x00000D24
+	.long 0xC2B50000
+	.long 0x00000D30
+	.long 0xC2B40000
+	.long 0x00000D3C
+	.long 0xC2B40000
+	.long 0x00000D48
+	.long 0xC2B50000
+	.long 0x00000D54
+	.long 0xC2B50000
+	.long 0x00000D60
+	.long 0xC2B40000
+	.long 0x00000D6C
+	.long 0xC2B40000
+	.long 0x00000D78
+	.long 0xC2B50000
+	.long 0x00000D84
+	.long 0xC2B50000
+	.long 0x00000D90
+	.long 0xC2B50000
+	.long 0x00000D9C
+	.long 0xC2B50000
+	.long 0x00000DA8
+	.long 0xC2B50000
+	.long 0x00000DB4
+	.long 0xC2B50000
+	.long 0x00000DC0
+	.long 0xC2B50000
+	.long 0x00000DCC
+	.long 0xC2B50000
+	.long 0x00000DD8
+	.long 0xC2B50000
+	.long 0x00000DE4
+	.long 0xC2B50000
+	.long 0x00000DF0
+	.long 0xC2FC0000
+	.long 0x00000DFC
+	.long 0xC2FC0000
+	.long 0x00000E08
+	.long 0xC2FC0000
+	.long 0x00000E14
+	.long 0xC2FC0000
+	.long 0x00000E20
+	.long 0xC2FB0000
+	.long 0x00000E2C
+	.long 0xC2FB0000
+	.long 0x00000E38
+	.long 0xC2FB0000
+	.long 0x00000E44
+	.long 0xC2FB0000
+	.long 0x00000E50
+	.long 0xC2FC0000
+	.long 0x00000E5C
+	.long 0xC2FC0000
+	.long 0x00000E68
+	.long 0xC2FB0000
+	.long 0x00000E74
+	.long 0xC2FC0000
+	.long 0x00000E80
+	.long 0xC2FC0000
+	.long 0x00000E8C
+	.long 0xC2FB0000
+	.long 0x00000E98
+	.long 0xC2FC0000
+	.long 0x00000EA4
+	.long 0xC2FC0000
+	.long 0x00000EB0
+	.long 0xC2FB0000
+	.long 0x00000EBC
+	.long 0xC2FB0000
+	.long 0x00000EC8
+	.long 0xC2FB0000
+	.long 0x00000ED4
+	.long 0xC2FB0000
+	.long 0x00000EE0
+	.long 0xC2FC0000
+	.long 0x00000EEC
+	.long 0xC2FC0000
+	.long 0x00000EF8
+	.long 0xC2FB0000
+	.long 0x00000F04
+	.long 0xC2FB0000
+	.long 0x00000F10
+	.long 0xC2FA0000
+	.long 0x00000F1C
+	.long 0xC2FA0000
+	.long 0x00000F28
+	.long 0xC2FA0000
+	.long 0x00000F34
+	.long 0xC2FA0000
+	.long 0x00000F40
+	.long 0xC2FA0000
+	.long 0x00000F4C
+	.long 0xC2FA0000
+	.long 0x00000F58
+	.long 0xC2FA0000
+	.long 0x00000F64
+	.long 0xC2FA0000
+	.long 0x00000F70
+	.long 0xC2FA0000
+	.long 0x00000F7C
+	.long 0xC2FA0000
+	.long 0x00000F88
+	.long 0xC2FA0000
+	.long 0x00000F94
+	.long 0xC2FA0000
+	.long 0x00000FA0
+	.long 0xC2FA0000
+	.long 0x00000FAC
+	.long 0xC2FA0000
+	.long 0x00000FB8
+	.long 0xC2FA0000
+	.long 0x00000FC4
+	.long 0xC2FA0000
+	.long 0x00000FD0
+	.long 0xC2FA0000
+	.long 0x00000FDC
+	.long 0xC2FC0000
+	.long 0x00000FE8
+	.long 0xC2FC0000
+	.long 0x00000FF4
+	.long 0xC2FC0000
+	.long 0x00001000
+	.long 0xC2FC0000
+	.long 0x0000100C
+	.long 0xC2FB0000
+	.long 0x00001018
+	.long 0xC2FB0000
+	.long 0x00001024
+	.long 0xC2FB0000
+	.long 0x00001030
+	.long 0xC2FB0000
+	.long 0x0000103C
+	.long 0xC2FC0000
+	.long 0x00001048
+	.long 0xC2FC0000
+	.long 0x00001054
+	.long 0xC2FB0000
+	.long 0x00001060
+	.long 0xC2FC0000
+	.long 0x0000106C
+	.long 0xC2FC0000
+	.long 0x00001078
+	.long 0xC2FB0000
+	.long 0x00001084
+	.long 0xC2FC0000
+	.long 0x00001090
+	.long 0xC2FC0000
+	.long 0x0000109C
+	.long 0xC2FB0000
+	.long 0x000010A8
+	.long 0xC2FB0000
+	.long 0x000010B4
+	.long 0xC2FB0000
+	.long 0x000010C0
+	.long 0xC2FB0000
+	.long 0x000010CC
+	.long 0xC2FC0000
+	.long 0x000010D8
+	.long 0xC2FC0000
+	.long 0x000010E4
+	.long 0xC2FB0000
+	.long 0x000010F0
+	.long 0xC2FB0000
+	.long 0x000010FC
+	.long 0xC2FA0000
+	.long 0x00001108
+	.long 0xC2FA0000
+	.long 0x00001114
+	.long 0xC2FA0000
+	.long 0x00001120
+	.long 0xC2FA0000
+	.long 0x0000112C
+	.long 0xC2FA0000
+	.long 0x00001138
+	.long 0xC2FA0000
+	.long 0x00001144
+	.long 0xC2FA0000
+	.long 0x00001150
+	.long 0xC2FA0000
+	.long 0x0000115C
+	.long 0xC2FA0000
+	.long 0x00001168
+	.long 0xC2FA0000
+	.long 0x00001174
+	.long 0xC2FA0000
+	.long 0x00001180
+	.long 0xC2FA0000
+	.long 0x0000118C
+	.long 0xC2FA0000
+	.long 0x00001198
+	.long 0xC2FA0000
+	.long 0x000011A4
+	.long 0xC2FA0000
+	.long 0x000011B0
+	.long 0xC2FA0000
+	.long 0x000011BC
+	.long 0xC2FA0000
+	.long 0x000011C8
+	.long 0xC2FA0000
+	.long 0x000011D4
+	.long 0xC2FA0000
+	.long 0x000011E0
+	.long 0xC2FA0000
+	.long 0x000011EC
+	.long 0xC2FA0000
+	.long 0x000011F8
+	.long 0xC2FA0000
+	.long 0x00001204
+	.long 0xC2FA0000
+	.long 0x00001210
+	.long 0xC2FA0000
+	.long 0x0000121C
+	.long 0xC2FA0000
+	.long 0x00001228
+	.long 0xC2FA0000
+	.long 0x00001234
+	.long 0xC2FA0000
+	.long 0x00001240
+	.long 0xC2FA0000
+	.long 0x0000124C
+	.long 0xC2FA0000
+	.long 0x00001258
+	.long 0xC2FA0000
+	.long 0x00001264
+	.long 0xC2FA0000
+	.long 0x00001270
+	.long 0xC2FA0000
+	.long 0x0000127C
+	.long 0xC2FA0000
+	.long 0x00001288
+	.long 0xC2FA0000
+	.long 0x00001294
+	.long 0xC2FB0000
+	.long 0x000012A0
+	.long 0xC2FB0000
+	.long 0x000012AC
+	.long 0xC2FC0000
+	.long 0x000012B8
+	.long 0xC2FC0000
+	.long 0x000012C4
+	.long 0xC2FB0000
+	.long 0x000012D0
+	.long 0xC2FB0000
+	.long 0x000012DC
+	.long 0xC2FC0000
+	.long 0x000012E8
+	.long 0xC2FC0000
+	.long 0x000012F4
+	.long 0xC2FB0000
+	.long 0x00001300
+	.long 0xC2FB0000
+	.long 0x0000130C
+	.long 0xC2FC0000
+	.long 0x00001318
+	.long 0xC2FC0000
+	.long 0x00001324
+	.long 0xC2FB0000
+	.long 0x00001330
+	.long 0xC2FB0000
+	.long 0x0000133C
+	.long 0xC2FC0000
+	.long 0x00001348
+	.long 0xC2FC0000
+	.long 0x00001354
+	.long 0xC2FB0000
+	.long 0x00001360
+	.long 0xC2FC0000
+	.long 0x0000136C
+	.long 0xC2FB0000
+	.long 0x00001378
+	.long 0xC2FC0000
+	.long 0x00001384
+	.long 0xC2FB0000
+	.long 0x00001390
+	.long 0xC2FB0000
+	.long 0x0000139C
+	.long 0xC2FC0000
+	.long 0x000013A8
+	.long 0xC2FC0000
+	.long 0x000013B4
+	.long 0xC2FA0000
+	.long 0x000013C0
+	.long 0xC2FA0000
+	.long 0x000013CC
+	.long 0xC2FA0000
+	.long 0x000013D8
+	.long 0xC2FA0000
+	.long 0x000013E4
+	.long 0xC2FA0000
+	.long 0x000013F0
+	.long 0xC2FA0000
+	.long 0x000013FC
+	.long 0xC2FA0000
+	.long 0x00001408
+	.long 0xC2FA0000
+	.long 0x00001414
+	.long 0xC2FA0000
+	.long 0x00001420
+	.long 0xC2FA0000
+	.long 0x0000142C
+	.long 0xC2FA0000
+	.long 0x00001438
+	.long 0xC2FA0000
+	.long 0x00001444
+	.long 0xC2FA0000
+	.long 0x00001450
+	.long 0xC2FA0000
+	.long 0x0000145C
+	.long 0xC2FA0000
+	.long 0x00001468
+	.long 0xC2FA0000
+	.long 0x00001474
+	.long 0xC2FA0000
+	.long 0x00001480
+	.long 0xC2FB0000
+	.long 0x0000148C
+	.long 0xC2FB0000
+	.long 0x00001498
+	.long 0xC2FC0000
+	.long 0x000014A4
+	.long 0xC2FC0000
+	.long 0x000014B0
+	.long 0xC2FB0000
+	.long 0x000014BC
+	.long 0xC2FB0000
+	.long 0x000014C8
+	.long 0xC2FC0000
+	.long 0x000014D4
+	.long 0xC2FC0000
+	.long 0x000014E0
+	.long 0xC2FB0000
+	.long 0x000014EC
+	.long 0xC2FB0000
+	.long 0x000014F8
+	.long 0xC2FC0000
+	.long 0x00001504
+	.long 0xC2FC0000
+	.long 0x00001510
+	.long 0xC2FB0000
+	.long 0x0000151C
+	.long 0xC2FB0000
+	.long 0x00001528
+	.long 0xC2FC0000
+	.long 0x00001534
+	.long 0xC2FC0000
+	.long 0x00001540
+	.long 0xC2FB0000
+	.long 0x0000154C
+	.long 0xC2FC0000
+	.long 0x00001558
+	.long 0xC2FB0000
+	.long 0x00001564
+	.long 0xC2FC0000
+	.long 0x00001570
+	.long 0xC2FB0000
+	.long 0x0000157C
+	.long 0xC2FB0000
+	.long 0x00001588
+	.long 0xC2FC0000
+	.long 0x00001594
+	.long 0xC2FC0000
+	.long 0x000015A0
+	.long 0xC2BA0000
+	.long 0x000015AC
+	.long 0xC2BA0000
+	.long 0x000015B8
+	.long 0xC2B90000
+	.long 0x000015C4
+	.long 0xC2B90000
+	.long 0x000015D0
+	.long 0xC2B70000
+	.long 0x000015DC
+	.long 0xC2B80000
+	.long 0x000015E8
+	.long 0xC2B80000
+	.long 0x000015F4
+	.long 0xC2B90000
+	.long 0x00001600
+	.long 0xC2B90000
+	.long 0x0000160C
+	.long 0xC2BA0000
+	.long 0x00001618
+	.long 0xC2B90000
+	.long 0x00001624
+	.long 0xC2BA0000
+	.long 0x00001630
+	.long 0xC2B90000
+	.long 0x0000163C
+	.long 0xC2B80000
+	.long 0x00001648
+	.long 0xC2B80000
+	.long 0x00001654
+	.long 0xC2B90000
+	.long 0x00001660
+	.long 0xC2B80000
+	.long 0x0000166C
+	.long 0xC2B70000
+	.long 0x00001678
+	.long 0xC2B90000
+	.long 0x00001684
+	.long 0xC2B90000
+	.long 0x00001690
+	.long 0xC2B70000
+	.long 0x0000169C
+	.long 0xC2B70000
+	.long 0x000016A8
+	.long 0xC2B70000
+	.long 0x000016B4
+	.long 0xC2B70000
+	.long 0x000016C0
+	.long 0xC2B70000
+	.long 0x000016CC
+	.long 0xC2BA0000
+	.long 0x000016D8
+	.long 0xC2B90000
+	.long 0x000016E4
+	.long 0xC2B90000
+	.long 0x000016F0
+	.long 0xC2BA0000
+	.long 0x000016FC
+	.long 0xC2BA0000
+	.long 0x00001708
+	.long 0xC2BA0000
+	.long 0x00001714
+	.long 0xC2BA0000
+	.long 0x00001720
+	.long 0xC2BA0000
+	.long 0x0000172C
+	.long 0xC2B60000
+	.long 0x00001738
+	.long 0xC2B60000
+	.long 0x00001744
+	.long 0xC2BB0000
+	.long 0x00001750
+	.long 0xC2BB0000
+	.long 0x0000175C
+	.long 0xC2B60000
+	.long 0x00001768
+	.long 0xC2BB0000
+	.long 0x00001774
+	.long 0xC2BB0000
+	.long 0x00001780
+	.long 0xC2B60000
+	.long 0x0000178C
+	.long 0xC2BA0000
+	.long 0x00001798
+	.long 0xC2BA0000
+	.long 0x000017A4
+	.long 0xC2B90000
+	.long 0x000017B0
+	.long 0xC2B90000
+	.long 0x000017BC
+	.long 0xC2B70000
+	.long 0x000017C8
+	.long 0xC2B80000
+	.long 0x000017D4
+	.long 0xC2B80000
+	.long 0x000017E0
+	.long 0xC2B90000
+	.long 0x000017EC
+	.long 0xC2B90000
+	.long 0x000017F8
+	.long 0xC2BA0000
+	.long 0x00001804
+	.long 0xC2B90000
+	.long 0x00001810
+	.long 0xC2BA0000
+	.long 0x0000181C
+	.long 0xC2B90000
+	.long 0x00001828
+	.long 0xC2B80000
+	.long 0x00001834
+	.long 0xC2B80000
+	.long 0x00001840
+	.long 0xC2B90000
+	.long 0x0000184C
+	.long 0xC2B80000
+	.long 0x00001858
+	.long 0xC2B70000
+	.long 0x00001864
+	.long 0xC2B90000
+	.long 0x00001870
+	.long 0xC2B90000
+	.long 0x0000187C
+	.long 0xC2B70000
+	.long 0x00001888
+	.long 0xC2B70000
+	.long 0x00001894
+	.long 0xC2B70000
+	.long 0x000018A0
+	.long 0xC2B70000
+	.long 0x000018AC
+	.long 0xC2B70000
+	.long 0x000018B8
+	.long 0xC2BA0000
+	.long 0x000018C4
+	.long 0xC2B90000
+	.long 0x000018D0
+	.long 0xC2B90000
+	.long 0x000018DC
+	.long 0xC2BA0000
+	.long 0x000018E8
+	.long 0xC2BA0000
+	.long 0x000018F4
+	.long 0xC2BA0000
+	.long 0x00001900
+	.long 0xC2BA0000
+	.long 0x0000190C
+	.long 0xC2BA0000
+	.long 0x00001918
+	.long 0xC2B60000
+	.long 0x00001924
+	.long 0xC2B60000
+	.long 0x00001930
+	.long 0xC2BB0000
+	.long 0x0000193C
+	.long 0xC2BB0000
+	.long 0x00001948
+	.long 0xC2B60000
+	.long 0x00001954
+	.long 0xC2BB0000
+	.long 0x00001960
+	.long 0xC2BB0000
+	.long 0x0000196C
+	.long 0xC2B60000
+	.long 0x00001978
+	.long 0xC3000000
+	.long 0x00001984
+	.long 0xC3000000
+	.long 0x00001990
+	.long 0xC2FF0000
+	.long 0x0000199C
+	.long 0xC2FF0000
+	.long 0x000019A8
+	.long 0xC2FE0000
+	.long 0x000019B4
+	.long 0xC2FE0000
+	.long 0x000019C0
+	.long 0xC2FE0000
+	.long 0x000019CC
+	.long 0xC2FF0000
+	.long 0x000019D8
+	.long 0xC2FF0000
+	.long 0x000019E4
+	.long 0xC3000000
+	.long 0x000019F0
+	.long 0xC2FF0000
+	.long 0x000019FC
+	.long 0xC3000000
+	.long 0x00001A08
+	.long 0xC2FF0000
+	.long 0x00001A14
+	.long 0xC2FE0000
+	.long 0x00001A20
+	.long 0xC2FE0000
+	.long 0x00001A2C
+	.long 0xC2FF0000
+	.long 0x00001A38
+	.long 0xC2FE0000
+	.long 0x00001A44
+	.long 0xC2FE0000
+	.long 0x00001A50
+	.long 0xC2FF0000
+	.long 0x00001A5C
+	.long 0xC2FF0000
+	.long 0x00001A68
+	.long 0xC2FE0000
+	.long 0x00001A74
+	.long 0xC2FE0000
+	.long 0x00001A80
+	.long 0xC2FD0000
+	.long 0x00001A8C
+	.long 0xC2FD0000
+	.long 0x00001A98
+	.long 0xC2FE0000
+	.long 0x00001AA4
+	.long 0xC3000000
+	.long 0x00001AB0
+	.long 0xC2FF0000
+	.long 0x00001ABC
+	.long 0xC2FF0000
+	.long 0x00001AC8
+	.long 0xC3000000
+	.long 0x00001AD4
+	.long 0xC3000000
+	.long 0x00001AE0
+	.long 0xC3000000
+	.long 0x00001AEC
+	.long 0xC3000000
+	.long 0x00001AF8
+	.long 0xC3000000
+	.long 0x00001B04
+	.long 0xC2FD0000
+	.long 0x00001B10
+	.long 0xC2FD0000
+	.long 0x00001B1C
+	.long 0xC3000000
+	.long 0x00001B28
+	.long 0xC3000000
+	.long 0x00001B34
+	.long 0xC2FD0000
+	.long 0x00001B40
+	.long 0xC3000000
+	.long 0x00001B4C
+	.long 0xC3000000
+	.long 0x00001B58
+	.long 0xC2FD0000
+	.long 0x00001B64
+	.long 0xC3000000
+	.long 0x00001B70
+	.long 0xC3000000
+	.long 0x00001B7C
+	.long 0xC2FF0000
+	.long 0x00001B88
+	.long 0xC2FF0000
+	.long 0x00001B94
+	.long 0xC2FE0000
+	.long 0x00001BA0
+	.long 0xC2FE0000
+	.long 0x00001BAC
+	.long 0xC2FE0000
+	.long 0x00001BB8
+	.long 0xC2FF0000
+	.long 0x00001BC4
+	.long 0xC2FF0000
+	.long 0x00001BD0
+	.long 0xC3000000
+	.long 0x00001BDC
+	.long 0xC2FF0000
+	.long 0x00001BE8
+	.long 0xC3000000
+	.long 0x00001BF4
+	.long 0xC2FF0000
+	.long 0x00001C00
+	.long 0xC2FE0000
+	.long 0x00001C0C
+	.long 0xC2FE0000
+	.long 0x00001C18
+	.long 0xC2FF0000
+	.long 0x00001C24
+	.long 0xC2FE0000
+	.long 0x00001C30
+	.long 0xC2FE0000
+	.long 0x00001C3C
+	.long 0xC2FF0000
+	.long 0x00001C48
+	.long 0xC2FF0000
+	.long 0x00001C54
+	.long 0xC2FE0000
+	.long 0x00001C60
+	.long 0xC2FE0000
+	.long 0x00001C6C
+	.long 0xC2FD0000
+	.long 0x00001C78
+	.long 0xC2FD0000
+	.long 0x00001C84
+	.long 0xC2FE0000
+	.long 0x00001C90
+	.long 0xC3000000
+	.long 0x00001C9C
+	.long 0xC2FF0000
+	.long 0x00001CA8
+	.long 0xC2FF0000
+	.long 0x00001CB4
+	.long 0xC3000000
+	.long 0x00001CC0
+	.long 0xC3000000
+	.long 0x00001CCC
+	.long 0xC3000000
+	.long 0x00001CD8
+	.long 0xC3000000
+	.long 0x00001CE4
+	.long 0xC3000000
+	.long 0x00001CF0
+	.long 0xC2FD0000
+	.long 0x00001CFC
+	.long 0xC2FD0000
+	.long 0x00001D08
+	.long 0xC3000000
+	.long 0x00001D14
+	.long 0xC3000000
+	.long 0x00001D20
+	.long 0xC2FD0000
+	.long 0x00001D2C
+	.long 0xC3000000
+	.long 0x00001D38
+	.long 0xC3000000
+	.long 0x00001D44
+	.long 0xC2FD0000
+	.long 0x00002E9C
+	.long 0xC2B50000
+	.long 0x00002EA8
+	.long 0xC2B50000
+	.long 0x00002EB4
+	.long 0xC2B50000
+	.long 0x00002EC0
+	.long 0xC2B50000
+	.long 0x00002ECC
+	.long 0xC2B50000
+	.long 0x00002ED8
+	.long 0xC2B50000
+	.long 0x00002EE4
+	.long 0xC2B50000
+	.long 0x00002EF0
+	.long 0xC2800000
+	.long 0x00002EFC
+	.long 0xC2800000
+	.long 0x00002F08
+	.long 0xC2800000
+	.long 0x00002F14
+	.long 0xC2800000
+	.long 0x00002F20
+	.long 0xC2460000
+	.long 0x00002F2C
+	.long 0xC2460000
+	.long 0x00002F38
+	.long 0xC2460000
+	.long 0x00002F44
+	.long 0xC2460000
+	.long 0x00002F50
+	.long 0xC2800000
+	.long 0x00002F5C
+	.long 0xC2800000
+	.long 0x00002F68
+	.long 0xC2800000
+	.long 0x00002F74
+	.long 0xC2800000
+	.long 0x00002F80
+	.long 0xC2800000
+	.long 0x00002F8C
+	.long 0xC2800000
+	.long 0x00002F98
+	.long 0xC2800000
+	.long 0x00002FA4
+	.long 0xC2800000
+	.long 0x00002FB0
+	.long 0xC2FC0000
+	.long 0x00002FBC
+	.long 0xC2FC0000
+	.long 0x00002FC8
+	.long 0xC2FC0000
+	.long 0x00002FD4
+	.long 0xC2F00000
+	.long 0x00002FE0
+	.long 0xC2F00000
+	.long 0x00002FEC
+	.long 0xC2F00000
+	.long 0x00002FF8
+	.long 0xC2F00000
+	.long 0x00003004
+	.long 0xC2E60000
+	.long 0x00003010
+	.long 0xC2E60000
+	.long 0x0000301C
+	.long 0xC2E60000
+	.long 0x00003028
+	.long 0xC2E60000
+	.long 0x00003034
+	.long 0xC2DA0000
+	.long 0x00003040
+	.long 0xC2DA0000
+	.long 0x0000304C
+	.long 0xC2DA0000
+	.long 0x00003058
+	.long 0xC2BE0000
+	.long 0x00003064
+	.long 0xC2BE0000
+	.long 0x00003070
+	.long 0xC2BE0000
+	.long 0x0000307C
+	.long 0xC2BE0000
+	.long 0x00003088
+	.long 0xC2DA0000
+	.long 0x00003094
+	.long 0xC2FC0000
+	.long 0x000030A0
+	.long 0xC2FC0000
+	.long 0x000030AC
+	.long 0xC2FC0000
+	.long 0x000030B8
+	.long 0xC2FC0000
+	.long 0x000030C4
+	.long 0xC2F00000
+	.long 0x000030D0
+	.long 0xC2F00000
+	.long 0x000030DC
+	.long 0xC2F00000
+	.long 0x000030E8
+	.long 0xC2F00000
+	.long 0x000030F4
+	.long 0xC2E60000
+	.long 0x00003100
+	.long 0xC2E60000
+	.long 0x0000310C
+	.long 0xC2E60000
+	.long 0x00003118
+	.long 0xC2E60000
+	.long 0x00003124
+	.long 0xC2DA0000
+	.long 0x00003130
+	.long 0xC2DA0000
+	.long 0x0000313C
+	.long 0xC2DA0000
+	.long 0x00003148
+	.long 0xC2BE0000
+	.long 0x00003154
+	.long 0xC2BE0000
+	.long 0x00003160
+	.long 0xC2BE0000
+	.long 0x0000316C
+	.long 0xC2FC0000
+	.long 0x00003178
+	.long 0xC2DA0000
+	.long 0x00003184
+	.long 0xC2BE0000
+	.long 0x00003190
+	.long 0xC2FC0000
+	.long 0x0000319C
+	.long 0xC2FC0000
+	.long 0x000031A8
+	.long 0xC2FC0000
+	.long 0x000031B4
+	.long 0xC2F00000
+	.long 0x000031C0
+	.long 0xC2F00000
+	.long 0x000031CC
+	.long 0xC2F00000
+	.long 0x000031D8
+	.long 0xC2F00000
+	.long 0x000031E4
+	.long 0xC2E60000
+	.long 0x000031F0
+	.long 0xC2E60000
+	.long 0x000031FC
+	.long 0xC2E60000
+	.long 0x00003208
+	.long 0xC2E60000
+	.long 0x00003214
+	.long 0xC2DA0000
+	.long 0x00003220
+	.long 0xC2DA0000
+	.long 0x0000322C
+	.long 0xC2DA0000
+	.long 0x00003238
+	.long 0xC2BE0000
+	.long 0x00003244
+	.long 0xC2BE0000
+	.long 0x00003250
+	.long 0xC2BE0000
+	.long 0x0000325C
+	.long 0xC2FC0000
+	.long 0x00003268
+	.long 0xC2DA0000
+	.long 0x00003274
+	.long 0xC2BE0000
+	.long 0x000034C4
+	.long 0xC1170000
+	.long 0x000034D0
+	.long 0xC11E0000
+	.long 0x000034DC
+	.long 0xC1240000
+	.long 0x000034E8
+	.long 0xC1280000
+	.long 0x000034F4
+	.long 0xC1320000
+	.long 0x00003500
+	.long 0xC12F0000
+	.long 0x0000350C
+	.long 0xC12C0000
+	.long 0x00003518
+	.long 0xC1280000
+	.long 0x00003524
+	.long 0xC1280000
+	.long 0x00003530
+	.long 0xC11E0000
+	.long 0x0000353C
+	.long 0xC1240000
+	.long 0x00003548
+	.long 0xC1200000
+	.long 0x00003554
+	.long 0xC1280000
+	.long 0x00003560
+	.long 0xC12F0000
+	.long 0x0000356C
+	.long 0xC12C0000
+	.long 0x00003578
+	.long 0xC1280000
+	.long 0x00003584
+	.long 0xC12E0000
+	.long 0x00003590
+	.long 0xC1300000
+	.long 0x0000359C
+	.long 0xC1280000
+	.long 0x000035A8
+	.long 0xC1280000
+	.long 0x000035B4
+	.long 0xC1300000
+	.long 0x000035C0
+	.long 0xC1300000
+	.long 0x000035CC
+	.long 0xC1350000
+	.long 0x000035D8
+	.long 0xC1350000
+	.long 0x000035E4
+	.long 0xC1300000
+	.long 0x000035F0
+	.long 0xC11B0000
+	.long 0x000035FC
+	.long 0xC1280000
+	.long 0x00003608
+	.long 0xC1280000
+	.long 0x00003614
+	.long 0xC11B0000
+	.long 0x00003620
+	.long 0xC11B0000
+	.long 0x0000362C
+	.long 0xC1130000
+	.long 0x00003638
+	.long 0xC1130000
+	.long 0x00003644
+	.long 0xC11B0000
+	.long 0x00003650
+	.long 0xC13A0000
+	.long 0x0000365C
+	.long 0xC13A0000
+	.long 0x00003668
+	.long 0xC1080000
+	.long 0x00003674
+	.long 0xC1080000
+	.long 0x00003680
+	.long 0xC13A0000
+	.long 0x0000368C
+	.long 0xC1080000
+	.long 0x00003698
+	.long 0xC1080000
+	.long 0x000036A4
+	.long 0xC13A0000
+	.long 0x000036B0
+	.long 0xC1170000
+	.long 0x000036BC
+	.long 0xC11E0000
+	.long 0x000036C8
+	.long 0xC1240000
+	.long 0x000036D4
+	.long 0xC1280000
+	.long 0x000036E0
+	.long 0xC1320000
+	.long 0x000036EC
+	.long 0xC12F0000
+	.long 0x000036F8
+	.long 0xC12C0000
+	.long 0x00003704
+	.long 0xC1280000
+	.long 0x00003710
+	.long 0xC1280000
+	.long 0x0000371C
+	.long 0xC11E0000
+	.long 0x00003728
+	.long 0xC1240000
+	.long 0x00003734
+	.long 0xC1200000
+	.long 0x00003740
+	.long 0xC1280000
+	.long 0x0000374C
+	.long 0xC12F0000
+	.long 0x00003758
+	.long 0xC12C0000
+	.long 0x00003764
+	.long 0xC1280000
+	.long 0x00003770
+	.long 0xC12E0000
+	.long 0x0000377C
+	.long 0xC1300000
+	.long 0x00003788
+	.long 0xC1280000
+	.long 0x00003794
+	.long 0xC1280000
+	.long 0x000037A0
+	.long 0xC1300000
+	.long 0x000037AC
+	.long 0xC1300000
+	.long 0x000037B8
+	.long 0xC1350000
+	.long 0x000037C4
+	.long 0xC1350000
+	.long 0x000037D0
+	.long 0xC1300000
+	.long 0x000037DC
+	.long 0xC11B0000
+	.long 0x000037E8
+	.long 0xC1280000
+	.long 0x000037F4
+	.long 0xC1280000
+	.long 0x00003800
+	.long 0xC11B0000
+	.long 0x0000380C
+	.long 0xC11B0000
+	.long 0x00003818
+	.long 0xC1130000
+	.long 0x00003824
+	.long 0xC1130000
+	.long 0x00003830
+	.long 0xC11B0000
+	.long 0x0000383C
+	.long 0xC13A0000
+	.long 0x00003848
+	.long 0xC13A0000
+	.long 0x00003854
+	.long 0xC1080000
+	.long 0x00003860
+	.long 0xC1080000
+	.long 0x0000386C
+	.long 0xC13A0000
+	.long 0x00003878
+	.long 0xC1080000
+	.long 0x00003884
+	.long 0xC1080000
+	.long 0x00003890
+	.long 0xC13A0000
+	.long 0x0000389C
+	.long 0xC1170000
+	.long 0x000038A8
+	.long 0xC11E0000
+	.long 0x000038B4
+	.long 0xC1240000
+	.long 0x000038C0
+	.long 0xC1280000
+	.long 0x000038CC
+	.long 0xC1320000
+	.long 0x000038D8
+	.long 0xC12F0000
+	.long 0x000038E4
+	.long 0xC12C0000
+	.long 0x000038F0
+	.long 0xC1280000
+	.long 0x000038FC
+	.long 0xC1280000
+	.long 0x00003908
+	.long 0xC11E0000
+	.long 0x00003914
+	.long 0xC1240000
+	.long 0x00003920
+	.long 0xC1200000
+	.long 0x0000392C
+	.long 0xC1280000
+	.long 0x00003938
+	.long 0xC12F0000
+	.long 0x00003944
+	.long 0xC12C0000
+	.long 0x00003950
+	.long 0xC1280000
+	.long 0x0000395C
+	.long 0xC12E0000
+	.long 0x00003968
+	.long 0xC1300000
+	.long 0x00003974
+	.long 0xC1280000
+	.long 0x00003980
+	.long 0xC1280000
+	.long 0x0000398C
+	.long 0xC1300000
+	.long 0x00003998
+	.long 0xC1300000
+	.long 0x000039A4
+	.long 0xC1350000
+	.long 0x000039B0
+	.long 0xC1350000
+	.long 0x000039BC
+	.long 0xC1300000
+	.long 0x000039C8
+	.long 0xC11B0000
+	.long 0x000039D4
+	.long 0xC1280000
+	.long 0x000039E0
+	.long 0xC1280000
+	.long 0x000039EC
+	.long 0xC11B0000
+	.long 0x000039F8
+	.long 0xC11B0000
+	.long 0x00003A04
+	.long 0xC1130000
+	.long 0x00003A10
+	.long 0xC1130000
+	.long 0x00003A1C
+	.long 0xC11B0000
+	.long 0x00003A28
+	.long 0xC13A0000
+	.long 0x00003A34
+	.long 0xC13A0000
+	.long 0x00003A40
+	.long 0xC1080000
+	.long 0x00003A4C
+	.long 0xC1080000
+	.long 0x00003A58
+	.long 0xC13A0000
+	.long 0x00003A64
+	.long 0xC1080000
+	.long 0x00003A70
+	.long 0xC1080000
+	.long 0x00003A7C
+	.long 0xC13A0000
+	.long 0x00003A88
+	.long 0x415A0000
+	.long 0x00003A94
+	.long 0x41570000
+	.long 0x00003AA0
+	.long 0x41540000
+	.long 0x00003AAC
+	.long 0x41500000
+	.long 0x00003AB8
+	.long 0x41470000
+	.long 0x00003AC4
+	.long 0x414A0000
+	.long 0x00003AD0
+	.long 0x414D0000
+	.long 0x00003ADC
+	.long 0x41500000
+	.long 0x00003AE8
+	.long 0x41500000
+	.long 0x00003AF4
+	.long 0x41570000
+	.long 0x00003B00
+	.long 0x41540000
+	.long 0x00003B0C
+	.long 0x41560000
+	.long 0x00003B18
+	.long 0x41500000
+	.long 0x00003B24
+	.long 0x414A0000
+	.long 0x00003B30
+	.long 0x414D0000
+	.long 0x00003B3C
+	.long 0x41500000
+	.long 0x00003B48
+	.long 0x414B0000
+	.long 0x00003B54
+	.long 0x41490000
+	.long 0x00003B60
+	.long 0x41500000
+	.long 0x00003B6C
+	.long 0x41500000
+	.long 0x00003B78
+	.long 0x41490000
+	.long 0x00003B84
+	.long 0x41490000
+	.long 0x00003B90
+	.long 0x41440000
+	.long 0x00003B9C
+	.long 0x41440000
+	.long 0x00003BA8
+	.long 0x41490000
+	.long 0x00003BB4
+	.long 0x41580000
+	.long 0x00003BC0
+	.long 0x41500000
+	.long 0x00003BCC
+	.long 0x41500000
+	.long 0x00003BD8
+	.long 0x41580000
+	.long 0x00003BE4
+	.long 0x41580000
+	.long 0x00003BF0
+	.long 0x415D0000
+	.long 0x00003BFC
+	.long 0x415D0000
+	.long 0x00003C08
+	.long 0x41580000
+	.long 0x00003C14
+	.long 0x413F0000
+	.long 0x00003C20
+	.long 0x413F0000
+	.long 0x00003C2C
+	.long 0x41620000
+	.long 0x00003C38
+	.long 0x41620000
+	.long 0x00003C44
+	.long 0x413F0000
+	.long 0x00003C50
+	.long 0x41620000
+	.long 0x00003C5C
+	.long 0x41620000
+	.long 0x00003C68
+	.long 0x413F0000
+	.long 0x00003C74
+	.long 0x415A0000
+	.long 0x00003C80
+	.long 0x41570000
+	.long 0x00003C8C
+	.long 0x41540000
+	.long 0x00003C98
+	.long 0x41500000
+	.long 0x00003CA4
+	.long 0x41470000
+	.long 0x00003CB0
+	.long 0x414A0000
+	.long 0x00003CBC
+	.long 0x414D0000
+	.long 0x00003CC8
+	.long 0x41500000
+	.long 0x00003CD4
+	.long 0x41500000
+	.long 0x00003CE0
+	.long 0x41570000
+	.long 0x00003CEC
+	.long 0x41540000
+	.long 0x00003CF8
+	.long 0x41560000
+	.long 0x00003D04
+	.long 0x41500000
+	.long 0x00003D10
+	.long 0x414A0000
+	.long 0x00003D1C
+	.long 0x414D0000
+	.long 0x00003D28
+	.long 0x41500000
+	.long 0x00003D34
+	.long 0x414B0000
+	.long 0x00003D40
+	.long 0x41490000
+	.long 0x00003D4C
+	.long 0x41500000
+	.long 0x00003D58
+	.long 0x41500000
+	.long 0x00003D64
+	.long 0x41490000
+	.long 0x00003D70
+	.long 0x41490000
+	.long 0x00003D7C
+	.long 0x41440000
+	.long 0x00003D88
+	.long 0x41440000
+	.long 0x00003D94
+	.long 0x41490000
+	.long 0x00003DA0
+	.long 0x41580000
+	.long 0x00003DAC
+	.long 0x41500000
+	.long 0x00003DB8
+	.long 0x41500000
+	.long 0x00003DC4
+	.long 0x41580000
+	.long 0x00003DD0
+	.long 0x41580000
+	.long 0x00003DDC
+	.long 0x415D0000
+	.long 0x00003DE8
+	.long 0x415D0000
+	.long 0x00003DF4
+	.long 0x41580000
+	.long 0x00003E00
+	.long 0x413F0000
+	.long 0x00003E0C
+	.long 0x413F0000
+	.long 0x00003E18
+	.long 0x41620000
+	.long 0x00003E24
+	.long 0x41620000
+	.long 0x00003E30
+	.long 0x413F0000
+	.long 0x00003E3C
+	.long 0x41620000
+	.long 0x00003E48
+	.long 0x41620000
+	.long 0x00003E54
+	.long 0x413F0000
+	.long 0x00003E60
+	.long 0x415A0000
+	.long 0x00003E6C
+	.long 0x41570000
+	.long 0x00003E78
+	.long 0x41540000
+	.long 0x00003E84
+	.long 0x41500000
+	.long 0x00003E90
+	.long 0x41470000
+	.long 0x00003E9C
+	.long 0x414A0000
+	.long 0x00003EA8
+	.long 0x414D0000
+	.long 0x00003EB4
+	.long 0x41500000
+	.long 0x00003EC0
+	.long 0x41500000
+	.long 0x00003ECC
+	.long 0x41570000
+	.long 0x00003ED8
+	.long 0x41540000
+	.long 0x00003EE4
+	.long 0x41560000
+	.long 0x00003EF0
+	.long 0x41500000
+	.long 0x00003EFC
+	.long 0x414A0000
+	.long 0x00003F08
+	.long 0x414D0000
+	.long 0x00003F14
+	.long 0x41500000
+	.long 0x00003F20
+	.long 0x414B0000
+	.long 0x00003F2C
+	.long 0x41490000
+	.long 0x00003F38
+	.long 0x41500000
+	.long 0x00003F44
+	.long 0x41500000
+	.long 0x00003F50
+	.long 0x41490000
+	.long 0x00003F5C
+	.long 0x41490000
+	.long 0x00003F68
+	.long 0x41440000
+	.long 0x00003F74
+	.long 0x41440000
+	.long 0x00003F80
+	.long 0x41490000
+	.long 0x00003F8C
+	.long 0x41580000
+	.long 0x00003F98
+	.long 0x41500000
+	.long 0x00003FA4
+	.long 0x41500000
+	.long 0x00003FB0
+	.long 0x41580000
+	.long 0x00003FBC
+	.long 0x41580000
+	.long 0x00003FC8
+	.long 0x415D0000
+	.long 0x00003FD4
+	.long 0x415D0000
+	.long 0x00003FE0
+	.long 0x41580000
+	.long 0x00003FEC
+	.long 0x413F0000
+	.long 0x00003FF8
+	.long 0x413F0000
+	.long 0x00004004
+	.long 0x41620000
+	.long 0x00004010
+	.long 0x41620000
+	.long 0x0000401C
+	.long 0x413F0000
+	.long 0x00004028
+	.long 0x41620000
+	.long 0x00004034
+	.long 0x41620000
+	.long 0x00004040
+	.long 0x413F0000
+	.long 0x00009964
+	.long 0xC3050000
+	.long 0x00009970
+	.long 0xC3050000
+	.long 0x0000997C
+	.long 0xC3050000
+	.long 0x00009988
+	.long 0xC3050000
+	.long 0x00009994
+	.long 0xC3050000
+	.long 0x000099A0
+	.long 0xC3050000
+	.long 0x000099AC
+	.long 0xC3050000
+	.long 0x00009B38
+	.long 0xC2FD0000
+	.long 0x00009C64
+	.long 0xC2B60000
+	.long 0x00009C94
+	.long 0xC2B60000
+	.long 0x00009CA0
+	.long 0xC2B60000
+	.long 0x00009CAC
+	.long 0xC2B60000
+	.long 0x00009CB8
+	.long 0xC2B60000
+	.long 0x00009CC4
+	.long 0xC2B60000
+	.long 0x00009CD0
+	.long 0xC2B60000
+	.long 0x00009CDC
+	.long 0xC2BD0000
+	.long 0x00009CE8
+	.long 0xC2BD0000
+	.long 0x00009CF4
+	.long 0xC2BD0000
+	.long 0x00009D00
+	.long 0xC2BD0000
+	.long 0x00009D0C
+	.long 0xC2BD0000
+	.long 0x00009D18
+	.long 0xC2BD0000
+	.long 0x00009D24
+	.long 0xC2BD0000
+	.long 0x00009D30
+	.long 0xC2D70000
+	.long 0x00009D3C
+	.long 0xC2FD0000
+	.long 0x00009D48
+	.long 0xC2FD0000
+	.long 0x00009D54
+	.long 0xC2D70000
+	.long 0x00009D60
+	.long 0xC2FD0000
+	.long 0x00009D6C
+	.long 0xC2FD0000
+	.long 0x00009D78
+	.long 0xC2D70000
+	.long 0x00009D84
+	.long 0xC2FD0000
+	.long 0x00009D90
+	.long 0xC2FD0000
+	.long 0x00009D9C
+	.long 0xC3040000
+	.long 0x00009DA8
+	.long 0xC2FD0000
+	.long 0x00009DB4
+	.long 0xC3040000
+	.long 0x00009DC0
+	.long 0xC2FD0000
+	.long 0x00009DCC
+	.long 0xC2FD0000
+	.long 0x00009DD8
+	.long 0xC3040000
+	.long 0x00009DE4
+	.long 0xC2FD0000
+	.long 0x00009DF0
+	.long 0xC2FD0000
+	.long 0x00009DFC
+	.long 0xC3040000
+	.long 0x00009E08
+	.long 0xC3040000
+	.long 0x00009E14
+	.long 0xC30A0000
+	.long 0x00009E20
+	.long 0xC30A0000
+	.long 0x00009E2C
+	.long 0xC30A0000
+	.long 0x00009E38
+	.long 0xC30A0000
+	.long 0x00009E44
+	.long 0xC30A0000
+	.long 0x00009E50
+	.long 0xC30A0000
+	.long 0x00009E5C
+	.long 0xC30A0000
+	.long 0x00009F40
+	.long 0xC2FD0000
+	.long 0x00009F88
+	.long 0xC3050000
+	.long 0x00009F94
+	.long 0xC3040000
+	.long 0x00009FA0
+	.long 0xC3050000
+	.long 0x00009FAC
+	.long 0xC30A0000
+	.long 0x00009FB8
+	.long 0xC30A0000
+	.long 0x00009FD0
+	.long 0xC30B0000
+	.long 0x00009FDC
+	.long 0xC3040000
+	.long 0x00009FE8
+	.long 0xC2FD0000
+	.long 0x0000A030
+	.long 0xC2FD0000
+	.long 0x0000A03C
+	.long 0xC2FD0000
+	.long 0x0000A048
+	.long 0xC3040000
+	.long 0x0000A054
+	.long 0xC3040000
+	.long 0x0000A114
+	.long 0xC30B0000
+	.long 0x0000A12C
+	.long 0xC30B0000
+	.long 0x0000A144
+	.long 0xC30B0000
+	.long 0x0000A15C
+	.long 0xC30B0000
+	.long 0x0000A168
+	.long 0xC30B0000
+	.long 0x0000A18C
+	.long 0xC30B0000
+	.long 0x0000A198
+	.long 0xC30B0000
+	.long 0x0000A1BC
+	.long 0xC30B0000
+	.long 0x0000AA38
+	.long 0xC2D70000
+	.long 0x0000AA5C
+	.long 0xC2D70000
+	.long 0x0000AB70
+	.long 0xC2FD0000
+	.long 0x0000AB7C
+	.long 0xC2D70000
+	.long 0x0000AB88
+	.long 0xC2D70000
+	.long 0x0000ABC4
+	.long 0xC2FD0000
+	.long 0x0000ABD0
+	.long 0xC2D70000
+	.long 0x0000ABDC
+	.long 0xC2D70000
+	.long 0x0002E6EC
+	.long 0x00000000
+	.long 0x0002E75C
+	.long 0x43000000
+	.long 0x0002E998
+	.long 0x46825FBE
+	.long 0x0002E9D8
+	.long 0x00000000
+	.long 0x0002EA54
+	.long 0x00000000
+	.long 0x0002EA58
+	.long 0xC3000000
+	.long 0x0002EA5C
+	.long 0x00000000
+	.long 0x0002EB58
+	.long 0xC33FDCD0
+	.long 0x0002EB94
+	.long 0x00000000
+	.long 0x0002EB98
+	.long 0x00000000
+	.long 0x0002EB9C
+	.long 0x00000000
+	.long 0x0002EBD4
+	.long 0x00000000
+	.long 0x0002EBD8
+	.long 0x00000000
+	.long 0x0002EBDC
+	.long 0x00000000
+	.long 0x0002EC14
+	.long 0x00000000
+	.long 0x0002EC18
+	.long 0x00000000
+	.long 0x0002EC1C
+	.long 0x00000000
+	.long 0x0002EC54
+	.long 0xC321D0BD
+	.long 0x0002EC58
+	.long 0x419C17BD
+	.long 0x0002EC5C
+	.long 0xBFAFE771
+	.long 0x0002ED5C
+	.long 0xC122BB88
+	.long 0x0002ED9C
+	.long 0xC122BB88
+	.long 0x0002EDDC
+	.long 0xC122BB88
+	.long 0x0002EE14
+	.long 0xC60637BD
+	.long 0x000306F4
+	.long 0x00000000
+	.long 0x000306F8
+	.long 0xC3000000
+	.long 0x000306FC
+	.long 0x00000000
+	.long 0x000307F4
+	.long 0x00000000
+	.long 0x000307F8
+	.long 0xC3000000
+	.long 0x000307FC
+	.long 0x00000000
+	.long 0x00030834
+	.long 0x00000000
+	.long 0x00030838
+	.long 0xC3000000
+	.long 0x0003083C
+	.long 0x00000000
+	.long 0x00030874
+	.long 0x00000000
+	.long 0x00030878
+	.long 0xC3000000
+	.long 0x0003087C
+	.long 0x00000000
+	.long 0x000308B4
+	.long 0xC218A6E6
+	.long 0x000308B8
+	.long 0x3F9A29D0
+	.long 0x000308BC
+	.long 0x41398B84
+	.long 0x000308F4
+	.long 0xC26CF2D0
+	.long 0x000308F8
+	.long 0x3F9A29D0
+	.long 0x000308FC
+	.long 0x41398B84
+	.long 0x00030934
+	.long 0xC2A0E1A7
+	.long 0x00030938
+	.long 0x3F9A29D0
+	.long 0x0003093C
+	.long 0x41398B84
+	.long 0x00030A34
+	.long 0x00000000
+	.long 0x00030A38
+	.long 0xC2330000
+	.long 0x00030A3C
+	.long 0x00000000
+	.long 0x00030A74
+	.long 0xC15C0000
+	.long 0x00030A78
+	.long 0xC2330000
+	.long 0x00030A7C
+	.long 0x00000000
+	.long 0x00030AB4
+	.long 0xC12D0000
+	.long 0x00030AB8
+	.long 0xC2090000
+	.long 0x00030ABC
+	.long 0x00000000
+	.long 0x00030AF4
+	.long 0xC0B847B2
+	.long 0x00030AF8
+	.long 0xC2090000
+	.long 0x00030AFC
+	.long 0x00000000
+	.long 0x00030B34
+	.long 0x00000000
+	.long 0x00030B38
+	.long 0xC3000000
+	.long 0x00030B3C
+	.long 0x00000000
+	.long 0x00030B74
+	.long 0x00000000
+	.long 0x00030B78
+	.long 0xC3000000
+	.long 0x00030B7C
+	.long 0x00000000
+	.long 0x00030BB4
+	.long 0x00000000
+	.long 0x00030BB8
+	.long 0xC3000000
+	.long 0x00030BBC
+	.long 0x00000000
+	.long 0x00036BB4
+	.long 0xC1000000
+	.long 0x00036BB8
+	.long 0x416065B4
+	.long 0x00036CE8
+	.long 0x3F4CCCCD
+	.long 0x0004AC40
+	.long 0x00000000
+	.long 0x0004AC44
+	.long 0x00000000
+	.long 0x0004AC48
+	.long 0x00000000
+	.long 0x0004AC4C
+	.long 0x00000000
+	.long 0x0004AC50
+	.long 0x00000000
+	.long 0x0004AC54
+	.long 0x00000000
+	.long 0x0004AC58
+	.long 0x00000000
+	.long 0x0004AC5C
+	.long 0x00000000
+	.long 0x0004AC60
+	.long 0x00000000
+	.long 0x0004AC64
+	.long 0x00000000
+	.long 0x0004AC68
+	.long 0x00000000
+	.long 0x0004AC6C
+	.long 0x00000000
+	.long 0x0004AC70
+	.long 0x00000000
+	.long 0x0004AC74
+	.long 0x00000000
+	.long 0x0004AC78
+	.long 0x00000000
+	.long 0x0004AC7C
+	.long 0x00000000
+	.long 0x0004AC80
+	.long 0x00000000
+	.long 0x0004AC84
+	.long 0x00000000
+	.long 0x0004AC88
+	.long 0x00000000
+	.long 0x0004AC8C
+	.long 0x00000000
+	.long 0x0004AC90
+	.long 0x00000000
+	.long 0x0004AC94
+	.long 0x00000000
+	.long 0x0004AC98
+	.long 0x00000000
+	.long 0x0004AC9C
+	.long 0x00000000
+	.long 0x0004ACA0
+	.long 0x00000000
+	.long 0x0004ACA4
+	.long 0x00000000
+	.long 0x0004ACA8
+	.long 0x00000000
+	.long 0x0004ACAC
+	.long 0x00000000
+	.long 0x0004ACB0
+	.long 0x00000000
+	.long 0x0004ACB4
+	.long 0x00000000
+	.long 0x0004ACB8
+	.long 0x00000000
+	.long 0x0004ACBC
+	.long 0x00000000
+	.long 0x0004ACC0
+	.long 0x00000000
+	.long 0x0004ACC4
+	.long 0x00000000
+	.long 0x0004ACC8
+	.long 0x00000000
+	.long 0x0004ACCC
+	.long 0x00000000
+	.long 0x0004ACD0
+	.long 0x00000000
+	.long 0x0004ACD4
+	.long 0x00000000
+	.long 0x0004ACD8
+	.long 0x00000000
+	.long 0x0004ACDC
+	.long 0x00000000
+	.long 0x0004ACE0
+	.long 0x00000000
+	.long 0x0004ACE4
+	.long 0x00000000
+	.long 0x0004ACE8
+	.long 0x00000000
+	.long 0x0004ACEC
+	.long 0x00000000
+	.long 0x0004ACF0
+	.long 0x00000000
+	.long 0x0004ACF4
+	.long 0x00000000
+	.long 0x0004ACF8
+	.long 0xC2A40000
+	.long 0x0004ACFC
+	.long 0xC3240000
+	.long 0x0004AD00
+	.long 0xC2A40000
+	.long 0x0004AD04
+	.long 0x3F000000
+	.long 0x0004AD08
+	.long 0x42530000
+	.long 0x0004AD0C
+	.long 0x3F000000
+	.long 0x0004AD10
+	.long 0x42530000
+	.long 0x0004AD14
+	.long 0xC3240000
+	.long 0x0004AD18
+	.long 0xC2870000
+	.long 0x0004AD1C
+	.long 0x3F000000
+	.long 0x0004AD20
+	.long 0x42110000
+	.long 0x0004AD24
+	.long 0x3F000000
+	.long 0x0004AD28
+	.long 0xC1DD0000
+	.long 0x0004AD2C
+	.long 0xC1370000
+	.long 0x0004AD30
+	.long 0x41EC0000
+	.long 0x0004AD34
+	.long 0xC13B0000
+	.long 0x0004AD38
+	.long 0x00000000
+	.long 0x0004AD3C
+	.long 0x00000000
+	.long 0x0004AD40
+	.long 0x00000000
+	.long 0x0004AD44
+	.long 0x00000000
+	.long 0x0004AD48
+	.long 0x00000000
+	.long 0x0004AD4C
+	.long 0x00000000
+	.long 0x0004AD50
+	.long 0x00000000
+	.long 0x0004AD54
+	.long 0x00000000
+	.long 0x0004AD58
+	.long 0x00000000
+	.long 0x0004AD5C
+	.long 0x00000000
+	.long 0x0004AD60
+	.long 0x00000000
+	.long 0x0004AD64
+	.long 0x00000000
+	.long 0x0004AD68
+	.long 0x00000000
+	.long 0x0004AD6C
+	.long 0x00000000
+	.long 0x0004AD70
+	.long 0x00000000
+	.long 0x0004AD74
+	.long 0x00000000
+	.long 0x0004AD78
+	.long 0x00000000
+	.long 0x0004AD7C
+	.long 0x00000000
+	.long 0x0004AD80
+	.long 0x00000000
+	.long 0x0004AD84
+	.long 0x00000000
+	.long 0x0004AD88
+	.long 0x00000000
+	.long 0x0004AD8C
+	.long 0x00000000
+	.long 0x0004AD90
+	.long 0x00000000
+	.long 0x0004AD94
+	.long 0x00000000
+	.long 0x0004AD98
+	.long 0x00000000
+	.long 0x0004AD9C
+	.long 0x00000000
+	.long 0x0004ADA0
+	.long 0x00000000
+	.long 0x0004ADA4
+	.long 0x00000000
+	.long 0x0004ADA8
+	.long 0x00000000
+	.long 0x0004ADAC
+	.long 0x00000000
+	.long 0x0004ADBC
+	.long 0x00010000
+	.long 0x0004AE0C
+	.long 0x00010000
+	.long 0x0004AE1C
+	.long 0x00010000
+	.long 0x0004AE6C
+	.long 0x00010000
+	.long 0x0004AFDC
+	.long 0x00040600
+	.long 0x0004B03C
+	.long 0x00080600
+	.long 0x0004B054
+	.long 0xC43316A1
+	.long 0x0004B05C
+	.long 0x44720000
+	.long 0x0004B07C
+	.long 0xC40001B7
+	.long 0x0004B084
+	.long 0x444FB886
+	.long 0x0004B0A4
+	.long 0xC4900000
+	.long 0x0004B0AC
+	.long 0x44050000
+	.long 0x0004B0B0
+	.long 0x432FFEC6
+	.long 0x0004B0CC
+	.long 0xC40E8F42
+	.long 0x0004B0D4
+	.long 0x4416D26E
+	.long 0x0004B0F4
+	.long 0xC48087C8
+	.long 0x0004B0FC
+	.long 0x448087C8
+	.long 0x0004B398
+	.long 0x00000082
+	.long 0x0004B3A8
+	.long 0x3D99999A
+	.long 0x0004B3B4
+	.long 0x3F99999A
+	.long 0x0004B3DC
+	.long 0xC1400000
+	.long 0x0004B3E0
+	.long 0x42960000
+	.long 0x0004B3E8
+	.long 0x41500000
+	.long 0x0004B478
+	.long 0x0000003C
+	.long 0x0004B47C
+	.long 0x00000000
+	.long 0x0004B480
+	.long 0x00000000
+	.long 0x0004B484
+	.long 0x00000000
+	.long 0x0004B488
+	.long 0x00000000
+	.long 0x0004B48C
+	.long 0x00000000
+	.long 0x0004B490
+	.long 0x00000000
+	.long 0x0004B494
+	.long 0x00000000
+	.long 0x0004B498
+	.long 0x00000000
+	.long 0x0004B4A0
+	.long 0x7F7F012C
+	.long 0x0004B73C
+	.long 0xC1000000
+	.long 0x0004B778
+	.long 0xC16A0000
+	.long 0x0004B7B8
+	.long 0xC32CFFFE
+	.long 0x0004B7BC
+	.long 0x43020000
+	.long 0x0004B7F8
+	.long 0x431CFFFE
+	.long 0x0004B7FC
+	.long 0xC24CE2D2
+	.long 0x0004B838
+	.long 0xC35F999C
+	.long 0x0004B878
+	.long 0x434F999C
+	.long 0x0004B87C
+	.long 0xC2CBC2D1
+	.long 0x0004BAB8
+	.long 0xC28D0000
+	.long 0x0004BABC
+	.long 0x41500000
+	.long 0x0004BAF8
+	.long 0x42250000
+	.long 0x0004BAFC
+	.long 0x41500000
+	.long 0x0004BB38
+	.long 0x41800000
+	.long 0x0004BB3C
+	.long 0x41500000
+	.long 0x0004BB78
+	.long 0xC2350000
+	.long 0x0004BB7C
+	.long 0x41500000
+	.long 0x0004BBBC
+	.long 0x42600000
+	.long 0xFFFFFFFF
+	.long 0x000026D8
+	.long 0xFE2A0191
+	.long 0x00002738
+	.long 0x01900191
+	.long 0x000028F0
+	.long 0x034CFE79
+	.long 0x000028FC
+	.long 0x0392FE79
+	.long 0x00002908
+	.long 0x034CFE79
+	.long 0x0000298C
+	.long 0x03520137
+	.long 0x000029F8
+	.long 0x04780137
+	.long 0x00002A80
+	.long 0x0073FFC0
+	.long 0x00002A9C
+	.long 0x00080073
+	.long 0x00002AE4
+	.long 0x00560073
+	.long 0x00012514
+	.long 0x41F00000
+	.long 0x00012518
+	.long 0xC4900000
+	.long 0x0001251C
+	.long 0xC0600000
+	.long 0x00012558
+	.long 0x40FBC9BA
+	.long 0x00012598
+	.long 0xC40BC9BA
+	.long 0x000125D4
+	.long 0x42A79997
+	.long 0x000125DC
+	.long 0xC1B3332B
+	.long 0x00012658
+	.long 0xC24A3021
+	.long 0x0006B494
+	.long 0xC2E889C7
+	.long 0x0006B498
+	.long 0xC000645A
+	.long 0x0006B49C
+	.long 0xC2E889C7
+	.long 0x0006B4A0
+	.long 0x412A6BBA
+	.long 0x0006B4A4
+	.long 0x420A76C9
+	.long 0x0006B4A8
+	.long 0x412A6BBA
+	.long 0x0006B4AC
+	.long 0x420A76C9
+	.long 0x0006B4B0
+	.long 0xC000645A
+	.long 0x0006B4B4
+	.long 0x00000000
+	.long 0x0006B4B8
+	.long 0x00000000
+	.long 0x0006B4BC
+	.long 0x00000000
+	.long 0x0006B4C0
+	.long 0x00000000
+	.long 0x0006B4C4
+	.long 0x00000000
+	.long 0x0006B4C8
+	.long 0x00000000
+	.long 0x0006B4CC
+	.long 0x00000000
+	.long 0x0006B4D0
+	.long 0x00000000
+	.long 0x0006B4D4
+	.long 0x00000000
+	.long 0x0006B4D8
+	.long 0x00000000
+	.long 0x0006B4DC
+	.long 0x00000000
+	.long 0x0006B4E0
+	.long 0x00000000
+	.long 0x0006B4E4
+	.long 0x00000000
+	.long 0x0006B4E8
+	.long 0x00000000
+	.long 0x0006B4EC
+	.long 0x00000000
+	.long 0x0006B4F0
+	.long 0x00000000
+	.long 0x0006B9A8
+	.long 0xC3EAB611
+	.long 0x0006B9B0
+	.long 0x43F0DAEE
+	.long 0x0006B9B4
+	.long 0x4350CE70
+	.long 0x0006B9D0
+	.long 0xC335B405
+	.long 0x0006B9D8
+	.long 0x4335B405
+	.long 0x0006B9DC
+	.long 0x432F084B
+	.long 0x0006B9F8
+	.long 0xC3C2FE9E
+	.long 0x0006BA00
+	.long 0x4367DBA6
+	.long 0x0006BA04
+	.long 0x432EE7BB
+	.long 0x0006BA20
+	.long 0xC3D31412
+	.long 0x0006BA28
+	.long 0x43D31412
+	.long 0x0006BA2C
+	.long 0x436CCCCD
+	.long 0x0006BA48
+	.long 0xC3D31412
+	.long 0x0006BA50
+	.long 0x43D31412
+	.long 0x0006BA54
+	.long 0x43580000
+	.long 0x0006BA70
+	.long 0xC37E7C1C
+	.long 0x0006BA78
+	.long 0x437E7C1C
+	.long 0x0006BA7C
+	.long 0x43DC0000
+	.long 0x0006BA98
+	.long 0xC357A162
+	.long 0x0006BAA0
+	.long 0x43F2F1AA
+	.long 0x0006BAA4
+	.long 0x435AB5DD
+	.long 0x0006BAC0
+	.long 0xC3F889C7
+	.long 0x0006BAC8
+	.long 0x439E76C9
+	.long 0x0006BACC
+	.long 0x4335F41F
+	.long 0x000766D8
+	.long 0x42CD0000
+	.long 0x000766DC
+	.long 0x42CD0000
+	.long 0x000766E0
+	.long 0x42CD0000
+	.long 0x000766E4
+	.long 0xC2F30000
+	.long 0x000766E8
+	.long 0xC2F30000
+	.long 0x0008E8F0
+	.long 0xC3840000
+	.long 0x0008E930
+	.long 0x435A0000
+	.long 0x0008E970
+	.long 0xC3A60000
+	.long 0x0008E9B0
+	.long 0x438C0000
+	.long 0x0008EBF4
+	.long 0x41920000
+	.long 0x0008EC30
+	.long 0x42BCCCCD
+	.long 0x0008EC70
+	.long 0xC284000F
+	.long 0x0008EC74
+	.long 0x41920004
+	.long 0x0008ECB0
+	.long 0x00000000
+	.long 0x0008ECB4
+	.long 0x41920000
+	.long 0x0008ECF4
+	.long 0x425C0004
+	.long 0x00012548
+	.long 0x3FD9999A
+	.long 0x00012554
+	.long 0x41200000
+	.long 0x00012648
+	.long 0x3F3AE148
+	.long 0x00012654
+	.long 0x40800000
+	.long 0x00012618
+	.long 0xC3480000
+	.long 0x000125D8
+	.long 0xC3480000
+	.long 0xFFFFFFFF
+	.long 0x00020DEC
+	.long 0x00000000
+	.long 0x00020E2C
+	.long 0x00000000
+	.long 0x00020E54
+	.long 0xC2AB0000
+	.long 0x00020E58
+	.long 0x00200000
+	.long 0x00020E6C
+	.long 0x00000000
+	.long 0x00020E94
+	.long 0x42AB0000
+	.long 0x00020E98
+	.long 0x00200000
+	.long 0x00020F14
+	.long 0xC6820000
+	.long 0x00020F18
+	.long 0xC6700000
+	.long 0x00020F54
+	.long 0xC6AA0000
+	.long 0x00020F58
+	.long 0xC6700000
+	.long 0x00020F94
+	.long 0xC6960000
+	.long 0x00020F98
+	.long 0xC0700000
+	.long 0x00020FD4
+	.long 0xC6820000
+	.long 0x00020FD8
+	.long 0xC0700000
+	.long 0x00021014
+	.long 0xC6820000
+	.long 0x00021018
+	.long 0xC0C80000
+	.long 0x00021054
+	.long 0xC6960000
+	.long 0x00021058
+	.long 0xC0C80000
+	.long 0x00021094
+	.long 0xC6AA0000
+	.long 0x00021098
+	.long 0xC0C80000
+	.long 0x000210D4
+	.long 0x46820000
+	.long 0x000210D8
+	.long 0x46C80000
+	.long 0x00021114
+	.long 0x46960000
+	.long 0x00021118
+	.long 0x46C80000
+	.long 0x00021154
+	.long 0x40AA0000
+	.long 0x00021158
+	.long 0x40C80000
+	.long 0x00021194
+	.long 0x40AA0000
+	.long 0x00021198
+	.long 0x40700000
+	.long 0x000211D4
+	.long 0xC6960000
+	.long 0x000211D8
+	.long 0xC0700000
+	.long 0x00021214
+	.long 0x40960000
+	.long 0x00021218
+	.long 0x40700000
+	.long 0x00021254
+	.long 0x40820000
+	.long 0x00021258
+	.long 0x40700000
+	.long 0x000216D4
+	.long 0xC2740000
+	.long 0x000216D8
+	.long 0x00000000
+	.long 0x00021714
+	.long 0x42740000
+	.long 0x00021718
+	.long 0x00000000
+	.long 0x00056434
+	.long 0x00000000
+	.long 0x00056438
+	.long 0x46000000
+	.long 0x0005643C
+	.long 0x00000000
+	.long 0x00056440
+	.long 0x46000000
+	.long 0x00056444
+	.long 0x00000000
+	.long 0x00056448
+	.long 0x46000000
+	.long 0x0005644C
+	.long 0x00000000
+	.long 0x00056450
+	.long 0x46000000
+	.long 0x00056454
+	.long 0x00000000
+	.long 0x00056458
+	.long 0x46000000
+	.long 0x0005645C
+	.long 0x00000000
+	.long 0x00056460
+	.long 0x46000000
+	.long 0x00056464
+	.long 0x00000000
+	.long 0x00056468
+	.long 0x46000000
+	.long 0x0005646C
+	.long 0x00000000
+	.long 0x00056470
+	.long 0x46000000
+	.long 0x00056474
+	.long 0x00000000
+	.long 0x00056478
+	.long 0x46000000
+	.long 0x0005647C
+	.long 0x00000000
+	.long 0x00056480
+	.long 0x46000000
+	.long 0x00056484
+	.long 0x00000000
+	.long 0x00056488
+	.long 0x46000000
+	.long 0x0005648C
+	.long 0x00000000
+	.long 0x00056490
+	.long 0x46000000
+	.long 0x00056494
+	.long 0x00000000
+	.long 0x00056498
+	.long 0x46000000
+	.long 0x0005649C
+	.long 0x00000000
+	.long 0x000564A0
+	.long 0x46000000
+	.long 0x000564A4
+	.long 0x00000000
+	.long 0x000564A8
+	.long 0x46000000
+	.long 0x000564AC
+	.long 0x00000000
+	.long 0x000564B0
+	.long 0x46000000
+	.long 0x000564B4
+	.long 0x00000000
+	.long 0x000564B8
+	.long 0x46000000
+	.long 0x000564BC
+	.long 0x00000000
+	.long 0x000564C0
+	.long 0x46000000
+	.long 0x000564C4
+	.long 0x00000000
+	.long 0x000564C8
+	.long 0x46000000
+	.long 0x000564CC
+	.long 0x00000000
+	.long 0x000564D0
+	.long 0x46000000
+	.long 0x000564D4
+	.long 0x00000000
+	.long 0x000564D8
+	.long 0x46000000
+	.long 0x000564DC
+	.long 0x00000000
+	.long 0x000564E0
+	.long 0x46000000
+	.long 0x000564E4
+	.long 0xC2DB0000
+	.long 0x000564EC
+	.long 0xC2A00000
+	.long 0x00056504
+	.long 0xC2DF0000
+	.long 0x00056508
+	.long 0x00000000
+	.long 0x0005650C
+	.long 0x42DE0000
+	.long 0x00056514
+	.long 0x42D40000
+	.long 0x0005651C
+	.long 0x42DE0000
+	.long 0x00056520
+	.long 0x00000000
+	.long 0x00056534
+	.long 0x42D40000
+	.long 0x0005653C
+	.long 0xC2DB0000
+	.long 0x00056544
+	.long 0xC2DF0000
+	.long 0x0005654C
+	.long 0xC2CB0000
+	.long 0x00056554
+	.long 0x42C40000
+	.long 0x0005655C
+	.long 0x00000000
+	.long 0x00056560
+	.long 0x46000000
+	.long 0x00056564
+	.long 0x00000000
+	.long 0x00056568
+	.long 0x46000000
+	.long 0x0005656C
+	.long 0x42990000
+	.long 0x00058FE0
+	.long 0x7F7F0320
+	.long 0x00058FE4
+	.long 0x7F7F0708
+	.long 0x00058FE8
+	.long 0x0000C28F
+	.long 0x00059038
+	.long 0x000404A3
+	.long 0x0005A5FC
+	.long 0x43A58000
+	.long 0x0005A63C
+	.long 0xC3A50000
+	.long 0x0005A640
+	.long 0x437A0000
+	.long 0x0005A8BC
+	.long 0xC22AAAAB
+	.long 0x0005A8C0
+	.long 0x42200000
+	.long 0x0005A8FC
+	.long 0x422AAAAB
+	.long 0x0005A900
+	.long 0x42200000
+	.long 0x0005A93C
+	.long 0x42B15555
+	.long 0x0005A940
+	.long 0x40A00000
+	.long 0x0005A97C
+	.long 0xC2B15555
+	.long 0x0005A980
+	.long 0x40A00000
+	.long 0xFFFFFFFF
+	.long 0x0001458C
+	.long 0x80000000
+	.long 0x000147EC
+	.long 0x80000000
+	.long 0x000148EC
+	.long 0x80000000
+	.long 0x00014AAC
+	.long 0x80000000
+	.long 0x00014BAC
+	.long 0x80000000
+	.long 0x00014D4C
+	.long 0x80000000
+	.long 0x00014F0C
+	.long 0x80000000
+	.long 0x0001500C
+	.long 0x80000000
+	.long 0x000151AC
+	.long 0x80000000
+	.long 0x00025228
+	.long 0x3F800000
+	.long 0x0002522C
+	.long 0x3F800000
+	.long 0x00025230
+	.long 0x3F800000
+	.long 0x00025234
+	.long 0xC1C00000
+	.long 0x00025238
+	.long 0x00000000
+	.long 0x0002523C
+	.long 0xC2700000
+	.long 0x00025268
+	.long 0x00000000
+	.long 0x0002526C
+	.long 0x00000000
+	.long 0x00025270
+	.long 0x00000000
+	.long 0x00025274
+	.long 0x00000000
+	.long 0x00025278
+	.long 0x00000000
+	.long 0x0002527C
+	.long 0x00000000
+	.long 0x000252A8
+	.long 0x00000000
+	.long 0x000252AC
+	.long 0x00000000
+	.long 0x000252B0
+	.long 0x00000000
+	.long 0x000252B4
+	.long 0x00000000
+	.long 0x000252B8
+	.long 0x00000000
+	.long 0x000252BC
+	.long 0x00000000
+	.long 0x000252E8
+	.long 0x00000000
+	.long 0x000252EC
+	.long 0x00000000
+	.long 0x000252F0
+	.long 0x00000000
+	.long 0x000252F4
+	.long 0x00000000
+	.long 0x000252F8
+	.long 0x00000000
+	.long 0x000252FC
+	.long 0x00000000
+	.long 0x00025374
+	.long 0x422A0000
+	.long 0x00025378
+	.long 0xC3000000
+	.long 0x0002537C
+	.long 0xC3000000
+	.long 0x000253AC
+	.long 0x3F000000
+	.long 0x000253B4
+	.long 0xC2C80000
+	.long 0x000253B8
+	.long 0xC4C80000
+	.long 0x000253EC
+	.long 0x3F000000
+	.long 0x000253F4
+	.long 0xC2B40000
+	.long 0x000253F8
+	.long 0xC4C80000
+	.long 0x0002542C
+	.long 0x3F000000
+	.long 0x00025434
+	.long 0xC2A00000
+	.long 0x00025438
+	.long 0xC4C80000
+	.long 0x0002546C
+	.long 0x3F000000
+	.long 0x00025474
+	.long 0xC28C0000
+	.long 0x00025478
+	.long 0xC4C80000
+	.long 0x000254AC
+	.long 0x3F000000
+	.long 0x000254B4
+	.long 0xC2700000
+	.long 0x000254B8
+	.long 0xC4C80000
+	.long 0x000254EC
+	.long 0x3F000000
+	.long 0x000254F4
+	.long 0xC2480000
+	.long 0x000254F8
+	.long 0xC4C80000
+	.long 0x0002552C
+	.long 0x3F000000
+	.long 0x00025534
+	.long 0xC2200000
+	.long 0x00025538
+	.long 0xC4C80000
+	.long 0x0002556C
+	.long 0x3F000000
+	.long 0x00025574
+	.long 0xC1F00000
+	.long 0x00025578
+	.long 0xC4C80000
+	.long 0x000255AC
+	.long 0x3F000000
+	.long 0x000255B4
+	.long 0xC1F00000
+	.long 0x000255B8
+	.long 0xC3A00000
+	.long 0x000256A8
+	.long 0x3E800000
+	.long 0x000256AC
+	.long 0x3E800000
+	.long 0x000256B0
+	.long 0x3E800000
+	.long 0x000256B4
+	.long 0x00000000
+	.long 0x000256B8
+	.long 0x41C80000
+	.long 0x000256BC
+	.long 0xC1F00000
+	.long 0x000257A8
+	.long 0x3E19999A
+	.long 0x000257AC
+	.long 0x3E19999A
+	.long 0x000257B0
+	.long 0x3E19999A
+	.long 0x000257B8
+	.long 0x41200000
+	.long 0x000257BC
+	.long 0xC1700000
+	.long 0x0002B8DC
+	.long 0x00000000
+	.long 0x0002B900
+	.long 0xC1C80000
+	.long 0x0002B904
+	.long 0x41DC0000
+	.long 0x0002B910
+	.long 0xC2D20000
+	.long 0x0002B914
+	.long 0x41DC0000
+	.long 0x0002BA38
+	.long 0x000A000B
+	.long 0x0002BA3C
+	.long 0x002B0005
+	.long 0x0002BA48
+	.long 0x00060007
+	.long 0x0002BA4C
+	.long 0xFFFFFFFF
+	.long 0x0002BA54
+	.long 0x00000000
+	.long 0x0002BA5C
+	.long 0xFFFFFFFF
+	.long 0x0002BA64
+	.long 0x00000100
+	.long 0x0002BA68
+	.long 0x00060007
+	.long 0x0002BA6C
+	.long 0xFFFFFFFF
+	.long 0x0002BA74
+	.long 0x00000000
+	.long 0x0002BA78
+	.long 0x00060007
+	.long 0x0002BA7C
+	.long 0xFFFFFFFF
+	.long 0x0002BA84
+	.long 0x00000000
+	.long 0x0002BA8C
+	.long 0x0000001F
+	.long 0x0002BAA4
+	.long 0x00010002
+	.long 0x0002BAB4
+	.long 0x00000102
+	.long 0x0002BAC4
+	.long 0x00000103
+	.long 0x0002BAD4
+	.long 0x00000102
+	.long 0x0002BAE4
+	.long 0x00000100
+	.long 0x0002BAF4
+	.long 0x00000100
+	.long 0x0002BB04
+	.long 0x00000100
+	.long 0x0002BB14
+	.long 0x00000100
+	.long 0x0002BB24
+	.long 0x00000100
+	.long 0x0002BB34
+	.long 0x00000100
+	.long 0x0002BB44
+	.long 0x00000100
+	.long 0x0002BB54
+	.long 0x00000100
+	.long 0x0002BB64
+	.long 0x00000100
+	.long 0x0002BB7C
+	.long 0xFFFFFFFF
+	.long 0x0002BB84
+	.long 0x00000000
+	.long 0x0002BB8C
+	.long 0xFFFFFFFF
+	.long 0x0002BB94
+	.long 0x00000000
+	.long 0x0002BB9C
+	.long 0xFFFFFFFF
+	.long 0x0002BBA0
+	.long 0xFFFFFFFF
+	.long 0x0002BBA4
+	.long 0x00000000
+	.long 0x0002BBAC
+	.long 0xFFFFFFFF
+	.long 0x0002BBB0
+	.long 0xFFFFFFFF
+	.long 0x0002BBB4
+	.long 0x00000000
+	.long 0x0002BBBC
+	.long 0xFFFFFFFF
+	.long 0x0002BBC0
+	.long 0xFFFFFFFF
+	.long 0x0002BBC4
+	.long 0x00000000
+	.long 0x0002BBCC
+	.long 0xFFFFFFFF
+	.long 0x0002BBD0
+	.long 0xFFFFFFFF
+	.long 0x0002BBD4
+	.long 0x00000000
+	.long 0x0002BBDC
+	.long 0xFFFFFFFF
+	.long 0x0002BBE0
+	.long 0xFFFFFFFF
+	.long 0x0002BBE4
+	.long 0x00000000
+	.long 0x0002BBEC
+	.long 0xFFFFFFFF
+	.long 0x0002BBF0
+	.long 0xFFFFFFFF
+	.long 0x0002BBF4
+	.long 0x00000000
+	.long 0x0002BBFC
+	.long 0xFFFFFFFF
+	.long 0x0002BC00
+	.long 0xFFFFFFFF
+	.long 0x0002BC04
+	.long 0x00000000
+	.long 0x0002BC0C
+	.long 0xFFFFFFFF
+	.long 0x0002BC10
+	.long 0xFFFFFFFF
+	.long 0x0002BC14
+	.long 0x00000000
+	.long 0x0002BC1C
+	.long 0xFFFFFFFF
+	.long 0x0002BC20
+	.long 0xFFFFFFFF
+	.long 0x0002BC24
+	.long 0x00000000
+	.long 0x0002BC34
+	.long 0x00040600
+	.long 0x0002BC3C
+	.long 0xFFFFFFFF
+	.long 0x0002BC44
+	.long 0x00000000
+	.long 0x0002BC4C
+	.long 0xFFFFFFFF
+	.long 0x0002BC54
+	.long 0x00000000
+	.long 0x0002BC5C
+	.long 0xFFFFFFFF
+	.long 0x0002BC64
+	.long 0x00000000
+	.long 0x0002BC6C
+	.long 0xFFFFFFFF
+	.long 0x0002BC74
+	.long 0x00000000
+	.long 0x0002BC7C
+	.long 0xFFFFFFFF
+	.long 0x0002BC84
+	.long 0x00000000
+	.long 0x0002BC8C
+	.long 0xFFFFFFFF
+	.long 0x0002BC94
+	.long 0x00000000
+	.long 0x0002BC9C
+	.long 0xFFFFFFFF
+	.long 0x0002BCA4
+	.long 0x00000000
+	.long 0x0002BCAC
+	.long 0xFFFFFFFF
+	.long 0x0002BCB4
+	.long 0x00000000
+	.long 0x0002BCBC
+	.long 0xFFFFFFFF
+	.long 0x0002BCC4
+	.long 0x00000000
+	.long 0x0002BCCC
+	.long 0xFFFFFFFF
+	.long 0x0002BCD4
+	.long 0x00000000
+	.long 0x0002BCDC
+	.long 0xFFFFFFFF
+	.long 0x0002BCE4
+	.long 0x00000000
+	.long 0x0002BCF4
+	.long 0x00080600
+	.long 0x0002BCFC
+	.long 0xFFFFFFFF
+	.long 0x0002BD04
+	.long 0x00000000
+	.long 0x0002BD0C
+	.long 0xFFFFFFFF
+	.long 0x0002BD14
+	.long 0x00000000
+	.long 0x0002BD1C
+	.long 0xFFFFFFFF
+	.long 0x0002BD24
+	.long 0x00000000
+	.long 0x0002BD2C
+	.long 0xFFFFFFFF
+	.long 0x0002BD34
+	.long 0x00000000
+	.long 0x0002BD3C
+	.long 0xFFFFFFFF
+	.long 0x0002BD44
+	.long 0x00000000
+	.long 0x0002BD4C
+	.long 0xFFFFFFFF
+	.long 0x0002BD54
+	.long 0x00000000
+	.long 0x0002BD5C
+	.long 0xFFFFFFFF
+	.long 0x0002BD64
+	.long 0x00000000
+	.long 0x0002BD6C
+	.long 0xFFFFFFFF
+	.long 0x0002BD74
+	.long 0x00000000
+	.long 0x0002BD7C
+	.long 0xFFFFFFFF
+	.long 0x0002BD84
+	.long 0x00000000
+	.long 0x0002BD8C
+	.long 0xFFFFFFFF
+	.long 0x0002BD94
+	.long 0x00000000
+	.long 0x0002BDAC
+	.long 0xC3E3D37A
+	.long 0x0002BDB4
+	.long 0xC1200000
+	.long 0x0002C1AC
+	.long 0x3F933334
+	.long 0x0002C1C4
+	.long 0x3D4CCCCD
+	.long 0x0002C1C8
+	.long 0x3D4CCCCD
+	.long 0x0002C1CC
+	.long 0x3FA00000
+	.long 0x0002C1D0
+	.long 0x3FA00000
+	.long 0x0002C1D4
+	.long 0x3FC00000
+	.long 0x0002C1FC
+	.long 0xC2958000
+	.long 0x0002C204
+	.long 0x43D48000
+	.long 0x0002C444
+	.long 0xC2800000
+	.long 0x0002C4C4
+	.long 0xC2F990B2
+	.long 0x0002C504
+	.long 0x42E590B2
+	.long 0x0002C508
+	.long 0xC23C0000
+	.long 0x0002C548
+	.long 0xC2B40000
+	.long 0x0002C588
+	.long 0x43380000
+	.long 0x0002C844
+	.long 0xC2140000
+	.long 0x0002C848
+	.long 0x40C2C859
+	.long 0x0002C888
+	.long 0x40C2C859
+	.long 0x0002C8C4
+	.long 0x418BD37A
+	.long 0x0002C8C8
+	.long 0x40C2C859
+	.long 0x0002C904
+	.long 0xC19BD37A
+	.long 0x0002C908
+	.long 0x40C2C859
+	.long 0x0002C948
+	.long 0x421C8591
+	.long 0x0002C988
+	.long 0x421C8591
+	.long 0x0002C9C8
+	.long 0x421C8591
+	.long 0x0002CA08
+	.long 0x421C8591
+	.long 0xFFFFFFFF
+	.long 0x0000C0F8
+	.long 0xC60C0000
+	.long 0x0000C238
+	.long 0xC6340000
+	.long 0x0000C278
+	.long 0xC6340000
+	.long 0x0000C2B8
+	.long 0xC6340000
+	.long 0x0000C2F8
+	.long 0xC6340000
+	.long 0x0000C338
+	.long 0xC6340000
+	.long 0x0000C378
+	.long 0xC6340000
+	.long 0x0000C3B8
+	.long 0xC60C0000
+	.long 0x0000C3F8
+	.long 0xC60C0000
+	.long 0x0000C438
+	.long 0xC60C0000
+	.long 0x0000C478
+	.long 0xC60C0000
+	.long 0x0000C4B8
+	.long 0xC60C0000
+	.long 0x0000C4F8
+	.long 0xC60C0000
+	.long 0x0000C5B8
+	.long 0xC2720000
+	.long 0x0000C664
+	.long 0xC2A20000
+	.long 0x0000C668
+	.long 0x430D0000
+	.long 0x0000C6D4
+	.long 0x42A20000
+	.long 0x0000C6D8
+	.long 0x430D0000
+	.long 0x0000C744
+	.long 0x42A20000
+	.long 0x0000C824
+	.long 0xC2A20000
+	.long 0x0000ECDC
+	.long 0x00000000
+	.long 0x0000ECE4
+	.long 0x00000000
+	.long 0x0000ECE8
+	.long 0x00000000
+	.long 0x0000ECEC
+	.long 0x00000000
+	.long 0x0000ECF4
+	.long 0x00000000
+	.long 0x0000ECF8
+	.long 0x00000000
+	.long 0x0000ECFC
+	.long 0x00000000
+	.long 0x0000ED04
+	.long 0x00000000
+	.long 0x0000ED0C
+	.long 0x00000000
+	.long 0x0000ED10
+	.long 0x00000000
+	.long 0x0000ED14
+	.long 0x00000000
+	.long 0x0000ED1C
+	.long 0x00000000
+	.long 0x0000ED20
+	.long 0x00000000
+	.long 0x0000ED24
+	.long 0x00000000
+	.long 0x0000FDAC
+	.long 0x41A00000
+	.long 0x00010374
+	.long 0xC21C0000
+	.long 0x000103B4
+	.long 0x421C0000
+	.long 0xFFFFFFFF
+	.long 0x00001560
+	.long 0x31E8FEFF
+	.long 0x00001568
+	.long 0x03050003
+	.long 0x00009DB4
+	.long 0xC67F0000
+	.long 0x00009E34
+	.long 0x467F0000
+	.long 0x00012AB4
+	.long 0xC2F20000
+	.long 0x00013034
+	.long 0x42F20000
+	.long 0x00013210
+	.long 0x00000000
+	.long 0x00013214
+	.long 0x00000000
+	.long 0x00013218
+	.long 0x00000000
+	.long 0x0001321C
+	.long 0x00000000
+	.long 0x00013220
+	.long 0x00000000
+	.long 0x00013224
+	.long 0x00000000
+	.long 0x00013228
+	.long 0x00000000
+	.long 0x0001322C
+	.long 0x00000000
+	.long 0x00013230
+	.long 0x00000000
+	.long 0x00013234
+	.long 0x00000000
+	.long 0x00013238
+	.long 0x42D40000
+	.long 0x00013240
+	.long 0x42D40000
+	.long 0x00013248
+	.long 0x00000000
+	.long 0x0001324C
+	.long 0x00000000
+	.long 0x00013250
+	.long 0x00000000
+	.long 0x00013254
+	.long 0x00000000
+	.long 0x00013258
+	.long 0x00000000
+	.long 0x0001325C
+	.long 0x00000000
+	.long 0x00013260
+	.long 0x00000000
+	.long 0x00013264
+	.long 0x00000000
+	.long 0x00013268
+	.long 0x00000000
+	.long 0x0001326C
+	.long 0x00000000
+	.long 0x00013278
+	.long 0xC2D40000
+	.long 0x00013280
+	.long 0xC2D40000
+	.long 0x00015F54
+	.long 0xC3460000
+	.long 0x00015F94
+	.long 0x43480000
+	.long 0x00015FD4
+	.long 0xC3960000
+	.long 0x00016014
+	.long 0x43960000
+	.long 0x00009DE8
+	.long 0x40166666
+	.long 0x00009EA8
+	.long 0x40200000
+	.long 0x00009E68
+	.long 0x40200000
+	.long 0xFFFFFFFF
+	.long 0x3C608047
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x042021DC
+	.long 0x38A00000
+	.long 0x0445c388
+	.long 0xe76328b5
+	.long 0x041cd638
+	.long 0x60000000
+	.long 0x041cd640
+	.long 0x60000000
+	.long -1
+
 Widescreen_Off:
 	.long 0x043BB05C
 	.long 0x3FAAAAAA
@@ -4465,6 +7283,86 @@ GameVersion_Description:
 	.long 0x36202c20
 	.long 0x32203120
 	.long 0x3620e719
+	.long 0x0F0D0000
+StageExpansion_Description:
+	.long 0x160cffff
+	.long 0xff0e0085
+	.long 0x00b31220
+	.long 0x16203220
+	.long 0x27202c20
+	.long 0x29203c1a
+	.long 0x202c202f
+	.long 0x202f2028
+	.long 0x202a2024
+	.long 0x202f1a20
+	.long 0x36203720
+	.long 0x24202a20
+	.long 0x2820361a
+	.long 0x20372032
+	.long 0x1a202520
+	.long 0x281a2037
+	.long 0x20322038
+	.long 0x20352031
+	.long 0x20242030
+	.long 0x20282031
+	.long 0x20371a20
+	.long 0x2f202820
+	.long 0x2a202420
+	.long 0x2f20e71a
+	.long 0x200a2027
+	.long 0x202d2038
+	.long 0x20362037
+	.long 0x20361a20
+	.long 0x13203820
+	.long 0x31202a20
+	.long 0x2f202803
+	.long 0x20132024
+	.long 0x20332028
+	.long 0x203620e6
+	.long 0x1a200f20
+	.long 0x32203820
+	.long 0x35203620
+	.long 0x2c202720
+	.long 0x2820e61a
+	.long 0x20192028
+	.long 0x20242026
+	.long 0x202b20f3
+	.long 0x20361a20
+	.long 0x0c202420
+	.long 0x36203720
+	.long 0x2f202820
+	.long 0xe61a2010
+	.long 0x20352028
+	.long 0x20242037
+	.long 0x1a200b20
+	.long 0x24203c20
+	.long 0xe61a2010
+	.long 0x20352028
+	.long 0x20282031
+	.long 0x1a201020
+	.long 0x35202820
+	.long 0x28203120
+	.long 0x3620e603
+	.long 0x20222032
+	.long 0x2036202b
+	.long 0x202c20f3
+	.long 0x20361a20
+	.long 0x12203620
+	.long 0x2f202420
+	.long 0x31202720
+	.long 0xe61a2024
+	.long 0x20312027
+	.long 0x1a201620
+	.long 0x38203620
+	.long 0x2b203520
+	.long 0x32203220
+	.long 0x301a2014
+	.long 0x202c2031
+	.long 0x202a2027
+	.long 0x20322030
+	.long 0x1a20011a
+	.long 0x20fb1a20
+	.long 0x0220e719
 	.long 0x0F0D0000
 Widescreen_Description:
 	.long 0x160cffff
@@ -13688,6 +16586,726 @@ blrl
 .byte 0xf0,0xa5,0xdc,0x83,0xf6,0x74,0xc8,0x21,0xe1,0x28,0xf5,0xce,0xb5,0x92,0x9c,0xcc
 .byte 0xd1,0xd4,0xbc,0x21,0x98,0xad,0xb9,0x35,0xcd,0xd3,0xd1,0xd2,0xca,0x0f,0xed,0x8c
 .byte 0xc1,0x92,0xc9,0x07,0xc8,0x21,0xc1,0x07,0xbd,0x08,0xce,0x10,0xe2,0xb4,0xcd,0xae
+#endregion
+
+#endregion
+
+CustomESSThink:
+#Check For L
+	li	r3,4
+	branchl	r12,Inputs_GetPlayerInstantInputs
+	rlwinm.	r0, r4, 0, 25, 25			#CHECK FOR L
+	bne	OpenFDD
+	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
+	bne	OpenOptions
+
+#Check for Tutotial (R)
+#Check For Training Mode ISO Game ID First
+	lis	r5,0x8000
+	lwz	r5,0x0(r5)
+	load	r6,0x47544d45			#GTME
+	cmpw	r5,r6
+	bne	CheckToSwitchPage
+#Check for R
+	rlwinm.	r0, r4, 0, 26, 26			#CHECK FOR R
+	bne	PlayMovie
+
+CheckToSwitchPage:
+	li	r3,4
+	branchl	r12,Inputs_GetPlayerRapidInputs
+#Check For Left
+	li	r5,-1
+	rlwinm. r0,r3,0,25,25
+	bne	SwitchPage
+#Check For Right
+	li	r5,1
+	rlwinm. r0,r3,0,24,24
+	bne	SwitchPage
+	b	exit
+
+OpenFDD:
+
+	#PLAY SFX
+	li	r3, 1
+	branchl	r4,0x80024030
+
+	#SET FLAG IN RULES STRUCT
+	li	r0,3								#3 = frame data from event toggle
+	load	r3,0x804a04f0
+	stb	r0, 0x0011 (r3)
+
+	#SET SOMETHING
+	li	r0, 5
+	sth	r0, -0x4AD8 (r13)
+
+	#BACKUP CURRENT EVENT ID
+	lwz	r3, -0x4A40 (r13)
+	lwz	r5, 0x002C (r3)
+	lbz	r3,0x0(r5)
+	lwz	r4,0x4(r5)
+	add	r3,r3,r4
+	lwz	r4, -0x77C0 (r13)
+	stb	r3, 0x0535 (r4)
+
+	#LOAD RSS
+	branchl	r3,0x80237410
+
+	#REMOVE EVENT THINK FUNCTION
+	lwz	r3, -0x3E84 (r13)
+	branchl	r12,0x80390228
+
+	b	exit
+
+OpenOptions:
+
+#Create Background + GObj
+	bl	OptionMenu_CreateBackground
+#Display Menus Text
+	bl	MenuData_MainMenuBlrl
+	mflr r4
+	bl	OptionMenu_CreateText
+#Play SFX
+	li	r3,1
+	branchl r12,0x80024030
+	b	exit
+
+#region OptionMenu_CreateBackground
+BG_Constants:
+blrl
+.set BG_Transparency,0x0
+.set BG_ScaleX,0x4
+.set BG_ScaleY,0x8
+.set BG_TransformX,0xC
+.set BG_TransformY,0x10
+.set BG_TransformZ,0x14
+.set BG_Color,0x18
+.float 0.85							#transparency
+.float 0.1							#scale X
+.float 0.15							#scale Y
+.float 8								#X Position
+.float 3								#Y position
+.float 20								#Z Position
+.byte 13, 13, 46, 255		#Color
+
+OptionMenu_CreateBackground:
+.set	REG_GObj,20
+.set	REG_GObjData,21
+
+backup
+
+#Create Background GObj
+  li  r3,6
+  li  r4,7
+  li  r5,0x80
+  branchl r12,GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,0x8037f1b0
+	branchl r12,GObj_AddUserData
+#Add Process
+	mr	r3,REG_GObj
+	bl	OptionMenu_Think
+	mflr r4
+	li	r5,0
+	branchl r12,GObj_AddProc
+#Get JObj from archive
+  lwz	r3, -0x4AE8 (r13)
+  load r4,0x803efa0c
+  branchl r12,0x80380358
+#Load JObj
+  branchl r12,HSD_JObjLoadJoint
+#Get child JObj (the black background)
+	mr	r22,r3
+	lwz r3,0x10(r3)
+
+#Remove parent and child (the message box)
+	li	r4,0
+	stw r4,0x0c(r3)
+	stw r4,0x10(r3)
+#Adjust transparency
+	lwz r4,0x18(r3)
+	lwz r4,0x8(r4)
+	lwz r4,0xC(r4)
+	bl	BG_Constants
+	mflr r5
+	lfs f1,BG_Transparency(r5)
+	stfs f1,0xC(r4)
+#Adjust color
+	lwz r6,BG_Color(r5)
+	stw r6,0x4(r4)
+#Adjust Scale
+	lfs f1,BG_ScaleX(r5)
+	stfs f1,0x2C(r3)
+	lfs f1,BG_ScaleY(r5)
+	stfs f1,0x30(r3)
+#Adjust Position
+	lfs f1,BG_TransformX(r5)
+	stfs f1,0x38(r3)
+	lfs f1,BG_TransformY(r5)
+	stfs f1,0x3C(r3)
+	lfs f1,BG_TransformZ(r5)
+	stfs f1,0x40(r3)
+#Store JObj to GObj
+  mr  r5,r22
+  mr  r3,REG_GObj
+  lbz	r4, -0x3E57 (r13)
+  branchl r12,GObj_StorePointerToJObj
+#Add GX Link
+  mr  r3,REG_GObj
+  load r4,0x80391070
+  li  r5,7                    #layer id? higher = drawn later
+  li  r6,127                  #priority, higher = drawn later
+  branchl r12,GObj_AddGXLink
+
+#Return the GObj
+	mr	r3,REG_GObj
+
+#Exit
+	restore
+	blr
+#endregion
+
+#region OptionMenu_Think
+OptionMenu_Think:
+blrl
+.set REG_GObj,31
+backup
+
+#Backup
+	mr	REG_GObj,r3
+	lwz	REG_GObjData,0x2C(REG_GObj)
+
+#Disable Event Menu
+	li	r3,1
+	sth	r3, -0x4AD8 (r13)
+
+#Check for Z and close menu
+	li	r3,4
+	branchl r12,Inputs_GetPlayerInstantInputs
+	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
+	bne	OptionMenu_ThinkDestroy
+	rlwinm.	r0, r3, 0, 26, 26			#CHECK FOR Down
+	bne OptionMenu_ThinkDown
+	rlwinm.	r0, r3, 0, 27, 27			#CHECK FOR Up
+	bne OptionMenu_ThinkUp
+	rlwinm.	r0, r3, 0, 31, 31			#CHECK FOR A
+	bne OptionMenu_ThinkSelect
+	rlwinm.	r0, r3, 0, 30, 30			#CHECK FOR B
+	bne OptionMenu_ThinkBack
+	b	OptionMenu_ThinkExit
+
+OptionMenu_ThinkDown:
+#Down one cursor position
+	lwz	r3,Cursor(REG_GObjData)
+	addi r4,r3,1
+#Highlight current cursor
+	mr	r3,REG_GObjData
+	bl	OptionMenu_AdjustCursor
+#Play SFX
+	li	r3,2
+	branchl r12,0x80024030
+	b	OptionMenu_ThinkExit
+
+OptionMenu_ThinkUp:
+#Up one cursor position
+	lwz	r3,Cursor(REG_GObjData)
+	subi r4,r3,1
+#Highlight current cursor
+	mr	r3,REG_GObjData
+	bl	OptionMenu_AdjustCursor
+#Play SFX
+	li	r3,2
+	branchl r12,0x80024030
+	b	OptionMenu_ThinkExit
+
+OptionMenu_ThinkSelect:
+#Loop through current menu
+.set REG_Count,20
+.set REG_OptionData,22
+.set REG_OptionCount,23
+.set REG_MenuData,24
+.set REG_Cursor,25
+#Init
+	li	REG_Count,0														#loop count
+	li	REG_OptionCount,0											#Only incremented when an option is found
+	lwz	REG_MenuData,MenuData(REG_GObjData)
+	lwz	REG_Cursor,Cursor(REG_GObjData)
+
+OptionMenu_ThinkSelect_SearchOptionsLoop:
+#Get this option's text
+	addi r3,REG_MenuData,MenuData_OptionsStart
+	mulli	r4,REG_Count,MenuData_OptionDataLength
+	add	REG_OptionData,r3,r4
+#Get OnSelectType
+	lwz 	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_None
+	beq	OptionMenu_ThinkSelect_SearchOptionsIncLoop
+#Check if this is the desired option
+	cmpw REG_OptionCount,REG_Cursor
+	beq OptionMenu_ThinkSelect_SelectOption
+#Increment Option Count
+	addi	REG_OptionCount,REG_OptionCount,1
+	b	OptionMenu_ThinkSelect_SearchOptionsIncLoop
+
+OptionMenu_ThinkSelect_SelectOption:
+#Play SFX
+	li	r3,1
+	branchl r12,0x80024030
+#Decide Selection Type
+	lwz	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_Menu
+	beq	OptionMenu_ThinkSelect_GetNextMenu
+	cmpwi	r3,OnSelect_Function
+	beq	OptionMenu_ThinkSelect_GetFunction
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+
+OptionMenu_ThinkSelect_GetNextMenu:
+#Convert bl instruction to mem address
+	addi	r4,REG_OptionData,MenuData_OnSelectData
+	lwz	r5,0x0(r4)
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+	extsh	r5,r5
+  add	r4,r4,r5						#Gets Address in r3
+#Create Text
+	mr	r3,REG_GObj
+	bl	OptionMenu_CreateText
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+
+OptionMenu_ThinkSelect_GetFunction:
+#Convert bl instruction to mem address
+	addi	r4,REG_OptionData,MenuData_OnSelectData
+	lwz	r5,0x0(r4)
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+	extsh	r5,r5
+	cmpwi	r5,0
+	beq	OptionMenu_ThinkSelect_NoFunction
+  add	r4,r4,r5						#Gets Address in r3
+	mtctr	r4
+	mr	r3,REG_GObj
+	bctrl
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+OptionMenu_ThinkSelect_NoFunction:
+#Play Error Sound
+  li	r3, 3
+  branchl	r12,0x80024030
+  li	r3, 3
+  branchl	r12,0x80024030
+	b	OptionMenu_ThinkSelect_SearchOptionsEnd
+
+OptionMenu_ThinkSelect_SearchOptionsIncLoop:
+	addi REG_Count,REG_Count,1
+	b	OptionMenu_ThinkSelect_SearchOptionsLoop
+
+OptionMenu_ThinkSelect_SearchOptionsEnd:
+	b	OptionMenu_ThinkExit
+
+OptionMenu_ThinkBack:
+.set REG_MenuData,24
+	lwz	r4,MenuData(REG_GObjData)
+#Convert bl instruction to mem address
+	addi	r4,r4,MenuData_ReturnMenu
+	lwz	r5,0x0(r4)
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+	extsh	r5,r5
+	cmpwi	r5,0
+	beq OptionMenu_ThinkDestroy
+  add	r4,r4,r5						#Gets Address in r4
+#Load Prev Menu
+	mr	r3,REG_GObj
+	bl	OptionMenu_CreateText
+#Play SFX
+	li	r3,0
+	branchl r12,0x80024030
+	b	OptionMenu_ThinkExit
+
+OptionMenu_ThinkDestroy:
+#Remove text
+	lwz	r3,0x2C(REG_GObj)
+	lwz	r3,TextGObj(r3)
+	branchl r12,Text_RemoveText
+#Remove GObj
+	mr	r3,REG_GObj
+	branchl r12,GObj_Destroy
+#Play SFX
+	li	r3,0
+	branchl r12,0x80024030
+
+OptionMenu_ThinkExit:
+	restore
+	blr
+#endregion
+
+#region OptionMenu_CreateText
+TextProperties:
+blrl
+.set VersionX,0x0
+.set VersionY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YOffset,0x14
+.set YOffsetAddAfterTitle,0x18
+.set HighlightColor,0x1C
+.set NonHighlightColor,0x20
+.float 120      			#REG_TextGObj X pos
+.float -250  					#REG_TextGObj Y pos
+.float 21.9     			#Z offset
+.float 0.035   				#Canvas Scaling
+.float 0.65						#Text scale
+.float 30							#Y offset difference
+.float 20							#Y Offset to Add After Title
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	#nonhighlighted color
+
+OptionMenu_CreateText:
+.set REG_MenuData,28
+.set REG_GObjData,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GObj Data Struct
+.set Cursor,0x0
+.set TextGObj,0x4
+.set MenuData,0x8
+
+backup
+
+#Backup GObj and MenuData
+	lwz	REG_GObjData,0x2C(r3)
+	mr	REG_MenuData,r4
+
+#Check if a text gobj already
+	lwz r3,TextGObj(REG_GObjData)
+	cmpwi r3,0
+	beq OptionMenu_CreateText_SkipDestroyOldText
+#Destroy
+	branchl r12,Text_RemoveText
+	li	r3,0
+	stw r3,TextGObj(REG_GObjData)
+OptionMenu_CreateText_SkipDestroyOldText:
+
+#Store new menudata
+	stw	REG_MenuData,MenuData(REG_GObjData)
+
+#GET PROPERTIES TABLE
+	bl TextProperties
+	mflr REG_TextProp
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,1
+	branchl r12,Text_CreateTextStruct
+	stw r3,TextGObj(REG_GObjData)
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x0
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+OptionMenu_CreateText_PrintOptions:
+.set REG_Count,20
+.set REG_ASCII,21
+.set REG_OptionData,22
+.set OFST_LastYPos,0x80
+#Init
+	li	REG_Count,0									#loop count
+	lfs	f1,VersionY(REG_TextProp)		#Last text's Y position
+	stfs	f1,OFST_LastYPos(sp)
+
+OptionMenu_CreateText_PrintOptionsLoop:
+#Get this option's text
+	addi r3,REG_MenuData,MenuData_OptionsStart
+	mulli	r4,REG_Count,MenuData_OptionDataLength
+	add	REG_OptionData,r3,r4
+#Convert bl instruction to mem address
+  lwz	r4,0x0(REG_OptionData)		#Get bl Instruction
+	extsb	r5,r4										#Check if none left
+	cmpwi	r5,-1
+	beq OptionMenu_CreateText_PrintOptionsEnd
+  rlwinm	r4,r4,0,6,29							#Mask Bits 6-29 (the offset)
+	extsh	r4,r4
+  add	REG_ASCII,REG_OptionData,r4		#Gets ASCII Address in r3
+
+#Get Y offset
+	lfs	f2,OFST_LastYPos(sp)		 	#Y base offset of REG_TextGObj
+	lfs	f3,YOffset(REG_TextProp)			#Y offset difference
+	fadds	f2,f2,f3
+#Check if this is the first option
+	cmpwi REG_Count,0
+	beq OptionMenu_CreateText_PrintOptions_SkipTitleAdjust
+#Check if last option was a title
+	lwz	r3,-MenuData_OptionDataLength + MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_None
+	bne	OptionMenu_CreateText_PrintOptions_SkipTitleAdjust
+#Move down further
+	lfs	f1,YOffsetAddAfterTitle(REG_TextProp)
+	fadds	f2,f1,f2
+
+OptionMenu_CreateText_PrintOptions_SkipTitleAdjust:
+#Store as last Y position
+	stfs	f2,OFST_LastYPos(sp)
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_ASCII			#text
+	lfs	f1,VersionX(REG_TextProp) 		#X offset of REG_TextGObj
+	branchl r12,0x803a6b98
+
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_Count
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+OptionMenu_CreateText_PrintOptionsIncLoop:
+	addi REG_Count,REG_Count,1
+	b	OptionMenu_CreateText_PrintOptionsLoop
+
+OptionMenu_CreateText_PrintOptionsEnd:
+
+#Reset cursor position
+	li	r3,0
+#Highlight current cursor
+	mr	r4,r3
+	mr	r3,REG_GObjData
+	bl	OptionMenu_AdjustCursor
+
+
+
+#Exit
+	restore
+	blr
+#endregion
+
+#region OptionMenu_AdjustCursor
+OptionMenu_AdjustCursor:
+.set REG_GObjData,31
+.set REG_TextGObj,30
+.set REG_Cursor,29
+.set REG_TextProp,28
+
+backup
+
+#Backup
+	mr	REG_GObjData,r3
+	lwz	REG_TextGObj,TextGObj(REG_GObjData)
+	mr	REG_Cursor,r4
+	bl	TextProperties
+	mflr	REG_TextProp
+
+#Change all options to white
+OptionMenu_AdjustCursor_ResetColors:
+.set REG_Count,20
+#Init
+	li	REG_Count,0									#loop count
+OptionMenu_AdjustCursor_ResetColorsLoop:
+#Adjust Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_Count			#subtext text
+	addi	r5,REG_TextProp,NonHighlightColor
+	branchl r12,Text_ChangeTextColor
+
+OptionMenu_AdjustCursor_ResetColorsIncLoop:
+	addi	REG_Count,REG_Count,1
+#Get number of subtexts
+	lwz	r3,0x64(REG_TextGObj)
+	lwz	r3,0xC(r3)
+	cmpw REG_Count,r3
+	blt OptionMenu_AdjustCursor_ResetColorsLoop
+
+#Ensure this isnt below 0
+	cmpwi REG_Cursor,0
+	bge OptionMenu_AdjustCursor_SearchOptions
+#Adjust to be 0
+	li	REG_Cursor,0
+
+#Loop through current menu
+OptionMenu_AdjustCursor_SearchOptions:
+.set REG_Count,20
+.set REG_ASCII,21
+.set REG_OptionData,22
+.set REG_OptionCount,23
+.set REG_MenuData,24
+#Init
+	li	REG_Count,0									#loop count
+	li	REG_OptionCount,0						#Only incremented when an option is found
+	lwz	REG_MenuData,MenuData(REG_GObjData)
+
+OptionMenu_AdjustCursor_SearchOptionsLoop:
+#Get this option's text
+	addi r3,REG_MenuData,MenuData_OptionsStart
+	mulli	r4,REG_Count,MenuData_OptionDataLength
+	add	REG_OptionData,r3,r4
+#Convert bl instruction to mem address
+  lwz	r4,0x0(REG_OptionData)		#Get bl Instruction
+	extsb	r5,r4										#Check if none left
+	cmpwi	r5,-1
+	bne	OptionMenu_AdjustCursor_SearchOptionsNotLast
+	subi REG_OptionCount,REG_OptionCount,1
+OptionMenu_AdjustCursor_SearchOptionsGetLastValidOption:
+	subi REG_Count,REG_Count,1
+	addi r3,REG_MenuData,MenuData_OptionsStart
+	mulli	r4,REG_Count,MenuData_OptionDataLength
+	add	REG_OptionData,r3,r4
+	lwz	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_None
+	beq	OptionMenu_AdjustCursor_SearchOptionsGetLastValidOption
+	b	OptionMenu_AdjustCursor_SearchOptionsChangeColor
+#Get OnSelectType
+OptionMenu_AdjustCursor_SearchOptionsNotLast:
+	lwz 	r3,MenuData_OnSelectType(REG_OptionData)
+	cmpwi	r3,OnSelect_None
+	beq	OptionMenu_AdjustCursor_SearchOptionsIncLoop
+#Check if this is the desired option
+	cmpw REG_OptionCount,REG_Cursor
+	beq OptionMenu_AdjustCursor_SearchOptionsChangeColor
+#Increment Option Count
+	addi	REG_OptionCount,REG_OptionCount,1
+	b	OptionMenu_AdjustCursor_SearchOptionsIncLoop
+
+OptionMenu_AdjustCursor_SearchOptionsChangeColor:
+#Adjust Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_Count			#subtext text
+	addi	r5,REG_TextProp,HighlightColor
+	branchl r12,Text_ChangeTextColor
+
+#Update Cursor Position
+	stw	REG_OptionCount,Cursor(REG_GObjData)
+	b	OptionMenu_AdjustCursor_SearchOptionsEnd
+
+OptionMenu_AdjustCursor_SearchOptionsIncLoop:
+	addi REG_Count,REG_Count,1
+	b	OptionMenu_AdjustCursor_SearchOptionsLoop
+
+OptionMenu_AdjustCursor_SearchOptionsEnd:
+#Exit
+	restore
+	blr
+#endregion
+
+#region MenuData
+
+#MenuData Structure
+.set MenuData_ReturnMenu,0x0
+.set MenuData_OptionsStart,0x4
+	.set MenuData_OptionName,0x0
+	.set MenuData_OnSelectType,0x4
+	.set MenuData_OnSelectData,0x8
+.set MenuData_OptionDataLength,0xC
+
+#OnSelect Definitions
+.set OnSelect_None,0
+.set OnSelect_Menu,1
+.set OnSelect_Function,2
+
+#region Options
+MenuData_MainMenuBlrl:
+blrl
+MenuData_MainMenu:
+#Return menu
+	.long 0
+#Options
+	bl	MenuData_MainMenu_OptionsTitleName
+	.long	OnSelect_None
+	.long 0
+#Create Save File
+	bl	MenuData_MainMenu_CreateSaveName
+	.long	OnSelect_Menu
+	bl	MenuData_CreateSave
+#Play
+	bl	MenuData_MainMenu_PlayCreditsName
+	.long	OnSelect_Function
+	bl	LoadCredits
+	.long -1
+.align 2
+
+MenuData_MainMenu_OptionsTitleName:
+.string "<Options>"
+.align 2
+MenuData_MainMenu_PlayCreditsName:
+.string "Show Credits"
+.align 2
+MenuData_MainMenu_CreateSaveName:
+.string "Create Save"
+.align 2
+#endregion
+#region Create Save
+MenuData_CreateSave:
+#Return menu
+	bl	MenuData_MainMenu
+#Create Save
+	bl	MenuData_MainMenu_CreateSaveTitleName
+	.long	OnSelect_None
+	.long 0
+#Play
+	bl	MenuData_CreateSave_SlotA
+	.long	OnSelect_Function
+	bl	CreateSave_SlotA
+#Create Save File
+	bl	MenuData_CreateSave_SlotB
+	.long	OnSelect_Function
+	bl	CreateSave_SlotB
+
+#Space
+	bl	MenuData_CreateSave_Empty
+	.long	OnSelect_None
+	.long 0
+#Disabled
+	bl	MenuData_MainMenu_Disabled
+	.long	OnSelect_None
+	.long 0
+
+.long -1
+.align 2
+
+MenuData_MainMenu_CreateSaveTitleName:
+.string "<Create Save>"
+.align 2
+MenuData_CreateSave_SlotA:
+.string "Save to Slot A"
+.align 2
+MenuData_CreateSave_SlotB:
+.string "Save to Slot B"
+.align 2
+MenuData_CreateSave_Empty:
+.string ""
+.align 2
+MenuData_MainMenu_Disabled:
+.string "(Temp Disabled)"
+.align 2
+
+CreateSave_SlotA:
+	li	r3,0
+	b	CreateSave
+
+CreateSave_SlotB:
+	li	r3,1
+	b	CreateSave
 #endregion
 
 #endregion
