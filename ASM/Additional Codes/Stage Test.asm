@@ -5933,6 +5933,41 @@ StageMod_MK2:
 		.float 2.5
 		.long -1
 
+StageMod_FlatZone:
+	#Scale Handheld down
+	.long 0xC328
+	.float 0.5
+	.long 0xC32C
+	.float 0.5
+	.long 0xC330
+	.float 0.5
+	#Move handheld down
+	.long	0xC338
+	.float -81
+	#Move handheld forward
+	.long	0xC33C
+	.float 5
+	#Scale background up
+	.long 0x46148
+	.float 5
+	.long 0x4614C
+	.float 5
+	.long 0x46150
+	.float 5
+	#Move bg down
+	.long 0x46158
+	.float -60
+	#Move bg forward
+	.long 0x4615C
+	.float 10
+	#Ground Left Point
+	.long 0x466f8
+	.float -80
+	#Ground Right Point
+	.long 0x46700
+	.float 80
+
+	.long -1
 
 Exit:
   lis	r3, 0x8047
