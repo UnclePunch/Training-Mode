@@ -487,6 +487,11 @@ b	ExploitCode102_Exit
 ## Success ##
 #############
 ExploitCode102_Success:
+#flush cache on snapshot code
+  mr r3,REG_CodesetPointer
+	mr	r4,REG_CodesetSize
+  branchl r12,0x80328f50
+
 #Restore this stack frame and jump to the MML code in the snapshot file
 	addi	r3,REG_CodesetPointer,0x0
 	restore
@@ -580,6 +585,7 @@ blrl
 b	SnapshotCode102_Start
 b	SnapshotCode101_Start
 b	SnapshotCode100_Start
+
 #region SnapshotCode102
 SnapshotCode102_Start:
 .set	TournamentMode,0x801910E0	#PAL is 80191C24
@@ -625,18 +631,8 @@ blrl
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
-#good
-  load	r3,0x803d6900
-	crclr 6
-  branchl	r12,0x803456a8
-
 #Init and backup
   backup
-
-#good
-  load	r3,0x803d6900
-	crclr 6
-  branchl	r12,0x803456a8
 
 #/*
 #Init LagPrompt major struct
