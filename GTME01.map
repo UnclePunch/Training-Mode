@@ -1143,7 +1143,7 @@
 8004fc2c 0000043c 8004fc2c 0 ECB_StoreCeilingID+Type
 80050068 00000164 80050068 0 zz_0050068_
 800501cc 000003b0 800501cc 0 Raycast_LeftWallLine(r3=ReturnLinePosition,r4=ReturnLineID,r5=ReturnLineType,r6=ReturnUnk,r7=,r8=,r9=r10=OptionalFunction,f1=CurrentX,f2=CurrentY,f3=PrevX,f4=PrevY,r5=0)
-8005057c 0000043c 8005057c 0 Collision_SearchForRightWallBetween1 (With Ledge)
+8005057c 0000043c 8005057c 0 Collision_SearchForMovingCollisionRightWall (With Ledge)
 800509b8 000003b0 800509b8 0 Raycast_RightWallLine(r3=ReturnLinePosition,r4=ReturnLineID,r5=ReturnLineType,r6=ReturnUnk,r7=,r8=,r9=r10=OptionalFunction,f1=CurrentX,f2=CurrentY,f3=PrevX,f4=PrevY,r5=0)
 80050d68 0000043c 80050d68 0 Collision_SearchForLeftWallBetween1 (With Ledge)
 800511a4 000003fc 800511a4 0 Collision_SearchForRightWallBetween3 (No Ledge?)
@@ -1159,11 +1159,11 @@
 80052a98 000001cc 80052a98 0 zz_0052a98_
 80052c64 000001cc 80052c64 0 zz_0052c64_
 80052e30 000001cc 80052e30 0 zz_0052e30_
-80052ffc 000001cc 80052ffc 0 zz_0052ffc_
+80052ffc 000001cc 80052ffc 0 Stage_GetLinesNextLine?
 800531c8 000001cc 800531c8 0 zz_00531c8_
 80053394 000000b4 80053394 0 zz_0053394_
-80053448 000000b4 80053448 0 zz_0053448_
-800534fc 000001d0 800534fc 0 zz_00534fc_
+80053448 000000b4 80053448 0 Stage_Check0x4OfLinkInfo
+800534fc 000001d0 800534fc 0 Stage_Check0xAOfLinkInfo
 800536cc 000001d0 800536cc 0 zz_00536cc_
 8005389c 000000b4 8005389c 0 zz_005389c_
 80053950 000000b4 80053950 0 zz_0053950_
@@ -1185,10 +1185,10 @@
 80054cec 0000007c 80054cec 0 StageFile_FloorTypeLoad
 80054d68 00000094 80054d68 0 zz_0054d68_
 80054dfc 000000dc 80054dfc 0 zz_0054dfc_
-80054ed8 00000090 80054ed8 0 Stage_CheckIfLedgeIDExists(r3=LedgeID)
+80054ed8 00000090 80054ed8 0 Stage_CheckIfLineIsActive(r3=LineID)
 80054f68 00000348 80054f68 0 CheckIfPlayerOnSameLedge(r3=OnLedge,r4=AttemptingGrabO)
 800552b0 0000016c 800552b0 0 Stages_StoreJObjPointerToMovingCollisionData?
-8005541c 000003b4 8005541c 0 zz_005541c_
+8005541c 000003b4 8005541c 0 Stages_InitializeMovingCollisionAsEnabled?
 800557d0 0000048c 800557d0 0 zz_00557d0_
 80055c5c 000001c8 80055c5c 0 Stage_AdjustLineTypeBasedOnStageRotation
 80055e24 00000078 80055e24 0 Stage_EnableLine

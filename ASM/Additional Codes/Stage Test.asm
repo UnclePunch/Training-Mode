@@ -5934,6 +5934,14 @@ StageMod_MK2:
 		.long -1
 
 StageMod_FlatZone:
+/*
+
+main ground link is link 100
+first hijacked link is link 101
+second hijacked link is link 102
+*/
+
+
 	#Scale Handheld down
 	.long 0xC328
 	.float 0.5
@@ -5943,7 +5951,7 @@ StageMod_FlatZone:
 	.float 0.5
 	#Move handheld down
 	.long	0xC338
-	.float -81
+	.float -80.95
 	#Move handheld forward
 	.long	0xC33C
 	.float 5
@@ -5960,12 +5968,107 @@ StageMod_FlatZone:
 	#Move bg forward
 	.long 0x4615C
 	.float 10
+
 	#Ground Left Point
 	.long 0x466f8
-	.float -80
+	.float -81.6
 	#Ground Right Point
 	.long 0x46700
+	.float 81.6
+	#Ground = ledge
+	.long 0x46d54
+	.long 0x00010210
+
+	#Null ceilings
+	.long 0x475d4
+	.long 0x0
+
+
+	#Null Areas jobj center
+	.long 0xa0
+	.long 0x00000000
+	.long 0xa4
+	.long 0x00000022
+	#Null Area ceiling count
+	.long 0x473e4
+	.long 0x00000000
+	#Null Area Vertex Count
+	.long 0x47404
+	.long 0x00820002	#.long 0x00000000
+	#Add Wall counts
+	.long 0x473e8
+	.long 0x00650001
+	.long 0x473eC
+	.long 0x00660001
+
+	#Set 1 Left Wall
+	.long 0x475d8
+	.long 0x00650001
+	#Swap point vertices
+	.long 0x46d68
+	.long 0x00af0083 #.long 0x00830084
+	#Null Next and Prev Links
+	.long 0x46d6C
+	.long -1
+	#Set link as a left wall
+	.long 0x46d64
+	.long 0x00040010
+	#Left wall top point
+	.long 0x46598
+	.float -81.6
+	.long 0x465a4
+	.float -29.3597
+	#Left wall bottom point
+	.long 0x465a0
+	.float -81.6
+	.long 0x4659C
+	.float -200
+
+#ground vertices are 175 (AF) and 176 (B0)
+
+	#Set 1 Right Wall
+	.long 0x475dC
+	.long 0x00660001
+	#Swap point vertices
+	.long 0x46d58
+	.long 0x00B00082 #.long 0x00810082
+	#Null Next and Prev Links
+	.long 0x46d5C
+	.long -1
+	#Set link as a right wall
+	.long 0x46d74
+	.long 0x00080010
+	#Right wall top point
+	.long 0x46588
+	.float 81.6
+	.long 0x4658C
+	.float -29.3597
+	#Right wall bottom point
+	.long 0x46590
+	.float 81.6
+	.long 0x46594
+	.float -200
+
+	#adjust camera bounds
+	.long 0x49510
+	.float -130
+	.long 0x494d0
+	.float 130
+	.long 0x49514
+	.float -80
+	.long 0x494d4
 	.float 80
+	#adjust blastzone bounds
+	#X
+	.long 0x49550
+	.float 200
+	.long 0x49590
+	.float -200
+	#Y
+	.long 0x49554
+	.float 120
+	.long 0x49594
+	.float -120
 
 	.long -1
 
