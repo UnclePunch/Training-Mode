@@ -6068,7 +6068,7 @@ second hijacked link is link 102
 	.long 0x49554
 	.float 120
 	.long 0x49594
-	.float -120
+	.float -100
 
 	.long -1
 
