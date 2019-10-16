@@ -70,6 +70,15 @@ patchLoop:
   extsb r0,r3
   cmpwi r0,-1
   beq endPatchLoop
+#Check if contains a pointer (replacement data begins with 0xCC)
+	rlwinm	r0,r4,8,0x000000FF
+	cmpwi	r0,0xCC
+	bne	patchData
+#Convert pointer
+	rlwinm	r4,r4,0,0x00FFFFFF	#get pointer data
+	add	r4,r4,r6								#add to start of dat
+	addi	r4,r4,0x20						#disregard header
+patchData:
 #Replace data
   add r3,r3,r6
   stw r4,0x0(r3)
@@ -81,7 +90,6 @@ endPatchLoop:
 GoToExit:
 b	Exit
 
-#803e52f4 80202c48
 StageMod_Garden:
   .long 0x0001A68C
   .long 0x00000000
@@ -273,7 +281,6 @@ StageMod_Garden:
 		.float -200
   .long -1
 
-#remove textures
 StageMod_Castle:
   .long 0x0002ED18
   .long 0xC485C001
@@ -303,6 +310,12 @@ StageMod_Castle:
   .long 0x4285C3D7
   .long 0x0008B80C
   .long 0x4289799A
+	.long 0x00024EDC
+	.long 0xCC025A78
+	.long 0x0001AF3C
+	.long 0x00000000
+	.long 0x0001F03C
+	.long 0xCC01FDD8
   .long -1	#needs textures removed (use DTW to remove pointers) and stage hazards
 
 StageMod_Fourside:
@@ -2716,7 +2729,6 @@ StageMod_GreatBay:
 		.float	-200
 	.long 0xFFFFFFFF
 
-#802147c8 nop
 StageMod_Greens:
 	.long 0x00020DEC
 	.long 0x00000000
@@ -2952,7 +2964,6 @@ StageMod_Greens:
 	.long 0x40A00000
 	.long -1
 
-#802021dc li r5,0
 StageMod_Yoster:
 	#.long 0x00013FBC
 	#.long 0x00014198
@@ -5852,7 +5863,6 @@ StageMod_MK1:
 	.long 0x421C0000
 	.long -1
 
-#801fcfe8 nop
 StageMod_MK2:
 	.long 0x00001560
 	.long 0x31E8FEFF
@@ -6107,7 +6117,6 @@ StageMod_FlatZone:
 	.set	CeilingTotal,0
 	.set	Wall1Total,1
 	.set	Wall2Total,1
-
 	#Increment total line count
 	.long 0x475CC
 	.long 0x6A
@@ -6217,11 +6226,21 @@ StageMod_FlatZone:
 	.long 0x46dA4
 	.long 0x00080010 		#left
 
+	#Remove 2 right platforms (vertex 156,157,158)
+	.long 0x464c4
+	.float 300
+	.long 0x464cc
+	.float 300
+	.long 0x464d4
+	.float 300
+	#.long 0x46664
+	#.long 0x00000000
+
 	#adjust camera bounds
 	.long 0x49510
-	.float -130
+	.float -145
 	.long 0x494d0
-	.float 130
+	.float 145
 	.long 0x49514
 	.float -80
 	.long 0x494d4
