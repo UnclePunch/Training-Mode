@@ -6259,5 +6259,168 @@ StageMod_FlatZone:
 
 	.long -1
 
+StageMod_RCruise:
+	#Move plat
+	.long 0x39068
+	.float	0.7		#scale X
+	.long 0x3906C
+	.float	0.7		#scale Y
+	.long 0x39070
+	.float	0.7		#Scale Z
+	.long 0x39074		#ticktock X
+	.float 700
+	.long 0x39078		#ticktock Y
+	.float -300
+	.long 0x3907C		#ticktock Z
+	.float -40
+
+	#Move stage
+	.long 0x61be4
+	.float	1.5708		#Rotate Z
+	.long 0x61be8
+	.float	1.0		#scale X
+	.long 0x61beC
+	.float	2.5		#scale Y
+	.long 0x61bf0
+	.float	0.7		#Scale Z
+	.long 0x61bf4		#ticktock X
+	.float 1.8
+	.long 0x61bf8		#ticktock Y
+	.float -450
+	.long 0x61bfC		#ticktock Z
+	.float -0
+
+	#Change area region (area 13)
+	.long 0x745cc		#X min
+	.float -1000
+	.long 0x745d0		#Y min
+	.float -1000
+	.long 0x745d4		#X max
+	.float 1000
+	.long 0x745d8		#Y max
+	.float 1000
+
+	#Change line 53 to a ledge
+	.long 0x73efc
+	.long 0x00010200
+
+	#ground
+	#link 49 (vertices 67 and 68)
+	#link 50 (vertices 68 and 69)
+	#link 51 (vertices 69 and 70)
+	#link 52 (vertices 70 and 71)
+	#link 53 (vertices 71 and 65)
+	#ceiling
+	#link 83 (vertices 63 and 66)
+	#link 84 (vertices 62 and 63)
+	#link 85 (vertices 64 and 62)
+	#link 86 (vertices 61 and 64)
+	#link 87 (vertices 60 and 61)
+	#left
+	#link 110 (vertices 66 and 67)
+	#right
+	#link 98 (vertices 65 and 60)
+
+	#Move vertices
+	#vert 67
+	.long 0x73840
+	.float	-112.5
+	.long 0x73844
+	.float -428
+	#vert 68
+	.long 0x73848
+	.float -40
+	.long 0x7384C
+	.float -428
+	#vert 69
+	.long 0x73850
+	.float	-20
+	.long 0x73854
+	.float -428
+	#vert 70
+	.long 0x73858
+	.float	20
+	.long 0x7385C
+	.float -428
+	#vert 71
+	.long 0x73860
+	.float	40
+	.long 0x73864
+	.float -428
+	#vert 65
+	.long 0x73830
+	.float	112.5
+	.long 0x73834
+	.float -428
+
+	#vert 60
+	.long 0x73808
+	.float	112.5
+	.long 0x7380C
+	.float -472
+	#vert 61
+	.long 0x73810
+	.float	40
+	.long 0x73814
+	.float -472
+	#vert 62
+	.long 0x73818
+	.float	20
+	.long 0x7381C
+	.float -472
+	#vert 63
+	.long 0x73820
+	.float	-20
+	.long 0x73824
+	.float	-472
+	#vert 64
+	.long 0x73828
+	.float	-40
+	.long 0x7382C
+	.float	-472
+	#vert 66
+	.long 0x73838
+	.float	-112.5
+	.long 0x7383C
+	.float	-472
+
+	#Change spawn points
+	#p1
+	.long 0xeefc
+	.float -515
+	.long 0xef00
+	.float 72
+	#p2
+	.long 0xef3c
+	.float -375
+	.long 0xef40
+	.float 72
+	#p3
+	.long 0xef7c
+	.float -469
+	.long 0xef80
+	.float 72
+	#p4
+	.long 0xefbc
+	.float -423
+	.long 0xefc0
+	.float 72
+
+/*
+	.long 0x39328
+	.float	0.7		#scale X
+	.long 0x3932C
+	.float	0.7		#scale Y
+	.long 0x39330
+	.float	0.7		#Scale Z
+	.long 0x39334		#ticktock X
+	.float 0
+	.long 0x39338		#ticktock Y
+	.float -0
+	.long 0x3933C		#ticktock Z
+	.float -0
+*/
+	.long -1
+
 Exit:
   lis	r3, 0x8047
