@@ -5933,15 +5933,11 @@ StageMod_MK2:
 		.float 2.5
 		.long -1
 
-StageMod_FlatZone:
 /*
-
-main ground link is link 100
-first hijacked link is link 101
-second hijacked link is link 102
-*/
-
-
+StageMod_FlatZone:
+		#main ground link is link 100
+		#first hijacked link is link 101
+		#second hijacked link is link 102
 	#Scale Handheld down
 	.long 0xC328
 	.float 0.5
@@ -6024,8 +6020,6 @@ second hijacked link is link 102
 	.long 0x4659C
 	.float -200
 
-#ground vertices are 175 (AF) and 176 (B0)
-
 	#Set 1 Right Wall
 	.long 0x475dC
 	.long 0x00660001
@@ -6048,6 +6042,180 @@ second hijacked link is link 102
 	.float 81.6
 	.long 0x46594
 	.float -200
+
+	#adjust camera bounds
+	.long 0x49510
+	.float -130
+	.long 0x494d0
+	.float 130
+	.long 0x49514
+	.float -80
+	.long 0x494d4
+	.float 80
+	#adjust blastzone bounds
+	#X
+	.long 0x49550
+	.float 200
+	.long 0x49590
+	.float -200
+	#Y
+	.long 0x49554
+	.float 120
+	.long 0x49594
+	.float -100
+
+	.long -1
+*/
+
+StageMod_FlatZone:
+
+	#Scale Handheld down
+	.long 0xC328
+	.float 0.5
+	.long 0xC32C
+	.float 0.5
+	.long 0xC330
+	.float 0.5
+	#Move handheld down
+	.long	0xC338
+	.float -80.95
+	#Move handheld forward
+	.long	0xC33C
+	.float 5
+	#Scale background up
+	.long 0x46148
+	.float 5
+	.long 0x4614C
+	.float 5
+	.long 0x46150
+	.float 5
+	#Move bg down
+	.long 0x46158
+	.float -60
+	#Move bg forward
+	.long 0x4615C
+	.float 10
+
+	#Ground Left Point
+	.long 0x466fC
+	.float 300
+	#Ground Right Point
+	.long 0x46704
+	.float 300
+
+	.set	FloorTotal,101+3
+	.set	CeilingTotal,0
+	.set	Wall1Total,1
+	.set	Wall2Total,1
+
+	#Increment total line count
+	.long 0x475CC
+	.long 0x6A
+	#Increment global floor counter
+	.long 0x475d0
+	.hword 0,FloorTotal
+	#Remove global ceiling counter
+	.long 0x475d4
+	.hword 0,0
+	#Increment global wall counter
+	.long 0x475d8
+	.hword 104,Wall1Total
+	#Increment global wall counter
+	.long 0x475dC
+	.hword 105,Wall2Total
+
+	#Null Areas jobj center
+	.long 0xa0
+	.long 0x00000000
+	.long 0xa4
+	.long 0x00000022
+	#Adjust areas link types
+	.long 0x473e0
+	.hword 101,3		#ground
+	.long 0x473e4
+	.long 0x00000000	#no ceilings
+	.long 0x473e8
+	.hword 104,1		#wall1
+	.long 0x473eC
+	.hword 105,1		#wall2
+	.long 0x47404
+	.hword 0x7F,6		#vert count
+	.long 0x473f4		#X Min
+	.float -90
+	.long 0x473f8		#Y Min
+	.float -210
+	.long 0x473fC		#X Max
+	.float 90
+	.long 0x47400		#Y Max
+	.float -10
+
+	#EDIT VERTS
+	#vert 127
+	.long 0x46578
+	.float 81.6
+	.long 0x4657C
+	.float -29.3597
+	#vert 128
+	.long 0x46580
+	.float 81.6
+	.long 0x46584
+	.float -200
+	#vert 129
+	.long 0x46588
+	.float 61.6
+	.long 0x4658C
+	.float -29.3597
+	#vert 130
+	.long 0x46590
+	.float -61.6
+	.long 0x46594
+	.float -29.3597
+	#vert 131
+	.long 0x46598
+	.float -81.6
+	.long 0x4659C
+	.float -29.3597
+	#vert 132
+	.long 0x465A0
+	.float -81.6
+	.long 0x465A4
+	.float -200
+
+	#change link 101
+	.long 0x46d58
+	.hword 131,130 		#vertex index
+	.long 0x46d5C
+	.hword 105,103			#next and prev link
+	.long 0x46d64
+	.long 0x00010210 		#bottom w/ ledgegrab
+	#change link 102
+	.long 0x46d68
+	.hword 129,127 		#vertex index
+	.long 0x46d6C
+	.hword 103,104			#next and prev link
+	.long 0x46d74
+	.long 0x00010210 		#bottom w/ ledgegrab
+	#change link 103
+	.long 0x46d78
+	.hword 130,129 		#vertex index
+	.long 0x46d7C
+	.hword 101,102			#next and prev link
+	.long 0x46d84
+	.long 0x00010010 		#bottom
+	#change link 104
+	.long 0x46d88
+	.hword 127,128 		#vertex index
+	.long 0x46d8C
+	.hword 102,-1			#next and prev link
+	.long 0x46d94
+	.long 0x00040010		#right
+	#change link 105
+	.long 0x46d98
+	.hword 132,131 		#vertex index
+	.long 0x46d9C
+	.hword -1,101			#next and prev link
+	.long 0x46dA4
+	.long 0x00080010 		#left
 
 	#adjust camera bounds
 	.long 0x49510
