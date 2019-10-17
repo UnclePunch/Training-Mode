@@ -6106,6 +6106,10 @@ StageMod_FlatZone:
 	.long 0x4615C
 	.float 10
 
+	#Move platforms to the right slightly
+	.long 0x3dd54
+	.float 3
+
 	#Ground Left Point
 	.long 0x466fC
 	.float 300
@@ -6245,6 +6249,18 @@ StageMod_FlatZone:
 	.float -80
 	.long 0x494d4
 	.float 80
+	#adjust camera zoom
+	.long 0x47850
+	.long 160
+	.long 0x47854
+	.long 1000
+	#adjust pause camera zoom
+	.long 0x47874
+	.long 40
+	.long 0x47878
+	.long 100
+	.long 0x4787C
+	.long 200
 	#adjust blastzone bounds
 	#X
 	.long 0x49550
@@ -6270,25 +6286,49 @@ StageMod_RCruise:
 	.long 0x39074		#ticktock X
 	.float 700
 	.long 0x39078		#ticktock Y
-	.float -300
+	.float -308
 	.long 0x3907C		#ticktock Z
-	.float -40
+	.float -30
 
 	#Move stage
 	.long 0x61be4
 	.float	1.5708		#Rotate Z
 	.long 0x61be8
-	.float	1.0		#scale X
+	.float	1.7		#scale X
 	.long 0x61beC
 	.float	2.5		#scale Y
 	.long 0x61bf0
-	.float	0.7		#Scale Z
+	.float	1.1		#Scale Z
 	.long 0x61bf4		#ticktock X
 	.float 1.8
 	.long 0x61bf8		#ticktock Y
-	.float -450
+	.float -465
 	.long 0x61bfC		#ticktock Z
 	.float -0
+
+	#adjust camera boundaries
+	.long 0x750d4		#X max
+	.float 220
+	.long 0x75094		#X min
+	.float -220
+	.long 0x750d8		#Y max
+	.float 240
+	.long 0x75098		#Y min
+	.float -18
+	#adjust camera zoom
+	.long 0x74d48			#max zoom
+	.long 160
+	.long 0x74d4C			#unk
+	.long 1000
+	#adjust blastzones
+	.long 0x75114
+	.float 280
+	.long 0x75154
+	.float -280
+	.long 0x75118
+	.float	290
+	.long 0x75158
+	.float -70
 
 	#Change area region (area 13)
 	.long 0x745cc		#X min
@@ -6357,32 +6397,32 @@ StageMod_RCruise:
 	.long 0x73808
 	.float	112.5
 	.long 0x7380C
-	.float -472
+	.float -502
 	#vert 61
 	.long 0x73810
 	.float	40
 	.long 0x73814
-	.float -472
+	.float -502
 	#vert 62
 	.long 0x73818
 	.float	20
 	.long 0x7381C
-	.float -472
+	.float -502
 	#vert 63
 	.long 0x73820
 	.float	-20
 	.long 0x73824
-	.float	-472
+	.float	-502
 	#vert 64
 	.long 0x73828
 	.float	-40
 	.long 0x7382C
-	.float	-472
+	.float	-502
 	#vert 66
 	.long 0x73838
 	.float	-112.5
 	.long 0x7383C
-	.float	-472
+	.float	-502
 
 	#Change spawn points
 	#p1
