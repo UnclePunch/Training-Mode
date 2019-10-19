@@ -1,7 +1,7 @@
 #To be inserted at 8021819c
 .include "../../Globals.s"
 
-.set LayoutCount,9
+.set LayoutCount,8
 
 #Get rand number
   li r3,LayoutCount
@@ -14,7 +14,7 @@
 
 Layouts:
 blrl
-.byte 0,1,2,3,13,18,20,21,22
+.byte 0,1,/*2,*/3,13,18,20,21,22
 .align 2
 
 Exit:
