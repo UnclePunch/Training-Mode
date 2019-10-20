@@ -337,6 +337,498 @@ StageMod_Castle:
 	.long 0x01FDD8
   .long -1
 
+StageMod_Fourside:
+	#Remove building top
+	.long 0x23BD8 + 0xC
+	.long 0
+	.long 0x23CF8 + 0xC
+	.long 0
+	.long 0x23D58 + 0xC
+	.long 0
+	.long 0x23F58 + 0xC
+	.long 0
+	.long 0x24198 + 0xC
+	.long 0
+	#top of building metal thing
+	.long 0x1E2D8 + 0xC
+	.long 0
+	.long 0x1E518 + 0xC
+	.long 0
+	.long 0x1E758 + 0xC
+	.long 0
+	.long 0x1E938 + 0xC
+	.long 0
+
+	#right building lights
+	#.long 0x1EB98 + 0xC
+	#.long 0
+	#.long 0x1F018 + 0xC
+	#.long 0
+	#.long 0x1F538 + 0xC
+	#.long 0
+	#.long 0x1F6F8 + 0xC
+	#.long 0
+	#.long 0x1F958 + 0xC
+	#.long 0
+	#.long 0x1FC18 + 0xC
+	#.long 0
+
+	#top of building lights
+	.long 0x1FD58 + 0xC
+	.long 0
+	.long 0x1FF18 + 0xC
+	.long 0
+	.long 0x200F8 + 0xC
+	.long 0
+	.long 0x20238 + 0xC
+	.long 0
+	.long 0x203F8 + 0xC
+	.long 0
+	.long 0x205D8 + 0xC
+	.long 0
+	.long 0x20778 + 0xC
+	.long 0
+	.long 0x20A98 + 0xC
+	.long 0
+	.long 0x20E18 + 0xC
+	.long 0
+	.long 0x20FB8 + 0xC
+	.long 0
+	.long 0x212D8 + 0xC
+	.long 0
+	.long 0x21658 + 0xC
+	.long 0
+	.long 0x21738 + 0xC
+	.long 0
+	.long 0x21658 + 0xC
+	.long 0
+
+	#collision edits?
+  .long 0x0002E6EC
+  .long 0x00000000
+  .long 0x0002E75C
+  .long 0x43000000
+  .long 0x0002E998
+  .long 0x46825FBE
+  .long 0x0002E9D8
+  .long 0x00000000
+  .long 0x0002EA54
+  .long 0x00000000
+  .long 0x0002EA58
+  .long 0xC3000000
+  .long 0x0002EA5C
+  .long 0x00000000
+  .long 0x0002EB58
+  .long 0xC33FDCD0
+  .long 0x0002EB94
+  .long 0x00000000
+  .long 0x0002EB98
+  .long 0x00000000
+  .long 0x0002EB9C
+  .long 0x00000000
+  .long 0x0002EBD4
+  .long 0x00000000
+  .long 0x0002EBD8
+  .long 0x00000000
+  .long 0x0002EBDC
+  .long 0x00000000
+  .long 0x0002EC14
+  .long 0x00000000
+  .long 0x0002EC18
+  .long 0x00000000
+  .long 0x0002EC1C
+  .long 0x00000000
+  .long 0x0002EC54
+  .long 0xC321D0BD
+  .long 0x0002EC58
+  .long 0x419C17BD
+  .long 0x0002EC5C
+  .long 0xBFAFE771
+  .long 0x0002ED5C
+  .long 0xC122BB88
+  .long 0x0002ED9C
+  .long 0xC122BB88
+  .long 0x0002EDDC
+  .long 0xC122BB88
+  .long 0x0002EE14
+  .long 0xC60637BD
+  .long 0x000306F4
+  .long 0x00000000
+  .long 0x000306F8
+  .long 0xC3000000
+  .long 0x000306FC
+  .long 0x00000000
+  .long 0x000307F4
+  .long 0x00000000
+  .long 0x000307F8
+  .long 0xC3000000
+  .long 0x000307FC
+  .long 0x00000000
+  .long 0x00030834
+  .long 0x00000000
+  .long 0x00030838
+  .long 0xC3000000
+  .long 0x0003083C
+  .long 0x00000000
+  .long 0x00030874
+  .long 0x00000000
+  .long 0x00030878
+  .long 0xC3000000
+  .long 0x0003087C
+  .long 0x00000000
+  .long 0x000308B4
+  .long 0xC218A6E6
+  .long 0x000308B8
+  .long 0x3F9A29D0
+  .long 0x000308BC
+  .long 0x41398B84
+  .long 0x000308F4
+  .long 0xC26CF2D0
+  .long 0x000308F8
+  .long 0x3F9A29D0
+  .long 0x000308FC
+  .long 0x41398B84
+  .long 0x00030934
+  .long 0xC2A0E1A7
+  .long 0x00030938
+  .long 0x3F9A29D0
+  .long 0x0003093C
+  .long 0x41398B84
+  .long 0x00030A34
+  .long 0x00000000
+  .long 0x00030A38
+  .long 0xC2330000
+  .long 0x00030A3C
+  .long 0x00000000
+  .long 0x00030A74
+  .long 0xC15C0000
+  .long 0x00030A78
+  .long 0xC2330000
+  .long 0x00030A7C
+  .long 0x00000000
+  .long 0x00030AB4
+  .long 0xC12D0000
+  .long 0x00030AB8
+  .long 0xC2090000
+  .long 0x00030ABC
+  .long 0x00000000
+  .long 0x00030AF4
+  .long 0xC0B847B2
+  .long 0x00030AF8
+  .long 0xC2090000
+  .long 0x00030AFC
+  .long 0x00000000
+  .long 0x00030B34
+  .long 0x00000000
+  .long 0x00030B38
+  .long 0xC3000000
+  .long 0x00030B3C
+  .long 0x00000000
+  .long 0x00030B74
+  .long 0x00000000
+  .long 0x00030B78
+  .long 0xC3000000
+  .long 0x00030B7C
+  .long 0x00000000
+  .long 0x00030BB4
+  .long 0x00000000
+  .long 0x00030BB8
+  .long 0xC3000000
+  .long 0x00030BBC
+  .long 0x00000000
+  .long 0x00036BB4
+  .long 0xC1000000
+  .long 0x00036BB8
+  .long 0x416065B4
+  .long 0x00036CE8
+  .long 0x3F4CCCCD
+  .long 0x0004AC40
+  .long 0x00000000
+  .long 0x0004AC44
+  .long 0x00000000
+  .long 0x0004AC48
+  .long 0x00000000
+  .long 0x0004AC4C
+  .long 0x00000000
+  .long 0x0004AC50
+  .long 0x00000000
+  .long 0x0004AC54
+  .long 0x00000000
+  .long 0x0004AC58
+  .long 0x00000000
+  .long 0x0004AC5C
+  .long 0x00000000
+  .long 0x0004AC60
+  .long 0x00000000
+  .long 0x0004AC64
+  .long 0x00000000
+  .long 0x0004AC68
+  .long 0x00000000
+  .long 0x0004AC6C
+  .long 0x00000000
+  .long 0x0004AC70
+  .long 0x00000000
+  .long 0x0004AC74
+  .long 0x00000000
+  .long 0x0004AC78
+  .long 0x00000000
+  .long 0x0004AC7C
+  .long 0x00000000
+  .long 0x0004AC80
+  .long 0x00000000
+  .long 0x0004AC84
+  .long 0x00000000
+  .long 0x0004AC88
+  .long 0x00000000
+  .long 0x0004AC8C
+  .long 0x00000000
+  .long 0x0004AC90
+  .long 0x00000000
+  .long 0x0004AC94
+  .long 0x00000000
+  .long 0x0004AC98
+  .long 0x00000000
+  .long 0x0004AC9C
+  .long 0x00000000
+  .long 0x0004ACA0
+  .long 0x00000000
+  .long 0x0004ACA4
+  .long 0x00000000
+  .long 0x0004ACA8
+  .long 0x00000000
+  .long 0x0004ACAC
+  .long 0x00000000
+  .long 0x0004ACB0
+  .long 0x00000000
+  .long 0x0004ACB4
+  .long 0x00000000
+  .long 0x0004ACB8
+  .long 0x00000000
+  .long 0x0004ACBC
+  .long 0x00000000
+  .long 0x0004ACC0
+  .long 0x00000000
+  .long 0x0004ACC4
+  .long 0x00000000
+  .long 0x0004ACC8
+  .long 0x00000000
+  .long 0x0004ACCC
+  .long 0x00000000
+  .long 0x0004ACD0
+  .long 0x00000000
+  .long 0x0004ACD4
+  .long 0x00000000
+  .long 0x0004ACD8
+  .long 0x00000000
+  .long 0x0004ACDC
+  .long 0x00000000
+  .long 0x0004ACE0
+  .long 0x00000000
+  .long 0x0004ACE4
+  .long 0x00000000
+  .long 0x0004ACE8
+  .long 0x00000000
+  .long 0x0004ACEC
+  .long 0x00000000
+  .long 0x0004ACF0
+  .long 0x00000000
+  .long 0x0004ACF4
+  .long 0x00000000
+  .long 0x0004ACF8
+  .long 0xC2A40000
+  .long 0x0004ACFC
+  .long 0xC3240000
+  .long 0x0004AD00
+  .long 0xC2A40000
+  .long 0x0004AD04
+  .long 0x3F000000
+  .long 0x0004AD08
+  .long 0x42530000
+  .long 0x0004AD0C
+  .long 0x3F000000
+  .long 0x0004AD10
+  .long 0x42530000
+  .long 0x0004AD14
+  .long 0xC3240000
+  .long 0x0004AD18
+  .long 0xC2870000
+  .long 0x0004AD1C
+  .long 0x3F000000
+  .long 0x0004AD20
+  .long 0x42110000
+  .long 0x0004AD24
+  .long 0x3F000000
+  .long 0x0004AD28
+  .long 0xC1DD0000
+  .long 0x0004AD2C
+  .long 0xC1370000
+  .long 0x0004AD30
+  .long 0x41EC0000
+  .long 0x0004AD34
+  .long 0xC13B0000
+  .long 0x0004AD38
+  .long 0x00000000
+  .long 0x0004AD3C
+  .long 0x00000000
+  .long 0x0004AD40
+  .long 0x00000000
+  .long 0x0004AD44
+  .long 0x00000000
+  .long 0x0004AD48
+  .long 0x00000000
+  .long 0x0004AD4C
+  .long 0x00000000
+  .long 0x0004AD50
+  .long 0x00000000
+  .long 0x0004AD54
+  .long 0x00000000
+  .long 0x0004AD58
+  .long 0x00000000
+  .long 0x0004AD5C
+  .long 0x00000000
+  .long 0x0004AD60
+  .long 0x00000000
+  .long 0x0004AD64
+  .long 0x00000000
+  .long 0x0004AD68
+  .long 0x00000000
+  .long 0x0004AD6C
+  .long 0x00000000
+  .long 0x0004AD70
+  .long 0x00000000
+  .long 0x0004AD74
+  .long 0x00000000
+  .long 0x0004AD78
+  .long 0x00000000
+  .long 0x0004AD7C
+  .long 0x00000000
+  .long 0x0004AD80
+  .long 0x00000000
+  .long 0x0004AD84
+  .long 0x00000000
+  .long 0x0004AD88
+  .long 0x00000000
+  .long 0x0004AD8C
+  .long 0x00000000
+  .long 0x0004AD90
+  .long 0x00000000
+  .long 0x0004AD94
+  .long 0x00000000
+  .long 0x0004AD98
+  .long 0x00000000
+  .long 0x0004AD9C
+  .long 0x00000000
+  .long 0x0004ADA0
+  .long 0x00000000
+  .long 0x0004ADA4
+  .long 0x00000000
+  .long 0x0004ADA8
+  .long 0x00000000
+  .long 0x0004ADAC
+  .long 0x00000000
+  .long 0x0004ADBC
+  .long 0x00010000
+  .long 0x0004AE0C
+  .long 0x00010000
+  .long 0x0004AE1C
+  .long 0x00010000
+  .long 0x0004AE6C
+  .long 0x00010000
+  .long 0x0004AFDC
+  .long 0x00040600
+  .long 0x0004B03C
+  .long 0x00080600
+  .long 0x0004B054
+  .long 0xC43316A1
+  .long 0x0004B05C
+  .long 0x44720000
+  .long 0x0004B07C
+  .long 0xC40001B7
+  .long 0x0004B084
+  .long 0x444FB886
+  .long 0x0004B0A4
+  .long 0xC4900000
+  .long 0x0004B0AC
+  .long 0x44050000
+  .long 0x0004B0B0
+  .long 0x432FFEC6
+  .long 0x0004B0CC
+  .long 0xC40E8F42
+  .long 0x0004B0D4
+  .long 0x4416D26E
+  .long 0x0004B0F4
+  .long 0xC48087C8
+  .long 0x0004B0FC
+  .long 0x448087C8
+  .long 0x0004B398
+  .long 0x00000082
+  .long 0x0004B3A8
+  .long 0x3D99999A
+  .long 0x0004B3B4
+  .long 0x3F99999A
+  .long 0x0004B3DC
+  .long 0xC1400000
+  .long 0x0004B3E0
+  .long 0x42960000
+  .long 0x0004B3E8
+  .long 0x41500000
+  .long 0x0004B478
+  .long 0x0000003C
+  .long 0x0004B47C
+  .long 0x00000000
+  .long 0x0004B480
+  .long 0x00000000
+  .long 0x0004B484
+  .long 0x00000000
+  .long 0x0004B488
+  .long 0x00000000
+  .long 0x0004B48C
+  .long 0x00000000
+  .long 0x0004B490
+  .long 0x00000000
+  .long 0x0004B494
+  .long 0x00000000
+  .long 0x0004B498
+  .long 0x00000000
+  .long 0x0004B4A0
+  .long 0x7F7F012C
+  .long 0x0004B73C
+  .long 0xC1000000
+  .long 0x0004B778
+  .long 0xC16A0000
+  .long 0x0004B7B8
+  .long 0xC32CFFFE
+  .long 0x0004B7BC
+  .long 0x43020000
+  .long 0x0004B7F8
+  .long 0x431CFFFE
+  .long 0x0004B7FC
+  .long 0xC24CE2D2
+  .long 0x0004B838
+  .long 0xC35F999C
+  .long 0x0004B878
+  .long 0x434F999C
+  .long 0x0004B87C
+  .long 0xC2CBC2D1
+  .long 0x0004BAB8
+  .long 0xC28D0000
+  .long 0x0004BABC
+  .long 0x41500000
+  .long 0x0004BAF8
+  .long 0x42250000
+  .long 0x0004BAFC
+  .long 0x41500000
+  .long 0x0004BB38
+  .long 0x41800000
+  .long 0x0004BB3C
+  .long 0x41500000
+  .long 0x0004BB78
+  .long 0xC2350000
+  .long 0x0004BB7C
+  .long 0x41500000
+  .long 0x0004BBBC
+  .long 0x42600000
+  .long -1
 
 StageMod_GreatBay:
 	.long 0x000026D8
@@ -761,9 +1253,8 @@ StageMod_Greens:
 	.long 0x40A00000
 	.long -1
 
-StageMod_Yoster:
-	#.long 0x00013FBC
-	#.long 0x00014198
+/*
+StageMod_WIPYoster:
 	.long 0x0001458C
 	.long 0x80000000
 	.long 0x000147EC
@@ -782,136 +1273,146 @@ StageMod_Yoster:
 	.long 0x80000000
 	.long 0x000151AC
 	.long 0x80000000
-	.long 0x00025228
-	.long 0x3F800000
-	.long 0x0002522C
-	.long 0x3F800000
-	.long 0x00025230
-	.long 0x3F800000
-	.long 0x00025234
-	.long 0xC1C00000
-	.long 0x00025238
-	.long 0x00000000
-	.long 0x0002523C
-	.long 0xC2700000
-	.long 0x00025268
-	.long 0x00000000
-	.long 0x0002526C
-	.long 0x00000000
-	.long 0x00025270
-	.long 0x00000000
-	.long 0x00025274
-	.long 0x00000000
-	.long 0x00025278
-	.long 0x00000000
-	.long 0x0002527C
-	.long 0x00000000
-	.long 0x000252A8
-	.long 0x00000000
-	.long 0x000252AC
-	.long 0x00000000
-	.long 0x000252B0
-	.long 0x00000000
-	.long 0x000252B4
-	.long 0x00000000
-	.long 0x000252B8
-	.long 0x00000000
-	.long 0x000252BC
-	.long 0x00000000
-	.long 0x000252E8
-	.long 0x00000000
-	.long 0x000252EC
-	.long 0x00000000
-	.long 0x000252F0
-	.long 0x00000000
-	.long 0x000252F4
-	.long 0x00000000
-	.long 0x000252F8
-	.long 0x00000000
-	.long 0x000252FC
-	.long 0x00000000
-	.long 0x00025374
-	.long 0x422A0000
-	.long 0x00025378
-	.long 0xC3000000
-	.long 0x0002537C
-	.long 0xC3000000
-	.long 0x000253AC
-	.long 0x3F000000
-	.long 0x000253B4
-	.long 0xC2C80000
-	.long 0x000253B8
-	.long 0xC4C80000
-	.long 0x000253EC
-	.long 0x3F000000
-	.long 0x000253F4
-	.long 0xC2B40000
-	.long 0x000253F8
-	.long 0xC4C80000
-	.long 0x0002542C
-	.long 0x3F000000
-	.long 0x00025434
-	.long 0xC2A00000
-	.long 0x00025438
-	.long 0xC4C80000
-	.long 0x0002546C
-	.long 0x3F000000
-	.long 0x00025474
-	.long 0xC28C0000
-	.long 0x00025478
-	.long 0xC4C80000
-	.long 0x000254AC
-	.long 0x3F000000
-	.long 0x000254B4
-	.long 0xC2700000
-	.long 0x000254B8
-	.long 0xC4C80000
-	.long 0x000254EC
-	.long 0x3F000000
-	.long 0x000254F4
-	.long 0xC2480000
-	.long 0x000254F8
-	.long 0xC4C80000
-	.long 0x0002552C
-	.long 0x3F000000
-	.long 0x00025534
-	.long 0xC2200000
-	.long 0x00025538
-	.long 0xC4C80000
-	.long 0x0002556C
-	.long 0x3F000000
-	.long 0x00025574
-	.long 0xC1F00000
-	.long 0x00025578
-	.long 0xC4C80000
-	.long 0x000255AC
-	.long 0x3F000000
-	.long 0x000255B4
-	.long 0xC1F00000
-	.long 0x000255B8
-	.long 0xC3A00000
-	.long 0x000256A8
-	.long 0x3E800000
-	.long 0x000256AC
-	.long 0x3E800000
-	.long 0x000256B0
-	.long 0x3E800000
-	.long 0x000256B4
-	.long 0x00000000
-	.long 0x000256B8
-	.long 0x41C80000
-	.long 0x000256BC
-	.long 0xC1F00000
-	.long 0x000257A8
-	.long 0x3E19999A
-	.long 0x000257AC
-	.long 0x3E19999A
-	.long 0x000257B0
-	.long 0x3E19999A
-	.long 0x000257B8
-	.long 0x41200000
-	.long 0x000257BC
-	.long 0xC1700000
+
+	#Move right side of stage back
+	.long 0x25108 + 0x30
+	.float -40
+	.long 0x25108 + 0x34
+	.float -200
+	#Move left side forward
+	.long 0x25308 + 0x30
+	.float 40
+	.long 0x25308 + 0x34
+	.float 200
+	#Move trees forward
+	.long 0x25148 + 0x30
+	.float 70
+	.long 0x25148 + 0x34
+	.float 123.75
+	.long 0x25188 + 0x30
+	.float 85
+	.long 0x25188 + 0x34
+	.float 100
+	.long 0x251C8 + 0x30
+	.float 75
+	.long 0x251C8 + 0x34
+	.float 92
+
+	#remove all vertices
+	.long 0xCD02b888
+	.long 54*2 *4
+	.long -1000
+
+	#vert 10
+	.long 0x2b888 + 10 * 8
+	.float -132.25
+	.long 0x2b888 + 10 * 8 + 4
+	.float 0.0001
+	#vert 14
+	.long 0x2b888 + 14 * 8
+	.float -115
+	.long 0x2b888 + 14 * 8 + 4
+	.float 0.0001
+	#vert 17
+	.long 0x2b888 + 17 * 8
+	.float -50
+	.long 0x2b888 + 17 * 8 + 4
+	.float 0.0001
+	#vert 15
+	.long 0x2b888 + 15 * 8
+	.float -50
+	.long 0x2b888 + 15 * 8 + 4
+	.float 0.0001
+	#vert 16
+	.long 0x2b888 + 16 * 8
+	.float -50
+	.long 0x2b888 + 16 * 8 + 4
+	.float 0.0001
+	#vert 11
+	.long 0x2b888 + 11 * 8
+	.float 0
+	.long 0x2b888 + 11 * 8 + 4
+	.float 0.0001
+	#vert 12
+	.long 0x2b888 + 12 * 8
+	.float -17.25
+	.long 0x2b888 + 12 * 8 + 4
+	.float 0.0001
+	#vert 13
+	.long 0x2b888 + 13 * 8
+	.float -17.25
+	.long 0x2b888 + 12 * 8 + 4
+	.float -200
+	#vert 9
+	.long 0x2b888 + 9 * 8
+	.float -132.25
+	.long 0x2b888 + 12 * 8 + 4
+	.float -200
+
+	#remove plants in foreground
+	.long 0x14138 + 0xC
+	.long 0
+	.long 0x140B8 + 0xC
+	.long 0
+	.long 0x14038 + 0xC
+	.long 0
+	.long -1
+*/
+
+StageMod_Yoster:
+	#.long 0x00013FBC
+	#.long 0x00014198
+	#remove plants in foreground
+	.long 0x14138 + 0xC
+	.long 0
+	.long 0x140B8 + 0xC
+	.long 0
+	.long 0x14038 + 0xC
+	.long 0
+
+	.long 0x0001458C
+	.long 0x80000000
+	.long 0x000147EC
+	.long 0x80000000
+	.long 0x000148EC
+	.long 0x80000000
+	.long 0x00014AAC
+	.long 0x80000000
+	.long 0x00014BAC
+	.long 0x80000000
+	.long 0x00014D4C
+	.long 0x80000000
+	.long 0x00014F0C
+	.long 0x80000000
+	.long 0x0001500C
+	.long 0x80000000
+	.long 0x000151AC
+	.long 0x80000000
+
+	#Move right side of stage back
+	.long 0x25108 + 0x30
+	.float -40
+	.long 0x25108 + 0x34
+	.float -200
+	#Move left side forward
+	.long 0x25308 + 0x30
+	.float 40
+	.long 0x25308 + 0x34
+	.float 200
+	#Move trees forward
+	.long 0x25148 + 0x30
+	.float 70
+	.long 0x25148 + 0x34
+	.float 123.75
+	.long 0x25188 + 0x30
+	.float 85
+	.long 0x25188 + 0x34
+	.float 100
+	.long 0x251C8 + 0x30
+	.float 75
+	.long 0x251C8 + 0x34
+	.float 92
+
 	.long 0x0002B8DC
 	.long 0x00000000
 	.long 0x0002B900
@@ -1182,7 +1683,6 @@ StageMod_Yoster:
 	.long 0x421C8591
 	.long -1
 
-#/*
 StageMod_MK1:
 	.long 0x0000C0F8
 	.long 0xC60C0000
@@ -1210,6 +1710,8 @@ StageMod_MK1:
 	.long 0xC60C0000
 	.long 0x0000C4F8
 	.long 0xC60C0000
+
+	#Scale Platforms
 	.long 0x0000C5B8
 	.long 0xC2720000
 	.long 0x0000C664
@@ -1224,6 +1726,7 @@ StageMod_MK1:
 	.long 0x42A20000
 	.long 0x0000C824
 	.long 0xC2A20000
+
 	.long 0x0000ECDC
 	.long 0x00000000
 	.long 0x0000ECE4
@@ -1252,6 +1755,22 @@ StageMod_MK1:
 	.long 0x00000000
 	.long 0x0000ED24
 	.long 0x00000000
+
+	#remove top bricks
+	.long 0xC108 + 0x30
+	.float -300
+	.long 0xC508 + 0x30
+	.float -300
+	.long 0xC548 + 0x30
+	.float -300
+	.long 0xC148 + 0x30
+	.float -300
+	.long 0xC188 + 0x30
+	.float -300
+	.long 0xC1C8 + 0x30
+	.float -300
+
+	#scale weight limit?
 	.long 0x0000FDAC
 	.long 0x41A00000
 	.long 0x00010374
@@ -1305,7 +1824,6 @@ StageMod_MK1:
 	.long 0x8298 + 0xC
 	.long 0
 	.long -1
-#*/
 
 StageMod_MK2:
 	.long 0x00001560
