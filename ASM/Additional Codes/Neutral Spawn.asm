@@ -289,7 +289,7 @@ blrl
 #Yoshi's Story
 .long 0x08                  #Stage ID
   #Singles Data
-    .float -42,26.6,
+    .float -42,26.6
     .float 42,28
     .float 0,46.9
     .float 0,4.9
