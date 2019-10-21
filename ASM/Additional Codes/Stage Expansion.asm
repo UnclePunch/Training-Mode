@@ -1362,14 +1362,7 @@ StageMod_WIPYoster:
 StageMod_Yoster:
 	#.long 0x00013FBC
 	#.long 0x00014198
-	#remove plants in foreground
-	.long 0x14138 + 0xC
-	.long 0
-	.long 0x140B8 + 0xC
-	.long 0
-	.long 0x14038 + 0xC
-	.long 0
-
+	#Remove Pipe
 	.long 0x0001458C
 	.long 0x80000000
 	.long 0x000147EC
@@ -1390,6 +1383,8 @@ StageMod_Yoster:
 	.long 0x80000000
 
 	#Move right side of stage back
+	.long 0x25108 + 0x2C
+	.float 74
 	.long 0x25108 + 0x30
 	.float -40
 	.long 0x25108 + 0x34
@@ -1399,6 +1394,9 @@ StageMod_Yoster:
 	.float 40
 	.long 0x25308 + 0x34
 	.float 200
+	#Stretch left side
+	.long 0x25308 + 0x20
+	.float 1.14
 	#Move trees forward
 	.long 0x25148 + 0x30
 	.float 70
@@ -1412,275 +1410,87 @@ StageMod_Yoster:
 	.float 75
 	.long 0x251C8 + 0x34
 	.float 92
+	#remove plants in foreground
+	.long 0x14138 + 0xC
+	.long 0
+	.long 0x140B8 + 0xC
+	.long 0
+	.long 0x14038 + 0xC
+	.long 0
 
-	.long 0x0002B8DC
-	.long 0x00000000
-	.long 0x0002B900
-	.long 0xC1C80000
-	.long 0x0002B904
-	.long 0x41DC0000
-	.long 0x0002B910
-	.long 0xC2D20000
-	.long 0x0002B914
-	.long 0x41DC0000
-	.long 0x0002BA38
-	.long 0x000A000B
-	.long 0x0002BA3C
-	.long 0x002B0005
-	.long 0x0002BA48
-	.long 0x00060007
-	.long 0x0002BA4C
-	.long 0xFFFFFFFF
-	.long 0x0002BA54
-	.long 0x00000000
-	.long 0x0002BA5C
-	.long 0xFFFFFFFF
-	.long 0x0002BA64
-	.long 0x00000100
-	.long 0x0002BA68
-	.long 0x00060007
-	.long 0x0002BA6C
-	.long 0xFFFFFFFF
-	.long 0x0002BA74
-	.long 0x00000000
-	.long 0x0002BA78
-	.long 0x00060007
-	.long 0x0002BA7C
-	.long 0xFFFFFFFF
-	.long 0x0002BA84
-	.long 0x00000000
-	.long 0x0002BA8C
-	.long 0x0000001F
-	.long 0x0002BAA4
-	.long 0x00010002
-	.long 0x0002BAB4
-	.long 0x00000102
-	.long 0x0002BAC4
-	.long 0x00000103
-	.long 0x0002BAD4
-	.long 0x00000102
-	.long 0x0002BAE4
-	.long 0x00000100
-	.long 0x0002BAF4
-	.long 0x00000100
-	.long 0x0002BB04
-	.long 0x00000100
-	.long 0x0002BB14
-	.long 0x00000100
-	.long 0x0002BB24
-	.long 0x00000100
-	.long 0x0002BB34
-	.long 0x00000100
-	.long 0x0002BB44
-	.long 0x00000100
-	.long 0x0002BB54
-	.long 0x00000100
-	.long 0x0002BB64
-	.long 0x00000100
-	.long 0x0002BB7C
-	.long 0xFFFFFFFF
-	.long 0x0002BB84
-	.long 0x00000000
-	.long 0x0002BB8C
-	.long 0xFFFFFFFF
-	.long 0x0002BB94
-	.long 0x00000000
-	.long 0x0002BB9C
-	.long 0xFFFFFFFF
-	.long 0x0002BBA0
-	.long 0xFFFFFFFF
-	.long 0x0002BBA4
-	.long 0x00000000
-	.long 0x0002BBAC
-	.long 0xFFFFFFFF
-	.long 0x0002BBB0
-	.long 0xFFFFFFFF
-	.long 0x0002BBB4
-	.long 0x00000000
-	.long 0x0002BBBC
-	.long 0xFFFFFFFF
-	.long 0x0002BBC0
-	.long 0xFFFFFFFF
-	.long 0x0002BBC4
-	.long 0x00000000
-	.long 0x0002BBCC
-	.long 0xFFFFFFFF
-	.long 0x0002BBD0
-	.long 0xFFFFFFFF
-	.long 0x0002BBD4
-	.long 0x00000000
-	.long 0x0002BBDC
-	.long 0xFFFFFFFF
-	.long 0x0002BBE0
-	.long 0xFFFFFFFF
-	.long 0x0002BBE4
-	.long 0x00000000
-	.long 0x0002BBEC
-	.long 0xFFFFFFFF
-	.long 0x0002BBF0
-	.long 0xFFFFFFFF
-	.long 0x0002BBF4
-	.long 0x00000000
-	.long 0x0002BBFC
-	.long 0xFFFFFFFF
-	.long 0x0002BC00
-	.long 0xFFFFFFFF
-	.long 0x0002BC04
-	.long 0x00000000
-	.long 0x0002BC0C
-	.long 0xFFFFFFFF
-	.long 0x0002BC10
-	.long 0xFFFFFFFF
-	.long 0x0002BC14
-	.long 0x00000000
-	.long 0x0002BC1C
-	.long 0xFFFFFFFF
-	.long 0x0002BC20
-	.long 0xFFFFFFFF
-	.long 0x0002BC24
-	.long 0x00000000
-	.long 0x0002BC34
-	.long 0x00040600
-	.long 0x0002BC3C
-	.long 0xFFFFFFFF
-	.long 0x0002BC44
-	.long 0x00000000
-	.long 0x0002BC4C
-	.long 0xFFFFFFFF
-	.long 0x0002BC54
-	.long 0x00000000
-	.long 0x0002BC5C
-	.long 0xFFFFFFFF
-	.long 0x0002BC64
-	.long 0x00000000
-	.long 0x0002BC6C
-	.long 0xFFFFFFFF
-	.long 0x0002BC74
-	.long 0x00000000
-	.long 0x0002BC7C
-	.long 0xFFFFFFFF
-	.long 0x0002BC84
-	.long 0x00000000
-	.long 0x0002BC8C
-	.long 0xFFFFFFFF
-	.long 0x0002BC94
-	.long 0x00000000
-	.long 0x0002BC9C
-	.long 0xFFFFFFFF
-	.long 0x0002BCA4
-	.long 0x00000000
-	.long 0x0002BCAC
-	.long 0xFFFFFFFF
-	.long 0x0002BCB4
-	.long 0x00000000
-	.long 0x0002BCBC
-	.long 0xFFFFFFFF
-	.long 0x0002BCC4
-	.long 0x00000000
-	.long 0x0002BCCC
-	.long 0xFFFFFFFF
-	.long 0x0002BCD4
-	.long 0x00000000
-	.long 0x0002BCDC
-	.long 0xFFFFFFFF
-	.long 0x0002BCE4
-	.long 0x00000000
-	.long 0x0002BCF4
-	.long 0x00080600
-	.long 0x0002BCFC
-	.long 0xFFFFFFFF
-	.long 0x0002BD04
-	.long 0x00000000
-	.long 0x0002BD0C
-	.long 0xFFFFFFFF
-	.long 0x0002BD14
-	.long 0x00000000
-	.long 0x0002BD1C
-	.long 0xFFFFFFFF
-	.long 0x0002BD24
-	.long 0x00000000
-	.long 0x0002BD2C
-	.long 0xFFFFFFFF
-	.long 0x0002BD34
-	.long 0x00000000
-	.long 0x0002BD3C
-	.long 0xFFFFFFFF
-	.long 0x0002BD44
-	.long 0x00000000
-	.long 0x0002BD4C
-	.long 0xFFFFFFFF
-	.long 0x0002BD54
-	.long 0x00000000
-	.long 0x0002BD5C
-	.long 0xFFFFFFFF
-	.long 0x0002BD64
-	.long 0x00000000
-	.long 0x0002BD6C
-	.long 0xFFFFFFFF
-	.long 0x0002BD74
-	.long 0x00000000
-	.long 0x0002BD7C
-	.long 0xFFFFFFFF
-	.long 0x0002BD84
-	.long 0x00000000
-	.long 0x0002BD8C
-	.long 0xFFFFFFFF
-	.long 0x0002BD94
-	.long 0x00000000
-	.long 0x0002BDAC
-	.long 0xC3E3D37A
-	.long 0x0002BDB4
-	.long 0xC1200000
-	.long 0x0002C1AC
-	.long 0x3F933334
-	.long 0x0002C1C4
-	.long 0x3D4CCCCD
-	.long 0x0002C1C8
-	.long 0x3D4CCCCD
-	.long 0x0002C1CC
-	.long 0x3FA00000
-	.long 0x0002C1D0
-	.long 0x3FA00000
-	.long 0x0002C1D4
-	.long 0x3FC00000
-	.long 0x0002C1FC
-	.long 0xC2958000
-	.long 0x0002C204
-	.long 0x43D48000
-	.long 0x0002C444
-	.long 0xC2800000
-	.long 0x0002C4C4
-	.long 0xC2F990B2
-	.long 0x0002C504
-	.long 0x42E590B2
-	.long 0x0002C508
-	.long 0xC23C0000
-	.long 0x0002C548
-	.long 0xC2B40000
-	.long 0x0002C588
-	.long 0x43380000
-	.long 0x0002C844
-	.long 0xC2140000
-	.long 0x0002C848
-	.long 0x40C2C859
-	.long 0x0002C888
-	.long 0x40C2C859
-	.long 0x0002C8C4
-	.long 0x418BD37A
-	.long 0x0002C8C8
-	.long 0x40C2C859
-	.long 0x0002C904
-	.long 0xC19BD37A
-	.long 0x0002C908
-	.long 0x40C2C859
-	.long 0x0002C948
-	.long 0x421C8591
-	.long 0x0002C988
-	.long 0x421C8591
-	.long 0x0002C9C8
-	.long 0x421C8591
-	.long 0x0002CA08
-	.long 0x421C8591
+	#/*
+	#remove all vertices
+	.long 0xCD02b888
+	.long 0x1B0
+	.float -1000
+
+	#vert 10
+	.long 0x2B8D8
+	.float -57.5
+	.long 0x2B8DC
+	.float 0.0001
+	#vert 14
+	.long 0x2B8F8
+	.float -30
+	.long 0x2B8FC
+	.float 0.0001
+	#vert 17
+	.long 0x2B910
+	.float -20
+	.long 0x2B914
+	.float 0.0001
+	#vert 15
+	.long 0x2B900
+	.float 0
+	.long 0x2B904
+	.float 0.0001
+	#vert 16
+	.long 0x2B908
+	.float 20
+	.long 0x2B90C
+	.float 0.0001
+	#vert 11
+	.long 0x2B8E0
+	.float 30
+	.long 0x2B8E4
+	.float 0.0001
+	#vert 12
+	.long 0x2B8E8
+	.float 57.5
+	.long 0x2B8EC
+	.float 0.0001
+	#vert 13
+	.long 0x2B8F0
+	.float 57.5
+	.long 0x2B8F4
+	.float -200
+	#vert 9
+	.long 0x2B8D0
+	.float -57.5
+	.long 0x2B8D4
+	.float -200
+
+	#p1 spawn
+	.long 0x2c844
+	.float -40
+	.long 0x2c848
+	.float 7
+	#p2 spawn
+	.long 0x2c884
+	.float 40
+	.long 0x2c888
+	.float 7
+	#p3 spawn
+	.long 0x2c8c4
+	.float 20
+	.long 0x2c8c8
+	.float 7
+	#p4 spawn
+	.long 0x2c904
+	.float -20
+	.long 0x2c908
+	.float 7
+
 	.long -1
 
 StageMod_MK1:
@@ -1823,6 +1633,28 @@ StageMod_MK1:
 	.long 0
 	.long 0x8298 + 0xC
 	.long 0
+
+	#p1 spawn
+	.long 0x10374
+	.float -36
+	.long 0x10378
+	.float 7
+	#p2 spawn
+	.long 0x103b4
+	.float 36
+	.long 0x103b8
+	.float 7
+	#p3 spawn
+	.long 0x103f4
+	.float 15
+	.long 0x103f8
+	.float 7
+	#p4 spawn
+	.long 0x10434
+	.float -15
+	.long 0x10438
+	.float 7
+
 	.long -1
 
 StageMod_MK2:
@@ -1903,6 +1735,28 @@ StageMod_MK2:
 	#Stretch waterfall glisten
 		.long 0x9e68
 		.float 2.5
+
+	#p1 spawn
+	.long 0x16214
+	.float -62
+	.long 0x16218
+	.float 7
+	#p2 spawn
+	.long 0x16254
+	.float 62
+	.long 0x16258
+	.float 7
+	#p3 spawn
+	.long 0x16294
+	.float 32
+	.long 0x16298
+	.float 7
+	#p4 spawn
+	.long 0x162d4
+	.float -32
+	.long 0x162d8
+	.float 7
+
 		.long -1
 
 StageMod_FlatZone:
@@ -2069,13 +1923,13 @@ StageMod_FlatZone:
 
 	#adjust camera bounds
 	.long 0x49510
-	.float -145
+	.float -165
 	.long 0x494d0
-	.float 145
+	.float 160
 	.long 0x49514
 	.float -80
 	.long 0x494d4
-	.float 80
+	.float 120
 	#adjust camera zoom
 	.long 0x47850
 	.long 160
@@ -2099,6 +1953,27 @@ StageMod_FlatZone:
 	.float 120
 	.long 0x49594
 	.float -100
+
+	#p1 spawn
+	.long 0x496d0
+	.float -61.6
+	.long 0x496d4
+	.float -22.3597
+	#p2 spawn
+	.long 0x49710
+	.float 61.6
+	.long 0x49714
+	.float -22.3597
+	#p3 spawn
+	.long 0x49750
+	.float 31.6
+	.long 0x49754
+	.float -22.3597
+	#p4 spawn
+	.long 0x49790
+	.float -31.6
+	.long 0x49794
+	.float -22.3597
 
 	.long -1
 
@@ -2144,7 +2019,7 @@ StageMod_RCruise:
 	.float -18
 	#adjust camera zoom
 	.long 0x74d48			#max zoom
-	.long 220
+	.long 150
 	.long 0x74d4C			#unk
 	.long 1000
 	#adjust blastzones
@@ -2264,12 +2139,12 @@ StageMod_RCruise:
 	.float 72
 	#p3
 	.long 0xef7c
-	.float -469
+	.float -423
 	.long 0xef80
 	.float 72
 	#p4
 	.long 0xefbc
-	.float -423
+	.float -469
 	.long 0xefc0
 	.float 72
 
@@ -2411,6 +2286,27 @@ StageMod_Onett:
 	.long 0x4daf0
 	.long 1000
 
+	#p1 spawn
+	.long 0x4e258
+	.float -60
+	.long 0x4e25C
+	.float 5
+	#p2 spawn
+	.long 0x4e298
+	.float 60
+	.long 0x4e29C
+	.float 5
+	#p3 spawn
+	.long 0x4e2d8
+	.float 35
+	.long 0x4e2dC
+	.float 5
+	#p4 spawn
+	.long 0x4e318
+	.float -35
+	.long 0x4e31C
+	.float 5
+
 	.long -1
 
 StageMod_MuteCity:
@@ -2443,7 +2339,9 @@ StageMod_MuteCity:
 	.long 0x00040000
 	.long 0x37C28 + 0x30
 	.float 60
-
+	#Enable shadows on main floor
+	#.long 0x19590
+	#.long 0x00000000
 	# remove all vertices except 1,2,3,4
 	.long 0xCD04c9bc + 8*8
 	.long 0x220 - 8*8
@@ -2488,6 +2386,27 @@ StageMod_MuteCity:
 	#Remove fzero car hitboxes
 	.long 0x4d630
 	.long 0
+
+	#p1 spawn
+	.long 0x4dae4
+	.float -80
+	.long 0x4dae8
+	.float 5
+	#p2 spawn
+	.long 0x4db24
+	.float 80
+	.long 0x4db28
+	.float 5
+	#p3 spawn
+	.long 0x4db64
+	.float 40
+	.long 0x4db68
+	.float 5
+	#p4 spawn
+	.long 0x4dba4
+	.float -40
+	.long 0x4dba8
+	.float 5
 
 	#look into 80030788 for cam panning
 

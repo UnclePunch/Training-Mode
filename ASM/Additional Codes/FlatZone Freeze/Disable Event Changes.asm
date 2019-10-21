@@ -1,4 +1,4 @@
 #To be inserted at 803e7970
 .include "../../Globals.s"
 
-.long 0x0
+.long 0x800115f4
