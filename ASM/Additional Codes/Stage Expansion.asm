@@ -1384,7 +1384,7 @@ StageMod_Yoster:
 
 	#Move right side of stage back
 	.long 0x25108 + 0x2C
-	.float 74
+	.float 85.8
 	.long 0x25108 + 0x30
 	.float -40
 	.long 0x25108 + 0x34
@@ -1396,16 +1396,24 @@ StageMod_Yoster:
 	.float 200
 	#Stretch left side
 	.long 0x25308 + 0x20
-	.float 1.14
+	.float 1.32
 	#Move trees forward
+	.long 0x25148 + 0x2C
+	.float -165
 	.long 0x25148 + 0x30
 	.float 70
 	.long 0x25148 + 0x34
 	.float 123.75
+
+	.long 0x25188 + 0x2C
+	.float -135
 	.long 0x25188 + 0x30
 	.float 85
 	.long 0x25188 + 0x34
 	.float 100
+
+	.long 0x251C8 + 0x2C
+	.float -80
 	.long 0x251C8 + 0x30
 	.float 75
 	.long 0x251C8 + 0x34
@@ -1426,7 +1434,7 @@ StageMod_Yoster:
 
 	#vert 10
 	.long 0x2B8D8
-	.float -57.5
+	.float -67
 	.long 0x2B8DC
 	.float 0.0001
 	#vert 14
@@ -1456,38 +1464,58 @@ StageMod_Yoster:
 	.float 0.0001
 	#vert 12
 	.long 0x2B8E8
-	.float 57.5
+	.float 67
 	.long 0x2B8EC
 	.float 0.0001
 	#vert 13
 	.long 0x2B8F0
-	.float 57.5
+	.float 67
 	.long 0x2B8F4
 	.float -200
 	#vert 9
 	.long 0x2B8D0
-	.float -57.5
+	.float -67
 	.long 0x2B8D4
 	.float -200
 
+	#Adjust camera
+	.long 0x2c4c4
+	.float -140			#left
+	.long 0x2c4c8
+	.float 130.0		#top
+	.long 0x2c504
+	.float 140.0		#right
+	.long 0x2c508
+	.float -60.0		#bottom
+
+	#Adjust blastzone
+	.long 0x2c584
+	.float -180			#left
+	.long 0x2c544
+	.float 180			#right
+	.long 0x2c548
+	.float -110			#bottom
+	.long 0x2c588
+	.float 180			#top
+
 	#p1 spawn
 	.long 0x2c844
-	.float -40
+	.float -45
 	.long 0x2c848
 	.float 7
 	#p2 spawn
 	.long 0x2c884
-	.float 40
+	.float 45
 	.long 0x2c888
 	.float 7
 	#p3 spawn
 	.long 0x2c8c4
-	.float 20
+	.float 25
 	.long 0x2c8c8
 	.float 7
 	#p4 spawn
 	.long 0x2c904
-	.float -20
+	.float -25
 	.long 0x2c908
 	.float 7
 
@@ -1789,7 +1817,7 @@ StageMod_FlatZone:
 
 	#Move platforms to the right slightly
 	.long 0x3dd54
-	.float 3
+	.float 4.8
 
 	#Ground Left Point
 	.long 0x466fC
@@ -1945,12 +1973,12 @@ StageMod_FlatZone:
 	#adjust blastzone bounds
 	#X
 	.long 0x49550
-	.float 200
+	.float 230
 	.long 0x49590
-	.float -200
+	.float -230
 	#Y
 	.long 0x49554
-	.float 120
+	.float 160
 	.long 0x49594
 	.float -100
 
@@ -1974,6 +2002,10 @@ StageMod_FlatZone:
 	.float -31.6
 	.long 0x49794
 	.float -22.3597
+
+	#p1 respawn
+	.long 0x497d4
+	.float 20
 
 	.long -1
 
@@ -2278,11 +2310,30 @@ StageMod_Onett:
 	.long 0x49BE4
 	.float -200
 
-	#Camera Height
+	#Adjust camera
+	.long 0x4ded8
+	.float -150		#left
+	.long 0x4dedC
+	.float 160		#top
+	.long 0x4df18
+	.float 150		#right
+	.long 0x4df1C
+	.float -70		#bottom
+
+	#Adjust blastzone
+	.long 0x4df58
+	.float -225		#left
+	.long 0x4df5C
+	.float 210		#top
+	.long 0x4df98
+	.float 225		#right
+	.long 0x4df9C
+	.float -120		#bottom
+
 
 	#Camera Zoom
 	.long 0x4daec
-	.long 160
+	.long 130
 	.long 0x4daf0
 	.long 1000
 
@@ -2306,6 +2357,12 @@ StageMod_Onett:
 	.float -35
 	.long 0x4e31C
 	.float 5
+
+	#p1 respawn
+	.long 0x4e358
+	.float 0
+	.long 0x4e35C
+	.float 50
 
 	.long -1
 
@@ -2386,6 +2443,26 @@ StageMod_MuteCity:
 	#Remove fzero car hitboxes
 	.long 0x4d630
 	.long 0
+
+	#Adjust camera
+	.long 0x4d8a4
+	.float -200
+	.long 0x4d8a8
+	.float 177
+	.long 0x4d8e4
+	.float 200
+	.long 0x4d8e8
+	.float -73
+
+	#Adjust blastzone
+	.long 0x4d924
+	.float -350
+	.long 0x4d928
+	.float 335
+	.long 0x4d964
+	.float 350
+	.long 0x4d968
+	.float -165
 
 	#p1 spawn
 	.long 0x4dae4

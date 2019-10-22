@@ -52,6 +52,15 @@ DeleteMainSave:
 
 CreateMainSave:
 .set REG_OldSaveBackup,31
+
+#Mod Data Struct (this needs to be in the tournament redirect code)
+.set ModOFST_ModDataStart,0x1f24
+	.set ModOFST_ModDataKey,0x0
+		.set ModOFST_ModDataKeyLength,0x4
+	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
+		.set ModOFST_ModDataPrefsLength,0x18
+		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength
+
 #Allocate mem to backup current save data to
   load  r3,68144
   branchl r12,HSD_MemAlloc
@@ -107,9 +116,9 @@ ExploitFillLoop:
 
 
 #Init Mod Preferences
-	addi r3,REG_Memcard,0x1f24
+	addi r3,REG_Memcard,ModOFST_ModDataStart
   li  r4,0x0
-  li  r5,0x18
+  li  r5,ModOFST_ModDataLength
   branchl r12,0x80003100
 
 #Unlock All Messages
@@ -364,6 +373,12 @@ ExploitCode102:
 blrl
 
 backup
+
+#Wait for any memcard operation to finish
+ExploitCode102_WaitForMemcard:
+	branchl	r12,MemoryCard_WaitForFileToFinishSaving
+	cmpwi	r3,11
+	beq	ExploitCode102_WaitForMemcard
 
 ###################
 ## Load Snapshot ##
@@ -651,6 +666,16 @@ blrl
   mflr  r5
   bl  InitializeMajorSceneStruct
 
+#Check if key has been generated yet
+	lwz	r20,MemcardData(r13)
+	lwz	r3,ModOFST_ModDataStart+ModOFST_ModDataKey(r20)
+	cmpwi	r3,0
+	bne	GenerateKeyEnd
+#Generate Key
+	lwz	r3, -0x570C (r13)
+	lwz	r3,0x0(r3)
+	stw	r3,ModOFST_ModDataStart+ModOFST_ModDataKey(r20)
+GenerateKeyEnd:
   b CheckProgressive
 
 #region PointerConvert
@@ -1147,7 +1172,7 @@ blrl
 .align 2
 CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.5"
+.string "MultiMod Launcher v0.6"
 .align 2
 CodeNames_UCF:
 .string "UCF:"
@@ -1332,8 +1357,78 @@ DefaultCodes:
 	.long 0x00000000
 	.long 0x04397878
 	.long 0x4800020C
-	.long 0x0422D638
-	.long 0x38000002
+	.long 0xC222D638
+	.long 0x00000023
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7D1B78
+	.long 0x3C600001
+	.long 0x60630000
+	.long 0x3D808037
+	.long 0x618CF1E4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C7F1B78
+	.long 0x808D8840
+	.long 0x3CA00001
+	.long 0x60A50A30
+	.long 0x3D808000
+	.long 0x618C31F4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3D808001
+	.long 0x618CB6F8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03000B
+	.long 0x4182FFEC
+	.long 0x38600000
+	.long 0x3C80803B
+	.long 0x6084AC5C
+	.long 0x3CA0803B
+	.long 0x60A5AB74
+	.long 0x3CC08043
+	.long 0x60C6331C
+	.long 0x3D808001
+	.long 0x618CBD34
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x40820020
+	.long 0x806D8840
+	.long 0x80631F24
+	.long 0x809F1F24
+	.long 0x7C032000
+	.long 0x4082000C
+	.long 0x3BC00009
+	.long 0x4800000C
+	.long 0x3BC00002
+	.long 0x48000004
+	.long 0x806D8840
+	.long 0x7FE4FB78
+	.long 0x3CA00001
+	.long 0x60A50A30
+	.long 0x3D808000
+	.long 0x618C31F4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FE3FB78
+	.long 0x3D808037
+	.long 0x618CF1B0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FC3F378
+	.long 0x48000004
+	.long 0x7FA4EB78
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x7C601B78
+	.long 0x7C832378
+	.long 0x00000000
 	.long 0x041BFA1C
 	.long 0x60000000
 	.long 0x04479D40
@@ -1362,7 +1457,7 @@ DefaultCodes:
 	.long 0x38600001
 	.long 0x041644E8
 	.long 0x38600001
-  .long 0xFF000000
+	.long -1
 
 UCF_Off:
 	.long 0x040C9A44
@@ -4062,7 +4157,7 @@ GameVersion_SDR:
 	.long 0x280C010F
 	.long 0x000057F4
 	.long 0xCC000000
-	.long 0x00005894
+	.long 0xCC005894
 	.long 0x0000AB90
 	.long 0x0000598C
 	.long 0x03520000
@@ -4861,7 +4956,7 @@ GameVersion_SDR:
 	.long 0x00070100
 	.long 0x000082A0
 	.long 0x00001FE9
-	.long 0x000098C4
+	.long 0xCC0098C4
 	.long 0x000074C0
 	.long 0xFFFFFFFF
 	.long 0x00003334
@@ -5850,7 +5945,7 @@ GameVersion_SDR:
 	.long 0x88000005
 	.long 0xCC007AF4
 	.long 0x00000E78
-	.long 0xCC007AF8
+	.long 0x00007AF8
 	.long 0x0009A8C0
 	.long 0x00007AFC
 	.long 0x00001E59
@@ -6460,7 +6555,7 @@ GameVersion_SDR:
 	.long 0x00000000
 	.long 0x00003B64
 	.long 0x00000000
-	.long 0x00003BA0
+	.long 0xCC003BA0
 	.long 0x000070A0
 	.long 0x00003D00
 	.long 0x2C000003
@@ -9364,7 +9459,7 @@ StageExpansion_On:
 	.long 0x0445C388
 	.long 0xE7E33BB5
 	.long 0xC216E800
-	.long 0x000003D6
+	.long 0x000003F4
 	.long 0x48000089
 	.long 0x48000001
 	.long 0x48000001
@@ -9375,9 +9470,9 @@ StageExpansion_On:
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001BF9
-	.long 0x48001D6D
-	.long 0x48001A0D
+	.long 0x48001C59
+	.long 0x48001E1D
+	.long 0x48001A6D
 	.long 0x48000111
 	.long 0x48000BE1
 	.long 0x48000001
@@ -9385,15 +9480,15 @@ StageExpansion_On:
 	.long 0x4800123D
 	.long 0x48000E95
 	.long 0x48000471
-	.long 0x480013D1
-	.long 0x480015F9
+	.long 0x48001429
+	.long 0x48001651
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001749
+	.long 0x480017A1
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
@@ -9445,7 +9540,7 @@ StageExpansion_On:
 	.long 0x38A50008
 	.long 0x4BFFFF90
 	.long 0x48000004
-	.long 0x48001D68
+	.long 0x48001E58
 	.long 0x0001A68C
 	.long 0x00000000
 	.long 0x0001A6E8
@@ -10568,7 +10663,7 @@ StageExpansion_On:
 	.long 0x000151AC
 	.long 0x80000000
 	.long 0x00025134
-	.long 0x42940000
+	.long 0x42AB999A
 	.long 0x00025138
 	.long 0xC2200000
 	.long 0x0002513C
@@ -10578,15 +10673,21 @@ StageExpansion_On:
 	.long 0x0002533C
 	.long 0x43480000
 	.long 0x00025328
-	.long 0x3F91EB85
+	.long 0x3FA8F5C3
+	.long 0x00025174
+	.long 0xC3250000
 	.long 0x00025178
 	.long 0x428C0000
 	.long 0x0002517C
 	.long 0x42F78000
+	.long 0x000251B4
+	.long 0xC3070000
 	.long 0x000251B8
 	.long 0x42AA0000
 	.long 0x000251BC
 	.long 0x42C80000
+	.long 0x000251F4
+	.long 0xC2A00000
 	.long 0x000251F8
 	.long 0x42960000
 	.long 0x000251FC
@@ -10601,7 +10702,7 @@ StageExpansion_On:
 	.long 0x000001B0
 	.long 0xC47A0000
 	.long 0x0002B8D8
-	.long 0xC2660000
+	.long 0xC2860000
 	.long 0x0002B8DC
 	.long 0x38D1B717
 	.long 0x0002B8F8
@@ -10625,31 +10726,47 @@ StageExpansion_On:
 	.long 0x0002B8E4
 	.long 0x38D1B717
 	.long 0x0002B8E8
-	.long 0x42660000
+	.long 0x42860000
 	.long 0x0002B8EC
 	.long 0x38D1B717
 	.long 0x0002B8F0
-	.long 0x42660000
+	.long 0x42860000
 	.long 0x0002B8F4
 	.long 0xC3480000
 	.long 0x0002B8D0
-	.long 0xC2660000
+	.long 0xC2860000
 	.long 0x0002B8D4
 	.long 0xC3480000
+	.long 0x0002C4C4
+	.long 0xC30C0000
+	.long 0x0002C4C8
+	.long 0x43020000
+	.long 0x0002C504
+	.long 0x430C0000
+	.long 0x0002C508
+	.long 0xC2700000
+	.long 0x0002C584
+	.long 0xC3340000
+	.long 0x0002C544
+	.long 0x43340000
+	.long 0x0002C548
+	.long 0xC2DC0000
+	.long 0x0002C588
+	.long 0x43340000
 	.long 0x0002C844
-	.long 0xC2200000
+	.long 0xC2340000
 	.long 0x0002C848
 	.long 0x40E00000
 	.long 0x0002C884
-	.long 0x42200000
+	.long 0x42340000
 	.long 0x0002C888
 	.long 0x40E00000
 	.long 0x0002C8C4
-	.long 0x41A00000
+	.long 0x41C80000
 	.long 0x0002C8C8
 	.long 0x40E00000
 	.long 0x0002C904
-	.long 0xC1A00000
+	.long 0xC1C80000
 	.long 0x0002C908
 	.long 0x40E00000
 	.long 0xFFFFFFFF
@@ -10904,7 +11021,7 @@ StageExpansion_On:
 	.long 0x0004615C
 	.long 0x41200000
 	.long 0x0003DD54
-	.long 0x40400000
+	.long 0x4099999A
 	.long 0x000466FC
 	.long 0x43960000
 	.long 0x00046704
@@ -11020,11 +11137,11 @@ StageExpansion_On:
 	.long 0x0004787C
 	.long 0x000000C8
 	.long 0x00049550
-	.long 0x43480000
+	.long 0x43660000
 	.long 0x00049590
-	.long 0xC3480000
+	.long 0xC3660000
 	.long 0x00049554
-	.long 0x42F00000
+	.long 0x43200000
 	.long 0x00049594
 	.long 0xC2C80000
 	.long 0x000496D0
@@ -11043,6 +11160,8 @@ StageExpansion_On:
 	.long 0xC1FCCCCD
 	.long 0x00049794
 	.long 0xC1B2E0AA
+	.long 0x000497D4
+	.long 0x41A00000
 	.long 0xFFFFFFFF
 	.long 0x00039068
 	.long 0x3F333333
@@ -11238,8 +11357,24 @@ StageExpansion_On:
 	.long 0x42A20000
 	.long 0x00049BE4
 	.long 0xC3480000
+	.long 0x0004DED8
+	.long 0xC3160000
+	.long 0x0004DEDC
+	.long 0x43200000
+	.long 0x0004DF18
+	.long 0x43160000
+	.long 0x0004DF1C
+	.long 0xC28C0000
+	.long 0x0004DF58
+	.long 0xC3610000
+	.long 0x0004DF5C
+	.long 0x43520000
+	.long 0x0004DF98
+	.long 0x43610000
+	.long 0x0004DF9C
+	.long 0xC2F00000
 	.long 0x0004DAEC
-	.long 0x000000A0
+	.long 0x00000082
 	.long 0x0004DAF0
 	.long 0x000003E8
 	.long 0x0004E258
@@ -11258,6 +11393,10 @@ StageExpansion_On:
 	.long 0xC20C0000
 	.long 0x0004E31C
 	.long 0x40A00000
+	.long 0x0004E358
+	.long 0x00000000
+	.long 0x0004E35C
+	.long 0x42480000
 	.long 0xFFFFFFFF
 	.long 0x0002DAC4
 	.long 0x00000000
@@ -11310,6 +11449,22 @@ StageExpansion_On:
 	.long 0x00010206
 	.long 0x0004D630
 	.long 0x00000000
+	.long 0x0004D8A4
+	.long 0xC3480000
+	.long 0x0004D8A8
+	.long 0x43310000
+	.long 0x0004D8E4
+	.long 0x43480000
+	.long 0x0004D8E8
+	.long 0xC2920000
+	.long 0x0004D924
+	.long 0xC3AF0000
+	.long 0x0004D928
+	.long 0x43A78000
+	.long 0x0004D964
+	.long 0x43AF0000
+	.long 0x0004D968
+	.long 0xC3250000
 	.long 0x0004DAE4
 	.long 0xC2A00000
 	.long 0x0004DAE8
@@ -12192,8 +12347,8 @@ Codes_SceneLoad_CreateText:
 #Copy Saved Menu Options
 	addi	r3,REG_GObjData,OFST_OptionSelections
 	lwz	r4, -0x77C0 (r13)
-	addi r4,r4,0x1f24
-	li	r5,0x18
+	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
+	li	r5,ModOFST_ModDataPrefsLength
 	branchl	r12,memcpy
 
 #CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
@@ -12398,9 +12553,9 @@ Codes_SceneThink_CheckToExit:
   branchl r12,0x801a4b60
 #Save Menu Options
 	lwz	r3, -0x77C0 (r13)
-	addi r3,r3,0x1f24
+	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	addi	r4,REG_GObjData,OFST_OptionSelections
-	li	r5,0x18
+	li	r5,ModOFST_ModDataPrefsLength
 	branchl	r12,memcpy
 #Clear nametag region
 	load  r3,0x8045d850

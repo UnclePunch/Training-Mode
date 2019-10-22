@@ -1501,6 +1501,7 @@ InitSettings:
 .set ScreenDisplay_Adjust,0x8015f588
 .set ProgressiveStruct,0x8046b0f0
 .set TRK_flush_cache,0x80328f50
+.set MemoryCard_WaitForFileToFinishSaving,0x8001b6f8
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
