@@ -1,3 +1,5 @@
+.set ExpoitReturnAddr,0x8023BDB0
+
 .set Text_CreateTextCanvas,0x803A6044
 .set Text_CreateTextStruct,0x803A6664
 .set Text_InitializeSubtext,0x803a6b54
@@ -8,6 +10,7 @@
 .set HSD_Free,0x8037F0B4
 .set ZeroAreaLength,0x8000C2C0
 .set strlen,0x80325DE0
+.set strcpy,0x80325D2C
 .set memset,0x80003100
 .set GObj_AddUserData,0x80390A90
 .set GObj_AddProc,0x8038FC7C
@@ -53,6 +56,7 @@
 .set PlayerBlock_LoadDataOffset,0x80034780
 .set AS_218_CatchCut,0x800DAE4C
 .set SFX_PlaySFXAtFullVolume,0x801C7010
+.set SFX_MenuCommonSound,0x800242F0
 .set LoadFile_EfData,0x80067A40
 .set AS_AnimationFrameUpdateMore,0x8006F27C
 .set GFX_Shine,0x800E8C10
@@ -85,6 +89,14 @@
 .set DevelopMode_Text_ResetCursorXY,0x80303448
 .set sprintf,0x80323FA4
 .set ScreenDisplay_Adjust,0x8015fddc
+.set Text_CopyPremadeTextDataToStruct,0x803A6290
+.set MemoryCard_WaitForFileToFinishSaving,0x8001B87C
+.set Snapshot_UpdateFileList,0x80254F3C
+.set Memcard_FreeSomething,0x8001C6B0
+.set Memcard_AllocateSomething,0x8001C65C
+.set MemoryCard_ReadDataIntoMemory,0x8001C088
+.set MemoryCard_WaitForFileToFinishSaving,0x8001B87C
+.set Scene_GetMinorSceneData2,0x801A56A0
 
 #Mem Addresses
 .set	TournamentMode,0x80191C24
@@ -117,3 +129,6 @@
 .set  DeflickerStruct,0x8045bef8
 .set  ProgressiveStruct,0x8045bef8
 .set  OFST_CommonCObj,-0x45EC
+.set  MemcardFileList,0x80424120 #80433380
+.set  SnapshotData,0x803bb2c0 #0x803bacdc
+.set  SnapshotLoadThinkStruct,0x80491a98
