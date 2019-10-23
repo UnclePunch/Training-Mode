@@ -1851,7 +1851,7 @@ ExploitCode101_Success:
   branchl r12,TRK_flush_cache
 
 #Restore this stack frame and jump to the MML code in the snapshot file
-	addi	r3,REG_CodesetPointer,0xC
+	addi	r3,REG_CodesetPointer,0x4
 	restore
 	mtctr r3
 	bctr
@@ -2032,7 +2032,7 @@ ExploitCode100_Success:
   branchl r12,TRK_flush_cache
 
 #Restore this stack frame and jump to the MML code in the snapshot file
-	addi	r3,REG_CodesetPointer,0xC
+	addi	r3,REG_CodesetPointer,0x8
 	restore
 	mtctr r3
 	bctr
