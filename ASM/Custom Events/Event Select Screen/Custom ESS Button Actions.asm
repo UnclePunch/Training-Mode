@@ -14562,25 +14562,4002 @@ SnapshotCode100_Start:
 #endregion
 #region SnapshotCodePAL
 .include "../../CommonPAL.s"
+#Mod Data Struct (this needs to be in the tournament redirect code)
+.set ModOFST_ModDataStart,0x1f2C
+	.set ModOFST_ModDataKey,0x0
+		.set ModOFST_ModDataKeyLength,0x4
+	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
+		.set ModOFST_ModDataPrefsLength,0x18
+		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength
+
 SnapshotCodePALStart:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-#Disable Saving
-	load r4,OFST_MemcardController
-  li     r3,4
-  stw    r3,0x8(r4)    # store 4 to disable memory card saving
-#Store as next scene
-	branchl	r12,Scene_GetMinorSceneData2
+#First thing to do is relocate ALL of the exploit code to tournament mode
+	bl	MMLCodePAL_End
+	mflr	r3
+	bl	MMLCodePAL_Start
+	mflr	r4
+	sub	r5,r3,r4
+	load	r3,TournamentMode
+	branchl	r12,memcpy
+
+#Flush cache to ensure these instructions are up to date
+  load r3,TournamentMode
+	bl	MMLCodePAL_Start
+	mflr	r4
+	bl	MMLCodePAL_End
+	mflr	r5
+	sub	r4,r5,r4
+  branchl r12,TRK_flush_cache
+
+#Now run from the tournament mode code region
+	branch	r12,TournamentMode
+
+MMLCodePAL_Start:
+blrl
+#Overwriting the debug CSS with a lag reduction prompt
+#it crashes anyway so nothing of substance is being lost
+
+#Parameters
+.set  PromptSceneID,8 #0
+.set  CodesSceneID,9
+.set  ExitSceneID,2
+.set  PromptCommonSceneID,10
+.set  CodesCommonSceneID,10
+.set  InitialSelection,0
+.set  MaxCodesOnscreen,10
+
+#region Init New Scenes
+.set  REG_MinorSceneStruct,31
+
+#Init and backup
+  backup
+#Init LagPrompt major struct
+  li  r3,PromptSceneID
+  bl  SnapPAL_LagPrompt_MinorSceneStruct
+  mflr  r4
+  bl  SnapPAL_LagPrompt_SceneLoad
+  mflr  r5
+  bl  SnapPAL_InitializeMajorSceneStruct
+#Init Codes major struct
+  li  r3,CodesSceneID
+  bl  SnapPAL_Codes_MinorSceneStruct
+  mflr  r4
+  bl  SnapPAL_Codes_SceneLoad
+  mflr  r5
+  bl  SnapPAL_InitializeMajorSceneStruct
+
+#Check if key has been generated yet
+	lwz	r20,OFST_Memcard(r13)
+	lwz	r3,ModOFST_ModDataStart+ModOFST_ModDataKey(r20)
+	cmpwi	r3,0
+	bne	SnapPAL_GenerateKeyEnd
+#Generate Key
+	lwz	r3, OFST_Rand (r13)
+	lwz	r3,0x0(r3)
+	stw	r3,ModOFST_ModDataStart+ModOFST_ModDataKey(r20)
+SnapPAL_GenerateKeyEnd:
+  b SnapPAL_CheckProgressive
+
+#region SnapPAL_PointerConvert
+SnapPAL_PointerConvert:
+  lwz r4,0x0(r3)          #Load bl instruction
+  rlwinm r5,r4,8,25,29    #extract opcode bits
+  cmpwi r5,0x48           #if not a bl instruction, exit
+  bne SnapPAL_PointerConvert_Exit
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+	rlwinm	r5,r4,7,31,31		#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5
+  add r4,r4,r3
+  stw r4,0x0(r3)
+SnapPAL_PointerConvert_Exit:
+  blr
+#endregion
+#region SnapPAL_InitializeMajorSceneStruct
+SnapPAL_InitializeMajorSceneStruct:
+.set  REG_MajorScene,31
+.set  REG_MinorStruct,30
+.set  REG_SceneLoad,29
+
+#Init
+  backup
+  mr  REG_MajorScene,r3
+  mr  REG_MinorStruct,r4
+  mr  REG_SceneLoad,r5
+
+#Get major scene struct
+  branchl r12,Scene_GetMajorSceneStruct
+SnapPAL_GetMajorStruct_Loop:
+  lbz	r4, 0x0001 (r3)
+  cmpw r4,REG_MajorScene
+  beq SnapPAL_GetMajorStruct_Exit
+  addi  r3,r3,20
+  b SnapPAL_GetMajorStruct_Loop
+SnapPAL_GetMajorStruct_Exit:
+
+SnapPAL_InitMinorSceneStruct:
+.set  REG_MinorStructParse,20
+  stw REG_MinorStruct,0x10(r3)
+  mr  REG_MinorStructParse,REG_MinorStruct
+SnapPAL_InitMinorSceneStruct_Loop:
+#Check if valid entry
+  lbz r3,0x0(REG_MinorStructParse)
+  extsb r3,r3
+  cmpwi r3,-1
+  beq SnapPAL_InitMinorSceneStruct_Exit
+#Convert Pointers
+  addi  r3,REG_MinorStructParse,0x4
+  bl  SnapPAL_PointerConvert
+  addi  r3,REG_MinorStructParse,0x8
+  bl  SnapPAL_PointerConvert
+  addi  REG_MinorStructParse,REG_MinorStructParse,0x18
+  b SnapPAL_InitMinorSceneStruct_Loop
+SnapPAL_InitMinorSceneStruct_Exit:
+
+  restore
+  blr
+#endregion
+#endregion
+
+#region Codes
+
+#region SnapPAL_Codes_SceneLoad
+############################################
+
+#region SnapPAL_Codes_SceneLoad_Data
+SnapPAL_Codes_SceneLoad_TextProperties:
+blrl
+.set TitleX,0x0
+.set TitleY,0x4
+.set CanvasScaling,0x8
+.set TitleScale,0xC
+.set CodesX,0x10
+.set CodesInitialY,0x14
+.set CodesYDiff,0x18
+.set CodesScale,0x1C
+.set OptionsX,0x20
+.set HighlightColor,0x24
+.set NonHighlightColor,0x28
+.set ModNameX,0x2C
+.set ModNameY,0x30
+.set ModnameScale,0x34
+.set DescriptionX,0x38
+.set DescriptionY,0x3C
+.set DescriptionZ,0x40
+.set DescriptionMaxX,0x44
+.set DescriptionUnk,0x48
+.float 30     			   #Title X pos
+.float 30  					   #Title Y pos
+.float 1   				     #Canvas Scaling
+.float 1.2					    	#Text scale
+.float 320              #CodesX
+.float 85              #CodesInitialY
+.float 28              #CodesYDiff
+.float 0.7             #CodesScale
+.float 335              #OptionsX
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+.float	600							#ModName X
+.float	30							#ModName Y
+.float	0.5							#ModName Scale
+.float	30							#Desc X
+.float	390							#Desc Y
+.float	0.1								#Desc Z
+.float	560							#Desc Max X
+.float	0.1								#Desc Unk
+
+.set CodeAmount,10
+#region Code Names Order
+SnapPAL_CodeNames_Order:
+blrl
+bl  SnapPAL_CodeNames_UCF
+bl  SnapPAL_CodeNames_Frozen
+bl  SnapPAL_CodeNames_Spawns
+bl  SnapPAL_CodeNames_Wobbling
+bl  SnapPAL_CodeNames_Ledgegrab
+bl	SnapPAL_CodeNames_TournamentQoL
+bl	SnapPAL_CodeNames_FriendliesQoL
+bl	SnapPAL_CodeNames_GameVersion
+bl	SnapPAL_CodeNames_StageExpansion
+bl	SnapPAL_CodeNames_Widescreen
+.align 2
+#endregion
+#region Code Names
+SnapPAL_CodeNames_Title:
+blrl
+.string "Select Codes:"
+.align 2
+SnapPAL_CodeNames_ModName:
+blrl
+.string "MultiMod Launcher v0.6"
+.align 2
+SnapPAL_CodeNames_UCF:
+.string "UCF:"
+.align 2
+SnapPAL_CodeNames_Frozen:
+.string "Frozen Stages:"
+.align 2
+SnapPAL_CodeNames_Spawns:
+.string "Neutral Spawns:"
+.align 2
+SnapPAL_CodeNames_Wobbling:
+.string "Disable Wobbling:"
+.align 2
+SnapPAL_CodeNames_Ledgegrab:
+.string "Ledgegrab Limit:"
+.align 2
+SnapPAL_CodeNames_TournamentQoL:
+.string "Tournament QoL:"
+.align 2
+SnapPAL_CodeNames_FriendliesQoL:
+.string "Friendlies QoL:"
+.align 2
+SnapPAL_CodeNames_GameVersion:
+.string "Game Version:"
+.align 2
+SnapPAL_CodeNames_StageExpansion:
+.string "Stage Expansion:"
+.align 2
+SnapPAL_CodeNames_Widescreen:
+.string "Widescreen:"
+.align 2
+#endregion
+#region Code Options Order
+SnapPAL_CodeOptions_Order:
+blrl
+bl  SnapPAL_CodeOptions_UCF
+bl  SnapPAL_CodeOptions_Frozen
+bl  SnapPAL_CodeOptions_Spawns
+bl  SnapPAL_CodeOptions_Wobbling
+bl  SnapPAL_CodeOptions_Ledgegrab
+bl	SnapPAL_CodeOptions_TournamentQoL
+bl  SnapPAL_CodeOptions_FriendliesQoL
+bl	SnapPAL_CodeOptions_GameVersion
+bl	SnapPAL_CodeOptions_StageExpansion
+bl  SnapPAL_CodeOptions_Widescreen
+.align 2
+#endregion
+#region Code Options
+.set  SnapPAL_CodeOptions_OptionCount,0x0
+.set	SnapPAL_CodeOptions_CodeDescription,0x4
+.set  SnapPAL_CodeOptions_GeckoCodePointers,0x8
+SnapPAL_CodeOptions_Wrapper:
+	blrl
+	.ascii "(%s)"
+	.byte 0
+	.align 2
+SnapPAL_CodeOptions_UCF:
+	.long 3 -1           #number of options
+	bl	SnapPAL_UCF_Description
+	bl  SnapPAL_UCF_Off
+	bl  SnapPAL_UCF_On
+	bl  SnapPAL_UCF_Stealth
+	.string "Off"
+	.string "On"
+	.string "Stealth"
+	.align 2
+SnapPAL_CodeOptions_Frozen:
+	.long 3 -1           #number of options
+	bl	SnapPAL_Frozen_Description
+	bl  SnapPAL_Frozen_Off
+	bl  SnapPAL_Frozen_Stadium
+	bl  SnapPAL_Frozen_All
+	.string "Off"
+	.string "Stadium Only"
+	.string "All"
+	.align 2
+SnapPAL_CodeOptions_Spawns:
+	.long 2 -1           #number of options
+	bl	SnapPAL_Spawns_Description
+	bl  SnapPAL_Spawns_Off
+	bl  SnapPAL_Spawns_On
+	.string "Off"
+	.string "On"
+	.align 2
+SnapPAL_CodeOptions_Wobbling:
+	.long 2 -1           #number of options
+	bl	SnapPAL_DisableWobbling_Description
+	bl  SnapPAL_DisableWobbling_Off
+	bl  SnapPAL_DisableWobbling_On
+	.string "Off"
+	.string "On"
+	.align 2
+SnapPAL_CodeOptions_Ledgegrab:
+	.long 2 -1           #number of options
+	bl	SnapPAL_Ledgegrab_Description
+	bl  SnapPAL_Ledgegrab_Off
+	bl  SnapPAL_Ledgegrab_On
+	.string "Off"
+	.string "On"
+	.align 2
+SnapPAL_CodeOptions_TournamentQoL:
+	.long 2 -1           #number of options
+	bl	SnapPAL_TournamentQoL_Description
+	bl  SnapPAL_TournamentQoL_Off
+	bl  SnapPAL_TournamentQoL_On
+	.string "Off"
+	.string "On"
+	.align 2
+SnapPAL_CodeOptions_FriendliesQoL:
+	.long 2 -1           #number of options
+	bl	SnapPAL_FriendliesQoL_Description
+	bl  SnapPAL_FriendliesQoL_Off
+	bl  SnapPAL_FriendliesQoL_On
+	.string "Off"
+	.string "On"
+	.align 2
+SnapPAL_CodeOptions_GameVersion:
+	.long 3 -1           #number of options
+	bl	SnapPAL_GameVersion_Description
+	bl  SnapPAL_GameVersion_NTSC
+	bl  SnapPAL_GameVersion_PAL
+	bl  SnapPAL_GameVersion_SDR
+	.string "NTSC"
+	.string "PAL"
+	.string "SD Remix"
+	.align 2
+SnapPAL_CodeOptions_StageExpansion:
+	.long 2 -1           #number of options
+	bl	SnapPAL_StageExpansion_Description
+	bl  SnapPAL_StageExpansion_Off
+	bl  SnapPAL_StageExpansion_On
+	.string "Off"
+	.string "On"
+	.align 2
+SnapPAL_CodeOptions_Widescreen:
+	.long 3 -1           #number of options
+	bl	SnapPAL_Widescreen_Description
+	bl  SnapPAL_Widescreen_Off
+	bl  SnapPAL_Widescreen_Standard
+	bl	SnapPAL_Widescreen_True
+	.string "Off"
+	.string "Standard"
+	.string "True"
+	.align 2
+#endregion
+#region Gecko Codes
+SnapPAL_DefaultCodes:
+  blrl
+	.long 0xC201B010
+	.long 0x00000004
+	.long 0x2C190002
+	.long 0x41800014
+	.long 0x2C190008
+	.long 0x4181000C
+	.long 0x38000000
+	.long 0x48000008
+	.long 0x801F00F4
+	.long 0x00000000
+	.long 0xC201CA6C
+	.long 0x0000000A
+	.long 0x4800000D
+	.long 0x7C8802A6
+	.long 0x48000040
+	.long 0x4E800021
+	.long 0x53757065
+	.long 0x7220536D
+	.long 0x61736820
+	.long 0x42726F73
+	.long 0x2E204D65
+	.long 0x6C656520
+	.long 0x20202020
+	.long 0x20202020
+	.long 0x4D756C74
+	.long 0x694D6F64
+	.long 0x204C6175
+	.long 0x6E636865
+	.long 0x72204245
+	.long 0x54410000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x043977A0
+	.long 0x4800020C
+	.long 0xC222F4A4
+	.long 0x00000023
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7D1B78
+	.long 0x3C600001
+	.long 0x60630000
+	.long 0x3D808037
+	.long 0x618CF0E8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C7F1B78
+	.long 0x808D8858
+	.long 0x3CA00001
+	.long 0x60A50A30
+	.long 0x3D808000
+	.long 0x618C31F4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3D808001
+	.long 0x618CB87C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03000B
+	.long 0x4182FFEC
+	.long 0x38600000
+	.long 0x3C80803B
+	.long 0x6084B244
+	.long 0x3CA0803B
+	.long 0x60A5B0B4
+	.long 0x3CC08042
+	.long 0x60C640BC
+	.long 0x3D808001
+	.long 0x618CBEB8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x40820020
+	.long 0x806D8858
+	.long 0x80631F2C
+	.long 0x809F1F2C
+	.long 0x7C032000
+	.long 0x4082000C
+	.long 0x3BC00009
+	.long 0x4800000C
+	.long 0x3BC00002
+	.long 0x48000004
+	.long 0x806D8858
+	.long 0x7FE4FB78
+	.long 0x3CA00001
+	.long 0x60A50A30
+	.long 0x3D808000
+	.long 0x618C31F4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FE3FB78
+	.long 0x3D808037
+	.long 0x618CF0B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FC3F378
+	.long 0x48000004
+	.long 0x7FA4EB78
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x7C601B78
+	.long 0x7C832378
+	.long 0x00000000
+	.long 0x041C157C
+	.long 0x60000000
+	.long 0x0446AB48
+	.long 0x00000000
+	.long 0x041A49F4
+	.long 0x60000000
+	.long 0x041A4AA4
+	.long 0x38600000
+	.long 0x0444CD18
+	.long 0x00340102
+	.long 0x0444D178
+	.long 0xFF000000
+	.long 0x0444D190
+	.long 0xE70000B0
+	.long 0x0444CD1C
+	.long 0x04000A00
+	.long 0x0444CD20
+	.long 0x08010100
+	.long 0x041654E4
+	.long 0x38600001
+	.long 0x041652C4
+	.long 0x38600001
+	.long 0x04165028
+	.long 0x38600001
+	.long 0x04164EB8
+	.long 0x38600001
+	.long -1
+
+SnapPAL_UCF_Off:
+	.long 0x040CA1E8
+	.long 0xD01F002C
+	.long 0x04099F5C
+	.long 0x8083002C
+	.long 0x042669EC
+	.long 0x38980000
+  .long 0xFF000000
+SnapPAL_UCF_On:
+	.long 0xC20CA1E8
+	.long 0x0000002B
+	.long 0xD01F002C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x48000121
+	.long 0x7FC802A6
+	.long 0xC03F0894
+	.long 0xC05E0000
+	.long 0xFC011040
+	.long 0x40820118
+	.long 0x808DB0F4
+	.long 0xC03F0620
+	.long 0xFC200A10
+	.long 0xC044003C
+	.long 0xFC011040
+	.long 0x41800100
+	.long 0x887F0670
+	.long 0x2C030002
+	.long 0x408000F4
+	.long 0x887F221F
+	.long 0x54600739
+	.long 0x408200E8
+	.long 0x3C60804B
+	.long 0x60632FF8
+	.long 0x8BA30001
+	.long 0x387DFFFE
+	.long 0x889F0618
+	.long 0x4800008D
+	.long 0x7C7C1B78
+	.long 0x7FA3EB78
+	.long 0x889F0618
+	.long 0x4800007D
+	.long 0x7C7C1850
+	.long 0x7C6319D6
+	.long 0x2C0315F9
+	.long 0x408100B0
+	.long 0x38000001
+	.long 0x901F2358
+	.long 0x901F2340
+	.long 0x809F0004
+	.long 0x2C04000A
+	.long 0x40A20098
+	.long 0x887F000C
+	.long 0x38800001
+	.long 0x3D808003
+	.long 0x618C4780
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x41820078
+	.long 0x8083002C
+	.long 0x80841ECC
+	.long 0xC03F002C
+	.long 0xD0240018
+	.long 0xC05E0004
+	.long 0xFC011040
+	.long 0x4181000C
+	.long 0x38600080
+	.long 0x48000008
+	.long 0x3860007F
+	.long 0x98640006
+	.long 0x48000048
+	.long 0x7C852378
+	.long 0x3863FFFF
+	.long 0x2C030000
+	.long 0x40800008
+	.long 0x38630005
+	.long 0x3C808045
+	.long 0x6084BF10
+	.long 0x1C630030
+	.long 0x7C841A14
+	.long 0x1C65000C
+	.long 0x7C841A14
+	.long 0x88640002
+	.long 0x7C630774
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x40000000
+	.long 0x00000000
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC2099F5C
+	.long 0x00000026
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7FFEFB78
+	.long 0x83FE002C
+	.long 0x480000DD
+	.long 0x7FA802A6
+	.long 0xC03F063C
+	.long 0x806DB0F4
+	.long 0xC0030314
+	.long 0xFC010040
+	.long 0x408100E4
+	.long 0xC03F0620
+	.long 0x48000071
+	.long 0xD0210090
+	.long 0xC03F0624
+	.long 0x48000065
+	.long 0xC0410090
+	.long 0xEC4200B2
+	.long 0xEC210072
+	.long 0xEC21102A
+	.long 0xC05D000C
+	.long 0xFC011040
+	.long 0x418000B4
+	.long 0x889F0670
+	.long 0x2C040003
+	.long 0x408100A8
+	.long 0xC01D0010
+	.long 0xC03F0624
+	.long 0xFC000840
+	.long 0x40800098
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x8061001C
+	.long 0x83E10014
+	.long 0x38210018
+	.long 0x38630008
+	.long 0x7C6803A6
+	.long 0x4E800020
+	.long 0xFC000A10
+	.long 0xC03D0000
+	.long 0xEC000072
+	.long 0xC03D0004
+	.long 0xEC000828
+	.long 0xFC00001E
+	.long 0xD8010080
+	.long 0x80610084
+	.long 0x38630002
+	.long 0x3C004330
+	.long 0xC85D0014
+	.long 0x6C638000
+	.long 0x90010080
+	.long 0x90610084
+	.long 0xC8210080
+	.long 0xEC011028
+	.long 0xC03D0000
+	.long 0xEC200824
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x42A00000
+	.long 0x37270000
+	.long 0x43300000
+	.long 0x3F800000
+	.long 0xBF4CCCCD
+	.long 0x43300000
+	.long 0x80000000
+	.long 0x7FC3F378
+	.long 0x7FE4FB78
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x00000000
+	.long 0xC22669EC
+	.long 0x0000001B
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x48000089
+	.long 0x7FC802A6
+	.long 0x38600000
+	.long 0x38800000
+	.long 0x3DC0803A
+	.long 0x61CE6664
+	.long 0x7DC903A6
+	.long 0x4E800421
+	.long 0x7C7F1B78
+	.long 0x38800001
+	.long 0x989F0049
+	.long 0x38800001
+	.long 0x989F004A
+	.long 0xC03E000C
+	.long 0xD03F0024
+	.long 0xD03F0028
+	.long 0x7FE3FB78
+	.long 0x48000059
+	.long 0x7C8802A6
+	.long 0xC03E0000
+	.long 0xC05E0004
+	.long 0x3DC0803A
+	.long 0x61CE6B54
+	.long 0x7DC903A6
+	.long 0x4E800421
+	.long 0x7C641B78
+	.long 0x7FE3FB78
+	.long 0xC03E0008
+	.long 0xC05E0008
+	.long 0x3D80803A
+	.long 0x618C74FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000028
+	.long 0x4E800021
+	.long 0x42180000
+	.long 0xC3898000
+	.long 0x3EE66666
+	.long 0x3DCCCCCD
+	.long 0x4E800021
+	.long 0x55434620
+	.long 0x302E3734
+	.long 0x00000000
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x38980000
+	.long 0x60000000
+	.long 0x00000000
+  .long 0xFF000000
+SnapPAL_UCF_Stealth:
+	.long 0xC20CA1E8
+	.long 0x0000002B
+	.long 0xD01F002C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x48000121
+	.long 0x7FC802A6
+	.long 0xC03F0894
+	.long 0xC05E0000
+	.long 0xFC011040
+	.long 0x40820118
+	.long 0x808DB0F4
+	.long 0xC03F0620
+	.long 0xFC200A10
+	.long 0xC044003C
+	.long 0xFC011040
+	.long 0x41800100
+	.long 0x887F0670
+	.long 0x2C030002
+	.long 0x408000F4
+	.long 0x887F221F
+	.long 0x54600739
+	.long 0x408200E8
+	.long 0x3C60804B
+	.long 0x60632FF8
+	.long 0x8BA30001
+	.long 0x387DFFFE
+	.long 0x889F0618
+	.long 0x4800008D
+	.long 0x7C7C1B78
+	.long 0x7FA3EB78
+	.long 0x889F0618
+	.long 0x4800007D
+	.long 0x7C7C1850
+	.long 0x7C6319D6
+	.long 0x2C0315F9
+	.long 0x408100B0
+	.long 0x38000001
+	.long 0x901F2358
+	.long 0x901F2340
+	.long 0x809F0004
+	.long 0x2C04000A
+	.long 0x40A20098
+	.long 0x887F000C
+	.long 0x38800001
+	.long 0x3D808003
+	.long 0x618C4780
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x41820078
+	.long 0x8083002C
+	.long 0x80841ECC
+	.long 0xC03F002C
+	.long 0xD0240018
+	.long 0xC05E0004
+	.long 0xFC011040
+	.long 0x4181000C
+	.long 0x38600080
+	.long 0x48000008
+	.long 0x3860007F
+	.long 0x98640006
+	.long 0x48000048
+	.long 0x7C852378
+	.long 0x3863FFFF
+	.long 0x2C030000
+	.long 0x40800008
+	.long 0x38630005
+	.long 0x3C808045
+	.long 0x6084BF10
+	.long 0x1C630030
+	.long 0x7C841A14
+	.long 0x1C65000C
+	.long 0x7C841A14
+	.long 0x88640002
+	.long 0x7C630774
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x40000000
+	.long 0x00000000
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC2099F5C
+	.long 0x00000024
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7FFEFB78
+	.long 0x83FE002C
+	.long 0x480000D1
+	.long 0x7FA802A6
+	.long 0xC03F063C
+	.long 0x806DB0F4
+	.long 0xC0030314
+	.long 0xFC010040
+	.long 0x408100D4
+	.long 0xC01F0620
+	.long 0xFC000210
+	.long 0xC03D0000
+	.long 0xEC000072
+	.long 0xC03D0004
+	.long 0xEC000828
+	.long 0xC03D000C
+	.long 0xEC00082A
+	.long 0xC03D0000
+	.long 0xEC000824
+	.long 0xFC600090
+	.long 0xC01F0624
+	.long 0xFC000210
+	.long 0xC03D0000
+	.long 0xEC000072
+	.long 0xC03D0004
+	.long 0xEC000828
+	.long 0xC03D000C
+	.long 0xEC00082A
+	.long 0xC03D0000
+	.long 0xEC000824
+	.long 0xFC201890
+	.long 0xEC210072
+	.long 0xEC000032
+	.long 0xEC00082A
+	.long 0xC03D0010
+	.long 0xFC000840
+	.long 0x41800064
+	.long 0x889F0670
+	.long 0x2C040003
+	.long 0x40810058
+	.long 0xC01D0014
+	.long 0xC03F0624
+	.long 0xFC000840
+	.long 0x40800048
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x8061001C
+	.long 0x83E10014
+	.long 0x38210018
+	.long 0x38630008
+	.long 0x7C6803A6
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x42A00000
+	.long 0x37270000
+	.long 0x43300000
+	.long 0x40000000
+	.long 0x3F800000
+	.long 0xBF4CCCCD
+	.long 0x7FC3F378
+	.long 0x7FE4FB78
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x00000000
+  .long 0xFF000000
+
+SnapPAL_Frozen_Off:
+	.long 0x043E7300
+	.long 0x00000002
+	.long 0x0421C998
+	.long 0x48000805
+	.long 0x041D316C
+	.long 0x48003135
+	.long 0x041E5178
+	.long 0x480000D1
+	.long 0xFF000000
+SnapPAL_Frozen_Stadium:
+	.long 0x041D316C
+	.long 0x60000000
+	.long 0xFF000000
+SnapPAL_Frozen_All:
+	.long 0x043E7300
+	.long 0x00000000
+	.long 0x0421C998
+	.long 0x60000000
+	.long 0x041D316C
+	.long 0x60000000
+	.long 0x041E5178
+	.long 0x60000000
+	.long 0xFF000000
+
+SnapPAL_Spawns_Off:
+  .long 0x0416EEE4
+  .long 0x881F24D0
+  .long 0xFF000000
+SnapPAL_Spawns_On:
+	.long 0xC216EEE4
+	.long 0x00000099
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x3D808016
+	.long 0x618CBDEC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x4082048C
+	.long 0x2C1C0005
+	.long 0x40800484
+	.long 0x887F24D0
+	.long 0x2C030001
+	.long 0x41820054
+	.long 0x3B200000
+	.long 0x3B400000
+	.long 0x7F43D378
+	.long 0x3D808003
+	.long 0x618C2A10
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030003
+	.long 0x41820010
+	.long 0x7C1CD000
+	.long 0x41820014
+	.long 0x3B390001
+	.long 0x3B5A0001
+	.long 0x2C1A0004
+	.long 0x4081FFD0
+	.long 0x7F83E378
+	.long 0x7F24CB78
+	.long 0x88BF24D0
+	.long 0x48000115
+	.long 0x48000428
+	.long 0x3B400000
+	.long 0x3B000000
+	.long 0x3B200000
+	.long 0x7F23CB78
+	.long 0x3D808003
+	.long 0x618C2A10
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030003
+	.long 0x41820024
+	.long 0x7F23CB78
+	.long 0x3D808003
+	.long 0x618C3964
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03D000
+	.long 0x40820008
+	.long 0x3B180001
+	.long 0x3B390001
+	.long 0x2C190004
+	.long 0x4180FFBC
+	.long 0x2C180001
+	.long 0x418203CC
+	.long 0x2C180002
+	.long 0x418103C4
+	.long 0x3B5A0001
+	.long 0x2C1A0003
+	.long 0x4180FF98
+	.long 0x3B200000
+	.long 0x3B410080
+	.long 0x3B000000
+	.long 0x3AC00000
+	.long 0x3AE00000
+	.long 0x7EE3BB78
+	.long 0x3D808003
+	.long 0x618C2A10
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030003
+	.long 0x41820028
+	.long 0x7EE3BB78
+	.long 0x3D808003
+	.long 0x618C3964
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03C800
+	.long 0x4082000C
+	.long 0x7EF8D1AE
+	.long 0x3B180001
+	.long 0x3AF70001
+	.long 0x2C170004
+	.long 0x4180FFB8
+	.long 0x3B390001
+	.long 0x2C190003
+	.long 0x4180FFA4
+	.long 0x3B200000
+	.long 0x7C79D0AE
+	.long 0x7C03E000
+	.long 0x41820010
+	.long 0x3B390001
+	.long 0x2C190004
+	.long 0x4180FFEC
+	.long 0x7F83E378
+	.long 0x7F24CB78
+	.long 0x88BF24D0
+	.long 0x48000009
+	.long 0x4800031C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7F1B78
+	.long 0x7C9E2378
+	.long 0x7CBD2B78
+	.long 0x4800009D
+	.long 0x7F8802A6
+	.long 0x80CD9368
+	.long 0x38A00000
+	.long 0x807C0000
+	.long 0x2C03FFFF
+	.long 0x41820070
+	.long 0x7C033000
+	.long 0x4182000C
+	.long 0x3B9C0064
+	.long 0x4BFFFFE8
+	.long 0x3B9C0004
+	.long 0x1C7D0030
+	.long 0x7F9C1A14
+	.long 0x1C7E000C
+	.long 0x7F9C1A14
+	.long 0x38810080
+	.long 0xC03C0000
+	.long 0xD0240000
+	.long 0xC03C0004
+	.long 0xD0240004
+	.long 0x38600000
+	.long 0x90640008
+	.long 0x7FE3FB78
+	.long 0x3D808003
+	.long 0x618C2D5C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FE3FB78
+	.long 0xC03C0008
+	.long 0x3D808003
+	.long 0x618C3688
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x00000020
+	.long 0xC2700000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0x42700000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0xC1A00000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0x41A00000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0xC1A00000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0xC2700000
+	.long 0x41200000
+	.long 0x3F800000
+	.long 0x41A00000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0x42700000
+	.long 0x41200000
+	.long 0xBF800000
+	.long 0x0000001F
+	.long 0xC21B3333
+	.long 0x420CCCCD
+	.long 0x3F800000
+	.long 0x421B3333
+	.long 0x420CCCCD
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x41000000
+	.long 0x3F800000
+	.long 0x00000000
+	.long 0x4279999A
+	.long 0xBF800000
+	.long 0xC21B3333
+	.long 0x420CCCCD
+	.long 0x3F800000
+	.long 0xC21B3333
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x421B3333
+	.long 0x420CCCCD
+	.long 0xBF800000
+	.long 0x421B3333
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x00000008
+	.long 0xC2280000
+	.long 0x41D4CCCD
+	.long 0x3F800000
+	.long 0x42280000
+	.long 0x41E00000
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x423B999A
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x409CCCCD
+	.long 0x3F800000
+	.long 0xC2280000
+	.long 0x41D4CCCD
+	.long 0x3F800000
+	.long 0xC2280000
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x42280000
+	.long 0x41E00000
+	.long 0xBF800000
+	.long 0x42280000
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x0000001C
+	.long 0xC23A6666
+	.long 0x4214CCCD
+	.long 0x3F800000
+	.long 0x423D999A
+	.long 0x42153333
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x40E00000
+	.long 0x3F800000
+	.long 0x00000000
+	.long 0x426A0000
+	.long 0xBF800000
+	.long 0xC23A6666
+	.long 0x4214CCCD
+	.long 0x3F800000
+	.long 0xC23A6666
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x423D999A
+	.long 0x42153333
+	.long 0xBF800000
+	.long 0x423D999A
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x00000002
+	.long 0xC2250000
+	.long 0x41A80000
+	.long 0x3F800000
+	.long 0x42250000
+	.long 0x41D80000
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x40A80000
+	.long 0xBF800000
+	.long 0x00000000
+	.long 0x42400000
+	.long 0x3F800000
+	.long 0xC2250000
+	.long 0x41A80000
+	.long 0x3F800000
+	.long 0xC2250000
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x42250000
+	.long 0x41D80000
+	.long 0xBF800000
+	.long 0x42250000
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0x00000003
+	.long 0xC2200000
+	.long 0x42000000
+	.long 0x3F800000
+	.long 0x42200000
+	.long 0x42000000
+	.long 0xBF800000
+	.long 0x428C0000
+	.long 0x40E00000
+	.long 0xBF800000
+	.long 0xC28C0000
+	.long 0x40E00000
+	.long 0x3F800000
+	.long 0xC2200000
+	.long 0x42000000
+	.long 0x3F800000
+	.long 0xC2200000
+	.long 0x40A00000
+	.long 0x3F800000
+	.long 0x42200000
+	.long 0x42000000
+	.long 0xBF800000
+	.long 0x42200000
+	.long 0x40A00000
+	.long 0xBF800000
+	.long 0xFFFFFFFF
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x881F24D0
+	.long 0x00000000
+  .long 0xFF000000
+
+SnapPAL_DisableWobbling_Off:
+	.long 0x040DB190
+	.long 0xC02296E8
+	.long 0x0408F748
+	.long 0x801B0010
+  .long 0xFF000000
+SnapPAL_DisableWobbling_On:
+	.long 0xC20DB190
+	.long 0x00000003
+	.long 0x38600000
+	.long 0x987C2350
+	.long 0x3860FFFF
+	.long 0xB07C2352
+	.long 0xC02296E8
+	.long 0x00000000
+	.long 0xC208F748
+	.long 0x00000017
+	.long 0x807B0010
+	.long 0x2C0300DF
+	.long 0x418000A4
+	.long 0x2C0300E4
+	.long 0x4181009C
+	.long 0x807B1A58
+	.long 0x2C030000
+	.long 0x41820090
+	.long 0x8063002C
+	.long 0x88832222
+	.long 0x548407BD
+	.long 0x41820080
+	.long 0x8863000C
+	.long 0x38800001
+	.long 0x3D808003
+	.long 0x618C4780
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x41820060
+	.long 0x809B1868
+	.long 0x7C032000
+	.long 0x40820054
+	.long 0x80A3002C
+	.long 0xA0652088
+	.long 0xA09B2352
+	.long 0x7C032000
+	.long 0x41820040
+	.long 0xB07B2352
+	.long 0x887B2350
+	.long 0x38630001
+	.long 0x987B2350
+	.long 0x2C030003
+	.long 0x41800028
+	.long 0x807B1A58
+	.long 0x3D80800D
+	.long 0x618CAE4C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3D808008
+	.long 0x618CF780
+	.long 0x7D8903A6
+	.long 0x4E800420
+	.long 0x801B0010
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xFF000000
+
+SnapPAL_Ledgegrab_Off:
+	.long 0x041A6994
+	.long 0x7FE3FB78
+	.long 0x0416F5AC
+	.long 0x98030006
+	.long 0x041B2004
+	.long 0x98030000
+	.long 0x041B2138
+	.long 0x3800012C
+	.long 0x041B2134
+	.long 0x38C00001
+	.long 0x04166618
+	.long 0x8803000F
+  .long 0xFF000000
+SnapPAL_Ledgegrab_On:
+	.long 0xC21A6994
+	.long 0x00000002
+	.long 0x386000B4
+	.long 0x907F0010
+	.long 0x7FE3FB78
+	.long 0x00000000
+	.long 0x0416F5AC
+	.long 0x60000000
+	.long 0x041B2004
+	.long 0x60000000
+	.long 0x041B2138
+	.long 0x38000000
+	.long 0x041B2134
+	.long 0x38C00001
+	.long 0xC2166618
+	.long 0x0000005C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBC610008
+	.long 0x7C7F1B78
+	.long 0x887F0004
+	.long 0x2C030001
+	.long 0x408202AC
+	.long 0x3BC10080
+	.long 0x3BA00000
+	.long 0x38600000
+	.long 0x907E0000
+	.long 0x907E0004
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x41820028
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x4082001C
+	.long 0x887E0000
+	.long 0x38630001
+	.long 0x987E0000
+	.long 0x389E0001
+	.long 0x3863FFFF
+	.long 0x7FA321AE
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FFC0
+	.long 0x887E0000
+	.long 0x2C030001
+	.long 0x40810118
+	.long 0x3BA00000
+	.long 0x387E0001
+	.long 0x7C63E8AE
+	.long 0x3D808003
+	.long 0x618C48A8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C7C1B78
+	.long 0x3B600000
+	.long 0x7C1BE800
+	.long 0x4182002C
+	.long 0x387E0001
+	.long 0x7C63D8AE
+	.long 0x3D808003
+	.long 0x618C48A8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03E000
+	.long 0x4080000C
+	.long 0x7F7DDB78
+	.long 0x4BFFFFB4
+	.long 0x3B7B0001
+	.long 0x887E0000
+	.long 0x7C1B1800
+	.long 0x4180FFC4
+	.long 0x4800000C
+	.long 0x3BBD0001
+	.long 0x4BFFFF98
+	.long 0x3B600000
+	.long 0x387E0001
+	.long 0x7C83D8AE
+	.long 0x1C6400A8
+	.long 0x7C63FA14
+	.long 0x38BE0001
+	.long 0x7CA5E8AE
+	.long 0x7C042800
+	.long 0x4182000C
+	.long 0x38800001
+	.long 0x48000008
+	.long 0x38800000
+	.long 0x9883005D
+	.long 0x9883005E
+	.long 0x3B7B0001
+	.long 0x887E0000
+	.long 0x7C1B1800
+	.long 0x4180FFC0
+	.long 0x3B600000
+	.long 0x387E0001
+	.long 0x7F43D8AE
+	.long 0x387E0001
+	.long 0x7C63E8AE
+	.long 0x7C1A1800
+	.long 0x41820034
+	.long 0x7F43D378
+	.long 0x3D808003
+	.long 0x618C48A8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C03E000
+	.long 0x40820018
+	.long 0x1C7A00A8
+	.long 0x7C63FA14
+	.long 0x38800000
+	.long 0x9883005D
+	.long 0x9883005E
+	.long 0x3B7B0001
+	.long 0x887E0000
+	.long 0x7C1B1800
+	.long 0x4180FFAC
+	.long 0x3BA00000
+	.long 0x3B800000
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x41820030
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x40820024
+	.long 0x7FA3EB78
+	.long 0x3D808004
+	.long 0x618C11B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03003C
+	.long 0x41800008
+	.long 0x3B9C0001
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FFB8
+	.long 0x2C1C0001
+	.long 0x418100D8
+	.long 0x2C1C0000
+	.long 0x418200D0
+	.long 0x3BA00000
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x4182004C
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x41820010
+	.long 0x2C030001
+	.long 0x41820008
+	.long 0x48000034
+	.long 0x7FA3EB78
+	.long 0x3D808004
+	.long 0x618C11B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03003C
+	.long 0x40800018
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x38600000
+	.long 0x9864005D
+	.long 0x9864005E
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FF9C
+	.long 0x3BA00000
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x88640058
+	.long 0x2C030003
+	.long 0x41820040
+	.long 0x8864005D
+	.long 0x2C030000
+	.long 0x40820034
+	.long 0x7FA3EB78
+	.long 0x3D808004
+	.long 0x618C11B4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C03003C
+	.long 0x41800018
+	.long 0x1C7D00A8
+	.long 0x7C83FA14
+	.long 0x38600001
+	.long 0x9864005D
+	.long 0x9864005E
+	.long 0x3BBD0001
+	.long 0x2C1D0006
+	.long 0x4180FFA8
+	.long 0xB8610008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x8803000F
+	.long 0x00000000
+  .long 0xFF000000
+
+SnapPAL_TournamentQoL_Off:
+	.long 0x042673B0
+	.long 0x38600001
+	.long 0x042FD620
+	.long 0x281E0000
+	.long 0x0425C3E8
+	.long 0x38600001
+	.long 0x0444D188
+	.long 0x01010101
+	.long 0x04261078
+	.long 0x889F0004
+	.long 0x04260D9C
+	.long 0x38C00001
+	.long 0x044CD7F4
+	.long 0xC1AC0000
+	.long 0x04262218
+	.long 0x1C130024
+	.long 0x042622C8
+	.long 0x98A4007A
+	.long 0x042622DC
+	.long 0x98A4001B
+	.long 0x0425A678
+	.long 0x5460063F
+	.long 0x0425A768
+	.long 0x28000000
+  .long 0xFF000000
+SnapPAL_TournamentQoL_On:
+	.long 0xC22673B0
+	.long 0x0000000E
+	.long 0x3D808015
+	.long 0x618CD3FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C661B78
+	.long 0x80A60018
+	.long 0x3C60E700
+	.long 0x606300B0
+	.long 0x7C632A79
+	.long 0x41820010
+	.long 0x2C030020
+	.long 0x41820008
+	.long 0x48000034
+	.long 0x806DB8A8
+	.long 0x88630018
+	.long 0x2C030001
+	.long 0x41820014
+	.long 0x38600001
+	.long 0x50652EB4
+	.long 0x90A60018
+	.long 0x48000014
+	.long 0x38600000
+	.long 0x50652EB4
+	.long 0x90A60018
+	.long 0x48000004
+	.long 0x38600001
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC22FD620
+	.long 0x0000000D
+	.long 0x3C608045
+	.long 0x6063C4A8
+	.long 0x886324D0
+	.long 0x2C030001
+	.long 0x41820050
+	.long 0x887F0000
+	.long 0x3D808003
+	.long 0x618C4704
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x8083002C
+	.long 0x80640004
+	.long 0x2C030010
+	.long 0x40820010
+	.long 0x80640010
+	.long 0x2C0300EC
+	.long 0x41820010
+	.long 0x8864221E
+	.long 0x54630673
+	.long 0x41820014
+	.long 0x3D80802F
+	.long 0x618CD610
+	.long 0x7D8903A6
+	.long 0x4E800420
+	.long 0x281E0000
+	.long 0x00000000
+	.long 0xC225C3E8
+	.long 0x00000002
+	.long 0x3C608046
+	.long 0x6063AB38
+	.long 0x88630000
+	.long 0x00000000
+	.long 0x0444D188
+	.long 0x00000000
+	.long 0xC2261078
+	.long 0x00000020
+	.long 0x887F0007
+	.long 0x2C030000
+	.long 0x40820090
+	.long 0x889F0004
+	.long 0x7C972378
+	.long 0x800D8858
+	.long 0x7C602214
+	.long 0x88A31CC8
+	.long 0x57800739
+	.long 0x40820010
+	.long 0x5780077B
+	.long 0x4082003C
+	.long 0x480000C4
+	.long 0x28050001
+	.long 0x418200BC
+	.long 0x7EE3BB78
+	.long 0x38800000
+	.long 0x38A0000E
+	.long 0x38C00000
+	.long 0x38ED9B00
+	.long 0x3D808037
+	.long 0x618C8334
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x38800001
+	.long 0x48000010
+	.long 0x28050000
+	.long 0x41820088
+	.long 0x38800000
+	.long 0x7EE3BB78
+	.long 0x3D808015
+	.long 0x618CF4F0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x38800001
+	.long 0x989F0007
+	.long 0x3C80C040
+	.long 0x909F0014
+	.long 0x48000051
+	.long 0x7D8802A6
+	.long 0xC03F0014
+	.long 0xC04C0000
+	.long 0xC01F000C
+	.long 0xEC01002A
+	.long 0xD01F000C
+	.long 0xFC600850
+	.long 0xFC030840
+	.long 0x41810008
+	.long 0xEC6300B2
+	.long 0xD07F0014
+	.long 0x4180002C
+	.long 0xC08C0004
+	.long 0xFC032040
+	.long 0x41810020
+	.long 0x38800000
+	.long 0x909F0014
+	.long 0x989F0007
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x3F4CCCCD
+	.long 0x3C800000
+	.long 0x889F0004
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x04260D9C
+	.long 0x38C00003
+	.long 0x044CD7F4
+	.long 0xC0200000
+	.long 0xC2262218
+	.long 0x00000005
+	.long 0x88BF0005
+	.long 0x2C050002
+	.long 0x40820014
+	.long 0x3D808026
+	.long 0x618C2318
+	.long 0x7D8903A6
+	.long 0x4E800420
+	.long 0x1C130024
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x042622C8
+	.long 0x60000000
+	.long 0x042622DC
+	.long 0x60000000
+	.long 0xC225A678
+	.long 0x00000008
+	.long 0x5460063F
+	.long 0x41820038
+	.long 0x1C9E001C
+	.long 0x38040008
+	.long 0x7C1F00AE
+	.long 0x2C000000
+	.long 0x40820024
+	.long 0x3800001D
+	.long 0x7C0903A6
+	.long 0x38600000
+	.long 0x389F0000
+	.long 0x90640004
+	.long 0x3884001C
+	.long 0x4200FFF8
+	.long 0x2C030000
+	.long 0x00000000
+	.long 0xC225A768
+	.long 0x00000020
+	.long 0x3D808015
+	.long 0x618CD3FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x39430018
+	.long 0x39600000
+	.long 0x38600000
+	.long 0x3C80803F
+	.long 0x60841550
+	.long 0x28000013
+	.long 0x4082000C
+	.long 0x39600001
+	.long 0x48000010
+	.long 0x28000000
+	.long 0x408200C0
+	.long 0x48000034
+	.long 0x2C03001D
+	.long 0x408000B4
+	.long 0x2C0B0002
+	.long 0x4182004C
+	.long 0x1CA3001C
+	.long 0x7CA52214
+	.long 0x88C5000A
+	.long 0x80AA0000
+	.long 0x7CA53430
+	.long 0x54A507FF
+	.long 0x40820088
+	.long 0x4800002C
+	.long 0x806DB898
+	.long 0x5460056B
+	.long 0x4082001C
+	.long 0x546006F7
+	.long 0x40820008
+	.long 0x48000074
+	.long 0x39600002
+	.long 0x38600000
+	.long 0x4BFFFFB0
+	.long 0x886DB8A6
+	.long 0x2C03001D
+	.long 0x4080005C
+	.long 0x1CA3001C
+	.long 0x7CA52214
+	.long 0x38C00000
+	.long 0x2C0B0002
+	.long 0x40820008
+	.long 0x38C00002
+	.long 0x98C50008
+	.long 0x80A50000
+	.long 0x2C030016
+	.long 0x41800008
+	.long 0x80A50010
+	.long 0x3CC04400
+	.long 0x2C0B0002
+	.long 0x40820008
+	.long 0x38C00000
+	.long 0x90C50038
+	.long 0x38C0001E
+	.long 0x98CDB8A6
+	.long 0x2C0B0000
+	.long 0x4182000C
+	.long 0x38630001
+	.long 0x4BFFFF4C
+	.long 0x28000000
+	.long 0x00000000
+  .long 0xFF000000
+
+SnapPAL_FriendliesQoL_Off:
+	.long 0x041A6618
+	.long 0x3BA00000
+	.long 0x04265984
+	.long 0x880DB655
+	.long 0x0416F404
+	.long 0x981E0010
+	.long 0xFF000000
+SnapPAL_FriendliesQoL_On:
+	.long 0xC21A6618
+	.long 0x00000017
+	.long 0x3BA00000
+	.long 0x7FA3EB78
+	.long 0x3D80801A
+	.long 0x618C40C4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x548005EF
+	.long 0x41820014
+	.long 0x548005AD
+	.long 0x4082001C
+	.long 0x5480056B
+	.long 0x4082001C
+	.long 0x3BBD0001
+	.long 0x2C1D0004
+	.long 0x4180FFCC
+	.long 0x4800006C
+	.long 0x3B600002
+	.long 0x48000068
+	.long 0x3D80801A
+	.long 0x618C5D48
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C741B78
+	.long 0x3D808025
+	.long 0x618CA4EC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3C80803F
+	.long 0x60841550
+	.long 0x1C63001C
+	.long 0x7C841A14
+	.long 0x8864000B
+	.long 0xB0740016
+	.long 0x3C808042
+	.long 0x60842E1C
+	.long 0x9064000C
+	.long 0x3D808001
+	.long 0x618C8498
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x3B600002
+	.long 0x48000008
+	.long 0x3B600000
+	.long 0x3BA00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC2265984
+	.long 0x00000028
+	.long 0x7FA3EB78
+	.long 0x48000031
+	.long 0x2C030000
+	.long 0x4182012C
+	.long 0x807B0000
+	.long 0x38800000
+	.long 0x48000119
+	.long 0x7CA802A6
+	.long 0x3D80803A
+	.long 0x618C74A4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000108
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7D1B78
+	.long 0x3FE08046
+	.long 0x63FFABAC
+	.long 0x1FDD00A8
+	.long 0x7FDEFA14
+	.long 0x887F0004
+	.long 0x2C030000
+	.long 0x418200B0
+	.long 0x3C608045
+	.long 0x6063C4A8
+	.long 0x886324D0
+	.long 0x889F0006
+	.long 0x7C032000
+	.long 0x40820098
+	.long 0x887E0058
+	.long 0x2C030003
+	.long 0x4182008C
+	.long 0x887F0004
+	.long 0x2C030007
+	.long 0x40820040
+	.long 0x887F0006
+	.long 0x2C030001
+	.long 0x40820024
+	.long 0x887F0000
+	.long 0x1C6300A8
+	.long 0x7C63FA14
+	.long 0x8863005F
+	.long 0x889E005F
+	.long 0x7C032000
+	.long 0x41820058
+	.long 0x4800005C
+	.long 0x887F0000
+	.long 0x7C03E800
+	.long 0x41820048
+	.long 0x4800004C
+	.long 0x887F0006
+	.long 0x2C030001
+	.long 0x40820028
+	.long 0x7FE3FB78
+	.long 0x3D808016
+	.long 0x618C5E70
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x889E005F
+	.long 0x7C032000
+	.long 0x41820020
+	.long 0x48000014
+	.long 0x887E005D
+	.long 0x2C030000
+	.long 0x41820010
+	.long 0x48000004
+	.long 0x38600000
+	.long 0x48000008
+	.long 0x38600001
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0xFFD70000
+	.long 0x880DB8ED
+	.long 0x00000000
+	.long 0xC216F404
+	.long 0x00000004
+	.long 0x981E0010
+	.long 0x2C000007
+	.long 0x40820014
+	.long 0x3C808045
+	.long 0x6084C4A8
+	.long 0x88840001
+	.long 0x989E000C
+	.long 0x00000000
+	.long 0xFF000000
+
+SnapPAL_GameVersion_NTSC:
+	.long 0xC206960C
+	.long 0x0000007E
+	.long 0x9421FFBC
+	.long 0xBE810008
+	.long 0x7C0802A6
+	.long 0x90010040
+	.long 0x83FE010C
+	.long 0x83FF0008
+	.long 0x3BFFFFE0
+	.long 0x80BD0000
+	.long 0x2C05001B
+	.long 0x408003B0
+	.long 0x48000071
+	.long 0x480000AD
+	.long 0x480000B9
+	.long 0x48000129
+	.long 0x48000145
+	.long 0x48000145
+	.long 0x480001C9
+	.long 0x480001D5
+	.long 0x48000209
+	.long 0x48000261
+	.long 0x48000271
+	.long 0x48000271
+	.long 0x48000271
+	.long 0x48000271
+	.long 0x4800027D
+	.long 0x4800027D
+	.long 0x480002C9
+	.long 0x480002C9
+	.long 0x480002CD
+	.long 0x480002CD
+	.long 0x480002DD
+	.long 0x480002DD
+	.long 0x480002E9
+	.long 0x480002E9
+	.long 0x480002F5
+	.long 0x480002F5
+	.long 0x480002F5
+	.long 0x4800033D
+	.long 0x7C8802A6
+	.long 0x1CA50004
+	.long 0x7C842A14
+	.long 0x80A40000
+	.long 0x54A501BA
+	.long 0x7CA42A14
+	.long 0xA0650000
+	.long 0x7C600734
+	.long 0x2C00FFFF
+	.long 0x41820018
+	.long 0x80850002
+	.long 0x7C63FA14
+	.long 0x90830000
+	.long 0x38A50006
+	.long 0x4BFFFFE0
+	.long 0x48000300
+	.long 0x33443F5C
+	.long 0x28F63360
+	.long 0x42C80000
+	.long 0xFFFF0000
+	.long 0x379C4296
+	.long 0x00003908
+	.long 0x40C00000
+	.long 0x390C4073
+	.long 0x33333910
+	.long 0x3DCCCCCD
+	.long 0x39284190
+	.long 0x00003C04
+	.long 0x2C01480E
+	.long 0x47202416
+	.long 0x80134734
+	.long 0x24168013
+	.long 0x473C0400
+	.long 0x000A4A40
+	.long 0x2C006812
+	.long 0x4A4C281C
+	.long 0x00134A50
+	.long 0x0F00010B
+	.long 0x4A542C80
+	.long 0x68124A60
+	.long 0x281C0013
+	.long 0x4A640F00
+	.long 0x010B4B24
+	.long 0x2C00680F
+	.long 0x4B300C90
+	.long 0x40134B38
+	.long 0x2C80380F
+	.long 0x4B440C90
+	.long 0x4013FFFF
+	.long 0x380C0000
+	.long 0x00044EF8
+	.long 0x2C003806
+	.long 0x4F081180
+	.long 0x000B4F0C
+	.long 0x2C802006
+	.long 0x4F1C1180
+	.long 0x000BFFFF
+	.long 0xFFFF0000
+	.long 0x4D103FB3
+	.long 0x33334D70
+	.long 0x428C0000
+	.long 0x4DD441A0
+	.long 0x00004DE0
+	.long 0x41A00000
+	.long 0x83A02C00
+	.long 0x000883AC
+	.long 0x34908011
+	.long 0x83F43490
+	.long 0x80118424
+	.long 0x0400008B
+	.long 0x842C03E8
+	.long 0x044C8438
+	.long 0x0400008B
+	.long 0x84D00578
+	.long 0x04B085AC
+	.long 0x0C00010B
+	.long 0x85B403E8
+	.long 0x012C85C0
+	.long 0x0C00010B
+	.long 0x85C80384
+	.long 0x032085D4
+	.long 0x0C00010B
+	.long 0x880C0A00
+	.long 0x010B8820
+	.long 0x0A00010B
+	.long 0x88EC041A
+	.long 0x0A8C8930
+	.long 0x041A0A8C
+	.long 0x8974041A
+	.long 0x0A8C89D4
+	.long 0x04FEF804
+	.long 0xFFFF0000
+	.long 0x36CC42EA
+	.long 0x000037C4
+	.long 0x04000000
+	.long 0xFFFF0000
+	.long 0x34683F80
+	.long 0x000039D8
+	.long 0x44000000
+	.long 0x3A440019
+	.long 0x00113A48
+	.long 0x1E0C008F
+	.long 0x3A580019
+	.long 0x00113A5C
+	.long 0x1E0C008F
+	.long 0x3A6C0019
+	.long 0x00113A70
+	.long 0x1E0C008F
+	.long 0x3B304400
+	.long 0x0000FFFF
+	.long 0x45C82C01
+	.long 0x501145D4
+	.long 0x2D1A4013
+	.long 0x45DC2C80
+	.long 0xB01145E8
+	.long 0x2D1A4013
+	.long 0x49C42C00
+	.long 0x680C49D0
+	.long 0x281E0013
+	.long 0x49D82C80
+	.long 0x780C49E4
+	.long 0x281E0013
+	.long 0x49F02C00
+	.long 0x680949FC
+	.long 0x231E0013
+	.long 0x4A042C80
+	.long 0x78094A10
+	.long 0x231E0013
+	.long 0x5C98280C
+	.long 0x80005CF4
+	.long 0xB4800B50
+	.long 0x5D08B480
+	.long 0x0B50FFFF
+	.long 0x3A1CB491
+	.long 0x80133A64
+	.long 0x2C000014
+	.long 0x3A70B490
+	.long 0x4013FFFF
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x647CB499
+	.long 0x00176480
+	.long 0x96001097
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x33E442D8
+	.long 0x00004528
+	.long 0x2C013010
+	.long 0x4534B497
+	.long 0x8013453C
+	.long 0x2C813010
+	.long 0x4548B497
+	.long 0x80134550
+	.long 0x2D002010
+	.long 0x455CB497
+	.long 0x801345F8
+	.long 0x2C01300E
+	.long 0x46080D00
+	.long 0x010B460C
+	.long 0x2C81280E
+	.long 0x461C0D00
+	.long 0x010B4AEC
+	.long 0x2C007004
+	.long 0x4B002C80
+	.long 0x3804FFFF
+	.long 0xFFFF0000
+	.long 0x485C2C00
+	.long 0x000CFFFF
+	.long 0xFFFF0000
+	.long 0x37B03F66
+	.long 0x666637CC
+	.long 0x42AE0000
+	.long 0x55209111
+	.long 0x8013FFFF
+	.long 0xFFFF0000
+	.long 0x3B8C4400
+	.long 0x00003D0C
+	.long 0x44000000
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x50E49119
+	.long 0x001350F8
+	.long 0x91190013
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x4EB00320
+	.long 0xFF384EBC
+	.long 0x1E000123
+	.long 0x4EC403E8
+	.long 0x01F44ED0
+	.long 0x1E000123
+	.long 0x4ED80514
+	.long 0x04B04EE4
+	.long 0x1E000123
+	.long 0x505C2C00
+	.long 0x6816506C
+	.long 0x19080123
+	.long 0x50702C80
+	.long 0x60165080
+	.long 0x19080123
+	.long 0x50842D00
+	.long 0x20165094
+	.long 0x19080123
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x80010040
+	.long 0x7C0803A6
+	.long 0xBA810008
+	.long 0x38210044
+	.long 0x3C60803C
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC2124158
+	.long 0x00000002
+	.long 0x38000000
+	.long 0x901E1A5C
+	.long 0x3BE00001
+	.long 0x00000000
+	.long 0xC22669E8
+	.long 0x0000001C
+	.long 0x981C0477
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x38600000
+	.long 0x38800000
+	.long 0x3D80803A
+	.long 0x618C6664
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C7F1B78
+	.long 0x38800001
+	.long 0x989F0049
+	.long 0x38800001
+	.long 0x989F004A
+	.long 0x48000069
+	.long 0x7FC802A6
+	.long 0xC03E000C
+	.long 0xD03F0024
+	.long 0xD03F0028
+	.long 0x3C60FFFF
+	.long 0x6063FF00
+	.long 0x907F0030
+	.long 0xC03E0000
+	.long 0xC05E0004
+	.long 0x7FE3FB78
+	.long 0x48000051
+	.long 0x7C8802A6
+	.long 0x3D80803A
+	.long 0x618C6B54
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7FE3FB78
+	.long 0x38800000
+	.long 0xC03E0008
+	.long 0xC05E0008
+	.long 0x3D80803A
+	.long 0x618C74FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000024
+	.long 0x4E800021
+	.long 0xC402C000
+	.long 0xC43B8000
+	.long 0x3FC00000
+	.long 0x3D0F5C29
+	.long 0x4E800021
+	.long 0x76322E31
+	.long 0x00000000
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC226706C
+	.long 0x0000004F
+	.long 0x48000031
+	.long 0x7C8802A6
+	.long 0x80630020
+	.long 0x3CA00004
+	.long 0x60A5BE00
+	.long 0x7C632A14
+	.long 0x38A00238
+	.long 0x3D808000
+	.long 0x618C31F4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000244
+	.long 0x4E800021
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01FFC00F
+	.long 0x01FFE00F
+	.long 0x01FFD80F
+	.long 0x01FF7D0F
+	.long 0x01FF0E4F
+	.long 0x01FF0BBF
+	.long 0x01000000
+	.long 0x01000000
+	.long 0xF7FFFFFF
+	.long 0xF000FF00
+	.long 0xF000FF00
+	.long 0xF000FF00
+	.long 0xF000FF00
+	.long 0xF000FF00
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x72DEFFD4
+	.long 0x0DF408FE
+	.long 0x0FFB00CC
+	.long 0x0BFFEB00
+	.long 0x01CFFFE4
+	.long 0x0104DFFE
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01AEFEC0
+	.long 0x08FC08FD
+	.long 0x0EF700FE
+	.long 0x0FF00000
+	.long 0x0FF00000
+	.long 0x0FF00000
+	.long 0x04FF9888
+	.long 0x01CFB888
+	.long 0x019FC888
+	.long 0x016FD888
+	.long 0x014FE888
+	.long 0x012FF888
+	.long 0x010FF888
+	.long 0x012FF888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x8888888E
+	.long 0x888888DF
+	.long 0x88888CFF
+	.long 0x8888AFF7
+	.long 0x8889FFA0
+	.long 0x888FFC00
+	.long 0x8DFFB100
+	.long 0xEFF60000
+	.long 0xFF400000
+	.long 0xF3000000
+	.long 0x40000000
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01000000
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x01010101
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x88888888
+	.long 0x8888EF40
+	.long 0x8888DF60
+	.long 0x8888CF90
+	.long 0x8888BFC0
+	.long 0x88889FF4
+	.long 0x88888DF9
+	.long 0x88888BFE
+	.long 0x888888EF
+	.long 0x01FF02FF
+	.long 0x01FF00DF
+	.long 0x01FF008F
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x30000000
+	.long 0x90000000
+	.long 0xF000FF00
+	.long 0xF000FF00
+	.long 0xF000FF00
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x0FF007FF
+	.long 0x0DF804FE
+	.long 0x02DEFFE5
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x0EF700FF
+	.long 0x08FC0AFC
+	.long 0x00AFFEC0
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x01000000
+	.long 0x014FE888
+	.long 0x016FD888
+	.long 0x019FC888
+	.long 0x01CFB888
+	.long 0x04FF9888
+	.long 0x09FD8888
+	.long 0x3EFB8888
+	.long 0x387E0674
+	.long 0x00000000
+	.long 0xC2017264
+	.long 0x00000008
+	.long 0x808DB954
+	.long 0x80840020
+	.long 0x3884FFE0
+	.long 0x4800001D
+	.long 0x7CC802A6
+	.long 0xA0A60002
+	.long 0x7C842A14
+	.long 0x80A60004
+	.long 0x90A40000
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0xFFFF5614
+	.long 0x3F32F1AA
+	.long 0x80010034
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC2079DB4
+	.long 0x00000002
+	.long 0x98180DCE
+	.long 0x3A400001
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC22FA12C
+	.long 0x00000003
+	.long 0x3C003F93
+	.long 0x60003333
+	.long 0x901D002C
+	.long 0x901D0030
+	.long 0x3C00C1B0
+	.long 0x00000000
+	.long 0xC22F90E0
+	.long 0x00000011
+	.long 0x3C003EAA
+	.long 0x6000AAAB
+	.long 0x9001FFF0
+	.long 0xC001FFF0
+	.long 0x3C003F00
+	.long 0x9001FFF0
+	.long 0xC041FFF0
+	.long 0x80780010
+	.long 0xC0380038
+	.long 0xEC211028
+	.long 0xD0380038
+	.long 0xFC200090
+	.long 0x38800005
+	.long 0x48000009
+	.long 0x48000048
+	.long 0x3484FFFF
+	.long 0x7C0802A6
+	.long 0x9421FFF0
+	.long 0x90010014
+	.long 0x90610008
+	.long 0x41800020
+	.long 0x80630008
+	.long 0x4BFFFFE5
+	.long 0x80610008
+	.long 0xC0430038
+	.long 0xEC42082A
+	.long 0xEC21002A
+	.long 0xD0430038
+	.long 0x80010014
+	.long 0x38210010
+	.long 0x7C0803A6
+	.long 0x4E800020
+	.long 0xBAC10050
+	.long 0x00000000
+	.long 0x043CEB4C
+	.long 0x00200000
+	.long 0x041103F0
+	.long 0x3C608010
+	.long 0x041103F8
+	.long 0x6060DF28
+	.long 0x04110310
+	.long 0x3C608010
+	.long 0x04110318
+	.long 0x6060DF28
+	.long 0xC22B8528
+	.long 0x00000012
+	.long 0x887F2240
+	.long 0x2C030002
+	.long 0x41820054
+	.long 0x40800014
+	.long 0x2C030000
+	.long 0x41820018
+	.long 0x4080002C
+	.long 0x4800006C
+	.long 0x2C030004
+	.long 0x40800064
+	.long 0x4800004C
+	.long 0x801F065C
+	.long 0x54000739
+	.long 0x41820054
+	.long 0x38030001
+	.long 0x981F2240
+	.long 0x48000048
+	.long 0x801F065C
+	.long 0x5400077B
+	.long 0x4182003C
+	.long 0x38030001
+	.long 0x981F2240
+	.long 0x48000030
+	.long 0x801F065C
+	.long 0x54000739
+	.long 0x41820024
+	.long 0x38030001
+	.long 0x981F2240
+	.long 0x48000018
+	.long 0x801F0668
+	.long 0x540005EF
+	.long 0x4182000C
+	.long 0x38030001
+	.long 0x981F2240
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC22B86D8
+	.long 0x00000013
+	.long 0x80A3002C
+	.long 0x83C40004
+	.long 0x88652240
+	.long 0x3B850000
+	.long 0x2C030002
+	.long 0x41820054
+	.long 0x40800014
+	.long 0x2C030000
+	.long 0x41820018
+	.long 0x4080002C
+	.long 0x4800006C
+	.long 0x2C030004
+	.long 0x40800064
+	.long 0x4800004C
+	.long 0x801C065C
+	.long 0x54000739
+	.long 0x41820054
+	.long 0x38030001
+	.long 0x981C2240
+	.long 0x48000048
+	.long 0x801C065C
+	.long 0x5400077B
+	.long 0x4182003C
+	.long 0x38030001
+	.long 0x981C2240
+	.long 0x48000030
+	.long 0x801C065C
+	.long 0x54000739
+	.long 0x41820024
+	.long 0x38030001
+	.long 0x981C2240
+	.long 0x48000018
+	.long 0x801C0668
+	.long 0x540005EF
+	.long 0x4182000C
+	.long 0x38030001
+	.long 0x981C2240
+	.long 0x00000000
+	.long 0xFF000000
+SnapPAL_GameVersion_PAL:
+	.long 0x0406960C
+	.long 0x3C60803C
+	.long 0x04124158
+	.long 0x3BE00001
+	.long 0x042669E8
+	.long 0x981C0477
+	.long 0x0426706C
+	.long 0x387E0674
+	.long 0x04017264
+	.long 0x80010034
+	.long 0x04079DB4
+	.long 0x98180DCE
+	.long 0x042FA12C
+	.long 0x80160004
+	.long 0x042F90E0
+	.long 0xBAC10050
+	.long 0x043CEB4C
+	.long 0x00240464
+	.long 0x041103F0
+	.long 0x3C608011
+	.long 0x041103F8
+	.long 0x38030828
+	.long 0x04110310
+	.long 0x3C608011
+	.long 0x04110318
+	.long 0x38030828
+	.long 0x042B8528
+	.long 0x981F2240
+	.long 0x042B86D8
+	.long 0x981C2240
+	.long 0xFF000000
+SnapPAL_GameVersion_SDR:
+	.long -1
+
+SnapPAL_StageExpansion_Off:
+	.long -1
+SnapPAL_StageExpansion_On:
+	.long -1
+
+SnapPAL_Widescreen_Off:
+	.long 0x043BB6A4
+	.long 0x3FAAAAA8
+	.long 0x0436A3AC
+	.long 0xC03F0034
+	.long 0x044CEED0
+	.long 0x3E000000
+	.long 0x040871A0
+	.long 0x4182000C
+	.long 0x040311A8
+	.long 0xA0010020
+	.long 0x040311B4
+	.long 0xA0010022
+	.long 0x044CEEA8
+	.long 0x3F24D317
+	.long 0x044CEEAC
+	.long 0xBF24D317
+	.long 0x044CEEA4
+	.long 0xC322B333
+	.long 0x044CEEA0
+	.long 0x4322B333
+	.long 0x044CEEC4
+	.long 0x3DCCCCCD
+	.long 0x042FD90C
+	.long 0xC002E200
+	.long 0x044CEF04
+	.long 0x3ECCCCCD
+	.long 0xFF000000
+SnapPAL_Widescreen_Standard:
+	.long 0x043BB6A4
+	.long 0x3EB00000
+	.long 0xC236A3AC
+	.long 0x00000006
+	.long 0xC03F0034
+	.long 0x4800001D
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xC0630004
+	.long 0xEC2100B2
+	.long 0xEC211824
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x40800000
+	.long 0x40400000
+	.long 0x00000000
+	.long 0x044CEED0
+	.long 0x3E4CCCCD
+	.long 0x040871A0
+	.long 0x60000000
+	.long 0x040311A8
+	.long 0x3800004E
+	.long 0x040311B4
+	.long 0x38000232
+	.long 0x044CEEA8
+	.long 0x3F666666
+	.long 0x044CEEAC
+	.long 0xBF666666
+	.long 0x044CEEA4
+	.long 0xC3660000
+	.long 0x044CEEA0
+	.long 0x43660000
+	.long 0x044CEEC4
+	.long 0x3D916873
+	.long 0xC22FD90C
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40F00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x044CEF04
+	.long 0x3E99999A
+	.long 0xFF000000
+SnapPAL_Widescreen_True:
+	.long 0x043BB6A4
+	.long 0x3EB00000
+	.long 0xC236A3AC
+	.long 0x00000006
+	.long 0xC03F0034
+	.long 0x4800001D
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xC0630004
+	.long 0xEC2100B2
+	.long 0xEC211824
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x42B80000
+	.long 0x427C0000
+	.long 0x00000000
+	.long 0x044CEED0
+	.long 0x3E4CCCCD
+	.long 0x040871A0
+	.long 0x60000000
+	.long 0x040311A8
+	.long 0x38000064
+	.long 0x040311B4
+	.long 0x3800021C
+	.long 0x044CEEA8
+	.long 0x3F666666
+	.long 0x044CEEAC
+	.long 0xBF666666
+	.long 0x044CEEA4
+	.long 0xC3660000
+	.long 0x044CEEA0
+	.long 0x43660000
+	.long 0x044CEEC4
+	.long 0x3D916873
+	.long 0xC22FD90C
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40F00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x044CEF04
+	.long 0x3E99999A
+	.long 0xFF000000
+
+#endregion
+#region Code Descriptions
+SnapPAL_UCF_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0xac,0x00,0xb3,0x12
+  .ascii "Fixes controller disparities with dashback and "
+  .byte 0x03
+  .ascii "shield drop. Current version is 0.74."
+  .byte 0x00
+	.align 2
+SnapPAL_Frozen_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0xac,0x00,0xb3,0x12
+  .ascii "Disables hazards on tournament stages."
+  .byte 0x00
+	.align 2
+SnapPAL_Spawns_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0xac,0x00,0xb3,0x12
+  .ascii "Players spawn in neutral positions regardless "
+  .byte 0x03
+  .ascii "of port."
+  .byte 0x00
+	.align 2
+SnapPAL_DisableWobbling_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0x90,0x00,0xb3,0x12
+  .ascii "Disable Ice Climbers' grab infinite."
+  .byte 0x03
+  .ascii "Opponent breaks out after being hit by Nana 3 times."
+  .byte 0x00
+	.align 2
+SnapPAL_Ledgegrab_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0xac,0x00,0xb3,0x12
+  .ascii "Time-out victories are awarded to the player "
+  .byte 0x03
+  .ascii "with under 60 ledgegrabs."
+  .byte 0x00
+	.align 2
+SnapPAL_TournamentQoL_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0x75,0x00,0xb3,0x12
+  .ascii "Stage striking, hide nametags while invisible during singles, "
+  .byte 0x03
+  .ascii "toggle rumble from CSS, close port on unplug, disable FoD in doubles."
+  .byte 0x00
+	.align 2
+SnapPAL_FriendliesQoL_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0x75,0x00,0xb3,0x12
+    .ascii "Skip result screen, A+B for salty runback, A+X for random stage,"
+    .byte 0x03
+    .ascii "highlight winner's name."
+    .byte 0x00
+  	.align 2
+SnapPAL_GameVersion_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0xac,0x00,0xb3,0x12
+  .ascii "Toggle between multiple game versions."
+  .byte 0x00
+	.align 2
+SnapPAL_StageExpansion_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0x74,0x00,0xb3,0x12
+  .ascii "Modify banned stages to be competively viable. Adjusts Jungle"
+  .byte 0x03
+  .ascii "Japes, Peach's Castle, Onett, Green Greens, Mute City, Flat Zone"
+  .byte 0x03
+  .ascii "Fourside, Rainbow Cruise, Yoshi's Island, and Mushroom Kingdom 1+2."
+  .byte 0x00
+	.align 2
+SnapPAL_Widescreen_Description:
+  .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0x70,0x00,0xb3,0x12
+  .ascii "Enable widescreen. Players take damage when outside of the 4:3 region."
+  .byte 0x03
+  .ascii "Use Standard if thin black bars are present."
+  .byte 0x03
+  .ascii "Use True if the image occupies the entire screen."
+  .byte 0x00
+	.align 2
+
+
+#endregion
+
+#endregion
+#region SnapPAL_Codes_SceneLoad
+SnapPAL_Codes_SceneLoad:
+#GObj Offsets
+  .set OFST_CodeNamesTextGObj,0x0
+  .set OFST_CodeOptionsTextGObj,0x4
+	.set OFST_CodeDescTextGObj,0x8
+  .set OFST_CursorLocation,0xC
+  .set OFST_ScrollAmount,0xE
+  .set OFST_OptionSelections,0x10
+blrl
+
+#Init
+  backup
+
+SnapPAL_Codes_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl SnapPAL_Codes_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Title
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_CodeNames_Title
+  mflr  r4
+	lfs	f1,TitleX(REG_TextProp)
+  lfs	f2,TitleY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Modname + version
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_CodeNames_ModName
+  mflr  r4
+	lfs	f1,ModNameX(REG_TextProp)
+  lfs	f2,ModNameY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Init Menu
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  SnapPAL_Codes_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+#Copy Saved Menu Options
+	addi	r3,REG_GObjData,OFST_OptionSelections
+	lwz	r4, OFST_Memcard (r13)
+	addi r4,r4,OFST_ModPrefs
+	li	r5,0x18
+	branchl	r12,memcpy
+
+#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	lfs	f1,DescriptionX(REG_TextProp)
+	lfs	f2,DescriptionY(REG_TextProp)
+	lfs	f3,DescriptionZ(REG_TextProp)
+	lfs	f4,DescriptionMaxX(REG_TextProp)
+	lfs	f5,DescriptionUnk(REG_TextProp)
+	branchl r12,Text_AllocateTextObject
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
+#Init
+	mr	r3,REG_TextGObj
 	li	r4,0
-	stb	r4,0x0(r3)
+	branchl	r12,Text_CopyPremadeTextDataToStruct
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Menu
+  mr  r3,REG_GObjData
+  bl  SnapPAL_Codes_CreateMenu
+
+SnapPAL_Codes_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region SnapPAL_Codes_SceneThink
+SnapPAL_Codes_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  SnapPAL_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Code Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement up
+  rlwinm. r0,REG_Inputs,0,0x10
+  beq SnapPAL_Codes_SceneThink_SkipUp
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_Codes_SceneThink_UpdateMenu
+#Cursor stays at top
+  li  r3,0
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll up
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_Codes_SceneThink_UpdateMenu
+#Scroll stays at top
+  li  r3,0
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b SnapPAL_Codes_SceneThink_Exit
+SnapPAL_Codes_SceneThink_SkipUp:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x20
+  beq SnapPAL_Codes_SceneThink_AdjustOptionSelection
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Check if exceeds total amount of codes
+  extsb r3,r3
+  cmpwi r3,CodeAmount-1
+  ble 0x10
+#Cursor stays at the last code
+  li  r3,CodeAmount-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  b SnapPAL_Codes_SceneThink_Exit
+#Check if exceeds max amount of codes per page
+  cmpwi r3,MaxCodesOnscreen-1
+  ble SnapPAL_Codes_SceneThink_UpdateMenu
+#Cursor stays at bottom
+  li  r3,MaxCodesOnscreen-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll down
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,CodeAmount-MaxCodesOnscreen
+  ble SnapPAL_Codes_SceneThink_UpdateMenu
+#Scroll stays at bottom
+  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b SnapPAL_Codes_SceneThink_Exit
+#endregion
+#region Adjust Option Selection
+SnapPAL_Codes_SceneThink_AdjustOptionSelection:
+.set  REG_MaxOptions,20
+.set  REG_OptionValuePtr,21
+#Check for movement right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq SnapPAL_Codes_SceneThink_SkipRight
+#Get amount of options for this code
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+  bl  SnapPAL_ConvertBlPointer
+  lwz REG_MaxOptions,SnapPAL_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Increment value
+  lbz r3,0x0(REG_OptionValuePtr)
+  addi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpw r3,REG_MaxOptions
+  ble SnapPAL_Codes_SceneThink_UpdateMenu
+#Option stays maxxed out
+  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
+  b SnapPAL_Codes_SceneThink_Exit
+SnapPAL_Codes_SceneThink_SkipRight:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq SnapPAL_Codes_SceneThink_CheckToExit
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Decrement value
+  lbz r3,0x0(REG_OptionValuePtr)
+  subi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_Codes_SceneThink_UpdateMenu
+#Option stays at 0
+  li  r3,0
+  stb r3,0x0(REG_OptionValuePtr)
+  b SnapPAL_Codes_SceneThink_Exit
+#endregion
+#region Check to Exit
+SnapPAL_Codes_SceneThink_CheckToExit:
+#Check for start input
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x1000
+  beq SnapPAL_Codes_SceneThink_Exit
+#Apply codes
+  mr  r3,REG_GObjData
+  bl  SnapPAL_ApplyAllGeckoCodes
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_Forward
+#Exit Scene
+  branchl r12,MenuController_ChangeScreenMinor
+#Save Menu Options
+	lwz	r3, OFST_Memcard (r13)
+	addi r3,r3,OFST_ModPrefs
+	addi	r4,REG_GObjData,OFST_OptionSelections
+	li	r5,0x18
+	branchl	r12,memcpy
+#Clear nametag region
+	lwz	r3,OFST_Memcard(r13)
+	addi	r3,r3,OFST_NametagStart
+	li r4,0
+	li r5,0
+	ori r5,r5,0xda38
+	branchl  r12,memset
+#Request a memcard save
+	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
+	li	r3,0
+	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
+#Set memcard save flag
+	load	r3,OFST_MemcardController
+	li	r4,1
+	stw	r4,0xC(r3)
+
+  b SnapPAL_Codes_SceneThink_Exit
+#endregion
+
+SnapPAL_Codes_SceneThink_UpdateMenu:
+#Redraw Menu
+  mr  r3,REG_GObjData
+  bl  SnapPAL_Codes_CreateMenu
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+  b SnapPAL_Codes_SceneThink_Exit
+
+SnapPAL_Codes_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region SnapPAL_Codes_SceneDecide
+SnapPAL_Codes_SceneDecide:
+  backup
+
+#Change Major
+  li  r3,ExitSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Leave Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+SnapPAL_Codes_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region SnapPAL_Codes_CreateMenu
+SnapPAL_Codes_CreateMenu:
+.set  REG_GObjData,31
+.set  REG_TextGObj,30
+.set  REG_TextProp,29
+
+#Init
+  backup
+  mr  REG_GObjData,r3
+  bl  SnapPAL_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#Remove old text gobjs if they exist
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq SnapPAL_Codes_CreateMenu_SkipNameRemoval
+  branchl r12,Text_RemoveText
+SnapPAL_Codes_CreateMenu_SkipNameRemoval:
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq SnapPAL_Codes_CreateMenu_SkipOptionRemoval
+  branchl r12,Text_RemoveText
+SnapPAL_Codes_CreateMenu_SkipOptionRemoval:
+
+#region CreateTextGObjs
+SnapPAL_Codes_CreateMenu_CreateTextGObjs:
+#Create Code Mames Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#Create Code Options Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#endregion
+#region SnapPAL_Codes_CreateMenu_CreateNames
+SnapPAL_Codes_CreateMenu_CreateNamesInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+  li  REG_Count,0
+SnapPAL_Codes_CreateMenu_CreateNamesLoop:
+#Next name to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,REG_Count
+#Get the string bl pointer
+  bl  SnapPAL_CodeNames_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  SnapPAL_ConvertBlPointer
+  mr  r4,r3
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, -0x6758 (rtoc)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lfs f1,CodesX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+SnapPAL_Codes_CreateMenu_CreateNamesIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge SnapPAL_Codes_CreateMenu_CreateNameLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt SnapPAL_Codes_CreateMenu_CreateNamesLoop
+SnapPAL_Codes_CreateMenu_CreateNameLoopEnd:
+#endregion
+#region SnapPAL_Codes_CreateMenu_CreateOptions
+SnapPAL_Codes_CreateMenu_CreateOptionsInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+.set  REG_CurrentOptionID,22
+.set  REG_CurrentOptionSelection,23
+.set  REG_OptionStrings,24
+.set  REG_StringLoopCount,25
+  li  REG_Count,0
+SnapPAL_Codes_CreateMenu_CreateOptionsLoop:
+#Next option to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add REG_CurrentOptionID,r3,REG_Count
+#Get the bl pointer
+  mr  r3,REG_CurrentOptionID
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  SnapPAL_ConvertBlPointer
+  lwz r4,SnapPAL_CodeOptions_OptionCount(r3)
+  addi  r4,r4,1
+  addi  REG_OptionStrings,r3,SnapPAL_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
+  mulli r4,r4,0x4                                           #pointer length
+  add REG_OptionStrings,REG_OptionStrings,r4
+#Get this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
+
+#Loop through strings and get the current one
+  li  REG_StringLoopCount,0
+SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
+  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
+  beq SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
+#Get next string
+  mr  r3,REG_OptionStrings
+  branchl r12,strlen
+  add REG_OptionStrings,REG_OptionStrings,r3
+  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
+  addi  REG_StringLoopCount,REG_StringLoopCount,1
+  b SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch
+
+SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, -0x6758 (rtoc)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  bl  SnapPAL_CodeOptions_Wrapper
+  mflr  r4
+  mr  r5,REG_OptionStrings
+  lfs f1,OptionsX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+SnapPAL_Codes_CreateMenu_CreateOptionsIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge SnapPAL_Codes_CreateMenu_CreateOptionsLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt SnapPAL_Codes_CreateMenu_CreateOptionsLoop
+SnapPAL_Codes_CreateMenu_CreateOptionsLoopEnd:
+#endregion
+#region SnapPAL_Codes_CreateMenu_HighlightCursor
+#Name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Option
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#endregion
+#region SnapPAL_Codes_CreateMenu_ChangeCodeDescription
+#Get highlighted code ID
+	lhz r3,OFST_ScrollAmount(REG_GObjData)
+	lhz r4,OFST_CursorLocation(REG_GObjData)
+	add	r3,r3,r4
+#Get this codes options
+	bl	SnapPAL_CodeOptions_Order
+	mflr	r4
+	mulli	r3,r3,0x4
+	add	r3,r3,r4
+	bl	SnapPAL_ConvertBlPointer
+#Get this codes description
+	addi	r3,r3,SnapPAL_CodeOptions_CodeDescription
+	bl	SnapPAL_ConvertBlPointer
+	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
+#Store to text gobj
+	stw	r3,0x5C(r4)
+#endregion
+
+SnapPAL_Codes_CreateMenu_Exit:
+  restore
+  blr
+
+###############################################
+
+SnapPAL_ConvertBlPointer:
+  lwz r4,0x0(r3)        #Load bl instruction
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+	rlwinm	r5,r4,7,31,31		#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5
+  add r3,r4,r3
+  blr
+
+#endregion
+#region SnapPAL_ApplyAllGeckoCodes
+SnapPAL_ApplyAllGeckoCodes:
+.set  REG_GObjData,31
+.set  REG_Count,30
+.set  REG_OptionSelection,29
+#Init
+  backup
+  mr  REG_GObjData,r3
+
+#Default Codes
+  bl  SnapPAL_DefaultCodes
+  mflr  r3
+  bl  SnapPAL_ApplyGeckoCode
+
+#Init Loop
+  li  REG_Count,0
+ApplyAllGeckoSnapPAL_Codes_Loop:
+#Load this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's default gecko code pointer
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  SnapPAL_ConvertBlPointer
+  addi  r3,r3,SnapPAL_CodeOptions_GeckoCodePointers
+  bl  SnapPAL_ConvertBlPointer
+  bl  SnapPAL_ApplyGeckoCode
+#Get this code's gecko code pointers
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  SnapPAL_ConvertBlPointer
+  addi  r3,r3,SnapPAL_CodeOptions_GeckoCodePointers
+  mulli r4,REG_OptionSelection,0x4
+  add  r3,r3,r4
+  bl  SnapPAL_ConvertBlPointer
+  bl  SnapPAL_ApplyGeckoCode
+
+ApplyAllGeckoSnapPAL_Codes_IncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  blt ApplyAllGeckoSnapPAL_Codes_Loop
+
+ApplyAllGeckoSnapPAL_Codes_Exit:
+  restore
+  blr
+
+####################################
+
+SnapPAL_ApplyGeckoCode:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+SnapPAL_ApplyGeckoCode_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq SnapPAL_ApplyGeckoCode_C2
+  cmpwi r3,0x4
+  beq SnapPAL_ApplyGeckoCode_04
+  cmpwi r3,0xFF
+  beq SnapPAL_ApplyGeckoCode_Exit
+  b SnapPAL_ApplyGeckoCode_Exit
+SnapPAL_ApplyGeckoCode_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b SnapPAL_ApplyGeckoCode_Loop
+SnapPAL_ApplyGeckoCode_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b SnapPAL_ApplyGeckoCode_Loop
+SnapPAL_ApplyGeckoCode_Exit:
+blr
+
+#endregion
+
+#endregion
+
+#region LagPrompt
+
+#region SnapPAL_LagPrompt_SceneLoad
+############################################
+
+#region SnapPAL_LagPrompt_SceneLoad_Data
+SnapPAL_LagPrompt_SceneLoad_TextProperties:
+blrl
+.set PromptX,0x0
+.set PromptY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YesX,0x14
+.set YesY,0x18
+.set YesScale,0x1C
+.set NoX,0x20
+.set NoY,0x24
+.set NoScale,0x28
+.set HighlightColor,0x2C
+.set NonHighlightColor,0x30
+.float 315     			   #REG_TextGObj X pos
+.float 200  					   #REG_TextGObj Y pos
+.float 0.1     		     	 #Z offset
+.float 1   				     #Canvas Scaling
+.float 1					    	#Text scale
+.float 265              #Yes X pos
+.float 300              #Yes Y pos
+.float 1              #Yes scale
+.float 365              #No X pos
+.float 300              #No Y pos
+.float 1              #No scale
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+
+SnapPAL_LagPrompt_SceneLoad_TopText:
+blrl
+.ascii "Are you using HDMI?"
+.align 2
+
+SnapPAL_LagPrompt_SceneLoad_Yes:
+blrl
+.string "Yes"
+.align 2
+
+SnapPAL_LagPrompt_SceneLoad_No:
+blrl
+.string "No"
+.align 2
+
+#GObj Offsets
+  .set OFST_TextGObj,0x0
+  .set OFST_Selection,0x4
+
+#endregion
+#region SnapPAL_LagPrompt_SceneLoad
+SnapPAL_LagPrompt_SceneLoad:
+blrl
+
+#Init
+  backup
+
+SnapPAL_LagPrompt_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl SnapPAL_LagPrompt_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,0x0(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_LagPrompt_SceneLoad_TopText
+  mflr  r4
+	lfs	f1,PromptX(REG_TextProp)
+  lfs	f2,PromptY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create Yes
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_LagPrompt_SceneLoad_Yes
+  mflr  r4
+	lfs	f1,YesX(REG_TextProp)
+  lfs	f2,YesY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create No
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_LagPrompt_SceneLoad_No
+  mflr  r4
+	lfs	f1,NoX(REG_TextProp)
+  lfs	f2,NoY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  SnapPAL_LagPrompt_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+
+#Store text gobj pointer
+  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
+#Init Selection value
+  li  r3,InitialSelection
+  stb r3,OFST_Selection(REG_GObjData)
+
+#Highlight selection
+  mr  r3,REG_TextGObj
+  li  r4,InitialSelection+1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+
+SnapPAL_LagPrompt_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region SnapPAL_LagPrompt_SceneThink
+SnapPAL_LagPrompt_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  SnapPAL_LagPrompt_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement to the right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq SnapPAL_LagPrompt_SceneThink_SkipRight
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  addi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,1
+  ble SnapPAL_LagPrompt_SceneThink_HighlightSelection
+  li  r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  b SnapPAL_LagPrompt_SceneThink_CheckForA
+SnapPAL_LagPrompt_SceneThink_SkipRight:
+#Check for movement to the left
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq SnapPAL_LagPrompt_SceneThink_CheckForA
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  subi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_LagPrompt_SceneThink_HighlightSelection
+  li  r3,0
+  stb r3,OFST_Selection(REG_GObjData)
+  b SnapPAL_LagPrompt_SceneThink_CheckForA
+
+SnapPAL_LagPrompt_SceneThink_HighlightSelection:
+#Unhighlight both options
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,1
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,2
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+#Highlight selection
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  lbz r4,OFST_Selection(REG_GObjData)
+  addi  r4,r4,1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+#endregion
+#region Check for Confirmation
+SnapPAL_LagPrompt_SceneThink_CheckForA:
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x100
+  bne SnapPAL_LagPrompt_SceneThink_Confirmed
+  rlwinm. r0,r4,0,0x1000
+  bne SnapPAL_LagPrompt_SceneThink_Confirmed
+  b SnapPAL_LagPrompt_SceneThink_Exit
+SnapPAL_LagPrompt_SceneThink_Confirmed:
+#Play Menu Sound
+  branchl r12,SFX_PlayMenuSound_Forward
+#If yes, apply lag reduction
+  lbz r3,OFST_Selection(REG_GObjData)
+  cmpwi r3,0
+  bne SnapPAL_LagPrompt_SceneThink_ExitScene
+#endregion
+#region Apply Code
+.set  REG_GeckoCode,12
+#Apply lag reduction
+  bl  SnapPAL_LagReductionGeckoCode
+  mflr  r3
+  bl  SnapPAL_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+#Set new post retrace callback
+  load  r3,PostRetraceCallback
+  branchl r12,HSD_VISetUserPostRetraceCallback
+#Do some shit to enable 480p
+#Disable Deflicker
+  load  r3,DeflickerStruct
+  li  r0,1
+  stw r0,0x8(r3)
+  branchl r12,Deflicker_Toggle
+#Enable PAL60
+	load	r3,ProgressiveStruct
+	li	r4,1
+	stw	r4,0xC(r3)
+#Call VIConfigure
+	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
+	branchl	r12,ScreenDisplay_Adjust
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#endregion
+
+SnapPAL_LagPrompt_SceneThink_ExitScene:
+  branchl r12,MenuController_ChangeScreenMinor
+
+SnapPAL_LagPrompt_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region SnapPAL_LagPrompt_SceneDecide
+SnapPAL_LagPrompt_SceneDecide:
+
+  backup
+
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  SnapPAL_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+
+#Enter Codes Scene
+  li  r3,CodesSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Change Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+SnapPAL_LagPrompt_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+
+#region SnapPAL_LagReductionGeckoCode
+SnapPAL_LagReductionGeckoCode:
+blrl
+.long 0x04019D18
+.long 0x4BFFFD9D
+#Required for 480p
+.long 0x043D5170
+.long 0x00000002
+.long 0x043D5184
+.long 0x00000000
+.long 0x043D51AC
+.long 0x00000002
+.long 0x043D51C0
+.long 0x00000000
+.long 0x040000CC
+.long 0x00000000
+.long 0xFF000000
+#endregion
+
+#endregion
+
+#region MinorSceneStruct
+SnapPAL_LagPrompt_MinorSceneStruct:
+blrl
+#Lag Prompt
+.byte 0                     #Minor Scene ID
+.byte 00                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  SnapPAL_LagPrompt_SceneDecide   #SceneDecide
+.byte PromptCommonSceneID   #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+SnapPAL_Codes_MinorSceneStruct:
+blrl
+#Codes Prompt
+.byte 0                     #Minor Scene ID
+.byte 00                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  SnapPAL_Codes_SceneDecide       #SceneDecide
+.byte CodesCommonSceneID    #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+#endregion
+
+SnapPAL_CheckProgressive:
+
+#Check if progressive is enabled
+  lis	r3,0xCC00
+	lhz	r3,0x206E(r3)
+	rlwinm.	r3,r3,0,0x1
+  beq SnapPAL_NoProgressive
+
+SnapPAL_IsProgressive:
+#Override SceneLoad
+  li  r3,PromptCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  SnapPAL_LagPrompt_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Load LagPrompt
+  li	r3, PromptSceneID
+  b ExploitCodePAL_Exit
+SnapPAL_NoProgressive:
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  SnapPAL_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Load Codes
+  li  r3,CodesSceneID
+
+ExploitCodePAL_Exit:
+#Store as next scene
+	load	r4,OFST_MainMenuSceneData
+	stb	r3,0x0(r4)
 #request to change scenes
 	branchl	r12,MenuController_ChangeScreenMinor
-#Return to the game
-	branch	r12,ExpoitReturnAddr
 
+##########
+## Exit ##
+##########
+
+#Exit exploit code
+  restore
+	branch	r12,ExploitReturn
+
+MMLCodePAL_End:
+blrl
 #endregion
 
 SnapshotCode_End:

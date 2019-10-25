@@ -31,7 +31,6 @@
 .set Text_AllocateTextObject,0x803A3C08
 .set Memcard_AllocateSomething,0x8001C4D0
 .set MemoryCard_LoadBannerIconImagesToRAM,0x8001D0E4
-.set OSGetProgressiveMode,0000000000000000000000000000000000000000000000000000000000000000000000000000
 .set PlayerBlock_LoadDataOffsetStart,0x8003410C
 .set SinglePlayerModeCheck,0x8016AB00
 .set PlayerBlock_LoadSlotType,0x8003239C
@@ -45,10 +44,10 @@
 .set Rumble_StoreRumbleFlag,0x8015E2D0
 .set MatchEnd_GetWinningTeam,0x80164C98
 .set PlayerBlock_StoreInitialXYCoords,0x800326E8
-.set getStageFromRandomStageSelect,0000000000000000000000000000000000000000000000000000000000000000000000000000
+.set getStageFromRandomStageSelect,0x802586dc
 .set Preload_CompareGameCache,0x800181D4
 .set Nametag_GetAddressForNametagID,0x8015C2E8
-.set Deflicker_Toggle,0000000000000000000000000000000000000000000000000000000000000000000000000000
+.set Deflicker_Toggle,0x8015ec9c
 .set UnlockSram,0x80347004
 .set MemoryCard_CheckToSaveData,0x8001CC04
 .set MemoryCard_WaitForFileToFinishSaving,0x8001B678
@@ -90,7 +89,7 @@
 .set DevelopMode_Text_ResetCursorXY,0x80303448
 */
 .set sprintf,0x80322390
-.set ScreenDisplay_Adjust,0000000000000000000000000000000000000000000000000000000000000000000000000000
+.set ScreenDisplay_Adjust,0x8015ED24
 .set Text_CopyPremadeTextDataToStruct,0x803A44A4
 .set MemoryCard_WaitForFileToFinishSaving,0x8001B678
 .set Snapshot_UpdateFileList,0x80252B80
@@ -105,32 +104,36 @@
 .set  OFST_Memcard,-0x77C0 #find it @ 8015ed3c in 102
 .set  OFST_ModPrefs,0x1F30
 .set  PostRetraceCallback,0x8001957C #*
-.set  UnkPadStruct,0x80423790
-.set  OFST_MainMenuSceneData,0x804c7bc4
-.set  OFST_MemcardController,0x804240b8
+
+.set  UnkPadStruct,0x80430a30 #80019A48
+.set  OFST_MainMenuSceneData,0x804d473c
+.set  OFST_MemcardController,0x80431358
+
 .set  ExploitReturn,0x80238B90 #*
-.set  NametagStart,0x8044e4c0
-.set  HWInputs,0x804b2ff8
-.set  OFST_PlCo,-0x4F0C
-.set  OFST_ExtStageID,-0x6C98 #-0x6CB8
-.set  HWInputArray,0x8045bf10
-.set  InputStruct,0x804b302c
-.set  VSModeCSSData,0x80471628
-.set  SceneController,0x8046ab38
-.set  CSS_SubSceneID,-0x4712
-.set  CSS_WindowGObjs,0x803F1CF8
-.set  CSS_MinorSceneData,-0x4758
-.set  SSS_IconData,0x803f1550
-.set  SSS_Unk1,-0x4768
-.set  SSS_Unk2,-0x475A
-.set  SSS_HighlightedStage,-0x475A
-.set  SSS_MnSlMap,-0x4774
-.set  Match_StaticMatchData,0x8045c4a8
-.set  Match_EndStruct,0x8046abac
-.set  PreloadTable,0x80422e1c
-.set  DeflickerStruct,0x8045bef8
-.set  ProgressiveStruct,0x8045bef8
-.set  OFST_CommonCObj,-0x45EC
+
+.set  OFST_NametagStart,0x3000
+.set  HWInputs,0x804bfdf8
+.set  OFST_PlCo,-0x514C # 0x800679CC
+.set  OFST_ExtStageID,-0x6CB8 # 0x80223EEC
+.set  HWInputArray,0x80469140
+.set  InputStruct,0x804bfe2c
+.set  VSModeCSSData,0x8047e858
+.set  SceneController,0x80477d68
+.set  CSS_SubSceneID,-0x49AA # 0x80260404
+.set  CSS_WindowGObjs,0x803eeffc
+.set  CSS_MinorSceneData,-0x49F0 # 0x802655A0
+.set  SSS_IconData,0x803ee840
+.set  SSS_Unk1,-0x4A00 # 0x80259724
+.set  SSS_Unk2,-0x49F2 # 0x80259730
+.set  SSS_HighlightedStage,-0x49F2 # 0x80259730
+.set  SSS_MnSlMap,-0x4A0C # DONE
+.set  Match_StaticMatchData,0x804696d8
+.set  Match_EndStruct,0x80477ddc
+.set  PreloadTable,0x804300bc #add 0x4 to r3
+.set  DeflickerStruct,0x80469128
+.set  ProgressiveStruct,0x80469128
+.set  OFST_CommonCObj,-0x4884 #0x80300EE8
+
 .set  MemcardFileList,0x804313c0 #use func 8001e238 to find it #*
 .set  SnapshotData,0x803b8e08 #use func 8001df4c to find it #*
 .set  SnapshotLoadThinkStruct,0x8049e8d8 #804a0b6c, use func 8025389c to find it #*
