@@ -132,8 +132,9 @@
 .set  OFST_CommonCObj,-0x45EC
 .set  MemcardFileList,0x80424120 #80433380
 .set  SnapshotData,0x803bb2c0 #0x803bacdc
+.set  SnapshotLoadThinkStruct,0x80491a98
+
 .set  MainSaveUnk,0x804240b8 # r30 at 8001d24c (102)
 .set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
 .set  MainSaveString,0x803bb244 # r4 at 8001a564 (102)
-.set  SnapshotLoadThinkStruct,0x80491a98
 .set  OFST_Rand,-0x5564

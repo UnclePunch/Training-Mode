@@ -133,7 +133,11 @@
 .set  DeflickerStruct,0x8046a410
 .set  ProgressiveStruct,0x8046a410
 .set  OFST_CommonCObj,-0x4884 #0x80301B3C
-
 .set  MemcardFileList,0x804326a0 #use func 8001e238 to find it #*
 .set  SnapshotData,0x803bacc8 #use func 8001df4c to find it #*
 .set  SnapshotLoadThinkStruct,0x8049fd30 #804a0b6c, use func 8025389c to find it #*
+
+.set  MainSaveUnk,0x804240b8 # r30 at 8001d24c (102)
+.set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
+.set  MainSaveString,0x803bb244 # r4 at 8001a564 (102)
+.set  OFST_Rand,-0x570C

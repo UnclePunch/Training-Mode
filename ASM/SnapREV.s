@@ -1,7 +1,7 @@
 #region SnapshotCodeREV
 .include "../../CommonREV.s"
 
-SnapshotCodeREVStart:
+SnapshotCodeREV_Start:
 #First thing to do is relocate ALL of the exploit code to tournament mode
 	bl	MMLCodeREV_End
 	mflr	r3
@@ -158,6 +158,9 @@ blrl
 .set DescriptionZ,0x40
 .set DescriptionMaxX,0x44
 .set DescriptionUnk,0x48
+.set MagicNumber,0x4C
+.set Next,0x54
+
 .float 30     			   #Title X pos
 .float 30  					   #Title Y pos
 .float 1   				     #Canvas Scaling
@@ -177,6 +180,7 @@ blrl
 .float	0.1								#Desc Z
 .float	560							#Desc Max X
 .float	0.1								#Desc Unk
+.long 0x43300000,0x80000000
 
 .set CodeAmount,10
 #region Code Names Order
@@ -255,7 +259,9 @@ bl  SnapREV_CodeOptions_Widescreen
 .set  SnapREV_CodeOptions_GeckoCodePointers,0x8
 SnapREV_CodeOptions_Wrapper:
 	blrl
-	.ascii "(%s)"
+	.short 0x8183
+	.ascii "%s"
+	.short 0x8184
 	.byte 0
 	.align 2
 SnapREV_CodeOptions_UCF:
@@ -1374,7 +1380,7 @@ SnapREV_Codes_CreateMenu_CreateNamesLoop:
   mr  r4,r3
 #Get Y Offset for this
   lis    r0, 0x4330
-  lfd    f2, -0x6758 (rtoc)
+  lfd    f2, MagicNumber (REG_TextProp)
   xoris    r3,REG_Count,0x8000
   stw    r0,0x80(sp)
   stw    r3,0x84(sp)
@@ -1456,7 +1462,7 @@ SnapREV_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
 SnapREV_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
 #Get Y Offset for this
   lis    r0, 0x4330
-  lfd    f2, -0x6758 (rtoc)
+  lfd    f2, MagicNumber (REG_TextProp)
   xoris    r3,REG_Count,0x8000
   stw    r0,0x80(sp)
   stw    r3,0x84(sp)
@@ -2075,7 +2081,7 @@ SnapREV_IsProgressive:
   stw r4,0x8(r3)
 #Load LagPrompt
   li	r3, PromptSceneID
-  b ExploitCodeREV_Exit
+  b SnapREV_Exit
 SnapREV_NoProgressive:
 #Override SceneLoad
   li  r3,CodesCommonSceneID
@@ -2086,7 +2092,7 @@ SnapREV_NoProgressive:
 #Load Codes
   li  r3,CodesSceneID
 
-ExploitCodeREV_Exit:
+SnapREV_Exit:
 #Store as next scene
 	load	r4,OFST_MainMenuSceneData
 	stb	r3,0x0(r4)

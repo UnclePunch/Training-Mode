@@ -98,6 +98,7 @@
 .set MemoryCard_ReadDataIntoMemory,0x8001BE84
 .set MemoryCard_WaitForFileToFinishSaving,0x8001B678
 .set Scene_GetMinorSceneData2,0x801A3E54
+.set MemoryCard_LoadData,0x8001BEB8
 
 #Mem Addresses
 .set	TournamentMode,0x801901E0 #*
@@ -133,7 +134,11 @@
 .set  DeflickerStruct,0x80469128
 .set  ProgressiveStruct,0x80469128
 .set  OFST_CommonCObj,-0x4884 #0x80300EE8
-
 .set  MemcardFileList,0x804313c0 #use func 8001e238 to find it #*
 .set  SnapshotData,0x803b8e08 #use func 8001df4c to find it #*
 .set  SnapshotLoadThinkStruct,0x8049e8d8 #804a0b6c, use func 8025389c to find it #*
+
+.set  MainSaveUnk,0x804240b8 # r30 at 8001d24c (102)
+.set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
+.set  MainSaveString,0x803bb244 # r4 at 8001a564 (102)
+.set  OFST_Rand,-0x5714
