@@ -1251,6 +1251,11 @@ StageMod_Greens:
 	.long 0xC2B15555
 	.long 0x0005A980
 	.long 0x40A00000
+
+	#Adjust camera zoom
+	.long 0x58ed0
+	.long 135
+
 	.long -1
 
 /*
@@ -1477,6 +1482,10 @@ StageMod_Yoster:
 	.float -67
 	.long 0x2B8D4
 	.float -200
+
+	#Adjust camera zoom
+	.long 0x2c1b8
+	.long 135
 
 	#Adjust camera
 	.long 0x2c4c4
@@ -2020,7 +2029,7 @@ StageMod_RCruise:
 	.long 0x39074		#ticktock X
 	.float 700
 	.long 0x39078		#ticktock Y
-	.float -308
+	.float -375
 	.long 0x3907C		#ticktock Z
 	.float -30
 
@@ -2036,33 +2045,34 @@ StageMod_RCruise:
 	.long 0x61bf4		#ticktock X
 	.float 1.8
 	.long 0x61bf8		#ticktock Y
-	.float -465
+	.float -530
 	.long 0x61bfC		#ticktock Z
 	.float -0
 
-	#adjust camera boundaries
-	.long 0x750d4		#X max
-	.float 220
-	.long 0x75094		#X min
-	.float -220
-	.long 0x750d8		#Y max
-	.float 240
-	.long 0x75098		#Y min
-	.float -18
 	#adjust camera zoom
 	.long 0x74d48			#max zoom
 	.long 150
 	.long 0x74d4C			#unk
 	.long 1000
+	#adjust camera boundaries
+	.long 0x750d4		#X max
+	.float 250
+	.long 0x75094		#X min
+	.float -250
+	.long 0x750d8		#Y max
+	.float 220
+	.long 0x75098		#Y min
+	.float -100
+
 	#adjust blastzones
 	.long 0x75114
-	.float 280
+	.float 310
 	.long 0x75154
-	.float -280
+	.float -310
 	.long 0x75118
-	.float	290
+	.float	270
 	.long 0x75158
-	.float -70
+	.float -160
 
 	#Change area region (area 13)
 	.long 0x745cc		#X min
@@ -2095,90 +2105,96 @@ StageMod_RCruise:
 	#right
 	#link 98 (vertices 65 and 60)
 
+	#74 Y diff
+
 	#Move vertices
 	#vert 67
 	.long 0x73840
 	.float	-112.5
 	.long 0x73844
-	.float -428
+	.float -493
 	#vert 68
 	.long 0x73848
 	.float -40
 	.long 0x7384C
-	.float -428
+	.float -493
 	#vert 69
 	.long 0x73850
 	.float	-20
 	.long 0x73854
-	.float -428
+	.float -493
 	#vert 70
 	.long 0x73858
 	.float	20
 	.long 0x7385C
-	.float -428
+	.float -493
 	#vert 71
 	.long 0x73860
 	.float	40
 	.long 0x73864
-	.float -428
+	.float -493
 	#vert 65
 	.long 0x73830
 	.float	112.5
 	.long 0x73834
-	.float -428
+	.float -493
 
 	#vert 60
 	.long 0x73808
 	.float	112.5
 	.long 0x7380C
-	.float -502
+	.float -567
 	#vert 61
 	.long 0x73810
 	.float	40
 	.long 0x73814
-	.float -502
+	.float -567
 	#vert 62
 	.long 0x73818
 	.float	20
 	.long 0x7381C
-	.float -502
+	.float -567
 	#vert 63
 	.long 0x73820
 	.float	-20
 	.long 0x73824
-	.float	-502
+	.float	-567
 	#vert 64
 	.long 0x73828
 	.float	-40
 	.long 0x7382C
-	.float	-502
+	.float	-567
 	#vert 66
 	.long 0x73838
 	.float	-112.5
 	.long 0x7383C
-	.float	-502
+	.float	-567
 
 	#Change spawn points
 	#p1
 	.long 0xeefc
 	.float -515
 	.long 0xef00
-	.float 72
+	.float 7
 	#p2
 	.long 0xef3c
 	.float -375
 	.long 0xef40
-	.float 72
+	.float 7
 	#p3
 	.long 0xef7c
 	.float -423
 	.long 0xef80
-	.float 72
+	.float 7
 	#p4
 	.long 0xefbc
 	.float -469
 	.long 0xefc0
-	.float 72
+	.float 7
+
+	#Change Respawn points
+	.long 0x75518
+	.float 100
 
 	/*
 	.long 0x39328
@@ -2444,23 +2460,27 @@ StageMod_MuteCity:
 	.long 0x4d630
 	.long 0
 
+	#Adjust camera zoom
+	.long 0x4d460
+	.long 135
+
 	#Adjust camera
 	.long 0x4d8a4
-	.float -200
+	.float -280
 	.long 0x4d8a8
-	.float 177
+	.float 250
 	.long 0x4d8e4
-	.float 200
+	.float 280
 	.long 0x4d8e8
 	.float -73
 
 	#Adjust blastzone
 	.long 0x4d924
-	.float -350
+	.float -360
 	.long 0x4d928
 	.float 335
 	.long 0x4d964
-	.float 350
+	.float 360
 	.long 0x4d968
 	.float -165
 
@@ -2484,6 +2504,10 @@ StageMod_MuteCity:
 	.float -40
 	.long 0x4dba8
 	.float 5
+
+	#respawn plat
+	.long 0x4dbe8
+	.float 100
 
 	#look into 80030788 for cam panning
 
