@@ -2513,5 +2513,27 @@ StageMod_MuteCity:
 
 	.long -1
 
+StageMod_Corneria:
+
+	#Rotate City
+	.long 0x36668 + 0x18
+	.float	-0.802
+	#Scale City
+	.long 0x36668 + 0x20
+	.float	4
+	.long 0x36668 + 0x24
+	.float	4
+	.long 0x36668 + 0x28
+	.float	4
+	#Move City
+	.long 0x36668 + 0x2C
+	.float	-2200
+	.long 0x36668 + 0x30
+	.float	-400
+	.long 0x36668 + 0x34
+	.float	-2550
+
+	.long -1
+
 Exit:
   lis	r3, 0x8047
