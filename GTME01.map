@@ -1117,8 +1117,8 @@
 8004cb30 00000048 8004cb30 0 zz_004cb30_
 8004cb78 00000048 8004cb78 0 zz_004cb78_
 8004cbc0 00000028 8004cbc0 0 DataOffset_CheckIfOnDropThroughPlatform
-8004cbe8 0000000c 8004cbe8 0 zz_004cbe8_
-8004cbf4 0000000c 8004cbf4 0 zz_004cbf4_
+8004cbe8 0000000c 8004cbe8 0 ECB_SetLineIDToIgnore
+8004cbf4 0000000c 8004cbf4 0 ECB_ResetLineIDToIgnore
 8004cc00 00000424 8004cc00 0 ECB_CopyEntireECBContents
 8004d024 00000140 8004d024 0 Items_CheckIfSpawnPointIsntCollidingWithAnything
 8004d164 00000008 8004d164 0 Stage_GetStageLineInfoStruct
