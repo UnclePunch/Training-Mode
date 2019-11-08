@@ -2087,6 +2087,13 @@ SnapshotCode102_Start:
 	sub	r4,r5,r4
   branchl r12,0x80328f50
 
+#Clear nametag region
+	load  r3,0x8045d850
+	li r4,0
+	li r5,0
+	ori r5,r5,0xd894
+	branchl  r12,memset
+
 #Now run from the tournament mode code region
 	branch	r12,TournamentMode
 
@@ -14024,12 +14031,6 @@ Codes_SceneThink_CheckToExit:
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,ModOFST_ModDataPrefsLength
 	branchl	r12,memcpy
-#Clear nametag region
-	load  r3,0x8045d850
-	li r4,0
-	li r5,0
-	ori r5,r5,0xd894
-	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,0x8001c550	#Allocate memory for something
 	li	r3,0
@@ -14529,6 +14530,14 @@ SnapshotCode101_Start:
 	sub	r4,r5,r4
   branchl r12,TRK_flush_cache
 
+#Clear nametag region
+	lwz	r3,OFST_Memcard(r13)
+	addi	r3,r3,OFST_NametagStart
+	li r4,0
+	li r5,0
+	ori r5,r5,0xda38
+	branchl  r12,memset
+
 #Now run from the tournament mode code region
 	branch	r12,TournamentMode
 
@@ -14863,7 +14872,7 @@ Snap101_CodeOptions_Widescreen:
 	.align 2
 #endregion
 #region Gecko Codes
-Snap101_DefaultCodes:
+Snap101_DefaultCodes_On:
   blrl
 	.long 0xC201AE8C
 	.long 0x00000004
@@ -16191,13 +16200,6 @@ Snap101_Codes_SceneThink_CheckToExit:
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
-#Clear nametag region
-	lwz	r3,OFST_Memcard(r13)
-	addi	r3,r3,OFST_NametagStart
-	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
-	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
 	li	r3,0
@@ -17070,6 +17072,14 @@ SnapshotCode100_Start:
 	sub	r4,r5,r4
   branchl r12,TRK_flush_cache
 
+#Clear nametag region
+	lwz	r3,OFST_Memcard(r13)
+	addi	r3,r3,OFST_NametagStart
+	li r4,0
+	li r5,0
+	ori r5,r5,0xda38
+	branchl  r12,memset
+
 #Now run from the tournament mode code region
 	branch	r12,TournamentMode
 
@@ -17404,7 +17414,7 @@ Snap100_CodeOptions_Widescreen:
 	.align 2
 #endregion
 #region Gecko Codes
-Snap100_DefaultCodes:
+Snap100_DefaultCodes_On:
   blrl
 	.long 0xC201AE0C
 	.long 0x00000004
@@ -18515,13 +18525,6 @@ Snap100_Codes_SceneThink_CheckToExit:
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
-#Clear nametag region
-	lwz	r3,OFST_Memcard(r13)
-	addi	r3,r3,OFST_NametagStart
-	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
-	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
 	li	r3,0
@@ -19401,6 +19404,14 @@ SnapshotCodePAL_Start:
 	sub	r4,r5,r4
   branchl r12,TRK_flush_cache
 
+#Clear nametag region
+	lwz	r3,OFST_Memcard(r13)
+	addi	r3,r3,OFST_NametagStart
+	li r4,0
+	li r5,0
+	ori r5,r5,0xda38
+	branchl  r12,memset
+
 #Now run from the tournament mode code region
 	branch	r12,TournamentMode
 
@@ -19706,8 +19717,8 @@ SnapPAL_CodeOptions_FriendliesQoL:
 SnapPAL_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	SnapPAL_GameVersion_Description
-	bl  SnapPAL_GameVersion_NTSC
 	bl  SnapPAL_GameVersion_PAL
+	bl  SnapPAL_GameVersion_NTSC
 	bl  SnapPAL_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -27901,8 +27912,8 @@ SnapPAL_GameVersion_SDR:
 	.long 0x7F63DB78
 	.long 0x8BFE000C
 	.long 0x3FA08044
-	.long 0x63BD3E20
-	.long 0x1FFF0E90
+	.long 0x63BD3E24
+	.long 0x1FFF0EA0
 	.long 0x7FFDFA14
 	.long 0x809F0000
 	.long 0x8BFF0008
@@ -30875,13 +30886,6 @@ SnapPAL_Codes_SceneThink_CheckToExit:
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
-#Clear nametag region
-	lwz	r3,OFST_Memcard(r13)
-	addi	r3,r3,OFST_NametagStart
-	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
-	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
 	li	r3,0
