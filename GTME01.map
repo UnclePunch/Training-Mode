@@ -236,7 +236,7 @@
 80014bd0 0000015c 80014bd0 0 Animation_CopyAnimationDataFromARAMToPointerIn0x59C(r3=requestAddress,r4=Destination,r5=Length
 80014d2c 000000f8 80014d2c 0 zz_0014d2c_
 80014e24 000000c8 80014e24 0 Heap_CreatePersistentHeap(r3=Lo,r4=Hi // r3 = HeapStruct)
-80014eec 00000090 80014eec 0 zz_0014eec_
+80014eec 00000090 80014eec 0 Heap_DestroyPersistentHeap(r3 = HeapStruct)
 80014f7c 0000004c 80014f7c 0 zz_0014f7c_
 80014fc8 00000128 80014fc8 0 Heap_StoreFileEntryToFileSlotStruct(r3=Pointer,r4=FileLength)
 800150f0 00000094 800150f0 0 Preload_UpdateNextPreloadPointer
@@ -20108,7 +20108,7 @@
 80375404 00000008 80375404 0 HSD_GetCurrentRenderPass
 8037540c 00000008 8037540c 0 HSD_SetCurrentRenderPass
 80375414 00000014 80375414 0 Heap_StoreHeapBoundsToPersistentHeapTable
-80375428 00000108 80375428 0 zz_0375428_
+80375428 00000108 80375428 0 Heap_CreateMainHeap
 80375530 00000008 80375530 0 zz_0375530_
 80375538 00000070 80375538 0 HSD_StartRender
 803755a8 0000000c 803755a8 0 zz_03755a8_
@@ -20398,7 +20398,7 @@
 803887dc 00000160 803887dc 0 synth.c?
 8038893c 0000007c 8038893c 0 zz_038893c_
 803889b8 00000154 803889b8 0 loadCharAudioFile (r3=string, r4=bankID, r5=callback function, r6=typedef)
-80388b0c 00000044 80388b0c 0 zz_0388b0c_
+80388b0c 00000044 80388b0c 0 Audio_AsyncronousLoad
 80388b50 00000010 80388b50 0 glx_GetFreeMemory
 80388b60 00000150 80388b60 0 zz_0388b60_
 80388cb0 00000080 80388cb0 0 zz_0388cb0_
