@@ -1,3 +1,5 @@
+.set HeapHijack_Injection,0x80015994
+
 #####################
 ## Melee Variables ##
 #####################
@@ -24,6 +26,7 @@
 .set PreloadTable,0x80432078
   .set Preload_Stage,0x10
 .set CSS_CursorPointers,0x804a0bc0
+.set PersistentHeapStruct,0x80431fa0
 
 #r13 Offsets
 .set MemcardData,-0x77C0
@@ -51,6 +54,11 @@
 .set Stage_PositionHazardCount,-0x5128
 .set Stage_GrabHazardCount,-0x512C
 .set Stage_DamageHazardCount,-0x5130
+.set Heap_MainID,-0x58A0
+.set Heap_CurrentHeap,-0x5A98
+.set Heap_Lo,-0x3FE8
+.set Heap_Hi,-0x3FE4
+.set PersistentHeapStruct,0x80431fa0
 
 .set TM_FrozenToggle,-0x4F8C
 .set TM_GameFrameCounter,-0x49a8
@@ -243,6 +251,10 @@
 .set ProgressiveStruct,0x8046b0f0
 .set TRK_flush_cache,0x80328f50
 .set MemoryCard_WaitForFileToFinishSaving,0x8001b6f8
+.set OSDestroyHeap,0x80344154
+.set OSCreateHeap,0x803440e8
+.set OSAllocFromHeap,0x80343ef0
+
 
 #Custom Functions
 .set TextCreateFunction,0x80005928

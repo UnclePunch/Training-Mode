@@ -1,30 +1,18 @@
 #region SnapshotCodeREV
 .include "../../CommonREV.s"
 
-SnapshotCodeREV_Start:
-#First thing to do is relocate ALL of the exploit code to tournament mode
-	bl	MMLCodeREV_End
-	mflr	r3
-	bl	MMLCodeREV_Start
-	mflr	r4
-	sub	r5,r3,r4
-	load	r3,TournamentMode
-	branchl	r12,memcpy
-
-#Flush cache to ensure these instructions are up to date
-  load r3,TournamentMode
-	bl	MMLCodeREV_Start
-	mflr	r4
-	bl	MMLCodeREV_End
-	mflr	r5
-	sub	r4,r5,r4
-  branchl r12,TRK_flush_cache
-
-#Now run from the tournament mode code region
-	branch	r12,TournamentMode
-
 MMLCodeREV_Start:
 blrl
+
+SnapshotCodeREV_Start:
+
+#Clear nametag region
+	lwz	r3,OFST_Memcard(r13)
+	addi	r3,r3,OFST_NametagStart
+	li r4,0
+	load r5,Nametag_Length
+	branchl  r12,memset
+
 #Overwriting the debug CSS with a lag reduction prompt
 #it crashes anyway so nothing of substance is being lost
 
@@ -40,8 +28,6 @@ blrl
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
-#Init and backup
-  backup
 #Init LagPrompt major struct
   li  r3,PromptSceneID
   bl  SnapREV_LagPrompt_MinorSceneStruct
@@ -331,7 +317,7 @@ SnapREV_CodeOptions_GameVersion:
 	bl  SnapREV_GameVersion_REV
 	bl  SnapREV_GameVersion_SDR
 	.string "NTSC"
-	.string "REV"
+	.string "PAL"
 	.string "SD Remix"
 	.align 2
 SnapREV_CodeOptions_StageExpansion:
@@ -354,7 +340,7 @@ SnapREV_CodeOptions_Widescreen:
 	.align 2
 #endregion
 #region Gecko Codes
-SnapREV_DefaultCodes:
+SnapREV_DefaultCodes_On:
   blrl
 	.long -1
 
@@ -1253,13 +1239,6 @@ SnapREV_Codes_SceneThink_CheckToExit:
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
-#Clear nametag region
-	lwz	r3,OFST_Memcard(r13)
-	addi	r3,r3,OFST_NametagStart
-	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
-	branchl  r12,memset
 #Request a memcard save
 	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
 	li	r3,0
@@ -1558,7 +1537,7 @@ SnapREV_ApplyAllGeckoCodes:
   mr  REG_GObjData,r3
 
 #Default Codes
-  bl  SnapREV_DefaultCodes
+  bl  SnapREV_DefaultCodes_On
   mflr  r3
   bl  SnapREV_ApplyGeckoCode
 
@@ -2034,7 +2013,7 @@ SnapREV_LagPrompt_MinorSceneStruct:
 blrl
 #Lag Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  SnapREV_LagPrompt_SceneDecide   #SceneDecide
@@ -2050,7 +2029,7 @@ SnapREV_Codes_MinorSceneStruct:
 blrl
 #Codes Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  SnapREV_Codes_SceneDecide       #SceneDecide
@@ -2079,6 +2058,10 @@ SnapREV_IsProgressive:
   bl  SnapREV_LagPrompt_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	SnapREV_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load LagPrompt
   li	r3, PromptSceneID
   b SnapREV_Exit
@@ -2089,13 +2072,16 @@ SnapREV_NoProgressive:
   bl  SnapREV_Codes_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	SnapREV_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load Codes
   li  r3,CodesSceneID
 
 SnapREV_Exit:
 #Store as next scene
-	load	r4,OFST_MainMenuSceneData
-	stb	r3,0x0(r4)
+	branchl r12,MenuController_WriteToPendingMajor
 #request to change scenes
 	branchl	r12,MenuController_ChangeScreenMinor
 
@@ -2103,9 +2089,10 @@ SnapREV_Exit:
 ## Exit ##
 ##########
 
-#Exit exploit code
+#Return to the game
   restore
-	branch	r12,ExploitReturn
+	li	r0,2
+	blr
 
 MMLCodeREV_End:
 blrl

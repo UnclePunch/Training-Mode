@@ -1394,6 +1394,32 @@ CreateSnapshot:
 	mflr	r3
   stw r3,0x8(r5)
 
+#Store snapshot codeset sizes
+	bl	MMLCode102_Start
+	mflr	r4
+	bl	MMLCode102_End
+	mflr	r5
+	sub	r4,r5,r4
+	stw	r4,0x4(r3)
+	bl	MMLCode101_Start
+	mflr	r4
+	bl	MMLCode101_End
+	mflr	r5
+	sub	r4,r5,r4
+	stw	r4,0xC(r3)
+	bl	MMLCode100_Start
+	mflr	r4
+	bl	MMLCode100_End
+	mflr	r5
+	sub	r4,r5,r4
+	stw	r4,0x14(r3)
+	bl	MMLCodePAL_Start
+	mflr	r4
+	bl	MMLCodePAL_End
+	mflr	r5
+	sub	r4,r5,r4
+	stw	r4,0x1C(r3)
+
 #Load banner and image
 #Convert ID to string
   addi r3,sp,0x80
@@ -1518,14 +1544,44 @@ ExploitCode102:
 blrl
 .include "../../Common102.s"
 .set REG_SnapLoadResult,31
+.set  CodesSceneID,9
 
+#Place bl to heap hijack code
+	bl	ExploitCode102_HeapHijack
+	mflr	r3
+	load	r4,HeapHijack_Injection
+	sub r3,r3,r4           #Difference relative to branch addr
+	rlwinm  r3,r3,0,6,29                  #extract bits for offset
+	oris  r3,r3,0x4800                    #Create branch instruction from it
+	ori	r3,r3,0x1													#Create bl instruction
+	stw	r3,0x0(r4)												#Place instruction
+#Flush cache
+	mr	r3,r4
+	li	r4,32
+	branchl	r12,TRK_flush_cache
+
+#Store as next scene
+	branchl	r12,Scene_GetMinorSceneData2
+	li	r4,0
+	stb	r4,0x0(r3)
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+#Return to the game
+	branch	r12,ExpoitReturnAddr
+
+
+ExploitCode102_HeapHijack:
+blrl
 backup
 
-#Wait for any memcard operation to finish
-ExploitCode102_WaitForMemcard:
-	branchl	r12,MemoryCard_WaitForFileToFinishSaving
-	cmpwi	r3,11
-	beq	ExploitCode102_WaitForMemcard
+#Restore original codeline
+	load	r3,0x38000002
+	load	r4,HeapHijack_Injection
+	stw	r3,0x0(r4)
+#Flush cache
+	mr	r3,r4
+	li	r4,32
+	branchl	r12,TRK_flush_cache
 
 ###################
 ## Load Snapshot ##
@@ -1544,16 +1600,15 @@ ExploitCode102_WaitForMemcard:
 
 #Update list of present memcard snapshots
   li  r3,0
-  branchl r12,0x80253e90
+  branchl r12,Snapshot_UpdateFileList
 
-.set MemcardFileList,0x804333c8
-.set REG_Count,31
-.set REG_Index,30
-.set REG_SnapshotStruct,29
-.set REG_SnapshotID,28
+.set REG_Count,30
+.set REG_Index,29
+.set REG_SnapshotStruct,28
+.set REG_SnapshotID,27
 #Check if file exists on card
   load  r3,MemcardFileList                            #go to pointer location
-  lwz REG_SnapshotStruct,0x0(r3)                      #access pointer to snapshot file list
+  lwz REG_SnapshotStruct,0x48(r3)                      #access pointer to snapshot file list
   lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
   addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
   bl  ExploitCode102_SnapshotIDInt                                      #get ID we are looking for
@@ -1580,40 +1635,40 @@ ExploitCode102_SnapshotSearchLoop_NotFound:
 
 ExploitCode102_SnapshotSearchLoop_Found:
 .set REG_CodesetSize,31
-.set REG_CodesetPointer,30
+.set REG_SnapshotPointer,30
 #Convert blocks to bytes
   lhz r3,0x6(r3)
   mulli REG_CodesetSize,r3,0x2000
 #Alloc Space For Snapshot File
   mr  r3,REG_CodesetSize
-  branchl	r12,0x8037f1e4			       #HSD_Alloc
-  mr  REG_CodesetPointer,r3
-  load	r5,0x803bacdc			           #Snapshot Data Struct
-  stw	REG_CodesetPointer,0x8(r5)     #Store Pointer to this area
+  branchl	r12,HSD_MemAlloc			       #HSD_Alloc
+  mr  REG_SnapshotPointer,r3
+  load	r5,SnapshotData			           #Snapshot Data Struct
+  stw	REG_SnapshotPointer,0x1C(r5)     #Store Pointer to this area
 
 #Remove Pointer To Current Memcard Stuff
-  branchl	r12,0x8001c5a4
+  branchl	r12,Memcard_FreeSomething
 #Alloc Space For Memcard Stuff
-  branchl	r12,0x8001c550
+  branchl	r12,Memcard_AllocateSomething
 
 #Load File
   li	r3,0x0		#Slot A?
   bl	ExploitCode102_SnapshotID
   mflr	r4
-  load	r5,0x803bacdc		#Snapshot Data Struct
-  load	r6,0x80433384		#String Space?
-  load	r9,0x80433380
+  load	r5,SnapshotData+0x14		#Snapshot Data Struct
+  load	r9,MemcardFileList
+  addi	r6,r9,0x4
   lwz	r9,0x44(r9)
   lwz	r7,0x0(r9)		#Weird Char Pointer, Maybe Icon Image
   lwz	r8,0x4(r9)		#Banner Image
   li	r9,0		#Unk
-  branchl	r12,0x8001bf04
+  branchl	r12,MemoryCard_ReadDataIntoMemory
 #Store Result
-  load	r4,0x804A0B6C
-  stw	r3,0x0(r4)
+  load	r4,SnapshotLoadThinkStruct
+  stw	r3,0x15C(r4)
 
 ExploitCode102_WaitToLoadLoop:
-  branchl	r12,0x8001b6f8
+  branchl	r12,MemoryCard_WaitForFileToFinishSaving
   cmpwi	r3,0xB
   beq	ExploitCode102_WaitToLoadLoop
 #Backup result
@@ -1628,7 +1683,7 @@ ExploitCode102_RestoreGameID:
   beq	ExploitCode102_Success
   b	ExploitCode102_Failure
 
-##############################
+#########################################
 ExploitCode102_SnapshotIDInt:
 blrl
 .byte 0x00,0xD0
@@ -1642,7 +1697,8 @@ ExploitCode102_NTSCGameID:
 blrl
 .string "GALE01"
 .align 2
-##############################
+###########################################
+
 
 #############
 ## Failure ##
@@ -1651,45 +1707,74 @@ blrl
 ExploitCode102_Failure:
 #Play Error Sound
   li	r3, 3
-  branchl	r12,0x80024030
+  branchl	r12,SFX_MenuCommonSound
   li	r3, 3
-  branchl	r12,0x80024030
+  branchl	r12,SFX_MenuCommonSound
 #Disable Saving
-  lis     r4,0x8043
+	load r4,OFST_MemcardController
   li     r3,4
-  stw    r3,0x3320(r4)    # store 4 to disable memory card saving
-b	ExploitCode102_Exit
+  stw    r3,0x8(r4)    # store 4 to disable memory card saving
+	b	ExploitCode102_Exit
 
 #############
 ## Success ##
 #############
 ExploitCode102_Success:
+.set REG_PersistentHeapStruct,29
+.set REG_CodesetPointer,28
+
+#Get this revisions code size
+	lwz	REG_CodesetSize,(0*8)+0x4(REG_SnapshotPointer)
+
+#Destroy original heap
+	lwz	r3, Heap_MainID (r13) #-0x58A0
+	branchl	r12,OSDestroyHeap #80344154
+#Create new heap
+	load REG_PersistentHeapStruct,PersistentHeapStruct
+	lwz	r3, Heap_Lo (r13)
+	lwz	r4, Heap_Hi (r13)
+	branchl	r12,OSCreateHeap #803440e8
+#Adjust main heap offset from here on out
+	lwz	r3,0x70(REG_PersistentHeapStruct)
+	add	r3,r3,REG_CodesetSize
+	addi	r3,r3,32
+	stw	r3,0x70(REG_PersistentHeapStruct)
+
+#Alloc Space For Snapshot File
+  mr  r3,REG_CodesetSize
+  branchl	r12,HSD_MemAlloc			       #80343ef0
+  mr  REG_CodesetPointer,r3
+
+#Get address of codeset
+  lwz r4,(0*8)(REG_SnapshotPointer)       #Load b instruction
+  rlwinm  r4,r4,0,6,29  									#extract offset bits
+	rlwinm	r5,r4,7,31,31										#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5														#extend signed bit
+	addi r3,REG_SnapshotPointer,0*8		      #Load b instruction
+  add r4,r4,r3
+
+#Copy this revisions code to the new heap
+	addi r3,REG_CodesetPointer,0
+	addi r4,r4,0
+	mr	r5,REG_CodesetSize
+	branchl	r12,memcpy
+
 #flush cache on snapshot code
-  mr r3,REG_CodesetPointer
+  addi r3,REG_CodesetPointer,0
 	mr	r4,REG_CodesetSize
-  branchl r12,0x80328f50
+  branchl r12,TRK_flush_cache
 
 #Restore this stack frame and jump to the MML code in the snapshot file
-	addi	r3,REG_CodesetPointer,0x0
-	restore
-	mtctr r3
+	mtctr REG_CodesetPointer
 	bctr
 
 ExploitCode102_Exit:
-#Store as next scene
-	li	r3,0
-	load	r4,0x804d68bc
-	stb	r3,0x0(r4)
-#request to change scenes
-	branchl	r12,0x801a4b60
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	branch	r12,0x80239e9c
+#exit
+	restore
+	li	r0,2
+	blr
 
 ExploitCode102_End:
 blrl
@@ -1699,14 +1784,44 @@ ExploitCode101:
 blrl
 .include "../../Common101.s"
 .set REG_SnapLoadResult,31
+.set  CodesSceneID,9
 
+#Place bl to heap hijack code
+	bl	ExploitCode101_HeapHijack
+	mflr	r3
+	load	r4,HeapHijack_Injection
+	sub r3,r3,r4           #Difference relative to branch addr
+	rlwinm  r3,r3,0,6,29                  #extract bits for offset
+	oris  r3,r3,0x4800                    #Create branch instruction from it
+	ori	r3,r3,0x1													#Create bl instruction
+	stw	r3,0x0(r4)												#Place instruction
+#Flush cache
+	mr	r3,r4
+	li	r4,32
+	branchl	r12,TRK_flush_cache
+
+#Store as next scene
+	branchl	r12,Scene_GetMinorSceneData2
+	li	r4,0
+	stb	r4,0x0(r3)
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+#Return to the game
+	branch	r12,ExpoitReturnAddr
+
+
+ExploitCode101_HeapHijack:
+blrl
 backup
 
-#Wait for any memcard operation to finish
-ExploitCode101_WaitForMemcard:
-	branchl	r12,MemoryCard_WaitForFileToFinishSaving
-	cmpwi	r3,11
-	beq	ExploitCode101_WaitForMemcard
+#Restore original codeline
+	load	r3,0x38000002
+	load	r4,HeapHijack_Injection
+	stw	r3,0x0(r4)
+#Flush cache
+	mr	r3,r4
+	li	r4,32
+	branchl	r12,TRK_flush_cache
 
 ###################
 ## Load Snapshot ##
@@ -1759,17 +1874,17 @@ ExploitCode101_SnapshotSearchLoop_NotFound:
   b ExploitCode101_RestoreGameID
 
 ExploitCode101_SnapshotSearchLoop_Found:
-.set REG_CodesetSize,30
-.set REG_CodesetPointer,29
+.set REG_CodesetSize,31
+.set REG_SnapshotPointer,30
 #Convert blocks to bytes
   lhz r3,0x6(r3)
   mulli REG_CodesetSize,r3,0x2000
 #Alloc Space For Snapshot File
   mr  r3,REG_CodesetSize
   branchl	r12,HSD_MemAlloc			       #HSD_Alloc
-  mr  REG_CodesetPointer,r3
+  mr  REG_SnapshotPointer,r3
   load	r5,SnapshotData			           #Snapshot Data Struct
-  stw	REG_CodesetPointer,0x1C(r5)     #Store Pointer to this area
+  stw	REG_SnapshotPointer,0x1C(r5)     #Store Pointer to this area
 
 #Remove Pointer To Current Memcard Stuff
   branchl	r12,Memcard_FreeSomething
@@ -1845,32 +1960,61 @@ ExploitCode101_Failure:
 ## Success ##
 #############
 ExploitCode101_Success:
+.set REG_PersistentHeapStruct,29
+.set REG_CodesetPointer,28
+
+#Get this revisions code size
+	lwz	REG_CodesetSize,(1*8)+0x4(REG_SnapshotPointer)
+
+#Destroy original heap
+	lwz	r3, Heap_MainID (r13) #-0x58A0
+	branchl	r12,OSDestroyHeap #80344154
+#Create new heap
+	load REG_PersistentHeapStruct,PersistentHeapStruct
+	lwz	r3, Heap_Lo (r13)
+	lwz	r4, Heap_Hi (r13)
+	branchl	r12,OSCreateHeap #803440e8
+#Adjust main heap offset from here on out
+	lwz	r3,0x70(REG_PersistentHeapStruct)
+	add	r3,r3,REG_CodesetSize
+	addi	r3,r3,32
+	stw	r3,0x70(REG_PersistentHeapStruct)
+
+#Alloc Space For Snapshot File
+  mr  r3,REG_CodesetSize
+  branchl	r12,HSD_MemAlloc			       #80343ef0
+  mr  REG_CodesetPointer,r3
+
+#Get address of codeset
+  lwz r4,(1*8)(REG_SnapshotPointer)       #Load b instruction
+  rlwinm  r4,r4,0,6,29  									#extract offset bits
+	rlwinm	r5,r4,7,31,31										#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5														#extend signed bit
+	addi r3,REG_SnapshotPointer,1*8		      #Load b instruction
+  add r4,r4,r3
+
+#Copy this revisions code to the new heap
+	addi r3,REG_CodesetPointer,0
+	addi r4,r4,0
+	mr	r5,REG_CodesetSize
+	branchl	r12,memcpy
+
 #flush cache on snapshot code
-  mr r3,REG_CodesetPointer
+  addi r3,REG_CodesetPointer,0
 	mr	r4,REG_CodesetSize
   branchl r12,TRK_flush_cache
 
 #Restore this stack frame and jump to the MML code in the snapshot file
-	addi	r3,REG_CodesetPointer,0x4
-	restore
-	mtctr r3
+	mtctr REG_CodesetPointer
 	bctr
 
 ExploitCode101_Exit:
-#Store as next scene
-	branchl	r12,Scene_GetMinorSceneData2
-	li	r4,0
-	stb	r4,0x0(r3)
-#request to change scenes
-	branchl	r12,MenuController_ChangeScreenMinor
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	branch	r12,ExpoitReturnAddr
+#exit
+	restore
+	li	r0,2
+	blr
 
 ExploitCode101_End:
 blrl
@@ -1880,14 +2024,44 @@ ExploitCode100:
 blrl
 .include "../../Common100.s"
 .set REG_SnapLoadResult,31
+.set  CodesSceneID,9
 
+#Place bl to heap hijack code
+	bl	ExploitCode100_HeapHijack
+	mflr	r3
+	load	r4,HeapHijack_Injection
+	sub r3,r3,r4           #Difference relative to branch addr
+	rlwinm  r3,r3,0,6,29                  #extract bits for offset
+	oris  r3,r3,0x4800                    #Create branch instruction from it
+	ori	r3,r3,0x1													#Create bl instruction
+	stw	r3,0x0(r4)												#Place instruction
+#Flush cache
+	mr	r3,r4
+	li	r4,32
+	branchl	r12,TRK_flush_cache
+
+#Store as next scene
+	branchl	r12,Scene_GetMinorSceneData2
+	li	r4,0
+	stb	r4,0x0(r3)
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+#Return to the game
+	branch	r12,ExpoitReturnAddr
+
+
+ExploitCode100_HeapHijack:
+blrl
 backup
 
-#Wait for any memcard operation to finish
-ExploitCode100_WaitForMemcard:
-	branchl	r12,MemoryCard_WaitForFileToFinishSaving
-	cmpwi	r3,11
-	beq	ExploitCode100_WaitForMemcard
+#Restore original codeline
+	load	r3,0x38000002
+	load	r4,HeapHijack_Injection
+	stw	r3,0x0(r4)
+#Flush cache
+	mr	r3,r4
+	li	r4,32
+	branchl	r12,TRK_flush_cache
 
 ###################
 ## Load Snapshot ##
@@ -1940,17 +2114,17 @@ ExploitCode100_SnapshotSearchLoop_NotFound:
   b ExploitCode100_RestoreGameID
 
 ExploitCode100_SnapshotSearchLoop_Found:
-.set REG_CodesetSize,30
-.set REG_CodesetPointer,29
+.set REG_CodesetSize,31
+.set REG_SnapshotPointer,30
 #Convert blocks to bytes
   lhz r3,0x6(r3)
   mulli REG_CodesetSize,r3,0x2000
 #Alloc Space For Snapshot File
   mr  r3,REG_CodesetSize
   branchl	r12,HSD_MemAlloc			       #HSD_Alloc
-  mr  REG_CodesetPointer,r3
+  mr  REG_SnapshotPointer,r3
   load	r5,SnapshotData			           #Snapshot Data Struct
-  stw	REG_CodesetPointer,0x1C(r5)     #Store Pointer to this area
+  stw	REG_SnapshotPointer,0x1C(r5)     #Store Pointer to this area
 
 #Remove Pointer To Current Memcard Stuff
   branchl	r12,Memcard_FreeSomething
@@ -2026,32 +2200,61 @@ ExploitCode100_Failure:
 ## Success ##
 #############
 ExploitCode100_Success:
+.set REG_PersistentHeapStruct,29
+.set REG_CodesetPointer,28
+
+#Get this revisions code size
+	lwz	REG_CodesetSize,(2*8)+0x4(REG_SnapshotPointer)
+
+#Destroy original heap
+	lwz	r3, Heap_MainID (r13) #-0x58A0
+	branchl	r12,OSDestroyHeap #80344154
+#Create new heap
+	load REG_PersistentHeapStruct,PersistentHeapStruct
+	lwz	r3, Heap_Lo (r13)
+	lwz	r4, Heap_Hi (r13)
+	branchl	r12,OSCreateHeap #803440e8
+#Adjust main heap offset from here on out
+	lwz	r3,0x70(REG_PersistentHeapStruct)
+	add	r3,r3,REG_CodesetSize
+	addi	r3,r3,32
+	stw	r3,0x70(REG_PersistentHeapStruct)
+
+#Alloc Space For Snapshot File
+  mr  r3,REG_CodesetSize
+  branchl	r12,HSD_MemAlloc			       #80343ef0
+  mr  REG_CodesetPointer,r3
+
+#Get address of codeset
+  lwz r4,(2*8)(REG_SnapshotPointer)       #Load b instruction
+  rlwinm  r4,r4,0,6,29  									#extract offset bits
+	rlwinm	r5,r4,7,31,31										#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5														#extend signed bit
+	addi r3,REG_SnapshotPointer,2*8		      #Load b instruction
+  add r4,r4,r3
+
+#Copy this revisions code to the new heap
+	addi r3,REG_CodesetPointer,0
+	addi r4,r4,0
+	mr	r5,REG_CodesetSize
+	branchl	r12,memcpy
+
 #flush cache on snapshot code
-  mr r3,REG_CodesetPointer
+  addi r3,REG_CodesetPointer,0
 	mr	r4,REG_CodesetSize
   branchl r12,TRK_flush_cache
 
 #Restore this stack frame and jump to the MML code in the snapshot file
-	addi	r3,REG_CodesetPointer,0x8
-	restore
-	mtctr r3
+	mtctr REG_CodesetPointer
 	bctr
 
 ExploitCode100_Exit:
-#Store as next scene
-	branchl	r12,Scene_GetMinorSceneData2
-	li	r4,0
-	stb	r4,0x0(r3)
-#request to change scenes
-	branchl	r12,MenuController_ChangeScreenMinor
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	branch	r12,ExpoitReturnAddr
+#exit
+	restore
+	li	r0,2
+	blr
 
 ExploitCode100_End:
 blrl
@@ -2060,32 +2263,21 @@ blrl
 SnapshotCode_Start:
 blrl
 b	SnapshotCode102_Start
+.long 0										#revision's code length (stored to during creation of the snapshot)
 b	SnapshotCode101_Start
+.long 0										#revision's code length (stored to during creation of the snapshot)
 b	SnapshotCode100_Start
+.long 0										#revision's code length (stored to during creation of the snapshot)
 b	SnapshotCodePAL_Start
+.long 0										#revision's code length (stored to during creation of the snapshot)
 
 #region SnapshotCode102
+MMLCode102_Start:
+blrl
+
 SnapshotCode102_Start:
 .include "../../Common102.s"
 .set	TournamentMode,0x801910E0	#PAL is 80191C24
-
-#First thing to do is relocate ALL of the exploit code to tournament mode
-	bl	MMLCode102_End
-	mflr	r3
-	bl	MMLCode102_Start
-	mflr	r4
-	sub	r5,r3,r4
-	load	r3,TournamentMode
-	branchl	r12,memcpy
-
-#Flush cache to ensure these instructions are up to date
-  load r3,TournamentMode
-	bl	MMLCode102_Start
-	mflr	r4
-	bl	MMLCode102_End
-	mflr	r5
-	sub	r4,r5,r4
-  branchl r12,0x80328f50
 
 #Clear nametag region
 	load  r3,0x8045d850
@@ -2094,11 +2286,6 @@ SnapshotCode102_Start:
 	ori r5,r5,0xd894
 	branchl  r12,memset
 
-#Now run from the tournament mode code region
-	branch	r12,TournamentMode
-
-MMLCode102_Start:
-blrl
 #Overwriting the debug CSS with a lag reduction prompt
 #it crashes anyway so nothing of substance is being lost
 
@@ -2116,9 +2303,6 @@ blrl
 
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
-
-#Init and backup
-  backup
 
 #/*
 #Init LagPrompt major struct
@@ -14432,7 +14616,7 @@ LagPrompt_MinorSceneStruct:
 blrl
 #Lag Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  LagPrompt_SceneDecide   #SceneDecide
@@ -14448,7 +14632,7 @@ Codes_MinorSceneStruct:
 blrl
 #Codes Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  Codes_SceneDecide       #SceneDecide
@@ -14476,6 +14660,10 @@ IsProgressive:
   bl  LagPrompt_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load LagPrompt
   li	r3, PromptSceneID
   b SnapshotCode102_Exit
@@ -14487,13 +14675,16 @@ NoProgressive:
   bl  Codes_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load Codes
   li  r3,CodesSceneID
 
 SnapshotCode102_Exit:
 #Store as next scene
-	load	r4,0x804d68bc
-	stb	r3,0x0(r4)
+	branchl	r12,0x801a42e8
 #request to change scenes
 	branchl	r12,0x801a4b60
 
@@ -14503,46 +14694,26 @@ SnapshotCode102_Exit:
 
 #Return to the game
   restore
-	branch	r12,0x80239e9c
+	li	r0,2
+	blr
 
 MMLCode102_End:
 blrl
 #endregion
 #region SnapshotCode101
 .include "../../Common101.s"
+MMLCode101_Start:
+blrl
 
 SnapshotCode101_Start:
-#First thing to do is relocate ALL of the exploit code to tournament mode
-	bl	MMLCode101_End
-	mflr	r3
-	bl	MMLCode101_Start
-	mflr	r4
-	sub	r5,r3,r4
-	load	r3,TournamentMode
-	branchl	r12,memcpy
-
-#Flush cache to ensure these instructions are up to date
-  load r3,TournamentMode
-	bl	MMLCode101_Start
-	mflr	r4
-	bl	MMLCode101_End
-	mflr	r5
-	sub	r4,r5,r4
-  branchl r12,TRK_flush_cache
 
 #Clear nametag region
 	lwz	r3,OFST_Memcard(r13)
 	addi	r3,r3,OFST_NametagStart
 	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
+	load r5,Nametag_Length
 	branchl  r12,memset
 
-#Now run from the tournament mode code region
-	branch	r12,TournamentMode
-
-MMLCode101_Start:
-blrl
 #Overwriting the debug CSS with a lag reduction prompt
 #it crashes anyway so nothing of substance is being lost
 
@@ -14558,8 +14729,6 @@ blrl
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
-#Init and backup
-  backup
 #Init LagPrompt major struct
   li  r3,PromptSceneID
   bl  Snap101_LagPrompt_MinorSceneStruct
@@ -14846,7 +15015,7 @@ Snap101_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	Snap101_GameVersion_Description
 	bl  Snap101_GameVersion_NTSC
-	bl  Snap101_GameVersion_PAL
+	bl  Snap101_GameVersion_100
 	bl  Snap101_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -15124,8 +15293,8 @@ Snap101_UCF_On:
 	.long 0x887F221F
 	.long 0x54600739
 	.long 0x408200E8
-	.long 0x3C60804B
-	.long 0x6063FDF8
+	.long 0x3C60804C
+	.long 0x60631258
 	.long 0x8BA30001
 	.long 0x387DFFFE
 	.long 0x889F0618
@@ -15147,7 +15316,7 @@ Snap101_UCF_On:
 	.long 0x887F000C
 	.long 0x38800001
 	.long 0x3D808003
-	.long 0x618C410C
+	.long 0x618C418C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
@@ -15170,7 +15339,7 @@ Snap101_UCF_On:
 	.long 0x40800008
 	.long 0x38630005
 	.long 0x3C808046
-	.long 0x60849140
+	.long 0x6084A428
 	.long 0x1C630030
 	.long 0x7C841A14
 	.long 0x1C65000C
@@ -15275,9 +15444,9 @@ Snap101_UCF_On:
 	.long 0x7FC802A6
 	.long 0x38600000
 	.long 0x38800000
-	.long 0x3DC0803A
-	.long 0x61CE4890
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C5A74
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C7F1B78
 	.long 0x38800001
@@ -15292,16 +15461,16 @@ Snap101_UCF_On:
 	.long 0x7C8802A6
 	.long 0xC03E0000
 	.long 0xC05E0004
-	.long 0x3DC0803A
-	.long 0x61CE4CD4
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C5EB8
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C641B78
 	.long 0x7FE3FB78
 	.long 0xC03E0008
 	.long 0xC05E0008
 	.long 0x3D80803A
-	.long 0x618C5684
+	.long 0x618C6868
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000028
@@ -15348,8 +15517,8 @@ Snap101_UCF_Stealth:
 	.long 0x887F221F
 	.long 0x54600739
 	.long 0x408200E8
-	.long 0x3C60804B
-	.long 0x6063FDF8
+	.long 0x3C60804C
+	.long 0x60631258
 	.long 0x8BA30001
 	.long 0x387DFFFE
 	.long 0x889F0618
@@ -15371,7 +15540,7 @@ Snap101_UCF_Stealth:
 	.long 0x887F000C
 	.long 0x38800001
 	.long 0x3D808003
-	.long 0x618C410C
+	.long 0x618C418C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
@@ -15394,7 +15563,7 @@ Snap101_UCF_Stealth:
 	.long 0x40800008
 	.long 0x38630005
 	.long 0x3C808046
-	.long 0x60849140
+	.long 0x6084A428
 	.long 0x1C630030
 	.long 0x7C841A14
 	.long 0x1C65000C
@@ -15515,7 +15684,7 @@ Snap101_Widescreen_Off:
 	.long 0x044DCE1C
 	.long 0x3DCCCCCD
 	.long 0x042FC34C
-	.long 0xC002E194
+	.long 0xC002E18C
 	.long 0x044DCE54
 	.long 0x3ECCCCCD
 	.long -1
@@ -15653,7 +15822,7 @@ Snap101_Spawns_On:
 	.long 0x9421FF00
 	.long 0xBE810008
 	.long 0x3D808016
-	.long 0x618CAB00
+	.long 0x618CB128
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
@@ -15667,7 +15836,7 @@ Snap101_Spawns_On:
 	.long 0x3B400000
 	.long 0x7F43D378
 	.long 0x3D808003
-	.long 0x618C239C
+	.long 0x618C241C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030003
@@ -15688,14 +15857,14 @@ Snap101_Spawns_On:
 	.long 0x3B200000
 	.long 0x7F23CB78
 	.long 0x3D808003
-	.long 0x618C239C
+	.long 0x618C241C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030003
 	.long 0x41820024
 	.long 0x7F23CB78
 	.long 0x3D808003
-	.long 0x618C32F0
+	.long 0x618C3370
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C03D000
@@ -15718,14 +15887,14 @@ Snap101_Spawns_On:
 	.long 0x3AE00000
 	.long 0x7EE3BB78
 	.long 0x3D808003
-	.long 0x618C239C
+	.long 0x618C241C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030003
 	.long 0x41820028
 	.long 0x7EE3BB78
 	.long 0x3D808003
-	.long 0x618C32F0
+	.long 0x618C3370
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C03C800
@@ -15782,7 +15951,7 @@ Snap101_Spawns_On:
 	.long 0x90640008
 	.long 0x7FE3FB78
 	.long 0x3D808003
-	.long 0x618C26E8
+	.long 0x618C2768
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000054
@@ -15796,13 +15965,13 @@ Snap101_Spawns_On:
 	.long 0x48000004
 	.long 0x38810080
 	.long 0x3D808022
-	.long 0x618C3B54
+	.long 0x618C46DC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7FE3FB78
 	.long 0x38810080
 	.long 0x3D808003
-	.long 0x618C26E8
+	.long 0x618C2768
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000004
@@ -15811,7 +15980,7 @@ Snap101_Spawns_On:
 	.long 0x7FE3FB78
 	.long 0x38810080
 	.long 0x3D808003
-	.long 0x618C264C
+	.long 0x618C26CC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0xC0210080
@@ -15823,13 +15992,13 @@ Snap101_Spawns_On:
 	.long 0xC03B0008
 	.long 0x7FE3FB78
 	.long 0x3D808003
-	.long 0x618C3014
+	.long 0x618C3094
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7FE3FB78
 	.long 0x1C9E0005
 	.long 0x3D808003
-	.long 0x618C5F58
+	.long 0x618C5FDC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0xBA810008
@@ -15988,7 +16157,7 @@ Snap101_DisableWobbling_On:
 	.long 0x8863000C
 	.long 0x38800001
 	.long 0x3D808003
-	.long 0x618C410C
+	.long 0x618C418C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
@@ -16009,11 +16178,11 @@ Snap101_DisableWobbling_On:
 	.long 0x41800028
 	.long 0x807B1A58
 	.long 0x3D80800D
-	.long 0x618CA24C
+	.long 0x618CA424
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x3D808008
-	.long 0x618CEE20
+	.long 0x618CEF08
 	.long 0x7D8903A6
 	.long 0x4E800420
 	.long 0x801B0010
@@ -16166,7 +16335,7 @@ Snap101_Ledgegrab_On:
 	.long 0x40820024
 	.long 0x7FA3EB78
 	.long 0x3D808004
-	.long 0x618C0A2C
+	.long 0x618C0ADC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C03003C
@@ -16193,7 +16362,7 @@ Snap101_Ledgegrab_On:
 	.long 0x48000034
 	.long 0x7FA3EB78
 	.long 0x3D808004
-	.long 0x618C0A2C
+	.long 0x618C0ADC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C03003C
@@ -16217,7 +16386,7 @@ Snap101_Ledgegrab_On:
 	.long 0x40820034
 	.long 0x7FA3EB78
 	.long 0x3D808004
-	.long 0x618C0A2C
+	.long 0x618C0ADC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C03003C
@@ -16270,7 +16439,7 @@ Snap101_TournamentQoL_On:
 	.long 0xC2266544
 	.long 0x0000000E
 	.long 0x3D808015
-	.long 0x618CC2A4
+	.long 0x618CC830
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C661B78
@@ -16300,13 +16469,13 @@ Snap101_TournamentQoL_On:
 	.long 0xC22FC060
 	.long 0x0000000D
 	.long 0x3C608046
-	.long 0x606396D8
+	.long 0x6063A9C0
 	.long 0x886324D0
 	.long 0x2C030001
 	.long 0x41820050
 	.long 0x887F0000
 	.long 0x3D808003
-	.long 0x618C4090
+	.long 0x618C4110
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x8083002C
@@ -16320,7 +16489,7 @@ Snap101_TournamentQoL_On:
 	.long 0x54630631
 	.long 0x41820014
 	.long 0x3D80802F
-	.long 0x618CB404
+	.long 0x618CC050
 	.long 0x7D8903A6
 	.long 0x4E800420
 	.long 0x281E0000
@@ -16328,7 +16497,7 @@ Snap101_TournamentQoL_On:
 	.long 0xC225B120
 	.long 0x00000002
 	.long 0x3C608047
-	.long 0x60637D68
+	.long 0x60639050
 	.long 0x88630000
 	.long 0x00000000
 	.long 0x0445B6A0
@@ -16356,7 +16525,7 @@ Snap101_TournamentQoL_On:
 	.long 0x38C00000
 	.long 0x38ED9B00
 	.long 0x3D808037
-	.long 0x618C657C
+	.long 0x618C7750
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x38800001
@@ -16366,7 +16535,7 @@ Snap101_TournamentQoL_On:
 	.long 0x38800000
 	.long 0x7EE3BB78
 	.long 0x3D808015
-	.long 0x618CE2D0
+	.long 0x618CE8B0
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x38800001
@@ -16409,7 +16578,7 @@ Snap101_TournamentQoL_On:
 	.long 0x2C050002
 	.long 0x40820014
 	.long 0x3D808026
-	.long 0x618C0860
+	.long 0x618C13D0
 	.long 0x7D8903A6
 	.long 0x4E800420
 	.long 0x1C130024
@@ -16442,14 +16611,14 @@ Snap101_TournamentQoL_On:
 	.long 0xC22594A0
 	.long 0x00000020
 	.long 0x3D808015
-	.long 0x618CC2A4
+	.long 0x618CC830
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x39430018
 	.long 0x39600000
 	.long 0x38600000
 	.long 0x3C80803E
-	.long 0x6084E840
+	.long 0x6084F9F0
 	.long 0x28000013
 	.long 0x4082000C
 	.long 0x39600001
@@ -16521,7 +16690,7 @@ Snap101_FriendliesQoL_On:
 	.long 0x3BA00000
 	.long 0x7FA3EB78
 	.long 0x3D80801A
-	.long 0x618C2938
+	.long 0x618C3038
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x548005EF
@@ -16537,25 +16706,25 @@ Snap101_FriendliesQoL_On:
 	.long 0x3B600002
 	.long 0x48000068
 	.long 0x3D80801A
-	.long 0x618C44FC
+	.long 0x618C4BFC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C741B78
 	.long 0x3D808025
-	.long 0x618C86DC
+	.long 0x618C924C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x3C80803E
-	.long 0x6084E840
+	.long 0x6084F9F0
 	.long 0x1C63001C
 	.long 0x7C841A14
 	.long 0x8864000B
 	.long 0xB0740016
 	.long 0x3C808043
-	.long 0x608400BC
+	.long 0x6084139C
 	.long 0x9064000C
 	.long 0x3D808001
-	.long 0x618C81D4
+	.long 0x618C8254
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x3B600002
@@ -16575,7 +16744,7 @@ Snap101_FriendliesQoL_On:
 	.long 0x48000119
 	.long 0x7CA802A6
 	.long 0x3D80803A
-	.long 0x618C562C
+	.long 0x618C6810
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000108
@@ -16585,14 +16754,14 @@ Snap101_FriendliesQoL_On:
 	.long 0xBE810008
 	.long 0x7C7D1B78
 	.long 0x3FE08047
-	.long 0x63FF7DDC
+	.long 0x63FF90C4
 	.long 0x1FDD00A8
 	.long 0x7FDEFA14
 	.long 0x887F0004
 	.long 0x2C030000
 	.long 0x418200B0
 	.long 0x3C608046
-	.long 0x606396D8
+	.long 0x6063A9C0
 	.long 0x886324D0
 	.long 0x889F0006
 	.long 0x7C032000
@@ -16623,7 +16792,7 @@ Snap101_FriendliesQoL_On:
 	.long 0x40820028
 	.long 0x7FE3FB78
 	.long 0x3D808016
-	.long 0x618C4C98
+	.long 0x618C5278
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x889E005F
@@ -16652,7 +16821,7 @@ Snap101_FriendliesQoL_On:
 	.long 0x2C000007
 	.long 0x40820014
 	.long 0x3C808046
-	.long 0x608496D8
+	.long 0x6084A9C0
 	.long 0x88840001
 	.long 0x989E000C
 	.long 0x00000000
@@ -16674,9 +16843,9 @@ Snap101_GameVersion_NTSC:
 	.long 0x043CD7F4
 	.long 0x00200000
 	.long 0x0410F9D4
-	.long 0x3803D21C
+	.long 0x3803D500
 	.long 0x0410F8F4
-	.long 0x3803D21C
+	.long 0x3803D500
 	.long 0x0414B678
 	.long 0x901F21BC
 	.long 0x0414B51C
@@ -16960,13 +17129,13 @@ Snap101_GameVersion_PAL:
 	.long 0xC210F9D4
 	.long 0x00000002
 	.long 0x3C008010
-	.long 0x6000D21C
+	.long 0x6000D500
 	.long 0x60000000
 	.long 0x00000000
 	.long 0xC210F8F4
 	.long 0x00000002
 	.long 0x3C008010
-	.long 0x6000D21C
+	.long 0x6000D500
 	.long 0x60000000
 	.long 0x00000000
 	.long 0x042B73CC
@@ -22341,287 +22510,287 @@ Snap101_GameVersion_SDR:
 	.long 0x2D827004
 	.long 0x00004E38
 	.long 0x0F0C0087
-	.long 0x00004EC4
+	.long 0x00004EC0
 	.long 0x2D82700A
-	.long 0x00004ED0
+	.long 0x00004ECC
 	.long 0x2A8DC013
-	.long 0x00004ED4
+	.long 0x00004ED0
 	.long 0x23000087
-	.long 0x00004EF0
+	.long 0x00004EEC
 	.long 0x04000008
-	.long 0x00004F48
+	.long 0x00004F44
 	.long 0x2C82480E
+	.long 0x00004F54
+	.long 0x1E0C010F
 	.long 0x00004F58
-	.long 0x1E0C010F
-	.long 0x00004F5C
 	.long 0x2D00D80E
-	.long 0x00004F6C
+	.long 0x00004F68
 	.long 0x1E0C010F
-	.long 0x00004F70
+	.long 0x00004F6C
 	.long 0x2D82700C
-	.long 0x00004F80
+	.long 0x00004F7C
 	.long 0x1E0C008F
-	.long 0x00005030
+	.long 0x0000502C
 	.long 0x2D82700A
-	.long 0x0000503C
+	.long 0x00005038
 	.long 0x371D0013
-	.long 0x00005040
+	.long 0x0000503C
 	.long 0x118C008F
-	.long 0x00005084
+	.long 0x00005080
 	.long 0x2D82700A
-	.long 0x00005090
+	.long 0x0000508C
 	.long 0x2A9D0013
-	.long 0x00005094
+	.long 0x00005090
 	.long 0x118C008F
-	.long 0x000050A8
+	.long 0x000050A4
 	.long 0x08000020
-	.long 0x00005110
+	.long 0x0000510C
 	.long 0x2D827009
-	.long 0x000051F8
+	.long 0x000051F4
 	.long 0xB4918013
-	.long 0x000051FC
+	.long 0x000051F8
 	.long 0x1E0C0107
-	.long 0x00005280
+	.long 0x0000527C
 	.long 0x0800000E
-	.long 0x00005284
+	.long 0x00005280
 	.long 0x28000000
-	.long 0x00005288
+	.long 0x00005284
 	.long 0x03FB0000
+	.long 0x00005288
+	.long 0x00000000
 	.long 0x0000528C
 	.long 0x00000000
 	.long 0x00005290
 	.long 0x00000000
 	.long 0x00005294
-	.long 0x00000000
-	.long 0x00005298
 	.long 0x2D000004
+	.long 0x00005298
+	.long 0x044C0000
 	.long 0x0000529C
-	.long 0x044C0000
-	.long 0x000052A0
 	.long 0x06A40578
+	.long 0x000052A0
+	.long 0x46191373
 	.long 0x000052A4
-	.long 0x46191373
+	.long 0x000400A3
 	.long 0x000052A8
-	.long 0x000400A3
-	.long 0x000052AC
 	.long 0x2D800004
-	.long 0x000052B0
+	.long 0x000052AC
 	.long 0x044C0000
-	.long 0x000052B4
+	.long 0x000052B0
 	.long 0x06A4FA88
-	.long 0x000052B8
+	.long 0x000052B4
 	.long 0x46191373
-	.long 0x000052BC
+	.long 0x000052B8
 	.long 0x000400A3
+	.long 0x000052BC
+	.long 0xCC000000
 	.long 0x000052C0
 	.long 0xCC000000
 	.long 0x000052C4
-	.long 0xCC000000
-	.long 0x000052C8
 	.long 0x0800000F
-	.long 0x000052CC
+	.long 0x000052C8
 	.long 0x40000000
-	.long 0x000052D0
+	.long 0x000052CC
 	.long 0x48000000
-	.long 0x000052D4
+	.long 0x000052D0
 	.long 0x44040000
-	.long 0x000052D8
+	.long 0x000052D4
 	.long 0x0000009E
-	.long 0x000052DC
+	.long 0x000052D8
 	.long 0x00007F40
-	.long 0x000052E0
+	.long 0x000052DC
 	.long 0xAC024000
+	.long 0x000052E4
+	.long 0x28000000
 	.long 0x000052E8
-	.long 0x28000000
-	.long 0x000052EC
 	.long 0x05150000
-	.long 0x000052F0
+	.long 0x000052EC
 	.long 0x00000000
-	.long 0x00005300
+	.long 0x000052FC
 	.long 0x040D0000
-	.long 0x00005304
+	.long 0x00005300
 	.long 0x00001B58
-	.long 0x00005308
+	.long 0x00005304
 	.long 0x01F40000
-	.long 0x00005310
+	.long 0x0000530C
 	.long 0x2C027011
-	.long 0x00005314
+	.long 0x00005310
 	.long 0x05DC03E8
+	.long 0x00005314
+	.long 0x00000000
 	.long 0x00005318
-	.long 0x00000000
-	.long 0x0000531C
 	.long 0x2D140013
-	.long 0x00005324
+	.long 0x00005320
 	.long 0x2C824811
-	.long 0x00005328
+	.long 0x00005324
 	.long 0x05140000
-	.long 0x00005330
+	.long 0x0000532C
 	.long 0x2D140013
-	.long 0x00005338
+	.long 0x00005334
 	.long 0x2D000011
-	.long 0x0000533C
+	.long 0x00005338
 	.long 0x044C0000
-	.long 0x00005340
+	.long 0x0000533C
 	.long 0x07D00000
-	.long 0x00005344
+	.long 0x00005340
 	.long 0x2D140013
-	.long 0x0000534C
+	.long 0x00005348
 	.long 0x04000005
-	.long 0x000053B0
+	.long 0x000053AC
 	.long 0x25940013
-	.long 0x000053C4
+	.long 0x000053C0
 	.long 0x25940013
-	.long 0x000053D8
+	.long 0x000053D4
 	.long 0x25940013
-	.long 0x000053E0
+	.long 0x000053DC
 	.long 0x2D827010
-	.long 0x00005454
+	.long 0x00005450
 	.long 0x25938013
-	.long 0x00005468
+	.long 0x00005464
 	.long 0x25938013
-	.long 0x0000547C
+	.long 0x00005478
 	.long 0x25938013
-	.long 0x00005484
+	.long 0x00005480
 	.long 0x2D82700C
-	.long 0x000054E8
+	.long 0x000054E4
 	.long 0x03E80000
-	.long 0x000054FC
+	.long 0x000054F8
 	.long 0x03E80000
-	.long 0x00005510
+	.long 0x0000550C
 	.long 0x03E80578
-	.long 0x0000551C
+	.long 0x00005518
 	.long 0x0F00000F
-	.long 0x0000554C
+	.long 0x00005548
 	.long 0x2C02700B
-	.long 0x00005558
+	.long 0x00005554
 	.long 0xB497C013
-	.long 0x00005560
+	.long 0x0000555C
 	.long 0x2C82480B
-	.long 0x00005564
+	.long 0x00005560
 	.long 0x03E80000
-	.long 0x0000556C
+	.long 0x00005568
 	.long 0xB497C013
-	.long 0x00005574
+	.long 0x00005570
 	.long 0x2D00D80B
-	.long 0x00005578
+	.long 0x00005574
 	.long 0x03E80000
-	.long 0x00005580
+	.long 0x0000557C
 	.long 0xB497C013
-	.long 0x00005588
+	.long 0x00005584
 	.long 0x2D82700B
-	.long 0x0000558C
+	.long 0x00005588
 	.long 0x03E80578
-	.long 0x00005594
+	.long 0x00005590
 	.long 0xB497C013
-	.long 0x00005598
+	.long 0x00005594
 	.long 0x1900010F
-	.long 0x000055E8
+	.long 0x000055E4
 	.long 0x2C027009
+	.long 0x000055F0
+	.long 0xB48F0013
 	.long 0x000055F4
-	.long 0xB48F0013
+	.long 0x140C010F
 	.long 0x000055F8
-	.long 0x140C010F
-	.long 0x000055FC
 	.long 0x2C824809
+	.long 0x00005604
+	.long 0xB48F0013
 	.long 0x00005608
-	.long 0xB48F0013
+	.long 0x140C010F
 	.long 0x0000560C
-	.long 0x140C010F
-	.long 0x00005610
 	.long 0x2D00D809
-	.long 0x0000561C
+	.long 0x00005618
 	.long 0xB48F0013
+	.long 0x0000561C
+	.long 0x140C010F
 	.long 0x00005620
-	.long 0x140C010F
-	.long 0x00005624
 	.long 0x2D827008
-	.long 0x00005630
+	.long 0x0000562C
 	.long 0x218C8013
-	.long 0x00005634
+	.long 0x00005630
 	.long 0x1E0C0107
-	.long 0x0000563C
+	.long 0x00005638
 	.long 0x08000009
-	.long 0x0000567C
+	.long 0x00005678
 	.long 0x2C02700E
-	.long 0x00005688
+	.long 0x00005684
 	.long 0xB4990013
-	.long 0x00005690
+	.long 0x0000568C
 	.long 0x2C82480E
-	.long 0x0000569C
+	.long 0x00005698
 	.long 0xB4990013
-	.long 0x000056A4
+	.long 0x000056A0
 	.long 0x2D00D80E
-	.long 0x000056B0
+	.long 0x000056AC
 	.long 0xB4990013
-	.long 0x000056B8
+	.long 0x000056B4
 	.long 0x2D82700A
-	.long 0x000056C4
+	.long 0x000056C0
 	.long 0xB4990013
-	.long 0x000056C8
+	.long 0x000056C4
 	.long 0x0F0C0107
-	.long 0x000056D0
+	.long 0x000056CC
 	.long 0x0800000C
-	.long 0x00005714
+	.long 0x00005710
 	.long 0x2C82700A
+	.long 0x0000571C
+	.long 0x280DC013
 	.long 0x00005720
-	.long 0x280DC013
+	.long 0x140C010F
 	.long 0x00005724
-	.long 0x140C010F
-	.long 0x00005728
 	.long 0x2D02480A
+	.long 0x00005730
+	.long 0x280DC013
 	.long 0x00005734
-	.long 0x280DC013
+	.long 0x140C010F
 	.long 0x00005738
-	.long 0x140C010F
-	.long 0x0000573C
 	.long 0x2D80D80A
+	.long 0x00005744
+	.long 0x280DC013
 	.long 0x00005748
-	.long 0x280DC013
-	.long 0x0000574C
 	.long 0x140C010F
-	.long 0x00005750
+	.long 0x0000574C
 	.long 0x2C027008
-	.long 0x0000575C
+	.long 0x00005758
 	.long 0x280DC013
-	.long 0x00005760
+	.long 0x0000575C
 	.long 0x0F0C0107
-	.long 0x00005768
+	.long 0x00005764
 	.long 0x0800000C
-	.long 0x000057A8
+	.long 0x000057A4
 	.long 0x2C82700C
+	.long 0x000057B0
+	.long 0x87140013
 	.long 0x000057B4
-	.long 0x87140013
+	.long 0x1E0C0107
 	.long 0x000057B8
-	.long 0x1E0C0107
-	.long 0x000057BC
 	.long 0x2D024810
+	.long 0x000057C4
+	.long 0x91190013
 	.long 0x000057C8
-	.long 0x91190013
+	.long 0x1904010F
 	.long 0x000057CC
-	.long 0x1904010F
-	.long 0x000057D0
 	.long 0x2D80D810
-	.long 0x000057DC
+	.long 0x000057D8
 	.long 0x91190013
-	.long 0x000057E0
+	.long 0x000057DC
 	.long 0x1904010F
-	.long 0x000057E4
+	.long 0x000057E0
 	.long 0x2C02700C
-	.long 0x000057F0
+	.long 0x000057EC
 	.long 0x87140013
-	.long 0x000057F4
+	.long 0x000057F0
 	.long 0x1E0C0107
-	.long 0x00006068
+	.long 0x00006064
 	.long 0x68000002
-	.long 0x0000606C
+	.long 0x00006068
 	.long 0x08000006
-	.long 0x00006070
+	.long 0x0000606C
 	.long 0x28000000
-	.long 0x00006074
+	.long 0x00006070
 	.long 0x04070000
-	.long 0x00006080
+	.long 0x0000607C
 	.long 0x00000000
-	.long 0x00006A30
+	.long 0x00006A2C
 	.long 0x88000004
 	.long 0xFFFFFFFF
 	.long 0xBA810008
@@ -22640,7 +22809,7 @@ Snap101_GameVersion_SDR:
 	.long 0x7F63DB78
 	.long 0x8BFE000C
 	.long 0x3FA08045
-	.long 0x63BD10C4
+	.long 0x63BD23A4
 	.long 0x1FFF0E90
 	.long 0x7FFDFA14
 	.long 0x809F0000
@@ -22690,7 +22859,7 @@ Snap101_GameVersion_SDR:
 	.long 0x418204A4
 	.long 0xC03F0004
 	.long 0x3D808006
-	.long 0x618CF034
+	.long 0x618CF144
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x4800048C
@@ -23001,7 +23170,7 @@ Snap101_GameVersion_SDR:
 	.long 0x40800058
 	.long 0x7FC3F378
 	.long 0x3D808006
-	.long 0x618CF328
+	.long 0x618CF438
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000039
@@ -23014,7 +23183,7 @@ Snap101_GameVersion_SDR:
 	.long 0xEC200824
 	.long 0x7FC3F378
 	.long 0x3D808006
-	.long 0x618CF034
+	.long 0x618CF144
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x4800000C
@@ -23031,7 +23200,7 @@ Snap101_GameVersion_SDR:
 	.long 0x40800058
 	.long 0x7FC3F378
 	.long 0x3D808006
-	.long 0x618CF328
+	.long 0x618CF438
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000039
@@ -23044,7 +23213,7 @@ Snap101_GameVersion_SDR:
 	.long 0xEC200824
 	.long 0x7FC3F378
 	.long 0x3D808006
-	.long 0x618CF034
+	.long 0x618CF144
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x4800000C
@@ -23061,7 +23230,7 @@ Snap101_GameVersion_SDR:
 	.long 0x40800058
 	.long 0x7FC3F378
 	.long 0x3D808006
-	.long 0x618CF328
+	.long 0x618CF438
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000039
@@ -23074,7 +23243,7 @@ Snap101_GameVersion_SDR:
 	.long 0xEC200824
 	.long 0x7FC3F378
 	.long 0x3D808006
-	.long 0x618CF034
+	.long 0x618CF144
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x4800000C
@@ -23085,41 +23254,41 @@ Snap101_GameVersion_SDR:
 
 Snap101_StageExpansion_Off:
 	.long 0x043E4614
-	.long 0x802024A0
+	.long 0x80202E00
 	.long 0x041FC888
 	.long 0x480003E5
 	.long 0x041CCFCC
 	.long 0x48002179
 	.long 0x041CC670
-	.long 0x48000999
+	.long 0x40800010
 	.long 0x0445B6A8
 	.long 0xE70000B0
 	.long 0x0416E4EC
 	.long 0x3C608047
 	.long 0x043E6C90
-	.long 0x80215F1C
+	.long 0x80216A4C
 	.long 0x04216AA8
 	.long 0x38000000
 	.long 0x043E6CCC
-	.long 0x80216234
+	.long 0x80216D64
 	.long 0x04217A14
-	.long 0x4BFB0285
+	.long 0x4BFB00B9
 	.long 0x04213F84
-	.long 0x4BFACCA9
+	.long 0x4BFACADD
 	.long 0x04214904
 	.long 0x480002CD
 	.long 0x041EF6C8
-	.long 0x4BFD8401
+	.long 0x4BFD8405
 	.long 0x041EF9FC
 	.long 0x4800035D
 	.long 0x041EFA98
-	.long 0x4BFD8031
+	.long 0x4BFD8035
 	.long 0x041F1EA8
-	.long 0x4BE3F87D
+	.long 0x4BE3EF9D
 	.long 0x041E360C
-	.long 0x4BE752FD
+	.long 0x4BE74AA9
 	.long 0x041E361C
-	.long 0x4BE752ED
+	.long 0x4BE74A99
 	.long 0x041E303C
 	.long 0x48000059
 	.long 0x041E35C4
@@ -23127,11 +23296,11 @@ Snap101_StageExpansion_Off:
 	.long 0x041FEF9C
 	.long 0x48001E8D
 	.long 0x041FF080
-	.long 0x4BFC8A49
+	.long 0x4BFC8A4D
 	.long 0x043E4190
-	.long 0x801FE864
+	.long 0x801FF1C4
 	.long 0x041FEE88
-	.long 0x4BFC8C41
+	.long 0x4BFC8C45
 	.long 0x041FEECC
 	.long 0x3C608020
 	.long 0x041FF37C
@@ -23139,7 +23308,7 @@ Snap101_StageExpansion_Off:
 	.long -1
 Snap101_StageExpansion_On:
 	.long 0x043E4614
-	.long 0x80202504
+	.long 0x80202E64
 	.long 0x041FC888
 	.long 0x60000000
 	.long 0x041CCFCC
@@ -23196,7 +23365,7 @@ Snap101_StageExpansion_On:
 	.long 0x41820094
 	.long 0x7CA42A14
 	.long 0x3CC08049
-	.long 0x60C6CCD8
+	.long 0x60C6E130
 	.long 0x80C60000
 	.long 0x80C60020
 	.long 0x38C6FFE0
@@ -25185,7 +25354,7 @@ Snap101_StageExpansion_On:
 	.long 0x3C608047
 	.long 0x00000000
 	.long 0x043E6C90
-	.long 0x80011574
+	.long 0x800115F4
 	.long 0x04216AA8
 	.long 0x48000118
 	.long 0x043E6CCC
@@ -25194,7 +25363,7 @@ Snap101_StageExpansion_On:
 	.long 0x0000000C
 	.long 0x38600008
 	.long 0x3D808037
-	.long 0x618CE6CC
+	.long 0x618CF8A0
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000011
@@ -25207,12 +25376,12 @@ Snap101_StageExpansion_On:
 	.long 0x7FC3F378
 	.long 0x809D0014
 	.long 0x3D80801C
-	.long 0x618C7168
+	.long 0x618C7ACC
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7FC3F378
 	.long 0x3D80801C
-	.long 0x618C2010
+	.long 0x618C2974
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x00000000
@@ -25255,22 +25424,22 @@ Snap101_StageExpansion_On:
 	.long 0xC0270000
 	.long 0xC042BC84
 	.long 0x3D80801C
-	.long 0x618C7028
+	.long 0x618C798C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x3860000A
 	.long 0x3D808005
-	.long 0x618C7514
+	.long 0x618C7624
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x3860000A
 	.long 0x3D808005
-	.long 0x618C5D78
+	.long 0x618C5E88
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x3860000A
 	.long 0x3D808005
-	.long 0x618C7300
+	.long 0x618C7410
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x4800000C
@@ -26826,7 +26995,7 @@ Snap101_LagPrompt_SceneThink_Confirmed:
   li  r0,1
   stw r0,0x8(r3)
   branchl r12,Deflicker_Toggle
-#Enable 10160
+#Enable 10060
 	load	r3,ProgressiveStruct
 	li	r4,1
 	stw	r4,0xC(r3)
@@ -26896,7 +27065,7 @@ Snap101_LagPrompt_MinorSceneStruct:
 blrl
 #Lag Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  Snap101_LagPrompt_SceneDecide   #SceneDecide
@@ -26912,7 +27081,7 @@ Snap101_Codes_MinorSceneStruct:
 blrl
 #Codes Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  Snap101_Codes_SceneDecide       #SceneDecide
@@ -26941,6 +27110,10 @@ Snap101_IsProgressive:
   bl  Snap101_LagPrompt_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap101_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load LagPrompt
   li	r3, PromptSceneID
   b Snap101_Exit
@@ -26951,13 +27124,16 @@ Snap101_NoProgressive:
   bl  Snap101_Codes_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap101_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load Codes
   li  r3,CodesSceneID
 
 Snap101_Exit:
 #Store as next scene
-	load	r4,OFST_MainMenuSceneData
-	stb	r3,0x0(r4)
+	branchl r12,MenuController_WriteToPendingMajor
 #request to change scenes
 	branchl	r12,MenuController_ChangeScreenMinor
 
@@ -26965,48 +27141,28 @@ Snap101_Exit:
 ## Exit ##
 ##########
 
-#Exit exploit code
+#Return to the game
   restore
-	branch	r12,ExploitReturn
+	li	r0,2
+	blr
 
 MMLCode101_End:
 blrl
 #endregion
 #region SnapshotCode100
 .include "../../Common100.s"
+MMLCode100_Start:
+blrl
 
 SnapshotCode100_Start:
-#First thing to do is relocate ALL of the exploit code to tournament mode
-	bl	MMLCode100_End
-	mflr	r3
-	bl	MMLCode100_Start
-	mflr	r4
-	sub	r5,r3,r4
-	load	r3,TournamentMode
-	branchl	r12,memcpy
-
-#Flush cache to ensure these instructions are up to date
-  load r3,TournamentMode
-	bl	MMLCode100_Start
-	mflr	r4
-	bl	MMLCode100_End
-	mflr	r5
-	sub	r4,r5,r4
-  branchl r12,TRK_flush_cache
 
 #Clear nametag region
 	lwz	r3,OFST_Memcard(r13)
 	addi	r3,r3,OFST_NametagStart
 	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
+	load r5,Nametag_Length
 	branchl  r12,memset
 
-#Now run from the tournament mode code region
-	branch	r12,TournamentMode
-
-MMLCode100_Start:
-blrl
 #Overwriting the debug CSS with a lag reduction prompt
 #it crashes anyway so nothing of substance is being lost
 
@@ -27022,8 +27178,6 @@ blrl
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
-#Init and backup
-  backup
 #Init LagPrompt major struct
   li  r3,PromptSceneID
   bl  Snap100_LagPrompt_MinorSceneStruct
@@ -27310,7 +27464,7 @@ Snap100_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	Snap100_GameVersion_Description
 	bl  Snap100_GameVersion_NTSC
-	bl  Snap100_GameVersion_PAL
+	bl  Snap100_GameVersion_100
 	bl  Snap100_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -37747,7 +37901,6 @@ Snap100_StageExpansion_On:
 	.long -1
 
 
-
 #endregion
 #region Code Descriptions
 Snap100_UCF_Description:
@@ -39359,7 +39512,7 @@ Snap100_LagPrompt_MinorSceneStruct:
 blrl
 #Lag Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  Snap100_LagPrompt_SceneDecide   #SceneDecide
@@ -39375,7 +39528,7 @@ Snap100_Codes_MinorSceneStruct:
 blrl
 #Codes Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  Snap100_Codes_SceneDecide       #SceneDecide
@@ -39404,6 +39557,10 @@ Snap100_IsProgressive:
   bl  Snap100_LagPrompt_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap100_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load LagPrompt
   li	r3, PromptSceneID
   b Snap100_Exit
@@ -39414,13 +39571,16 @@ Snap100_NoProgressive:
   bl  Snap100_Codes_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap100_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load Codes
   li  r3,CodesSceneID
 
 Snap100_Exit:
 #Store as next scene
-	load	r4,OFST_MainMenuSceneData
-	stb	r3,0x0(r4)
+	branchl r12,MenuController_WriteToPendingMajor
 #request to change scenes
 	branchl	r12,MenuController_ChangeScreenMinor
 
@@ -39428,9 +39588,10 @@ Snap100_Exit:
 ## Exit ##
 ##########
 
-#Exit exploit code
+#Return to the game
   restore
-	branch	r12,ExploitReturn
+	li	r0,2
+	blr
 
 MMLCode100_End:
 blrl
@@ -39444,39 +39605,18 @@ blrl
 	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
 		.set ModOFST_ModDataPrefsLength,0x18
 		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength
+MMLCodePAL_Start:
+blrl
 
 SnapshotCodePAL_Start:
-#First thing to do is relocate ALL of the exploit code to tournament mode
-	bl	MMLCodePAL_End
-	mflr	r3
-	bl	MMLCodePAL_Start
-	mflr	r4
-	sub	r5,r3,r4
-	load	r3,TournamentMode
-	branchl	r12,memcpy
-
-#Flush cache to ensure these instructions are up to date
-  load r3,TournamentMode
-	bl	MMLCodePAL_Start
-	mflr	r4
-	bl	MMLCodePAL_End
-	mflr	r5
-	sub	r4,r5,r4
-  branchl r12,TRK_flush_cache
 
 #Clear nametag region
 	lwz	r3,OFST_Memcard(r13)
 	addi	r3,r3,OFST_NametagStart
 	li r4,0
-	li r5,0
-	ori r5,r5,0xda38
+	load r5,Nametag_Length
 	branchl  r12,memset
 
-#Now run from the tournament mode code region
-	branch	r12,TournamentMode
-
-MMLCodePAL_Start:
-blrl
 #Overwriting the debug CSS with a lag reduction prompt
 #it crashes anyway so nothing of substance is being lost
 
@@ -39492,8 +39632,6 @@ blrl
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
-#Init and backup
-  backup
 #Init LagPrompt major struct
   li  r3,PromptSceneID
   bl  SnapPAL_LagPrompt_MinorSceneStruct
@@ -40447,7 +40585,7 @@ SnapPAL_Widescreen_Off:
 	.long 0x044CEEC4
 	.long 0x3DCCCCCD
 	.long 0x042FD90C
-	.long 0xC002E19C
+	.long 0xC002E200
 	.long 0x044CEF04
 	.long 0x3ECCCCCD
 	.long -1
@@ -41347,56 +41485,8 @@ SnapPAL_TournamentQoL_On:
 	.long 0x1C130024
 	.long 0x60000000
 	.long 0x00000000
-	.long 0xC23774A8
-	.long 0x00000018
-	.long 0x8879000A
-	.long 0x7C600774
-	.long 0x2C00FFFF
-	.long 0x408200A8
-	.long 0x881A0041
-	.long 0x7C030000
-	.long 0x4182009C
-	.long 0x3C608047
-	.long 0x60631628
-	.long 0x1C98000C
-	.long 0x7C832214
-	.long 0x38600078
-	.long 0x9864000A
-	.long 0x3D80801A
-	.long 0x618C5D48
-	.long 0x7D8903A6
-	.long 0x4E800421
-	.long 0x38630068
-	.long 0x1CB80024
-	.long 0x7C842A14
-	.long 0x9864000A
-	.long 0x7F03C378
-	.long 0x38800000
-	.long 0x3D808015
-	.long 0x618CF4F0
-	.long 0x7D8903A6
-	.long 0x4E800421
-	.long 0x3C808046
-	.long 0x6084AB38
-	.long 0x88640000
-	.long 0x2C030002
-	.long 0x40820038
-	.long 0x88640003
-	.long 0x2C030000
-	.long 0x4082002C
-	.long 0x886DB8EE
-	.long 0x2C030000
-	.long 0x40820020
-	.long 0x3C80803F
-	.long 0x60841CF8
-	.long 0x1C78000C
-	.long 0x7C632214
-	.long 0x80830000
-	.long 0x38600000
-	.long 0x9864001B
+	.long 0x043774A8
 	.long 0x8819000A
-	.long 0x60000000
-	.long 0x00000000
 	.long 0x042622C8
 	.long 0x60000000
 	.long 0x042622DC
@@ -41893,6 +41983,8 @@ SnapPAL_GameVersion_NTSC:
 	.long 0x3C60803C
 	.long 0x60000000
 	.long 0x00000000
+	.long 0x04073A10
+	.long 0xBB610014
 	.long 0xC2124158
 	.long 0x00000002
 	.long 0x38000000
@@ -51240,7 +51332,7 @@ SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
 SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
 #Get Y Offset for this
   lis    r0, 0x4330
-  lfd    f2, -0x6758 (rtoc)
+  lfd    f2, MagicNumber (REG_TextProp)
   xoris    r3,REG_Count,0x8000
   stw    r0,0x80(sp)
   stw    r3,0x84(sp)
@@ -51812,7 +51904,7 @@ SnapPAL_LagPrompt_MinorSceneStruct:
 blrl
 #Lag Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  SnapPAL_LagPrompt_SceneDecide   #SceneDecide
@@ -51828,7 +51920,7 @@ SnapPAL_Codes_MinorSceneStruct:
 blrl
 #Codes Prompt
 .byte 0                     #Minor Scene ID
-.byte 00                    #Amount of persistent heaps
+.byte 2                    #Amount of persistent heaps
 .align 2
 .long 0x00000000            #ScenePrep
 bl  SnapPAL_Codes_SceneDecide       #SceneDecide
@@ -51857,9 +51949,13 @@ SnapPAL_IsProgressive:
   bl  SnapPAL_LagPrompt_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	SnapPAL_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load LagPrompt
   li	r3, PromptSceneID
-  b ExploitCodePAL_Exit
+  b SnapPAL_Exit
 SnapPAL_NoProgressive:
 #Override SceneLoad
   li  r3,CodesCommonSceneID
@@ -51867,13 +51963,16 @@ SnapPAL_NoProgressive:
   bl  SnapPAL_Codes_SceneLoad
   mflr  r4
   stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	SnapPAL_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
 #Load Codes
   li  r3,CodesSceneID
 
-ExploitCodePAL_Exit:
+SnapPAL_Exit:
 #Store as next scene
-	load	r4,OFST_MainMenuSceneData
-	stb	r3,0x0(r4)
+	branchl r12,MenuController_WriteToPendingMajor
 #request to change scenes
 	branchl	r12,MenuController_ChangeScreenMinor
 
@@ -51881,12 +51980,14 @@ ExploitCodePAL_Exit:
 ## Exit ##
 ##########
 
-#Exit exploit code
+#Return to the game
   restore
-	branch	r12,ExploitReturn
+	li	r0,2
+	blr
 
 MMLCodePAL_End:
 blrl
+
 #endregion
 
 SnapshotCode_End:

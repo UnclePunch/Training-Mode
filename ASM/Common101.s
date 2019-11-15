@@ -1,5 +1,16 @@
 .set ExpoitReturnAddr,0x80239700
 
+.set HeapHijack_Injection,0x80015994
+.set PersistentHeapStruct,0x804312c0
+
+.set Heap_MainID,-0x58A0
+.set Heap_CurrentHeap, -0x5A98
+.set Heap_Lo,-0x3FE8
+.set Heap_Hi,-0x3FE4
+
+.set OSDestroyHeap,0x80343474
+.set OSCreateHeap,0x80343408
+
 .set Text_CreateTextCanvas,0x803A543C
 .set Text_CreateTextStruct,0x803A5A74
 .set Text_InitializeSubtext,0x803a5eb8
@@ -112,6 +123,7 @@
 .set  ExploitReturn,0x80239700 #*
 
 .set  OFST_NametagStart,0x3000
+.set  Nametag_Length,0xd894
 .set  HWInputs,0x804c1258
 .set  OFST_PlCo,-0x514C #0x80067ADC
 .set  OFST_ExtStageID,-0x6CB8 #0x80224A74
@@ -140,4 +152,5 @@
 .set  MainSaveUnk,0x804240b8 # r30 at 8001d24c (102)
 .set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
 .set  MainSaveString,0x803bb244 # r4 at 8001a564 (102)
+.set  StageInfo,0x8049ccd8
 .set  OFST_Rand,-0x570C
