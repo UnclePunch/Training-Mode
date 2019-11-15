@@ -1543,238 +1543,423 @@ blrl
 ExploitCode102:
 blrl
 .include "../../Common102.s"
-.set REG_SnapLoadResult,31
-.set  CodesSceneID,9
+.set REG_TournamentMode,31
+.set REG_CodesetSize,30
 
-#Place bl to heap hijack code
-	bl	ExploitCode102_HeapHijack
-	mflr	r3
-	load	r4,HeapHijack_Injection
-	sub r3,r3,r4           #Difference relative to branch addr
-	rlwinm  r3,r3,0,6,29                  #extract bits for offset
-	oris  r3,r3,0x4800                    #Create branch instruction from it
-	ori	r3,r3,0x1													#Create bl instruction
-	stw	r3,0x0(r4)												#Place instruction
-#Flush cache
-	mr	r3,r4
-	li	r4,32
-	branchl	r12,TRK_flush_cache
-
-#Store as next scene
-	branchl	r12,Scene_GetMinorSceneData2
-	li	r4,0
-	stb	r4,0x0(r3)
-#request to change scenes
-	branchl	r12,MenuController_ChangeScreenMinor
-#Return to the game
-	branch	r12,ExpoitReturnAddr
-
-
-ExploitCode102_HeapHijack:
-blrl
 backup
 
-#Restore original codeline
-	load	r3,0x38000002
-	load	r4,HeapHijack_Injection
-	stw	r3,0x0(r4)
-#Flush cache
-	mr	r3,r4
-	li	r4,32
-	branchl	r12,TRK_flush_cache
+#Init
+	load	REG_TournamentMode,0x801910E0
+	bl	GeckoCodelist_Start
+	mflr	r4
+	bl	GeckoCodelist_End
+	mflr	r3
+	sub	REG_CodesetSize,r3,r4
 
-###################
-## Load Snapshot ##
-###################
-
-#Spoof game ID as NTSC (to load the snapshot file)
-#Backup current Game ID
-  addi r3,sp,0xB0
-  lis r4,0x8000
-  branchl r12,strcpy
-#Change Game ID to Melee's
-  lis r3,0x8000
-  bl  ExploitCode102_NTSCGameID
-  mflr r4
-  branchl r12,strcpy
-
-#Update list of present memcard snapshots
-  li  r3,0
-  branchl r12,Snapshot_UpdateFileList
-
-.set REG_Count,30
-.set REG_Index,29
-.set REG_SnapshotStruct,28
-.set REG_SnapshotID,27
-#Check if file exists on card
-  load  r3,MemcardFileList                            #go to pointer location
-  lwz REG_SnapshotStruct,0x48(r3)                      #access pointer to snapshot file list
-  lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
-  addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
-  bl  ExploitCode102_SnapshotIDInt                                      #get ID we are looking for
-  mflr r3
-  lwz REG_SnapshotID,0x0(r3)
-  li  REG_Count,0                                     #init count
-ExploitCode102_SnapshotSearchLoop:
-  cmpw REG_Count,REG_Index
-  bge ExploitCode102_SnapshotSearchLoop_NotFound
-#Get the next snapshots ID
-  mulli r3,REG_Count,0x8          #each snapshots data is 0x8 long
-  add r3,r3,REG_SnapshotStruct
-  lwz r4,0x0(r3)                  #get the snaps ID
-  cmpw r4,REG_SnapshotID
-  bne ExploitCode102_SnapshotSearchLoop_IncLoop
-  b ExploitCode102_SnapshotSearchLoop_Found
-ExploitCode102_SnapshotSearchLoop_IncLoop:
-  addi REG_Count,REG_Count,1
-  b ExploitCode102_SnapshotSearchLoop
-
-ExploitCode102_SnapshotSearchLoop_NotFound:
-	li	REG_SnapLoadResult,11
-  b ExploitCode102_RestoreGameID
-
-ExploitCode102_SnapshotSearchLoop_Found:
-.set REG_CodesetSize,31
-.set REG_SnapshotPointer,30
-#Convert blocks to bytes
-  lhz r3,0x6(r3)
-  mulli REG_CodesetSize,r3,0x2000
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,HSD_MemAlloc			       #HSD_Alloc
-  mr  REG_SnapshotPointer,r3
-  load	r5,SnapshotData			           #Snapshot Data Struct
-  stw	REG_SnapshotPointer,0x1C(r5)     #Store Pointer to this area
-
-#Remove Pointer To Current Memcard Stuff
-  branchl	r12,Memcard_FreeSomething
-#Alloc Space For Memcard Stuff
-  branchl	r12,Memcard_AllocateSomething
-
-#Load File
-  li	r3,0x0		#Slot A?
-  bl	ExploitCode102_SnapshotID
-  mflr	r4
-  load	r5,SnapshotData+0x14		#Snapshot Data Struct
-  load	r9,MemcardFileList
-  addi	r6,r9,0x4
-  lwz	r9,0x44(r9)
-  lwz	r7,0x0(r9)		#Weird Char Pointer, Maybe Icon Image
-  lwz	r8,0x4(r9)		#Banner Image
-  li	r9,0		#Unk
-  branchl	r12,MemoryCard_ReadDataIntoMemory
-#Store Result
-  load	r4,SnapshotLoadThinkStruct
-  stw	r3,0x15C(r4)
-
-ExploitCode102_WaitToLoadLoop:
-  branchl	r12,MemoryCard_WaitForFileToFinishSaving
-  cmpwi	r3,0xB
-  beq	ExploitCode102_WaitToLoadLoop
-#Backup result
-	mr	REG_SnapLoadResult,r3
-ExploitCode102_RestoreGameID:
-#Restore orig Game ID
-  lis r3,0x8000
-  addi r4,sp,0xB0
-  branchl r12,strcpy
-#If Exists
-  cmpwi	REG_SnapLoadResult,0x0
-  beq	ExploitCode102_Success
-  b	ExploitCode102_Failure
-
-#########################################
-ExploitCode102_SnapshotIDInt:
-blrl
-.byte 0x00,0xD0
-.ascii "MM"
-.align 2
-ExploitCode102_SnapshotID:
-blrl
-.string "13651277"
-.align 2
-ExploitCode102_NTSCGameID:
-blrl
-.string "GALE01"
-.align 2
-###########################################
-
-
-#############
-## Failure ##
-#############
-
-ExploitCode102_Failure:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-#Disable Saving
-	load r4,OFST_MemcardController
-  li     r3,4
-  stw    r3,0x8(r4)    # store 4 to disable memory card saving
-	b	ExploitCode102_Exit
-
-#############
-## Success ##
-#############
-ExploitCode102_Success:
-.set REG_PersistentHeapStruct,29
-.set REG_CodesetPointer,28
-
-#Get this revisions code size
-	lwz	REG_CodesetSize,(0*8)+0x4(REG_SnapshotPointer)
-
-#Destroy original heap
-	lwz	r3, Heap_MainID (r13) #-0x58A0
-	branchl	r12,OSDestroyHeap #80344154
-#Create new heap
-	load REG_PersistentHeapStruct,PersistentHeapStruct
-	lwz	r3, Heap_Lo (r13)
-	lwz	r4, Heap_Hi (r13)
-	branchl	r12,OSCreateHeap #803440e8
-#Adjust main heap offset from here on out
-	lwz	r3,0x70(REG_PersistentHeapStruct)
-	add	r3,r3,REG_CodesetSize
-	addi	r3,r3,32
-	stw	r3,0x70(REG_PersistentHeapStruct)
-
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,HSD_MemAlloc			       #80343ef0
-  mr  REG_CodesetPointer,r3
-
-#Get address of codeset
-  lwz r4,(0*8)(REG_SnapshotPointer)       #Load b instruction
-  rlwinm  r4,r4,0,6,29  									#extract offset bits
-	rlwinm	r5,r4,7,31,31										#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5														#extend signed bit
-	addi r3,REG_SnapshotPointer,0*8		      #Load b instruction
-  add r4,r4,r3
-
-#Copy this revisions code to the new heap
-	addi r3,REG_CodesetPointer,0
-	addi r4,r4,0
+#Copy codeset to tournament mode
+	mr	r3,REG_TournamentMode
+	bl	GeckoCodelist_Start
+	mflr	r4
 	mr	r5,REG_CodesetSize
 	branchl	r12,memcpy
 
-#flush cache on snapshot code
-  addi r3,REG_CodesetPointer,0
-	mr	r4,REG_CodesetSize
-  branchl r12,TRK_flush_cache
+#Apply codeset
+	mr	r3,REG_TournamentMode
+	bl	ApplyGeckoCodes
 
-#Restore this stack frame and jump to the MML code in the snapshot file
-	mtctr REG_CodesetPointer
-	bctr
+#Flush cache
+	lis	r3,0x8000
+	load	r4,0x3b722c
+	branchl	r12,TRK_flush_cache
 
-ExploitCode102_Exit:
-#exit
+.set  UnkPadStruct,0x804329f0
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+
+#Store as next scene
+	branchl	r12,0x801a4b9c
+	li	r4,2
+	stb	r4,0x0(r3)
+#request to change scenes
+	branchl	r12,0x801a4b60
+
+#Clear nametag region
 	restore
-	li	r0,2
-	blr
+	load	r3,0x80239E9C
+	mtlr	r3
+	load  r3,0x8045d850
+	li r4,0
+	li r5,0
+	ori r5,r5,0xd894
+	branch  r12,memset
+
+
+####################################
+
+ApplyGeckoCodes:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+ApplyGeckoCodes_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq ApplyGeckoCodes_C2
+  cmpwi r3,0x4
+  beq ApplyGeckoCodes_04
+  cmpwi r3,0xFF
+  beq ApplyGeckoCodes_Exit
+  b ApplyGeckoCodes_Exit
+ApplyGeckoCodes_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b ApplyGeckoCodes_Loop
+ApplyGeckoCodes_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b ApplyGeckoCodes_Loop
+ApplyGeckoCodes_Exit:
+blr
+
+###############################################
+GeckoCodelist_Start:
+blrl
+	.long 0xC201AE8C
+	.long 0x00000004
+	.long 0x2C190002
+	.long 0x41800014
+	.long 0x2C190008
+	.long 0x4181000C
+	.long 0x38000000
+	.long 0x48000008
+	.long 0x801F00F4
+	.long 0x00000000
+	.long 0x04397878
+	.long 0x4800020C
+	.long 0xC2228BF4
+	.long 0x00000028
+	.long 0x3E808034
+	.long 0x629456A8
+	.long 0x480000F5
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000A9
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x4800005D
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x48000089
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000B5
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000AD
+	.long 0x7C6802A6
+	.long 0x3C808000
+	.long 0x88A40007
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x4800008D
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000B8
+	.long 0x4E800021
+	.long 0x23232054
+	.long 0x57454554
+	.long 0x20412050
+	.long 0x49435455
+	.long 0x5245204F
+	.long 0x46205448
+	.long 0x4953204D
+	.long 0x45535341
+	.long 0x47452054
+	.long 0x4F204055
+	.long 0x6E636C65
+	.long 0x50756E63
+	.long 0x685F2023
+	.long 0x230A0000
+	.long 0x4E800021
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x230A0000
+	.long 0x4E800021
+	.long 0x0A000000
+	.long 0x4E800021
+	.long 0x4D756C74
+	.long 0x694D6F64
+	.long 0x204C6175
+	.long 0x6E636865
+	.long 0x72207630
+	.long 0x2E36200A
+	.long 0x47616D65
+	.long 0x20566572
+	.long 0x73696F6E
+	.long 0x3A202573
+	.long 0x7225640A
+	.long 0x00000000
+	.long 0x387D0000
+	.long 0x00000000
+	.long 0x0422D638
+	.long 0x38000002
+	.long 0x041BFA1C
+	.long 0x60000000
+	.long 0x04479d40
+	.long 0x00000000
+	.long 0x041A4234
+	.long 0x60000000
+	.long 0x041A4258
+	.long 0x38600000
+	.long 0x0445BF18
+	.long 0x08010100
+	.long 0x0445BF10
+	.long 0x00340102
+	.long 0x0445C370
+	.long 0xFF000000
+	.long 0x0445C388
+	.long 0xE70000B0
+	.long 0x0445BF14
+	.long 0x04000A00
+	.long 0x0445BF18
+	.long 0x08010100
+	.long 0x04164B14
+	.long 0x38600001
+	.long 0x041648F4
+	.long 0x38600001
+	.long 0x04164658
+	.long 0x38600001
+	.long 0x041644E8
+	.long 0x38600001
+	.long 0xC20C9A44
+	.long 0x0000002B
+	.long 0xD01F002C
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x48000121
+	.long 0x7FC802A6
+	.long 0xC03F0894
+	.long 0xC05E0000
+	.long 0xFC011040
+	.long 0x40820118
+	.long 0x808DAEB4
+	.long 0xC03F0620
+	.long 0xFC200A10
+	.long 0xC044003C
+	.long 0xFC011040
+	.long 0x41800100
+	.long 0x887F0670
+	.long 0x2C030002
+	.long 0x408000F4
+	.long 0x887F221F
+	.long 0x54600739
+	.long 0x408200E8
+	.long 0x3C60804C
+	.long 0x60631F78
+	.long 0x8BA30001
+	.long 0x387DFFFE
+	.long 0x889F0618
+	.long 0x4800008D
+	.long 0x7C7C1B78
+	.long 0x7FA3EB78
+	.long 0x889F0618
+	.long 0x4800007D
+	.long 0x7C7C1850
+	.long 0x7C6319D6
+	.long 0x2C0315F9
+	.long 0x408100B0
+	.long 0x38000001
+	.long 0x901F2358
+	.long 0x901F2340
+	.long 0x809F0004
+	.long 0x2C04000A
+	.long 0x40A20098
+	.long 0x887F000C
+	.long 0x38800001
+	.long 0x3D808003
+	.long 0x618C418C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x2C030000
+	.long 0x41820078
+	.long 0x8083002C
+	.long 0x80841ECC
+	.long 0xC03F002C
+	.long 0xD0240018
+	.long 0xC05E0004
+	.long 0xFC011040
+	.long 0x4181000C
+	.long 0x38600080
+	.long 0x48000008
+	.long 0x3860007F
+	.long 0x98640006
+	.long 0x48000048
+	.long 0x7C852378
+	.long 0x3863FFFF
+	.long 0x2C030000
+	.long 0x40800008
+	.long 0x38630005
+	.long 0x3C808046
+	.long 0x6084B108
+	.long 0x1C630030
+	.long 0x7C841A14
+	.long 0x1C65000C
+	.long 0x7C841A14
+	.long 0x88640002
+	.long 0x7C630774
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x40000000
+	.long 0x00000000
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x60000000
+	.long 0x00000000
+	.long 0xC20998A4
+	.long 0x00000026
+	.long 0x7C0802A6
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
+	.long 0x7C7E1B78
+	.long 0x83FE002C
+	.long 0x480000DD
+	.long 0x7FA802A6
+	.long 0xC03F063C
+	.long 0x806DAEB4
+	.long 0xC0030314
+	.long 0xFC010040
+	.long 0x408100E4
+	.long 0xC03F0620
+	.long 0x48000071
+	.long 0xD0210090
+	.long 0xC03F0624
+	.long 0x48000065
+	.long 0xC0410090
+	.long 0xEC4200B2
+	.long 0xEC210072
+	.long 0xEC21102A
+	.long 0xC05D000C
+	.long 0xFC011040
+	.long 0x418000B4
+	.long 0x889F0670
+	.long 0x2C040003
+	.long 0x408100A8
+	.long 0xC01D0010
+	.long 0xC03F0624
+	.long 0xFC000840
+	.long 0x40800098
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x8061001C
+	.long 0x83E10014
+	.long 0x38210018
+	.long 0x38630008
+	.long 0x7C6803A6
+	.long 0x4E800020
+	.long 0xFC000A10
+	.long 0xC03D0000
+	.long 0xEC000072
+	.long 0xC03D0004
+	.long 0xEC000828
+	.long 0xFC00001E
+	.long 0xD8010080
+	.long 0x80610084
+	.long 0x38630002
+	.long 0x3C004330
+	.long 0xC85D0014
+	.long 0x6C638000
+	.long 0x90010080
+	.long 0x90610084
+	.long 0xC8210080
+	.long 0xEC011028
+	.long 0xC03D0000
+	.long 0xEC200824
+	.long 0x4E800020
+	.long 0x4E800021
+	.long 0x42A00000
+	.long 0x37270000
+	.long 0x43300000
+	.long 0x3F800000
+	.long 0xBF4CCCCD
+	.long 0x43300000
+	.long 0x80000000
+	.long 0x7FC3F378
+	.long 0x7FE4FB78
+	.long 0xBA810008
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
+	.long 0x00000000
+	.long 0xC21A4DA0
+	.long 0x00000003
+	.long 0x901C0000
+	.long 0x3D808001
+	.long 0x618C95FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x00000000
+	.long 0x041A4DB4
+	.long 0x60000000
+	.long 0x04019860
+	.long 0x4BFFFD9D
+	.long -1
+GeckoCodelist_End:
+blrl
+
 
 ExploitCode102_End:
 blrl
@@ -1783,22 +1968,6 @@ blrl
 ExploitCode101:
 blrl
 .include "../../Common101.s"
-.set REG_SnapLoadResult,31
-.set  CodesSceneID,9
-
-#Place bl to heap hijack code
-	bl	ExploitCode101_HeapHijack
-	mflr	r3
-	load	r4,HeapHijack_Injection
-	sub r3,r3,r4           #Difference relative to branch addr
-	rlwinm  r3,r3,0,6,29                  #extract bits for offset
-	oris  r3,r3,0x4800                    #Create branch instruction from it
-	ori	r3,r3,0x1													#Create bl instruction
-	stw	r3,0x0(r4)												#Place instruction
-#Flush cache
-	mr	r3,r4
-	li	r4,32
-	branchl	r12,TRK_flush_cache
 
 #Store as next scene
 	branchl	r12,Scene_GetMinorSceneData2
@@ -1808,213 +1977,6 @@ blrl
 	branchl	r12,MenuController_ChangeScreenMinor
 #Return to the game
 	branch	r12,ExpoitReturnAddr
-
-
-ExploitCode101_HeapHijack:
-blrl
-backup
-
-#Restore original codeline
-	load	r3,0x38000002
-	load	r4,HeapHijack_Injection
-	stw	r3,0x0(r4)
-#Flush cache
-	mr	r3,r4
-	li	r4,32
-	branchl	r12,TRK_flush_cache
-
-###################
-## Load Snapshot ##
-###################
-
-#Spoof game ID as NTSC (to load the snapshot file)
-#Backup current Game ID
-  addi r3,sp,0xB0
-  lis r4,0x8000
-  branchl r12,strcpy
-#Change Game ID to Melee's
-  lis r3,0x8000
-  bl  ExploitCode101_NTSCGameID
-  mflr r4
-  branchl r12,strcpy
-
-#Update list of present memcard snapshots
-  li  r3,0
-  branchl r12,Snapshot_UpdateFileList
-
-.set REG_Count,30
-.set REG_Index,29
-.set REG_SnapshotStruct,28
-.set REG_SnapshotID,27
-#Check if file exists on card
-  load  r3,MemcardFileList                            #go to pointer location
-  lwz REG_SnapshotStruct,0x48(r3)                      #access pointer to snapshot file list
-  lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
-  addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
-  bl  ExploitCode101_SnapshotIDInt                                      #get ID we are looking for
-  mflr r3
-  lwz REG_SnapshotID,0x0(r3)
-  li  REG_Count,0                                     #init count
-ExploitCode101_SnapshotSearchLoop:
-  cmpw REG_Count,REG_Index
-  bge ExploitCode101_SnapshotSearchLoop_NotFound
-#Get the next snapshots ID
-  mulli r3,REG_Count,0x8          #each snapshots data is 0x8 long
-  add r3,r3,REG_SnapshotStruct
-  lwz r4,0x0(r3)                  #get the snaps ID
-  cmpw r4,REG_SnapshotID
-  bne ExploitCode101_SnapshotSearchLoop_IncLoop
-  b ExploitCode101_SnapshotSearchLoop_Found
-ExploitCode101_SnapshotSearchLoop_IncLoop:
-  addi REG_Count,REG_Count,1
-  b ExploitCode101_SnapshotSearchLoop
-
-ExploitCode101_SnapshotSearchLoop_NotFound:
-	li	REG_SnapLoadResult,11
-  b ExploitCode101_RestoreGameID
-
-ExploitCode101_SnapshotSearchLoop_Found:
-.set REG_CodesetSize,31
-.set REG_SnapshotPointer,30
-#Convert blocks to bytes
-  lhz r3,0x6(r3)
-  mulli REG_CodesetSize,r3,0x2000
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,HSD_MemAlloc			       #HSD_Alloc
-  mr  REG_SnapshotPointer,r3
-  load	r5,SnapshotData			           #Snapshot Data Struct
-  stw	REG_SnapshotPointer,0x1C(r5)     #Store Pointer to this area
-
-#Remove Pointer To Current Memcard Stuff
-  branchl	r12,Memcard_FreeSomething
-#Alloc Space For Memcard Stuff
-  branchl	r12,Memcard_AllocateSomething
-
-#Load File
-  li	r3,0x0		#Slot A?
-  bl	ExploitCode101_SnapshotID
-  mflr	r4
-  load	r5,SnapshotData+0x14		#Snapshot Data Struct
-  load	r9,MemcardFileList
-  addi	r6,r9,0x4
-  lwz	r9,0x44(r9)
-  lwz	r7,0x0(r9)		#Weird Char Pointer, Maybe Icon Image
-  lwz	r8,0x4(r9)		#Banner Image
-  li	r9,0		#Unk
-  branchl	r12,MemoryCard_ReadDataIntoMemory
-#Store Result
-  load	r4,SnapshotLoadThinkStruct
-  stw	r3,0x15C(r4)
-
-ExploitCode101_WaitToLoadLoop:
-  branchl	r12,MemoryCard_WaitForFileToFinishSaving
-  cmpwi	r3,0xB
-  beq	ExploitCode101_WaitToLoadLoop
-#Backup result
-	mr	REG_SnapLoadResult,r3
-ExploitCode101_RestoreGameID:
-#Restore orig Game ID
-  lis r3,0x8000
-  addi r4,sp,0xB0
-  branchl r12,strcpy
-#If Exists
-  cmpwi	REG_SnapLoadResult,0x0
-  beq	ExploitCode101_Success
-  b	ExploitCode101_Failure
-
-#########################################
-ExploitCode101_SnapshotIDInt:
-blrl
-.byte 0x00,0xD0
-.ascii "MM"
-.align 2
-ExploitCode101_SnapshotID:
-blrl
-.string "13651277"
-.align 2
-ExploitCode101_NTSCGameID:
-blrl
-.string "GALE01"
-.align 2
-###########################################
-
-
-#############
-## Failure ##
-#############
-
-ExploitCode101_Failure:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-#Disable Saving
-	load r4,OFST_MemcardController
-  li     r3,4
-  stw    r3,0x8(r4)    # store 4 to disable memory card saving
-	b	ExploitCode101_Exit
-
-#############
-## Success ##
-#############
-ExploitCode101_Success:
-.set REG_PersistentHeapStruct,29
-.set REG_CodesetPointer,28
-
-#Get this revisions code size
-	lwz	REG_CodesetSize,(1*8)+0x4(REG_SnapshotPointer)
-
-#Destroy original heap
-	lwz	r3, Heap_MainID (r13) #-0x58A0
-	branchl	r12,OSDestroyHeap #80344154
-#Create new heap
-	load REG_PersistentHeapStruct,PersistentHeapStruct
-	lwz	r3, Heap_Lo (r13)
-	lwz	r4, Heap_Hi (r13)
-	branchl	r12,OSCreateHeap #803440e8
-#Adjust main heap offset from here on out
-	lwz	r3,0x70(REG_PersistentHeapStruct)
-	add	r3,r3,REG_CodesetSize
-	addi	r3,r3,32
-	stw	r3,0x70(REG_PersistentHeapStruct)
-
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,HSD_MemAlloc			       #80343ef0
-  mr  REG_CodesetPointer,r3
-
-#Get address of codeset
-  lwz r4,(1*8)(REG_SnapshotPointer)       #Load b instruction
-  rlwinm  r4,r4,0,6,29  									#extract offset bits
-	rlwinm	r5,r4,7,31,31										#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5														#extend signed bit
-	addi r3,REG_SnapshotPointer,1*8		      #Load b instruction
-  add r4,r4,r3
-
-#Copy this revisions code to the new heap
-	addi r3,REG_CodesetPointer,0
-	addi r4,r4,0
-	mr	r5,REG_CodesetSize
-	branchl	r12,memcpy
-
-#flush cache on snapshot code
-  addi r3,REG_CodesetPointer,0
-	mr	r4,REG_CodesetSize
-  branchl r12,TRK_flush_cache
-
-#Restore this stack frame and jump to the MML code in the snapshot file
-	mtctr REG_CodesetPointer
-	bctr
-
-ExploitCode101_Exit:
-#exit
-	restore
-	li	r0,2
-	blr
 
 ExploitCode101_End:
 blrl
@@ -2023,23 +1985,6 @@ blrl
 ExploitCode100:
 blrl
 .include "../../Common100.s"
-.set REG_SnapLoadResult,31
-.set  CodesSceneID,9
-
-#Place bl to heap hijack code
-	bl	ExploitCode100_HeapHijack
-	mflr	r3
-	load	r4,HeapHijack_Injection
-	sub r3,r3,r4           #Difference relative to branch addr
-	rlwinm  r3,r3,0,6,29                  #extract bits for offset
-	oris  r3,r3,0x4800                    #Create branch instruction from it
-	ori	r3,r3,0x1													#Create bl instruction
-	stw	r3,0x0(r4)												#Place instruction
-#Flush cache
-	mr	r3,r4
-	li	r4,32
-	branchl	r12,TRK_flush_cache
-
 #Store as next scene
 	branchl	r12,Scene_GetMinorSceneData2
 	li	r4,0
@@ -2048,213 +1993,6 @@ blrl
 	branchl	r12,MenuController_ChangeScreenMinor
 #Return to the game
 	branch	r12,ExpoitReturnAddr
-
-
-ExploitCode100_HeapHijack:
-blrl
-backup
-
-#Restore original codeline
-	load	r3,0x38000002
-	load	r4,HeapHijack_Injection
-	stw	r3,0x0(r4)
-#Flush cache
-	mr	r3,r4
-	li	r4,32
-	branchl	r12,TRK_flush_cache
-
-###################
-## Load Snapshot ##
-###################
-
-#Spoof game ID as NTSC (to load the snapshot file)
-#Backup current Game ID
-  addi r3,sp,0xB0
-  lis r4,0x8000
-  branchl r12,strcpy
-#Change Game ID to Melee's
-  lis r3,0x8000
-  bl  ExploitCode100_NTSCGameID
-  mflr r4
-  branchl r12,strcpy
-
-#Update list of present memcard snapshots
-  li  r3,0
-  branchl r12,Snapshot_UpdateFileList
-
-.set REG_Count,30
-.set REG_Index,29
-.set REG_SnapshotStruct,28
-.set REG_SnapshotID,27
-#Check if file exists on card
-  load  r3,MemcardFileList                            #go to pointer location
-  lwz REG_SnapshotStruct,0x48(r3)                      #access pointer to snapshot file list
-  lwz REG_Index,0x4(REG_SnapshotStruct)               #get number of snapshots present
-  addi REG_SnapshotStruct,REG_SnapshotStruct,0x10     #get to snapshot info
-  bl  ExploitCode100_SnapshotIDInt                                      #get ID we are looking for
-  mflr r3
-  lwz REG_SnapshotID,0x0(r3)
-  li  REG_Count,0                                     #init count
-ExploitCode100_SnapshotSearchLoop:
-  cmpw REG_Count,REG_Index
-  bge ExploitCode100_SnapshotSearchLoop_NotFound
-#Get the next snapshots ID
-  mulli r3,REG_Count,0x8          #each snapshots data is 0x8 long
-  add r3,r3,REG_SnapshotStruct
-  lwz r4,0x0(r3)                  #get the snaps ID
-  cmpw r4,REG_SnapshotID
-  bne ExploitCode100_SnapshotSearchLoop_IncLoop
-  b ExploitCode100_SnapshotSearchLoop_Found
-ExploitCode100_SnapshotSearchLoop_IncLoop:
-  addi REG_Count,REG_Count,1
-  b ExploitCode100_SnapshotSearchLoop
-
-ExploitCode100_SnapshotSearchLoop_NotFound:
-	li	REG_SnapLoadResult,11
-  b ExploitCode100_RestoreGameID
-
-ExploitCode100_SnapshotSearchLoop_Found:
-.set REG_CodesetSize,31
-.set REG_SnapshotPointer,30
-#Convert blocks to bytes
-  lhz r3,0x6(r3)
-  mulli REG_CodesetSize,r3,0x2000
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,HSD_MemAlloc			       #HSD_Alloc
-  mr  REG_SnapshotPointer,r3
-  load	r5,SnapshotData			           #Snapshot Data Struct
-  stw	REG_SnapshotPointer,0x1C(r5)     #Store Pointer to this area
-
-#Remove Pointer To Current Memcard Stuff
-  branchl	r12,Memcard_FreeSomething
-#Alloc Space For Memcard Stuff
-  branchl	r12,Memcard_AllocateSomething
-
-#Load File
-  li	r3,0x0		#Slot A?
-  bl	ExploitCode100_SnapshotID
-  mflr	r4
-  load	r5,SnapshotData+0x14		#Snapshot Data Struct
-  load	r9,MemcardFileList
-  addi	r6,r9,0x4
-  lwz	r9,0x44(r9)
-  lwz	r7,0x0(r9)		#Weird Char Pointer, Maybe Icon Image
-  lwz	r8,0x4(r9)		#Banner Image
-  li	r9,0		#Unk
-  branchl	r12,MemoryCard_ReadDataIntoMemory
-#Store Result
-  load	r4,SnapshotLoadThinkStruct
-  stw	r3,0x15C(r4)
-
-ExploitCode100_WaitToLoadLoop:
-  branchl	r12,MemoryCard_WaitForFileToFinishSaving
-  cmpwi	r3,0xB
-  beq	ExploitCode100_WaitToLoadLoop
-#Backup result
-	mr	REG_SnapLoadResult,r3
-ExploitCode100_RestoreGameID:
-#Restore orig Game ID
-  lis r3,0x8000
-  addi r4,sp,0xB0
-  branchl r12,strcpy
-#If Exists
-  cmpwi	REG_SnapLoadResult,0x0
-  beq	ExploitCode100_Success
-  b	ExploitCode100_Failure
-
-#########################################
-ExploitCode100_SnapshotIDInt:
-blrl
-.byte 0x00,0xD0
-.ascii "MM"
-.align 2
-ExploitCode100_SnapshotID:
-blrl
-.string "13651277"
-.align 2
-ExploitCode100_NTSCGameID:
-blrl
-.string "GALE01"
-.align 2
-###########################################
-
-
-#############
-## Failure ##
-#############
-
-ExploitCode100_Failure:
-#Play Error Sound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-  li	r3, 3
-  branchl	r12,SFX_MenuCommonSound
-#Disable Saving
-	load r4,OFST_MemcardController
-  li     r3,4
-  stw    r3,0x8(r4)    # store 4 to disable memory card saving
-	b	ExploitCode100_Exit
-
-#############
-## Success ##
-#############
-ExploitCode100_Success:
-.set REG_PersistentHeapStruct,29
-.set REG_CodesetPointer,28
-
-#Get this revisions code size
-	lwz	REG_CodesetSize,(2*8)+0x4(REG_SnapshotPointer)
-
-#Destroy original heap
-	lwz	r3, Heap_MainID (r13) #-0x58A0
-	branchl	r12,OSDestroyHeap #80344154
-#Create new heap
-	load REG_PersistentHeapStruct,PersistentHeapStruct
-	lwz	r3, Heap_Lo (r13)
-	lwz	r4, Heap_Hi (r13)
-	branchl	r12,OSCreateHeap #803440e8
-#Adjust main heap offset from here on out
-	lwz	r3,0x70(REG_PersistentHeapStruct)
-	add	r3,r3,REG_CodesetSize
-	addi	r3,r3,32
-	stw	r3,0x70(REG_PersistentHeapStruct)
-
-#Alloc Space For Snapshot File
-  mr  r3,REG_CodesetSize
-  branchl	r12,HSD_MemAlloc			       #80343ef0
-  mr  REG_CodesetPointer,r3
-
-#Get address of codeset
-  lwz r4,(2*8)(REG_SnapshotPointer)       #Load b instruction
-  rlwinm  r4,r4,0,6,29  									#extract offset bits
-	rlwinm	r5,r4,7,31,31										#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5														#extend signed bit
-	addi r3,REG_SnapshotPointer,2*8		      #Load b instruction
-  add r4,r4,r3
-
-#Copy this revisions code to the new heap
-	addi r3,REG_CodesetPointer,0
-	addi r4,r4,0
-	mr	r5,REG_CodesetSize
-	branchl	r12,memcpy
-
-#flush cache on snapshot code
-  addi r3,REG_CodesetPointer,0
-	mr	r4,REG_CodesetSize
-  branchl r12,TRK_flush_cache
-
-#Restore this stack frame and jump to the MML code in the snapshot file
-	mtctr REG_CodesetPointer
-	bctr
-
-ExploitCode100_Exit:
-#exit
-	restore
-	li	r0,2
-	blr
 
 ExploitCode100_End:
 blrl
