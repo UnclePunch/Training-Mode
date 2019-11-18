@@ -1,3 +1,4 @@
+.set isPAL,0
 .set ExpoitReturnAddr,0x80238B90
 
 .set HeapHijack_Injection,0x80015914
@@ -149,6 +150,8 @@
 .set  MemcardFileList,0x804313c0 #use func 8001e238 to find it #*
 .set  SnapshotData,0x803b8e08 #use func 8001df4c to find it #*
 .set  SnapshotLoadThinkStruct,0x8049e8d8 #804a0b6c, use func 8025389c to find it #*
+.set  VI_Struct,0x804bfc00 #0x804c1d80
+.set  RenewInputs_Prefunction,0x8001957C
 
 .set  MainSaveUnk,0x804240b8 # r30 at 8001d24c (102)
 .set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)

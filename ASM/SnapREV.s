@@ -1,4 +1,3 @@
-#region SnapshotCodeREV
 .include "../../CommonREV.s"
 
 MMLCodeREV_Start:
@@ -245,11 +244,17 @@ bl  SnapREV_CodeOptions_Widescreen
 .set  SnapREV_CodeOptions_GeckoCodePointers,0x8
 SnapREV_CodeOptions_Wrapper:
 	blrl
+.if isPAL==0
 	.short 0x8183
 	.ascii "%s"
 	.short 0x8184
 	.byte 0
 	.align 2
+.endif
+.if isPAL==1
+	.string "(%s)"
+	.align 2
+.endif
 SnapREV_CodeOptions_UCF:
 	.long 3 -1           #number of options
 	bl	SnapREV_UCF_Description
@@ -338,568 +343,6 @@ SnapREV_CodeOptions_Widescreen:
 	.string "Standard"
 	.string "True"
 	.align 2
-#endregion
-#region Gecko Codes
-SnapREV_DefaultCodes_On:
-  blrl
-	.long -1
-
-SnapREV_UCF_Off:
-	.long -1
-SnapREV_UCF_On:
-	.long -1
-SnapREV_UCF_Stealth:
-	.long -1
-
-SnapREV_Frozen_Off:
-	.long -1
-SnapREV_Frozen_Stadium:
-	.long -1
-SnapREV_Frozen_All:
-	.long -1
-
-SnapREV_Spawns_Off:
-	.long -1
-SnapREV_Spawns_On:
-	.long -1
-
-SnapREV_DisableWobbling_Off:
-	.long -1
-SnapREV_DisableWobbling_On:
-	.long -1
-
-SnapREV_Ledgegrab_Off:
-	.long -1
-SnapREV_Ledgegrab_On:
-	.long -1
-
-SnapREV_TournamentQoL_Off:
-	.long -1
-SnapREV_TournamentQoL_On:
-	.long -1
-
-SnapREV_FriendliesQoL_Off:
-	.long -1
-SnapREV_FriendliesQoL_On:
-	.long -1
-
-SnapREV_GameVersion_NTSC:
-	.long -1
-SnapREV_GameVersion_REV:
-	.long -1
-SnapREV_GameVersion_SDR:
-	.long -1
-
-SnapREV_StageExpansion_Off:
-	.long -1
-SnapREV_StageExpansion_On:
-	.long -1
-
-SnapREV_Widescreen_Off:
-	.long -1
-SnapREV_Widescreen_Standard:
-	.long -1
-SnapREV_Widescreen_True:
-	.long -1
-
-#endregion
-#region Code Descriptions
-SnapREV_UCF_Description:
-	.long 0x160cffff
-	.long 0xff0e00ac
-	.long 0x00b31220
-	.long 0x0f202c20
-	.long 0x3b202820
-	.long 0x361a2026
-	.long 0x20322031
-	.long 0x20372035
-	.long 0x2032202f
-	.long 0x202f2028
-	.long 0x20351a20
-	.long 0x27202c20
-	.long 0x36203320
-	.long 0x24203520
-	.long 0x2c203720
-	.long 0x2c202820
-	.long 0x361a203a
-	.long 0x202c2037
-	.long 0x202b1a20
-	.long 0x27202420
-	.long 0x36202b20
-	.long 0x25202420
-	.long 0x26202e1a
-	.long 0x20242031
-	.long 0x20271a03
-	.long 0x2036202b
-	.long 0x202c2028
-	.long 0x202f2027
-	.long 0x1a202720
-	.long 0x35203220
-	.long 0x3320e71a
-	.long 0x200c2038
-	.long 0x20352035
-	.long 0x20282031
-	.long 0x20371a20
-	.long 0x39202820
-	.long 0x35203620
-	.long 0x2c203220
-	.long 0x311a202c
-	.long 0x20361a20
-	.long 0x0020e720
-	.long 0x07200420
-	.long 0xe7190F0D
-	.long 0x00000000
-SnapREV_Frozen_Description:
-	.long 0x160cffff
-	.long 0xff0e00ac
-	.long 0x00b31220
-	.long 0x0d202c20
-	.long 0x36202420
-	.long 0x25202f20
-	.long 0x2820361a
-	.long 0x202b2024
-	.long 0x203d2024
-	.long 0x20352027
-	.long 0x20361a20
-	.long 0x3220311a
-	.long 0x20372032
-	.long 0x20382035
-	.long 0x20312024
-	.long 0x20302028
-	.long 0x20312037
-	.long 0x1a203620
-	.long 0x37202420
-	.long 0x2a202820
-	.long 0x3620e719
-	.long 0x0F0D0000
-SnapREV_Spawns_Description:
-	.long 0x160cffff
-	.long 0xff0e00ac
-	.long 0x00b31220
-	.long 0x19202f20
-	.long 0x24203c20
-	.long 0x28203520
-	.long 0x361a2036
-	.long 0x20332024
-	.long 0x203a2031
-	.long 0x1a202c20
-	.long 0x311a2031
-	.long 0x20282038
-	.long 0x20372035
-	.long 0x2024202f
-	.long 0x1a203320
-	.long 0x32203620
-	.long 0x2c203720
-	.long 0x2c203220
-	.long 0x3120361a
-	.long 0x20352028
-	.long 0x202a2024
-	.long 0x20352027
-	.long 0x202f2028
-	.long 0x20362036
-	.long 0x1a032032
-	.long 0x20291a20
-	.long 0x33203220
-	.long 0x35203720
-	.long 0xe7190F0D
-	.long 0x00000000
-SnapREV_DisableWobbling_Description:
-	.long 0x160cffff
-	.long 0xff0e0090
-	.long 0x00b31220
-	.long 0x0d202c20
-	.long 0x36202420
-	.long 0x25202f20
-	.long 0x281a2012
-	.long 0x20262028
-	.long 0x1a200c20
-	.long 0x2f202c20
-	.long 0x30202520
-	.long 0x28203520
-	.long 0x3620f31a
-	.long 0x202a2035
-	.long 0x20242025
-	.long 0x1a202c20
-	.long 0x31202920
-	.long 0x2c203120
-	.long 0x2c203720
-	.long 0x2820e703
-	.long 0x20182033
-	.long 0x20332032
-	.long 0x20312028
-	.long 0x20312037
-	.long 0x1a202520
-	.long 0x35202820
-	.long 0x24202e20
-	.long 0x361a2032
-	.long 0x20382037
-	.long 0x1a202420
-	.long 0x29203720
-	.long 0x2820351a
-	.long 0x20252028
-	.long 0x202c2031
-	.long 0x202a1a20
-	.long 0x2b202c20
-	.long 0x371a2025
-	.long 0x203c1a20
-	.long 0x17202420
-	.long 0x3120241a
-	.long 0x20031a20
-	.long 0x37202c20
-	.long 0x30202820
-	.long 0x3620e719
-	.long 0x0F0D0000
-SnapREV_Ledgegrab_Description:
-	.long 0x160cffff
-	.long 0xff0e00ac
-	.long 0x00b31220
-	.long 0x1d202c20
-	.long 0x30202820
-	.long 0xfc203220
-	.long 0x3820371a
-	.long 0x2039202c
-	.long 0x20262037
-	.long 0x20322035
-	.long 0x202c2028
-	.long 0x20361a20
-	.long 0x24203520
-	.long 0x281a2024
-	.long 0x203a2024
-	.long 0x20352027
-	.long 0x20282027
-	.long 0x1a203720
-	.long 0x321a2037
-	.long 0x202b2028
-	.long 0x1a203320
-	.long 0x2f202420
-	.long 0x3c202820
-	.long 0x351a0320
-	.long 0x3a202c20
-	.long 0x37202b1a
-	.long 0x20382031
-	.long 0x20272028
-	.long 0x20351a20
-	.long 0x0620001a
-	.long 0x202f2028
-	.long 0x2027202a
-	.long 0x2028202a
-	.long 0x20352024
-	.long 0x20252036
-	.long 0x20e7190F
-	.long 0x0D000000
-SnapREV_TournamentQoL_Description:
-	.long 0x160cffff
-	.long 0xff0e0075
-	.long 0x00b31220
-	.long 0x1c203720
-	.long 0x24202a20
-	.long 0x281a2036
-	.long 0x20372035
-	.long 0x202c202e
-	.long 0x202c2031
-	.long 0x202a20e6
-	.long 0x1a202b20
-	.long 0x2c202720
-	.long 0x281a2031
-	.long 0x20242030
-	.long 0x20282037
-	.long 0x2024202a
-	.long 0x20361a20
-	.long 0x3a202b20
-	.long 0x2c202f20
-	.long 0x281a202c
-	.long 0x20312039
-	.long 0x202c2036
-	.long 0x202c2025
-	.long 0x202f2028
-	.long 0x1a202720
-	.long 0x38203520
-	.long 0x2c203120
-	.long 0x2a1a2036
-	.long 0x202c2031
-	.long 0x202a202f
-	.long 0x20282036
-	.long 0x20e61a03
-	.long 0x20372032
-	.long 0x202a202a
-	.long 0x202f2028
-	.long 0x1a203520
-	.long 0x38203020
-	.long 0x25202f20
-	.long 0x281a2029
-	.long 0x20352032
-	.long 0x20301a20
-	.long 0x0c201c20
-	.long 0x1c20e61a
-	.long 0x2026202f
-	.long 0x20322036
-	.long 0x20281a20
-	.long 0x33203220
-	.long 0x3520371a
-	.long 0x20322031
-	.long 0x1a203820
-	.long 0x31203320
-	.long 0x2f203820
-	.long 0x2a20e61a
-	.long 0x2027202c
-	.long 0x20362024
-	.long 0x2025202f
-	.long 0x20281a20
-	.long 0x0f203220
-	.long 0x0d1a202c
-	.long 0x20311a20
-	.long 0x27203220
-	.long 0x38202520
-	.long 0x2f202820
-	.long 0x3620e719
-	.long 0x0F0D0000
-SnapREV_FriendliesQoL_Description:
-	.long 0x160cffff
-	.long 0xff0e0075
-	.long 0x00b31220
-	.long 0x1c202e20
-	.long 0x2c20331a
-	.long 0x20352028
-	.long 0x20362038
-	.long 0x202f2037
-	.long 0x1a203620
-	.long 0x26203520
-	.long 0x28202820
-	.long 0x3120e61a
-	.long 0x200a20fb
-	.long 0x200b1a20
-	.long 0x29203220
-	.long 0x351a2036
-	.long 0x2024202f
-	.long 0x2037203c
-	.long 0x1a203520
-	.long 0x38203120
-	.long 0x25202420
-	.long 0x26202e20
-	.long 0xe61a200a
-	.long 0x20fb2021
-	.long 0x1a202920
-	.long 0x3220351a
-	.long 0x20352024
-	.long 0x20312027
-	.long 0x20322030
-	.long 0x1a203620
-	.long 0x37202420
-	.long 0x2a202820
-	.long 0xe603202b
-	.long 0x202c202a
-	.long 0x202b202f
-	.long 0x202c202a
-	.long 0x202b2037
-	.long 0x1a203a20
-	.long 0x2c203120
-	.long 0x31202820
-	.long 0x3520f320
-	.long 0x361a2031
-	.long 0x20242030
-	.long 0x202820e7
-	.long 0x190F0D00
-	.long 0x00000000
-SnapREV_GameVersion_Description:
-	.long 0x160cffff
-	.long 0xff0e00ac
-	.long 0x00b31220
-	.long 0x1d203220
-	.long 0x2a202a20
-	.long 0x2f20281a
-	.long 0x20252028
-	.long 0x2037203a
-	.long 0x20282028
-	.long 0x20311a20
-	.long 0x30203820
-	.long 0x2f203720
-	.long 0x2c203320
-	.long 0x2f20281a
-	.long 0x202a2024
-	.long 0x20302028
-	.long 0x1a203920
-	.long 0x28203520
-	.long 0x36202c20
-	.long 0x32203120
-	.long 0x3620e719
-	.long 0x0F0D0000
-SnapREV_StageExpansion_Description:
-	.long 0x160cffff
-	.long 0xff0e0074
-	.long 0x00b31220
-	.long 0x16203220
-	.long 0x27202c20
-	.long 0x29203c1a
-	.long 0x20252024
-	.long 0x20312031
-	.long 0x20282027
-	.long 0x1a203620
-	.long 0x37202420
-	.long 0x2a202820
-	.long 0x361a2037
-	.long 0x20321a20
-	.long 0x2520281a
-	.long 0x20262032
-	.long 0x20302033
-	.long 0x20282037
-	.long 0x202c2039
-	.long 0x2028202f
-	.long 0x203c1a20
-	.long 0x39202c20
-	.long 0x24202520
-	.long 0x2f202820
-	.long 0xe71a200a
-	.long 0x2027202d
-	.long 0x20382036
-	.long 0x20372036
-	.long 0x1a201320
-	.long 0x38203120
-	.long 0x2a202f20
-	.long 0x28032013
-	.long 0x20242033
-	.long 0x20282036
-	.long 0x20e61a20
-	.long 0x19202820
-	.long 0x24202620
-	.long 0x2b20f320
-	.long 0x361a200c
-	.long 0x20242036
-	.long 0x2037202f
-	.long 0x202820e6
-	.long 0x1a201820
-	.long 0x31202820
-	.long 0x37203720
-	.long 0xe61a2010
-	.long 0x20352028
-	.long 0x20282031
-	.long 0x1a201020
-	.long 0x35202820
-	.long 0x28203120
-	.long 0x3620e61a
-	.long 0x20162038
-	.long 0x20372028
-	.long 0x1a200c20
-	.long 0x2c203720
-	.long 0x3c20e61a
-	.long 0x200f202f
-	.long 0x20242037
-	.long 0x1a202320
-	.long 0x32203120
-	.long 0x2803200f
-	.long 0x20322038
-	.long 0x20352036
-	.long 0x202c2027
-	.long 0x202820e6
-	.long 0x1a201b20
-	.long 0x24202c20
-	.long 0x31202520
-	.long 0x32203a1a
-	.long 0x200c2035
-	.long 0x2038202c
-	.long 0x20362028
-	.long 0x20e61a20
-	.long 0x22203220
-	.long 0x36202b20
-	.long 0x2c20f320
-	.long 0x361a2012
-	.long 0x2036202f
-	.long 0x20242031
-	.long 0x202720e6
-	.long 0x1a202420
-	.long 0x3120271a
-	.long 0x20162038
-	.long 0x2036202b
-	.long 0x20352032
-	.long 0x20322030
-	.long 0x1a201420
-	.long 0x2c203120
-	.long 0x2a202720
-	.long 0x3220301a
-	.long 0x200120fb
-	.long 0x200220e7
-	.long 0x190F0D00
-SnapREV_Widescreen_Description:
-	.long 0x160cffff
-	.long 0xff0e0088
-	.long 0x00b31220
-	.long 0x0e203120
-	.long 0x24202520
-	.long 0x2f20281a
-	.long 0x203a202c
-	.long 0x20272028
-	.long 0x20362026
-	.long 0x20352028
-	.long 0x20282031
-	.long 0x20e71a20
-	.long 0x19202f20
-	.long 0x24203c20
-	.long 0x28203520
-	.long 0x361a2037
-	.long 0x2024202e
-	.long 0x20281a20
-	.long 0x27202420
-	.long 0x30202420
-	.long 0x2a20281a
-	.long 0x203a202b
-	.long 0x20282031
-	.long 0x1a203220
-	.long 0x38203720
-	.long 0x36202c20
-	.long 0x2720281a
-	.long 0x20322029
-	.long 0x1a032037
-	.long 0x202b2028
-	.long 0x1a200420
-	.long 0xe920031a
-	.long 0x20352028
-	.long 0x202a202c
-	.long 0x20322031
-	.long 0x20e71a20
-	.long 0x1e203620
-	.long 0x281a201c
-	.long 0x20372024
-	.long 0x20312027
-	.long 0x20242035
-	.long 0x20271a20
-	.long 0x2c20291a
-	.long 0x2037202b
-	.long 0x202c2031
-	.long 0x1a202520
-	.long 0x2f202420
-	.long 0x26202e1a
-	.long 0x20252024
-	.long 0x20352036
-	.long 0x1a202420
-	.long 0x3520281a
-	.long 0x20332035
-	.long 0x20282036
-	.long 0x20282031
-	.long 0x203720e7
-	.long 0x03201e20
-	.long 0x3620281a
-	.long 0x201d2035
-	.long 0x20382028
-	.long 0x1a202c20
-	.long 0x291a2037
-	.long 0x202b2028
-	.long 0x1a202c20
-	.long 0x30202420
-	.long 0x2a20281a
-	.long 0x20322026
-	.long 0x20262038
-	.long 0x2033202c
-	.long 0x20282036
-	.long 0x1a203720
-	.long 0x2b20281a
-	.long 0x20282031
-	.long 0x2037202c
-	.long 0x20352028
-	.long 0x1a203620
-	.long 0x26203520
-	.long 0x28202820
-	.long 0x3120e719
-	.long 0x0F0D0000
-
 #endregion
 
 #endregion
@@ -1536,6 +979,28 @@ SnapREV_ApplyAllGeckoCodes:
   backup
   mr  REG_GObjData,r3
 
+#Check if LCD reduction was enabled
+	load	r3,VI_Struct
+	lwz	r3,0x1DC(r3)
+	load	r4,RenewInputs_Prefunction
+	cmpw	r3,r4
+	beq	SnapREV_ApplyAllGeckoCodes_DefaultCodes
+#Polling Drift Fix
+  bl  SnapREV_LagReduction_PD
+  mflr  r3
+  bl  SnapREV_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+
+SnapREV_ApplyAllGeckoCodes_DefaultCodes:
+#Default Codes
+  bl  SnapREV_DefaultCodes_On
+  mflr  r3
+  bl  SnapREV_ApplyGeckoCode
+
 #Default Codes
   bl  SnapREV_DefaultCodes_On
   mflr  r3
@@ -1672,8 +1137,16 @@ blrl
 
 SnapREV_LagPrompt_SceneLoad_TopText:
 blrl
+.if isPAL==1
 .ascii "Are you using HDMI?"
 .align 2
+.endif
+.if isPAL==0
+.ascii "Are you using HDMI"
+.hword 0x8148
+.byte 0x00
+.align 2
+.endif
 
 SnapREV_LagPrompt_SceneLoad_Yes:
 blrl
@@ -1926,7 +1399,7 @@ SnapREV_LagPrompt_SceneThink_Confirmed:
 #region Apply Code
 .set  REG_GeckoCode,12
 #Apply lag reduction
-  bl  SnapREV_LagReductionGeckoCode
+  bl  SnapREV_LagReduction_LCD
   mflr  r3
   bl  SnapREV_ApplyGeckoCode
 #Reset some pad variables to cancel the current alarm
@@ -1937,16 +1410,17 @@ SnapREV_LagPrompt_SceneThink_Confirmed:
 #Set new post retrace callback
   load  r3,PostRetraceCallback
   branchl r12,HSD_VISetUserPostRetraceCallback
-#Do some shit to enable 480p
-#Disable Deflicker
-  load  r3,DeflickerStruct
+#Enable progressive
+  load  r3,ProgressiveStruct
   li  r0,1
   stw r0,0x8(r3)
   branchl r12,Deflicker_Toggle
-#Enable REV60
+.if isPAL==1
+#Enable PAL60
 	load	r3,ProgressiveStruct
 	li	r4,1
 	stw	r4,0xC(r3)
+.endif
 #Call VIConfigure
 	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
 	branchl	r12,ScreenDisplay_Adjust
@@ -1985,25 +1459,6 @@ SnapREV_LagPrompt_SceneDecide_Exit:
   restore
   blr
 ############################################
-#endregion
-
-#region SnapREV_LagReductionGeckoCode
-SnapREV_LagReductionGeckoCode:
-blrl
-.long 0x04019D18
-.long 0x4BFFFD9D
-#Required for 480p
-.long 0x043D5170
-.long 0x00000002
-.long 0x043D5184
-.long 0x00000000
-.long 0x043D51AC
-.long 0x00000002
-.long 0x043D51C0
-.long 0x00000000
-.long 0x040000CC
-.long 0x00000000
-.long 0xFF000000
 #endregion
 
 #endregion
@@ -2094,6 +1549,10 @@ SnapREV_Exit:
 	li	r0,2
 	blr
 
+#region Gecko Codes
+#endregion
+#region Code Descriptions
+#endregion
+
 MMLCodeREV_End:
 blrl
-#endregion

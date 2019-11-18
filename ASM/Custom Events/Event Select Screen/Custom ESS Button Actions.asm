@@ -2272,18 +2272,18 @@ b	SnapshotCodePAL_Start
 .long 0										#revision's code length (stored to during creation of the snapshot)
 
 #region SnapshotCode102
+.include "../../Common102.s"
+
 MMLCode102_Start:
 blrl
 
 SnapshotCode102_Start:
-.include "../../Common102.s"
-.set	TournamentMode,0x801910E0	#PAL is 80191C24
 
 #Clear nametag region
-	load  r3,0x8045d850
+	lwz	r3,OFST_Memcard(r13)
+	addi	r3,r3,OFST_NametagStart
 	li r4,0
-	li r5,0
-	ori r5,r5,0xd894
+	load r5,Nametag_Length
 	branchl  r12,memset
 
 #Overwriting the debug CSS with a lag reduction prompt
@@ -2297,48 +2297,43 @@ SnapshotCode102_Start:
 .set  CodesCommonSceneID,10
 .set  InitialSelection,0
 .set  MaxCodesOnscreen,10
-#Function Addresses
-.set  PostRetraceCallback,0x800195fc
-.set  UnkPadStruct,0x804329f0
 
 #region Init New Scenes
 .set  REG_MinorSceneStruct,31
 
-#/*
 #Init LagPrompt major struct
   li  r3,PromptSceneID
-  bl  LagPrompt_MinorSceneStruct
+  bl  Snap102_LagPrompt_MinorSceneStruct
   mflr  r4
-  bl  LagPrompt_SceneLoad
+  bl  Snap102_LagPrompt_SceneLoad
   mflr  r5
-  bl  InitializeMajorSceneStruct
-#*/
+  bl  Snap102_InitializeMajorSceneStruct
 #Init Codes major struct
   li  r3,CodesSceneID
-  bl  Codes_MinorSceneStruct
+  bl  Snap102_Codes_MinorSceneStruct
   mflr  r4
-  bl  Codes_SceneLoad
+  bl  Snap102_Codes_SceneLoad
   mflr  r5
-  bl  InitializeMajorSceneStruct
+  bl  Snap102_InitializeMajorSceneStruct
 
 #Check if key has been generated yet
-	lwz	r20,MemcardData(r13)
+	lwz	r20,OFST_Memcard(r13)
 	lwz	r3,ModOFST_ModDataStart+ModOFST_ModDataKey(r20)
 	cmpwi	r3,0
-	bne	GenerateKeyEnd
+	bne	Snap102_GenerateKeyEnd
 #Generate Key
-	lwz	r3, -0x570C (r13)
+	lwz	r3, OFST_Rand (r13)
 	lwz	r3,0x0(r3)
 	stw	r3,ModOFST_ModDataStart+ModOFST_ModDataKey(r20)
-GenerateKeyEnd:
-  b CheckProgressive
+Snap102_GenerateKeyEnd:
+  b Snap102_CheckProgressive
 
-#region PointerConvert
-PointerConvert:
+#region Snap102_PointerConvert
+Snap102_PointerConvert:
   lwz r4,0x0(r3)          #Load bl instruction
   rlwinm r5,r4,8,25,29    #extract opcode bits
   cmpwi r5,0x48           #if not a bl instruction, exit
-  bne PointerConvert_Exit
+  bne Snap102_PointerConvert_Exit
   rlwinm  r4,r4,0,6,29  #extract offset bits
 	rlwinm	r5,r4,7,31,31		#Get signed bit
 	lis	r6,0xFC00
@@ -2346,11 +2341,11 @@ PointerConvert:
 	or	r4,r4,r5
   add r4,r4,r3
   stw r4,0x0(r3)
-PointerConvert_Exit:
+Snap102_PointerConvert_Exit:
   blr
 #endregion
-#region InitializeMajorSceneStruct
-InitializeMajorSceneStruct:
+#region Snap102_InitializeMajorSceneStruct
+Snap102_InitializeMajorSceneStruct:
 .set  REG_MajorScene,31
 .set  REG_MinorStruct,30
 .set  REG_SceneLoad,29
@@ -2362,408 +2357,46 @@ InitializeMajorSceneStruct:
   mr  REG_SceneLoad,r5
 
 #Get major scene struct
-  branchl r12,0x801a50ac
-GetMajorStruct_Loop:
+  branchl r12,Scene_GetMajorSceneStruct
+Snap102_GetMajorStruct_Loop:
   lbz	r4, 0x0001 (r3)
   cmpw r4,REG_MajorScene
-  beq GetMajorStruct_Exit
+  beq Snap102_GetMajorStruct_Exit
   addi  r3,r3,20
-  b GetMajorStruct_Loop
-GetMajorStruct_Exit:
+  b Snap102_GetMajorStruct_Loop
+Snap102_GetMajorStruct_Exit:
 
-InitMinorSceneStruct:
+Snap102_InitMinorSceneStruct:
 .set  REG_MinorStructParse,20
   stw REG_MinorStruct,0x10(r3)
   mr  REG_MinorStructParse,REG_MinorStruct
-InitMinorSceneStruct_Loop:
+Snap102_InitMinorSceneStruct_Loop:
 #Check if valid entry
   lbz r3,0x0(REG_MinorStructParse)
   extsb r3,r3
   cmpwi r3,-1
-  beq InitMinorSceneStruct_Exit
+  beq Snap102_InitMinorSceneStruct_Exit
 #Convert Pointers
   addi  r3,REG_MinorStructParse,0x4
-  bl  PointerConvert
+  bl  Snap102_PointerConvert
   addi  r3,REG_MinorStructParse,0x8
-  bl  PointerConvert
+  bl  Snap102_PointerConvert
   addi  REG_MinorStructParse,REG_MinorStructParse,0x18
-  b InitMinorSceneStruct_Loop
-InitMinorSceneStruct_Exit:
+  b Snap102_InitMinorSceneStruct_Loop
+Snap102_InitMinorSceneStruct_Exit:
 
   restore
   blr
 #endregion
 #endregion
 
-#/*
-#region LagPrompt
-
-#region LagPrompt_SceneLoad
-############################################
-
-#region LagPrompt_SceneLoad_Data
-LagPrompt_SceneLoad_TextProperties:
-blrl
-.set PromptX,0x0
-.set PromptY,0x4
-.set ZOffset,0x8
-.set CanvasScaling,0xC
-.set Scale,0x10
-.set YesX,0x14
-.set YesY,0x18
-.set YesScale,0x1C
-.set NoX,0x20
-.set NoY,0x24
-.set NoScale,0x28
-.set HighlightColor,0x2C
-.set NonHighlightColor,0x30
-.float 315     			   #REG_TextGObj X pos
-.float 200  					   #REG_TextGObj Y pos
-.float 0     		     	 #Z offset
-.float 1   				     #Canvas Scaling
-.float 1					    	#Text scale
-.float 265              #Yes X pos
-.float 300              #Yes Y pos
-.float 1              #Yes scale
-.float 365              #No X pos
-.float 300              #No Y pos
-.float 1              #No scale
-.byte 251,199,57,255		#highlighted color
-.byte 170,170,170,255	  #nonhighlighted color
-
-LagPrompt_SceneLoad_TopText:
-blrl
-.ascii "Are you using HDMI"
-.short 0x8148
-.byte 0
-.align 2
-
-LagPrompt_SceneLoad_Yes:
-blrl
-.string "Yes"
-.align 2
-
-LagPrompt_SceneLoad_No:
-blrl
-.string "No"
-.align 2
-
-#GObj Offsets
-  .set OFST_TextGObj,0x0
-  .set OFST_Selection,0x4
-
-#endregion
-#region LagPrompt_SceneLoad
-LagPrompt_SceneLoad:
-blrl
-
-#Init
-  backup
-
-LagPrompt_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl LagPrompt_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,0x803a611c
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,0x0(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO CENTER AROUND X LOCATION
-	li r4,0x1
-	stb r4,0x4A(REG_TextGObj)
-#Store Base Z Offset
-	lfs f1,ZOffset(REG_TextProp) #Z offset
-	stfs f1,0x8(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Prompt
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl LagPrompt_SceneLoad_TopText
-  mflr  r4
-	lfs	f1,PromptX(REG_TextProp)
-  lfs	f2,PromptY(REG_TextProp)
-	branchl r12,0x803a6b98
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create Yes
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl LagPrompt_SceneLoad_Yes
-  mflr  r4
-	lfs	f1,YesX(REG_TextProp)
-  lfs	f2,YesY(REG_TextProp)
-	branchl r12,0x803a6b98
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create No
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl LagPrompt_SceneLoad_No
-  mflr  r4
-	lfs	f1,NoX(REG_TextProp)
-  lfs	f2,NoY(REG_TextProp)
-	branchl r12,0x803a6b98
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,0x8037f1b0
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  LagPrompt_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-
-#Store text gobj pointer
-  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
-#Init Selection value
-  li  r3,InitialSelection
-  stb r3,OFST_Selection(REG_GObjData)
-
-#Highlight selection
-  mr  r3,REG_TextGObj
-  li  r4,InitialSelection+1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-
-LagPrompt_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region LagPrompt_SceneThink
-LagPrompt_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  LagPrompt_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,0x801a36c0
-  mr  REG_Inputs,r3
-#Check for movement to the right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq LagPrompt_SceneThink_SkipRight
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  addi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,1
-  ble LagPrompt_SceneThink_HighlightSelection
-  li  r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  b LagPrompt_SceneThink_CheckForA
-LagPrompt_SceneThink_SkipRight:
-#Check for movement to the left
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq LagPrompt_SceneThink_CheckForA
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  subi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge LagPrompt_SceneThink_HighlightSelection
-  li  r3,0
-  stb r3,OFST_Selection(REG_GObjData)
-  b LagPrompt_SceneThink_CheckForA
-
-LagPrompt_SceneThink_HighlightSelection:
-#Unhighlight both options
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,1
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,2
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-#Highlight selection
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  lbz r4,OFST_Selection(REG_GObjData)
-  addi  r4,r4,1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Play SFX
-  branchl r12,0x80174380
-#endregion
-#region Check for Confirmation
-LagPrompt_SceneThink_CheckForA:
-  li  r3,4
-  branchl r12,0x801a36a0
-  rlwinm. r0,r4,0,0x100
-  bne LagPrompt_SceneThink_Confirmed
-  rlwinm. r0,r4,0,0x1000
-  bne LagPrompt_SceneThink_Confirmed
-  b LagPrompt_SceneThink_Exit
-LagPrompt_SceneThink_Confirmed:
-#Play Menu Sound
-  branchl r12,0x80174338
-#If yes, apply lag reduction
-  lbz r3,OFST_Selection(REG_GObjData)
-  cmpwi r3,0
-  bne LagPrompt_SceneThink_ExitScene
-#endregion
-#region Apply Code
-.set  REG_GeckoCode,12
-#Apply lag reduction
-  bl  LagReductionGeckoCode
-  mflr  r3
-  bl  ApplyGeckoCode
-#Reset some pad variables to cancel the current alarm
-  load  r3,UnkPadStruct
-  li  r4,0
-  stw r4,0x4(r3)
-  stw r4,0x44(r3)
-#Set new post retrace callback
-  load  r3,PostRetraceCallback
-  branchl r12,0x80375934
-#Enable 480p
-	load	r3,ProgressiveStruct
-	li	r4,1
-	stw	r4,0x8(r3)
-#Call VIConfigure
-	li	r3,0	#disables deflicker and will enable 480p
-	branchl	r12,ScreenDisplay_Adjust
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,0x80328f50
-#endregion
-
-LagPrompt_SceneThink_ExitScene:
-  branchl r12,0x801a4b60
-
-LagPrompt_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region LagPrompt_SceneDecide
-LagPrompt_SceneDecide:
-
-  backup
-
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,0x801a4ce0
-  bl  Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-
-#Enter Codes Scene
-  li  r3,CodesSceneID
-  branchl r12,0x801a42e8
-#Change Major
-  branchl r12,0x801a42d4
-
-LagPrompt_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-#region LagReductionGeckoCode
-LagReductionGeckoCode:
-blrl
-.long 0x04019860
-.long 0x4BFFFD9D
-.long 0x0415FFB8
-.long 0x3C808001
-.long 0x0415FFBC
-.long 0x608395FC
-.long 0xFF000000
-#endregion
-
-#endregion
-#*/
 #region Codes
 
-#region Codes_SceneLoad
+#region Snap102_Codes_SceneLoad
 ############################################
 
-#region Codes_SceneLoad_Data
-Codes_SceneLoad_TextProperties:
+#region Snap102_Codes_SceneLoad_Data
+Snap102_Codes_SceneLoad_TextProperties:
 blrl
 .set TitleX,0x0
 .set TitleY,0x4
@@ -2803,185 +2436,1390 @@ blrl
 .float	0.5							#ModName Scale
 .float	30							#Desc X
 .float	390							#Desc Y
-.float	0								#Desc Z
+.float	0.1								#Desc Z
 .float	560							#Desc Max X
-.float	0								#Desc Unk
+.float	0.1								#Desc Unk
 .long 0x43300000,0x80000000
 
 .set CodeAmount,10
 #region Code Names Order
-CodeNames_Order:
+Snap102_CodeNames_Order:
 blrl
-bl  CodeNames_UCF
-bl  CodeNames_Frozen
-bl  CodeNames_Spawns
-bl  CodeNames_Wobbling
-bl  CodeNames_Ledgegrab
-bl	CodeNames_TournamentQoL
-bl	CodeNames_FriendliesQoL
-bl	CodeNames_GameVersion
-bl	CodeNames_StageExpansion
-bl	CodeNames_Widescreen
+bl  Snap102_CodeNames_UCF
+bl  Snap102_CodeNames_Frozen
+bl  Snap102_CodeNames_Spawns
+bl  Snap102_CodeNames_Wobbling
+bl  Snap102_CodeNames_Ledgegrab
+bl	Snap102_CodeNames_TournamentQoL
+bl	Snap102_CodeNames_FriendliesQoL
+bl	Snap102_CodeNames_GameVersion
+bl	Snap102_CodeNames_StageExpansion
+bl	Snap102_CodeNames_Widescreen
 .align 2
 #endregion
 #region Code Names
-CodeNames_Title:
+Snap102_CodeNames_Title:
 blrl
 .string "Select Codes:"
 .align 2
-CodeNames_ModName:
+Snap102_CodeNames_ModName:
 blrl
 .string "MultiMod Launcher v0.6"
 .align 2
-CodeNames_UCF:
+Snap102_CodeNames_UCF:
 .string "UCF:"
 .align 2
-CodeNames_Frozen:
+Snap102_CodeNames_Frozen:
 .string "Frozen Stages:"
 .align 2
-CodeNames_Spawns:
+Snap102_CodeNames_Spawns:
 .string "Neutral Spawns:"
 .align 2
-CodeNames_Wobbling:
+Snap102_CodeNames_Wobbling:
 .string "Disable Wobbling:"
 .align 2
-CodeNames_Ledgegrab:
+Snap102_CodeNames_Ledgegrab:
 .string "Ledgegrab Limit:"
 .align 2
-CodeNames_TournamentQoL:
+Snap102_CodeNames_TournamentQoL:
 .string "Tournament QoL:"
 .align 2
-CodeNames_FriendliesQoL:
+Snap102_CodeNames_FriendliesQoL:
 .string "Friendlies QoL:"
 .align 2
-CodeNames_GameVersion:
+Snap102_CodeNames_GameVersion:
 .string "Game Version:"
 .align 2
-CodeNames_StageExpansion:
+Snap102_CodeNames_StageExpansion:
 .string "Stage Expansion:"
 .align 2
-CodeNames_Widescreen:
+Snap102_CodeNames_Widescreen:
 .string "Widescreen:"
 .align 2
 #endregion
 #region Code Options Order
-CodeOptions_Order:
+Snap102_CodeOptions_Order:
 blrl
-bl  CodeOptions_UCF
-bl  CodeOptions_Frozen
-bl  CodeOptions_Spawns
-bl  CodeOptions_Wobbling
-bl  CodeOptions_Ledgegrab
-bl	CodeOptions_TournamentQoL
-bl  CodeOptions_FriendliesQoL
-bl	CodeOptions_GameVersion
-bl	CodeOptions_StageExpansion
-bl  CodeOptions_Widescreen
+bl  Snap102_CodeOptions_UCF
+bl  Snap102_CodeOptions_Frozen
+bl  Snap102_CodeOptions_Spawns
+bl  Snap102_CodeOptions_Wobbling
+bl  Snap102_CodeOptions_Ledgegrab
+bl	Snap102_CodeOptions_TournamentQoL
+bl  Snap102_CodeOptions_FriendliesQoL
+bl	Snap102_CodeOptions_GameVersion
+bl	Snap102_CodeOptions_StageExpansion
+bl  Snap102_CodeOptions_Widescreen
 .align 2
 #endregion
 #region Code Options
-.set  CodeOptions_OptionCount,0x0
-.set	CodeOptions_CodeDescription,0x4
-.set  CodeOptions_GeckoCodePointers,0x8
-CodeOptions_Wrapper:
+.set  Snap102_CodeOptions_OptionCount,0x0
+.set	Snap102_CodeOptions_CodeDescription,0x4
+.set  Snap102_CodeOptions_GeckoCodePointers,0x8
+Snap102_CodeOptions_Wrapper:
 	blrl
 	.short 0x8183
 	.ascii "%s"
 	.short 0x8184
 	.byte 0
 	.align 2
-CodeOptions_UCF:
+Snap102_CodeOptions_UCF:
 	.long 3 -1           #number of options
-	bl	UCF_Description
-	bl  UCF_Off
-	bl  UCF_On
-	bl  UCF_Stealth
+	bl	Snap102_UCF_Description
+	bl  Snap102_UCF_Off
+	bl  Snap102_UCF_On
+	bl  Snap102_UCF_Stealth
 	.string "Off"
 	.string "On"
 	.string "Stealth"
 	.align 2
-CodeOptions_Frozen:
+Snap102_CodeOptions_Frozen:
 	.long 3 -1           #number of options
-	bl	Frozen_Description
-	bl  Frozen_Off
-	bl  Frozen_Stadium
-	bl  Frozen_All
+	bl	Snap102_Frozen_Description
+	bl  Snap102_Frozen_Off
+	bl  Snap102_Frozen_Stadium
+	bl  Snap102_Frozen_All
 	.string "Off"
 	.string "Stadium Only"
 	.string "All"
 	.align 2
-CodeOptions_Spawns:
+Snap102_CodeOptions_Spawns:
 	.long 2 -1           #number of options
-	bl	Spawns_Description
-	bl  Spawns_Off
-	bl  Spawns_On
+	bl	Snap102_Spawns_Description
+	bl  Snap102_Spawns_Off
+	bl  Snap102_Spawns_On
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_Wobbling:
+Snap102_CodeOptions_Wobbling:
 	.long 2 -1           #number of options
-	bl	DisableWobbling_Description
-	bl  DisableWobbling_Off
-	bl  DisableWobbling_On
+	bl	Snap102_DisableWobbling_Description
+	bl  Snap102_DisableWobbling_Off
+	bl  Snap102_DisableWobbling_On
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_Ledgegrab:
+Snap102_CodeOptions_Ledgegrab:
 	.long 2 -1           #number of options
-	bl	Ledgegrab_Description
-	bl  Ledgegrab_Off
-	bl  Ledgegrab_On
+	bl	Snap102_Ledgegrab_Description
+	bl  Snap102_Ledgegrab_Off
+	bl  Snap102_Ledgegrab_On
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_TournamentQoL:
+Snap102_CodeOptions_TournamentQoL:
 	.long 2 -1           #number of options
-	bl	TournamentQoL_Description
-	bl  TournamentQoL_Off
-	bl  TournamentQoL_On
+	bl	Snap102_TournamentQoL_Description
+	bl  Snap102_TournamentQoL_Off
+	bl  Snap102_TournamentQoL_On
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_FriendliesQoL:
+Snap102_CodeOptions_FriendliesQoL:
 	.long 2 -1           #number of options
-	bl	FriendliesQoL_Description
-	bl  FriendliesQoL_Off
-	bl  FriendliesQoL_On
+	bl	Snap102_FriendliesQoL_Description
+	bl  Snap102_FriendliesQoL_Off
+	bl  Snap102_FriendliesQoL_On
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_GameVersion:
+Snap102_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
-	bl	GameVersion_Description
-	bl  GameVersion_NTSC
-	bl  GameVersion_PAL
-	bl  GameVersion_SDR
+	bl	Snap102_GameVersion_Description
+	bl  Snap102_GameVersion_NTSC
+	bl  Snap102_GameVersion_102
+	bl  Snap102_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
 	.string "SD Remix"
 	.align 2
-CodeOptions_StageExpansion:
+Snap102_CodeOptions_StageExpansion:
 	.long 2 -1           #number of options
-	bl	StageExpansion_Description
-	bl  StageExpansion_Off
-	bl  StageExpansion_On
+	bl	Snap102_StageExpansion_Description
+	bl  Snap102_StageExpansion_Off
+	bl  Snap102_StageExpansion_On
 	.string "Off"
 	.string "On"
 	.align 2
-CodeOptions_Widescreen:
+Snap102_CodeOptions_Widescreen:
 	.long 3 -1           #number of options
-	bl	Widescreen_Description
-	bl  Widescreen_Off
-	bl  Widescreen_Standard
-	bl	Widescreen_True
+	bl	Snap102_Widescreen_Description
+	bl  Snap102_Widescreen_Off
+	bl  Snap102_Widescreen_Standard
+	bl	Snap102_Widescreen_True
 	.string "Off"
 	.string "Standard"
 	.string "True"
 	.align 2
 #endregion
+
+#endregion
+#region Snap102_Codes_SceneLoad
+Snap102_Codes_SceneLoad:
+#GObj Offsets
+  .set OFST_CodeNamesTextGObj,0x0
+  .set OFST_CodeOptionsTextGObj,0x4
+	.set OFST_CodeDescTextGObj,0x8
+  .set OFST_CursorLocation,0xC
+  .set OFST_ScrollAmount,0xE
+  .set OFST_OptionSelections,0x10
+blrl
+
+#Init
+  backup
+
+Snap102_Codes_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl Snap102_Codes_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Title
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap102_CodeNames_Title
+  mflr  r4
+	lfs	f1,TitleX(REG_TextProp)
+  lfs	f2,TitleY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Modname + version
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap102_CodeNames_ModName
+  mflr  r4
+	lfs	f1,ModNameX(REG_TextProp)
+  lfs	f2,ModNameY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Init Menu
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Snap102_Codes_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+#Copy Saved Menu Options
+	addi	r3,REG_GObjData,OFST_OptionSelections
+	lwz	r4, OFST_Memcard (r13)
+	addi r4,r4,OFST_ModPrefs
+	li	r5,0x18
+	branchl	r12,memcpy
+
+#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	lfs	f1,DescriptionX(REG_TextProp)
+	lfs	f2,DescriptionY(REG_TextProp)
+	lfs	f3,DescriptionZ(REG_TextProp)
+	lfs	f4,DescriptionMaxX(REG_TextProp)
+	lfs	f5,DescriptionUnk(REG_TextProp)
+	branchl r12,Text_AllocateTextObject
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
+#Init
+	mr	r3,REG_TextGObj
+	li	r4,0
+	branchl	r12,Text_CopyPremadeTextDataToStruct
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Menu
+  mr  r3,REG_GObjData
+  bl  Snap102_Codes_CreateMenu
+
+Snap102_Codes_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region Snap102_Codes_SceneThink
+Snap102_Codes_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Snap102_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Code Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement up
+  rlwinm. r0,REG_Inputs,0,0x10
+  beq Snap102_Codes_SceneThink_SkipUp
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap102_Codes_SceneThink_UpdateMenu
+#Cursor stays at top
+  li  r3,0
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll up
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap102_Codes_SceneThink_UpdateMenu
+#Scroll stays at top
+  li  r3,0
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Snap102_Codes_SceneThink_Exit
+Snap102_Codes_SceneThink_SkipUp:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x20
+  beq Snap102_Codes_SceneThink_AdjustOptionSelection
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Check if exceeds total amount of codes
+  extsb r3,r3
+  cmpwi r3,CodeAmount-1
+  ble 0x10
+#Cursor stays at the last code
+  li  r3,CodeAmount-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  b Snap102_Codes_SceneThink_Exit
+#Check if exceeds max amount of codes per page
+  cmpwi r3,MaxCodesOnscreen-1
+  ble Snap102_Codes_SceneThink_UpdateMenu
+#Cursor stays at bottom
+  li  r3,MaxCodesOnscreen-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll down
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,CodeAmount-MaxCodesOnscreen
+  ble Snap102_Codes_SceneThink_UpdateMenu
+#Scroll stays at bottom
+  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Snap102_Codes_SceneThink_Exit
+#endregion
+#region Adjust Option Selection
+Snap102_Codes_SceneThink_AdjustOptionSelection:
+.set  REG_MaxOptions,20
+.set  REG_OptionValuePtr,21
+#Check for movement right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Snap102_Codes_SceneThink_SkipRight
+#Get amount of options for this code
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  bl  Snap102_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+  bl  Snap102_ConvertBlPointer
+  lwz REG_MaxOptions,Snap102_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Increment value
+  lbz r3,0x0(REG_OptionValuePtr)
+  addi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpw r3,REG_MaxOptions
+  ble Snap102_Codes_SceneThink_UpdateMenu
+#Option stays maxxed out
+  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
+  b Snap102_Codes_SceneThink_Exit
+Snap102_Codes_SceneThink_SkipRight:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Snap102_Codes_SceneThink_CheckToExit
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Decrement value
+  lbz r3,0x0(REG_OptionValuePtr)
+  subi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap102_Codes_SceneThink_UpdateMenu
+#Option stays at 0
+  li  r3,0
+  stb r3,0x0(REG_OptionValuePtr)
+  b Snap102_Codes_SceneThink_Exit
+#endregion
+#region Check to Exit
+Snap102_Codes_SceneThink_CheckToExit:
+#Check for start input
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x1000
+  beq Snap102_Codes_SceneThink_Exit
+#Apply codes
+  mr  r3,REG_GObjData
+  bl  Snap102_ApplyAllGeckoCodes
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_Forward
+#Exit Scene
+  branchl r12,MenuController_ChangeScreenMinor
+#Save Menu Options
+	lwz	r3, OFST_Memcard (r13)
+	addi r3,r3,OFST_ModPrefs
+	addi	r4,REG_GObjData,OFST_OptionSelections
+	li	r5,0x18
+	branchl	r12,memcpy
+#Request a memcard save
+	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
+	li	r3,0
+	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
+#Set memcard save flag
+	load	r3,OFST_MemcardController
+	li	r4,1
+	stw	r4,0xC(r3)
+
+  b Snap102_Codes_SceneThink_Exit
+#endregion
+
+Snap102_Codes_SceneThink_UpdateMenu:
+#Redraw Menu
+  mr  r3,REG_GObjData
+  bl  Snap102_Codes_CreateMenu
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+  b Snap102_Codes_SceneThink_Exit
+
+Snap102_Codes_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Snap102_Codes_SceneDecide
+Snap102_Codes_SceneDecide:
+  backup
+
+#Change Major
+  li  r3,ExitSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Leave Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+Snap102_Codes_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region Snap102_Codes_CreateMenu
+Snap102_Codes_CreateMenu:
+.set  REG_GObjData,31
+.set  REG_TextGObj,30
+.set  REG_TextProp,29
+
+#Init
+  backup
+  mr  REG_GObjData,r3
+  bl  Snap102_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#Remove old text gobjs if they exist
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Snap102_Codes_CreateMenu_SkipNameRemoval
+  branchl r12,Text_RemoveText
+Snap102_Codes_CreateMenu_SkipNameRemoval:
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Snap102_Codes_CreateMenu_SkipOptionRemoval
+  branchl r12,Text_RemoveText
+Snap102_Codes_CreateMenu_SkipOptionRemoval:
+
+#region CreateTextGObjs
+Snap102_Codes_CreateMenu_CreateTextGObjs:
+#Create Code Mames Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#Create Code Options Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#endregion
+#region Snap102_Codes_CreateMenu_CreateNames
+Snap102_Codes_CreateMenu_CreateNamesInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+  li  REG_Count,0
+Snap102_Codes_CreateMenu_CreateNamesLoop:
+#Next name to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,REG_Count
+#Get the string bl pointer
+  bl  Snap102_CodeNames_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  Snap102_ConvertBlPointer
+  mr  r4,r3
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lfs f1,CodesX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Snap102_Codes_CreateMenu_CreateNamesIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Snap102_Codes_CreateMenu_CreateNameLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Snap102_Codes_CreateMenu_CreateNamesLoop
+Snap102_Codes_CreateMenu_CreateNameLoopEnd:
+#endregion
+#region Snap102_Codes_CreateMenu_CreateOptions
+Snap102_Codes_CreateMenu_CreateOptionsInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+.set  REG_CurrentOptionID,22
+.set  REG_CurrentOptionSelection,23
+.set  REG_OptionStrings,24
+.set  REG_StringLoopCount,25
+  li  REG_Count,0
+Snap102_Codes_CreateMenu_CreateOptionsLoop:
+#Next option to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add REG_CurrentOptionID,r3,REG_Count
+#Get the bl pointer
+  mr  r3,REG_CurrentOptionID
+  bl  Snap102_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  Snap102_ConvertBlPointer
+  lwz r4,Snap102_CodeOptions_OptionCount(r3)
+  addi  r4,r4,1
+  addi  REG_OptionStrings,r3,Snap102_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
+  mulli r4,r4,0x4                                           #pointer length
+  add REG_OptionStrings,REG_OptionStrings,r4
+#Get this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
+
+#Loop through strings and get the current one
+  li  REG_StringLoopCount,0
+Snap102_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
+  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
+  beq Snap102_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
+#Get next string
+  mr  r3,REG_OptionStrings
+  branchl r12,strlen
+  add REG_OptionStrings,REG_OptionStrings,r3
+  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
+  addi  REG_StringLoopCount,REG_StringLoopCount,1
+  b Snap102_Codes_CreateMenu_CreateOptionsLoop_StringSearch
+
+Snap102_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  bl  Snap102_CodeOptions_Wrapper
+  mflr  r4
+  mr  r5,REG_OptionStrings
+  lfs f1,OptionsX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Snap102_Codes_CreateMenu_CreateOptionsIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Snap102_Codes_CreateMenu_CreateOptionsLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Snap102_Codes_CreateMenu_CreateOptionsLoop
+Snap102_Codes_CreateMenu_CreateOptionsLoopEnd:
+#endregion
+#region Snap102_Codes_CreateMenu_HighlightCursor
+#Name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Option
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#endregion
+#region Snap102_Codes_CreateMenu_ChangeCodeDescription
+#Get highlighted code ID
+	lhz r3,OFST_ScrollAmount(REG_GObjData)
+	lhz r4,OFST_CursorLocation(REG_GObjData)
+	add	r3,r3,r4
+#Get this codes options
+	bl	Snap102_CodeOptions_Order
+	mflr	r4
+	mulli	r3,r3,0x4
+	add	r3,r3,r4
+	bl	Snap102_ConvertBlPointer
+#Get this codes description
+	addi	r3,r3,Snap102_CodeOptions_CodeDescription
+	bl	Snap102_ConvertBlPointer
+	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
+#Store to text gobj
+	stw	r3,0x5C(r4)
+#endregion
+
+Snap102_Codes_CreateMenu_Exit:
+  restore
+  blr
+
+###############################################
+
+Snap102_ConvertBlPointer:
+  lwz r4,0x0(r3)        #Load bl instruction
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+	rlwinm	r5,r4,7,31,31		#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5
+  add r3,r4,r3
+  blr
+
+#endregion
+#region Snap102_ApplyAllGeckoCodes
+Snap102_ApplyAllGeckoCodes:
+.set  REG_GObjData,31
+.set  REG_Count,30
+.set  REG_OptionSelection,29
+#Init
+  backup
+  mr  REG_GObjData,r3
+
+#Check if LCD reduction was enabled
+	load	r3,VI_Struct
+	lwz	r3,0x1DC(r3)
+	load	r4,RenewInputs_Prefunction
+	cmpw	r3,r4
+	beq	Snap102_ApplyAllGeckoCodes_DefaultCodes
+#Polling Drift Fix
+  bl  Snap102_LagReduction_PD
+  mflr  r3
+  bl  Snap102_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+
+Snap102_ApplyAllGeckoCodes_DefaultCodes:
+#Default Codes
+  bl  Snap102_DefaultCodes_On
+  mflr  r3
+  bl  Snap102_ApplyGeckoCode
+
+#Default Codes
+  bl  Snap102_DefaultCodes_On
+  mflr  r3
+  bl  Snap102_ApplyGeckoCode
+
+#Init Loop
+  li  REG_Count,0
+ApplyAllGeckoSnap102_Codes_Loop:
+#Load this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's default gecko code pointer
+  bl  Snap102_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  Snap102_ConvertBlPointer
+  addi  r3,r3,Snap102_CodeOptions_GeckoCodePointers
+  bl  Snap102_ConvertBlPointer
+  bl  Snap102_ApplyGeckoCode
+#Get this code's gecko code pointers
+  bl  Snap102_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  Snap102_ConvertBlPointer
+  addi  r3,r3,Snap102_CodeOptions_GeckoCodePointers
+  mulli r4,REG_OptionSelection,0x4
+  add  r3,r3,r4
+  bl  Snap102_ConvertBlPointer
+  bl  Snap102_ApplyGeckoCode
+
+ApplyAllGeckoSnap102_Codes_IncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  blt ApplyAllGeckoSnap102_Codes_Loop
+
+ApplyAllGeckoSnap102_Codes_Exit:
+  restore
+  blr
+
+####################################
+
+Snap102_ApplyGeckoCode:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+Snap102_ApplyGeckoCode_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq Snap102_ApplyGeckoCode_C2
+  cmpwi r3,0x4
+  beq Snap102_ApplyGeckoCode_04
+  cmpwi r3,0xFF
+  beq Snap102_ApplyGeckoCode_Exit
+  b Snap102_ApplyGeckoCode_Exit
+Snap102_ApplyGeckoCode_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b Snap102_ApplyGeckoCode_Loop
+Snap102_ApplyGeckoCode_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b Snap102_ApplyGeckoCode_Loop
+Snap102_ApplyGeckoCode_Exit:
+blr
+
+#endregion
+
+#endregion
+
+#region LagPrompt
+
+#region Snap102_LagPrompt_SceneLoad
+############################################
+
+#region Snap102_LagPrompt_SceneLoad_Data
+Snap102_LagPrompt_SceneLoad_TextProperties:
+blrl
+.set PromptX,0x0
+.set PromptY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YesX,0x14
+.set YesY,0x18
+.set YesScale,0x1C
+.set NoX,0x20
+.set NoY,0x24
+.set NoScale,0x28
+.set HighlightColor,0x2C
+.set NonHighlightColor,0x30
+.float 315     			   #REG_TextGObj X pos
+.float 200  					   #REG_TextGObj Y pos
+.float 0.1     		     	 #Z offset
+.float 1   				     #Canvas Scaling
+.float 1					    	#Text scale
+.float 265              #Yes X pos
+.float 300              #Yes Y pos
+.float 1              #Yes scale
+.float 365              #No X pos
+.float 300              #No Y pos
+.float 1              #No scale
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+
+Snap102_LagPrompt_SceneLoad_TopText:
+blrl
+.if isPAL==1
+.ascii "Are you using HDMI?"
+.align 2
+.endif
+.if isPAL==0
+.ascii "Are you using HDMI"
+.hword 0x8148
+.byte 0x00
+.align 2
+.endif
+
+Snap102_LagPrompt_SceneLoad_Yes:
+blrl
+.string "Yes"
+.align 2
+
+Snap102_LagPrompt_SceneLoad_No:
+blrl
+.string "No"
+.align 2
+
+#GObj Offsets
+  .set OFST_TextGObj,0x0
+  .set OFST_Selection,0x4
+
+#endregion
+#region Snap102_LagPrompt_SceneLoad
+Snap102_LagPrompt_SceneLoad:
+blrl
+
+#Init
+  backup
+
+Snap102_LagPrompt_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl Snap102_LagPrompt_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,0x0(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap102_LagPrompt_SceneLoad_TopText
+  mflr  r4
+	lfs	f1,PromptX(REG_TextProp)
+  lfs	f2,PromptY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create Yes
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap102_LagPrompt_SceneLoad_Yes
+  mflr  r4
+	lfs	f1,YesX(REG_TextProp)
+  lfs	f2,YesY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create No
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap102_LagPrompt_SceneLoad_No
+  mflr  r4
+	lfs	f1,NoX(REG_TextProp)
+  lfs	f2,NoY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Snap102_LagPrompt_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+
+#Store text gobj pointer
+  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
+#Init Selection value
+  li  r3,InitialSelection
+  stb r3,OFST_Selection(REG_GObjData)
+
+#Highlight selection
+  mr  r3,REG_TextGObj
+  li  r4,InitialSelection+1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+
+Snap102_LagPrompt_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region Snap102_LagPrompt_SceneThink
+Snap102_LagPrompt_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Snap102_LagPrompt_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement to the right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Snap102_LagPrompt_SceneThink_SkipRight
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  addi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,1
+  ble Snap102_LagPrompt_SceneThink_HighlightSelection
+  li  r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  b Snap102_LagPrompt_SceneThink_CheckForA
+Snap102_LagPrompt_SceneThink_SkipRight:
+#Check for movement to the left
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Snap102_LagPrompt_SceneThink_CheckForA
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  subi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap102_LagPrompt_SceneThink_HighlightSelection
+  li  r3,0
+  stb r3,OFST_Selection(REG_GObjData)
+  b Snap102_LagPrompt_SceneThink_CheckForA
+
+Snap102_LagPrompt_SceneThink_HighlightSelection:
+#Unhighlight both options
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,1
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,2
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+#Highlight selection
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  lbz r4,OFST_Selection(REG_GObjData)
+  addi  r4,r4,1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+#endregion
+#region Check for Confirmation
+Snap102_LagPrompt_SceneThink_CheckForA:
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x100
+  bne Snap102_LagPrompt_SceneThink_Confirmed
+  rlwinm. r0,r4,0,0x1000
+  bne Snap102_LagPrompt_SceneThink_Confirmed
+  b Snap102_LagPrompt_SceneThink_Exit
+Snap102_LagPrompt_SceneThink_Confirmed:
+#Play Menu Sound
+  branchl r12,SFX_PlayMenuSound_Forward
+#If yes, apply lag reduction
+  lbz r3,OFST_Selection(REG_GObjData)
+  cmpwi r3,0
+  bne Snap102_LagPrompt_SceneThink_ExitScene
+#endregion
+#region Apply Code
+.set  REG_GeckoCode,12
+#Apply lag reduction
+  bl  Snap102_LagReduction_LCD
+  mflr  r3
+  bl  Snap102_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+#Set new post retrace callback
+  load  r3,PostRetraceCallback
+  branchl r12,HSD_VISetUserPostRetraceCallback
+#Enable progressive
+  load  r3,ProgressiveStruct
+  li  r0,1
+  stw r0,0x8(r3)
+  branchl r12,Deflicker_Toggle
+.if isPAL==1
+#Enable PAL60
+	load	r3,ProgressiveStruct
+	li	r4,1
+	stw	r4,0xC(r3)
+.endif
+#Call VIConfigure
+	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
+	branchl	r12,ScreenDisplay_Adjust
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#endregion
+
+Snap102_LagPrompt_SceneThink_ExitScene:
+  branchl r12,MenuController_ChangeScreenMinor
+
+Snap102_LagPrompt_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Snap102_LagPrompt_SceneDecide
+Snap102_LagPrompt_SceneDecide:
+
+  backup
+
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap102_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+
+#Enter Codes Scene
+  li  r3,CodesSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Change Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+Snap102_LagPrompt_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+
+#endregion
+
+#region MinorSceneStruct
+Snap102_LagPrompt_MinorSceneStruct:
+blrl
+#Lag Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Snap102_LagPrompt_SceneDecide   #SceneDecide
+.byte PromptCommonSceneID   #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+Snap102_Codes_MinorSceneStruct:
+blrl
+#Codes Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Snap102_Codes_SceneDecide       #SceneDecide
+.byte CodesCommonSceneID    #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+#endregion
+
+Snap102_CheckProgressive:
+
+#Check if progressive is enabled
+  lis	r3,0xCC00
+	lhz	r3,0x206E(r3)
+	rlwinm.	r3,r3,0,0x1
+  beq Snap102_NoProgressive
+
+Snap102_IsProgressive:
+#Override SceneLoad
+  li  r3,PromptCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap102_LagPrompt_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap102_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load LagPrompt
+  li	r3, PromptSceneID
+  b Snap102_Exit
+Snap102_NoProgressive:
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap102_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap102_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load Codes
+  li  r3,CodesSceneID
+
+Snap102_Exit:
+#Store as next scene
+	branchl r12,MenuController_WriteToPendingMajor
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+
+##########
+## Exit ##
+##########
+
+#Return to the game
+  restore
+	li	r0,2
+	blr
+
 #region Gecko Codes
-DefaultCodes:
-  blrl
+Snap102_DefaultCodes_On:
+	blrl
 	.long 0xC201AE8C
 	.long 0x00000004
 	.long 0x2C190002
@@ -3016,6 +3854,88 @@ DefaultCodes:
 	.long 0x00000000
 	.long 0x04397878
 	.long 0x4800020C
+	.long 0xC2228BF4
+	.long 0x00000028
+	.long 0x3E808034
+	.long 0x629456A8
+	.long 0x480000F5
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000A9
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x4800005D
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x48000089
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000B5
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000AD
+	.long 0x7C6802A6
+	.long 0x3C808000
+	.long 0x88A40007
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x4800008D
+	.long 0x7C6802A6
+	.long 0x7E8903A6
+	.long 0x4E800421
+	.long 0x480000B8
+	.long 0x4E800021
+	.long 0x23232054
+	.long 0x57454554
+	.long 0x20412050
+	.long 0x49435455
+	.long 0x5245204F
+	.long 0x46205448
+	.long 0x4953204D
+	.long 0x45535341
+	.long 0x47452054
+	.long 0x4F204055
+	.long 0x6E636C65
+	.long 0x50756E63
+	.long 0x685F2023
+	.long 0x230A0000
+	.long 0x4E800021
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x23232323
+	.long 0x230A0000
+	.long 0x4E800021
+	.long 0x0A000000
+	.long 0x4E800021
+	.long 0x4D756C74
+	.long 0x694D6F64
+	.long 0x204C6175
+	.long 0x6E636865
+	.long 0x72207630
+	.long 0x2E36200A
+	.long 0x47616D65
+	.long 0x20566572
+	.long 0x73696F6E
+	.long 0x3A202573
+	.long 0x7225640A
+	.long 0x00000000
+	.long 0x387D0000
+	.long 0x00000000
 	.long 0xC222D638
 	.long 0x00000023
 	.long 0x7C0802A6
@@ -3096,8 +4016,6 @@ DefaultCodes:
 	.long 0x60000000
 	.long 0x041A4258
 	.long 0x38600000
-	.long 0x0445BF18
-	.long 0x08010100
 	.long 0x0445BF10
 	.long 0x00340102
 	.long 0x0445C370
@@ -3118,15 +4036,15 @@ DefaultCodes:
 	.long 0x38600001
 	.long -1
 
-UCF_Off:
+Snap102_UCF_Off:
 	.long 0x040C9A44
 	.long 0xD01F002C
 	.long 0x040998A4
 	.long 0x8083002C
 	.long 0x042662D0
 	.long 0x38980000
-  .long 0xFF000000
-UCF_On:
+	.long -1
+Snap102_UCF_On:
 	.long 0xC20C9A44
 	.long 0x0000002B
 	.long 0xD01F002C
@@ -3221,7 +4139,7 @@ UCF_On:
 	.long 0x90010004
 	.long 0x9421FF00
 	.long 0xBE810008
-	.long 0x7C7E1B78
+	.long 0x7FFEFB78
 	.long 0x83FE002C
 	.long 0x480000DD
 	.long 0x7FA802A6
@@ -3303,9 +4221,9 @@ UCF_On:
 	.long 0x7FC802A6
 	.long 0x38600000
 	.long 0x38800000
-	.long 0x3DC0803A
-	.long 0x61CE6754
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C6754
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C7F1B78
 	.long 0x38800001
@@ -3320,9 +4238,9 @@ UCF_On:
 	.long 0x7C8802A6
 	.long 0xC03E0000
 	.long 0xC05E0004
-	.long 0x3DC0803A
-	.long 0x61CE6B98
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C6B98
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C641B78
 	.long 0x7FE3FB78
@@ -3349,8 +4267,8 @@ UCF_On:
 	.long 0x38980000
 	.long 0x60000000
 	.long 0x00000000
-  .long 0xFF000000
-UCF_Stealth:
+	.long -1
+Snap102_UCF_Stealth:
 	.long 0xC20C9A44
 	.long 0x0000002B
 	.long 0xD01F002C
@@ -3440,55 +4358,39 @@ UCF_Stealth:
 	.long 0x60000000
 	.long 0x00000000
 	.long 0xC20998A4
-	.long 0x00000024
+	.long 0x00000026
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
 	.long 0xBE810008
-	.long 0x7C7E1B78
+	.long 0x7FFEFB78
 	.long 0x83FE002C
-	.long 0x480000D1
+	.long 0x480000DD
 	.long 0x7FA802A6
 	.long 0xC03F063C
 	.long 0x806DAEB4
 	.long 0xC0030314
 	.long 0xFC010040
-	.long 0x408100D4
-	.long 0xC01F0620
-	.long 0xFC000210
-	.long 0xC03D0000
-	.long 0xEC000072
-	.long 0xC03D0004
-	.long 0xEC000828
-	.long 0xC03D000C
-	.long 0xEC00082A
-	.long 0xC03D0000
-	.long 0xEC000824
-	.long 0xFC600090
-	.long 0xC01F0624
-	.long 0xFC000210
-	.long 0xC03D0000
-	.long 0xEC000072
-	.long 0xC03D0004
-	.long 0xEC000828
-	.long 0xC03D000C
-	.long 0xEC00082A
-	.long 0xC03D0000
-	.long 0xEC000824
-	.long 0xFC201890
+	.long 0x408100E4
+	.long 0xC03F0620
+	.long 0x48000071
+	.long 0xD0210090
+	.long 0xC03F0624
+	.long 0x48000065
+	.long 0xC0410090
+	.long 0xEC4200B2
 	.long 0xEC210072
-	.long 0xEC000032
-	.long 0xEC00082A
-	.long 0xC03D0010
-	.long 0xFC000840
-	.long 0x41800064
+	.long 0xEC21102A
+	.long 0xC05D000C
+	.long 0xFC011040
+	.long 0x418000B4
 	.long 0x889F0670
 	.long 0x2C040003
-	.long 0x40810058
-	.long 0xC01D0014
+	.long 0x408100A8
+	.long 0xC01D0010
 	.long 0xC03F0624
 	.long 0xFC000840
-	.long 0x40800048
+	.long 0x40800098
 	.long 0xBA810008
 	.long 0x80010104
 	.long 0x38210100
@@ -3499,13 +4401,33 @@ UCF_Stealth:
 	.long 0x38630008
 	.long 0x7C6803A6
 	.long 0x4E800020
+	.long 0xFC000A10
+	.long 0xC03D0000
+	.long 0xEC000072
+	.long 0xC03D0004
+	.long 0xEC000828
+	.long 0xFC00001E
+	.long 0xD8010080
+	.long 0x80610084
+	.long 0x38630002
+	.long 0x3C004330
+	.long 0xC85D0014
+	.long 0x6C638000
+	.long 0x90010080
+	.long 0x90610084
+	.long 0xC8210080
+	.long 0xEC011028
+	.long 0xC03D0000
+	.long 0xEC200824
+	.long 0x4E800020
 	.long 0x4E800021
 	.long 0x42A00000
 	.long 0x37270000
 	.long 0x43300000
-	.long 0x40000000
 	.long 0x3F800000
 	.long 0xBF4CCCCD
+	.long 0x43300000
+	.long 0x80000000
 	.long 0x7FC3F378
 	.long 0x7FE4FB78
 	.long 0xBA810008
@@ -3513,40 +4435,186 @@ UCF_Stealth:
 	.long 0x38210100
 	.long 0x7C0803A6
 	.long 0x00000000
-	.long 0xFF000000
+	.long -1
 
-Frozen_Off:
-	.long 0x043e67e0
+Snap102_Widescreen_Off:
+	.long 0x043BB05C
+	.long 0x3FAAAAA8
+	.long 0x0436A4A8
+	.long 0xC03F0034
+	.long 0x044DDB58
+	.long 0x3E000000
+	.long 0x04086B24
+	.long 0x4182000C
+	.long 0x04030C7C
+	.long 0xA0010020
+	.long 0x04030C88
+	.long 0xA0010022
+	.long 0x044DDB30
+	.long 0x3F24D317
+	.long 0x044DDB34
+	.long 0xBF24D317
+	.long 0x044DDB2C
+	.long 0xC322B333
+	.long 0x044DDB28
+	.long 0x4322B333
+	.long 0x044DDB4C
+	.long 0x3DCCCCCD
+	.long 0x042FCFC4
+	.long 0xC002E19C
+	.long 0x044DDB84
+	.long 0x3ECCCCCD
+	.long -1
+Snap102_Widescreen_Standard:
+	.long 0x043BB05C
+	.long 0x3EB00000
+	.long 0xC236A4A8
+	.long 0x00000006
+	.long 0xC03F0034
+	.long 0x4800001D
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xC0630004
+	.long 0xEC2100B2
+	.long 0xEC211824
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x40800000
+	.long 0x40400000
+	.long 0x00000000
+	.long 0x044DDB58
+	.long 0x3E4CCCCD
+	.long 0x04086B24
+	.long 0x60000000
+	.long 0x04030C7C
+	.long 0x3800004E
+	.long 0x04030C88
+	.long 0x38000232
+	.long 0x044DDB30
+	.long 0x3F666666
+	.long 0x044DDB34
+	.long 0xBF666666
+	.long 0x044DDB2C
+	.long 0xC3660000
+	.long 0x044DDB28
+	.long 0x43660000
+	.long 0x044DDB4C
+	.long 0x3D916873
+	.long 0xC22FCFC4
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40F00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x044DDB84
+	.long 0x3E99999A
+	.long -1
+Snap102_Widescreen_True:
+	.long 0x043BB05C
+	.long 0x3EB00000
+	.long 0xC236A4A8
+	.long 0x00000006
+	.long 0xC03F0034
+	.long 0x4800001D
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xC0630004
+	.long 0xEC2100B2
+	.long 0xEC211824
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x42B80000
+	.long 0x427C0000
+	.long 0x00000000
+	.long 0x044DDB58
+	.long 0x3E4CCCCD
+	.long 0x04086B24
+	.long 0x60000000
+	.long 0x04030C7C
+	.long 0x38000064
+	.long 0x04030C88
+	.long 0x3800021C
+	.long 0x044DDB30
+	.long 0x3F666666
+	.long 0x044DDB34
+	.long 0xBF666666
+	.long 0x044DDB2C
+	.long 0xC3660000
+	.long 0x044DDB28
+	.long 0x43660000
+	.long 0x044DDB4C
+	.long 0x3D916873
+	.long 0xC22FCFC4
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40F00000
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x044DDB84
+	.long 0x3E99999A
+	.long -1
+
+Snap102_LagReduction_LCD:
+	blrl
+	.long 0x04019860
+	.long 0x4BFFFD9D
+	.long -1
+Snap102_LagReduction_PD:
+	blrl
+	.long 0x041A4DB4
+	.long 0x60000000
+	.long 0x04019860
+	.long 0x4BFFFD9D
+	.long 0xC21A4DA0
+	.long 0x00000003
+	.long 0x901C0000
+	.long 0x3D808001
+	.long 0x618C95FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x00000000
+	.long -1
+
+Snap102_Frozen_All:
+	.long 0x043E67E0
+	.long 0x00000000
+	.long 0x0421AAE4
+	.long 0x60000000
+	.long 0x041D0578
+	.long 0x60000000
+	.long 0x041E3348
+	.long 0x60000000
+	.long -1
+Snap102_Frozen_Off:
+	.long 0x043E67E0
 	.long 0x00000002
 	.long 0x0421AAE4
 	.long 0x48000805
-	.long 0x041D1548
+	.long 0x041D0578
 	.long 0x48003001
 	.long 0x041E3348
 	.long 0x480000D1
-	.long 0xFF000000
-Frozen_Stadium:
-	.long 0x041D1548
+	.long -1
+Snap102_Frozen_Stadium:
+	.long 0x041D0578
 	.long 0x60000000
-	.long 0xFF000000
-Frozen_All:
-	.long 0x041D1548
-	.long 0x60000000
-	.long 0x043e67e0
-	.long 0x00000000
-	.long 0x041E3348
-	.long 0x60000000
-	.long 0x0421AAE4
-	.long 0x60000000
-	.long 0xFF000000
+	.long -1
 
-Spawns_Off:
-  .long 0x0416E510
-  .long 0x881f24d0
-  .long 0xFF000000
-Spawns_On:
+Snap102_Spawns_Off:
+	.long 0x0416E510
+	.long 0x881F24D0
+	.long -1
+Snap102_Spawns_On:
 	.long 0xC216E510
-	.long 0x00000096
+	.long 0x00000099
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -3556,9 +4624,9 @@ Spawns_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
-	.long 0x40820470
+	.long 0x40820488
 	.long 0x2C1C0005
-	.long 0x40800468
+	.long 0x40800480
 	.long 0x887F24D0
 	.long 0x2C030001
 	.long 0x41820054
@@ -3566,7 +4634,7 @@ Spawns_On:
 	.long 0x3B400000
 	.long 0x7F43D378
 	.long 0x3D808003
-	.long 0x618C241C
+	.long 0x618C248C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030003
@@ -3581,13 +4649,13 @@ Spawns_On:
 	.long 0x7F24CB78
 	.long 0x88BF24D0
 	.long 0x48000115
-	.long 0x4800040C
+	.long 0x48000424
 	.long 0x3B400000
 	.long 0x3B000000
 	.long 0x3B200000
 	.long 0x7F23CB78
 	.long 0x3D808003
-	.long 0x618C241C
+	.long 0x618C248C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030003
@@ -3604,9 +4672,9 @@ Spawns_On:
 	.long 0x2C190004
 	.long 0x4180FFBC
 	.long 0x2C180001
-	.long 0x418203B0
+	.long 0x418203C8
 	.long 0x2C180002
-	.long 0x418103A8
+	.long 0x418103C0
 	.long 0x3B5A0001
 	.long 0x2C1A0003
 	.long 0x4180FF98
@@ -3617,7 +4685,7 @@ Spawns_On:
 	.long 0x3AE00000
 	.long 0x7EE3BB78
 	.long 0x3D808003
-	.long 0x618C241C
+	.long 0x618C248C
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030003
@@ -3648,7 +4716,7 @@ Spawns_On:
 	.long 0x7F24CB78
 	.long 0x88BF24D0
 	.long 0x48000009
-	.long 0x48000300
+	.long 0x48000318
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -3656,7 +4724,7 @@ Spawns_On:
 	.long 0x7C7F1B78
 	.long 0x7C9E2378
 	.long 0x7CBD2B78
-	.long 0x48000139
+	.long 0x48000141
 	.long 0x7F8802A6
 	.long 0x80CD9348
 	.long 0x38A00000
@@ -3689,7 +4757,7 @@ Spawns_On:
 	.long 0x4182000C
 	.long 0x7FC3F378
 	.long 0x48000014
-	.long 0x48000255
+	.long 0x4800025D
 	.long 0x7C6802A6
 	.long 0x7C63F0AE
 	.long 0x48000004
@@ -3705,6 +4773,8 @@ Spawns_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x48000004
+	.long 0x48000225
+	.long 0x7F6802A6
 	.long 0x7FE3FB78
 	.long 0x38810080
 	.long 0x3D808003
@@ -3712,12 +4782,12 @@ Spawns_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0xC0210080
-	.long 0xC002A8E8
+	.long 0xC01B0000
 	.long 0xFC010040
 	.long 0x4081000C
-	.long 0xC022A8F8
+	.long 0xC03B0004
 	.long 0x48000008
-	.long 0xC022A8CC
+	.long 0xC03B0008
 	.long 0x7FE3FB78
 	.long 0x3D808003
 	.long 0x618C3094
@@ -3840,6 +4910,10 @@ Spawns_On:
 	.long 0xFFFFFFFF
 	.long 0x4E800021
 	.long 0x00030102
+	.long 0x4E800021
+	.long 0x00000000
+	.long 0xBF800000
+	.long 0x3F800000
 	.long 0xBA810008
 	.long 0x80010104
 	.long 0x38210100
@@ -3849,20 +4923,20 @@ Spawns_On:
 	.long 0x00000000
 	.long -1
 
-DisableWobbling_Off:
+Snap102_DisableWobbling_Off:
 	.long 0x040DA9DC
-	.long 0xC02296E8
+	.long 0x7F43D378
 	.long 0x0408F090
 	.long 0x801B0010
-  .long 0xFF000000
-DisableWobbling_On:
+	.long -1
+Snap102_DisableWobbling_On:
 	.long 0xC20DA9DC
 	.long 0x00000003
 	.long 0x38600000
 	.long 0x987C2350
 	.long 0x3860FFFF
 	.long 0xB07C2352
-	.long 0xC02296E8
+	.long 0x7F43D378
 	.long 0x00000000
 	.long 0xC208F090
 	.long 0x00000017
@@ -3912,23 +4986,23 @@ DisableWobbling_On:
 	.long 0x801B0010
 	.long 0x60000000
 	.long 0x00000000
-  .long 0xFF000000
+	.long -1
 
-Ledgegrab_Off:
+Snap102_Ledgegrab_Off:
+	.long 0x041A5E90
+	.long 0x7FE3FB78
 	.long 0x0416EBD8
 	.long 0x98030006
 	.long 0x041B0498
 	.long 0x98030000
 	.long 0x041B05CC
-	.long 0x3800012c
+	.long 0x3800012C
 	.long 0x041B05C8
-	.long 0x38c00001
-  .long 0x04165c48
-  .long 0x8803000f
-	.long 0x041A5E90
-	.long 0x7fe3fb78
-  .long 0xFF000000
-Ledgegrab_On:
+	.long 0x38C00001
+	.long 0x04165C48
+	.long 0x8803000F
+	.long -1
+Snap102_Ledgegrab_On:
 	.long 0xC21A5E90
 	.long 0x00000002
 	.long 0x386000B4
@@ -4129,9 +5203,9 @@ Ledgegrab_On:
 	.long 0x7C0803A6
 	.long 0x8803000F
 	.long 0x00000000
-  .long 0xFF000000
+	.long -1
 
-TournamentQoL_Off:
+Snap102_TournamentQoL_Off:
 	.long 0x04266CE0
 	.long 0x38600001
 	.long 0x042FCCD8
@@ -4158,12 +5232,15 @@ TournamentQoL_Off:
 	.long 0x5460063F
 	.long 0x04259C40
 	.long 0x28000000
-  .long 0xFF000000
-TournamentQoL_On:
+	.long -1
+Snap102_TournamentQoL_On:
 	.long 0xC2266CE0
-	.long 0x0000000C
-	.long 0x80CD8840
-	.long 0x38C61CB0
+	.long 0x0000000E
+	.long 0x3D808015
+	.long 0x618CCC58
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C661B78
 	.long 0x80A60018
 	.long 0x3C60E700
 	.long 0x606300B0
@@ -4185,6 +5262,7 @@ TournamentQoL_On:
 	.long 0x90A60018
 	.long 0x48000004
 	.long 0x38600001
+	.long 0x60000000
 	.long 0x00000000
 	.long 0xC22FCCD8
 	.long 0x0000000D
@@ -4223,7 +5301,7 @@ TournamentQoL_On:
 	.long 0x0445C380
 	.long 0x00000000
 	.long 0xC22608D8
-	.long 0x0000001D
+	.long 0x00000020
 	.long 0x887F0007
 	.long 0x2C030000
 	.long 0x40820090
@@ -4231,19 +5309,19 @@ TournamentQoL_On:
 	.long 0x7C972378
 	.long 0x800D8840
 	.long 0x7C602214
-	.long 0x88A31CC0
+	.long 0x88A31CC8
 	.long 0x57800739
 	.long 0x40820010
 	.long 0x5780077B
 	.long 0x4082003C
-	.long 0x480000AC
+	.long 0x480000C4
 	.long 0x28050001
-	.long 0x418200A4
+	.long 0x418200BC
 	.long 0x7EE3BB78
 	.long 0x38800000
 	.long 0x38A0000E
 	.long 0x38C00000
-	.long 0x38ED9950
+	.long 0x38ED9B00
 	.long 0x3D808037
 	.long 0x618C8430
 	.long 0x7D8903A6
@@ -4251,7 +5329,7 @@ TournamentQoL_On:
 	.long 0x38800001
 	.long 0x48000010
 	.long 0x28050000
-	.long 0x41820070
+	.long 0x41820088
 	.long 0x38800000
 	.long 0x7EE3BB78
 	.long 0x3D808015
@@ -4262,8 +5340,10 @@ TournamentQoL_On:
 	.long 0x989F0007
 	.long 0x3C80C040
 	.long 0x909F0014
+	.long 0x48000051
+	.long 0x7D8802A6
 	.long 0xC03F0014
-	.long 0xC0428E0C
+	.long 0xC04C0000
 	.long 0xC01F000C
 	.long 0xEC01002A
 	.long 0xD01F000C
@@ -4272,13 +5352,17 @@ TournamentQoL_On:
 	.long 0x41810008
 	.long 0xEC6300B2
 	.long 0xD07F0014
-	.long 0x4180001C
-	.long 0xC0828258
+	.long 0x4180002C
+	.long 0xC08C0004
 	.long 0xFC032040
-	.long 0x41810010
+	.long 0x41810020
 	.long 0x38800000
 	.long 0x909F0014
 	.long 0x989F0007
+	.long 0x48000010
+	.long 0x4E800021
+	.long 0x3F4CCCCD
+	.long 0x3C800000
 	.long 0x889F0004
 	.long 0x60000000
 	.long 0x00000000
@@ -4298,6 +5382,8 @@ TournamentQoL_On:
 	.long 0x1C130024
 	.long 0x60000000
 	.long 0x00000000
+	.long 0x043775A4
+	.long 0x8819000A
 	.long 0x04261B1C
 	.long 0x60000000
 	.long 0x04261B30
@@ -4321,10 +5407,13 @@ TournamentQoL_On:
 	.long 0x2C030000
 	.long 0x00000000
 	.long 0xC2259C40
-	.long 0x0000001F
+	.long 0x00000020
+	.long 0x3D808015
+	.long 0x618CCC58
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x39430018
 	.long 0x39600000
-	.long 0x3D408045
-	.long 0x614AC388
 	.long 0x38600000
 	.long 0x3C80803F
 	.long 0x608406D0
@@ -4382,21 +5471,20 @@ TournamentQoL_On:
 	.long 0x38630001
 	.long 0x4BFFFF4C
 	.long 0x28000000
-	.long 0x60000000
 	.long 0x00000000
-  .long 0xFF000000
+	.long -1
 
-FriendliesQoL_Off:
+Snap102_FriendliesQoL_Off:
 	.long 0x041A5B14
-	.long 0x3ba00000
+	.long 0x3BA00000
 	.long 0x04265220
-	.long 0x880db655
+	.long 0x880DB655
 	.long 0x0416EA30
-	.long 0x981e0010
-	.long 0xFF000000
-FriendliesQoL_On:
-	.long 0xC21A5B14	#Salty Runback + Skip Result
-	.long 0x00000015
+	.long 0x981E0010
+	.long -1
+Snap102_FriendliesQoL_On:
+	.long 0xC21A5B14
+	.long 0x00000017
 	.long 0x3BA00000
 	.long 0x7FA3EB78
 	.long 0x3D80801A
@@ -4412,9 +5500,14 @@ FriendliesQoL_On:
 	.long 0x3BBD0001
 	.long 0x2C1D0004
 	.long 0x4180FFCC
-	.long 0x48000060
+	.long 0x4800006C
 	.long 0x3B600002
-	.long 0x4800005C
+	.long 0x48000068
+	.long 0x3D80801A
+	.long 0x618C5244
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x7C741B78
 	.long 0x3D808025
 	.long 0x618C99EC
 	.long 0x7D8903A6
@@ -4424,11 +5517,9 @@ FriendliesQoL_On:
 	.long 0x1C63001C
 	.long 0x7C841A14
 	.long 0x8864000B
-	.long 0x3C808045
-	.long 0x6084AC64
-	.long 0xB0640002
+	.long 0xB0740016
 	.long 0x3C808043
-	.long 0x6084207C
+	.long 0x60842078
 	.long 0x9064000C
 	.long 0x3D808001
 	.long 0x618C8254
@@ -4438,24 +5529,23 @@ FriendliesQoL_On:
 	.long 0x48000008
 	.long 0x3B600000
 	.long 0x3BA00000
+	.long 0x60000000
 	.long 0x00000000
-	.long 0xC2265220	#Winners names are gold
+	.long 0xC2265220
 	.long 0x00000028
 	.long 0x7FA3EB78
-	.long 0x48000039
+	.long 0x48000031
 	.long 0x2C030000
 	.long 0x4182012C
 	.long 0x807B0000
 	.long 0x38800000
-	.long 0x3CA0FFD7
-	.long 0x60A50000
-	.long 0x90A10100
-	.long 0x38A10100
+	.long 0x48000119
+	.long 0x7CA802A6
 	.long 0x3D80803A
 	.long 0x618C74F0
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x48000100
+	.long 0x48000108
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -4519,6 +5609,8 @@ FriendliesQoL_On:
 	.long 0x38210100
 	.long 0x7C0803A6
 	.long 0x4E800020
+	.long 0x4E800021
+	.long 0xFFD70000
 	.long 0x880DB655
 	.long 0x00000000
 	.long 0xC216EA30
@@ -4531,502 +5623,326 @@ FriendliesQoL_On:
 	.long 0x88840001
 	.long 0x989E000C
 	.long 0x00000000
-	.long 0x0416B480
-	.long 0x60000000
-	.long 0x0406AE90
-	.long 0x38000000
-	.long 0xFF000000
+	.long -1
 
-GameVersion_NTSC:
+Snap102_GameVersion_NTSC:
 	.long 0x04068F30
-	.long 0x3c60803c
+	.long 0x3C60803C
+	.long 0x04073338
+	.long 0xBB610014
+	.long 0x041239A8
+	.long 0x901F1A5C
 	.long 0x040796E0
-	.long 0x3a400001
-	.long 0x04266978
-	.long 0x387f0718
+	.long 0x3A400001
 	.long 0x042F9A28
 	.long 0x80160004
+	.long 0x04068F48
+	.long 0x807E0004
 	.long 0x043CE4D4
 	.long 0x00200000
-	.long 0x0410FC48
-	.long 0x900521dc
-	.long 0x0410FB68
-	.long 0x900521dc
+	.long 0x0410FC44
+	.long 0x3803D774
+	.long 0x0410FB64
+	.long 0x3803D774
+	.long 0x0414B96C
+	.long 0x901F21BC
+	.long 0x0414B810
+	.long 0x901F21BC
+	.long 0x0414BAC8
+	.long 0x901F21BC
 	.long 0x042B7E54
-	.long 0x887f2240
+	.long 0x887F2240
 	.long 0x042B808C
-	.long 0x2c030002
-	.long 0xFF000000
-GameVersion_PAL:
+	.long 0x2C030002
+	.long -1
+Snap102_GameVersion_PAL:
 	.long 0xC2068F30
-	.long 0x0000008C
-	.long 0x9421FFBC
-	.long 0xBE810008
+	.long 0x0000007E
 	.long 0x7C0802A6
-	.long 0x90010040
+	.long 0x90010004
+	.long 0x9421FF00
+	.long 0xBE810008
 	.long 0x83FE010C
 	.long 0x83FF0008
 	.long 0x3BFFFFE0
-	.long 0x807D0000
-	.long 0x2C03001B
-	.long 0x40800424
+	.long 0x80BD0000
+	.long 0x2C05001B
+	.long 0x408003B0
 	.long 0x48000071
-	.long 0x480000A9
+	.long 0x480000AD
 	.long 0x480000B9
-	.long 0x48000151
-	.long 0x48000179
-	.long 0x48000179
-	.long 0x480001B1
-	.long 0x480001C1
+	.long 0x48000129
+	.long 0x48000145
+	.long 0x48000145
+	.long 0x480001C9
+	.long 0x480001D5
 	.long 0x48000209
-	.long 0x48000281
-	.long 0x48000299
-	.long 0x48000299
-	.long 0x48000299
-	.long 0x48000299
-	.long 0x480002A9
-	.long 0x480002A9
-	.long 0x48000311
-	.long 0x48000311
-	.long 0x48000319
-	.long 0x48000319
-	.long 0x48000331
-	.long 0x48000331
-	.long 0x48000341
-	.long 0x48000341
-	.long 0x48000351
-	.long 0x48000351
-	.long 0x48000351
-	.long 0x480003B1
+	.long 0x48000261
+	.long 0x48000271
+	.long 0x48000271
+	.long 0x48000271
+	.long 0x48000271
+	.long 0x4800027D
+	.long 0x4800027D
+	.long 0x480002C9
+	.long 0x480002C9
+	.long 0x480002CD
+	.long 0x480002CD
+	.long 0x480002DD
+	.long 0x480002DD
+	.long 0x480002E9
+	.long 0x480002E9
+	.long 0x480002F5
+	.long 0x480002F5
+	.long 0x480002F5
+	.long 0x4800033D
 	.long 0x7C8802A6
-	.long 0x1C630004
-	.long 0x7C841A14
+	.long 0x1CA50004
+	.long 0x7C842A14
 	.long 0x80A40000
 	.long 0x54A501BA
 	.long 0x7CA42A14
-	.long 0x80650000
-	.long 0x80850004
-	.long 0x2C0300FF
-	.long 0x41820014
+	.long 0xA0650000
+	.long 0x7C600734
+	.long 0x2C00FFFF
+	.long 0x41820018
+	.long 0x80850002
 	.long 0x7C63FA14
 	.long 0x90830000
-	.long 0x38A50008
-	.long 0x4BFFFFE4
-	.long 0x48000378
-	.long 0x00003344
-	.long 0x3F547AE1
-	.long 0x00003360
+	.long 0x38A50006
+	.long 0x4BFFFFE0
+	.long 0x48000300
+	.long 0x33443F54
+	.long 0x7AE13360
 	.long 0x42C40000
-	.long 0x000000FF
-	.long 0x0000379C
-	.long 0x42920000
+	.long 0xFFFF0000
+	.long 0x379C4292
 	.long 0x00003908
 	.long 0x40000000
-	.long 0x0000390C
-	.long 0x40866666
-	.long 0x00003910
+	.long 0x390C4086
+	.long 0x66663910
 	.long 0x3DEA0EA1
-	.long 0x00003928
-	.long 0x41A00000
+	.long 0x392841A0
 	.long 0x00003C04
 	.long 0x2C01480C
-	.long 0x00004720
+	.long 0x47201B96
+	.long 0x80134734
 	.long 0x1B968013
-	.long 0x00004734
-	.long 0x1B968013
-	.long 0x0000473C
-	.long 0x04000009
-	.long 0x00004A40
+	.long 0x473C0400
+	.long 0x00094A40
 	.long 0x2C006811
-	.long 0x00004A4C
-	.long 0x281B0013
-	.long 0x00004A50
+	.long 0x4A4C281B
+	.long 0x00134A50
 	.long 0x0D00010B
-	.long 0x00004A54
-	.long 0x2C806811
-	.long 0x00004A60
+	.long 0x4A542C80
+	.long 0x68114A60
 	.long 0x281B0013
-	.long 0x00004A64
-	.long 0x0D00010B
-	.long 0x00004B24
+	.long 0x4A640D00
+	.long 0x010B4B24
 	.long 0x2C00680D
-	.long 0x00004B30
-	.long 0x0F104013
-	.long 0x00004B38
+	.long 0x4B300F10
+	.long 0x40134B38
 	.long 0x2C80380D
-	.long 0x00004B44
-	.long 0x0F104013
-	.long 0x000000FF
-	.long 0x0000380C
-	.long 0x00000007
-	.long 0x00004EF8
+	.long 0x4B440F10
+	.long 0x4013FFFF
+	.long 0x380C0000
+	.long 0x00074EF8
 	.long 0x2C003803
-	.long 0x00004F08
-	.long 0x0F80000B
-	.long 0x00004F0C
+	.long 0x4F080F80
+	.long 0x000B4F0C
 	.long 0x2C802003
-	.long 0x00004F1C
-	.long 0x0F80000B
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x00004D10
-	.long 0x3FC00000
+	.long 0x4F1C0F80
+	.long 0x000BFFFF
+	.long 0xFFFF0000
+	.long 0x4D103FC0
 	.long 0x00004D70
 	.long 0x42940000
-	.long 0x00004DD4
-	.long 0x41900000
+	.long 0x4DD44190
 	.long 0x00004DE0
 	.long 0x41900000
-	.long 0x000083AC
-	.long 0x2C000009
-	.long 0x000083B8
+	.long 0x83AC2C00
+	.long 0x000983B8
 	.long 0x348C8011
-	.long 0x00008400
-	.long 0x348C8011
-	.long 0x000000FF
-	.long 0x000036CC
-	.long 0x42EC0000
+	.long 0x8400348C
+	.long 0x80118430
+	.long 0x0500008B
+	.long 0x8438041A
+	.long 0x05008444
+	.long 0x0500008B
+	.long 0x84DC0578
+	.long 0x057885B8
+	.long 0x1000010B
+	.long 0x85C003E8
+	.long 0x01F485CC
+	.long 0x1000010B
+	.long 0x85D40384
+	.long 0x03E885E0
+	.long 0x1000010B
+	.long 0x88180B00
+	.long 0x010B882C
+	.long 0x0B00010B
+	.long 0x88F8041A
+	.long 0x0BB8893C
+	.long 0x041A0BB8
+	.long 0x8980041A
+	.long 0x0BB889E0
+	.long 0x04FEF704
+	.long 0xFFFF0000
+	.long 0x36CC42EC
 	.long 0x000037C4
 	.long 0x0C000000
-	.long 0x000000FF
-	.long 0x00003468
-	.long 0x3F666666
-	.long 0x000039D8
+	.long 0xFFFF0000
+	.long 0x34683F66
+	.long 0x666639D8
 	.long 0x440C0000
-	.long 0x00003A44
-	.long 0xB4990011
-	.long 0x00003A48
+	.long 0x3A44B499
+	.long 0x00113A48
 	.long 0x1B8C008F
-	.long 0x00003A58
-	.long 0xB4990011
-	.long 0x00003A5C
+	.long 0x3A58B499
+	.long 0x00113A5C
 	.long 0x1B8C008F
-	.long 0x00003A6C
-	.long 0xB4990011
-	.long 0x00003A70
+	.long 0x3A6CB499
+	.long 0x00113A70
 	.long 0x1B8C008F
-	.long 0x00003B30
-	.long 0x440C0000
-	.long 0x000000FF
-	.long 0x000045C8
-	.long 0x2C015010
-	.long 0x000045D4
+	.long 0x3B30440C
+	.long 0x0000FFFF
+	.long 0x45C82C01
+	.long 0x501045D4
 	.long 0x2D198013
-	.long 0x000045DC
-	.long 0x2C80B010
-	.long 0x000045E8
+	.long 0x45DC2C80
+	.long 0xB01045E8
 	.long 0x2D198013
-	.long 0x000049C4
-	.long 0x2C00680A
-	.long 0x000049D0
+	.long 0x49C42C00
+	.long 0x680A49D0
 	.long 0x281B8013
-	.long 0x000049D8
-	.long 0x2C80780A
-	.long 0x000049E4
+	.long 0x49D82C80
+	.long 0x780A49E4
 	.long 0x281B8013
-	.long 0x000049F0
-	.long 0x2C006808
-	.long 0x000049FC
+	.long 0x49F02C00
+	.long 0x680849FC
 	.long 0x231B8013
-	.long 0x00004A04
-	.long 0x2C807808
-	.long 0x00004A10
+	.long 0x4A042C80
+	.long 0x78084A10
 	.long 0x231B8013
-	.long 0x00005C98
-	.long 0x1E0C8080
-	.long 0x00005CF4
+	.long 0x5C981E0C
+	.long 0x80805CF4
 	.long 0xB4800C90
-	.long 0x00005D08
-	.long 0xB4800C90
-	.long 0x000000FF
-	.long 0x00003A1C
-	.long 0xB4940013
-	.long 0x00001A64
+	.long 0x5D08B480
+	.long 0x0C90FFFF
+	.long 0x3A1CB494
+	.long 0x00131A64
 	.long 0x2C000015
-	.long 0x00003A70
-	.long 0xB4928013
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x0000647C
-	.long 0xB49A4017
-	.long 0x00006480
+	.long 0x3A70B492
+	.long 0x8013FFFF
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x647CB49A
+	.long 0x40176480
 	.long 0x64001097
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x000033E4
-	.long 0x42DE0000
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x33E442DE
 	.long 0x00004528
 	.long 0x2C013011
-	.long 0x00004534
-	.long 0xB4988013
-	.long 0x0000453C
+	.long 0x4534B498
+	.long 0x8013453C
 	.long 0x2C813011
-	.long 0x00004548
-	.long 0xB4988013
-	.long 0x00004550
+	.long 0x4548B498
+	.long 0x80134550
 	.long 0x2D002011
-	.long 0x0000455C
-	.long 0xB4988013
-	.long 0x000045F8
+	.long 0x455CB498
+	.long 0x801345F8
 	.long 0x2C01300F
-	.long 0x00004608
-	.long 0x0F00010B
-	.long 0x0000460C
+	.long 0x46080F00
+	.long 0x010B460C
 	.long 0x2C81280F
-	.long 0x0000461C
-	.long 0x0F00010B
-	.long 0x00004AEC
+	.long 0x461C0F00
+	.long 0x010B4AEC
 	.long 0x2C007003
-	.long 0x00004B00
-	.long 0x2C803803
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x0000485C
-	.long 0x2C00000F
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x000037B0
-	.long 0x3F59999A
-	.long 0x000037CC
+	.long 0x4B002C80
+	.long 0x3803FFFF
+	.long 0xFFFF0000
+	.long 0x485C2C00
+	.long 0x000FFFFF
+	.long 0xFFFF0000
+	.long 0x37B03F59
+	.long 0x999A37CC
 	.long 0x42AA0000
-	.long 0x00005520
-	.long 0x87118013
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x00003B8C
-	.long 0x440C0000
+	.long 0x55208711
+	.long 0x8013FFFF
+	.long 0xFFFF0000
+	.long 0x3B8C440C
 	.long 0x00003D0C
 	.long 0x440C0000
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x000050E4
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x50E4B499
+	.long 0x001350F8
 	.long 0xB4990013
-	.long 0x000050F8
-	.long 0xB4990013
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x00004EB0
-	.long 0x02BCFF38
-	.long 0x00004EBC
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0xFFFF0000
+	.long 0x4EB002BC
+	.long 0xFF384EBC
 	.long 0x14000123
-	.long 0x00004EC4
-	.long 0x038401F4
-	.long 0x00004ED0
+	.long 0x4EC40384
+	.long 0x01F44ED0
 	.long 0x14000123
-	.long 0x00004ED8
-	.long 0x044C04B0
-	.long 0x00004EE4
+	.long 0x4ED8044C
+	.long 0x04B04EE4
 	.long 0x14000123
-	.long 0x0000505C
-	.long 0x2C006815
-	.long 0x0000506C
+	.long 0x505C2C00
+	.long 0x6815506C
 	.long 0x14080123
-	.long 0x00005070
-	.long 0x2C806015
-	.long 0x00005080
+	.long 0x50702C80
+	.long 0x60155080
 	.long 0x14080123
-	.long 0x00005084
-	.long 0x2D002015
-	.long 0x00005094
+	.long 0x50842D00
+	.long 0x20155094
 	.long 0x14080123
-	.long 0x000000FF
-	.long 0x000000FF
-	.long 0x80010040
-	.long 0x7C0803A6
+	.long 0xFFFF0000
+	.long 0xFFFF0000
 	.long 0xBA810008
-	.long 0x38210044
+	.long 0x80010104
+	.long 0x38210100
+	.long 0x7C0803A6
 	.long 0x3C60803C
+	.long 0x60000000
 	.long 0x00000000
+	.long 0x041239A8
+	.long 0x60000000
 	.long 0x040796E0
 	.long 0x60000000
-	.long 0xC2266978
-	.long 0x00000050
-	.long 0x7DC802A6
-	.long 0x48000031
-	.long 0x7C8802A6
-	.long 0x7DC803A6
-	.long 0x3DC00035
-	.long 0x61CE6A60
-	.long 0x7C6E1850
-	.long 0x38A00238
-	.long 0x3DC08000
-	.long 0x61CE31F4
-	.long 0x7DC903A6
-	.long 0x4E800421
-	.long 0x48000244
-	.long 0x4E800021
-	.long 0x00000000
-	.long 0x00006FFF
-	.long 0x00007FF1
-	.long 0x00007FF0
-	.long 0x00007FF0
-	.long 0x00007FF0
-	.long 0x00007FFF
-	.long 0x00007FF1
-	.long 0x00000000
-	.long 0xFFC40002
-	.long 0x17FF3006
-	.long 0x00EF800B
-	.long 0x00EF801F
-	.long 0x04FF404F
-	.long 0xFFF7009F
-	.long 0x110000EF
-	.long 0x00000000
-	.long 0xFFF8000D
-	.long 0xFEFD000F
-	.long 0xFBFF300F
-	.long 0xF6DF700F
-	.long 0xF3BFC00F
-	.long 0xE07FF10F
-	.long 0xB14FF60F
-	.long 0x00000000
-	.long 0xF6000000
-	.long 0xF7000000
-	.long 0xF7000000
-	.long 0xF7000000
-	.long 0xF7000000
-	.long 0xF7000000
-	.long 0xF7000000
-	.long 0x04FF9888
-	.long 0x00CFB888
-	.long 0x009FC888
-	.long 0x006FD888
-	.long 0x004FE888
-	.long 0x002FF888
-	.long 0x000FF888
-	.long 0x002FF888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x8888888E
-	.long 0x888888DF
-	.long 0x88888CFF
-	.long 0x8888AFF7
-	.long 0x8889FFA0
-	.long 0x888FFC00
-	.long 0x8DFFB100
-	.long 0xEFF60000
-	.long 0xFF400000
-	.long 0xF3000000
-	.long 0x40000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x88888888
-	.long 0x8888EF40
-	.long 0x8888DF60
-	.long 0x8888CF90
-	.long 0x8888BFC0
-	.long 0x88889FF4
-	.long 0x88888DF9
-	.long 0x88888BFE
-	.long 0x888888EF
-	.long 0x00007FF0
-	.long 0x00007FF0
-	.long 0x00006FD0
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x30000000
-	.long 0x90000000
-	.long 0x000003FF
-	.long 0x000008FF
-	.long 0x00000BFB
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0xEFFFFB0F
-	.long 0x200AFF1F
-	.long 0x0004FF4D
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0xF7000000
-	.long 0xF7111100
-	.long 0xFFFFFB00
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x00000000
-	.long 0x004FE888
-	.long 0x006FD888
-	.long 0x009FC888
-	.long 0x00CFB888
-	.long 0x04FF9888
-	.long 0x09FD8888
-	.long 0x3EFB8888
-	.long 0x387F0718
-	.long 0x60000000
-	.long 0x00000000
 	.long 0xC22F9A28
-	.long 0x00000004
-	.long 0x3C003F59
-	.long 0x6000999A
+	.long 0x00000003
+	.long 0x3C003F93
+	.long 0x60003333
 	.long 0x901D002C
 	.long 0x901D0030
 	.long 0x3C00C1B0
-	.long 0x60000000
-	.long 0x60000000
 	.long 0x00000000
 	.long 0x043CE4D4
 	.long 0x00240464
-	.long 0x0410FC48
+	.long 0xC210FC44
+	.long 0x00000002
+	.long 0x3C008010
+	.long 0x6000D774
 	.long 0x60000000
-	.long 0x0410FB68
+	.long 0x00000000
+	.long 0xC210FB64
+	.long 0x00000002
+	.long 0x3C008010
+	.long 0x6000D774
 	.long 0x60000000
+	.long 0x00000000
 	.long 0x042B7E54
 	.long 0x48000088
 	.long 0x042B808C
 	.long 0x48000084
-	.long 0xFF000000
-GameVersion_SDR:
-	.long 0xC2068F30
+	.long -1
+Snap102_GameVersion_SDR:
+	.long 0xC2068F48
 	.long 0x00000B0B
 	.long 0x7C0802A6
 	.long 0x90010004
@@ -7036,7 +7952,7 @@ GameVersion_SDR:
 	.long 0xB4918013
 	.long 0x00003A74
 	.long 0x1B88011F
-	.long 0x00003BF8
+	.long 0xCC003BF8
 	.long 0x00007100
 	.long 0x00003CA8
 	.long 0x41800000
@@ -7078,7 +7994,7 @@ GameVersion_SDR:
 	.long 0x04000001
 	.long 0x00004054
 	.long 0x41000000
-	.long 0x0000408C
+	.long 0xCC00408C
 	.long 0x00004038
 	.long 0x00004804
 	.long 0x1400008B
@@ -10679,11 +11595,11 @@ GameVersion_SDR:
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
-	.long 0x3C60803C
+	.long 0x807E0004
 	.long 0x60000000
 	.long 0x00000000
 	.long 0xC2073338
-	.long 0x000000B6
+	.long 0x000000B3
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -10720,13 +11636,13 @@ GameVersion_SDR:
 	.long 0x7FE802A6
 	.long 0x87BF0008
 	.long 0x2C1D0000
-	.long 0x41820504
+	.long 0x418204EC
 	.long 0x57BC463E
 	.long 0x2C1C00FF
 	.long 0x41820014
 	.long 0x7C1C2000
 	.long 0x4182000C
-	.long 0x418104EC
+	.long 0x418104D4
 	.long 0x4BFFFFDC
 	.long 0x57BC863E
 	.long 0x7C1C2800
@@ -10738,20 +11654,14 @@ GameVersion_SDR:
 	.long 0x4082FFBC
 	.long 0x839F0004
 	.long 0x2C1CFFFF
-	.long 0x418204BC
+	.long 0x418204A4
 	.long 0xC03F0004
 	.long 0x3D808006
 	.long 0x618CF190
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x480004A4
+	.long 0x4800048C
 	.long 0x4E800021
-	.long 0x00090165
-	.long 0x3EE66666
-	.long 0x00000165
-	.long 0x40000000
-	.long 0x00080160
-	.long 0x3FC00000
 	.long 0x001400EB
 	.long 0x3FC00000
 	.long 0x01190042
@@ -11048,11 +11958,101 @@ GameVersion_SDR:
 	.long 0xBB610014
 	.long 0x60000000
 	.long 0x00000000
+	.long 0xC214B96C
+	.long 0x0000000E
+	.long 0x901F21BC
+	.long 0x80ADAEB4
+	.long 0x808500E4
+	.long 0x887F067F
+	.long 0x7C032000
+	.long 0x40800058
+	.long 0x7FC3F378
+	.long 0x3D808006
+	.long 0x618CF484
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000039
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0xEC00082A
+	.long 0xC02500E8
+	.long 0xC05F01F8
+	.long 0xEC220824
+	.long 0xEC200824
+	.long 0x7FC3F378
+	.long 0x3D808006
+	.long 0x618CF190
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3DCCCCCD
+	.long 0x00000000
+	.long 0xC214B810
+	.long 0x0000000E
+	.long 0x901F21BC
+	.long 0x80ADAEB4
+	.long 0x808500E4
+	.long 0x887F067F
+	.long 0x7C032000
+	.long 0x40800058
+	.long 0x7FC3F378
+	.long 0x3D808006
+	.long 0x618CF484
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000039
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0xEC00082A
+	.long 0xC02500E8
+	.long 0xC05F01F8
+	.long 0xEC220824
+	.long 0xEC200824
+	.long 0x7FC3F378
+	.long 0x3D808006
+	.long 0x618CF190
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3DCCCCCD
+	.long 0x00000000
+	.long 0xC214BAC8
+	.long 0x0000000E
+	.long 0x901F21BC
+	.long 0x80ADAEB4
+	.long 0x808500E4
+	.long 0x887F067F
+	.long 0x7C032000
+	.long 0x40800058
+	.long 0x7FC3F378
+	.long 0x3D808006
+	.long 0x618CF484
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000039
+	.long 0x7C6802A6
+	.long 0xC0030000
+	.long 0xEC00082A
+	.long 0xC02500E8
+	.long 0xC05F01F8
+	.long 0xEC220824
+	.long 0xEC200824
+	.long 0x7FC3F378
+	.long 0x3D808006
+	.long 0x618CF190
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3DCCCCCD
+	.long 0x00000000
 	.long -1
 
-StageExpansion_Off:
+Snap102_StageExpansion_Off:
 	.long 0x043E52F4
-	.long 0x80202C24
+	.long 0x80203560
 	.long 0x041FCFE8
 	.long 0x480003E5
 	.long 0x041CD638
@@ -11063,8 +12063,6 @@ StageExpansion_Off:
 	.long 0xE70000B0
 	.long 0x0416E800
 	.long 0x3C608047
-	.long 0x042021DC
-	.long 0x38A00004
 	.long 0x043E7970
 	.long 0x802171D4
 	.long 0x04217230
@@ -11078,11 +12076,11 @@ StageExpansion_Off:
 	.long 0x0421508C
 	.long 0x480002CD
 	.long 0x041EFE28
-	.long 0x60000000
+	.long 0x4BFD8311
 	.long 0x041F015C
-	.long 0x60000000
+	.long 0x4800035D
 	.long 0x041F01F8
-	.long 0x60000000
+	.long 0x4BFD7F41
 	.long 0x041F2608
 	.long 0x4BE3E83D
 	.long 0x041E3D6C
@@ -11106,9 +12104,9 @@ StageExpansion_Off:
 	.long 0x041FFADC
 	.long 0x7C0802A6
 	.long -1
-StageExpansion_On:
+Snap102_StageExpansion_On:
 	.long 0x043E52F4
-	.long 0x80202C48
+	.long 0x802035C4
 	.long 0x041FCFE8
 	.long 0x60000000
 	.long 0x041CD638
@@ -11118,7 +12116,7 @@ StageExpansion_On:
 	.long 0x0445C388
 	.long 0xE7E33BB5
 	.long 0xC216E800
-	.long 0x000003F4
+	.long 0x000003F9
 	.long 0x48000089
 	.long 0x48000001
 	.long 0x48000001
@@ -11129,25 +12127,25 @@ StageExpansion_On:
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001C59
-	.long 0x48001E1D
-	.long 0x48001A6D
+	.long 0x48001C71
+	.long 0x48001E35
+	.long 0x48001A7D
 	.long 0x48000111
 	.long 0x48000BE1
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x4800123D
+	.long 0x48001245
 	.long 0x48000E95
 	.long 0x48000471
-	.long 0x48001429
-	.long 0x48001651
+	.long 0x48001439
+	.long 0x48001661
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x480017A1
+	.long 0x480017B1
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
@@ -11199,7 +12197,7 @@ StageExpansion_On:
 	.long 0x38A50008
 	.long 0x4BFFFF90
 	.long 0x48000004
-	.long 0x48001E58
+	.long 0x48001E80
 	.long 0x0001A68C
 	.long 0x00000000
 	.long 0x0001A6E8
@@ -12302,6 +13300,8 @@ StageExpansion_On:
 	.long 0xC2B15555
 	.long 0x0005A980
 	.long 0x40A00000
+	.long 0x00058ED0
+	.long 0x00000087
 	.long 0xFFFFFFFF
 	.long 0x0001458C
 	.long 0x80000000
@@ -12396,6 +13396,8 @@ StageExpansion_On:
 	.long 0xC2860000
 	.long 0x0002B8D4
 	.long 0xC3480000
+	.long 0x0002C1B8
+	.long 0x00000087
 	.long 0x0002C4C4
 	.long 0xC30C0000
 	.long 0x0002C4C8
@@ -12831,7 +13833,7 @@ StageExpansion_On:
 	.long 0x00039074
 	.long 0x442F0000
 	.long 0x00039078
-	.long 0xC39A0000
+	.long 0xC3BB8000
 	.long 0x0003907C
 	.long 0xC1F00000
 	.long 0x00061BE4
@@ -12845,29 +13847,29 @@ StageExpansion_On:
 	.long 0x00061BF4
 	.long 0x3FE66666
 	.long 0x00061BF8
-	.long 0xC3E88000
+	.long 0xC4048000
 	.long 0x00061BFC
 	.long 0x80000000
-	.long 0x000750D4
-	.long 0x435C0000
-	.long 0x00075094
-	.long 0xC35C0000
-	.long 0x000750D8
-	.long 0x43700000
-	.long 0x00075098
-	.long 0xC1900000
 	.long 0x00074D48
 	.long 0x00000096
 	.long 0x00074D4C
 	.long 0x000003E8
+	.long 0x000750D4
+	.long 0x437A0000
+	.long 0x00075094
+	.long 0xC37A0000
+	.long 0x000750D8
+	.long 0x435C0000
+	.long 0x00075098
+	.long 0xC2C80000
 	.long 0x00075114
-	.long 0x438C0000
+	.long 0x439B0000
 	.long 0x00075154
-	.long 0xC38C0000
+	.long 0xC39B0000
 	.long 0x00075118
-	.long 0x43910000
+	.long 0x43870000
 	.long 0x00075158
-	.long 0xC28C0000
+	.long 0xC3200000
 	.long 0x000745CC
 	.long 0xC47A0000
 	.long 0x000745D0
@@ -12881,67 +13883,69 @@ StageExpansion_On:
 	.long 0x00073840
 	.long 0xC2E10000
 	.long 0x00073844
-	.long 0xC3D60000
+	.long 0xC3F68000
 	.long 0x00073848
 	.long 0xC2200000
 	.long 0x0007384C
-	.long 0xC3D60000
+	.long 0xC3F68000
 	.long 0x00073850
 	.long 0xC1A00000
 	.long 0x00073854
-	.long 0xC3D60000
+	.long 0xC3F68000
 	.long 0x00073858
 	.long 0x41A00000
 	.long 0x0007385C
-	.long 0xC3D60000
+	.long 0xC3F68000
 	.long 0x00073860
 	.long 0x42200000
 	.long 0x00073864
-	.long 0xC3D60000
+	.long 0xC3F68000
 	.long 0x00073830
 	.long 0x42E10000
 	.long 0x00073834
-	.long 0xC3D60000
+	.long 0xC3F68000
 	.long 0x00073808
 	.long 0x42E10000
 	.long 0x0007380C
-	.long 0xC3FB0000
+	.long 0xC40DC000
 	.long 0x00073810
 	.long 0x42200000
 	.long 0x00073814
-	.long 0xC3FB0000
+	.long 0xC40DC000
 	.long 0x00073818
 	.long 0x41A00000
 	.long 0x0007381C
-	.long 0xC3FB0000
+	.long 0xC40DC000
 	.long 0x00073820
 	.long 0xC1A00000
 	.long 0x00073824
-	.long 0xC3FB0000
+	.long 0xC40DC000
 	.long 0x00073828
 	.long 0xC2200000
 	.long 0x0007382C
-	.long 0xC3FB0000
+	.long 0xC40DC000
 	.long 0x00073838
 	.long 0xC2E10000
 	.long 0x0007383C
-	.long 0xC3FB0000
+	.long 0xC40DC000
 	.long 0x0000EEFC
 	.long 0xC400C000
 	.long 0x0000EF00
-	.long 0x42900000
+	.long 0x40E00000
 	.long 0x0000EF3C
 	.long 0xC3BB8000
 	.long 0x0000EF40
-	.long 0x42900000
+	.long 0x40E00000
 	.long 0x0000EF7C
 	.long 0xC3D38000
 	.long 0x0000EF80
-	.long 0x42900000
+	.long 0x40E00000
 	.long 0x0000EFBC
 	.long 0xC3EA8000
 	.long 0x0000EFC0
-	.long 0x42900000
+	.long 0x40E00000
+	.long 0x00075518
+	.long 0x42C80000
 	.long 0xFFFFFFFF
 	.long 0x0003D6D8
 	.long 0xC2C80000
@@ -13108,20 +14112,22 @@ StageExpansion_On:
 	.long 0x00010206
 	.long 0x0004D630
 	.long 0x00000000
+	.long 0x0004D460
+	.long 0x00000087
 	.long 0x0004D8A4
-	.long 0xC3480000
+	.long 0xC38C0000
 	.long 0x0004D8A8
-	.long 0x43310000
+	.long 0x437A0000
 	.long 0x0004D8E4
-	.long 0x43480000
+	.long 0x438C0000
 	.long 0x0004D8E8
 	.long 0xC2920000
 	.long 0x0004D924
-	.long 0xC3AF0000
+	.long 0xC3B40000
 	.long 0x0004D928
 	.long 0x43A78000
 	.long 0x0004D964
-	.long 0x43AF0000
+	.long 0x43B40000
 	.long 0x0004D968
 	.long 0xC3250000
 	.long 0x0004DAE4
@@ -13140,11 +14146,11 @@ StageExpansion_On:
 	.long 0xC2200000
 	.long 0x0004DBA8
 	.long 0x40A00000
+	.long 0x0004DBE8
+	.long 0x42C80000
 	.long 0xFFFFFFFF
 	.long 0x3C608047
 	.long 0x00000000
-	.long 0x042021DC
-	.long 0x38A00000
 	.long 0x043E7970
 	.long 0x800115F4
 	.long 0x04217230
@@ -13206,7 +14212,7 @@ StageExpansion_On:
 	.long 0x041FF5E8
 	.long 0x60000000
 	.long 0xC21FF62C
-	.long 0x00000010
+	.long 0x00000011
 	.long 0x48000071
 	.long 0x7CE802A6
 	.long 0x7FC3F378
@@ -13238,141 +14244,17 @@ StageExpansion_On:
 	.long 0x4E800021
 	.long 0x42C80000
 	.long 0x3C608020
+	.long 0x3C608020
+	.long 0x60000000
 	.long 0x00000000
 	.long 0x041FFADC
 	.long 0x4E800020
 	.long -1
 
-Widescreen_Off:
-	.long 0x043BB05C
-	.long 0x3FAAAAAA
-	.long 0x0436A4A8
-	.long 0xc03f0034
-	.long 0x042FCFC4
-	.long 0xc002e19c
-	.long 0x044DDB84
-	.long 0x3ecccccd
-	.long 0x044DDB48
-	.long 0x3dbae148
-	.long 0x044DDB58
-	.long 0x3e000000
-	.long 0x04086B24
-	.long 0x4182000c
-	.long 0x04030C7C
-	.long 0xa0010020
-	.long 0x04030C88
-	.long 0xa0010022
-	.long 0x044DDB30
-	.long 0x3f24d31e
-	.long 0x044DDB34
-	.long 0xbf24d31e
-	.long 0x044DDB2C
-	.long 0xc322b333
-	.long 0x044DDB28
-	.long 0x4322b333
-	.long 0x044DDB4C
-	.long 0x3dcccccd
-	.long 0xFF000000
-Widescreen_Standard:
-	.long 0x043BB05C
-	.long 0x3EB00000
-	.long 0xC236A4A8
-	.long 0x00000006
-	.long 0xC03F0034
-	.long 0x4800001D
-	.long 0x7C6802A6
-	.long 0xC0430000
-	.long 0xC0630004
-	.long 0xEC2100B2
-	.long 0xEC211824
-	.long 0x48000010
-	.long 0x4E800021
-	.long 0x40800000
-	.long 0x40400000
-	.long 0x00000000
-	.long 0x044DDB58
-	.long 0x3E4CCCCD
-	.long 0x04086B24
-	.long 0x60000000
-	.long 0x04030C7C
-	.long 0x3800004E
-	.long 0x04030C88
-	.long 0x38000232
-	.long 0x044DDB30
-	.long 0x3F666666
-	.long 0x044DDB34
-	.long 0xBF666666
-	.long 0x044DDB2C
-	.long 0xC3660000
-	.long 0x044DDB28
-	.long 0x43660000
-	.long 0x044DDB4C
-	.long 0x3D916873
-	.long 0xC22FCFC4
-	.long 0x00000004
-	.long 0x48000011
-	.long 0x7C6802A6
-	.long 0xC0030000
-	.long 0x4800000C
-	.long 0x4E800021
-	.long 0x40F00000
-	.long 0x60000000
-	.long 0x00000000
-	.long 0x044DDB84
-	.long 0x3E99999A
-	.long 0xFF000000
-Widescreen_True:
-	.long 0x043BB05C
-	.long 0x3EB00000
-	.long 0xC236A4A8
-	.long 0x00000006
-	.long 0xC03F0034
-	.long 0x4800001D
-	.long 0x7C6802A6
-	.long 0xC0430000
-	.long 0xC0630004
-	.long 0xEC2100B2
-	.long 0xEC211824
-	.long 0x48000010
-	.long 0x4E800021
-	.long 0x42B80000
-	.long 0x427C0000
-	.long 0x00000000
-	.long 0x044DDB58
-	.long 0x3E4CCCCD
-	.long 0x04086B24
-	.long 0x60000000
-	.long 0x04030C7C
-	.long 0x38000064
-	.long 0x04030C88
-	.long 0x3800021C
-	.long 0x044DDB30
-	.long 0x3F666666
-	.long 0x044DDB34
-	.long 0xBF666666
-	.long 0x044DDB2C
-	.long 0xC3660000
-	.long 0x044DDB28
-	.long 0x43660000
-	.long 0x044DDB4C
-	.long 0x3D916873
-	.long 0xC22FCFC4
-	.long 0x00000004
-	.long 0x48000011
-	.long 0x7C6802A6
-	.long 0xC0030000
-	.long 0x4800000C
-	.long 0x4E800021
-	.long 0x40F00000
-	.long 0x60000000
-	.long 0x00000000
-	.long 0x044DDB84
-	.long 0x3E99999A
-	.long 0xFF000000
 
 #endregion
 #region Code Descriptions
-UCF_Description:
+Snap102_UCF_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
 	.long 0x00b31220
@@ -13417,7 +14299,7 @@ UCF_Description:
 	.long 0x07200420
 	.long 0xe7190F0D
 	.long 0x00000000
-Frozen_Description:
+Snap102_Frozen_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
 	.long 0x00b31220
@@ -13440,7 +14322,7 @@ Frozen_Description:
 	.long 0x2a202820
 	.long 0x3620e719
 	.long 0x0F0D0000
-Spawns_Description:
+Snap102_Spawns_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
 	.long 0x00b31220
@@ -13471,7 +14353,7 @@ Spawns_Description:
 	.long 0x35203720
 	.long 0xe7190F0D
 	.long 0x00000000
-DisableWobbling_Description:
+Snap102_DisableWobbling_Description:
 	.long 0x160cffff
 	.long 0xff0e0090
 	.long 0x00b31220
@@ -13517,7 +14399,7 @@ DisableWobbling_Description:
 	.long 0x30202820
 	.long 0x3620e719
 	.long 0x0F0D0000
-Ledgegrab_Description:
+Snap102_Ledgegrab_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
 	.long 0x00b31220
@@ -13555,7 +14437,7 @@ Ledgegrab_Description:
 	.long 0x20252036
 	.long 0x20e7190F
 	.long 0x0D000000
-TournamentQoL_Description:
+Snap102_TournamentQoL_Description:
 	.long 0x160cffff
 	.long 0xff0e0075
 	.long 0x00b31220
@@ -13621,7 +14503,7 @@ TournamentQoL_Description:
 	.long 0x2f202820
 	.long 0x3620e719
 	.long 0x0F0D0000
-FriendliesQoL_Description:
+Snap102_FriendliesQoL_Description:
 	.long 0x160cffff
 	.long 0xff0e0075
 	.long 0x00b31220
@@ -13668,7 +14550,7 @@ FriendliesQoL_Description:
 	.long 0x202820e7
 	.long 0x190F0D00
 	.long 0x00000000
-GameVersion_Description:
+Snap102_GameVersion_Description:
 	.long 0x160cffff
 	.long 0xff0e00ac
 	.long 0x00b31220
@@ -13691,7 +14573,7 @@ GameVersion_Description:
 	.long 0x32203120
 	.long 0x3620e719
 	.long 0x0F0D0000
-StageExpansion_Description:
+Snap102_StageExpansion_Description:
 	.long 0x160cffff
 	.long 0xff0e0074
 	.long 0x00b31220
@@ -13786,7 +14668,7 @@ StageExpansion_Description:
 	.long 0x200120fb
 	.long 0x200220e7
 	.long 0x190F0D00
-Widescreen_Description:
+Snap102_Widescreen_Description:
 	.long 0x160cffff
 	.long 0xff0e0088
 	.long 0x00b31220
@@ -13870,838 +14752,12 @@ Widescreen_Description:
 
 #endregion
 
-#endregion
-#region Codes_SceneLoad
-Codes_SceneLoad:
-#GObj Offsets
-  .set OFST_CodeNamesTextGObj,0x0
-  .set OFST_CodeOptionsTextGObj,0x4
-	.set OFST_CodeDescTextGObj,0x8
-  .set OFST_CursorLocation,0xC
-  .set OFST_ScrollAmount,0xE
-  .set OFST_OptionSelections,0x10
-blrl
-
-#Init
-  backup
-
-Codes_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl Codes_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,0x803a611c
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Title
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl CodeNames_Title
-  mflr  r4
-	lfs	f1,TitleX(REG_TextProp)
-  lfs	f2,TitleY(REG_TextProp)
-	branchl r12,0x803a6b98
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Modname + version
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl CodeNames_ModName
-  mflr  r4
-	lfs	f1,ModNameX(REG_TextProp)
-  lfs	f2,ModNameY(REG_TextProp)
-	branchl r12,0x803a6b98
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Init Menu
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,0x8037f1b0
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  Codes_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-#Copy Saved Menu Options
-	addi	r3,REG_GObjData,OFST_OptionSelections
-	lwz	r4, -0x77C0 (r13)
-	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
-	li	r5,ModOFST_ModDataPrefsLength
-	branchl	r12,memcpy
-
-#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	lfs	f1,DescriptionX(REG_TextProp)
-	lfs	f2,DescriptionY(REG_TextProp)
-	lfs	f3,DescriptionZ(REG_TextProp)
-	lfs	f4,DescriptionMaxX(REG_TextProp)
-	lfs	f5,DescriptionUnk(REG_TextProp)
-	branchl r12,0x803a5acc
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
-#Init?
-	mr	r3,REG_TextGObj
-	li	r4,0
-	branchl	r12,0x803a6368
-/*
-#Init?
-	li	r3,16
-	branchl	r12,0x803a5798
-	stw	r3,0x68(REG_TextGObj)
-	li	r3,16
-	sth	r3,0x6E(REG_TextGObj)
-*/
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Menu
-  mr  r3,REG_GObjData
-  bl  Codes_CreateMenu
-
-Codes_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region Codes_SceneThink
-Codes_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Code Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,0x801a36c0
-  mr  REG_Inputs,r3
-#Check for movement up
-  rlwinm. r0,REG_Inputs,0,0x10
-  beq Codes_SceneThink_SkipUp
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Codes_SceneThink_UpdateMenu
-#Cursor stays at top
-  li  r3,0
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll up
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Codes_SceneThink_UpdateMenu
-#Scroll stays at top
-  li  r3,0
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b Codes_SceneThink_Exit
-Codes_SceneThink_SkipUp:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x20
-  beq Codes_SceneThink_AdjustOptionSelection
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Check if exceeds total amount of codes
-  extsb r3,r3
-  cmpwi r3,CodeAmount-1
-  ble 0x10
-#Cursor stays at the last code
-  li  r3,CodeAmount-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  b Codes_SceneThink_Exit
-#Check if exceeds max amount of codes per page
-  cmpwi r3,MaxCodesOnscreen-1
-  ble Codes_SceneThink_UpdateMenu
-#Cursor stays at bottom
-  li  r3,MaxCodesOnscreen-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll down
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,CodeAmount-MaxCodesOnscreen
-  ble Codes_SceneThink_UpdateMenu
-#Scroll stays at bottom
-  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b Codes_SceneThink_Exit
-#endregion
-#region Adjust Option Selection
-Codes_SceneThink_AdjustOptionSelection:
-.set  REG_MaxOptions,20
-.set  REG_OptionValuePtr,21
-#Check for movement right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq Codes_SceneThink_SkipRight
-#Get amount of options for this code
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  bl  CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add r3,r3,r4                                #get bl pointer to options info
-  bl  ConvertBlPointer
-  lwz REG_MaxOptions,CodeOptions_OptionCount(r3)     #get amount of options for this code
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Increment value
-  lbz r3,0x0(REG_OptionValuePtr)
-  addi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpw r3,REG_MaxOptions
-  ble Codes_SceneThink_UpdateMenu
-#Option stays maxxed out
-  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
-  b Codes_SceneThink_Exit
-Codes_SceneThink_SkipRight:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq Codes_SceneThink_CheckToExit
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Decrement value
-  lbz r3,0x0(REG_OptionValuePtr)
-  subi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Codes_SceneThink_UpdateMenu
-#Option stays at 0
-  li  r3,0
-  stb r3,0x0(REG_OptionValuePtr)
-  b Codes_SceneThink_Exit
-#endregion
-#region Check to Exit
-Codes_SceneThink_CheckToExit:
-#Check for start input
-  li  r3,4
-  branchl r12,0x801a36a0
-  rlwinm. r0,r4,0,0x1000
-  beq Codes_SceneThink_Exit
-#Apply codes
-  mr  r3,REG_GObjData
-  bl  ApplyAllGeckoCodes
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,0x80328f50
-#Play SFX
-  branchl r12,0x80174338
-#Exit Scene
-  branchl r12,0x801a4b60
-#Save Menu Options
-	lwz	r3, -0x77C0 (r13)
-	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
-	addi	r4,REG_GObjData,OFST_OptionSelections
-	li	r5,ModOFST_ModDataPrefsLength
-	branchl	r12,memcpy
-#Request a memcard save
-	branchl	r12,0x8001c550	#Allocate memory for something
-	li	r3,0
-	branchl	r12,0x8001d164	#load banner images
-#Set memcard save flag
-	load	r3,0x80433318
-	li	r4,1
-	stw	r4,0xC(r3)
-
-  b Codes_SceneThink_Exit
-#endregion
-
-Codes_SceneThink_UpdateMenu:
-#Redraw Menu
-  mr  r3,REG_GObjData
-  bl  Codes_CreateMenu
-#Play SFX
-  branchl r12,0x80174380
-  b Codes_SceneThink_Exit
-
-Codes_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region Codes_SceneDecide
-Codes_SceneDecide:
-  backup
-
-#Change Major
-  li  r3,ExitSceneID
-  branchl r12,0x801a42e8
-#Leave Major
-  branchl r12,0x801a42d4
-
-Codes_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-#region Codes_CreateMenu
-Codes_CreateMenu:
-.set  REG_GObjData,31
-.set  REG_TextGObj,30
-.set  REG_TextProp,29
-
-#Init
-  backup
-  mr  REG_GObjData,r3
-  bl  Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#Remove old text gobjs if they exist
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq Codes_CreateMenu_SkipNameRemoval
-  branchl r12,Text_RemoveText
-Codes_CreateMenu_SkipNameRemoval:
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq Codes_CreateMenu_SkipOptionRemoval
-  branchl r12,Text_RemoveText
-Codes_CreateMenu_SkipOptionRemoval:
-
-#region CreateTextGObjs
-Codes_CreateMenu_CreateTextGObjs:
-#Create Code Mames Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#Create Code Options Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#endregion
-#region Codes_CreateMenu_CreateNames
-Codes_CreateMenu_CreateNamesInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-  li  REG_Count,0
-Codes_CreateMenu_CreateNamesLoop:
-#Next name to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,REG_Count
-#Get the string bl pointer
-  bl  CodeNames_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  ConvertBlPointer
-  mr  r4,r3
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lfs f1,CodesX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-Codes_CreateMenu_CreateNamesIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge Codes_CreateMenu_CreateNameLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt Codes_CreateMenu_CreateNamesLoop
-Codes_CreateMenu_CreateNameLoopEnd:
-#endregion
-#region Codes_CreateMenu_CreateOptions
-Codes_CreateMenu_CreateOptionsInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-.set  REG_CurrentOptionID,22
-.set  REG_CurrentOptionSelection,23
-.set  REG_OptionStrings,24
-.set  REG_StringLoopCount,25
-  li  REG_Count,0
-Codes_CreateMenu_CreateOptionsLoop:
-#Next option to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add REG_CurrentOptionID,r3,REG_Count
-#Get the bl pointer
-  mr  r3,REG_CurrentOptionID
-  bl  CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  ConvertBlPointer
-  lwz r4,CodeOptions_OptionCount(r3)
-  addi  r4,r4,1
-  addi  REG_OptionStrings,r3,CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
-  mulli r4,r4,0x4                                           #pointer length
-  add REG_OptionStrings,REG_OptionStrings,r4
-#Get this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
-
-#Loop through strings and get the current one
-  li  REG_StringLoopCount,0
-Codes_CreateMenu_CreateOptionsLoop_StringSearch:
-  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
-  beq Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
-#Get next string
-  mr  r3,REG_OptionStrings
-  branchl r12,strlen
-  add REG_OptionStrings,REG_OptionStrings,r3
-  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
-  addi  REG_StringLoopCount,REG_StringLoopCount,1
-  b Codes_CreateMenu_CreateOptionsLoop_StringSearch
-
-Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  bl  CodeOptions_Wrapper
-  mflr  r4
-  mr  r5,REG_OptionStrings
-  lfs f1,OptionsX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-Codes_CreateMenu_CreateOptionsIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge Codes_CreateMenu_CreateOptionsLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt Codes_CreateMenu_CreateOptionsLoop
-Codes_CreateMenu_CreateOptionsLoopEnd:
-#endregion
-#region Codes_CreateMenu_HighlightCursor
-#Name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Option
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#endregion
-#region Codes_CreateMenu_ChangeCodeDescription
-#Get highlighted code ID
-	lhz r3,OFST_ScrollAmount(REG_GObjData)
-	lhz r4,OFST_CursorLocation(REG_GObjData)
-	add	r3,r3,r4
-#Get this codes options
-	bl	CodeOptions_Order
-	mflr	r4
-	mulli	r3,r3,0x4
-	add	r3,r3,r4
-	bl	ConvertBlPointer
-#Get this codes description
-	addi	r3,r3,CodeOptions_CodeDescription
-	bl	ConvertBlPointer
-	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
-#Store to text gobj
-	stw	r3,0x5C(r4)
-#endregion
-
-Codes_CreateMenu_Exit:
-  restore
-  blr
-
-###############################################
-
-ConvertBlPointer:
-  lwz r4,0x0(r3)        #Load bl instruction
-  rlwinm  r4,r4,0,6,29  #extract offset bits
-	rlwinm	r5,r4,7,31,31		#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5
-  add r3,r4,r3
-  blr
-
-#endregion
-#region ApplyAllGeckoCodes
-ApplyAllGeckoCodes:
-.set  REG_GObjData,31
-.set  REG_Count,30
-.set  REG_OptionSelection,29
-#Init
-  backup
-  mr  REG_GObjData,r3
-
-#Default Codes
-  bl  DefaultCodes
-  mflr  r3
-  bl  ApplyGeckoCode
-
-#Init Loop
-  li  REG_Count,0
-ApplyAllGeckoCodes_Loop:
-#Load this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx REG_OptionSelection,r3,REG_Count
-#Get this code's default gecko code pointer
-  bl  CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  ConvertBlPointer
-  addi  r3,r3,CodeOptions_GeckoCodePointers
-  bl  ConvertBlPointer
-  bl  ApplyGeckoCode
-#Get this code's gecko code pointers
-  bl  CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  ConvertBlPointer
-  addi  r3,r3,CodeOptions_GeckoCodePointers
-  mulli r4,REG_OptionSelection,0x4
-  add  r3,r3,r4
-  bl  ConvertBlPointer
-  bl  ApplyGeckoCode
-
-ApplyAllGeckoCodes_IncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  blt ApplyAllGeckoCodes_Loop
-
-ApplyAllGeckoCodes_Exit:
-  restore
-  blr
-
-####################################
-
-ApplyGeckoCode:
-.set  REG_GeckoCode,12
-  mr  REG_GeckoCode,r3
-
-ApplyGeckoCode_Loop:
-  lbz r3,0x0(REG_GeckoCode)
-  cmpwi r3,0xC2
-  beq ApplyGeckoCode_C2
-  cmpwi r3,0x4
-  beq ApplyGeckoCode_04
-  cmpwi r3,0xFF
-  beq ApplyGeckoCode_Exit
-  b ApplyGeckoCode_Exit
-ApplyGeckoCode_C2:
-.set  REG_InjectionSite,11
-#Branch overwrite
-  lwz r5,0x0(REG_GeckoCode)
-  rlwinm r3,r5,0,8,31                   #get offset for branch calc
-  rlwinm r5,r5,0,8,31
-  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
-  addi  r4,REG_GeckoCode,0x8            #get branch destination
-  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  stw r3,0x0(REG_InjectionSite)         #place branch instruction
-#Place branch back
-  lwz r3,0x4(REG_GeckoCode)
-  mulli r3,r3,0x8
-  add r4,r3,REG_GeckoCode               #get branch back site
-  addi  r3,REG_InjectionSite,0x4        #get branch back destination
-  sub r3,r3,r4
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  subi  r3,r3,0x4                       #subtract 4 i guess
-  stw r3,0x4(r4)                        #place branch instruction
-#Get next gecko code
-  lwz r3,0x4(REG_GeckoCode)
-  addi  r3,r3,1
-  mulli r3,r3,0x8
-  add REG_GeckoCode,REG_GeckoCode,r3
-  b ApplyGeckoCode_Loop
-ApplyGeckoCode_04:
-  lwz r3,0x0(REG_GeckoCode)
-  rlwinm r3,r3,0,8,31
-  oris  r3,r3,0x8000
-  lwz r4,0x4(REG_GeckoCode)
-  stw r4,0x0(r3)
-  addi REG_GeckoCode,REG_GeckoCode,0x8
-  b ApplyGeckoCode_Loop
-ApplyGeckoCode_Exit:
-blr
-
-#endregion
-
-#endregion
-
-#region MinorSceneStruct
-LagPrompt_MinorSceneStruct:
-blrl
-#Lag Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  LagPrompt_SceneDecide   #SceneDecide
-.byte PromptCommonSceneID   #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-Codes_MinorSceneStruct:
-blrl
-#Codes Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  Codes_SceneDecide       #SceneDecide
-.byte CodesCommonSceneID    #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-#endregion
-
-CheckProgressive:
-#/*
-#Check if progressive is enabled
-  lis	r3,0xCC00
-	lhz	r3,0x206E(r3)
-	rlwinm.	r3,r3,0,0x1
-  beq NoProgressive
-IsProgressive:
-#Override SceneLoad
-  li  r3,PromptCommonSceneID
-  branchl r12,0x801a4ce0
-  bl  LagPrompt_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	LagPrompt_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load LagPrompt
-  li	r3, PromptSceneID
-  b SnapshotCode102_Exit
-#*/
-NoProgressive:
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,0x801a4ce0
-  bl  Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	Codes_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load Codes
-  li  r3,CodesSceneID
-
-SnapshotCode102_Exit:
-#Store as next scene
-	branchl	r12,0x801a42e8
-#request to change scenes
-	branchl	r12,0x801a4b60
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	li	r0,2
-	blr
-
 MMLCode102_End:
 blrl
 #endregion
 #region SnapshotCode101
 .include "../../Common101.s"
+
 MMLCode101_Start:
 blrl
 
@@ -15015,7 +15071,7 @@ Snap101_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	Snap101_GameVersion_Description
 	bl  Snap101_GameVersion_NTSC
-	bl  Snap101_GameVersion_100
+	bl  Snap101_GameVersion_101
 	bl  Snap101_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -15040,6 +15096,1211 @@ Snap101_CodeOptions_Widescreen:
 	.string "True"
 	.align 2
 #endregion
+
+#endregion
+#region Snap101_Codes_SceneLoad
+Snap101_Codes_SceneLoad:
+#GObj Offsets
+  .set OFST_CodeNamesTextGObj,0x0
+  .set OFST_CodeOptionsTextGObj,0x4
+	.set OFST_CodeDescTextGObj,0x8
+  .set OFST_CursorLocation,0xC
+  .set OFST_ScrollAmount,0xE
+  .set OFST_OptionSelections,0x10
+blrl
+
+#Init
+  backup
+
+Snap101_Codes_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl Snap101_Codes_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Title
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap101_CodeNames_Title
+  mflr  r4
+	lfs	f1,TitleX(REG_TextProp)
+  lfs	f2,TitleY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Modname + version
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap101_CodeNames_ModName
+  mflr  r4
+	lfs	f1,ModNameX(REG_TextProp)
+  lfs	f2,ModNameY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Init Menu
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Snap101_Codes_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+#Copy Saved Menu Options
+	addi	r3,REG_GObjData,OFST_OptionSelections
+	lwz	r4, OFST_Memcard (r13)
+	addi r4,r4,OFST_ModPrefs
+	li	r5,0x18
+	branchl	r12,memcpy
+
+#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	lfs	f1,DescriptionX(REG_TextProp)
+	lfs	f2,DescriptionY(REG_TextProp)
+	lfs	f3,DescriptionZ(REG_TextProp)
+	lfs	f4,DescriptionMaxX(REG_TextProp)
+	lfs	f5,DescriptionUnk(REG_TextProp)
+	branchl r12,Text_AllocateTextObject
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
+#Init
+	mr	r3,REG_TextGObj
+	li	r4,0
+	branchl	r12,Text_CopyPremadeTextDataToStruct
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Menu
+  mr  r3,REG_GObjData
+  bl  Snap101_Codes_CreateMenu
+
+Snap101_Codes_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region Snap101_Codes_SceneThink
+Snap101_Codes_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Snap101_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Code Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement up
+  rlwinm. r0,REG_Inputs,0,0x10
+  beq Snap101_Codes_SceneThink_SkipUp
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap101_Codes_SceneThink_UpdateMenu
+#Cursor stays at top
+  li  r3,0
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll up
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap101_Codes_SceneThink_UpdateMenu
+#Scroll stays at top
+  li  r3,0
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Snap101_Codes_SceneThink_Exit
+Snap101_Codes_SceneThink_SkipUp:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x20
+  beq Snap101_Codes_SceneThink_AdjustOptionSelection
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Check if exceeds total amount of codes
+  extsb r3,r3
+  cmpwi r3,CodeAmount-1
+  ble 0x10
+#Cursor stays at the last code
+  li  r3,CodeAmount-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  b Snap101_Codes_SceneThink_Exit
+#Check if exceeds max amount of codes per page
+  cmpwi r3,MaxCodesOnscreen-1
+  ble Snap101_Codes_SceneThink_UpdateMenu
+#Cursor stays at bottom
+  li  r3,MaxCodesOnscreen-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll down
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,CodeAmount-MaxCodesOnscreen
+  ble Snap101_Codes_SceneThink_UpdateMenu
+#Scroll stays at bottom
+  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Snap101_Codes_SceneThink_Exit
+#endregion
+#region Adjust Option Selection
+Snap101_Codes_SceneThink_AdjustOptionSelection:
+.set  REG_MaxOptions,20
+.set  REG_OptionValuePtr,21
+#Check for movement right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Snap101_Codes_SceneThink_SkipRight
+#Get amount of options for this code
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  bl  Snap101_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+  bl  Snap101_ConvertBlPointer
+  lwz REG_MaxOptions,Snap101_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Increment value
+  lbz r3,0x0(REG_OptionValuePtr)
+  addi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpw r3,REG_MaxOptions
+  ble Snap101_Codes_SceneThink_UpdateMenu
+#Option stays maxxed out
+  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
+  b Snap101_Codes_SceneThink_Exit
+Snap101_Codes_SceneThink_SkipRight:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Snap101_Codes_SceneThink_CheckToExit
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Decrement value
+  lbz r3,0x0(REG_OptionValuePtr)
+  subi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap101_Codes_SceneThink_UpdateMenu
+#Option stays at 0
+  li  r3,0
+  stb r3,0x0(REG_OptionValuePtr)
+  b Snap101_Codes_SceneThink_Exit
+#endregion
+#region Check to Exit
+Snap101_Codes_SceneThink_CheckToExit:
+#Check for start input
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x1000
+  beq Snap101_Codes_SceneThink_Exit
+#Apply codes
+  mr  r3,REG_GObjData
+  bl  Snap101_ApplyAllGeckoCodes
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_Forward
+#Exit Scene
+  branchl r12,MenuController_ChangeScreenMinor
+#Save Menu Options
+	lwz	r3, OFST_Memcard (r13)
+	addi r3,r3,OFST_ModPrefs
+	addi	r4,REG_GObjData,OFST_OptionSelections
+	li	r5,0x18
+	branchl	r12,memcpy
+#Request a memcard save
+	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
+	li	r3,0
+	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
+#Set memcard save flag
+	load	r3,OFST_MemcardController
+	li	r4,1
+	stw	r4,0xC(r3)
+
+  b Snap101_Codes_SceneThink_Exit
+#endregion
+
+Snap101_Codes_SceneThink_UpdateMenu:
+#Redraw Menu
+  mr  r3,REG_GObjData
+  bl  Snap101_Codes_CreateMenu
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+  b Snap101_Codes_SceneThink_Exit
+
+Snap101_Codes_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Snap101_Codes_SceneDecide
+Snap101_Codes_SceneDecide:
+  backup
+
+#Change Major
+  li  r3,ExitSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Leave Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+Snap101_Codes_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region Snap101_Codes_CreateMenu
+Snap101_Codes_CreateMenu:
+.set  REG_GObjData,31
+.set  REG_TextGObj,30
+.set  REG_TextProp,29
+
+#Init
+  backup
+  mr  REG_GObjData,r3
+  bl  Snap101_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#Remove old text gobjs if they exist
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Snap101_Codes_CreateMenu_SkipNameRemoval
+  branchl r12,Text_RemoveText
+Snap101_Codes_CreateMenu_SkipNameRemoval:
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Snap101_Codes_CreateMenu_SkipOptionRemoval
+  branchl r12,Text_RemoveText
+Snap101_Codes_CreateMenu_SkipOptionRemoval:
+
+#region CreateTextGObjs
+Snap101_Codes_CreateMenu_CreateTextGObjs:
+#Create Code Mames Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#Create Code Options Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#endregion
+#region Snap101_Codes_CreateMenu_CreateNames
+Snap101_Codes_CreateMenu_CreateNamesInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+  li  REG_Count,0
+Snap101_Codes_CreateMenu_CreateNamesLoop:
+#Next name to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,REG_Count
+#Get the string bl pointer
+  bl  Snap101_CodeNames_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  Snap101_ConvertBlPointer
+  mr  r4,r3
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lfs f1,CodesX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Snap101_Codes_CreateMenu_CreateNamesIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Snap101_Codes_CreateMenu_CreateNameLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Snap101_Codes_CreateMenu_CreateNamesLoop
+Snap101_Codes_CreateMenu_CreateNameLoopEnd:
+#endregion
+#region Snap101_Codes_CreateMenu_CreateOptions
+Snap101_Codes_CreateMenu_CreateOptionsInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+.set  REG_CurrentOptionID,22
+.set  REG_CurrentOptionSelection,23
+.set  REG_OptionStrings,24
+.set  REG_StringLoopCount,25
+  li  REG_Count,0
+Snap101_Codes_CreateMenu_CreateOptionsLoop:
+#Next option to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add REG_CurrentOptionID,r3,REG_Count
+#Get the bl pointer
+  mr  r3,REG_CurrentOptionID
+  bl  Snap101_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  Snap101_ConvertBlPointer
+  lwz r4,Snap101_CodeOptions_OptionCount(r3)
+  addi  r4,r4,1
+  addi  REG_OptionStrings,r3,Snap101_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
+  mulli r4,r4,0x4                                           #pointer length
+  add REG_OptionStrings,REG_OptionStrings,r4
+#Get this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
+
+#Loop through strings and get the current one
+  li  REG_StringLoopCount,0
+Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
+  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
+  beq Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
+#Get next string
+  mr  r3,REG_OptionStrings
+  branchl r12,strlen
+  add REG_OptionStrings,REG_OptionStrings,r3
+  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
+  addi  REG_StringLoopCount,REG_StringLoopCount,1
+  b Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearch
+
+Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  bl  Snap101_CodeOptions_Wrapper
+  mflr  r4
+  mr  r5,REG_OptionStrings
+  lfs f1,OptionsX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Snap101_Codes_CreateMenu_CreateOptionsIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Snap101_Codes_CreateMenu_CreateOptionsLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Snap101_Codes_CreateMenu_CreateOptionsLoop
+Snap101_Codes_CreateMenu_CreateOptionsLoopEnd:
+#endregion
+#region Snap101_Codes_CreateMenu_HighlightCursor
+#Name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Option
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#endregion
+#region Snap101_Codes_CreateMenu_ChangeCodeDescription
+#Get highlighted code ID
+	lhz r3,OFST_ScrollAmount(REG_GObjData)
+	lhz r4,OFST_CursorLocation(REG_GObjData)
+	add	r3,r3,r4
+#Get this codes options
+	bl	Snap101_CodeOptions_Order
+	mflr	r4
+	mulli	r3,r3,0x4
+	add	r3,r3,r4
+	bl	Snap101_ConvertBlPointer
+#Get this codes description
+	addi	r3,r3,Snap101_CodeOptions_CodeDescription
+	bl	Snap101_ConvertBlPointer
+	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
+#Store to text gobj
+	stw	r3,0x5C(r4)
+#endregion
+
+Snap101_Codes_CreateMenu_Exit:
+  restore
+  blr
+
+###############################################
+
+Snap101_ConvertBlPointer:
+  lwz r4,0x0(r3)        #Load bl instruction
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+	rlwinm	r5,r4,7,31,31		#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5
+  add r3,r4,r3
+  blr
+
+#endregion
+#region Snap101_ApplyAllGeckoCodes
+Snap101_ApplyAllGeckoCodes:
+.set  REG_GObjData,31
+.set  REG_Count,30
+.set  REG_OptionSelection,29
+#Init
+  backup
+  mr  REG_GObjData,r3
+
+#Check if LCD reduction was enabled
+	load	r3,VI_Struct
+	lwz	r3,0x1DC(r3)
+	load	r4,RenewInputs_Prefunction
+	cmpw	r3,r4
+	beq	Snap101_ApplyAllGeckoCodes_DefaultCodes
+#Polling Drift Fix
+  bl  Snap101_LagReduction_PD
+  mflr  r3
+  bl  Snap101_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+
+Snap101_ApplyAllGeckoCodes_DefaultCodes:
+#Default Codes
+  bl  Snap101_DefaultCodes_On
+  mflr  r3
+  bl  Snap101_ApplyGeckoCode
+
+#Default Codes
+  bl  Snap101_DefaultCodes_On
+  mflr  r3
+  bl  Snap101_ApplyGeckoCode
+
+#Init Loop
+  li  REG_Count,0
+ApplyAllGeckoSnap101_Codes_Loop:
+#Load this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's default gecko code pointer
+  bl  Snap101_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  Snap101_ConvertBlPointer
+  addi  r3,r3,Snap101_CodeOptions_GeckoCodePointers
+  bl  Snap101_ConvertBlPointer
+  bl  Snap101_ApplyGeckoCode
+#Get this code's gecko code pointers
+  bl  Snap101_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  Snap101_ConvertBlPointer
+  addi  r3,r3,Snap101_CodeOptions_GeckoCodePointers
+  mulli r4,REG_OptionSelection,0x4
+  add  r3,r3,r4
+  bl  Snap101_ConvertBlPointer
+  bl  Snap101_ApplyGeckoCode
+
+ApplyAllGeckoSnap101_Codes_IncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  blt ApplyAllGeckoSnap101_Codes_Loop
+
+ApplyAllGeckoSnap101_Codes_Exit:
+  restore
+  blr
+
+####################################
+
+Snap101_ApplyGeckoCode:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+Snap101_ApplyGeckoCode_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq Snap101_ApplyGeckoCode_C2
+  cmpwi r3,0x4
+  beq Snap101_ApplyGeckoCode_04
+  cmpwi r3,0xFF
+  beq Snap101_ApplyGeckoCode_Exit
+  b Snap101_ApplyGeckoCode_Exit
+Snap101_ApplyGeckoCode_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b Snap101_ApplyGeckoCode_Loop
+Snap101_ApplyGeckoCode_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b Snap101_ApplyGeckoCode_Loop
+Snap101_ApplyGeckoCode_Exit:
+blr
+
+#endregion
+
+#endregion
+
+#region LagPrompt
+
+#region Snap101_LagPrompt_SceneLoad
+############################################
+
+#region Snap101_LagPrompt_SceneLoad_Data
+Snap101_LagPrompt_SceneLoad_TextProperties:
+blrl
+.set PromptX,0x0
+.set PromptY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YesX,0x14
+.set YesY,0x18
+.set YesScale,0x1C
+.set NoX,0x20
+.set NoY,0x24
+.set NoScale,0x28
+.set HighlightColor,0x2C
+.set NonHighlightColor,0x30
+.float 315     			   #REG_TextGObj X pos
+.float 200  					   #REG_TextGObj Y pos
+.float 0.1     		     	 #Z offset
+.float 1   				     #Canvas Scaling
+.float 1					    	#Text scale
+.float 265              #Yes X pos
+.float 300              #Yes Y pos
+.float 1              #Yes scale
+.float 365              #No X pos
+.float 300              #No Y pos
+.float 1              #No scale
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+
+Snap101_LagPrompt_SceneLoad_TopText:
+blrl
+.if isPAL==1
+.ascii "Are you using HDMI?"
+.align 2
+.endif
+.if isPAL==0
+.ascii "Are you using HDMI"
+.hword 0x8148
+.byte 0x00
+.align 2
+.endif
+
+Snap101_LagPrompt_SceneLoad_Yes:
+blrl
+.string "Yes"
+.align 2
+
+Snap101_LagPrompt_SceneLoad_No:
+blrl
+.string "No"
+.align 2
+
+#GObj Offsets
+  .set OFST_TextGObj,0x0
+  .set OFST_Selection,0x4
+
+#endregion
+#region Snap101_LagPrompt_SceneLoad
+Snap101_LagPrompt_SceneLoad:
+blrl
+
+#Init
+  backup
+
+Snap101_LagPrompt_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl Snap101_LagPrompt_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,0x0(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap101_LagPrompt_SceneLoad_TopText
+  mflr  r4
+	lfs	f1,PromptX(REG_TextProp)
+  lfs	f2,PromptY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create Yes
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap101_LagPrompt_SceneLoad_Yes
+  mflr  r4
+	lfs	f1,YesX(REG_TextProp)
+  lfs	f2,YesY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create No
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap101_LagPrompt_SceneLoad_No
+  mflr  r4
+	lfs	f1,NoX(REG_TextProp)
+  lfs	f2,NoY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Snap101_LagPrompt_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+
+#Store text gobj pointer
+  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
+#Init Selection value
+  li  r3,InitialSelection
+  stb r3,OFST_Selection(REG_GObjData)
+
+#Highlight selection
+  mr  r3,REG_TextGObj
+  li  r4,InitialSelection+1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+
+Snap101_LagPrompt_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region Snap101_LagPrompt_SceneThink
+Snap101_LagPrompt_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Snap101_LagPrompt_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement to the right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Snap101_LagPrompt_SceneThink_SkipRight
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  addi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,1
+  ble Snap101_LagPrompt_SceneThink_HighlightSelection
+  li  r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  b Snap101_LagPrompt_SceneThink_CheckForA
+Snap101_LagPrompt_SceneThink_SkipRight:
+#Check for movement to the left
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Snap101_LagPrompt_SceneThink_CheckForA
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  subi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap101_LagPrompt_SceneThink_HighlightSelection
+  li  r3,0
+  stb r3,OFST_Selection(REG_GObjData)
+  b Snap101_LagPrompt_SceneThink_CheckForA
+
+Snap101_LagPrompt_SceneThink_HighlightSelection:
+#Unhighlight both options
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,1
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,2
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+#Highlight selection
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  lbz r4,OFST_Selection(REG_GObjData)
+  addi  r4,r4,1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+#endregion
+#region Check for Confirmation
+Snap101_LagPrompt_SceneThink_CheckForA:
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x100
+  bne Snap101_LagPrompt_SceneThink_Confirmed
+  rlwinm. r0,r4,0,0x1000
+  bne Snap101_LagPrompt_SceneThink_Confirmed
+  b Snap101_LagPrompt_SceneThink_Exit
+Snap101_LagPrompt_SceneThink_Confirmed:
+#Play Menu Sound
+  branchl r12,SFX_PlayMenuSound_Forward
+#If yes, apply lag reduction
+  lbz r3,OFST_Selection(REG_GObjData)
+  cmpwi r3,0
+  bne Snap101_LagPrompt_SceneThink_ExitScene
+#endregion
+#region Apply Code
+.set  REG_GeckoCode,12
+#Apply lag reduction
+  bl  Snap101_LagReduction_LCD
+  mflr  r3
+  bl  Snap101_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+#Set new post retrace callback
+  load  r3,PostRetraceCallback
+  branchl r12,HSD_VISetUserPostRetraceCallback
+#Enable progressive
+  load  r3,ProgressiveStruct
+  li  r0,1
+  stw r0,0x8(r3)
+  branchl r12,Deflicker_Toggle
+.if isPAL==1
+#Enable PAL60
+	load	r3,ProgressiveStruct
+	li	r4,1
+	stw	r4,0xC(r3)
+.endif
+#Call VIConfigure
+	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
+	branchl	r12,ScreenDisplay_Adjust
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#endregion
+
+Snap101_LagPrompt_SceneThink_ExitScene:
+  branchl r12,MenuController_ChangeScreenMinor
+
+Snap101_LagPrompt_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Snap101_LagPrompt_SceneDecide
+Snap101_LagPrompt_SceneDecide:
+
+  backup
+
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap101_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+
+#Enter Codes Scene
+  li  r3,CodesSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Change Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+Snap101_LagPrompt_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+
+#endregion
+
+#region MinorSceneStruct
+Snap101_LagPrompt_MinorSceneStruct:
+blrl
+#Lag Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Snap101_LagPrompt_SceneDecide   #SceneDecide
+.byte PromptCommonSceneID   #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+Snap101_Codes_MinorSceneStruct:
+blrl
+#Codes Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Snap101_Codes_SceneDecide       #SceneDecide
+.byte CodesCommonSceneID    #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+#endregion
+
+Snap101_CheckProgressive:
+
+#Check if progressive is enabled
+  lis	r3,0xCC00
+	lhz	r3,0x206E(r3)
+	rlwinm.	r3,r3,0,0x1
+  beq Snap101_NoProgressive
+
+Snap101_IsProgressive:
+#Override SceneLoad
+  li  r3,PromptCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap101_LagPrompt_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap101_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load LagPrompt
+  li	r3, PromptSceneID
+  b Snap101_Exit
+Snap101_NoProgressive:
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap101_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap101_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load Codes
+  li  r3,CodesSceneID
+
+Snap101_Exit:
+#Store as next scene
+	branchl r12,MenuController_WriteToPendingMajor
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+
+##########
+## Exit ##
+##########
+
+#Return to the game
+  restore
+	li	r0,2
+	blr
+
 #region Gecko Codes
 Snap101_DefaultCodes_On:
 	blrl
@@ -15783,6 +17044,27 @@ Snap101_Widescreen_True:
 	.long 0x00000000
 	.long 0x044DCE54
 	.long 0x3E99999A
+	.long -1
+
+Snap101_LagReduction_LCD:
+	blrl
+	.long 0x04019860
+	.long 0x4BFFFD9D
+	.long -1
+Snap101_LagReduction_PD:
+	blrl
+	.long 0x041A476C
+	.long 0x60000000
+	.long 0x04019860
+	.long 0x4BFFFD9D
+	.long 0xC2019860
+	.long 0x00000003
+	.long 0x901C0000
+	.long 0x3D808001
+	.long 0x618C95FC
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x00000000
 	.long -1
 
 Snap101_Frozen_All:
@@ -25954,1203 +27236,12 @@ Snap101_Widescreen_Description:
 
 #endregion
 
-#endregion
-#region Snap101_Codes_SceneLoad
-Snap101_Codes_SceneLoad:
-#GObj Offsets
-  .set OFST_CodeNamesTextGObj,0x0
-  .set OFST_CodeOptionsTextGObj,0x4
-	.set OFST_CodeDescTextGObj,0x8
-  .set OFST_CursorLocation,0xC
-  .set OFST_ScrollAmount,0xE
-  .set OFST_OptionSelections,0x10
-blrl
-
-#Init
-  backup
-
-Snap101_Codes_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl Snap101_Codes_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,Text_CreateTextCanvas
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Title
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap101_CodeNames_Title
-  mflr  r4
-	lfs	f1,TitleX(REG_TextProp)
-  lfs	f2,TitleY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Modname + version
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap101_CodeNames_ModName
-  mflr  r4
-	lfs	f1,ModNameX(REG_TextProp)
-  lfs	f2,ModNameY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Init Menu
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,HSD_Free
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  Snap101_Codes_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-#Copy Saved Menu Options
-	addi	r3,REG_GObjData,OFST_OptionSelections
-	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
-	li	r5,0x18
-	branchl	r12,memcpy
-
-#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	lfs	f1,DescriptionX(REG_TextProp)
-	lfs	f2,DescriptionY(REG_TextProp)
-	lfs	f3,DescriptionZ(REG_TextProp)
-	lfs	f4,DescriptionMaxX(REG_TextProp)
-	lfs	f5,DescriptionUnk(REG_TextProp)
-	branchl r12,Text_AllocateTextObject
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
-#Init
-	mr	r3,REG_TextGObj
-	li	r4,0
-	branchl	r12,Text_CopyPremadeTextDataToStruct
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Menu
-  mr  r3,REG_GObjData
-  bl  Snap101_Codes_CreateMenu
-
-Snap101_Codes_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region Snap101_Codes_SceneThink
-Snap101_Codes_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  Snap101_Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Code Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,Inputs_GetPlayerRapidHeldInputs
-  mr  REG_Inputs,r3
-#Check for movement up
-  rlwinm. r0,REG_Inputs,0,0x10
-  beq Snap101_Codes_SceneThink_SkipUp
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap101_Codes_SceneThink_UpdateMenu
-#Cursor stays at top
-  li  r3,0
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll up
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap101_Codes_SceneThink_UpdateMenu
-#Scroll stays at top
-  li  r3,0
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b Snap101_Codes_SceneThink_Exit
-Snap101_Codes_SceneThink_SkipUp:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x20
-  beq Snap101_Codes_SceneThink_AdjustOptionSelection
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Check if exceeds total amount of codes
-  extsb r3,r3
-  cmpwi r3,CodeAmount-1
-  ble 0x10
-#Cursor stays at the last code
-  li  r3,CodeAmount-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  b Snap101_Codes_SceneThink_Exit
-#Check if exceeds max amount of codes per page
-  cmpwi r3,MaxCodesOnscreen-1
-  ble Snap101_Codes_SceneThink_UpdateMenu
-#Cursor stays at bottom
-  li  r3,MaxCodesOnscreen-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll down
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,CodeAmount-MaxCodesOnscreen
-  ble Snap101_Codes_SceneThink_UpdateMenu
-#Scroll stays at bottom
-  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b Snap101_Codes_SceneThink_Exit
-#endregion
-#region Adjust Option Selection
-Snap101_Codes_SceneThink_AdjustOptionSelection:
-.set  REG_MaxOptions,20
-.set  REG_OptionValuePtr,21
-#Check for movement right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq Snap101_Codes_SceneThink_SkipRight
-#Get amount of options for this code
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  bl  Snap101_CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add r3,r3,r4                                #get bl pointer to options info
-  bl  Snap101_ConvertBlPointer
-  lwz REG_MaxOptions,Snap101_CodeOptions_OptionCount(r3)     #get amount of options for this code
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Increment value
-  lbz r3,0x0(REG_OptionValuePtr)
-  addi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpw r3,REG_MaxOptions
-  ble Snap101_Codes_SceneThink_UpdateMenu
-#Option stays maxxed out
-  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
-  b Snap101_Codes_SceneThink_Exit
-Snap101_Codes_SceneThink_SkipRight:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq Snap101_Codes_SceneThink_CheckToExit
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Decrement value
-  lbz r3,0x0(REG_OptionValuePtr)
-  subi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap101_Codes_SceneThink_UpdateMenu
-#Option stays at 0
-  li  r3,0
-  stb r3,0x0(REG_OptionValuePtr)
-  b Snap101_Codes_SceneThink_Exit
-#endregion
-#region Check to Exit
-Snap101_Codes_SceneThink_CheckToExit:
-#Check for start input
-  li  r3,4
-  branchl r12,Inputs_GetPlayerInstantInputs
-  rlwinm. r0,r4,0,0x1000
-  beq Snap101_Codes_SceneThink_Exit
-#Apply codes
-  mr  r3,REG_GObjData
-  bl  Snap101_ApplyAllGeckoCodes
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,TRK_flush_cache
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_Forward
-#Exit Scene
-  branchl r12,MenuController_ChangeScreenMinor
-#Save Menu Options
-	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
-	addi	r4,REG_GObjData,OFST_OptionSelections
-	li	r5,0x18
-	branchl	r12,memcpy
-#Request a memcard save
-	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
-	li	r3,0
-	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
-#Set memcard save flag
-	load	r3,OFST_MemcardController
-	li	r4,1
-	stw	r4,0xC(r3)
-
-  b Snap101_Codes_SceneThink_Exit
-#endregion
-
-Snap101_Codes_SceneThink_UpdateMenu:
-#Redraw Menu
-  mr  r3,REG_GObjData
-  bl  Snap101_Codes_CreateMenu
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_CloseOpenPort
-  b Snap101_Codes_SceneThink_Exit
-
-Snap101_Codes_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region Snap101_Codes_SceneDecide
-Snap101_Codes_SceneDecide:
-  backup
-
-#Change Major
-  li  r3,ExitSceneID
-  branchl r12,MenuController_WriteToPendingMajor
-#Leave Major
-  branchl r12,MenuController_ChangeScreenMajor
-
-Snap101_Codes_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-#region Snap101_Codes_CreateMenu
-Snap101_Codes_CreateMenu:
-.set  REG_GObjData,31
-.set  REG_TextGObj,30
-.set  REG_TextProp,29
-
-#Init
-  backup
-  mr  REG_GObjData,r3
-  bl  Snap101_Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#Remove old text gobjs if they exist
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq Snap101_Codes_CreateMenu_SkipNameRemoval
-  branchl r12,Text_RemoveText
-Snap101_Codes_CreateMenu_SkipNameRemoval:
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq Snap101_Codes_CreateMenu_SkipOptionRemoval
-  branchl r12,Text_RemoveText
-Snap101_Codes_CreateMenu_SkipOptionRemoval:
-
-#region CreateTextGObjs
-Snap101_Codes_CreateMenu_CreateTextGObjs:
-#Create Code Mames Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#Create Code Options Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#endregion
-#region Snap101_Codes_CreateMenu_CreateNames
-Snap101_Codes_CreateMenu_CreateNamesInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-  li  REG_Count,0
-Snap101_Codes_CreateMenu_CreateNamesLoop:
-#Next name to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,REG_Count
-#Get the string bl pointer
-  bl  Snap101_CodeNames_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  Snap101_ConvertBlPointer
-  mr  r4,r3
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lfs f1,CodesX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-Snap101_Codes_CreateMenu_CreateNamesIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge Snap101_Codes_CreateMenu_CreateNameLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt Snap101_Codes_CreateMenu_CreateNamesLoop
-Snap101_Codes_CreateMenu_CreateNameLoopEnd:
-#endregion
-#region Snap101_Codes_CreateMenu_CreateOptions
-Snap101_Codes_CreateMenu_CreateOptionsInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-.set  REG_CurrentOptionID,22
-.set  REG_CurrentOptionSelection,23
-.set  REG_OptionStrings,24
-.set  REG_StringLoopCount,25
-  li  REG_Count,0
-Snap101_Codes_CreateMenu_CreateOptionsLoop:
-#Next option to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add REG_CurrentOptionID,r3,REG_Count
-#Get the bl pointer
-  mr  r3,REG_CurrentOptionID
-  bl  Snap101_CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  Snap101_ConvertBlPointer
-  lwz r4,Snap101_CodeOptions_OptionCount(r3)
-  addi  r4,r4,1
-  addi  REG_OptionStrings,r3,Snap101_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
-  mulli r4,r4,0x4                                           #pointer length
-  add REG_OptionStrings,REG_OptionStrings,r4
-#Get this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
-
-#Loop through strings and get the current one
-  li  REG_StringLoopCount,0
-Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
-  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
-  beq Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
-#Get next string
-  mr  r3,REG_OptionStrings
-  branchl r12,strlen
-  add REG_OptionStrings,REG_OptionStrings,r3
-  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
-  addi  REG_StringLoopCount,REG_StringLoopCount,1
-  b Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearch
-
-Snap101_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  bl  Snap101_CodeOptions_Wrapper
-  mflr  r4
-  mr  r5,REG_OptionStrings
-  lfs f1,OptionsX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-Snap101_Codes_CreateMenu_CreateOptionsIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge Snap101_Codes_CreateMenu_CreateOptionsLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt Snap101_Codes_CreateMenu_CreateOptionsLoop
-Snap101_Codes_CreateMenu_CreateOptionsLoopEnd:
-#endregion
-#region Snap101_Codes_CreateMenu_HighlightCursor
-#Name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Option
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#endregion
-#region Snap101_Codes_CreateMenu_ChangeCodeDescription
-#Get highlighted code ID
-	lhz r3,OFST_ScrollAmount(REG_GObjData)
-	lhz r4,OFST_CursorLocation(REG_GObjData)
-	add	r3,r3,r4
-#Get this codes options
-	bl	Snap101_CodeOptions_Order
-	mflr	r4
-	mulli	r3,r3,0x4
-	add	r3,r3,r4
-	bl	Snap101_ConvertBlPointer
-#Get this codes description
-	addi	r3,r3,Snap101_CodeOptions_CodeDescription
-	bl	Snap101_ConvertBlPointer
-	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
-#Store to text gobj
-	stw	r3,0x5C(r4)
-#endregion
-
-Snap101_Codes_CreateMenu_Exit:
-  restore
-  blr
-
-###############################################
-
-Snap101_ConvertBlPointer:
-  lwz r4,0x0(r3)        #Load bl instruction
-  rlwinm  r4,r4,0,6,29  #extract offset bits
-	rlwinm	r5,r4,7,31,31		#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5
-  add r3,r4,r3
-  blr
-
-#endregion
-#region Snap101_ApplyAllGeckoCodes
-Snap101_ApplyAllGeckoCodes:
-.set  REG_GObjData,31
-.set  REG_Count,30
-.set  REG_OptionSelection,29
-#Init
-  backup
-  mr  REG_GObjData,r3
-
-#Default Codes
-  bl  Snap101_DefaultCodes_On
-  mflr  r3
-  bl  Snap101_ApplyGeckoCode
-
-#Init Loop
-  li  REG_Count,0
-ApplyAllGeckoSnap101_Codes_Loop:
-#Load this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx REG_OptionSelection,r3,REG_Count
-#Get this code's default gecko code pointer
-  bl  Snap101_CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  Snap101_ConvertBlPointer
-  addi  r3,r3,Snap101_CodeOptions_GeckoCodePointers
-  bl  Snap101_ConvertBlPointer
-  bl  Snap101_ApplyGeckoCode
-#Get this code's gecko code pointers
-  bl  Snap101_CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  Snap101_ConvertBlPointer
-  addi  r3,r3,Snap101_CodeOptions_GeckoCodePointers
-  mulli r4,REG_OptionSelection,0x4
-  add  r3,r3,r4
-  bl  Snap101_ConvertBlPointer
-  bl  Snap101_ApplyGeckoCode
-
-ApplyAllGeckoSnap101_Codes_IncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  blt ApplyAllGeckoSnap101_Codes_Loop
-
-ApplyAllGeckoSnap101_Codes_Exit:
-  restore
-  blr
-
-####################################
-
-Snap101_ApplyGeckoCode:
-.set  REG_GeckoCode,12
-  mr  REG_GeckoCode,r3
-
-Snap101_ApplyGeckoCode_Loop:
-  lbz r3,0x0(REG_GeckoCode)
-  cmpwi r3,0xC2
-  beq Snap101_ApplyGeckoCode_C2
-  cmpwi r3,0x4
-  beq Snap101_ApplyGeckoCode_04
-  cmpwi r3,0xFF
-  beq Snap101_ApplyGeckoCode_Exit
-  b Snap101_ApplyGeckoCode_Exit
-Snap101_ApplyGeckoCode_C2:
-.set  REG_InjectionSite,11
-#Branch overwrite
-  lwz r5,0x0(REG_GeckoCode)
-  rlwinm r3,r5,0,8,31                   #get offset for branch calc
-  rlwinm r5,r5,0,8,31
-  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
-  addi  r4,REG_GeckoCode,0x8            #get branch destination
-  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  stw r3,0x0(REG_InjectionSite)         #place branch instruction
-#Place branch back
-  lwz r3,0x4(REG_GeckoCode)
-  mulli r3,r3,0x8
-  add r4,r3,REG_GeckoCode               #get branch back site
-  addi  r3,REG_InjectionSite,0x4        #get branch back destination
-  sub r3,r3,r4
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  subi  r3,r3,0x4                       #subtract 4 i guess
-  stw r3,0x4(r4)                        #place branch instruction
-#Get next gecko code
-  lwz r3,0x4(REG_GeckoCode)
-  addi  r3,r3,1
-  mulli r3,r3,0x8
-  add REG_GeckoCode,REG_GeckoCode,r3
-  b Snap101_ApplyGeckoCode_Loop
-Snap101_ApplyGeckoCode_04:
-  lwz r3,0x0(REG_GeckoCode)
-  rlwinm r3,r3,0,8,31
-  oris  r3,r3,0x8000
-  lwz r4,0x4(REG_GeckoCode)
-  stw r4,0x0(r3)
-  addi REG_GeckoCode,REG_GeckoCode,0x8
-  b Snap101_ApplyGeckoCode_Loop
-Snap101_ApplyGeckoCode_Exit:
-blr
-
-#endregion
-
-#endregion
-
-#region LagPrompt
-
-#region Snap101_LagPrompt_SceneLoad
-############################################
-
-#region Snap101_LagPrompt_SceneLoad_Data
-Snap101_LagPrompt_SceneLoad_TextProperties:
-blrl
-.set PromptX,0x0
-.set PromptY,0x4
-.set ZOffset,0x8
-.set CanvasScaling,0xC
-.set Scale,0x10
-.set YesX,0x14
-.set YesY,0x18
-.set YesScale,0x1C
-.set NoX,0x20
-.set NoY,0x24
-.set NoScale,0x28
-.set HighlightColor,0x2C
-.set NonHighlightColor,0x30
-.float 315     			   #REG_TextGObj X pos
-.float 200  					   #REG_TextGObj Y pos
-.float 0.1     		     	 #Z offset
-.float 1   				     #Canvas Scaling
-.float 1					    	#Text scale
-.float 265              #Yes X pos
-.float 300              #Yes Y pos
-.float 1              #Yes scale
-.float 365              #No X pos
-.float 300              #No Y pos
-.float 1              #No scale
-.byte 251,199,57,255		#highlighted color
-.byte 170,170,170,255	  #nonhighlighted color
-
-Snap101_LagPrompt_SceneLoad_TopText:
-blrl
-.ascii "Are you using HDMI?"
-.align 2
-
-Snap101_LagPrompt_SceneLoad_Yes:
-blrl
-.string "Yes"
-.align 2
-
-Snap101_LagPrompt_SceneLoad_No:
-blrl
-.string "No"
-.align 2
-
-#GObj Offsets
-  .set OFST_TextGObj,0x0
-  .set OFST_Selection,0x4
-
-#endregion
-#region Snap101_LagPrompt_SceneLoad
-Snap101_LagPrompt_SceneLoad:
-blrl
-
-#Init
-  backup
-
-Snap101_LagPrompt_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl Snap101_LagPrompt_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,Text_CreateTextCanvas
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,0x0(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO CENTER AROUND X LOCATION
-	li r4,0x1
-	stb r4,0x4A(REG_TextGObj)
-#Store Base Z Offset
-	lfs f1,ZOffset(REG_TextProp) #Z offset
-	stfs f1,0x8(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Prompt
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap101_LagPrompt_SceneLoad_TopText
-  mflr  r4
-	lfs	f1,PromptX(REG_TextProp)
-  lfs	f2,PromptY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create Yes
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap101_LagPrompt_SceneLoad_Yes
-  mflr  r4
-	lfs	f1,YesX(REG_TextProp)
-  lfs	f2,YesY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create No
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap101_LagPrompt_SceneLoad_No
-  mflr  r4
-	lfs	f1,NoX(REG_TextProp)
-  lfs	f2,NoY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,HSD_Free
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  Snap101_LagPrompt_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-
-#Store text gobj pointer
-  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
-#Init Selection value
-  li  r3,InitialSelection
-  stb r3,OFST_Selection(REG_GObjData)
-
-#Highlight selection
-  mr  r3,REG_TextGObj
-  li  r4,InitialSelection+1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-
-Snap101_LagPrompt_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region Snap101_LagPrompt_SceneThink
-Snap101_LagPrompt_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  Snap101_LagPrompt_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,Inputs_GetPlayerRapidHeldInputs
-  mr  REG_Inputs,r3
-#Check for movement to the right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq Snap101_LagPrompt_SceneThink_SkipRight
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  addi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,1
-  ble Snap101_LagPrompt_SceneThink_HighlightSelection
-  li  r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  b Snap101_LagPrompt_SceneThink_CheckForA
-Snap101_LagPrompt_SceneThink_SkipRight:
-#Check for movement to the left
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq Snap101_LagPrompt_SceneThink_CheckForA
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  subi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap101_LagPrompt_SceneThink_HighlightSelection
-  li  r3,0
-  stb r3,OFST_Selection(REG_GObjData)
-  b Snap101_LagPrompt_SceneThink_CheckForA
-
-Snap101_LagPrompt_SceneThink_HighlightSelection:
-#Unhighlight both options
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,1
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,2
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-#Highlight selection
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  lbz r4,OFST_Selection(REG_GObjData)
-  addi  r4,r4,1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_CloseOpenPort
-#endregion
-#region Check for Confirmation
-Snap101_LagPrompt_SceneThink_CheckForA:
-  li  r3,4
-  branchl r12,Inputs_GetPlayerInstantInputs
-  rlwinm. r0,r4,0,0x100
-  bne Snap101_LagPrompt_SceneThink_Confirmed
-  rlwinm. r0,r4,0,0x1000
-  bne Snap101_LagPrompt_SceneThink_Confirmed
-  b Snap101_LagPrompt_SceneThink_Exit
-Snap101_LagPrompt_SceneThink_Confirmed:
-#Play Menu Sound
-  branchl r12,SFX_PlayMenuSound_Forward
-#If yes, apply lag reduction
-  lbz r3,OFST_Selection(REG_GObjData)
-  cmpwi r3,0
-  bne Snap101_LagPrompt_SceneThink_ExitScene
-#endregion
-#region Apply Code
-.set  REG_GeckoCode,12
-#Apply lag reduction
-  bl  Snap101_LagReductionGeckoCode
-  mflr  r3
-  bl  Snap101_ApplyGeckoCode
-#Reset some pad variables to cancel the current alarm
-  load  r3,UnkPadStruct
-  li  r4,0
-  stw r4,0x4(r3)
-  stw r4,0x44(r3)
-#Set new post retrace callback
-  load  r3,PostRetraceCallback
-  branchl r12,HSD_VISetUserPostRetraceCallback
-#Do some shit to enable 480p
-#Disable Deflicker
-  load  r3,DeflickerStruct
-  li  r0,1
-  stw r0,0x8(r3)
-  branchl r12,Deflicker_Toggle
-#Enable 10060
-	load	r3,ProgressiveStruct
-	li	r4,1
-	stw	r4,0xC(r3)
-#Call VIConfigure
-	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
-	branchl	r12,ScreenDisplay_Adjust
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,TRK_flush_cache
-#endregion
-
-Snap101_LagPrompt_SceneThink_ExitScene:
-  branchl r12,MenuController_ChangeScreenMinor
-
-Snap101_LagPrompt_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region Snap101_LagPrompt_SceneDecide
-Snap101_LagPrompt_SceneDecide:
-
-  backup
-
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  Snap101_Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-
-#Enter Codes Scene
-  li  r3,CodesSceneID
-  branchl r12,MenuController_WriteToPendingMajor
-#Change Major
-  branchl r12,MenuController_ChangeScreenMajor
-
-Snap101_LagPrompt_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-
-#region Snap101_LagReductionGeckoCode
-Snap101_LagReductionGeckoCode:
-blrl
-.long 0x04019D18
-.long 0x4BFFFD9D
-#Required for 480p
-.long 0x043D5170
-.long 0x00000002
-.long 0x043D5184
-.long 0x00000000
-.long 0x043D51AC
-.long 0x00000002
-.long 0x043D51C0
-.long 0x00000000
-.long 0x040000CC
-.long 0x00000000
-.long 0xFF000000
-#endregion
-
-#endregion
-
-#region MinorSceneStruct
-Snap101_LagPrompt_MinorSceneStruct:
-blrl
-#Lag Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  Snap101_LagPrompt_SceneDecide   #SceneDecide
-.byte PromptCommonSceneID   #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-Snap101_Codes_MinorSceneStruct:
-blrl
-#Codes Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  Snap101_Codes_SceneDecide       #SceneDecide
-.byte CodesCommonSceneID    #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-#endregion
-
-Snap101_CheckProgressive:
-
-#Check if progressive is enabled
-  lis	r3,0xCC00
-	lhz	r3,0x206E(r3)
-	rlwinm.	r3,r3,0,0x1
-  beq Snap101_NoProgressive
-
-Snap101_IsProgressive:
-#Override SceneLoad
-  li  r3,PromptCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  Snap101_LagPrompt_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	Snap101_LagPrompt_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load LagPrompt
-  li	r3, PromptSceneID
-  b Snap101_Exit
-Snap101_NoProgressive:
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  Snap101_Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	Snap101_Codes_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load Codes
-  li  r3,CodesSceneID
-
-Snap101_Exit:
-#Store as next scene
-	branchl r12,MenuController_WriteToPendingMajor
-#request to change scenes
-	branchl	r12,MenuController_ChangeScreenMinor
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	li	r0,2
-	blr
-
 MMLCode101_End:
 blrl
 #endregion
 #region SnapshotCode100
 .include "../../Common100.s"
+
 MMLCode100_Start:
 blrl
 
@@ -27489,6 +27580,1211 @@ Snap100_CodeOptions_Widescreen:
 	.string "True"
 	.align 2
 #endregion
+
+#endregion
+#region Snap100_Codes_SceneLoad
+Snap100_Codes_SceneLoad:
+#GObj Offsets
+  .set OFST_CodeNamesTextGObj,0x0
+  .set OFST_CodeOptionsTextGObj,0x4
+	.set OFST_CodeDescTextGObj,0x8
+  .set OFST_CursorLocation,0xC
+  .set OFST_ScrollAmount,0xE
+  .set OFST_OptionSelections,0x10
+blrl
+
+#Init
+  backup
+
+Snap100_Codes_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl Snap100_Codes_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Title
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap100_CodeNames_Title
+  mflr  r4
+	lfs	f1,TitleX(REG_TextProp)
+  lfs	f2,TitleY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Modname + version
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap100_CodeNames_ModName
+  mflr  r4
+	lfs	f1,ModNameX(REG_TextProp)
+  lfs	f2,ModNameY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Init Menu
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Snap100_Codes_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+#Copy Saved Menu Options
+	addi	r3,REG_GObjData,OFST_OptionSelections
+	lwz	r4, OFST_Memcard (r13)
+	addi r4,r4,OFST_ModPrefs
+	li	r5,0x18
+	branchl	r12,memcpy
+
+#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	lfs	f1,DescriptionX(REG_TextProp)
+	lfs	f2,DescriptionY(REG_TextProp)
+	lfs	f3,DescriptionZ(REG_TextProp)
+	lfs	f4,DescriptionMaxX(REG_TextProp)
+	lfs	f5,DescriptionUnk(REG_TextProp)
+	branchl r12,Text_AllocateTextObject
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
+#Init
+	mr	r3,REG_TextGObj
+	li	r4,0
+	branchl	r12,Text_CopyPremadeTextDataToStruct
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Menu
+  mr  r3,REG_GObjData
+  bl  Snap100_Codes_CreateMenu
+
+Snap100_Codes_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region Snap100_Codes_SceneThink
+Snap100_Codes_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Snap100_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Code Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement up
+  rlwinm. r0,REG_Inputs,0,0x10
+  beq Snap100_Codes_SceneThink_SkipUp
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap100_Codes_SceneThink_UpdateMenu
+#Cursor stays at top
+  li  r3,0
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll up
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap100_Codes_SceneThink_UpdateMenu
+#Scroll stays at top
+  li  r3,0
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Snap100_Codes_SceneThink_Exit
+Snap100_Codes_SceneThink_SkipUp:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x20
+  beq Snap100_Codes_SceneThink_AdjustOptionSelection
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Check if exceeds total amount of codes
+  extsb r3,r3
+  cmpwi r3,CodeAmount-1
+  ble 0x10
+#Cursor stays at the last code
+  li  r3,CodeAmount-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  b Snap100_Codes_SceneThink_Exit
+#Check if exceeds max amount of codes per page
+  cmpwi r3,MaxCodesOnscreen-1
+  ble Snap100_Codes_SceneThink_UpdateMenu
+#Cursor stays at bottom
+  li  r3,MaxCodesOnscreen-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll down
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,CodeAmount-MaxCodesOnscreen
+  ble Snap100_Codes_SceneThink_UpdateMenu
+#Scroll stays at bottom
+  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b Snap100_Codes_SceneThink_Exit
+#endregion
+#region Adjust Option Selection
+Snap100_Codes_SceneThink_AdjustOptionSelection:
+.set  REG_MaxOptions,20
+.set  REG_OptionValuePtr,21
+#Check for movement right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Snap100_Codes_SceneThink_SkipRight
+#Get amount of options for this code
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  bl  Snap100_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+  bl  Snap100_ConvertBlPointer
+  lwz REG_MaxOptions,Snap100_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Increment value
+  lbz r3,0x0(REG_OptionValuePtr)
+  addi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpw r3,REG_MaxOptions
+  ble Snap100_Codes_SceneThink_UpdateMenu
+#Option stays maxxed out
+  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
+  b Snap100_Codes_SceneThink_Exit
+Snap100_Codes_SceneThink_SkipRight:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Snap100_Codes_SceneThink_CheckToExit
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Decrement value
+  lbz r3,0x0(REG_OptionValuePtr)
+  subi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap100_Codes_SceneThink_UpdateMenu
+#Option stays at 0
+  li  r3,0
+  stb r3,0x0(REG_OptionValuePtr)
+  b Snap100_Codes_SceneThink_Exit
+#endregion
+#region Check to Exit
+Snap100_Codes_SceneThink_CheckToExit:
+#Check for start input
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x1000
+  beq Snap100_Codes_SceneThink_Exit
+#Apply codes
+  mr  r3,REG_GObjData
+  bl  Snap100_ApplyAllGeckoCodes
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_Forward
+#Exit Scene
+  branchl r12,MenuController_ChangeScreenMinor
+#Save Menu Options
+	lwz	r3, OFST_Memcard (r13)
+	addi r3,r3,OFST_ModPrefs
+	addi	r4,REG_GObjData,OFST_OptionSelections
+	li	r5,0x18
+	branchl	r12,memcpy
+#Request a memcard save
+	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
+	li	r3,0
+	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
+#Set memcard save flag
+	load	r3,OFST_MemcardController
+	li	r4,1
+	stw	r4,0xC(r3)
+
+  b Snap100_Codes_SceneThink_Exit
+#endregion
+
+Snap100_Codes_SceneThink_UpdateMenu:
+#Redraw Menu
+  mr  r3,REG_GObjData
+  bl  Snap100_Codes_CreateMenu
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+  b Snap100_Codes_SceneThink_Exit
+
+Snap100_Codes_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Snap100_Codes_SceneDecide
+Snap100_Codes_SceneDecide:
+  backup
+
+#Change Major
+  li  r3,ExitSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Leave Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+Snap100_Codes_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region Snap100_Codes_CreateMenu
+Snap100_Codes_CreateMenu:
+.set  REG_GObjData,31
+.set  REG_TextGObj,30
+.set  REG_TextProp,29
+
+#Init
+  backup
+  mr  REG_GObjData,r3
+  bl  Snap100_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#Remove old text gobjs if they exist
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Snap100_Codes_CreateMenu_SkipNameRemoval
+  branchl r12,Text_RemoveText
+Snap100_Codes_CreateMenu_SkipNameRemoval:
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq Snap100_Codes_CreateMenu_SkipOptionRemoval
+  branchl r12,Text_RemoveText
+Snap100_Codes_CreateMenu_SkipOptionRemoval:
+
+#region CreateTextGObjs
+Snap100_Codes_CreateMenu_CreateTextGObjs:
+#Create Code Mames Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#Create Code Options Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#endregion
+#region Snap100_Codes_CreateMenu_CreateNames
+Snap100_Codes_CreateMenu_CreateNamesInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+  li  REG_Count,0
+Snap100_Codes_CreateMenu_CreateNamesLoop:
+#Next name to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,REG_Count
+#Get the string bl pointer
+  bl  Snap100_CodeNames_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  Snap100_ConvertBlPointer
+  mr  r4,r3
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lfs f1,CodesX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Snap100_Codes_CreateMenu_CreateNamesIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Snap100_Codes_CreateMenu_CreateNameLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Snap100_Codes_CreateMenu_CreateNamesLoop
+Snap100_Codes_CreateMenu_CreateNameLoopEnd:
+#endregion
+#region Snap100_Codes_CreateMenu_CreateOptions
+Snap100_Codes_CreateMenu_CreateOptionsInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+.set  REG_CurrentOptionID,22
+.set  REG_CurrentOptionSelection,23
+.set  REG_OptionStrings,24
+.set  REG_StringLoopCount,25
+  li  REG_Count,0
+Snap100_Codes_CreateMenu_CreateOptionsLoop:
+#Next option to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add REG_CurrentOptionID,r3,REG_Count
+#Get the bl pointer
+  mr  r3,REG_CurrentOptionID
+  bl  Snap100_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  Snap100_ConvertBlPointer
+  lwz r4,Snap100_CodeOptions_OptionCount(r3)
+  addi  r4,r4,1
+  addi  REG_OptionStrings,r3,Snap100_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
+  mulli r4,r4,0x4                                           #pointer length
+  add REG_OptionStrings,REG_OptionStrings,r4
+#Get this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
+
+#Loop through strings and get the current one
+  li  REG_StringLoopCount,0
+Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
+  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
+  beq Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
+#Get next string
+  mr  r3,REG_OptionStrings
+  branchl r12,strlen
+  add REG_OptionStrings,REG_OptionStrings,r3
+  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
+  addi  REG_StringLoopCount,REG_StringLoopCount,1
+  b Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearch
+
+Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  bl  Snap100_CodeOptions_Wrapper
+  mflr  r4
+  mr  r5,REG_OptionStrings
+  lfs f1,OptionsX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+Snap100_Codes_CreateMenu_CreateOptionsIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge Snap100_Codes_CreateMenu_CreateOptionsLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt Snap100_Codes_CreateMenu_CreateOptionsLoop
+Snap100_Codes_CreateMenu_CreateOptionsLoopEnd:
+#endregion
+#region Snap100_Codes_CreateMenu_HighlightCursor
+#Name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Option
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#endregion
+#region Snap100_Codes_CreateMenu_ChangeCodeDescription
+#Get highlighted code ID
+	lhz r3,OFST_ScrollAmount(REG_GObjData)
+	lhz r4,OFST_CursorLocation(REG_GObjData)
+	add	r3,r3,r4
+#Get this codes options
+	bl	Snap100_CodeOptions_Order
+	mflr	r4
+	mulli	r3,r3,0x4
+	add	r3,r3,r4
+	bl	Snap100_ConvertBlPointer
+#Get this codes description
+	addi	r3,r3,Snap100_CodeOptions_CodeDescription
+	bl	Snap100_ConvertBlPointer
+	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
+#Store to text gobj
+	stw	r3,0x5C(r4)
+#endregion
+
+Snap100_Codes_CreateMenu_Exit:
+  restore
+  blr
+
+###############################################
+
+Snap100_ConvertBlPointer:
+  lwz r4,0x0(r3)        #Load bl instruction
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+	rlwinm	r5,r4,7,31,31		#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5
+  add r3,r4,r3
+  blr
+
+#endregion
+#region Snap100_ApplyAllGeckoCodes
+Snap100_ApplyAllGeckoCodes:
+.set  REG_GObjData,31
+.set  REG_Count,30
+.set  REG_OptionSelection,29
+#Init
+  backup
+  mr  REG_GObjData,r3
+
+#Check if LCD reduction was enabled
+	load	r3,VI_Struct
+	lwz	r3,0x1DC(r3)
+	load	r4,RenewInputs_Prefunction
+	cmpw	r3,r4
+	beq	Snap100_ApplyAllGeckoCodes_DefaultCodes
+#Polling Drift Fix
+  bl  Snap100_LagReduction_PD
+  mflr  r3
+  bl  Snap100_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+
+Snap100_ApplyAllGeckoCodes_DefaultCodes:
+#Default Codes
+  bl  Snap100_DefaultCodes_On
+  mflr  r3
+  bl  Snap100_ApplyGeckoCode
+
+#Default Codes
+  bl  Snap100_DefaultCodes_On
+  mflr  r3
+  bl  Snap100_ApplyGeckoCode
+
+#Init Loop
+  li  REG_Count,0
+ApplyAllGeckoSnap100_Codes_Loop:
+#Load this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's default gecko code pointer
+  bl  Snap100_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  Snap100_ConvertBlPointer
+  addi  r3,r3,Snap100_CodeOptions_GeckoCodePointers
+  bl  Snap100_ConvertBlPointer
+  bl  Snap100_ApplyGeckoCode
+#Get this code's gecko code pointers
+  bl  Snap100_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  Snap100_ConvertBlPointer
+  addi  r3,r3,Snap100_CodeOptions_GeckoCodePointers
+  mulli r4,REG_OptionSelection,0x4
+  add  r3,r3,r4
+  bl  Snap100_ConvertBlPointer
+  bl  Snap100_ApplyGeckoCode
+
+ApplyAllGeckoSnap100_Codes_IncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  blt ApplyAllGeckoSnap100_Codes_Loop
+
+ApplyAllGeckoSnap100_Codes_Exit:
+  restore
+  blr
+
+####################################
+
+Snap100_ApplyGeckoCode:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+Snap100_ApplyGeckoCode_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq Snap100_ApplyGeckoCode_C2
+  cmpwi r3,0x4
+  beq Snap100_ApplyGeckoCode_04
+  cmpwi r3,0xFF
+  beq Snap100_ApplyGeckoCode_Exit
+  b Snap100_ApplyGeckoCode_Exit
+Snap100_ApplyGeckoCode_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b Snap100_ApplyGeckoCode_Loop
+Snap100_ApplyGeckoCode_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b Snap100_ApplyGeckoCode_Loop
+Snap100_ApplyGeckoCode_Exit:
+blr
+
+#endregion
+
+#endregion
+
+#region LagPrompt
+
+#region Snap100_LagPrompt_SceneLoad
+############################################
+
+#region Snap100_LagPrompt_SceneLoad_Data
+Snap100_LagPrompt_SceneLoad_TextProperties:
+blrl
+.set PromptX,0x0
+.set PromptY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YesX,0x14
+.set YesY,0x18
+.set YesScale,0x1C
+.set NoX,0x20
+.set NoY,0x24
+.set NoScale,0x28
+.set HighlightColor,0x2C
+.set NonHighlightColor,0x30
+.float 315     			   #REG_TextGObj X pos
+.float 200  					   #REG_TextGObj Y pos
+.float 0.1     		     	 #Z offset
+.float 1   				     #Canvas Scaling
+.float 1					    	#Text scale
+.float 265              #Yes X pos
+.float 300              #Yes Y pos
+.float 1              #Yes scale
+.float 365              #No X pos
+.float 300              #No Y pos
+.float 1              #No scale
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+
+Snap100_LagPrompt_SceneLoad_TopText:
+blrl
+.if isPAL==1
+.ascii "Are you using HDMI?"
+.align 2
+.endif
+.if isPAL==0
+.ascii "Are you using HDMI"
+.hword 0x8148
+.byte 0x00
+.align 2
+.endif
+
+Snap100_LagPrompt_SceneLoad_Yes:
+blrl
+.string "Yes"
+.align 2
+
+Snap100_LagPrompt_SceneLoad_No:
+blrl
+.string "No"
+.align 2
+
+#GObj Offsets
+  .set OFST_TextGObj,0x0
+  .set OFST_Selection,0x4
+
+#endregion
+#region Snap100_LagPrompt_SceneLoad
+Snap100_LagPrompt_SceneLoad:
+blrl
+
+#Init
+  backup
+
+Snap100_LagPrompt_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl Snap100_LagPrompt_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,0x0(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap100_LagPrompt_SceneLoad_TopText
+  mflr  r4
+	lfs	f1,PromptX(REG_TextProp)
+  lfs	f2,PromptY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create Yes
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap100_LagPrompt_SceneLoad_Yes
+  mflr  r4
+	lfs	f1,YesX(REG_TextProp)
+  lfs	f2,YesY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create No
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl Snap100_LagPrompt_SceneLoad_No
+  mflr  r4
+	lfs	f1,NoX(REG_TextProp)
+  lfs	f2,NoY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  Snap100_LagPrompt_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+
+#Store text gobj pointer
+  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
+#Init Selection value
+  li  r3,InitialSelection
+  stb r3,OFST_Selection(REG_GObjData)
+
+#Highlight selection
+  mr  r3,REG_TextGObj
+  li  r4,InitialSelection+1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+
+Snap100_LagPrompt_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region Snap100_LagPrompt_SceneThink
+Snap100_LagPrompt_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  Snap100_LagPrompt_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement to the right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq Snap100_LagPrompt_SceneThink_SkipRight
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  addi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,1
+  ble Snap100_LagPrompt_SceneThink_HighlightSelection
+  li  r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  b Snap100_LagPrompt_SceneThink_CheckForA
+Snap100_LagPrompt_SceneThink_SkipRight:
+#Check for movement to the left
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq Snap100_LagPrompt_SceneThink_CheckForA
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  subi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge Snap100_LagPrompt_SceneThink_HighlightSelection
+  li  r3,0
+  stb r3,OFST_Selection(REG_GObjData)
+  b Snap100_LagPrompt_SceneThink_CheckForA
+
+Snap100_LagPrompt_SceneThink_HighlightSelection:
+#Unhighlight both options
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,1
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,2
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+#Highlight selection
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  lbz r4,OFST_Selection(REG_GObjData)
+  addi  r4,r4,1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+#endregion
+#region Check for Confirmation
+Snap100_LagPrompt_SceneThink_CheckForA:
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x100
+  bne Snap100_LagPrompt_SceneThink_Confirmed
+  rlwinm. r0,r4,0,0x1000
+  bne Snap100_LagPrompt_SceneThink_Confirmed
+  b Snap100_LagPrompt_SceneThink_Exit
+Snap100_LagPrompt_SceneThink_Confirmed:
+#Play Menu Sound
+  branchl r12,SFX_PlayMenuSound_Forward
+#If yes, apply lag reduction
+  lbz r3,OFST_Selection(REG_GObjData)
+  cmpwi r3,0
+  bne Snap100_LagPrompt_SceneThink_ExitScene
+#endregion
+#region Apply Code
+.set  REG_GeckoCode,12
+#Apply lag reduction
+  bl  Snap100_LagReduction_LCD
+  mflr  r3
+  bl  Snap100_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+#Set new post retrace callback
+  load  r3,PostRetraceCallback
+  branchl r12,HSD_VISetUserPostRetraceCallback
+#Enable progressive
+  load  r3,ProgressiveStruct
+  li  r0,1
+  stw r0,0x8(r3)
+  branchl r12,Deflicker_Toggle
+.if isPAL==1
+#Enable PAL60
+	load	r3,ProgressiveStruct
+	li	r4,1
+	stw	r4,0xC(r3)
+.endif
+#Call VIConfigure
+	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
+	branchl	r12,ScreenDisplay_Adjust
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#endregion
+
+Snap100_LagPrompt_SceneThink_ExitScene:
+  branchl r12,MenuController_ChangeScreenMinor
+
+Snap100_LagPrompt_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region Snap100_LagPrompt_SceneDecide
+Snap100_LagPrompt_SceneDecide:
+
+  backup
+
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap100_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+
+#Enter Codes Scene
+  li  r3,CodesSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Change Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+Snap100_LagPrompt_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+
+#endregion
+
+#region MinorSceneStruct
+Snap100_LagPrompt_MinorSceneStruct:
+blrl
+#Lag Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Snap100_LagPrompt_SceneDecide   #SceneDecide
+.byte PromptCommonSceneID   #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+Snap100_Codes_MinorSceneStruct:
+blrl
+#Codes Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  Snap100_Codes_SceneDecide       #SceneDecide
+.byte CodesCommonSceneID    #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+#endregion
+
+Snap100_CheckProgressive:
+
+#Check if progressive is enabled
+  lis	r3,0xCC00
+	lhz	r3,0x206E(r3)
+	rlwinm.	r3,r3,0,0x1
+  beq Snap100_NoProgressive
+
+Snap100_IsProgressive:
+#Override SceneLoad
+  li  r3,PromptCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap100_LagPrompt_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap100_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load LagPrompt
+  li	r3, PromptSceneID
+  b Snap100_Exit
+Snap100_NoProgressive:
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  Snap100_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	Snap100_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load Codes
+  li  r3,CodesSceneID
+
+Snap100_Exit:
+#Store as next scene
+	branchl r12,MenuController_WriteToPendingMajor
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+
+##########
+## Exit ##
+##########
+
+#Return to the game
+  restore
+	li	r0,2
+	blr
+
 #region Gecko Codes
 Snap100_DefaultCodes_On:
 	blrl
@@ -27891,9 +29187,9 @@ Snap100_UCF_On:
 	.long 0x7FC802A6
 	.long 0x38600000
 	.long 0x38800000
-	.long 0x3DC0803A
-	.long 0x61CE4890
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C4890
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C7F1B78
 	.long 0x38800001
@@ -27908,9 +29204,9 @@ Snap100_UCF_On:
 	.long 0x7C8802A6
 	.long 0xC03E0000
 	.long 0xC05E0004
-	.long 0x3DC0803A
-	.long 0x61CE4CD4
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C4CD4
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C641B78
 	.long 0x7FE3FB78
@@ -28230,6 +29526,27 @@ Snap100_Widescreen_True:
 	.long 0x00000000
 	.long 0x044DB9FC
 	.long 0x3E99999A
+	.long -1
+
+Snap100_LagReduction_LCD:
+	blrl
+	.long 0x040197E0
+	.long 0x4BFFFD9D
+	.long -1
+Snap100_LagReduction_PD:
+	blrl
+	.long 0x041A406C
+	.long 0x60000000
+	.long 0x040197E0
+	.long 0x4BFFFD9D
+	.long 0xC21A4058
+	.long 0x00000003
+	.long 0x901C0000
+	.long 0x3D808001
+	.long 0x618C957C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x00000000
 	.long -1
 
 Snap100_Frozen_All:
@@ -38401,1210 +39718,12 @@ Snap100_Widescreen_Description:
 
 #endregion
 
-#endregion
-#region Snap100_Codes_SceneLoad
-Snap100_Codes_SceneLoad:
-#GObj Offsets
-  .set OFST_CodeNamesTextGObj,0x0
-  .set OFST_CodeOptionsTextGObj,0x4
-	.set OFST_CodeDescTextGObj,0x8
-  .set OFST_CursorLocation,0xC
-  .set OFST_ScrollAmount,0xE
-  .set OFST_OptionSelections,0x10
-blrl
-
-#Init
-  backup
-
-Snap100_Codes_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl Snap100_Codes_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,Text_CreateTextCanvas
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Title
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap100_CodeNames_Title
-  mflr  r4
-	lfs	f1,TitleX(REG_TextProp)
-  lfs	f2,TitleY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Modname + version
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap100_CodeNames_ModName
-  mflr  r4
-	lfs	f1,ModNameX(REG_TextProp)
-  lfs	f2,ModNameY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Init Menu
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,HSD_Free
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  Snap100_Codes_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-#Copy Saved Menu Options
-	addi	r3,REG_GObjData,OFST_OptionSelections
-	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
-	li	r5,0x18
-	branchl	r12,memcpy
-
-#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	lfs	f1,DescriptionX(REG_TextProp)
-	lfs	f2,DescriptionY(REG_TextProp)
-	lfs	f3,DescriptionZ(REG_TextProp)
-	lfs	f4,DescriptionMaxX(REG_TextProp)
-	lfs	f5,DescriptionUnk(REG_TextProp)
-	branchl r12,Text_AllocateTextObject
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
-#Init
-	mr	r3,REG_TextGObj
-	li	r4,0
-	branchl	r12,Text_CopyPremadeTextDataToStruct
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Menu
-  mr  r3,REG_GObjData
-  bl  Snap100_Codes_CreateMenu
-
-Snap100_Codes_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region Snap100_Codes_SceneThink
-Snap100_Codes_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  Snap100_Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Code Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,Inputs_GetPlayerRapidHeldInputs
-  mr  REG_Inputs,r3
-#Check for movement up
-  rlwinm. r0,REG_Inputs,0,0x10
-  beq Snap100_Codes_SceneThink_SkipUp
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap100_Codes_SceneThink_UpdateMenu
-#Cursor stays at top
-  li  r3,0
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll up
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap100_Codes_SceneThink_UpdateMenu
-#Scroll stays at top
-  li  r3,0
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b Snap100_Codes_SceneThink_Exit
-Snap100_Codes_SceneThink_SkipUp:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x20
-  beq Snap100_Codes_SceneThink_AdjustOptionSelection
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Check if exceeds total amount of codes
-  extsb r3,r3
-  cmpwi r3,CodeAmount-1
-  ble 0x10
-#Cursor stays at the last code
-  li  r3,CodeAmount-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  b Snap100_Codes_SceneThink_Exit
-#Check if exceeds max amount of codes per page
-  cmpwi r3,MaxCodesOnscreen-1
-  ble Snap100_Codes_SceneThink_UpdateMenu
-#Cursor stays at bottom
-  li  r3,MaxCodesOnscreen-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll down
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,CodeAmount-MaxCodesOnscreen
-  ble Snap100_Codes_SceneThink_UpdateMenu
-#Scroll stays at bottom
-  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b Snap100_Codes_SceneThink_Exit
-#endregion
-#region Adjust Option Selection
-Snap100_Codes_SceneThink_AdjustOptionSelection:
-.set  REG_MaxOptions,20
-.set  REG_OptionValuePtr,21
-#Check for movement right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq Snap100_Codes_SceneThink_SkipRight
-#Get amount of options for this code
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  bl  Snap100_CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add r3,r3,r4                                #get bl pointer to options info
-  bl  Snap100_ConvertBlPointer
-  lwz REG_MaxOptions,Snap100_CodeOptions_OptionCount(r3)     #get amount of options for this code
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Increment value
-  lbz r3,0x0(REG_OptionValuePtr)
-  addi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpw r3,REG_MaxOptions
-  ble Snap100_Codes_SceneThink_UpdateMenu
-#Option stays maxxed out
-  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
-  b Snap100_Codes_SceneThink_Exit
-Snap100_Codes_SceneThink_SkipRight:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq Snap100_Codes_SceneThink_CheckToExit
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Decrement value
-  lbz r3,0x0(REG_OptionValuePtr)
-  subi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap100_Codes_SceneThink_UpdateMenu
-#Option stays at 0
-  li  r3,0
-  stb r3,0x0(REG_OptionValuePtr)
-  b Snap100_Codes_SceneThink_Exit
-#endregion
-#region Check to Exit
-Snap100_Codes_SceneThink_CheckToExit:
-#Check for start input
-  li  r3,4
-  branchl r12,Inputs_GetPlayerInstantInputs
-  rlwinm. r0,r4,0,0x1000
-  beq Snap100_Codes_SceneThink_Exit
-#Apply codes
-  mr  r3,REG_GObjData
-  bl  Snap100_ApplyAllGeckoCodes
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,TRK_flush_cache
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_Forward
-#Exit Scene
-  branchl r12,MenuController_ChangeScreenMinor
-#Save Menu Options
-	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
-	addi	r4,REG_GObjData,OFST_OptionSelections
-	li	r5,0x18
-	branchl	r12,memcpy
-#Request a memcard save
-	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
-	li	r3,0
-	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
-#Set memcard save flag
-	load	r3,OFST_MemcardController
-	li	r4,1
-	stw	r4,0xC(r3)
-
-  b Snap100_Codes_SceneThink_Exit
-#endregion
-
-Snap100_Codes_SceneThink_UpdateMenu:
-#Redraw Menu
-  mr  r3,REG_GObjData
-  bl  Snap100_Codes_CreateMenu
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_CloseOpenPort
-  b Snap100_Codes_SceneThink_Exit
-
-Snap100_Codes_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region Snap100_Codes_SceneDecide
-Snap100_Codes_SceneDecide:
-  backup
-
-#Change Major
-  li  r3,ExitSceneID
-  branchl r12,MenuController_WriteToPendingMajor
-#Leave Major
-  branchl r12,MenuController_ChangeScreenMajor
-
-Snap100_Codes_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-#region Snap100_Codes_CreateMenu
-Snap100_Codes_CreateMenu:
-.set  REG_GObjData,31
-.set  REG_TextGObj,30
-.set  REG_TextProp,29
-
-#Init
-  backup
-  mr  REG_GObjData,r3
-  bl  Snap100_Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#Remove old text gobjs if they exist
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq Snap100_Codes_CreateMenu_SkipNameRemoval
-  branchl r12,Text_RemoveText
-Snap100_Codes_CreateMenu_SkipNameRemoval:
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq Snap100_Codes_CreateMenu_SkipOptionRemoval
-  branchl r12,Text_RemoveText
-Snap100_Codes_CreateMenu_SkipOptionRemoval:
-
-#region CreateTextGObjs
-Snap100_Codes_CreateMenu_CreateTextGObjs:
-#Create Code Mames Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#Create Code Options Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#endregion
-#region Snap100_Codes_CreateMenu_CreateNames
-Snap100_Codes_CreateMenu_CreateNamesInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-  li  REG_Count,0
-Snap100_Codes_CreateMenu_CreateNamesLoop:
-#Next name to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,REG_Count
-#Get the string bl pointer
-  bl  Snap100_CodeNames_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  Snap100_ConvertBlPointer
-  mr  r4,r3
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lfs f1,CodesX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-Snap100_Codes_CreateMenu_CreateNamesIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge Snap100_Codes_CreateMenu_CreateNameLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt Snap100_Codes_CreateMenu_CreateNamesLoop
-Snap100_Codes_CreateMenu_CreateNameLoopEnd:
-#endregion
-#region Snap100_Codes_CreateMenu_CreateOptions
-Snap100_Codes_CreateMenu_CreateOptionsInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-.set  REG_CurrentOptionID,22
-.set  REG_CurrentOptionSelection,23
-.set  REG_OptionStrings,24
-.set  REG_StringLoopCount,25
-  li  REG_Count,0
-Snap100_Codes_CreateMenu_CreateOptionsLoop:
-#Next option to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add REG_CurrentOptionID,r3,REG_Count
-#Get the bl pointer
-  mr  r3,REG_CurrentOptionID
-  bl  Snap100_CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  Snap100_ConvertBlPointer
-  lwz r4,Snap100_CodeOptions_OptionCount(r3)
-  addi  r4,r4,1
-  addi  REG_OptionStrings,r3,Snap100_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
-  mulli r4,r4,0x4                                           #pointer length
-  add REG_OptionStrings,REG_OptionStrings,r4
-#Get this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
-
-#Loop through strings and get the current one
-  li  REG_StringLoopCount,0
-Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
-  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
-  beq Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
-#Get next string
-  mr  r3,REG_OptionStrings
-  branchl r12,strlen
-  add REG_OptionStrings,REG_OptionStrings,r3
-  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
-  addi  REG_StringLoopCount,REG_StringLoopCount,1
-  b Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearch
-
-Snap100_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  bl  Snap100_CodeOptions_Wrapper
-  mflr  r4
-  mr  r5,REG_OptionStrings
-  lfs f1,OptionsX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-Snap100_Codes_CreateMenu_CreateOptionsIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge Snap100_Codes_CreateMenu_CreateOptionsLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt Snap100_Codes_CreateMenu_CreateOptionsLoop
-Snap100_Codes_CreateMenu_CreateOptionsLoopEnd:
-#endregion
-#region Snap100_Codes_CreateMenu_HighlightCursor
-#Name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Option
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#endregion
-#region Snap100_Codes_CreateMenu_ChangeCodeDescription
-#Get highlighted code ID
-	lhz r3,OFST_ScrollAmount(REG_GObjData)
-	lhz r4,OFST_CursorLocation(REG_GObjData)
-	add	r3,r3,r4
-#Get this codes options
-	bl	Snap100_CodeOptions_Order
-	mflr	r4
-	mulli	r3,r3,0x4
-	add	r3,r3,r4
-	bl	Snap100_ConvertBlPointer
-#Get this codes description
-	addi	r3,r3,Snap100_CodeOptions_CodeDescription
-	bl	Snap100_ConvertBlPointer
-	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
-#Store to text gobj
-	stw	r3,0x5C(r4)
-#endregion
-
-Snap100_Codes_CreateMenu_Exit:
-  restore
-  blr
-
-###############################################
-
-Snap100_ConvertBlPointer:
-  lwz r4,0x0(r3)        #Load bl instruction
-  rlwinm  r4,r4,0,6,29  #extract offset bits
-	rlwinm	r5,r4,7,31,31		#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5
-  add r3,r4,r3
-  blr
-
-#endregion
-#region Snap100_ApplyAllGeckoCodes
-Snap100_ApplyAllGeckoCodes:
-.set  REG_GObjData,31
-.set  REG_Count,30
-.set  REG_OptionSelection,29
-#Init
-  backup
-  mr  REG_GObjData,r3
-
-#Default Codes
-  bl  Snap100_DefaultCodes_On
-  mflr  r3
-  bl  Snap100_ApplyGeckoCode
-
-#Init Loop
-  li  REG_Count,0
-ApplyAllGeckoSnap100_Codes_Loop:
-#Load this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx REG_OptionSelection,r3,REG_Count
-#Get this code's default gecko code pointer
-  bl  Snap100_CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  Snap100_ConvertBlPointer
-  addi  r3,r3,Snap100_CodeOptions_GeckoCodePointers
-  bl  Snap100_ConvertBlPointer
-  bl  Snap100_ApplyGeckoCode
-#Get this code's gecko code pointers
-  bl  Snap100_CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  Snap100_ConvertBlPointer
-  addi  r3,r3,Snap100_CodeOptions_GeckoCodePointers
-  mulli r4,REG_OptionSelection,0x4
-  add  r3,r3,r4
-  bl  Snap100_ConvertBlPointer
-  bl  Snap100_ApplyGeckoCode
-
-ApplyAllGeckoSnap100_Codes_IncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  blt ApplyAllGeckoSnap100_Codes_Loop
-
-ApplyAllGeckoSnap100_Codes_Exit:
-  restore
-  blr
-
-####################################
-
-Snap100_ApplyGeckoCode:
-.set  REG_GeckoCode,12
-  mr  REG_GeckoCode,r3
-
-Snap100_ApplyGeckoCode_Loop:
-  lbz r3,0x0(REG_GeckoCode)
-  cmpwi r3,0xC2
-  beq Snap100_ApplyGeckoCode_C2
-  cmpwi r3,0x4
-  beq Snap100_ApplyGeckoCode_04
-  cmpwi r3,0xFF
-  beq Snap100_ApplyGeckoCode_Exit
-  b Snap100_ApplyGeckoCode_Exit
-Snap100_ApplyGeckoCode_C2:
-.set  REG_InjectionSite,11
-#Branch overwrite
-  lwz r5,0x0(REG_GeckoCode)
-  rlwinm r3,r5,0,8,31                   #get offset for branch calc
-  rlwinm r5,r5,0,8,31
-  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
-  addi  r4,REG_GeckoCode,0x8            #get branch destination
-  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  stw r3,0x0(REG_InjectionSite)         #place branch instruction
-#Place branch back
-  lwz r3,0x4(REG_GeckoCode)
-  mulli r3,r3,0x8
-  add r4,r3,REG_GeckoCode               #get branch back site
-  addi  r3,REG_InjectionSite,0x4        #get branch back destination
-  sub r3,r3,r4
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  subi  r3,r3,0x4                       #subtract 4 i guess
-  stw r3,0x4(r4)                        #place branch instruction
-#Get next gecko code
-  lwz r3,0x4(REG_GeckoCode)
-  addi  r3,r3,1
-  mulli r3,r3,0x8
-  add REG_GeckoCode,REG_GeckoCode,r3
-  b Snap100_ApplyGeckoCode_Loop
-Snap100_ApplyGeckoCode_04:
-  lwz r3,0x0(REG_GeckoCode)
-  rlwinm r3,r3,0,8,31
-  oris  r3,r3,0x8000
-  lwz r4,0x4(REG_GeckoCode)
-  stw r4,0x0(r3)
-  addi REG_GeckoCode,REG_GeckoCode,0x8
-  b Snap100_ApplyGeckoCode_Loop
-Snap100_ApplyGeckoCode_Exit:
-blr
-
-#endregion
-
-#endregion
-
-#region LagPrompt
-
-#region Snap100_LagPrompt_SceneLoad
-############################################
-
-#region Snap100_LagPrompt_SceneLoad_Data
-Snap100_LagPrompt_SceneLoad_TextProperties:
-blrl
-.set PromptX,0x0
-.set PromptY,0x4
-.set ZOffset,0x8
-.set CanvasScaling,0xC
-.set Scale,0x10
-.set YesX,0x14
-.set YesY,0x18
-.set YesScale,0x1C
-.set NoX,0x20
-.set NoY,0x24
-.set NoScale,0x28
-.set HighlightColor,0x2C
-.set NonHighlightColor,0x30
-.float 315     			   #REG_TextGObj X pos
-.float 200  					   #REG_TextGObj Y pos
-.float 0.1     		     	 #Z offset
-.float 1   				     #Canvas Scaling
-.float 1					    	#Text scale
-.float 265              #Yes X pos
-.float 300              #Yes Y pos
-.float 1              #Yes scale
-.float 365              #No X pos
-.float 300              #No Y pos
-.float 1              #No scale
-.byte 251,199,57,255		#highlighted color
-.byte 170,170,170,255	  #nonhighlighted color
-
-Snap100_LagPrompt_SceneLoad_TopText:
-blrl
-.ascii "Are you using HDMI?"
-.align 2
-
-Snap100_LagPrompt_SceneLoad_Yes:
-blrl
-.string "Yes"
-.align 2
-
-Snap100_LagPrompt_SceneLoad_No:
-blrl
-.string "No"
-.align 2
-
-#GObj Offsets
-  .set OFST_TextGObj,0x0
-  .set OFST_Selection,0x4
-
-#endregion
-#region Snap100_LagPrompt_SceneLoad
-Snap100_LagPrompt_SceneLoad:
-blrl
-
-#Init
-  backup
-
-Snap100_LagPrompt_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl Snap100_LagPrompt_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,Text_CreateTextCanvas
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,0x0(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO CENTER AROUND X LOCATION
-	li r4,0x1
-	stb r4,0x4A(REG_TextGObj)
-#Store Base Z Offset
-	lfs f1,ZOffset(REG_TextProp) #Z offset
-	stfs f1,0x8(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Prompt
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap100_LagPrompt_SceneLoad_TopText
-  mflr  r4
-	lfs	f1,PromptX(REG_TextProp)
-  lfs	f2,PromptY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create Yes
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap100_LagPrompt_SceneLoad_Yes
-  mflr  r4
-	lfs	f1,YesX(REG_TextProp)
-  lfs	f2,YesY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create No
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl Snap100_LagPrompt_SceneLoad_No
-  mflr  r4
-	lfs	f1,NoX(REG_TextProp)
-  lfs	f2,NoY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,HSD_Free
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  Snap100_LagPrompt_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-
-#Store text gobj pointer
-  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
-#Init Selection value
-  li  r3,InitialSelection
-  stb r3,OFST_Selection(REG_GObjData)
-
-#Highlight selection
-  mr  r3,REG_TextGObj
-  li  r4,InitialSelection+1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-
-Snap100_LagPrompt_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region Snap100_LagPrompt_SceneThink
-Snap100_LagPrompt_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  Snap100_LagPrompt_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,Inputs_GetPlayerRapidHeldInputs
-  mr  REG_Inputs,r3
-#Check for movement to the right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq Snap100_LagPrompt_SceneThink_SkipRight
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  addi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,1
-  ble Snap100_LagPrompt_SceneThink_HighlightSelection
-  li  r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  b Snap100_LagPrompt_SceneThink_CheckForA
-Snap100_LagPrompt_SceneThink_SkipRight:
-#Check for movement to the left
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq Snap100_LagPrompt_SceneThink_CheckForA
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  subi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge Snap100_LagPrompt_SceneThink_HighlightSelection
-  li  r3,0
-  stb r3,OFST_Selection(REG_GObjData)
-  b Snap100_LagPrompt_SceneThink_CheckForA
-
-Snap100_LagPrompt_SceneThink_HighlightSelection:
-#Unhighlight both options
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,1
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,2
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-#Highlight selection
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  lbz r4,OFST_Selection(REG_GObjData)
-  addi  r4,r4,1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_CloseOpenPort
-#endregion
-#region Check for Confirmation
-Snap100_LagPrompt_SceneThink_CheckForA:
-  li  r3,4
-  branchl r12,Inputs_GetPlayerInstantInputs
-  rlwinm. r0,r4,0,0x100
-  bne Snap100_LagPrompt_SceneThink_Confirmed
-  rlwinm. r0,r4,0,0x1000
-  bne Snap100_LagPrompt_SceneThink_Confirmed
-  b Snap100_LagPrompt_SceneThink_Exit
-Snap100_LagPrompt_SceneThink_Confirmed:
-#Play Menu Sound
-  branchl r12,SFX_PlayMenuSound_Forward
-#If yes, apply lag reduction
-  lbz r3,OFST_Selection(REG_GObjData)
-  cmpwi r3,0
-  bne Snap100_LagPrompt_SceneThink_ExitScene
-#endregion
-#region Apply Code
-.set  REG_GeckoCode,12
-#Apply lag reduction
-  bl  Snap100_LagReductionGeckoCode
-  mflr  r3
-  bl  Snap100_ApplyGeckoCode
-#Reset some pad variables to cancel the current alarm
-  load  r3,UnkPadStruct
-  li  r4,0
-  stw r4,0x4(r3)
-  stw r4,0x44(r3)
-#Set new post retrace callback
-  load  r3,PostRetraceCallback
-  branchl r12,HSD_VISetUserPostRetraceCallback
-#Do some shit to enable 480p
-#Disable Deflicker
-  load  r3,DeflickerStruct
-  li  r0,1
-  stw r0,0x8(r3)
-  branchl r12,Deflicker_Toggle
-#Enable 10060
-	load	r3,ProgressiveStruct
-	li	r4,1
-	stw	r4,0xC(r3)
-#Call VIConfigure
-	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
-	branchl	r12,ScreenDisplay_Adjust
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,TRK_flush_cache
-#endregion
-
-Snap100_LagPrompt_SceneThink_ExitScene:
-  branchl r12,MenuController_ChangeScreenMinor
-
-Snap100_LagPrompt_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region Snap100_LagPrompt_SceneDecide
-Snap100_LagPrompt_SceneDecide:
-
-  backup
-
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  Snap100_Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-
-#Enter Codes Scene
-  li  r3,CodesSceneID
-  branchl r12,MenuController_WriteToPendingMajor
-#Change Major
-  branchl r12,MenuController_ChangeScreenMajor
-
-Snap100_LagPrompt_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-
-#region Snap100_LagReductionGeckoCode
-Snap100_LagReductionGeckoCode:
-blrl
-.long 0x04019D18
-.long 0x4BFFFD9D
-#Required for 480p
-.long 0x043D5170
-.long 0x00000002
-.long 0x043D5184
-.long 0x00000000
-.long 0x043D51AC
-.long 0x00000002
-.long 0x043D51C0
-.long 0x00000000
-.long 0x040000CC
-.long 0x00000000
-.long 0xFF000000
-#endregion
-
-#endregion
-
-#region MinorSceneStruct
-Snap100_LagPrompt_MinorSceneStruct:
-blrl
-#Lag Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  Snap100_LagPrompt_SceneDecide   #SceneDecide
-.byte PromptCommonSceneID   #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-Snap100_Codes_MinorSceneStruct:
-blrl
-#Codes Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  Snap100_Codes_SceneDecide       #SceneDecide
-.byte CodesCommonSceneID    #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-#endregion
-
-Snap100_CheckProgressive:
-
-#Check if progressive is enabled
-  lis	r3,0xCC00
-	lhz	r3,0x206E(r3)
-	rlwinm.	r3,r3,0,0x1
-  beq Snap100_NoProgressive
-
-Snap100_IsProgressive:
-#Override SceneLoad
-  li  r3,PromptCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  Snap100_LagPrompt_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	Snap100_LagPrompt_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load LagPrompt
-  li	r3, PromptSceneID
-  b Snap100_Exit
-Snap100_NoProgressive:
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  Snap100_Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	Snap100_Codes_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load Codes
-  li  r3,CodesSceneID
-
-Snap100_Exit:
-#Store as next scene
-	branchl r12,MenuController_WriteToPendingMajor
-#request to change scenes
-	branchl	r12,MenuController_ChangeScreenMinor
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	li	r0,2
-	blr
-
 MMLCode100_End:
 blrl
 #endregion
 #region SnapshotCodePAL
 .include "../../CommonPAL.s"
-#Mod Data Struct (this needs to be in the tournament redirect code)
-.set ModOFST_ModDataStart,0x1f2C
-	.set ModOFST_ModDataKey,0x0
-		.set ModOFST_ModDataKeyLength,0x4
-	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
-		.set ModOFST_ModDataPrefsLength,0x18
-		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength
+
 MMLCodePAL_Start:
 blrl
 
@@ -39849,9 +39968,17 @@ bl  SnapPAL_CodeOptions_Widescreen
 .set  SnapPAL_CodeOptions_GeckoCodePointers,0x8
 SnapPAL_CodeOptions_Wrapper:
 	blrl
-	.ascii "(%s)"
+.if isPAL==0
+	.short 0x8183
+	.ascii "%s"
+	.short 0x8184
 	.byte 0
 	.align 2
+.endif
+.if isPAL==1
+	.string "(%s)"
+	.align 2
+.endif
 SnapPAL_CodeOptions_UCF:
 	.long 3 -1           #number of options
 	bl	SnapPAL_UCF_Description
@@ -39941,6 +40068,1211 @@ SnapPAL_CodeOptions_Widescreen:
 	.string "True"
 	.align 2
 #endregion
+
+#endregion
+#region SnapPAL_Codes_SceneLoad
+SnapPAL_Codes_SceneLoad:
+#GObj Offsets
+  .set OFST_CodeNamesTextGObj,0x0
+  .set OFST_CodeOptionsTextGObj,0x4
+	.set OFST_CodeDescTextGObj,0x8
+  .set OFST_CursorLocation,0xC
+  .set OFST_ScrollAmount,0xE
+  .set OFST_OptionSelections,0x10
+blrl
+
+#Init
+  backup
+
+SnapPAL_Codes_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl SnapPAL_Codes_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Title
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_CodeNames_Title
+  mflr  r4
+	lfs	f1,TitleX(REG_TextProp)
+  lfs	f2,TitleY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Modname + version
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_CodeNames_ModName
+  mflr  r4
+	lfs	f1,ModNameX(REG_TextProp)
+  lfs	f2,ModNameY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Init Menu
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  SnapPAL_Codes_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+#Copy Saved Menu Options
+	addi	r3,REG_GObjData,OFST_OptionSelections
+	lwz	r4, OFST_Memcard (r13)
+	addi r4,r4,OFST_ModPrefs
+	li	r5,0x18
+	branchl	r12,memcpy
+
+#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	lfs	f1,DescriptionX(REG_TextProp)
+	lfs	f2,DescriptionY(REG_TextProp)
+	lfs	f3,DescriptionZ(REG_TextProp)
+	lfs	f4,DescriptionMaxX(REG_TextProp)
+	lfs	f5,DescriptionUnk(REG_TextProp)
+	branchl r12,Text_AllocateTextObject
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
+#Init
+	mr	r3,REG_TextGObj
+	li	r4,0
+	branchl	r12,Text_CopyPremadeTextDataToStruct
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Menu
+  mr  r3,REG_GObjData
+  bl  SnapPAL_Codes_CreateMenu
+
+SnapPAL_Codes_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region SnapPAL_Codes_SceneThink
+SnapPAL_Codes_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  SnapPAL_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Code Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement up
+  rlwinm. r0,REG_Inputs,0,0x10
+  beq SnapPAL_Codes_SceneThink_SkipUp
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_Codes_SceneThink_UpdateMenu
+#Cursor stays at top
+  li  r3,0
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll up
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  subi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_Codes_SceneThink_UpdateMenu
+#Scroll stays at top
+  li  r3,0
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b SnapPAL_Codes_SceneThink_Exit
+SnapPAL_Codes_SceneThink_SkipUp:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x20
+  beq SnapPAL_Codes_SceneThink_AdjustOptionSelection
+#Adjust cursor
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Check if exceeds total amount of codes
+  extsb r3,r3
+  cmpwi r3,CodeAmount-1
+  ble 0x10
+#Cursor stays at the last code
+  li  r3,CodeAmount-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+  b SnapPAL_Codes_SceneThink_Exit
+#Check if exceeds max amount of codes per page
+  cmpwi r3,MaxCodesOnscreen-1
+  ble SnapPAL_Codes_SceneThink_UpdateMenu
+#Cursor stays at bottom
+  li  r3,MaxCodesOnscreen-1
+  sth r3,OFST_CursorLocation(REG_GObjData)
+#Attempt to scroll down
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  addi  r3,r3,1
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,CodeAmount-MaxCodesOnscreen
+  ble SnapPAL_Codes_SceneThink_UpdateMenu
+#Scroll stays at bottom
+  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
+  sth r3,OFST_ScrollAmount(REG_GObjData)
+  b SnapPAL_Codes_SceneThink_Exit
+#endregion
+#region Adjust Option Selection
+SnapPAL_Codes_SceneThink_AdjustOptionSelection:
+.set  REG_MaxOptions,20
+.set  REG_OptionValuePtr,21
+#Check for movement right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq SnapPAL_Codes_SceneThink_SkipRight
+#Get amount of options for this code
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+  bl  SnapPAL_ConvertBlPointer
+  lwz REG_MaxOptions,SnapPAL_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Increment value
+  lbz r3,0x0(REG_OptionValuePtr)
+  addi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpw r3,REG_MaxOptions
+  ble SnapPAL_Codes_SceneThink_UpdateMenu
+#Option stays maxxed out
+  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
+  b SnapPAL_Codes_SceneThink_Exit
+SnapPAL_Codes_SceneThink_SkipRight:
+#Check for movement down
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq SnapPAL_Codes_SceneThink_CheckToExit
+#Get options value
+  lhz r3,OFST_CursorLocation(REG_GObjData)
+  lhz r4,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,r4                                #get which option this is
+  addi  r4,REG_GObjData,OFST_OptionSelections
+  add REG_OptionValuePtr,r3,r4
+#Decrement value
+  lbz r3,0x0(REG_OptionValuePtr)
+  subi  r3,r3,1
+  stb r3,0x0(REG_OptionValuePtr)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_Codes_SceneThink_UpdateMenu
+#Option stays at 0
+  li  r3,0
+  stb r3,0x0(REG_OptionValuePtr)
+  b SnapPAL_Codes_SceneThink_Exit
+#endregion
+#region Check to Exit
+SnapPAL_Codes_SceneThink_CheckToExit:
+#Check for start input
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x1000
+  beq SnapPAL_Codes_SceneThink_Exit
+#Apply codes
+  mr  r3,REG_GObjData
+  bl  SnapPAL_ApplyAllGeckoCodes
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_Forward
+#Exit Scene
+  branchl r12,MenuController_ChangeScreenMinor
+#Save Menu Options
+	lwz	r3, OFST_Memcard (r13)
+	addi r3,r3,OFST_ModPrefs
+	addi	r4,REG_GObjData,OFST_OptionSelections
+	li	r5,0x18
+	branchl	r12,memcpy
+#Request a memcard save
+	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
+	li	r3,0
+	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
+#Set memcard save flag
+	load	r3,OFST_MemcardController
+	li	r4,1
+	stw	r4,0xC(r3)
+
+  b SnapPAL_Codes_SceneThink_Exit
+#endregion
+
+SnapPAL_Codes_SceneThink_UpdateMenu:
+#Redraw Menu
+  mr  r3,REG_GObjData
+  bl  SnapPAL_Codes_CreateMenu
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+  b SnapPAL_Codes_SceneThink_Exit
+
+SnapPAL_Codes_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region SnapPAL_Codes_SceneDecide
+SnapPAL_Codes_SceneDecide:
+  backup
+
+#Change Major
+  li  r3,ExitSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Leave Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+SnapPAL_Codes_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+#region SnapPAL_Codes_CreateMenu
+SnapPAL_Codes_CreateMenu:
+.set  REG_GObjData,31
+.set  REG_TextGObj,30
+.set  REG_TextProp,29
+
+#Init
+  backup
+  mr  REG_GObjData,r3
+  bl  SnapPAL_Codes_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#Remove old text gobjs if they exist
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq SnapPAL_Codes_CreateMenu_SkipNameRemoval
+  branchl r12,Text_RemoveText
+SnapPAL_Codes_CreateMenu_SkipNameRemoval:
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  cmpwi r3,0
+  beq SnapPAL_Codes_CreateMenu_SkipOptionRemoval
+  branchl r12,Text_RemoveText
+SnapPAL_Codes_CreateMenu_SkipOptionRemoval:
+
+#region CreateTextGObjs
+SnapPAL_Codes_CreateMenu_CreateTextGObjs:
+#Create Code Mames Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align right
+	li r4,2
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#Create Code Options Text GObj
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO align left
+	li r4,0
+	stb r4,0x4A(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+#endregion
+#region SnapPAL_Codes_CreateMenu_CreateNames
+SnapPAL_Codes_CreateMenu_CreateNamesInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+  li  REG_Count,0
+SnapPAL_Codes_CreateMenu_CreateNamesLoop:
+#Next name to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add r3,r3,REG_Count
+#Get the string bl pointer
+  bl  SnapPAL_CodeNames_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  SnapPAL_ConvertBlPointer
+  mr  r4,r3
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lfs f1,CodesX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+SnapPAL_Codes_CreateMenu_CreateNamesIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge SnapPAL_Codes_CreateMenu_CreateNameLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt SnapPAL_Codes_CreateMenu_CreateNamesLoop
+SnapPAL_Codes_CreateMenu_CreateNameLoopEnd:
+#endregion
+#region SnapPAL_Codes_CreateMenu_CreateOptions
+SnapPAL_Codes_CreateMenu_CreateOptionsInit:
+#Loop through and draw code names
+.set  REG_Count,20
+.set  REG_SubtextID,21
+.set  REG_CurrentOptionID,22
+.set  REG_CurrentOptionSelection,23
+.set  REG_OptionStrings,24
+.set  REG_StringLoopCount,25
+  li  REG_Count,0
+SnapPAL_Codes_CreateMenu_CreateOptionsLoop:
+#Next option to draw is scroll + Count
+  lhz r3,OFST_ScrollAmount(REG_GObjData)
+  add REG_CurrentOptionID,r3,REG_Count
+#Get the bl pointer
+  mr  r3,REG_CurrentOptionID
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r4
+  mulli r3,r3,0x4
+  add  r3,r3,r4
+#Convert bl pointer to mem address
+  bl  SnapPAL_ConvertBlPointer
+  lwz r4,SnapPAL_CodeOptions_OptionCount(r3)
+  addi  r4,r4,1
+  addi  REG_OptionStrings,r3,SnapPAL_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
+  mulli r4,r4,0x4                                           #pointer length
+  add REG_OptionStrings,REG_OptionStrings,r4
+#Get this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
+
+#Loop through strings and get the current one
+  li  REG_StringLoopCount,0
+SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
+  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
+  beq SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
+#Get next string
+  mr  r3,REG_OptionStrings
+  branchl r12,strlen
+  add REG_OptionStrings,REG_OptionStrings,r3
+  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
+  addi  REG_StringLoopCount,REG_StringLoopCount,1
+  b SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch
+
+SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
+#Get Y Offset for this
+  lis    r0, 0x4330
+  lfd    f2, MagicNumber (REG_TextProp)
+  xoris    r3,REG_Count,0x8000
+  stw    r0,0x80(sp)
+  stw    r3,0x84(sp)
+  lfd    f1,0x80(sp)
+  fsubs    f1,f1,f2                   #REG_Count as a float
+  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
+  fmuls f1,f1,f2
+  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
+  fadds f2,f1,f2
+#Create Text
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  bl  SnapPAL_CodeOptions_Wrapper
+  mflr  r4
+  mr  r5,REG_OptionStrings
+  lfs f1,OptionsX(REG_TextProp)
+  crset 6
+  branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Unhighlight this name
+  mr  r4,REG_SubtextID
+  addi  r5,REG_TextProp,NonHighlightColor
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  branchl r12,Text_ChangeTextColor
+#Scale this name
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  mr  r4,REG_SubtextID
+  lfs f1,CodesScale(REG_TextProp)
+  lfs f2,CodesScale(REG_TextProp)
+  branchl r12,Text_UpdateSubtextSize
+SnapPAL_Codes_CreateMenu_CreateOptionsIncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  bge SnapPAL_Codes_CreateMenu_CreateOptionsLoopEnd
+  cmpwi REG_Count,MaxCodesOnscreen
+  blt SnapPAL_Codes_CreateMenu_CreateOptionsLoop
+SnapPAL_Codes_CreateMenu_CreateOptionsLoopEnd:
+#endregion
+#region SnapPAL_Codes_CreateMenu_HighlightCursor
+#Name
+  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Option
+  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
+  lhz r4,OFST_CursorLocation(REG_GObjData)
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#endregion
+#region SnapPAL_Codes_CreateMenu_ChangeCodeDescription
+#Get highlighted code ID
+	lhz r3,OFST_ScrollAmount(REG_GObjData)
+	lhz r4,OFST_CursorLocation(REG_GObjData)
+	add	r3,r3,r4
+#Get this codes options
+	bl	SnapPAL_CodeOptions_Order
+	mflr	r4
+	mulli	r3,r3,0x4
+	add	r3,r3,r4
+	bl	SnapPAL_ConvertBlPointer
+#Get this codes description
+	addi	r3,r3,SnapPAL_CodeOptions_CodeDescription
+	bl	SnapPAL_ConvertBlPointer
+	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
+#Store to text gobj
+	stw	r3,0x5C(r4)
+#endregion
+
+SnapPAL_Codes_CreateMenu_Exit:
+  restore
+  blr
+
+###############################################
+
+SnapPAL_ConvertBlPointer:
+  lwz r4,0x0(r3)        #Load bl instruction
+  rlwinm  r4,r4,0,6,29  #extract offset bits
+	rlwinm	r5,r4,7,31,31		#Get signed bit
+	lis	r6,0xFC00
+	mullw	r5,r5,r6
+	or	r4,r4,r5
+  add r3,r4,r3
+  blr
+
+#endregion
+#region SnapPAL_ApplyAllGeckoCodes
+SnapPAL_ApplyAllGeckoCodes:
+.set  REG_GObjData,31
+.set  REG_Count,30
+.set  REG_OptionSelection,29
+#Init
+  backup
+  mr  REG_GObjData,r3
+
+#Check if LCD reduction was enabled
+	load	r3,VI_Struct
+	lwz	r3,0x1DC(r3)
+	load	r4,RenewInputs_Prefunction
+	cmpw	r3,r4
+	beq	SnapPAL_ApplyAllGeckoCodes_DefaultCodes
+#Polling Drift Fix
+  bl  SnapPAL_LagReduction_PD
+  mflr  r3
+  bl  SnapPAL_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+
+SnapPAL_ApplyAllGeckoCodes_DefaultCodes:
+#Default Codes
+  bl  SnapPAL_DefaultCodes_On
+  mflr  r3
+  bl  SnapPAL_ApplyGeckoCode
+
+#Default Codes
+  bl  SnapPAL_DefaultCodes_On
+  mflr  r3
+  bl  SnapPAL_ApplyGeckoCode
+
+#Init Loop
+  li  REG_Count,0
+ApplyAllGeckoSnapPAL_Codes_Loop:
+#Load this options value
+  addi  r3,REG_GObjData,OFST_OptionSelections
+  lbzx REG_OptionSelection,r3,REG_Count
+#Get this code's default gecko code pointer
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  SnapPAL_ConvertBlPointer
+  addi  r3,r3,SnapPAL_CodeOptions_GeckoCodePointers
+  bl  SnapPAL_ConvertBlPointer
+  bl  SnapPAL_ApplyGeckoCode
+#Get this code's gecko code pointers
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r3
+  mulli r4,REG_Count,0x4
+  add r3,r3,r4
+  bl  SnapPAL_ConvertBlPointer
+  addi  r3,r3,SnapPAL_CodeOptions_GeckoCodePointers
+  mulli r4,REG_OptionSelection,0x4
+  add  r3,r3,r4
+  bl  SnapPAL_ConvertBlPointer
+  bl  SnapPAL_ApplyGeckoCode
+
+ApplyAllGeckoSnapPAL_Codes_IncLoop:
+  addi  REG_Count,REG_Count,1
+  cmpwi REG_Count,CodeAmount
+  blt ApplyAllGeckoSnapPAL_Codes_Loop
+
+ApplyAllGeckoSnapPAL_Codes_Exit:
+  restore
+  blr
+
+####################################
+
+SnapPAL_ApplyGeckoCode:
+.set  REG_GeckoCode,12
+  mr  REG_GeckoCode,r3
+
+SnapPAL_ApplyGeckoCode_Loop:
+  lbz r3,0x0(REG_GeckoCode)
+  cmpwi r3,0xC2
+  beq SnapPAL_ApplyGeckoCode_C2
+  cmpwi r3,0x4
+  beq SnapPAL_ApplyGeckoCode_04
+  cmpwi r3,0xFF
+  beq SnapPAL_ApplyGeckoCode_Exit
+  b SnapPAL_ApplyGeckoCode_Exit
+SnapPAL_ApplyGeckoCode_C2:
+.set  REG_InjectionSite,11
+#Branch overwrite
+  lwz r5,0x0(REG_GeckoCode)
+  rlwinm r3,r5,0,8,31                   #get offset for branch calc
+  rlwinm r5,r5,0,8,31
+  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  addi  r4,REG_GeckoCode,0x8            #get branch destination
+  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  stw r3,0x0(REG_InjectionSite)         #place branch instruction
+#Place branch back
+  lwz r3,0x4(REG_GeckoCode)
+  mulli r3,r3,0x8
+  add r4,r3,REG_GeckoCode               #get branch back site
+  addi  r3,REG_InjectionSite,0x4        #get branch back destination
+  sub r3,r3,r4
+  rlwinm  r3,r3,0,6,29                  #extract bits for offset
+  oris  r3,r3,0x4800                    #Create branch instruction from it
+  subi  r3,r3,0x4                       #subtract 4 i guess
+  stw r3,0x4(r4)                        #place branch instruction
+#Get next gecko code
+  lwz r3,0x4(REG_GeckoCode)
+  addi  r3,r3,1
+  mulli r3,r3,0x8
+  add REG_GeckoCode,REG_GeckoCode,r3
+  b SnapPAL_ApplyGeckoCode_Loop
+SnapPAL_ApplyGeckoCode_04:
+  lwz r3,0x0(REG_GeckoCode)
+  rlwinm r3,r3,0,8,31
+  oris  r3,r3,0x8000
+  lwz r4,0x4(REG_GeckoCode)
+  stw r4,0x0(r3)
+  addi REG_GeckoCode,REG_GeckoCode,0x8
+  b SnapPAL_ApplyGeckoCode_Loop
+SnapPAL_ApplyGeckoCode_Exit:
+blr
+
+#endregion
+
+#endregion
+
+#region LagPrompt
+
+#region SnapPAL_LagPrompt_SceneLoad
+############################################
+
+#region SnapPAL_LagPrompt_SceneLoad_Data
+SnapPAL_LagPrompt_SceneLoad_TextProperties:
+blrl
+.set PromptX,0x0
+.set PromptY,0x4
+.set ZOffset,0x8
+.set CanvasScaling,0xC
+.set Scale,0x10
+.set YesX,0x14
+.set YesY,0x18
+.set YesScale,0x1C
+.set NoX,0x20
+.set NoY,0x24
+.set NoScale,0x28
+.set HighlightColor,0x2C
+.set NonHighlightColor,0x30
+.float 315     			   #REG_TextGObj X pos
+.float 200  					   #REG_TextGObj Y pos
+.float 0.1     		     	 #Z offset
+.float 1   				     #Canvas Scaling
+.float 1					    	#Text scale
+.float 265              #Yes X pos
+.float 300              #Yes Y pos
+.float 1              #Yes scale
+.float 365              #No X pos
+.float 300              #No Y pos
+.float 1              #No scale
+.byte 251,199,57,255		#highlighted color
+.byte 170,170,170,255	  #nonhighlighted color
+
+SnapPAL_LagPrompt_SceneLoad_TopText:
+blrl
+.if isPAL==1
+.ascii "Are you using HDMI?"
+.align 2
+.endif
+.if isPAL==0
+.ascii "Are you using HDMI"
+.hword 0x8148
+.byte 0x00
+.align 2
+.endif
+
+SnapPAL_LagPrompt_SceneLoad_Yes:
+blrl
+.string "Yes"
+.align 2
+
+SnapPAL_LagPrompt_SceneLoad_No:
+blrl
+.string "No"
+.align 2
+
+#GObj Offsets
+  .set OFST_TextGObj,0x0
+  .set OFST_Selection,0x4
+
+#endregion
+#region SnapPAL_LagPrompt_SceneLoad
+SnapPAL_LagPrompt_SceneLoad:
+blrl
+
+#Init
+  backup
+
+SnapPAL_LagPrompt_SceneLoad_CreateText:
+.set REG_GObjData,27
+.set REG_GObj,28
+.set REG_SubtextID,29
+.set REG_TextProp,30
+.set REG_TextGObj,31
+
+#GET PROPERTIES TABLE
+	bl SnapPAL_LagPrompt_SceneLoad_TextProperties
+	mflr REG_TextProp
+
+#Create canvas
+  li  r3,0
+  li  r4,0
+  li  r5,9
+  li  r6,13
+  li  r7,0
+  li  r8,14
+  li  r9,0
+  li  r10,19
+  branchl r12,Text_CreateTextCanvas
+
+########################
+## Create Text Object ##
+########################
+
+#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
+	li r3,0
+	li r4,0
+	branchl r12,Text_CreateTextStruct
+#BACKUP STRUCT POINTER
+	mr REG_TextGObj,r3
+  stw REG_TextGObj,0x0(REG_GObjData)
+#SET TEXT SPACING TO TIGHT
+	li r4,0x1
+	stb r4,0x49(REG_TextGObj)
+#SET TEXT TO CENTER AROUND X LOCATION
+	li r4,0x1
+	stb r4,0x4A(REG_TextGObj)
+#Store Base Z Offset
+	lfs f1,ZOffset(REG_TextProp) #Z offset
+	stfs f1,0x8(REG_TextGObj)
+#Scale Canvas Down
+  lfs f1,CanvasScaling(REG_TextProp)
+  stfs f1,0x24(REG_TextGObj)
+  stfs f1,0x28(REG_TextGObj)
+
+#Create Prompt
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_LagPrompt_SceneLoad_TopText
+  mflr  r4
+	lfs	f1,PromptX(REG_TextProp)
+  lfs	f2,PromptY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create Yes
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_LagPrompt_SceneLoad_Yes
+  mflr  r4
+	lfs	f1,YesX(REG_TextProp)
+  lfs	f2,YesY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create No
+#Initialize Subtext
+	mr 	r3,REG_TextGObj		#struct pointer
+	bl SnapPAL_LagPrompt_SceneLoad_No
+  mflr  r4
+	lfs	f1,NoX(REG_TextProp)
+  lfs	f2,NoY(REG_TextProp)
+	branchl r12,Text_InitializeSubtext
+  mr  REG_SubtextID,r3
+#Change Text Scale
+	mr 	r3,REG_TextGObj		#struct pointer
+	mr	r4,REG_SubtextID
+	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
+	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
+	branchl r12,Text_UpdateSubtextSize
+
+#Create GObj
+  li  r3, 13
+  li  r4,14
+  li  r5,0
+  branchl r12, GObj_Create
+  mr  REG_GObj,r3
+#Allocate Space
+	li	r3,64
+	branchl r12,HSD_MemAlloc
+	mr	REG_GObjData,r3
+#Zero
+	li	r4,64
+	branchl r12,ZeroAreaLength
+#Initialize
+	mr	r6,REG_GObjData
+	mr	r3,REG_GObj
+	li	r4,4
+	load	r5,HSD_Free
+	branchl r12,GObj_AddUserData
+#Add Proc
+  mr  r3,REG_GObj
+  bl  SnapPAL_LagPrompt_SceneThink
+  mflr  r4      #Function to Run
+  li  r5,0      #Priority
+  branchl r12, GObj_AddProc
+
+#Store text gobj pointer
+  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
+#Init Selection value
+  li  r3,InitialSelection
+  stb r3,OFST_Selection(REG_GObjData)
+
+#Highlight selection
+  mr  r3,REG_TextGObj
+  li  r4,InitialSelection+1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+
+SnapPAL_LagPrompt_SceneLoad_Exit:
+  restore
+  blr
+#endregion
+
+############################################
+#endregion
+#region SnapPAL_LagPrompt_SceneThink
+SnapPAL_LagPrompt_SceneThink:
+blrl
+
+.set REG_TextProp,28
+.set REG_Inputs,29
+.set REG_GObjData,30
+.set REG_GObj,31
+
+#Init
+  backup
+  mr  REG_GObj,r3
+  lwz REG_GObjData,0x2C(REG_GObj)
+  bl  SnapPAL_LagPrompt_SceneLoad_TextProperties
+  mflr  REG_TextProp
+
+#region Adjust Selection
+#Adjust Menu Choice
+#Get all player inputs
+  li  r3,4
+  branchl r12,Inputs_GetPlayerRapidHeldInputs
+  mr  REG_Inputs,r3
+#Check for movement to the right
+  rlwinm. r0,REG_Inputs,0,0x80
+  beq SnapPAL_LagPrompt_SceneThink_SkipRight
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  addi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,1
+  ble SnapPAL_LagPrompt_SceneThink_HighlightSelection
+  li  r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  b SnapPAL_LagPrompt_SceneThink_CheckForA
+SnapPAL_LagPrompt_SceneThink_SkipRight:
+#Check for movement to the left
+  rlwinm. r0,REG_Inputs,0,0x40
+  beq SnapPAL_LagPrompt_SceneThink_CheckForA
+#Adjust cursor
+  lbz r3,OFST_Selection(REG_GObjData)
+  subi  r3,r3,1
+  stb r3,OFST_Selection(REG_GObjData)
+  extsb r3,r3
+  cmpwi r3,0
+  bge SnapPAL_LagPrompt_SceneThink_HighlightSelection
+  li  r3,0
+  stb r3,OFST_Selection(REG_GObjData)
+  b SnapPAL_LagPrompt_SceneThink_CheckForA
+
+SnapPAL_LagPrompt_SceneThink_HighlightSelection:
+#Unhighlight both options
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,1
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  li  r4,2
+  addi  r5,REG_TextProp,NonHighlightColor
+  branchl r12,Text_ChangeTextColor
+#Highlight selection
+  lwz r3,OFST_TextGObj(REG_GObjData)
+  lbz r4,OFST_Selection(REG_GObjData)
+  addi  r4,r4,1
+  addi  r5,REG_TextProp,HighlightColor
+  branchl r12,Text_ChangeTextColor
+#Play SFX
+  branchl r12,SFX_PlayMenuSound_CloseOpenPort
+#endregion
+#region Check for Confirmation
+SnapPAL_LagPrompt_SceneThink_CheckForA:
+  li  r3,4
+  branchl r12,Inputs_GetPlayerInstantInputs
+  rlwinm. r0,r4,0,0x100
+  bne SnapPAL_LagPrompt_SceneThink_Confirmed
+  rlwinm. r0,r4,0,0x1000
+  bne SnapPAL_LagPrompt_SceneThink_Confirmed
+  b SnapPAL_LagPrompt_SceneThink_Exit
+SnapPAL_LagPrompt_SceneThink_Confirmed:
+#Play Menu Sound
+  branchl r12,SFX_PlayMenuSound_Forward
+#If yes, apply lag reduction
+  lbz r3,OFST_Selection(REG_GObjData)
+  cmpwi r3,0
+  bne SnapPAL_LagPrompt_SceneThink_ExitScene
+#endregion
+#region Apply Code
+.set  REG_GeckoCode,12
+#Apply lag reduction
+  bl  SnapPAL_LagReduction_LCD
+  mflr  r3
+  bl  SnapPAL_ApplyGeckoCode
+#Reset some pad variables to cancel the current alarm
+  load  r3,UnkPadStruct
+  li  r4,0
+  stw r4,0x4(r3)
+  stw r4,0x44(r3)
+#Set new post retrace callback
+  load  r3,PostRetraceCallback
+  branchl r12,HSD_VISetUserPostRetraceCallback
+#Enable progressive
+  load  r3,ProgressiveStruct
+  li  r0,1
+  stw r0,0x8(r3)
+  branchl r12,Deflicker_Toggle
+.if isPAL==1
+#Enable PAL60
+	load	r3,ProgressiveStruct
+	li	r4,1
+	stw	r4,0xC(r3)
+.endif
+#Call VIConfigure
+	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
+	branchl	r12,ScreenDisplay_Adjust
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,TRK_flush_cache
+#endregion
+
+SnapPAL_LagPrompt_SceneThink_ExitScene:
+  branchl r12,MenuController_ChangeScreenMinor
+
+SnapPAL_LagPrompt_SceneThink_Exit:
+  restore
+  blr
+#endregion
+#region SnapPAL_LagPrompt_SceneDecide
+SnapPAL_LagPrompt_SceneDecide:
+
+  backup
+
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  SnapPAL_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+
+#Enter Codes Scene
+  li  r3,CodesSceneID
+  branchl r12,MenuController_WriteToPendingMajor
+#Change Major
+  branchl r12,MenuController_ChangeScreenMajor
+
+SnapPAL_LagPrompt_SceneDecide_Exit:
+  restore
+  blr
+############################################
+#endregion
+
+#endregion
+
+#region MinorSceneStruct
+SnapPAL_LagPrompt_MinorSceneStruct:
+blrl
+#Lag Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  SnapPAL_LagPrompt_SceneDecide   #SceneDecide
+.byte PromptCommonSceneID   #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+SnapPAL_Codes_MinorSceneStruct:
+blrl
+#Codes Prompt
+.byte 0                     #Minor Scene ID
+.byte 2                    #Amount of persistent heaps
+.align 2
+.long 0x00000000            #ScenePrep
+bl  SnapPAL_Codes_SceneDecide       #SceneDecide
+.byte CodesCommonSceneID    #Common Minor ID
+.align 2
+.long 0x00000000            #Minor Data 1
+.long 0x00000000            #Minor Data 2
+#End
+.byte -1
+.align 2
+
+#endregion
+
+SnapPAL_CheckProgressive:
+
+#Check if progressive is enabled
+  lis	r3,0xCC00
+	lhz	r3,0x206E(r3)
+	rlwinm.	r3,r3,0,0x1
+  beq SnapPAL_NoProgressive
+
+SnapPAL_IsProgressive:
+#Override SceneLoad
+  li  r3,PromptCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  SnapPAL_LagPrompt_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	SnapPAL_LagPrompt_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load LagPrompt
+  li	r3, PromptSceneID
+  b SnapPAL_Exit
+SnapPAL_NoProgressive:
+#Override SceneLoad
+  li  r3,CodesCommonSceneID
+  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
+  bl  SnapPAL_Codes_SceneLoad
+  mflr  r4
+  stw r4,0x8(r3)
+#Hijack the MajorScene load functions register (VERY HACKY)
+	bl	SnapPAL_Codes_MinorSceneStruct
+	mflr	r3
+	stw	r3,0x114(sp)
+#Load Codes
+  li  r3,CodesSceneID
+
+SnapPAL_Exit:
+#Store as next scene
+	branchl r12,MenuController_WriteToPendingMajor
+#request to change scenes
+	branchl	r12,MenuController_ChangeScreenMinor
+
+##########
+## Exit ##
+##########
+
+#Return to the game
+  restore
+	li	r0,2
+	blr
+
 #region Gecko Codes
 SnapPAL_DefaultCodes_On:
 	blrl
@@ -40345,9 +41677,9 @@ SnapPAL_UCF_On:
 	.long 0x7FC802A6
 	.long 0x38600000
 	.long 0x38800000
-	.long 0x3DC0803A
-	.long 0x61CE6664
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C6664
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C7F1B78
 	.long 0x38800001
@@ -40362,9 +41694,9 @@ SnapPAL_UCF_On:
 	.long 0x7C8802A6
 	.long 0xC03E0000
 	.long 0xC05E0004
-	.long 0x3DC0803A
-	.long 0x61CE6B54
-	.long 0x7DC903A6
+	.long 0x3D80803A
+	.long 0x618C6B54
+	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x7C641B78
 	.long 0x7FE3FB78
@@ -40684,6 +42016,37 @@ SnapPAL_Widescreen_True:
 	.long 0x00000000
 	.long 0x044CEF04
 	.long 0x3E99999A
+	.long -1
+
+SnapPAL_LagReduction_LCD:
+	blrl
+	.long 0x043D5170
+	.long 0x00000002
+	.long 0x043D5184
+	.long 0x00000000
+	.long 0x040000CC
+	.long 0x00000000
+	.long 0x043D51AC
+	.long 0x00000002
+	.long 0x043D51C0
+	.long 0x00000000
+	.long 0x04019D18
+	.long 0x4BFFFD9D
+	.long -1
+SnapPAL_LagReduction_PD:
+	blrl
+	.long 0x041A58B8
+	.long 0x60000000
+	.long 0x04019D18
+	.long 0x4BFFFD9D
+	.long 0xC2019D18
+	.long 0x00000003
+	.long 0x901C0000
+	.long 0x3D808001
+	.long 0x618C9AB4
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x00000000
 	.long -1
 
 SnapPAL_Frozen_All:
@@ -50715,8 +52078,6 @@ SnapPAL_StageExpansion_On:
 	.long 0x04201904
 	.long 0x4E800020
 	.long -1
-
-
 #endregion
 #region Code Descriptions
 SnapPAL_UCF_Description:
@@ -50789,1201 +52150,7 @@ SnapPAL_Widescreen_Description:
   .ascii "Use True if the image occupies the entire screen."
   .byte 0x00
 	.align 2
-
-
 #endregion
-
-#endregion
-#region SnapPAL_Codes_SceneLoad
-SnapPAL_Codes_SceneLoad:
-#GObj Offsets
-  .set OFST_CodeNamesTextGObj,0x0
-  .set OFST_CodeOptionsTextGObj,0x4
-	.set OFST_CodeDescTextGObj,0x8
-  .set OFST_CursorLocation,0xC
-  .set OFST_ScrollAmount,0xE
-  .set OFST_OptionSelections,0x10
-blrl
-
-#Init
-  backup
-
-SnapPAL_Codes_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl SnapPAL_Codes_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,Text_CreateTextCanvas
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Title
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl SnapPAL_CodeNames_Title
-  mflr  r4
-	lfs	f1,TitleX(REG_TextProp)
-  lfs	f2,TitleY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,TitleScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,TitleScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Modname + version
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl SnapPAL_CodeNames_ModName
-  mflr  r4
-	lfs	f1,ModNameX(REG_TextProp)
-  lfs	f2,ModNameY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,ModnameScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,ModnameScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Init Menu
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,HSD_Free
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  SnapPAL_Codes_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-#Copy Saved Menu Options
-	addi	r3,REG_GObjData,OFST_OptionSelections
-	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
-	li	r5,0x18
-	branchl	r12,memcpy
-
-#CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	lfs	f1,DescriptionX(REG_TextProp)
-	lfs	f2,DescriptionY(REG_TextProp)
-	lfs	f3,DescriptionZ(REG_TextProp)
-	lfs	f4,DescriptionMaxX(REG_TextProp)
-	lfs	f5,DescriptionUnk(REG_TextProp)
-	branchl r12,Text_AllocateTextObject
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-	stw	REG_TextGObj,OFST_CodeDescTextGObj(REG_GObjData)
-#Init
-	mr	r3,REG_TextGObj
-	li	r4,0
-	branchl	r12,Text_CopyPremadeTextDataToStruct
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Menu
-  mr  r3,REG_GObjData
-  bl  SnapPAL_Codes_CreateMenu
-
-SnapPAL_Codes_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region SnapPAL_Codes_SceneThink
-SnapPAL_Codes_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  SnapPAL_Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Code Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,Inputs_GetPlayerRapidHeldInputs
-  mr  REG_Inputs,r3
-#Check for movement up
-  rlwinm. r0,REG_Inputs,0,0x10
-  beq SnapPAL_Codes_SceneThink_SkipUp
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge SnapPAL_Codes_SceneThink_UpdateMenu
-#Cursor stays at top
-  li  r3,0
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll up
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  subi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge SnapPAL_Codes_SceneThink_UpdateMenu
-#Scroll stays at top
-  li  r3,0
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b SnapPAL_Codes_SceneThink_Exit
-SnapPAL_Codes_SceneThink_SkipUp:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x20
-  beq SnapPAL_Codes_SceneThink_AdjustOptionSelection
-#Adjust cursor
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Check if exceeds total amount of codes
-  extsb r3,r3
-  cmpwi r3,CodeAmount-1
-  ble 0x10
-#Cursor stays at the last code
-  li  r3,CodeAmount-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-  b SnapPAL_Codes_SceneThink_Exit
-#Check if exceeds max amount of codes per page
-  cmpwi r3,MaxCodesOnscreen-1
-  ble SnapPAL_Codes_SceneThink_UpdateMenu
-#Cursor stays at bottom
-  li  r3,MaxCodesOnscreen-1
-  sth r3,OFST_CursorLocation(REG_GObjData)
-#Attempt to scroll down
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  addi  r3,r3,1
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,CodeAmount-MaxCodesOnscreen
-  ble SnapPAL_Codes_SceneThink_UpdateMenu
-#Scroll stays at bottom
-  li  r3,(CodeAmount-1)-(MaxCodesOnscreen-1)
-  sth r3,OFST_ScrollAmount(REG_GObjData)
-  b SnapPAL_Codes_SceneThink_Exit
-#endregion
-#region Adjust Option Selection
-SnapPAL_Codes_SceneThink_AdjustOptionSelection:
-.set  REG_MaxOptions,20
-.set  REG_OptionValuePtr,21
-#Check for movement right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq SnapPAL_Codes_SceneThink_SkipRight
-#Get amount of options for this code
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  bl  SnapPAL_CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add r3,r3,r4                                #get bl pointer to options info
-  bl  SnapPAL_ConvertBlPointer
-  lwz REG_MaxOptions,SnapPAL_CodeOptions_OptionCount(r3)     #get amount of options for this code
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Increment value
-  lbz r3,0x0(REG_OptionValuePtr)
-  addi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpw r3,REG_MaxOptions
-  ble SnapPAL_Codes_SceneThink_UpdateMenu
-#Option stays maxxed out
-  stb REG_MaxOptions,0x0(REG_OptionValuePtr)
-  b SnapPAL_Codes_SceneThink_Exit
-SnapPAL_Codes_SceneThink_SkipRight:
-#Check for movement down
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq SnapPAL_Codes_SceneThink_CheckToExit
-#Get options value
-  lhz r3,OFST_CursorLocation(REG_GObjData)
-  lhz r4,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,r4                                #get which option this is
-  addi  r4,REG_GObjData,OFST_OptionSelections
-  add REG_OptionValuePtr,r3,r4
-#Decrement value
-  lbz r3,0x0(REG_OptionValuePtr)
-  subi  r3,r3,1
-  stb r3,0x0(REG_OptionValuePtr)
-  extsb r3,r3
-  cmpwi r3,0
-  bge SnapPAL_Codes_SceneThink_UpdateMenu
-#Option stays at 0
-  li  r3,0
-  stb r3,0x0(REG_OptionValuePtr)
-  b SnapPAL_Codes_SceneThink_Exit
-#endregion
-#region Check to Exit
-SnapPAL_Codes_SceneThink_CheckToExit:
-#Check for start input
-  li  r3,4
-  branchl r12,Inputs_GetPlayerInstantInputs
-  rlwinm. r0,r4,0,0x1000
-  beq SnapPAL_Codes_SceneThink_Exit
-#Apply codes
-  mr  r3,REG_GObjData
-  bl  SnapPAL_ApplyAllGeckoCodes
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,TRK_flush_cache
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_Forward
-#Exit Scene
-  branchl r12,MenuController_ChangeScreenMinor
-#Save Menu Options
-	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
-	addi	r4,REG_GObjData,OFST_OptionSelections
-	li	r5,0x18
-	branchl	r12,memcpy
-#Request a memcard save
-	branchl	r12,Memcard_AllocateSomething		#Allocate memory for something
-	li	r3,0
-	branchl	r12,MemoryCard_LoadBannerIconImagesToRAM	#load banner images
-#Set memcard save flag
-	load	r3,OFST_MemcardController
-	li	r4,1
-	stw	r4,0xC(r3)
-
-  b SnapPAL_Codes_SceneThink_Exit
-#endregion
-
-SnapPAL_Codes_SceneThink_UpdateMenu:
-#Redraw Menu
-  mr  r3,REG_GObjData
-  bl  SnapPAL_Codes_CreateMenu
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_CloseOpenPort
-  b SnapPAL_Codes_SceneThink_Exit
-
-SnapPAL_Codes_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region SnapPAL_Codes_SceneDecide
-SnapPAL_Codes_SceneDecide:
-  backup
-
-#Change Major
-  li  r3,ExitSceneID
-  branchl r12,MenuController_WriteToPendingMajor
-#Leave Major
-  branchl r12,MenuController_ChangeScreenMajor
-
-SnapPAL_Codes_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-#region SnapPAL_Codes_CreateMenu
-SnapPAL_Codes_CreateMenu:
-.set  REG_GObjData,31
-.set  REG_TextGObj,30
-.set  REG_TextProp,29
-
-#Init
-  backup
-  mr  REG_GObjData,r3
-  bl  SnapPAL_Codes_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#Remove old text gobjs if they exist
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq SnapPAL_Codes_CreateMenu_SkipNameRemoval
-  branchl r12,Text_RemoveText
-SnapPAL_Codes_CreateMenu_SkipNameRemoval:
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  cmpwi r3,0
-  beq SnapPAL_Codes_CreateMenu_SkipOptionRemoval
-  branchl r12,Text_RemoveText
-SnapPAL_Codes_CreateMenu_SkipOptionRemoval:
-
-#region CreateTextGObjs
-SnapPAL_Codes_CreateMenu_CreateTextGObjs:
-#Create Code Mames Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeNamesTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align right
-	li r4,2
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#Create Code Options Text GObj
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,OFST_CodeOptionsTextGObj(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO align left
-	li r4,0
-	stb r4,0x4A(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-#endregion
-#region SnapPAL_Codes_CreateMenu_CreateNames
-SnapPAL_Codes_CreateMenu_CreateNamesInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-  li  REG_Count,0
-SnapPAL_Codes_CreateMenu_CreateNamesLoop:
-#Next name to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add r3,r3,REG_Count
-#Get the string bl pointer
-  bl  SnapPAL_CodeNames_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  SnapPAL_ConvertBlPointer
-  mr  r4,r3
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lfs f1,CodesX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-SnapPAL_Codes_CreateMenu_CreateNamesIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge SnapPAL_Codes_CreateMenu_CreateNameLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt SnapPAL_Codes_CreateMenu_CreateNamesLoop
-SnapPAL_Codes_CreateMenu_CreateNameLoopEnd:
-#endregion
-#region SnapPAL_Codes_CreateMenu_CreateOptions
-SnapPAL_Codes_CreateMenu_CreateOptionsInit:
-#Loop through and draw code names
-.set  REG_Count,20
-.set  REG_SubtextID,21
-.set  REG_CurrentOptionID,22
-.set  REG_CurrentOptionSelection,23
-.set  REG_OptionStrings,24
-.set  REG_StringLoopCount,25
-  li  REG_Count,0
-SnapPAL_Codes_CreateMenu_CreateOptionsLoop:
-#Next option to draw is scroll + Count
-  lhz r3,OFST_ScrollAmount(REG_GObjData)
-  add REG_CurrentOptionID,r3,REG_Count
-#Get the bl pointer
-  mr  r3,REG_CurrentOptionID
-  bl  SnapPAL_CodeOptions_Order
-  mflr  r4
-  mulli r3,r3,0x4
-  add  r3,r3,r4
-#Convert bl pointer to mem address
-  bl  SnapPAL_ConvertBlPointer
-  lwz r4,SnapPAL_CodeOptions_OptionCount(r3)
-  addi  r4,r4,1
-  addi  REG_OptionStrings,r3,SnapPAL_CodeOptions_GeckoCodePointers  #Get pointer to gecko code pointers
-  mulli r4,r4,0x4                                           #pointer length
-  add REG_OptionStrings,REG_OptionStrings,r4
-#Get this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx  REG_CurrentOptionSelection,r3,REG_CurrentOptionID
-
-#Loop through strings and get the current one
-  li  REG_StringLoopCount,0
-SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch:
-  cmpw  REG_StringLoopCount,REG_CurrentOptionSelection
-  beq SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd
-#Get next string
-  mr  r3,REG_OptionStrings
-  branchl r12,strlen
-  add REG_OptionStrings,REG_OptionStrings,r3
-  addi  REG_OptionStrings,REG_OptionStrings,1       #add 1 to skip past the 0 terminator
-  addi  REG_StringLoopCount,REG_StringLoopCount,1
-  b SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearch
-
-SnapPAL_Codes_CreateMenu_CreateOptionsLoop_StringSearchEnd:
-#Get Y Offset for this
-  lis    r0, 0x4330
-  lfd    f2, MagicNumber (REG_TextProp)
-  xoris    r3,REG_Count,0x8000
-  stw    r0,0x80(sp)
-  stw    r3,0x84(sp)
-  lfd    f1,0x80(sp)
-  fsubs    f1,f1,f2                   #REG_Count as a float
-  lfs f2,CodesYDiff(REG_TextProp)     #YDifference
-  fmuls f1,f1,f2
-  lfs f2,CodesInitialY(REG_TextProp)  #Initial Y Value
-  fadds f2,f1,f2
-#Create Text
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  bl  SnapPAL_CodeOptions_Wrapper
-  mflr  r4
-  mr  r5,REG_OptionStrings
-  lfs f1,OptionsX(REG_TextProp)
-  crset 6
-  branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Unhighlight this name
-  mr  r4,REG_SubtextID
-  addi  r5,REG_TextProp,NonHighlightColor
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  branchl r12,Text_ChangeTextColor
-#Scale this name
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  mr  r4,REG_SubtextID
-  lfs f1,CodesScale(REG_TextProp)
-  lfs f2,CodesScale(REG_TextProp)
-  branchl r12,Text_UpdateSubtextSize
-SnapPAL_Codes_CreateMenu_CreateOptionsIncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  bge SnapPAL_Codes_CreateMenu_CreateOptionsLoopEnd
-  cmpwi REG_Count,MaxCodesOnscreen
-  blt SnapPAL_Codes_CreateMenu_CreateOptionsLoop
-SnapPAL_Codes_CreateMenu_CreateOptionsLoopEnd:
-#endregion
-#region SnapPAL_Codes_CreateMenu_HighlightCursor
-#Name
-  lwz r3,OFST_CodeNamesTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Option
-  lwz r3,OFST_CodeOptionsTextGObj(REG_GObjData)
-  lhz r4,OFST_CursorLocation(REG_GObjData)
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#endregion
-#region SnapPAL_Codes_CreateMenu_ChangeCodeDescription
-#Get highlighted code ID
-	lhz r3,OFST_ScrollAmount(REG_GObjData)
-	lhz r4,OFST_CursorLocation(REG_GObjData)
-	add	r3,r3,r4
-#Get this codes options
-	bl	SnapPAL_CodeOptions_Order
-	mflr	r4
-	mulli	r3,r3,0x4
-	add	r3,r3,r4
-	bl	SnapPAL_ConvertBlPointer
-#Get this codes description
-	addi	r3,r3,SnapPAL_CodeOptions_CodeDescription
-	bl	SnapPAL_ConvertBlPointer
-	lwz	r4,OFST_CodeDescTextGObj(REG_GObjData)
-#Store to text gobj
-	stw	r3,0x5C(r4)
-#endregion
-
-SnapPAL_Codes_CreateMenu_Exit:
-  restore
-  blr
-
-###############################################
-
-SnapPAL_ConvertBlPointer:
-  lwz r4,0x0(r3)        #Load bl instruction
-  rlwinm  r4,r4,0,6,29  #extract offset bits
-	rlwinm	r5,r4,7,31,31		#Get signed bit
-	lis	r6,0xFC00
-	mullw	r5,r5,r6
-	or	r4,r4,r5
-  add r3,r4,r3
-  blr
-
-#endregion
-#region SnapPAL_ApplyAllGeckoCodes
-SnapPAL_ApplyAllGeckoCodes:
-.set  REG_GObjData,31
-.set  REG_Count,30
-.set  REG_OptionSelection,29
-#Init
-  backup
-  mr  REG_GObjData,r3
-
-#Default Codes
-  bl  SnapPAL_DefaultCodes_On
-  mflr  r3
-  bl  SnapPAL_ApplyGeckoCode
-
-#Init Loop
-  li  REG_Count,0
-ApplyAllGeckoSnapPAL_Codes_Loop:
-#Load this options value
-  addi  r3,REG_GObjData,OFST_OptionSelections
-  lbzx REG_OptionSelection,r3,REG_Count
-#Get this code's default gecko code pointer
-  bl  SnapPAL_CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  SnapPAL_ConvertBlPointer
-  addi  r3,r3,SnapPAL_CodeOptions_GeckoCodePointers
-  bl  SnapPAL_ConvertBlPointer
-  bl  SnapPAL_ApplyGeckoCode
-#Get this code's gecko code pointers
-  bl  SnapPAL_CodeOptions_Order
-  mflr  r3
-  mulli r4,REG_Count,0x4
-  add r3,r3,r4
-  bl  SnapPAL_ConvertBlPointer
-  addi  r3,r3,SnapPAL_CodeOptions_GeckoCodePointers
-  mulli r4,REG_OptionSelection,0x4
-  add  r3,r3,r4
-  bl  SnapPAL_ConvertBlPointer
-  bl  SnapPAL_ApplyGeckoCode
-
-ApplyAllGeckoSnapPAL_Codes_IncLoop:
-  addi  REG_Count,REG_Count,1
-  cmpwi REG_Count,CodeAmount
-  blt ApplyAllGeckoSnapPAL_Codes_Loop
-
-ApplyAllGeckoSnapPAL_Codes_Exit:
-  restore
-  blr
-
-####################################
-
-SnapPAL_ApplyGeckoCode:
-.set  REG_GeckoCode,12
-  mr  REG_GeckoCode,r3
-
-SnapPAL_ApplyGeckoCode_Loop:
-  lbz r3,0x0(REG_GeckoCode)
-  cmpwi r3,0xC2
-  beq SnapPAL_ApplyGeckoCode_C2
-  cmpwi r3,0x4
-  beq SnapPAL_ApplyGeckoCode_04
-  cmpwi r3,0xFF
-  beq SnapPAL_ApplyGeckoCode_Exit
-  b SnapPAL_ApplyGeckoCode_Exit
-SnapPAL_ApplyGeckoCode_C2:
-.set  REG_InjectionSite,11
-#Branch overwrite
-  lwz r5,0x0(REG_GeckoCode)
-  rlwinm r3,r5,0,8,31                   #get offset for branch calc
-  rlwinm r5,r5,0,8,31
-  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
-  addi  r4,REG_GeckoCode,0x8            #get branch destination
-  sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  stw r3,0x0(REG_InjectionSite)         #place branch instruction
-#Place branch back
-  lwz r3,0x4(REG_GeckoCode)
-  mulli r3,r3,0x8
-  add r4,r3,REG_GeckoCode               #get branch back site
-  addi  r3,REG_InjectionSite,0x4        #get branch back destination
-  sub r3,r3,r4
-  rlwinm  r3,r3,0,6,29                  #extract bits for offset
-  oris  r3,r3,0x4800                    #Create branch instruction from it
-  subi  r3,r3,0x4                       #subtract 4 i guess
-  stw r3,0x4(r4)                        #place branch instruction
-#Get next gecko code
-  lwz r3,0x4(REG_GeckoCode)
-  addi  r3,r3,1
-  mulli r3,r3,0x8
-  add REG_GeckoCode,REG_GeckoCode,r3
-  b SnapPAL_ApplyGeckoCode_Loop
-SnapPAL_ApplyGeckoCode_04:
-  lwz r3,0x0(REG_GeckoCode)
-  rlwinm r3,r3,0,8,31
-  oris  r3,r3,0x8000
-  lwz r4,0x4(REG_GeckoCode)
-  stw r4,0x0(r3)
-  addi REG_GeckoCode,REG_GeckoCode,0x8
-  b SnapPAL_ApplyGeckoCode_Loop
-SnapPAL_ApplyGeckoCode_Exit:
-blr
-
-#endregion
-
-#endregion
-
-#region LagPrompt
-
-#region SnapPAL_LagPrompt_SceneLoad
-############################################
-
-#region SnapPAL_LagPrompt_SceneLoad_Data
-SnapPAL_LagPrompt_SceneLoad_TextProperties:
-blrl
-.set PromptX,0x0
-.set PromptY,0x4
-.set ZOffset,0x8
-.set CanvasScaling,0xC
-.set Scale,0x10
-.set YesX,0x14
-.set YesY,0x18
-.set YesScale,0x1C
-.set NoX,0x20
-.set NoY,0x24
-.set NoScale,0x28
-.set HighlightColor,0x2C
-.set NonHighlightColor,0x30
-.float 315     			   #REG_TextGObj X pos
-.float 200  					   #REG_TextGObj Y pos
-.float 0.1     		     	 #Z offset
-.float 1   				     #Canvas Scaling
-.float 1					    	#Text scale
-.float 265              #Yes X pos
-.float 300              #Yes Y pos
-.float 1              #Yes scale
-.float 365              #No X pos
-.float 300              #No Y pos
-.float 1              #No scale
-.byte 251,199,57,255		#highlighted color
-.byte 170,170,170,255	  #nonhighlighted color
-
-SnapPAL_LagPrompt_SceneLoad_TopText:
-blrl
-.ascii "Are you using HDMI?"
-.align 2
-
-SnapPAL_LagPrompt_SceneLoad_Yes:
-blrl
-.string "Yes"
-.align 2
-
-SnapPAL_LagPrompt_SceneLoad_No:
-blrl
-.string "No"
-.align 2
-
-#GObj Offsets
-  .set OFST_TextGObj,0x0
-  .set OFST_Selection,0x4
-
-#endregion
-#region SnapPAL_LagPrompt_SceneLoad
-SnapPAL_LagPrompt_SceneLoad:
-blrl
-
-#Init
-  backup
-
-SnapPAL_LagPrompt_SceneLoad_CreateText:
-.set REG_GObjData,27
-.set REG_GObj,28
-.set REG_SubtextID,29
-.set REG_TextProp,30
-.set REG_TextGObj,31
-
-#GET PROPERTIES TABLE
-	bl SnapPAL_LagPrompt_SceneLoad_TextProperties
-	mflr REG_TextProp
-
-#Create canvas
-  li  r3,0
-  li  r4,0
-  li  r5,9
-  li  r6,13
-  li  r7,0
-  li  r8,14
-  li  r9,0
-  li  r10,19
-  branchl r12,Text_CreateTextCanvas
-
-########################
-## Create Text Object ##
-########################
-
-#CREATE TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
-	li r3,0
-	li r4,0
-	branchl r12,Text_CreateTextStruct
-#BACKUP STRUCT POINTER
-	mr REG_TextGObj,r3
-  stw REG_TextGObj,0x0(REG_GObjData)
-#SET TEXT SPACING TO TIGHT
-	li r4,0x1
-	stb r4,0x49(REG_TextGObj)
-#SET TEXT TO CENTER AROUND X LOCATION
-	li r4,0x1
-	stb r4,0x4A(REG_TextGObj)
-#Store Base Z Offset
-	lfs f1,ZOffset(REG_TextProp) #Z offset
-	stfs f1,0x8(REG_TextGObj)
-#Scale Canvas Down
-  lfs f1,CanvasScaling(REG_TextProp)
-  stfs f1,0x24(REG_TextGObj)
-  stfs f1,0x28(REG_TextGObj)
-
-#Create Prompt
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl SnapPAL_LagPrompt_SceneLoad_TopText
-  mflr  r4
-	lfs	f1,PromptX(REG_TextProp)
-  lfs	f2,PromptY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,Scale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,Scale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create Yes
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl SnapPAL_LagPrompt_SceneLoad_Yes
-  mflr  r4
-	lfs	f1,YesX(REG_TextProp)
-  lfs	f2,YesY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,YesScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,YesScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create No
-#Initialize Subtext
-	mr 	r3,REG_TextGObj		#struct pointer
-	bl SnapPAL_LagPrompt_SceneLoad_No
-  mflr  r4
-	lfs	f1,NoX(REG_TextProp)
-  lfs	f2,NoY(REG_TextProp)
-	branchl r12,Text_InitializeSubtext
-  mr  REG_SubtextID,r3
-#Change Text Scale
-	mr 	r3,REG_TextGObj		#struct pointer
-	mr	r4,REG_SubtextID
-	lfs 	f1,NoScale(REG_TextProp) 		#X offset of REG_TextGObj
-	lfs 	f2,NoScale(REG_TextProp)	  	#Y offset of REG_TextGObj
-	branchl r12,Text_UpdateSubtextSize
-
-#Create GObj
-  li  r3, 13
-  li  r4,14
-  li  r5,0
-  branchl r12, GObj_Create
-  mr  REG_GObj,r3
-#Allocate Space
-	li	r3,64
-	branchl r12,HSD_MemAlloc
-	mr	REG_GObjData,r3
-#Zero
-	li	r4,64
-	branchl r12,ZeroAreaLength
-#Initialize
-	mr	r6,REG_GObjData
-	mr	r3,REG_GObj
-	li	r4,4
-	load	r5,HSD_Free
-	branchl r12,GObj_AddUserData
-#Add Proc
-  mr  r3,REG_GObj
-  bl  SnapPAL_LagPrompt_SceneThink
-  mflr  r4      #Function to Run
-  li  r5,0      #Priority
-  branchl r12, GObj_AddProc
-
-#Store text gobj pointer
-  stw REG_TextGObj,OFST_TextGObj(REG_GObjData)
-#Init Selection value
-  li  r3,InitialSelection
-  stb r3,OFST_Selection(REG_GObjData)
-
-#Highlight selection
-  mr  r3,REG_TextGObj
-  li  r4,InitialSelection+1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-
-SnapPAL_LagPrompt_SceneLoad_Exit:
-  restore
-  blr
-#endregion
-
-############################################
-#endregion
-#region SnapPAL_LagPrompt_SceneThink
-SnapPAL_LagPrompt_SceneThink:
-blrl
-
-.set REG_TextProp,28
-.set REG_Inputs,29
-.set REG_GObjData,30
-.set REG_GObj,31
-
-#Init
-  backup
-  mr  REG_GObj,r3
-  lwz REG_GObjData,0x2C(REG_GObj)
-  bl  SnapPAL_LagPrompt_SceneLoad_TextProperties
-  mflr  REG_TextProp
-
-#region Adjust Selection
-#Adjust Menu Choice
-#Get all player inputs
-  li  r3,4
-  branchl r12,Inputs_GetPlayerRapidHeldInputs
-  mr  REG_Inputs,r3
-#Check for movement to the right
-  rlwinm. r0,REG_Inputs,0,0x80
-  beq SnapPAL_LagPrompt_SceneThink_SkipRight
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  addi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,1
-  ble SnapPAL_LagPrompt_SceneThink_HighlightSelection
-  li  r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  b SnapPAL_LagPrompt_SceneThink_CheckForA
-SnapPAL_LagPrompt_SceneThink_SkipRight:
-#Check for movement to the left
-  rlwinm. r0,REG_Inputs,0,0x40
-  beq SnapPAL_LagPrompt_SceneThink_CheckForA
-#Adjust cursor
-  lbz r3,OFST_Selection(REG_GObjData)
-  subi  r3,r3,1
-  stb r3,OFST_Selection(REG_GObjData)
-  extsb r3,r3
-  cmpwi r3,0
-  bge SnapPAL_LagPrompt_SceneThink_HighlightSelection
-  li  r3,0
-  stb r3,OFST_Selection(REG_GObjData)
-  b SnapPAL_LagPrompt_SceneThink_CheckForA
-
-SnapPAL_LagPrompt_SceneThink_HighlightSelection:
-#Unhighlight both options
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,1
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  li  r4,2
-  addi  r5,REG_TextProp,NonHighlightColor
-  branchl r12,Text_ChangeTextColor
-#Highlight selection
-  lwz r3,OFST_TextGObj(REG_GObjData)
-  lbz r4,OFST_Selection(REG_GObjData)
-  addi  r4,r4,1
-  addi  r5,REG_TextProp,HighlightColor
-  branchl r12,Text_ChangeTextColor
-#Play SFX
-  branchl r12,SFX_PlayMenuSound_CloseOpenPort
-#endregion
-#region Check for Confirmation
-SnapPAL_LagPrompt_SceneThink_CheckForA:
-  li  r3,4
-  branchl r12,Inputs_GetPlayerInstantInputs
-  rlwinm. r0,r4,0,0x100
-  bne SnapPAL_LagPrompt_SceneThink_Confirmed
-  rlwinm. r0,r4,0,0x1000
-  bne SnapPAL_LagPrompt_SceneThink_Confirmed
-  b SnapPAL_LagPrompt_SceneThink_Exit
-SnapPAL_LagPrompt_SceneThink_Confirmed:
-#Play Menu Sound
-  branchl r12,SFX_PlayMenuSound_Forward
-#If yes, apply lag reduction
-  lbz r3,OFST_Selection(REG_GObjData)
-  cmpwi r3,0
-  bne SnapPAL_LagPrompt_SceneThink_ExitScene
-#endregion
-#region Apply Code
-.set  REG_GeckoCode,12
-#Apply lag reduction
-  bl  SnapPAL_LagReductionGeckoCode
-  mflr  r3
-  bl  SnapPAL_ApplyGeckoCode
-#Reset some pad variables to cancel the current alarm
-  load  r3,UnkPadStruct
-  li  r4,0
-  stw r4,0x4(r3)
-  stw r4,0x44(r3)
-#Set new post retrace callback
-  load  r3,PostRetraceCallback
-  branchl r12,HSD_VISetUserPostRetraceCallback
-#Do some shit to enable 480p
-#Disable Deflicker
-  load  r3,DeflickerStruct
-  li  r0,1
-  stw r0,0x8(r3)
-  branchl r12,Deflicker_Toggle
-#Enable PAL60
-	load	r3,ProgressiveStruct
-	li	r4,1
-	stw	r4,0xC(r3)
-#Call VIConfigure
-	li	r3,0	#disables deflicker and will enable 480p because of the gecko code
-	branchl	r12,ScreenDisplay_Adjust
-#Now flush the instruction cache
-  lis r3,0x8000
-  load r4,0x3b722c    #might be overkill but flush the entire dol file
-  branchl r12,TRK_flush_cache
-#endregion
-
-SnapPAL_LagPrompt_SceneThink_ExitScene:
-  branchl r12,MenuController_ChangeScreenMinor
-
-SnapPAL_LagPrompt_SceneThink_Exit:
-  restore
-  blr
-#endregion
-#region SnapPAL_LagPrompt_SceneDecide
-SnapPAL_LagPrompt_SceneDecide:
-
-  backup
-
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  SnapPAL_Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-
-#Enter Codes Scene
-  li  r3,CodesSceneID
-  branchl r12,MenuController_WriteToPendingMajor
-#Change Major
-  branchl r12,MenuController_ChangeScreenMajor
-
-SnapPAL_LagPrompt_SceneDecide_Exit:
-  restore
-  blr
-############################################
-#endregion
-
-#region SnapPAL_LagReductionGeckoCode
-SnapPAL_LagReductionGeckoCode:
-blrl
-.long 0x04019D18
-.long 0x4BFFFD9D
-#Required for 480p
-.long 0x043D5170
-.long 0x00000002
-.long 0x043D5184
-.long 0x00000000
-.long 0x043D51AC
-.long 0x00000002
-.long 0x043D51C0
-.long 0x00000000
-.long 0x040000CC
-.long 0x00000000
-.long 0xFF000000
-#endregion
-
-#endregion
-
-#region MinorSceneStruct
-SnapPAL_LagPrompt_MinorSceneStruct:
-blrl
-#Lag Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  SnapPAL_LagPrompt_SceneDecide   #SceneDecide
-.byte PromptCommonSceneID   #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-SnapPAL_Codes_MinorSceneStruct:
-blrl
-#Codes Prompt
-.byte 0                     #Minor Scene ID
-.byte 2                    #Amount of persistent heaps
-.align 2
-.long 0x00000000            #ScenePrep
-bl  SnapPAL_Codes_SceneDecide       #SceneDecide
-.byte CodesCommonSceneID    #Common Minor ID
-.align 2
-.long 0x00000000            #Minor Data 1
-.long 0x00000000            #Minor Data 2
-#End
-.byte -1
-.align 2
-
-#endregion
-
-SnapPAL_CheckProgressive:
-
-#Check if progressive is enabled
-  lis	r3,0xCC00
-	lhz	r3,0x206E(r3)
-	rlwinm.	r3,r3,0,0x1
-  beq SnapPAL_NoProgressive
-
-SnapPAL_IsProgressive:
-#Override SceneLoad
-  li  r3,PromptCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  SnapPAL_LagPrompt_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	SnapPAL_LagPrompt_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load LagPrompt
-  li	r3, PromptSceneID
-  b SnapPAL_Exit
-SnapPAL_NoProgressive:
-#Override SceneLoad
-  li  r3,CodesCommonSceneID
-  branchl r12,Scene_MinorIDToMinorSceneFunctionTable
-  bl  SnapPAL_Codes_SceneLoad
-  mflr  r4
-  stw r4,0x8(r3)
-#Hijack the MajorScene load functions register (VERY HACKY)
-	bl	SnapPAL_Codes_MinorSceneStruct
-	mflr	r3
-	stw	r3,0x114(sp)
-#Load Codes
-  li  r3,CodesSceneID
-
-SnapPAL_Exit:
-#Store as next scene
-	branchl r12,MenuController_WriteToPendingMajor
-#request to change scenes
-	branchl	r12,MenuController_ChangeScreenMinor
-
-##########
-## Exit ##
-##########
-
-#Return to the game
-  restore
-	li	r0,2
-	blr
 
 MMLCodePAL_End:
 blrl

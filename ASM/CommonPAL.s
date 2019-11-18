@@ -1,3 +1,5 @@
+.set isPAL,1
+
 .set ExpoitReturnAddr,0x8023BDB0
 
 .set HeapHijack_Injection,0x80015994
@@ -146,6 +148,9 @@
 .set  MemcardFileList,0x80424120 #80433380
 .set  SnapshotData,0x803bb2c0 #0x803bacdc
 .set  SnapshotLoadThinkStruct,0x80491a98
+.set  VI_Struct,0x804b2e00 #0x804c1d80
+.set  RenewInputs_Prefunction,0x80019AB4
+
 
 .set  MainSaveUnk,0x804240b8 # r30 at 8001d24c (102)
 .set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
