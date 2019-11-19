@@ -2464,7 +2464,7 @@ blrl
 .align 2
 Snap102_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.6"
+.string "MultiMod Launcher v0.7"
 .align 2
 Snap102_CodeNames_UCF:
 .string "UCF:"
@@ -2587,7 +2587,7 @@ Snap102_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	Snap102_GameVersion_Description
 	bl  Snap102_GameVersion_NTSC
-	bl  Snap102_GameVersion_102
+	bl  Snap102_GameVersion_PAL
 	bl  Snap102_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -3983,7 +3983,7 @@ Snap102_DefaultCodes_On:
 	.long 0x4082000C
 	.long 0x3BC00009
 	.long 0x4800000C
-	.long 0x3BC00002
+	.long 0x3BC0001B
 	.long 0x48000004
 	.long 0x806D8840
 	.long 0x7FE4FB78
@@ -4564,8 +4564,42 @@ Snap102_Widescreen_True:
 
 Snap102_LagReduction_LCD:
 	blrl
+	.long 0xC21A5018
+	.long 0x00000006
+	.long 0x3B5A0001
+	.long 0x3C60803B
+	.long 0x6063F7D4
+	.long 0x80030000
+	.long 0x2C00FFFF
+	.long 0x38000000
+	.long 0x90030000
+	.long 0x3D80801A
+	.long 0x618C5078
+	.long 0x7D8903A6
+	.long 0x4D820420
+	.long 0x00000000
+	.long 0xC21A4C24
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C8802A6
+	.long 0xC0440000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3C83126F
+	.long 0x60000000
+	.long 0x00000000
 	.long 0x04019860
 	.long 0x4BFFFD9D
+	.long 0xC2376200
+	.long 0x00000004
+	.long 0x2C1DFFFF
+	.long 0x41820008
+	.long 0x48000010
+	.long 0x3C60803B
+	.long 0x6063F7D4
+	.long 0x93A30000
+	.long 0x60000000
+	.long 0x00000000
 	.long -1
 Snap102_LagReduction_PD:
 	blrl
@@ -4588,7 +4622,7 @@ Snap102_Frozen_All:
 	.long 0x00000000
 	.long 0x0421AAE4
 	.long 0x60000000
-	.long 0x041D0578
+	.long 0x041D1548
 	.long 0x60000000
 	.long 0x041E3348
 	.long 0x60000000
@@ -4604,7 +4638,7 @@ Snap102_Frozen_Off:
 	.long 0x480000D1
 	.long -1
 Snap102_Frozen_Stadium:
-	.long 0x041D0578
+	.long 0x041D1548
 	.long 0x60000000
 	.long -1
 
@@ -4939,19 +4973,19 @@ Snap102_DisableWobbling_On:
 	.long 0x7F43D378
 	.long 0x00000000
 	.long 0xC208F090
-	.long 0x00000017
+	.long 0x0000001D
 	.long 0x807B0010
 	.long 0x2C0300DF
-	.long 0x418000A4
+	.long 0x418000D4
 	.long 0x2C0300E4
-	.long 0x4181009C
+	.long 0x418100CC
 	.long 0x807B1A58
 	.long 0x2C030000
-	.long 0x41820090
+	.long 0x418200C0
 	.long 0x8063002C
 	.long 0x88832222
 	.long 0x5484077B
-	.long 0x41820080
+	.long 0x418200B0
 	.long 0x8863000C
 	.long 0x38800001
 	.long 0x3D808003
@@ -4959,10 +4993,22 @@ Snap102_DisableWobbling_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
-	.long 0x41820060
+	.long 0x41820090
 	.long 0x809B1868
 	.long 0x7C032000
-	.long 0x40820054
+	.long 0x41820034
+	.long 0xA0A40000
+	.long 0x2C050006
+	.long 0x40820078
+	.long 0x80A4002C
+	.long 0x80850518
+	.long 0x7C032000
+	.long 0x40820068
+	.long 0xA0650DA8
+	.long 0xA09B2352
+	.long 0x7C032000
+	.long 0x41820058
+	.long 0x48000018
 	.long 0x80A3002C
 	.long 0xA0652088
 	.long 0xA09B2352
@@ -5018,7 +5064,7 @@ Snap102_Ledgegrab_On:
 	.long 0x041B05C8
 	.long 0x38C00001
 	.long 0xC2165C48
-	.long 0x0000005C
+	.long 0x00000066
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -5026,7 +5072,7 @@ Snap102_Ledgegrab_On:
 	.long 0x7C7F1B78
 	.long 0x887F0004
 	.long 0x2C030001
-	.long 0x408202AC
+	.long 0x408202F8
 	.long 0x3BC10080
 	.long 0x3BA00000
 	.long 0x38600000
@@ -5121,9 +5167,25 @@ Snap102_Ledgegrab_On:
 	.long 0x887E0000
 	.long 0x7C1B1800
 	.long 0x4180FFAC
-	.long 0x3BA00000
+	.long 0x807F0008
+	.long 0x3880003C
+	.long 0x7C6323D6
+	.long 0x7C8323D6
+	.long 0x38600000
+	.long 0x3D808032
+	.long 0x618C2DA0
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000151
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xEC2100B2
+	.long 0xFC20081E
+	.long 0xD8210080
+	.long 0x83A10084
 	.long 0x3B800000
-	.long 0x1C7D00A8
+	.long 0x3B600000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -5131,23 +5193,23 @@ Snap102_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820024
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0AF0
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800008
+	.long 0x3B7B0001
 	.long 0x3B9C0001
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x2C1C0006
 	.long 0x4180FFB8
-	.long 0x2C1C0001
-	.long 0x418100D8
-	.long 0x2C1C0000
-	.long 0x418200D0
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x2C1B0001
+	.long 0x418100E4
+	.long 0x2C1B0000
+	.long 0x418200DC
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -5158,23 +5220,23 @@ Snap102_Ledgegrab_On:
 	.long 0x2C030001
 	.long 0x41820008
 	.long 0x48000034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0AF0
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x40800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600000
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FF9C
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -5182,26 +5244,30 @@ Snap102_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0AF0
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600001
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FFA8
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40B6DABA
 	.long 0xB8610008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
 	.long 0x8803000F
+	.long 0x60000000
 	.long 0x00000000
 	.long -1
 
@@ -5309,7 +5375,7 @@ Snap102_TournamentQoL_On:
 	.long 0x7C972378
 	.long 0x800D8840
 	.long 0x7C602214
-	.long 0x88A31CC8
+	.long 0x88A31CC0
 	.long 0x57800739
 	.long 0x40820010
 	.long 0x5780077B
@@ -12114,7 +12180,7 @@ Snap102_StageExpansion_On:
 	.long 0x041CD640
 	.long 0x60000000
 	.long 0x0445C388
-	.long 0xE7E33BB5
+	.long 0xE7E333B0
 	.long 0xC216E800
 	.long 0x000003F9
 	.long 0x48000089
@@ -14429,7 +14495,7 @@ Snap102_Ledgegrab_Description:
 	.long 0x20382031
 	.long 0x20272028
 	.long 0x20351a20
-	.long 0x0620001a
+	.long 0x0420051a
 	.long 0x202f2028
 	.long 0x2027202a
 	.long 0x2028202a
@@ -14948,7 +15014,7 @@ blrl
 .align 2
 Snap101_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.6"
+.string "MultiMod Launcher v0.7"
 .align 2
 Snap101_CodeNames_UCF:
 .string "UCF:"
@@ -15071,7 +15137,7 @@ Snap101_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	Snap101_GameVersion_Description
 	bl  Snap101_GameVersion_NTSC
-	bl  Snap101_GameVersion_101
+	bl  Snap101_GameVersion_PAL
 	bl  Snap101_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -16467,7 +16533,7 @@ Snap101_DefaultCodes_On:
 	.long 0x4082000C
 	.long 0x3BC00009
 	.long 0x4800000C
-	.long 0x3BC00002
+	.long 0x3BC0001B
 	.long 0x48000004
 	.long 0x806D8840
 	.long 0x7FE4FB78
@@ -17048,8 +17114,42 @@ Snap101_Widescreen_True:
 
 Snap101_LagReduction_LCD:
 	blrl
+	.long 0xC21A49D0
+	.long 0x00000006
+	.long 0x3B5A0001
+	.long 0x3C60803B
+	.long 0x6063EAF4
+	.long 0x80030000
+	.long 0x2C00FFFF
+	.long 0x38000000
+	.long 0x90030000
+	.long 0x3D80801A
+	.long 0x618C4A30
+	.long 0x7D8903A6
+	.long 0x4D820420
+	.long 0x00000000
+	.long 0xC21A45DC
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C8802A6
+	.long 0xC0440000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3C83126F
+	.long 0x60000000
+	.long 0x00000000
 	.long 0x04019860
 	.long 0x4BFFFD9D
+	.long 0xC2375520
+	.long 0x00000004
+	.long 0x2C1DFFFF
+	.long 0x41820008
+	.long 0x48000010
+	.long 0x3C60803B
+	.long 0x6063EAF4
+	.long 0x93A30000
+	.long 0x60000000
+	.long 0x00000000
 	.long -1
 Snap101_LagReduction_PD:
 	blrl
@@ -17423,19 +17523,19 @@ Snap101_DisableWobbling_On:
 	.long 0x7F43D378
 	.long 0x00000000
 	.long 0xC208EED0
-	.long 0x00000017
+	.long 0x0000001D
 	.long 0x807B0010
 	.long 0x2C0300DF
-	.long 0x418000A4
+	.long 0x418000D4
 	.long 0x2C0300E4
-	.long 0x4181009C
+	.long 0x418100CC
 	.long 0x807B1A58
 	.long 0x2C030000
-	.long 0x41820090
+	.long 0x418200C0
 	.long 0x8063002C
 	.long 0x88832222
 	.long 0x5484077B
-	.long 0x41820080
+	.long 0x418200B0
 	.long 0x8863000C
 	.long 0x38800001
 	.long 0x3D808003
@@ -17443,10 +17543,22 @@ Snap101_DisableWobbling_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
-	.long 0x41820060
+	.long 0x41820090
 	.long 0x809B1868
 	.long 0x7C032000
-	.long 0x40820054
+	.long 0x41820034
+	.long 0xA0A40000
+	.long 0x2C050006
+	.long 0x40820078
+	.long 0x80A4002C
+	.long 0x80850518
+	.long 0x7C032000
+	.long 0x40820068
+	.long 0xA0650DA8
+	.long 0xA09B2352
+	.long 0x7C032000
+	.long 0x41820058
+	.long 0x48000018
 	.long 0x80A3002C
 	.long 0xA0652088
 	.long 0xA09B2352
@@ -17502,7 +17614,7 @@ Snap101_Ledgegrab_On:
 	.long 0x041AFF80
 	.long 0x38C00001
 	.long 0xC2165A20
-	.long 0x0000005C
+	.long 0x00000066
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -17510,7 +17622,7 @@ Snap101_Ledgegrab_On:
 	.long 0x7C7F1B78
 	.long 0x887F0004
 	.long 0x2C030001
-	.long 0x408202AC
+	.long 0x408202F8
 	.long 0x3BC10080
 	.long 0x3BA00000
 	.long 0x38600000
@@ -17605,9 +17717,25 @@ Snap101_Ledgegrab_On:
 	.long 0x887E0000
 	.long 0x7C1B1800
 	.long 0x4180FFAC
-	.long 0x3BA00000
+	.long 0x807F0008
+	.long 0x3880003C
+	.long 0x7C6323D6
+	.long 0x7C8323D6
+	.long 0x38600000
+	.long 0x3D808032
+	.long 0x618C20C8
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000151
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xEC2100B2
+	.long 0xFC20081E
+	.long 0xD8210080
+	.long 0x83A10084
 	.long 0x3B800000
-	.long 0x1C7D00A8
+	.long 0x3B600000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -17615,23 +17743,23 @@ Snap101_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820024
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0ADC
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800008
+	.long 0x3B7B0001
 	.long 0x3B9C0001
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x2C1C0006
 	.long 0x4180FFB8
-	.long 0x2C1C0001
-	.long 0x418100D8
-	.long 0x2C1C0000
-	.long 0x418200D0
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x2C1B0001
+	.long 0x418100E4
+	.long 0x2C1B0000
+	.long 0x418200DC
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -17642,23 +17770,23 @@ Snap101_Ledgegrab_On:
 	.long 0x2C030001
 	.long 0x41820008
 	.long 0x48000034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0ADC
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x40800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600000
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FF9C
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -17666,26 +17794,30 @@ Snap101_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0ADC
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600001
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FFA8
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40B6DABA
 	.long 0xB8610008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
 	.long 0x8803000F
+	.long 0x60000000
 	.long 0x00000000
 	.long -1
 
@@ -17793,7 +17925,7 @@ Snap101_TournamentQoL_On:
 	.long 0x7C972378
 	.long 0x800D8840
 	.long 0x7C602214
-	.long 0x88A31CC8
+	.long 0x88A31CC0
 	.long 0x57800739
 	.long 0x40820010
 	.long 0x5780077B
@@ -24598,7 +24730,7 @@ Snap101_StageExpansion_On:
 	.long 0x041CC670
 	.long 0x60000000
 	.long 0x0445B6A8
-	.long 0xE7E33BB5
+	.long 0xE7E333B0
 	.long 0xC216E4EC
 	.long 0x000003F9
 	.long 0x48000089
@@ -26913,7 +27045,7 @@ Snap101_Ledgegrab_Description:
 	.long 0x20382031
 	.long 0x20272028
 	.long 0x20351a20
-	.long 0x0620001a
+	.long 0x0420051a
 	.long 0x202f2028
 	.long 0x2027202a
 	.long 0x2028202a
@@ -27432,7 +27564,7 @@ blrl
 .align 2
 Snap100_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.6"
+.string "MultiMod Launcher v0.7"
 .align 2
 Snap100_CodeNames_UCF:
 .string "UCF:"
@@ -27555,7 +27687,7 @@ Snap100_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	Snap100_GameVersion_Description
 	bl  Snap100_GameVersion_NTSC
-	bl  Snap100_GameVersion_100
+	bl  Snap100_GameVersion_PAL
 	bl  Snap100_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
@@ -28951,7 +29083,7 @@ Snap100_DefaultCodes_On:
 	.long 0x4082000C
 	.long 0x3BC00009
 	.long 0x4800000C
-	.long 0x3BC00002
+	.long 0x3BC0001B
 	.long 0x48000004
 	.long 0x806D8840
 	.long 0x7FE4FB78
@@ -29530,8 +29662,42 @@ Snap100_Widescreen_True:
 
 Snap100_LagReduction_LCD:
 	blrl
+	.long 0xC21A42D0
+	.long 0x00000006
+	.long 0x3B5A0001
+	.long 0x3C60803B
+	.long 0x6063D914
+	.long 0x80030000
+	.long 0x2C00FFFF
+	.long 0x38000000
+	.long 0x90030000
+	.long 0x3D80801A
+	.long 0x618C4330
+	.long 0x7D8903A6
+	.long 0x4D820420
+	.long 0x00000000
+	.long 0xC21A3EDC
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C8802A6
+	.long 0xC0440000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3C83126F
+	.long 0x60000000
+	.long 0x00000000
 	.long 0x040197E0
 	.long 0x4BFFFD9D
+	.long 0xC237434C
+	.long 0x00000004
+	.long 0x2C1DFFFF
+	.long 0x41820008
+	.long 0x48000010
+	.long 0x3C60803B
+	.long 0x6063D914
+	.long 0x93A30000
+	.long 0x60000000
+	.long 0x00000000
 	.long -1
 Snap100_LagReduction_PD:
 	blrl
@@ -29905,19 +30071,19 @@ Snap100_DisableWobbling_On:
 	.long 0x7F43D378
 	.long 0x00000000
 	.long 0xC208EDE8
-	.long 0x00000017
+	.long 0x0000001D
 	.long 0x807B0010
 	.long 0x2C0300DF
-	.long 0x418000A4
+	.long 0x418000D4
 	.long 0x2C0300E4
-	.long 0x4181009C
+	.long 0x418100CC
 	.long 0x807B1A58
 	.long 0x2C030000
-	.long 0x41820090
+	.long 0x418200C0
 	.long 0x8063002C
 	.long 0x88832222
 	.long 0x5484077B
-	.long 0x41820080
+	.long 0x418200B0
 	.long 0x8863000C
 	.long 0x38800001
 	.long 0x3D808003
@@ -29925,10 +30091,22 @@ Snap100_DisableWobbling_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
-	.long 0x41820060
+	.long 0x41820090
 	.long 0x809B1868
 	.long 0x7C032000
-	.long 0x40820054
+	.long 0x41820034
+	.long 0xA0A40000
+	.long 0x2C050006
+	.long 0x40820078
+	.long 0x80A4002C
+	.long 0x80850518
+	.long 0x7C032000
+	.long 0x40820068
+	.long 0xA0650DA8
+	.long 0xA09B2352
+	.long 0x7C032000
+	.long 0x41820058
+	.long 0x48000018
 	.long 0x80A3002C
 	.long 0xA0652088
 	.long 0xA09B2352
@@ -29984,7 +30162,7 @@ Snap100_Ledgegrab_On:
 	.long 0x041AF860
 	.long 0x38C00001
 	.long 0xC2165440
-	.long 0x0000005C
+	.long 0x00000066
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -29992,7 +30170,7 @@ Snap100_Ledgegrab_On:
 	.long 0x7C7F1B78
 	.long 0x887F0004
 	.long 0x2C030001
-	.long 0x408202AC
+	.long 0x408202F8
 	.long 0x3BC10080
 	.long 0x3BA00000
 	.long 0x38600000
@@ -30087,9 +30265,25 @@ Snap100_Ledgegrab_On:
 	.long 0x887E0000
 	.long 0x7C1B1800
 	.long 0x4180FFAC
-	.long 0x3BA00000
+	.long 0x807F0008
+	.long 0x3880003C
+	.long 0x7C6323D6
+	.long 0x7C8323D6
+	.long 0x38600000
+	.long 0x3D808032
+	.long 0x618C143C
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000151
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xEC2100B2
+	.long 0xFC20081E
+	.long 0xD8210080
+	.long 0x83A10084
 	.long 0x3B800000
-	.long 0x1C7D00A8
+	.long 0x3B600000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -30097,23 +30291,23 @@ Snap100_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820024
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0A2C
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800008
+	.long 0x3B7B0001
 	.long 0x3B9C0001
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x2C1C0006
 	.long 0x4180FFB8
-	.long 0x2C1C0001
-	.long 0x418100D8
-	.long 0x2C1C0000
-	.long 0x418200D0
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x2C1B0001
+	.long 0x418100E4
+	.long 0x2C1B0000
+	.long 0x418200DC
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -30124,23 +30318,23 @@ Snap100_Ledgegrab_On:
 	.long 0x2C030001
 	.long 0x41820008
 	.long 0x48000034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0A2C
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x40800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600000
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FF9C
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -30148,26 +30342,30 @@ Snap100_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C0A2C
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600001
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FFA8
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40B6DABA
 	.long 0xB8610008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
 	.long 0x8803000F
+	.long 0x60000000
 	.long 0x00000000
 	.long -1
 
@@ -30275,7 +30473,7 @@ Snap100_TournamentQoL_On:
 	.long 0x7C972378
 	.long 0x800D8840
 	.long 0x7C602214
-	.long 0x88A31CC8
+	.long 0x88A31CB8
 	.long 0x57800739
 	.long 0x40820010
 	.long 0x5780077B
@@ -37080,7 +37278,7 @@ Snap100_StageExpansion_On:
 	.long 0x041CC670
 	.long 0x60000000
 	.long 0x0445A3C0
-	.long 0xE7E33BB5
+	.long 0xE7E333B0
 	.long 0xC216DDF8
 	.long 0x000003F9
 	.long 0x48000089
@@ -39395,7 +39593,7 @@ Snap100_Ledgegrab_Description:
 	.long 0x20382031
 	.long 0x20272028
 	.long 0x20351a20
-	.long 0x0620001a
+	.long 0x0420051a
 	.long 0x202f2028
 	.long 0x2027202a
 	.long 0x2028202a
@@ -39914,7 +40112,7 @@ blrl
 .align 2
 SnapPAL_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.6"
+.string "MultiMod Launcher v0.7"
 .align 2
 SnapPAL_CodeNames_UCF:
 .string "UCF:"
@@ -41439,7 +41637,7 @@ SnapPAL_DefaultCodes_On:
 	.long 0x4082000C
 	.long 0x3BC00009
 	.long 0x4800000C
-	.long 0x3BC00002
+	.long 0x3BC0001B
 	.long 0x48000004
 	.long 0x806D8858
 	.long 0x7FE4FB78
@@ -42020,6 +42218,42 @@ SnapPAL_Widescreen_True:
 
 SnapPAL_LagReduction_LCD:
 	blrl
+	.long 0xC21A5B1C
+	.long 0x00000006
+	.long 0x3B5A0001
+	.long 0x3C60803B
+	.long 0x6063FE4C
+	.long 0x80030000
+	.long 0x2C00FFFF
+	.long 0x38000000
+	.long 0x90030000
+	.long 0x3D80801A
+	.long 0x618C5B7C
+	.long 0x7D8903A6
+	.long 0x4D820420
+	.long 0x00000000
+	.long 0xC21A5728
+	.long 0x00000004
+	.long 0x48000011
+	.long 0x7C8802A6
+	.long 0xC0440000
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x3C83126F
+	.long 0x60000000
+	.long 0x00000000
+	.long 0x04019D18
+	.long 0x4BFFFD9D
+	.long 0xC2376104
+	.long 0x00000004
+	.long 0x2C1DFFFF
+	.long 0x41820008
+	.long 0x48000010
+	.long 0x3C60803B
+	.long 0x6063FE4C
+	.long 0x93A30000
+	.long 0x60000000
+	.long 0x00000000
 	.long 0x043D5170
 	.long 0x00000002
 	.long 0x043D5184
@@ -42030,8 +42264,6 @@ SnapPAL_LagReduction_LCD:
 	.long 0x00000002
 	.long 0x043D51C0
 	.long 0x00000000
-	.long 0x04019D18
-	.long 0x4BFFFD9D
 	.long -1
 SnapPAL_LagReduction_PD:
 	blrl
@@ -42405,19 +42637,19 @@ SnapPAL_DisableWobbling_On:
 	.long 0x7F43D378
 	.long 0x00000000
 	.long 0xC208F748
-	.long 0x00000017
+	.long 0x0000001D
 	.long 0x807B0010
 	.long 0x2C0300DF
-	.long 0x418000A4
+	.long 0x418000D4
 	.long 0x2C0300E4
-	.long 0x4181009C
+	.long 0x418100CC
 	.long 0x807B1A58
 	.long 0x2C030000
-	.long 0x41820090
+	.long 0x418200C0
 	.long 0x8063002C
 	.long 0x88832222
 	.long 0x548407BD
-	.long 0x41820080
+	.long 0x418200B0
 	.long 0x8863000C
 	.long 0x38800001
 	.long 0x3D808003
@@ -42425,10 +42657,22 @@ SnapPAL_DisableWobbling_On:
 	.long 0x7D8903A6
 	.long 0x4E800421
 	.long 0x2C030000
-	.long 0x41820060
+	.long 0x41820090
 	.long 0x809B1868
 	.long 0x7C032000
-	.long 0x40820054
+	.long 0x41820034
+	.long 0xA0A40000
+	.long 0x2C050006
+	.long 0x40820078
+	.long 0x80A4002C
+	.long 0x80850518
+	.long 0x7C032000
+	.long 0x40820068
+	.long 0xA0650DA8
+	.long 0xA09B2352
+	.long 0x7C032000
+	.long 0x41820058
+	.long 0x48000018
 	.long 0x80A3002C
 	.long 0xA0652088
 	.long 0xA09B2352
@@ -42484,7 +42728,7 @@ SnapPAL_Ledgegrab_On:
 	.long 0x041B2134
 	.long 0x38C00001
 	.long 0xC2166618
-	.long 0x0000005C
+	.long 0x00000066
 	.long 0x7C0802A6
 	.long 0x90010004
 	.long 0x9421FF00
@@ -42492,7 +42736,7 @@ SnapPAL_Ledgegrab_On:
 	.long 0x7C7F1B78
 	.long 0x887F0004
 	.long 0x2C030001
-	.long 0x408202AC
+	.long 0x408202F8
 	.long 0x3BC10080
 	.long 0x3BA00000
 	.long 0x38600000
@@ -42587,9 +42831,25 @@ SnapPAL_Ledgegrab_On:
 	.long 0x887E0000
 	.long 0x7C1B1800
 	.long 0x4180FFAC
-	.long 0x3BA00000
+	.long 0x807F0008
+	.long 0x3880003C
+	.long 0x7C6323D6
+	.long 0x7C8323D6
+	.long 0x38600000
+	.long 0x3D808032
+	.long 0x618C3050
+	.long 0x7D8903A6
+	.long 0x4E800421
+	.long 0x48000151
+	.long 0x7C6802A6
+	.long 0xC0430000
+	.long 0xEC2100B2
+	.long 0xFC20081E
+	.long 0xD8210080
+	.long 0x83A10084
 	.long 0x3B800000
-	.long 0x1C7D00A8
+	.long 0x3B600000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -42597,23 +42857,23 @@ SnapPAL_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820024
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C11B4
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800008
+	.long 0x3B7B0001
 	.long 0x3B9C0001
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x2C1C0006
 	.long 0x4180FFB8
-	.long 0x2C1C0001
-	.long 0x418100D8
-	.long 0x2C1C0000
-	.long 0x418200D0
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x2C1B0001
+	.long 0x418100E4
+	.long 0x2C1B0000
+	.long 0x418200DC
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -42624,23 +42884,23 @@ SnapPAL_Ledgegrab_On:
 	.long 0x2C030001
 	.long 0x41820008
 	.long 0x48000034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C11B4
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x40800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600000
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FF9C
-	.long 0x3BA00000
-	.long 0x1C7D00A8
+	.long 0x3B800000
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x88640058
 	.long 0x2C030003
@@ -42648,26 +42908,30 @@ SnapPAL_Ledgegrab_On:
 	.long 0x8864005D
 	.long 0x2C030000
 	.long 0x40820034
-	.long 0x7FA3EB78
+	.long 0x7F83E378
 	.long 0x3D808004
 	.long 0x618C11B4
 	.long 0x7D8903A6
 	.long 0x4E800421
-	.long 0x2C03003C
+	.long 0x7C03E800
 	.long 0x41800018
-	.long 0x1C7D00A8
+	.long 0x1C7C00A8
 	.long 0x7C83FA14
 	.long 0x38600001
 	.long 0x9864005D
 	.long 0x9864005E
-	.long 0x3BBD0001
-	.long 0x2C1D0006
+	.long 0x3B9C0001
+	.long 0x2C1C0006
 	.long 0x4180FFA8
+	.long 0x4800000C
+	.long 0x4E800021
+	.long 0x40B6DABA
 	.long 0xB8610008
 	.long 0x80010104
 	.long 0x38210100
 	.long 0x7C0803A6
 	.long 0x8803000F
+	.long 0x60000000
 	.long 0x00000000
 	.long -1
 
@@ -49942,7 +50206,7 @@ SnapPAL_StageExpansion_On:
 	.long 0x041CF264
 	.long 0x60000000
 	.long 0x0444D190
-	.long 0xE7E33BB5
+	.long 0xE7E333B0
 	.long 0xC216F1D4
 	.long 0x000003F9
 	.long 0x48000089
@@ -52078,6 +52342,7 @@ SnapPAL_StageExpansion_On:
 	.long 0x04201904
 	.long 0x4E800020
 	.long -1
+
 #endregion
 #region Code Descriptions
 SnapPAL_UCF_Description:
@@ -52110,7 +52375,7 @@ SnapPAL_Ledgegrab_Description:
   .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0xac,0x00,0xb3,0x12
   .ascii "Time-out victories are awarded to the player "
   .byte 0x03
-  .ascii "with under 60 ledgegrabs."
+  .ascii "with under 45 ledgegrabs."
   .byte 0x00
 	.align 2
 SnapPAL_TournamentQoL_Description:

@@ -1024,7 +1024,7 @@
 80041bfc 0000007c 80041bfc 0 zz_0041bfc_
 80041c78 00000014 80041c78 0 zz_0041c78_
 80041c8c 00000144 80041c8c 0 CopyECBCurrentToECBPrevious
-80041dd0 00000114 80041dd0 0 Stage_UpdateLineAreasRangeFlag (CheckIfNearLineAreas, disregarded otherwise))
+80041dd0 00000114 80041dd0 0 Stage_UpdateLineGroupsRangeFlag (CheckIfNearLineAreas, disregarded otherwise))
 80041ee4 00000194 80041ee4 0 ECB_InitializeECBStructValues
 80042078 00000194 80042078 0 ECB_StorePointersToBonesToStruct
 8004220c 00000168 8004220c 0 zz_004220c_

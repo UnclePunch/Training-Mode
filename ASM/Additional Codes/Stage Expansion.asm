@@ -2019,6 +2019,8 @@ StageMod_FlatZone:
 	.long -1
 
 StageMod_RCruise:
+
+	/*
 	#Move plat
 	.long 0x39068
 	.float	0.7		#scale X
@@ -2032,6 +2034,25 @@ StageMod_RCruise:
 	.float -375
 	.long 0x3907C		#ticktock Z
 	.float -30
+	*/
+
+	#side plats should be 150 apart
+	# top plat should be 75 above sides
+	#Move left plat
+	.long 0x39274
+	.float -75
+	.long 0x39278
+	.float -455
+	#Move top plat
+	.long 0x392b4
+	.float 0
+	.long 0x392b8
+	.float -430
+	#Move right plat
+	.long 0x392f4
+	.float 75
+	.long 0x392f8
+	.float -455
 
 	#Move stage
 	.long 0x61be4
@@ -2042,11 +2063,11 @@ StageMod_RCruise:
 	.float	2.5		#scale Y
 	.long 0x61bf0
 	.float	1.1		#Scale Z
-	.long 0x61bf4		#ticktock X
+	.long 0x61bf4		# X
 	.float 1.8
-	.long 0x61bf8		#ticktock Y
+	.long 0x61bf8		# Y
 	.float -530
-	.long 0x61bfC		#ticktock Z
+	.long 0x61bfC		# Z
 	.float -0
 
 	#adjust camera zoom
@@ -2170,25 +2191,86 @@ StageMod_RCruise:
 	.long 0x7383C
 	.float	-567
 
+	#plat lines
+	#left plat left point
+	.long 0x738a8
+	.float -105
+	.long 0x738ac
+	.float -455
+	#left plat right point
+	.long 0x738b0
+	.float -45
+	.long 0x738b4
+	.float -455
+	#top plat left point
+	.long 0x738b8
+	.float -30
+	.long 0x738bc
+	.float -430
+	#top plat right point
+	.long 0x738c0
+	.float 30
+	.long 0x738c4
+	.float -430
+	#right plat left point
+	.long 0x738c8
+	.float 45
+	.long 0x738cc
+	.float -455
+	#right plat right point
+	.long 0x738d0
+	.float 105
+	.long 0x738d4
+	.float -455
+
+	#Platform collision ranges
+	#left
+	.long 0x74694
+	.float -500
+	.long 0x74698
+	.float -500
+	.long 0x7469C
+	.float 500
+	.long 0x746A0
+	.float 500
+	#top
+	.long 0x746bc
+	.float -500
+	.long 0x746c0
+	.float -500
+	.long 0x746c4
+	.float 500
+	.long 0x746c8
+	.float 500
+	#right
+	.long 0x746e4
+	.float -500
+	.long 0x746e8
+	.float -500
+	.long 0x746ec
+	.float 500
+	.long 0x746f0
+	.float 500
+
 	#Change spawn points
 	#p1
 	.long 0xeefc
-	.float -515
+	.float -520
 	.long 0xef00
-	.float 7
+	.float 40
 	#p2
 	.long 0xef3c
-	.float -375
+	.float -370
 	.long 0xef40
-	.float 7
+	.float 40
 	#p3
 	.long 0xef7c
-	.float -423
+	.float -520
 	.long 0xef80
 	.float 7
 	#p4
 	.long 0xefbc
-	.float -469
+	.float -370
 	.long 0xefc0
 	.float 7
 

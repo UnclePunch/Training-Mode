@@ -190,7 +190,7 @@ blrl
 .align 2
 SnapREV_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.6"
+.string "MultiMod Launcher v0.7"
 .align 2
 SnapREV_CodeNames_UCF:
 .string "UCF:"
@@ -319,7 +319,7 @@ SnapREV_CodeOptions_GameVersion:
 	.long 3 -1           #number of options
 	bl	SnapREV_GameVersion_Description
 	bl  SnapREV_GameVersion_NTSC
-	bl  SnapREV_GameVersion_REV
+	bl  SnapREV_GameVersion_PAL
 	bl  SnapREV_GameVersion_SDR
 	.string "NTSC"
 	.string "PAL"
