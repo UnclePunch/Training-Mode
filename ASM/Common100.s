@@ -115,7 +115,6 @@
 #Mem Addresses
 .set	TournamentMode,0x801901E0 #*
 .set  OFST_Memcard,-0x77C0 #find it @ 8015ed3c in 102
-.set  OFST_ModPrefs,0x1F30
 .set  PostRetraceCallback,0x8001957C #*
 
 .set  UnkPadStruct,0x80430a30 #80019A48
@@ -157,3 +156,11 @@
 .set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
 .set  MainSaveString,0x803bb244 # r4 at 8001a564 (102)
 .set  OFST_Rand,-0x5714
+
+#Mod Data Offsets
+.set ModOFST_ModDataStart,0x1f24 - 0x8 #idk why 1.00's data is pointed to differently
+	.set ModOFST_ModDataKey,0x0
+		.set ModOFST_ModDataKeyLength,0x4
+	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
+		.set ModOFST_ModDataPrefsLength,0x18
+		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength

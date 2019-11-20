@@ -481,7 +481,7 @@ SnapREV_Codes_SceneLoad_CreateText:
 #Copy Saved Menu Options
 	addi	r3,REG_GObjData,OFST_OptionSelections
 	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
+	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
 
@@ -678,7 +678,7 @@ SnapREV_Codes_SceneThink_CheckToExit:
   branchl r12,MenuController_ChangeScreenMinor
 #Save Menu Options
 	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
+	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy

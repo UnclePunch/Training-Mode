@@ -2749,7 +2749,7 @@ Snap102_Codes_SceneLoad_CreateText:
 #Copy Saved Menu Options
 	addi	r3,REG_GObjData,OFST_OptionSelections
 	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
+	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
 
@@ -2946,7 +2946,7 @@ Snap102_Codes_SceneThink_CheckToExit:
   branchl r12,MenuController_ChangeScreenMinor
 #Save Menu Options
 	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
+	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
@@ -4159,7 +4159,7 @@ Snap102_UCF_On:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -4383,7 +4383,7 @@ Snap102_UCF_Stealth:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -12182,7 +12182,7 @@ Snap102_StageExpansion_On:
 	.long 0x0445C388
 	.long 0xE7E333B0
 	.long 0xC216E800
-	.long 0x000003F9
+	.long 0x00000411
 	.long 0x48000089
 	.long 0x48000001
 	.long 0x48000001
@@ -12193,8 +12193,8 @@ Snap102_StageExpansion_On:
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001C71
-	.long 0x48001E35
+	.long 0x48001D31
+	.long 0x48001EF5
 	.long 0x48001A7D
 	.long 0x48000111
 	.long 0x48000BE1
@@ -12263,7 +12263,7 @@ Snap102_StageExpansion_On:
 	.long 0x38A50008
 	.long 0x4BFFFF90
 	.long 0x48000004
-	.long 0x48001E80
+	.long 0x48001F40
 	.long 0x0001A68C
 	.long 0x00000000
 	.long 0x0001A6E8
@@ -13890,18 +13890,18 @@ Snap102_StageExpansion_On:
 	.long 0x000497D4
 	.long 0x41A00000
 	.long 0xFFFFFFFF
-	.long 0x00039068
-	.long 0x3F333333
-	.long 0x0003906C
-	.long 0x3F333333
-	.long 0x00039070
-	.long 0x3F333333
-	.long 0x00039074
-	.long 0x442F0000
-	.long 0x00039078
-	.long 0xC3BB8000
-	.long 0x0003907C
-	.long 0xC1F00000
+	.long 0x00039274
+	.long 0xC2960000
+	.long 0x00039278
+	.long 0xC3E38000
+	.long 0x000392B4
+	.long 0x00000000
+	.long 0x000392B8
+	.long 0xC3D70000
+	.long 0x000392F4
+	.long 0x42960000
+	.long 0x000392F8
+	.long 0xC3E38000
 	.long 0x00061BE4
 	.long 0x3FC90FF9
 	.long 0x00061BE8
@@ -13994,21 +13994,69 @@ Snap102_StageExpansion_On:
 	.long 0xC2E10000
 	.long 0x0007383C
 	.long 0xC40DC000
+	.long 0x000738A8
+	.long 0xC2D20000
+	.long 0x000738AC
+	.long 0xC3E38000
+	.long 0x000738B0
+	.long 0xC2340000
+	.long 0x000738B4
+	.long 0xC3E38000
+	.long 0x000738B8
+	.long 0xC1F00000
+	.long 0x000738BC
+	.long 0xC3D70000
+	.long 0x000738C0
+	.long 0x41F00000
+	.long 0x000738C4
+	.long 0xC3D70000
+	.long 0x000738C8
+	.long 0x42340000
+	.long 0x000738CC
+	.long 0xC3E38000
+	.long 0x000738D0
+	.long 0x42D20000
+	.long 0x000738D4
+	.long 0xC3E38000
+	.long 0x00074694
+	.long 0xC3FA0000
+	.long 0x00074698
+	.long 0xC3FA0000
+	.long 0x0007469C
+	.long 0x43FA0000
+	.long 0x000746A0
+	.long 0x43FA0000
+	.long 0x000746BC
+	.long 0xC3FA0000
+	.long 0x000746C0
+	.long 0xC3FA0000
+	.long 0x000746C4
+	.long 0x43FA0000
+	.long 0x000746C8
+	.long 0x43FA0000
+	.long 0x000746E4
+	.long 0xC3FA0000
+	.long 0x000746E8
+	.long 0xC3FA0000
+	.long 0x000746EC
+	.long 0x43FA0000
+	.long 0x000746F0
+	.long 0x43FA0000
 	.long 0x0000EEFC
-	.long 0xC400C000
+	.long 0xC4020000
 	.long 0x0000EF00
-	.long 0x40E00000
+	.long 0x42200000
 	.long 0x0000EF3C
-	.long 0xC3BB8000
+	.long 0xC3B90000
 	.long 0x0000EF40
+	.long 0x42200000
+	.long 0x0000EFBC
+	.long 0xC3B90000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC3D38000
+	.long 0xC4020000
 	.long 0x0000EF80
-	.long 0x40E00000
-	.long 0x0000EFBC
-	.long 0xC3EA8000
-	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -15299,7 +15347,7 @@ Snap101_Codes_SceneLoad_CreateText:
 #Copy Saved Menu Options
 	addi	r3,REG_GObjData,OFST_OptionSelections
 	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
+	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
 
@@ -15496,7 +15544,7 @@ Snap101_Codes_SceneThink_CheckToExit:
   branchl r12,MenuController_ChangeScreenMinor
 #Save Menu Options
 	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
+	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
@@ -16709,7 +16757,7 @@ Snap101_UCF_On:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -16933,7 +16981,7 @@ Snap101_UCF_Stealth:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -24732,7 +24780,7 @@ Snap101_StageExpansion_On:
 	.long 0x0445B6A8
 	.long 0xE7E333B0
 	.long 0xC216E4EC
-	.long 0x000003F9
+	.long 0x00000411
 	.long 0x48000089
 	.long 0x48000001
 	.long 0x48000001
@@ -24743,8 +24791,8 @@ Snap101_StageExpansion_On:
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001C71
-	.long 0x48001E35
+	.long 0x48001D31
+	.long 0x48001EF5
 	.long 0x48001A7D
 	.long 0x48000111
 	.long 0x48000BE1
@@ -24813,7 +24861,7 @@ Snap101_StageExpansion_On:
 	.long 0x38A50008
 	.long 0x4BFFFF90
 	.long 0x48000004
-	.long 0x48001E80
+	.long 0x48001F40
 	.long 0x0001A68C
 	.long 0x00000000
 	.long 0x0001A6E8
@@ -26440,18 +26488,18 @@ Snap101_StageExpansion_On:
 	.long 0x000497D4
 	.long 0x41A00000
 	.long 0xFFFFFFFF
-	.long 0x00039068
-	.long 0x3F333333
-	.long 0x0003906C
-	.long 0x3F333333
-	.long 0x00039070
-	.long 0x3F333333
-	.long 0x00039074
-	.long 0x442F0000
-	.long 0x00039078
-	.long 0xC3BB8000
-	.long 0x0003907C
-	.long 0xC1F00000
+	.long 0x00039274
+	.long 0xC2960000
+	.long 0x00039278
+	.long 0xC3E38000
+	.long 0x000392B4
+	.long 0x00000000
+	.long 0x000392B8
+	.long 0xC3D70000
+	.long 0x000392F4
+	.long 0x42960000
+	.long 0x000392F8
+	.long 0xC3E38000
 	.long 0x00061BE4
 	.long 0x3FC90FF9
 	.long 0x00061BE8
@@ -26544,21 +26592,69 @@ Snap101_StageExpansion_On:
 	.long 0xC2E10000
 	.long 0x0007383C
 	.long 0xC40DC000
+	.long 0x000738A8
+	.long 0xC2D20000
+	.long 0x000738AC
+	.long 0xC3E38000
+	.long 0x000738B0
+	.long 0xC2340000
+	.long 0x000738B4
+	.long 0xC3E38000
+	.long 0x000738B8
+	.long 0xC1F00000
+	.long 0x000738BC
+	.long 0xC3D70000
+	.long 0x000738C0
+	.long 0x41F00000
+	.long 0x000738C4
+	.long 0xC3D70000
+	.long 0x000738C8
+	.long 0x42340000
+	.long 0x000738CC
+	.long 0xC3E38000
+	.long 0x000738D0
+	.long 0x42D20000
+	.long 0x000738D4
+	.long 0xC3E38000
+	.long 0x00074694
+	.long 0xC3FA0000
+	.long 0x00074698
+	.long 0xC3FA0000
+	.long 0x0007469C
+	.long 0x43FA0000
+	.long 0x000746A0
+	.long 0x43FA0000
+	.long 0x000746BC
+	.long 0xC3FA0000
+	.long 0x000746C0
+	.long 0xC3FA0000
+	.long 0x000746C4
+	.long 0x43FA0000
+	.long 0x000746C8
+	.long 0x43FA0000
+	.long 0x000746E4
+	.long 0xC3FA0000
+	.long 0x000746E8
+	.long 0xC3FA0000
+	.long 0x000746EC
+	.long 0x43FA0000
+	.long 0x000746F0
+	.long 0x43FA0000
 	.long 0x0000EEFC
-	.long 0xC400C000
+	.long 0xC4020000
 	.long 0x0000EF00
-	.long 0x40E00000
+	.long 0x42200000
 	.long 0x0000EF3C
-	.long 0xC3BB8000
+	.long 0xC3B90000
 	.long 0x0000EF40
+	.long 0x42200000
+	.long 0x0000EFBC
+	.long 0xC3B90000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC3D38000
+	.long 0xC4020000
 	.long 0x0000EF80
-	.long 0x40E00000
-	.long 0x0000EFBC
-	.long 0xC3EA8000
-	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -27849,7 +27945,7 @@ Snap100_Codes_SceneLoad_CreateText:
 #Copy Saved Menu Options
 	addi	r3,REG_GObjData,OFST_OptionSelections
 	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
+	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
 
@@ -28046,7 +28142,7 @@ Snap100_Codes_SceneThink_CheckToExit:
   branchl r12,MenuController_ChangeScreenMinor
 #Save Menu Options
 	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
+	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
@@ -29077,8 +29173,8 @@ Snap100_DefaultCodes_On:
 	.long 0x2C030000
 	.long 0x40820020
 	.long 0x806D8840
-	.long 0x80631F24
-	.long 0x809F1F24
+	.long 0x80631F1C
+	.long 0x809F1F1C
 	.long 0x7C032000
 	.long 0x4082000C
 	.long 0x3BC00009
@@ -29124,6 +29220,8 @@ Snap100_DefaultCodes_On:
 	.long 0xE70000B0
 	.long 0x04459F4C
 	.long 0x04000A00
+	.long 0x04459F50
+	.long 0x08010100
 	.long 0x0416430C
 	.long 0x38600001
 	.long 0x041640EC
@@ -29257,7 +29355,7 @@ Snap100_UCF_On:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -29481,7 +29579,7 @@ Snap100_UCF_Stealth:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -37280,7 +37378,7 @@ Snap100_StageExpansion_On:
 	.long 0x0445A3C0
 	.long 0xE7E333B0
 	.long 0xC216DDF8
-	.long 0x000003F9
+	.long 0x00000411
 	.long 0x48000089
 	.long 0x48000001
 	.long 0x48000001
@@ -37291,8 +37389,8 @@ Snap100_StageExpansion_On:
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001C71
-	.long 0x48001E35
+	.long 0x48001D31
+	.long 0x48001EF5
 	.long 0x48001A7D
 	.long 0x48000111
 	.long 0x48000BE1
@@ -37361,7 +37459,7 @@ Snap100_StageExpansion_On:
 	.long 0x38A50008
 	.long 0x4BFFFF90
 	.long 0x48000004
-	.long 0x48001E80
+	.long 0x48001F40
 	.long 0x0001A68C
 	.long 0x00000000
 	.long 0x0001A6E8
@@ -38988,18 +39086,18 @@ Snap100_StageExpansion_On:
 	.long 0x000497D4
 	.long 0x41A00000
 	.long 0xFFFFFFFF
-	.long 0x00039068
-	.long 0x3F333333
-	.long 0x0003906C
-	.long 0x3F333333
-	.long 0x00039070
-	.long 0x3F333333
-	.long 0x00039074
-	.long 0x442F0000
-	.long 0x00039078
-	.long 0xC3BB8000
-	.long 0x0003907C
-	.long 0xC1F00000
+	.long 0x00039274
+	.long 0xC2960000
+	.long 0x00039278
+	.long 0xC3E38000
+	.long 0x000392B4
+	.long 0x00000000
+	.long 0x000392B8
+	.long 0xC3D70000
+	.long 0x000392F4
+	.long 0x42960000
+	.long 0x000392F8
+	.long 0xC3E38000
 	.long 0x00061BE4
 	.long 0x3FC90FF9
 	.long 0x00061BE8
@@ -39092,21 +39190,69 @@ Snap100_StageExpansion_On:
 	.long 0xC2E10000
 	.long 0x0007383C
 	.long 0xC40DC000
+	.long 0x000738A8
+	.long 0xC2D20000
+	.long 0x000738AC
+	.long 0xC3E38000
+	.long 0x000738B0
+	.long 0xC2340000
+	.long 0x000738B4
+	.long 0xC3E38000
+	.long 0x000738B8
+	.long 0xC1F00000
+	.long 0x000738BC
+	.long 0xC3D70000
+	.long 0x000738C0
+	.long 0x41F00000
+	.long 0x000738C4
+	.long 0xC3D70000
+	.long 0x000738C8
+	.long 0x42340000
+	.long 0x000738CC
+	.long 0xC3E38000
+	.long 0x000738D0
+	.long 0x42D20000
+	.long 0x000738D4
+	.long 0xC3E38000
+	.long 0x00074694
+	.long 0xC3FA0000
+	.long 0x00074698
+	.long 0xC3FA0000
+	.long 0x0007469C
+	.long 0x43FA0000
+	.long 0x000746A0
+	.long 0x43FA0000
+	.long 0x000746BC
+	.long 0xC3FA0000
+	.long 0x000746C0
+	.long 0xC3FA0000
+	.long 0x000746C4
+	.long 0x43FA0000
+	.long 0x000746C8
+	.long 0x43FA0000
+	.long 0x000746E4
+	.long 0xC3FA0000
+	.long 0x000746E8
+	.long 0xC3FA0000
+	.long 0x000746EC
+	.long 0x43FA0000
+	.long 0x000746F0
+	.long 0x43FA0000
 	.long 0x0000EEFC
-	.long 0xC400C000
+	.long 0xC4020000
 	.long 0x0000EF00
-	.long 0x40E00000
+	.long 0x42200000
 	.long 0x0000EF3C
-	.long 0xC3BB8000
+	.long 0xC3B90000
 	.long 0x0000EF40
+	.long 0x42200000
+	.long 0x0000EFBC
+	.long 0xC3B90000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC3D38000
+	.long 0xC4020000
 	.long 0x0000EF80
-	.long 0x40E00000
-	.long 0x0000EFBC
-	.long 0xC3EA8000
-	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -40403,7 +40549,7 @@ SnapPAL_Codes_SceneLoad_CreateText:
 #Copy Saved Menu Options
 	addi	r3,REG_GObjData,OFST_OptionSelections
 	lwz	r4, OFST_Memcard (r13)
-	addi r4,r4,OFST_ModPrefs
+	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
 
@@ -40600,7 +40746,7 @@ SnapPAL_Codes_SceneThink_CheckToExit:
   branchl r12,MenuController_ChangeScreenMinor
 #Save Menu Options
 	lwz	r3, OFST_Memcard (r13)
-	addi r3,r3,OFST_ModPrefs
+	addi r3,r3,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	addi	r4,REG_GObjData,OFST_OptionSelections
 	li	r5,0x18
 	branchl	r12,memcpy
@@ -41813,7 +41959,7 @@ SnapPAL_UCF_On:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -42037,7 +42183,7 @@ SnapPAL_UCF_Stealth:
 	.long 0xEC21102A
 	.long 0xC05D000C
 	.long 0xFC011040
-	.long 0x418000B4
+	.long 0x408100B4
 	.long 0x889F0670
 	.long 0x2C040003
 	.long 0x408100A8
@@ -50208,7 +50354,7 @@ SnapPAL_StageExpansion_On:
 	.long 0x0444D190
 	.long 0xE7E333B0
 	.long 0xC216F1D4
-	.long 0x000003F9
+	.long 0x00000411
 	.long 0x48000089
 	.long 0x48000001
 	.long 0x48000001
@@ -50219,8 +50365,8 @@ SnapPAL_StageExpansion_On:
 	.long 0x48000001
 	.long 0x48000001
 	.long 0x48000001
-	.long 0x48001C71
-	.long 0x48001E35
+	.long 0x48001D31
+	.long 0x48001EF5
 	.long 0x48001A7D
 	.long 0x48000111
 	.long 0x48000BE1
@@ -50289,7 +50435,7 @@ SnapPAL_StageExpansion_On:
 	.long 0x38A50008
 	.long 0x4BFFFF90
 	.long 0x48000004
-	.long 0x48001E80
+	.long 0x48001F40
 	.long 0x0001A68C
 	.long 0x00000000
 	.long 0x0001A6E8
@@ -51916,18 +52062,18 @@ SnapPAL_StageExpansion_On:
 	.long 0x000497D4
 	.long 0x41A00000
 	.long 0xFFFFFFFF
-	.long 0x00039068
-	.long 0x3F333333
-	.long 0x0003906C
-	.long 0x3F333333
-	.long 0x00039070
-	.long 0x3F333333
-	.long 0x00039074
-	.long 0x442F0000
-	.long 0x00039078
-	.long 0xC3BB8000
-	.long 0x0003907C
-	.long 0xC1F00000
+	.long 0x00039274
+	.long 0xC2960000
+	.long 0x00039278
+	.long 0xC3E38000
+	.long 0x000392B4
+	.long 0x00000000
+	.long 0x000392B8
+	.long 0xC3D70000
+	.long 0x000392F4
+	.long 0x42960000
+	.long 0x000392F8
+	.long 0xC3E38000
 	.long 0x00061BE4
 	.long 0x3FC90FF9
 	.long 0x00061BE8
@@ -52020,21 +52166,69 @@ SnapPAL_StageExpansion_On:
 	.long 0xC2E10000
 	.long 0x0007383C
 	.long 0xC40DC000
+	.long 0x000738A8
+	.long 0xC2D20000
+	.long 0x000738AC
+	.long 0xC3E38000
+	.long 0x000738B0
+	.long 0xC2340000
+	.long 0x000738B4
+	.long 0xC3E38000
+	.long 0x000738B8
+	.long 0xC1F00000
+	.long 0x000738BC
+	.long 0xC3D70000
+	.long 0x000738C0
+	.long 0x41F00000
+	.long 0x000738C4
+	.long 0xC3D70000
+	.long 0x000738C8
+	.long 0x42340000
+	.long 0x000738CC
+	.long 0xC3E38000
+	.long 0x000738D0
+	.long 0x42D20000
+	.long 0x000738D4
+	.long 0xC3E38000
+	.long 0x00074694
+	.long 0xC3FA0000
+	.long 0x00074698
+	.long 0xC3FA0000
+	.long 0x0007469C
+	.long 0x43FA0000
+	.long 0x000746A0
+	.long 0x43FA0000
+	.long 0x000746BC
+	.long 0xC3FA0000
+	.long 0x000746C0
+	.long 0xC3FA0000
+	.long 0x000746C4
+	.long 0x43FA0000
+	.long 0x000746C8
+	.long 0x43FA0000
+	.long 0x000746E4
+	.long 0xC3FA0000
+	.long 0x000746E8
+	.long 0xC3FA0000
+	.long 0x000746EC
+	.long 0x43FA0000
+	.long 0x000746F0
+	.long 0x43FA0000
 	.long 0x0000EEFC
-	.long 0xC400C000
+	.long 0xC4020000
 	.long 0x0000EF00
-	.long 0x40E00000
+	.long 0x42200000
 	.long 0x0000EF3C
-	.long 0xC3BB8000
+	.long 0xC3B90000
 	.long 0x0000EF40
+	.long 0x42200000
+	.long 0x0000EFBC
+	.long 0xC3B90000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC3D38000
+	.long 0xC4020000
 	.long 0x0000EF80
-	.long 0x40E00000
-	.long 0x0000EFBC
-	.long 0xC3EA8000
-	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -52342,6 +52536,7 @@ SnapPAL_StageExpansion_On:
 	.long 0x04201904
 	.long 0x4E800020
 	.long -1
+
 
 #endregion
 #region Code Descriptions

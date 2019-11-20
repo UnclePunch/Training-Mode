@@ -2264,14 +2264,14 @@ StageMod_RCruise:
 	.long 0xef40
 	.float 40
 	#p3
-	.long 0xef7c
-	.float -520
-	.long 0xef80
-	.float 7
-	#p4
 	.long 0xefbc
 	.float -370
 	.long 0xefc0
+	.float 7
+	#p4
+	.long 0xef7c
+	.float -520
+	.long 0xef80
 	.float 7
 
 	#Change Respawn points
@@ -2594,7 +2594,7 @@ StageMod_MuteCity:
 	#look into 80030788 for cam panning
 
 	.long -1
-
+/*
 StageMod_Corneria:
 
 	#Rotate City
@@ -2616,6 +2616,7 @@ StageMod_Corneria:
 	.float	-2550
 
 	.long -1
+*/
 
 Exit:
   lis	r3, 0x8047

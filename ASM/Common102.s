@@ -79,10 +79,9 @@
 .set  CSS_MinorSceneData,-0x49F0 # 0x802655A0
 
 #Mem Addresses
-.set  OFST_ModPrefs,0x1F30
 .set  PostRetraceCallback,0x800195fc #*
 .set  UnkPadStruct,0x804329f0 #80019A48
-.set  OFST_MemcardController,0x80431358 #r31 at 0x8001D244
+.set  OFST_MemcardController,0x80433318 #r31 at 0x8001D244
 .set  ExploitReturn,0x80239E9C #*
 .set  OFST_NametagStart,0x3000
 .set  OFST_Rand,-0x570C
@@ -98,3 +97,11 @@
 .set  MainSaveUnk,0x80433318 # r30 at 8001d24c (102)
 .set  MainSaveData,0x803bab74 # r25 at 8001ccb0 (102)
 .set  MainSaveString,0x803bac5c # r4 at 8001a564 (102)
+
+#Mod Data Offsets
+.set ModOFST_ModDataStart,0x1f24
+	.set ModOFST_ModDataKey,0x0
+		.set ModOFST_ModDataKeyLength,0x4
+	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
+		.set ModOFST_ModDataPrefsLength,0x18
+		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength

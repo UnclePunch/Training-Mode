@@ -116,7 +116,6 @@
 #Mem Addresses
 .set	TournamentMode,0x80191C24
 .set  OFST_Memcard,-0x77A8
-.set  OFST_ModPrefs,0x1F30
 .set  PostRetraceCallback,0x80019AB4
 .set  UnkPadStruct,0x80423790
 .set  OFST_MainMenuSceneData,0x804c7bc4
@@ -156,3 +155,11 @@
 .set  MainSaveData,0x803bb0b4 # r25 at 8001ccb0 (102)
 .set  MainSaveString,0x803bb244 # r4 at 8001a564 (102)
 .set  OFST_Rand,-0x5564
+
+#Mod Data Offsets
+.set ModOFST_ModDataStart,0x1f24
+	.set ModOFST_ModDataKey,0x0
+		.set ModOFST_ModDataKeyLength,0x4
+	.set ModOFST_ModDataPrefs,ModOFST_ModDataKey + ModOFST_ModDataKeyLength
+		.set ModOFST_ModDataPrefsLength,0x18
+		.set ModOFST_ModDataLength,ModOFST_ModDataPrefs + ModOFST_ModDataPrefsLength
