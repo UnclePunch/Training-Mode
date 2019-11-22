@@ -14050,13 +14050,13 @@ Snap102_StageExpansion_On:
 	.long 0xC3B90000
 	.long 0x0000EF40
 	.long 0x42200000
-	.long 0x0000EFBC
-	.long 0xC3B90000
-	.long 0x0000EFC0
-	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC4020000
+	.long 0xC3B90000
 	.long 0x0000EF80
+	.long 0x40E00000
+	.long 0x0000EFBC
+	.long 0xC4020000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -26648,13 +26648,13 @@ Snap101_StageExpansion_On:
 	.long 0xC3B90000
 	.long 0x0000EF40
 	.long 0x42200000
-	.long 0x0000EFBC
-	.long 0xC3B90000
-	.long 0x0000EFC0
-	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC4020000
+	.long 0xC3B90000
 	.long 0x0000EF80
+	.long 0x40E00000
+	.long 0x0000EFBC
+	.long 0xC4020000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -39246,13 +39246,13 @@ Snap100_StageExpansion_On:
 	.long 0xC3B90000
 	.long 0x0000EF40
 	.long 0x42200000
-	.long 0x0000EFBC
-	.long 0xC3B90000
-	.long 0x0000EFC0
-	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC4020000
+	.long 0xC3B90000
 	.long 0x0000EF80
+	.long 0x40E00000
+	.long 0x0000EFBC
+	.long 0xC4020000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
@@ -41654,7 +41654,7 @@ SnapPAL_DefaultCodes_On:
 	.long 0x00000000
 	.long 0x043977A0
 	.long 0x4800020C
-	.long 0xC222846C
+	.long 0xC222AA64
 	.long 0x00000028
 	.long 0x3E808034
 	.long 0x62945A84
@@ -42443,7 +42443,7 @@ SnapPAL_Frozen_Off:
 	.long 0x0421C998
 	.long 0x48000805
 	.long 0x041D316C
-	.long 0x48003001
+	.long 0x48003135
 	.long 0x041E5178
 	.long 0x480000D1
 	.long -1
@@ -52222,13 +52222,13 @@ SnapPAL_StageExpansion_On:
 	.long 0xC3B90000
 	.long 0x0000EF40
 	.long 0x42200000
-	.long 0x0000EFBC
-	.long 0xC3B90000
-	.long 0x0000EFC0
-	.long 0x40E00000
 	.long 0x0000EF7C
-	.long 0xC4020000
+	.long 0xC3B90000
 	.long 0x0000EF80
+	.long 0x40E00000
+	.long 0x0000EFBC
+	.long 0xC4020000
+	.long 0x0000EFC0
 	.long 0x40E00000
 	.long 0x00075518
 	.long 0x42C80000
