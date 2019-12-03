@@ -190,7 +190,7 @@ blrl
 .align 2
 SnapREV_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.7" #dont forget to update osreport version
+.string "MultiMod Launcher v0.71" #dont forget to update osreport version
 .align 2
 SnapREV_CodeNames_UCF:
 .string "UCF:"
@@ -1414,7 +1414,6 @@ SnapREV_LagPrompt_SceneThink_Confirmed:
   load  r3,ProgressiveStruct
   li  r0,1
   stw r0,0x8(r3)
-  branchl r12,Deflicker_Toggle
 .if isPAL==1
 #Enable PAL60
 	load	r3,ProgressiveStruct
