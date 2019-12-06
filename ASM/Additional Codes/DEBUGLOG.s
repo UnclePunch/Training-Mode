@@ -73,6 +73,7 @@ backup
 
 lwz REG_GObjData,0x2C(r3)
 
+/*
 #Erase all text
   lwz  r3,0x0(REG_GObjData)
   branchl r12,DevelopText_EraseAllText
@@ -80,12 +81,18 @@ lwz REG_GObjData,0x2C(r3)
   li  r4,0
   li  r5,0
   branchl r12,DevelopMode_Text_ResetCursorXY
+*/
+
+#Get X input
+  li  r3,0
+	bl FETCH_INPUT
+  mr  r6,r3
 #vprintf string
   addi  r3,sp,0x80
   bl  String
   mflr r4
-  load  r5,0xCC00206E
-  lhz r5,0x0(r5)
+  load  r5,SceneController
+  lwz r5,0x30(r5)
   branchl r12,sprintf
 #Display string
   lwz  r3,0x0(REG_GObjData)
@@ -95,10 +102,41 @@ lwz REG_GObjData,0x2C(r3)
 DebugLogThink_Exit:
 restore
 blr
+
+#########################################
+  .set  HSD_Pad,0x804c1f78
+
+  FETCH_INPUT:   # Gets hw input according to controller port and frame index in r5
+  #r3 = index
+  #r4 = controller port
+
+  #Backup controller port
+  	mr	r5,r3
+
+  GET_INPUT:
+    load r3,HSD_Pad
+    lwz r4,0x8(r3)
+  	lbz r3,0x1(r3)    # HSD_PadRenewMasterStatus gets index for which inputs to get from here
+  	mulli r3, r3, 48
+  	add r4, r4, r3  # Add index to get inputs from the right frame
+  	mulli r3, r5, 0xC
+  	add r4, r4, r3
+  	lbz r3, 0x02(r4)   # load x-input
+  	extsb r3, r3    # convert to 32-bit signed int
+  /*
+  #Apply deadzone
+    cmpwi r3,0x16
+    bgt FETCH_INPUT_EXIT
+    cmpwi r3,-0x16
+    blt FETCH_INPUT_EXIT
+    li  r3,0
+  */
+  FETCH_INPUT_EXIT:
+  	blr
 #########################################
 String:
 blrl
-.string "0xCC00206E = 0x%X4"
+.string "Frame %d X:%d\n"
 .align 2
 
 Exit:
