@@ -10327,13 +10327,8 @@
 801c7b24 0000007c 801c7b24 0 zz_01c7b24_
 801c7ba0 0000007c 801c7ba0 0 zz_01c7ba0_
 801c7c1c 000003dc 801c7c1c 0 zz_01c7c1c_
-<<<<<<< Updated upstream
 801c7ff8 000000a0 801c7ff8 0 Stage_map_gobj_JObjStateChange(r3=map_gobj,r4=JObjID,r5=State,f1=StartFrame,f2=AnimSpeed)
 801c8098 000000a0 801c8098 0 Stage_map_gobj_TextureStateChange(r3=map_gobj,r4=JObjID,r5=State,f1=StartFrame,f2=AnimSpeed)
-=======
-801c7ff8 000000a0 801c7ff8 0 Stage_map_gobj_JObjStateChange(r3=map_gobj,r4=JObjID,r5=State)
-801c8098 000000a0 801c8098 0 Stage_TextureStateChange?
->>>>>>> Stashed changes
 801c8138 000001b0 801c8138 0 Stage_map_gobj_StateChange (r5=animationID)
 801c82e8 00000030 801c82e8 0 zz_01c82e8_
 801c8318 000000b8 801c8318 0 FinalDestination_GetUnkJObj?
