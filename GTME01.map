@@ -10327,8 +10327,13 @@
 801c7b24 0000007c 801c7b24 0 zz_01c7b24_
 801c7ba0 0000007c 801c7ba0 0 zz_01c7ba0_
 801c7c1c 000003dc 801c7c1c 0 zz_01c7c1c_
+<<<<<<< Updated upstream
 801c7ff8 000000a0 801c7ff8 0 Stage_map_gobj_JObjStateChange(r3=map_gobj,r4=JObjID,r5=State,f1=StartFrame,f2=AnimSpeed)
 801c8098 000000a0 801c8098 0 Stage_map_gobj_TextureStateChange(r3=map_gobj,r4=JObjID,r5=State,f1=StartFrame,f2=AnimSpeed)
+=======
+801c7ff8 000000a0 801c7ff8 0 Stage_map_gobj_JObjStateChange(r3=map_gobj,r4=JObjID,r5=State)
+801c8098 000000a0 801c8098 0 Stage_TextureStateChange?
+>>>>>>> Stashed changes
 801c8138 000001b0 801c8138 0 Stage_map_gobj_StateChange (r5=animationID)
 801c82e8 00000030 801c82e8 0 zz_01c82e8_
 801c8318 000000b8 801c8318 0 FinalDestination_GetUnkJObj?
@@ -10363,9 +10368,9 @@
 801c9664 00000034 801c9664 0 zz_01c9664_
 801c9698 00000050 801c9698 0 zz_01c9698_
 801c96e8 00000010 801c96e8 0 zz_01c96e8_
-801c96f8 000000e4 801c96f8 0 GFX_SpawnStageTextureEffect
-801c97dc 0000002c 801c97dc 0 Stage_GFXUnk
-801c9808 0000002c 801c9808 0 zz_01c9808_
+801c96f8 000000e4 801c96f8 0 Stage_SpawnGFX
+801c97dc 0000002c 801c97dc 0 Stage_SpawnGFXParticle1
+801c9808 0000002c 801c9808 0 Stage_SpawnGFXParticle2
 801c9834 00000020 801c9834 0 Stage_RemoveStageEffectPrefunction?
 801c9854 00000020 801c9854 0 zz_01c9854_
 801c9874 0000002c 801c9874 0 zz_01c9874_
@@ -10436,7 +10441,7 @@
 801ccb08 00000008 801ccb08 0 zz_01ccb08_
 801ccb10 00000004 801ccb10 0 zz_01ccb10_
 801ccb14 00000004 801ccb14 0 zz_01ccb14_
-801ccb18 00000078 801ccb18 0 zz_01ccb18_
+801ccb18 00000078 801ccb18 0 FoD_CreateStarsInBackground
 801ccb90 0000004c 801ccb90 0 zz_01ccb90_
 801ccbdc 000001bc 801ccbdc 0 Stages_Fountain_SidePlatformSpawn
 801ccd98 00000108 801ccd98 0 Stages_Fountain_InitReflection
@@ -11854,7 +11859,7 @@
 802109d4 00000004 802109d4 0 zz_02109d4_
 802109d8 00000044 802109d8 0 zz_02109d8_
 80210a1c 00000008 80210a1c 0 zz_0210a1c_
-80210a24 000000dc 80210a24 0 zz_0210a24_
+80210a24 000000dc 80210a24 0 Dreamland_DecideWindBlowEffect
 80210b00 00000004 80210b00 0 zz_0210b00_
 80210b04 00000044 80210b04 0 zz_0210b04_
 80210b48 00000008 80210b48 0 zz_0210b48_
