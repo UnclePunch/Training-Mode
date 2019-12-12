@@ -1507,6 +1507,11 @@ InitSettings:
 .set DevelopText_AddString,0x80302be4
 .set DevelopText_EraseAllText,0x80302bb0
 .set DevelopMode_Text_ResetCursorXY,0x80302a3c
+.set DevelopText_StoreBGColor,0x80302b90
+.set DevelopText_HideBG,0x80302ae0
+.set DevelopText_ShowBG,0x80302ad0
+.set cvt_sll_flt,0x80322da0
+.set cvt_fp2unsigned,0x803228c0
 .set sprintf,0x80323cf4
 
 #Custom Functions
