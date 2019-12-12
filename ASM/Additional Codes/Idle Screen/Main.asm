@@ -1,12 +1,10 @@
-#To be inserted at 801a4c94
+#To be inserted at 80302788
 .include "../../Globals.s"
 
 .set  REG_DevelopText,31
 .set  REG_GObjData,30
 .set  REG_GObj,29
 .set  REG_Floats,28
-
-stw	r3, -0x4F74 (r13)
 
 backup
 
@@ -168,3 +166,4 @@ blrl
 
 Injection_Exit:
   restore
+  mr	r3, r31
