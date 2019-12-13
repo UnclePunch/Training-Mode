@@ -1,6 +1,8 @@
 #To be inserted at 80302788
 .include "../../Globals.s"
 
+.set  IdleThreshold, (3*60) * 60
+
 .set  REG_DevelopText,31
 .set  REG_GObjData,30
 .set  REG_GObj,29
@@ -79,8 +81,6 @@ blrl
 .set  IdleData_State,0x4
 .set  IdleData_VolumeBackup,0x8
 .set  IdleData_IdleCounter,0xC
-
-.set  IdleThreshold, 60 * 60
 
   backup
 
