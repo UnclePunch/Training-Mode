@@ -1513,6 +1513,8 @@ InitSettings:
 .set cvt_sll_flt,0x80322da0
 .set cvt_fp2unsigned,0x803228c0
 .set sprintf,0x80323cf4
+.set PlayerBlock_LoadNameTagSlot,0x8003556c
+.set Nametag_LoadNametagSlotText,0x8023754c
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
