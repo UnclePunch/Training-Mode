@@ -13,7 +13,12 @@ backup
   beq Link
   cmpwi r3,Popo.Int
   beq Nana
-
+  /*
+  cmpwi r3,Pikachu.Int
+  beq Pikachu
+  cmpwi r3,Pichu.Int
+  beq Pikachu
+  */
 ##########################
 Link:
 #Check if boomerang exists
@@ -41,7 +46,7 @@ Link:
   lfs f1,0x2C(r4)
   bl  DrawBubble
 Link_NoBoomerang:
-
+/*
 #Check if chain exists
   lwz REG_ItemGObj,0x2238(REG_PlayerData)
   cmpwi REG_ItemGObj,0
@@ -51,7 +56,6 @@ Link_NoBoomerang:
   lwz r3,0x24(REG_ItemData)
   cmpwi r3,8
   bne Link_NoChain
-/*
 #Draw circle of 6 radius around the end of the hook
   lfs f1,0xB0(REG_PlayerData)
   stfs f1,0x80(sp)
@@ -102,6 +106,29 @@ Nana_NoUpB:
   b Exit
 
 ##########################
+/*
+Pikachu:
+#Check AS
+  lwz r3,0x10(REG_PlayerData)
+  cmpwi r3,0x168
+  beq Pikachu_DownB
+  cmpwi r3,0x15C
+  beq Pikachu_DownB
+  b Pikachu_NoDownB
+#Get thunder position
+  lwz r3,0x2340(REG_PlayerData)
+  cmpwi r3,0
+  beq Pikachu_NoDownB
+  addi  r4,sp,0x80
+  branchl r12,0x802b1fe8
+*/
+
+
+Pikachu_NoDownB:
+  b Exit
+
+##########################
+
 DrawBubble:
 backup
 mr  r4,r3
