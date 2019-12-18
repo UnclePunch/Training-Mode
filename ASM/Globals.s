@@ -1314,6 +1314,7 @@ InitSettings:
 .set Audio_NextAreaInSSMHeap,-0x5258
 .set Audio_UnkConstant,-0x5250
 .set Audio_TotalSSMMemory,-0x5268
+.set GObj_Lists,-0x3E74
 
 .set TM_FrozenToggle,-0x4F8C
 .set TM_GameFrameCounter,-0x49a8
