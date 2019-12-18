@@ -1294,6 +1294,7 @@ InitSettings:
 .set CSS_PointerToDatNodes,-0x49C8    #these are initialized to at 80266970
 .set CSS_MainPlayerPort,-0x49B0
 .set CSS_CPUPlayerPort,-0x49AF
+.set CSS_StartCountdown,-0x49AE
 .set CSS_Unk,-0x49AC
 .set CSS_MaxPlayers,-0x49AB
 .set CSS_Unk,-0x49AA
@@ -1516,6 +1517,7 @@ InitSettings:
 .set sprintf,0x80323cf4
 .set PlayerBlock_LoadNameTagSlot,0x8003556c
 .set Nametag_LoadNametagSlotText,0x8023754c
+.set LoadRulesSettingsPointer1,0x8015cc34
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
