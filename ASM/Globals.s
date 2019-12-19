@@ -1279,11 +1279,15 @@ InitSettings:
   .set InputStruct_LeftAnalogYFloat,0x24
   .set InputStruct_RightAnalogXFloat,0x28
   .set InputStruct_RightAnalogYFloat,0x2C
+  .set InputStruct_IsPlugged,0x41
   .set InputStruct_Length,68
 .set HSD_InputStructStart,0x804c1fac
 .set PreloadTable,0x80432078
   .set Preload_Stage,0x10
 .set CSS_CursorPointers,0x804a0bc0
+.set HSD_Pad,0x804c1f78
+.set CSS_DoorStructs,0x803f0dfc
+  .set  CSSDoor_State,0xB
 
 #r13 Offsets
 .set MemcardData,-0x77C0
@@ -1518,6 +1522,7 @@ InitSettings:
 .set PlayerBlock_LoadNameTagSlot,0x8003556c
 .set Nametag_LoadNametagSlotText,0x8023754c
 .set LoadRulesSettingsPointer1,0x8015cc34
+.set CSS_UpdateCSPInfo,0x8025db34
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
