@@ -4,6 +4,11 @@
 #Original
   stfs	f0, 0x002C (r28)
 
+#Check if HMN
+  mr  r3,r27
+  branchl r12,PlayerBlock_LoadSlotType
+  cmpwi r3,0
+  bne Exit
 #Get nametag ID
   mr  r3,r27
   branchl r12,PlayerBlock_LoadNameTagSlot #0x8003556c
