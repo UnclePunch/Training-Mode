@@ -1523,6 +1523,7 @@ InitSettings:
 .set Nametag_LoadNametagSlotText,0x8023754c
 .set LoadRulesSettingsPointer1,0x8015cc34
 .set CSS_UpdateCSPInfo,0x8025db34
+.set Rumble_StoreRumbleFlag,0x8015ed4c
 
 #Custom Functions
 .set TextCreateFunction,0x80005928
