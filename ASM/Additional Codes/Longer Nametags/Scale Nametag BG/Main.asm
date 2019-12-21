@@ -37,15 +37,15 @@ CountLetterLoop_Exit:
   bl  Floats
   mflr  r3
   lfs f2,0x0(r3)
+  lfs f3,0x2C(r28)
+  fdivs f2,f3,f2
   fmuls f1,f1,f2
-  lfs f2,0x4(r3)
-  fadds f1,f1,f2
+  fadds f1,f1,f3
   stfs	f1, 0x002C (r28)
   b Exit
 
 Floats:
-blrl
-.float 2.5
-.float 10
+  blrl
+  .float 4
 
-Exit:
+  Exit:
