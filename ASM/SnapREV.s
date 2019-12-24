@@ -190,7 +190,7 @@ blrl
 .align 2
 SnapREV_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.71" #dont forget to update osreport version
+.string "MultiMod Launcher v0.77" #dont forget to update osreport version
 .align 2
 SnapREV_CodeNames_UCF:
 .string "UCF:"
