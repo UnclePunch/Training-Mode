@@ -1520,7 +1520,7 @@ blrl
 ###################
 SnapshotSaveName:
 blrl
-.ascii "MultiMod Launcher BETA          "
+.ascii "MultiMod Launcher v1.0          "
 .ascii "Mod Data (2 of 2)               "
 ###################
 CodeFileName:
@@ -2464,7 +2464,7 @@ blrl
 .align 2
 Snap102_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.78"
+.string "MultiMod Launcher v1.0"
 .align 2
 Snap102_CodeNames_UCF:
 .string "UCF:"
@@ -2589,7 +2589,7 @@ Snap102_CodeOptions_GameVersion:
 	bl  Snap102_GameVersion_NTSC
 	bl  Snap102_GameVersion_PAL
 	bl  Snap102_GameVersion_SDR
-	.string "NTSC"
+	.string "NTSC v1.02"
 	.string "PAL"
 	.string "SD Remix"
 	.align 2
@@ -3818,7 +3818,6 @@ Snap102_Exit:
 	blr
 
 #region Gecko Codes
-
 #endregion
 #region Code Descriptions
 Snap102_UCF_Description:
@@ -4113,8 +4112,17 @@ Snap102_FriendliesQoL_Description:
 	.long 0x3520f320
 	.long 0x361a2031
 	.long 0x20242030
-	.long 0x202820e7
-	.long 0x190F0D00
+	.long 0x202820e6
+	.long 0x1a202420
+	.long 0x2f202f20
+	.long 0x32203a1a
+	.long 0x20012019
+	.long 0x1a202c20
+	.long 0x311a201f
+	.long 0x201c1a20
+	.long 0x16203220
+	.long 0x27202820
+	.long 0xe7190F0D
 	.long 0x00000000
 Snap102_GameVersion_Description:
 	.long 0x160cffff
@@ -4514,7 +4522,7 @@ blrl
 .align 2
 Snap101_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.78"
+.string "MultiMod Launcher v1.0"
 .align 2
 Snap101_CodeNames_UCF:
 .string "UCF:"
@@ -4639,7 +4647,7 @@ Snap101_CodeOptions_GameVersion:
 	bl  Snap101_GameVersion_NTSC
 	bl  Snap101_GameVersion_PAL
 	bl  Snap101_GameVersion_SDR
-	.string "NTSC"
+	.string "NTSC v1.02"
 	.string "PAL"
 	.string "SD Remix"
 	.align 2
@@ -6162,8 +6170,17 @@ Snap101_FriendliesQoL_Description:
 	.long 0x3520f320
 	.long 0x361a2031
 	.long 0x20242030
-	.long 0x202820e7
-	.long 0x190F0D00
+	.long 0x202820e6
+	.long 0x1a202420
+	.long 0x2f202f20
+	.long 0x32203a1a
+	.long 0x20012019
+	.long 0x1a202c20
+	.long 0x311a201f
+	.long 0x201c1a20
+	.long 0x16203220
+	.long 0x27202820
+	.long 0xe7190F0D
 	.long 0x00000000
 Snap101_GameVersion_Description:
 	.long 0x160cffff
@@ -6563,7 +6580,7 @@ blrl
 .align 2
 Snap100_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.78"
+.string "MultiMod Launcher v1.0"
 .align 2
 Snap100_CodeNames_UCF:
 .string "UCF:"
@@ -6688,7 +6705,7 @@ Snap100_CodeOptions_GameVersion:
 	bl  Snap100_GameVersion_NTSC
 	bl  Snap100_GameVersion_PAL
 	bl  Snap100_GameVersion_SDR
-	.string "NTSC"
+	.string "NTSC v1.02"
 	.string "PAL"
 	.string "SD Remix"
 	.align 2
@@ -8211,8 +8228,17 @@ Snap100_FriendliesQoL_Description:
 	.long 0x3520f320
 	.long 0x361a2031
 	.long 0x20242030
-	.long 0x202820e7
-	.long 0x190F0D00
+	.long 0x202820e6
+	.long 0x1a202420
+	.long 0x2f202f20
+	.long 0x32203a1a
+	.long 0x20012019
+	.long 0x1a202c20
+	.long 0x311a201f
+	.long 0x201c1a20
+	.long 0x16203220
+	.long 0x27202820
+	.long 0xe7190F0D
 	.long 0x00000000
 Snap100_GameVersion_Description:
 	.long 0x160cffff
@@ -8612,7 +8638,7 @@ blrl
 .align 2
 SnapPAL_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v0.78"
+.string "MultiMod Launcher v1.0"
 .align 2
 SnapPAL_CodeNames_UCF:
 .string "UCF:"
@@ -8743,7 +8769,7 @@ SnapPAL_CodeOptions_GameVersion:
 	bl  SnapPAL_GameVersion_NTSC
 	bl  SnapPAL_GameVersion_PAL
 	bl  SnapPAL_GameVersion_SDR
-	.string "NTSC"
+	.string "NTSC v1.02"
 	.string "PAL"
 	.string "SD Remix"
 	.align 2
@@ -10018,7 +10044,7 @@ SnapPAL_FriendliesQoL_Description:
   .byte 0x16,0x0c,0xff,0xff,0xff,0x0e,0x00,0x75,0x00,0xb3,0x12
     .ascii "Skip result screen, A+B for salty runback, A+X for random stage,"
     .byte 0x03
-    .ascii "highlight winner's name."
+    .ascii "highlight winner's name, allow 1P in VS Mode."
     .byte 0x00
   	.align 2
 SnapPAL_GameVersion_Description:
