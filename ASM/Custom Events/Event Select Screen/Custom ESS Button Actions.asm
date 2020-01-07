@@ -1520,7 +1520,7 @@ blrl
 ###################
 SnapshotSaveName:
 blrl
-.ascii "MultiMod Launcher v1.01          "
+.ascii "MultiMod Launcher v1.01         "
 .ascii "Mod Data (2 of 2)               "
 ###################
 CodeFileName:
