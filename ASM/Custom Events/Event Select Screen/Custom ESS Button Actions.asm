@@ -1520,7 +1520,7 @@ blrl
 ###################
 SnapshotSaveName:
 blrl
-.ascii "MultiMod Launcher v1.01         "
+.ascii "MultiMod Launcher v1.02         "
 .ascii "Mod Data (2 of 2)               "
 ###################
 CodeFileName:
@@ -2464,7 +2464,7 @@ blrl
 .align 2
 Snap102_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v1.01"
+.string "MultiMod Launcher v1.02"
 .align 2
 Snap102_CodeNames_UCF:
 .string "UCF:"
@@ -4522,7 +4522,7 @@ blrl
 .align 2
 Snap101_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v1.01"
+.string "MultiMod Launcher v1.02"
 .align 2
 Snap101_CodeNames_UCF:
 .string "UCF:"
@@ -6580,7 +6580,7 @@ blrl
 .align 2
 Snap100_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v1.01"
+.string "MultiMod Launcher v1.02"
 .align 2
 Snap100_CodeNames_UCF:
 .string "UCF:"
@@ -8638,7 +8638,7 @@ blrl
 .align 2
 SnapPAL_CodeNames_ModName:
 blrl
-.string "MultiMod Launcher v1.01"
+.string "MultiMod Launcher v1.02"
 .align 2
 SnapPAL_CodeNames_UCF:
 .string "UCF:"
