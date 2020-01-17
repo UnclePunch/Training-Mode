@@ -1062,8 +1062,7 @@ SnapREV_ApplyGeckoCode_C2:
 #Branch overwrite
   lwz r5,0x0(REG_GeckoCode)
   rlwinm r3,r5,0,8,31                   #get offset for branch calc
-  rlwinm r5,r5,0,8,31
-  oris  REG_InjectionSite,r5,0x8000     #get mem address to write to
+  oris  REG_InjectionSite,r3,0x8000     #get mem address to write to
   addi  r4,REG_GeckoCode,0x8            #get branch destination
   sub r3,r4,REG_InjectionSite           #Difference relative to branch addr
   rlwinm  r3,r3,0,6,29                  #extract bits for offset
