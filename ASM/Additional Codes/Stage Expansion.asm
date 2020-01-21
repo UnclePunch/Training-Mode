@@ -2020,279 +2020,284 @@ StageMod_FlatZone:
 
 StageMod_RCruise:
 
-	/*
-	#Move plat
-	.long 0x39068
-	.float	0.7		#scale X
-	.long 0x3906C
-	.float	0.7		#scale Y
-	.long 0x39070
-	.float	0.7		#Scale Z
-	.long 0x39074		#ticktock X
-	.float 700
-	.long 0x39078		#ticktock Y
-	.float -375
-	.long 0x3907C		#ticktock Z
-	.float -30
-	*/
+  	/*
+  	#Move plat
+  	.long 0x39068
+  	.float	0.7		#scale X
+  	.long 0x3906C
+  	.float	0.7		#scale Y
+  	.long 0x39070
+  	.float	0.7		#Scale Z
+  	.long 0x39074		#ticktock X
+  	.float 700
+  	.long 0x39078		#ticktock Y
+  	.float -375
+  	.long 0x3907C		#ticktock Z
+  	.float -30
+  	*/
 
-	#side plats should be 150 apart
-	# top plat should be 75 above sides
-	#Move left plat
-	.long 0x39274
-	.float -75
-	.long 0x39278
-	.float -455
-	#Move top plat
-	.long 0x392b4
-	.float 0
-	.long 0x392b8
-	.float -430
-	#Move right plat
-	.long 0x392f4
-	.float 75
-	.long 0x392f8
-	.float -455
+    #Remove all collision
+    .long 0xCD073628
+  	.long 0x578
+  	.float -1000
 
-	#Move stage
-	.long 0x61be4
-	.float	1.5708		#Rotate Z
-	.long 0x61be8
-	.float	1.7		#scale X
-	.long 0x61beC
-	.float	2.5		#scale Y
-	.long 0x61bf0
-	.float	1.1		#Scale Z
-	.long 0x61bf4		# X
-	.float 1.8
-	.long 0x61bf8		# Y
-	.float -530
-	.long 0x61bfC		# Z
-	.float -0
+  	#side plats should be 150 apart
+  	# top plat should be 75 above sides
+  	#Move left plat
+  	.long 0x39274
+  	.float -75
+  	.long 0x39278
+  	.float -455
+  	#Move top plat
+  	.long 0x392b4
+  	.float 0
+  	.long 0x392b8
+  	.float -430
+  	#Move right plat
+  	.long 0x392f4
+  	.float 75
+  	.long 0x392f8
+  	.float -455
 
-	#adjust camera zoom
-	.long 0x74d48			#max zoom
-	.long 150
-	.long 0x74d4C			#unk
-	.long 1000
-	#adjust camera boundaries
-	.long 0x750d4		#X max
-	.float 250
-	.long 0x75094		#X min
-	.float -250
-	.long 0x750d8		#Y max
-	.float 220
-	.long 0x75098		#Y min
-	.float -100
+  	#Move stage
+  	.long 0x61be4
+  	.float	1.5708		#Rotate Z
+  	.long 0x61be8
+  	.float	1.7		#scale X
+  	.long 0x61beC
+  	.float	2.5		#scale Y
+  	.long 0x61bf0
+  	.float	1.1		#Scale Z
+  	.long 0x61bf4		# X
+  	.float 1.8
+  	.long 0x61bf8		# Y
+  	.float -530
+  	.long 0x61bfC		# Z
+  	.float -0
 
-	#adjust blastzones
-	.long 0x75114
-	.float 310
-	.long 0x75154
-	.float -310
-	.long 0x75118
-	.float	270
-	.long 0x75158
-	.float -160
+  	#adjust camera zoom
+  	.long 0x74d48			#max zoom
+  	.long 150
+  	.long 0x74d4C			#unk
+  	.long 1000
+  	#adjust camera boundaries
+  	.long 0x750d4		#X max
+  	.float 250
+  	.long 0x75094		#X min
+  	.float -250
+  	.long 0x750d8		#Y max
+  	.float 220
+  	.long 0x75098		#Y min
+  	.float -100
 
-	#Change area region (area 13)
-	.long 0x745cc		#X min
-	.float -1000
-	.long 0x745d0		#Y min
-	.float -1000
-	.long 0x745d4		#X max
-	.float 1000
-	.long 0x745d8		#Y max
-	.float 1000
+  	#adjust blastzones
+  	.long 0x75114
+  	.float 310
+  	.long 0x75154
+  	.float -310
+  	.long 0x75118
+  	.float	270
+  	.long 0x75158
+  	.float -160
 
-	#Change line 53 to a ledge
-	.long 0x73efc
-	.long 0x00010200
+  	#Change area region (area 13)
+  	.long 0x745cc		#X min
+  	.float -1000
+  	.long 0x745d0		#Y min
+  	.float -1000
+  	.long 0x745d4		#X max
+  	.float 1000
+  	.long 0x745d8		#Y max
+  	.float 1000
 
-	#ground
-	#link 49 (vertices 67 and 68)
-	#link 50 (vertices 68 and 69)
-	#link 51 (vertices 69 and 70)
-	#link 52 (vertices 70 and 71)
-	#link 53 (vertices 71 and 65)
-	#ceiling
-	#link 83 (vertices 63 and 66)
-	#link 84 (vertices 62 and 63)
-	#link 85 (vertices 64 and 62)
-	#link 86 (vertices 61 and 64)
-	#link 87 (vertices 60 and 61)
-	#left
-	#link 110 (vertices 66 and 67)
-	#right
-	#link 98 (vertices 65 and 60)
+  	#Change line 53 to a ledge
+  	.long 0x73efc
+  	.long 0x00010200
 
-	#74 Y diff
+  	#ground
+  	#link 49 (vertices 67 and 68)
+  	#link 50 (vertices 68 and 69)
+  	#link 51 (vertices 69 and 70)
+  	#link 52 (vertices 70 and 71)
+  	#link 53 (vertices 71 and 65)
+  	#ceiling
+  	#link 83 (vertices 63 and 66)
+  	#link 84 (vertices 62 and 63)
+  	#link 85 (vertices 64 and 62)
+  	#link 86 (vertices 61 and 64)
+  	#link 87 (vertices 60 and 61)
+  	#left
+  	#link 110 (vertices 66 and 67)
+  	#right
+  	#link 98 (vertices 65 and 60)
 
-	#Move vertices
-	#vert 67
-	.long 0x73840
-	.float	-112.5
-	.long 0x73844
-	.float -493
-	#vert 68
-	.long 0x73848
-	.float -40
-	.long 0x7384C
-	.float -493
-	#vert 69
-	.long 0x73850
-	.float	-20
-	.long 0x73854
-	.float -493
-	#vert 70
-	.long 0x73858
-	.float	20
-	.long 0x7385C
-	.float -493
-	#vert 71
-	.long 0x73860
-	.float	40
-	.long 0x73864
-	.float -493
-	#vert 65
-	.long 0x73830
-	.float	112.5
-	.long 0x73834
-	.float -493
+  	#74 Y diff
 
-	#vert 60
-	.long 0x73808
-	.float	112.5
-	.long 0x7380C
-	.float -567
-	#vert 61
-	.long 0x73810
-	.float	40
-	.long 0x73814
-	.float -567
-	#vert 62
-	.long 0x73818
-	.float	20
-	.long 0x7381C
-	.float -567
-	#vert 63
-	.long 0x73820
-	.float	-20
-	.long 0x73824
-	.float	-567
-	#vert 64
-	.long 0x73828
-	.float	-40
-	.long 0x7382C
-	.float	-567
-	#vert 66
-	.long 0x73838
-	.float	-112.5
-	.long 0x7383C
-	.float	-567
+  	#Move vertices
+  	#vert 67
+  	.long 0x73840
+  	.float	-112.5
+  	.long 0x73844
+  	.float 5
+  	#vert 68
+  	.long 0x73848
+  	.float -40
+  	.long 0x7384C
+  	.float 5
+  	#vert 69
+  	.long 0x73850
+  	.float	-20
+  	.long 0x73854
+  	.float 5
+  	#vert 70
+  	.long 0x73858
+  	.float	20
+  	.long 0x7385C
+  	.float 5
+  	#vert 71
+  	.long 0x73860
+  	.float	40
+  	.long 0x73864
+  	.float 5
+  	#vert 65
+  	.long 0x73830
+  	.float	112.5
+  	.long 0x73834
+  	.float 5
 
-	#plat lines
-	#left plat left point
-	.long 0x738a8
-	.float -105
-	.long 0x738ac
-	.float -455
-	#left plat right point
-	.long 0x738b0
-	.float -45
-	.long 0x738b4
-	.float -455
-	#top plat left point
-	.long 0x738b8
-	.float -30
-	.long 0x738bc
-	.float -430
-	#top plat right point
-	.long 0x738c0
-	.float 30
-	.long 0x738c4
-	.float -430
-	#right plat left point
-	.long 0x738c8
-	.float 45
-	.long 0x738cc
-	.float -455
-	#right plat right point
-	.long 0x738d0
-	.float 105
-	.long 0x738d4
-	.float -455
+  	#vert 60
+  	.long 0x73808
+  	.float	112.5
+  	.long 0x7380C
+  	.float -69
+  	#vert 61
+  	.long 0x73810
+  	.float	40
+  	.long 0x73814
+  	.float -69
+  	#vert 62
+  	.long 0x73818
+  	.float	20
+  	.long 0x7381C
+  	.float -69
+  	#vert 63
+  	.long 0x73820
+  	.float	-20
+  	.long 0x73824
+  	.float	-69
+  	#vert 64
+  	.long 0x73828
+  	.float	-40
+  	.long 0x7382C
+  	.float	-69
+  	#vert 66
+  	.long 0x73838
+  	.float	-112.5
+  	.long 0x7383C
+  	.float	-69
 
-	#Platform collision ranges
-	#left
-	.long 0x74694
-	.float -500
-	.long 0x74698
-	.float -500
-	.long 0x7469C
-	.float 500
-	.long 0x746A0
-	.float 500
-	#top
-	.long 0x746bc
-	.float -500
-	.long 0x746c0
-	.float -500
-	.long 0x746c4
-	.float 500
-	.long 0x746c8
-	.float 500
-	#right
-	.long 0x746e4
-	.float -500
-	.long 0x746e8
-	.float -500
-	.long 0x746ec
-	.float 500
-	.long 0x746f0
-	.float 500
+  	#plat lines
+  	#left plat left point
+  	.long 0x738a8
+  	.float -105
+  	.long 0x738ac
+  	.float 43#-455
+  	#left plat right point
+  	.long 0x738b0
+  	.float -45
+  	.long 0x738b4
+  	.float 43#-455
+  	#top plat left point
+  	.long 0x738b8
+  	.float -30
+  	.long 0x738bc
+  	.float 68
+  	#top plat right point
+  	.long 0x738c0
+  	.float 30
+  	.long 0x738c4
+  	.float 68
+  	#right plat left point
+  	.long 0x738c8
+  	.float 45
+  	.long 0x738cc
+  	.float 43
+  	#right plat right point
+  	.long 0x738d0
+  	.float 105
+  	.long 0x738d4
+  	.float 43
 
-	#Change spawn points
-	#p1
-	.long 0xeefc
-	.float -520
-	.long 0xef00
-	.float 40
-	#p2
-	.long 0xef3c
-	.float -370
-	.long 0xef40
-	.float 40
-	#p3
-	.long 0xef7c
-	.float -370
-  .long 0xef80
-  .float 7
-	#p4
-	.long 0xefbc
-	.float -520
-	.long 0xefc0
-	.float 7
+  	#Platform collision ranges
+  	#left
+  	.long 0x74694
+  	.float -500
+  	.long 0x74698
+  	.float -500
+  	.long 0x7469C
+  	.float 500
+  	.long 0x746A0
+  	.float 500
+  	#top
+  	.long 0x746bc
+  	.float -500
+  	.long 0x746c0
+  	.float -500
+  	.long 0x746c4
+  	.float 500
+  	.long 0x746c8
+  	.float 500
+  	#right
+  	.long 0x746e4
+  	.float -500
+  	.long 0x746e8
+  	.float -500
+  	.long 0x746ec
+  	.float 500
+  	.long 0x746f0
+  	.float 500
 
-	#Change Respawn points
-	.long 0x75518
-	.float 100
+  	#Change spawn points
+  	#p1
+  	.long 0xeefc
+  	.float -520
+  	.long 0xef00
+  	.float 40
+  	#p2
+  	.long 0xef3c
+  	.float -370
+  	.long 0xef40
+  	.float 40
+  	#p3
+  	.long 0xef7c
+  	.float -370
+  	.long 0xef80
+  	.float 7
+  	#p4
+  	.long 0xefbc
+  	.float -520
+  	.long 0xefc0
+  	.float 7
 
-	/*
-	.long 0x39328
-	.float	0.7		#scale X
-	.long 0x3932C
-	.float	0.7		#scale Y
-	.long 0x39330
-	.float	0.7		#Scale Z
-	.long 0x39334		#ticktock X
-	.float 0
-	.long 0x39338		#ticktock Y
-	.float -0
-	.long 0x3933C		#ticktock Z
-	.float -0
-	*/
-	.long -1
+  	#Change Respawn points
+  	.long 0x75518
+  	.float 100
+
+  	/*
+  	.long 0x39328
+  	.float	0.7		#scale X
+  	.long 0x3932C
+  	.float	0.7		#scale Y
+  	.long 0x39330
+  	.float	0.7		#Scale Z
+  	.long 0x39334		#ticktock X
+  	.float 0
+  	.long 0x39338		#ticktock Y
+  	.float -0
+  	.long 0x3933C		#ticktock Z
+  	.float -0
+  	*/
+  	.long -1
 
 StageMod_Onett:
 	#Move scenery down

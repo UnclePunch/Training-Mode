@@ -2753,6 +2753,39 @@ Snap102_Codes_SceneLoad_CreateText:
 	li	r5,0x18
 	branchl	r12,memcpy
 
+#Ensure toggles are in bounds
+.set REG_Temp,20
+	li	REG_Temp,0
+Snap102_Codes_SceneLoad_BoundTogglesLoop:
+  bl  Snap102_CodeOptions_Order
+  mflr  r4
+  mulli r3,REG_Temp,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+#Access pointer
+	bl  Snap102_ConvertBlPointer
+  lwz r3,Snap102_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get current value
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  lbzx  r4,r4,REG_Temp
+	extsb	r4,r4
+#Check if below 0
+	cmpwi	r4,0
+	blt	Snap102_Codes_SceneLoad_BoundTogglesZero
+#Check if above max
+	cmpw	r4,r3
+	bge	Snap102_Codes_SceneLoad_BoundTogglesZero
+#All is good, loop
+	b	Snap102_Codes_SceneLoad_BoundTogglesIncLoop
+Snap102_Codes_SceneLoad_BoundTogglesZero:
+	li	r3,0
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  stbx  r3,r4,REG_Temp
+	b	Snap102_Codes_SceneLoad_BoundTogglesIncLoop
+Snap102_Codes_SceneLoad_BoundTogglesIncLoop:
+	addi	REG_Temp,REG_Temp,1
+	cmpwi REG_Temp,CodeAmount
+	blt	Snap102_Codes_SceneLoad_BoundTogglesLoop
+
 #CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
@@ -4811,6 +4844,39 @@ Snap101_Codes_SceneLoad_CreateText:
 	li	r5,0x18
 	branchl	r12,memcpy
 
+#Ensure toggles are in bound
+.set REG_Temp,20
+	li	REG_Temp,0
+Snap101_Codes_SceneLoad_BoundTogglesLoop:
+  bl  Snap101_CodeOptions_Order
+  mflr  r4
+  mulli r3,REG_Temp,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+#Access pointer
+	bl  Snap101_ConvertBlPointer
+  lwz r3,Snap101_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get current value
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  lbzx  r4,r4,REG_Temp
+	extsb	r4,r4
+#Check if below 0
+	cmpwi	r4,0
+	blt	Snap101_Codes_SceneLoad_BoundTogglesZero
+#Check if above max
+	cmpw	r4,r3
+	bge	Snap101_Codes_SceneLoad_BoundTogglesZero
+#All is good, loop
+	b	Snap101_Codes_SceneLoad_BoundTogglesIncLoop
+Snap101_Codes_SceneLoad_BoundTogglesZero:
+	li	r3,0
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  stbx  r3,r4,REG_Temp
+	b	Snap101_Codes_SceneLoad_BoundTogglesIncLoop
+Snap101_Codes_SceneLoad_BoundTogglesIncLoop:
+	addi	REG_Temp,REG_Temp,1
+	cmpwi REG_Temp,CodeAmount
+	blt	Snap101_Codes_SceneLoad_BoundTogglesLoop
+
 #CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
@@ -6868,6 +6934,39 @@ Snap100_Codes_SceneLoad_CreateText:
 	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
+
+#Ensure toggles are in bound
+.set REG_Temp,20
+	li	REG_Temp,0
+Snap100_Codes_SceneLoad_BoundTogglesLoop:
+  bl  Snap100_CodeOptions_Order
+  mflr  r4
+  mulli r3,REG_Temp,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+#Access pointer
+	bl  Snap100_ConvertBlPointer
+  lwz r3,Snap100_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get current value
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  lbzx  r4,r4,REG_Temp
+	extsb	r4,r4
+#Check if below 0
+	cmpwi	r4,0
+	blt	Snap100_Codes_SceneLoad_BoundTogglesZero
+#Check if above max
+	cmpw	r4,r3
+	bge	Snap100_Codes_SceneLoad_BoundTogglesZero
+#All is good, loop
+	b	Snap100_Codes_SceneLoad_BoundTogglesIncLoop
+Snap100_Codes_SceneLoad_BoundTogglesZero:
+	li	r3,0
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  stbx  r3,r4,REG_Temp
+	b	Snap100_Codes_SceneLoad_BoundTogglesIncLoop
+Snap100_Codes_SceneLoad_BoundTogglesIncLoop:
+	addi	REG_Temp,REG_Temp,1
+	cmpwi REG_Temp,CodeAmount
+	blt	Snap100_Codes_SceneLoad_BoundTogglesLoop
 
 #CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
@@ -8932,6 +9031,39 @@ SnapPAL_Codes_SceneLoad_CreateText:
 	addi r4,r4,ModOFST_ModDataStart + ModOFST_ModDataPrefs
 	li	r5,0x18
 	branchl	r12,memcpy
+
+#Ensure toggles are in bound
+.set REG_Temp,20
+	li	REG_Temp,0
+SnapPAL_Codes_SceneLoad_BoundTogglesLoop:
+  bl  SnapPAL_CodeOptions_Order
+  mflr  r4
+  mulli r3,REG_Temp,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+#Access pointer
+	bl  SnapPAL_ConvertBlPointer
+  lwz r3,SnapPAL_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get current value
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  lbzx  r4,r4,REG_Temp
+	extsb	r4,r4
+#Check if below 0
+	cmpwi	r4,0
+	blt	SnapPAL_Codes_SceneLoad_BoundTogglesZero
+#Check if above max
+	cmpw	r4,r3
+	bge	SnapPAL_Codes_SceneLoad_BoundTogglesZero
+#All is good, loop
+	b	SnapPAL_Codes_SceneLoad_BoundTogglesIncLoop
+SnapPAL_Codes_SceneLoad_BoundTogglesZero:
+	li	r3,0
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  stbx  r3,r4,REG_Temp
+	b	SnapPAL_Codes_SceneLoad_BoundTogglesIncLoop
+SnapPAL_Codes_SceneLoad_BoundTogglesIncLoop:
+	addi	REG_Temp,REG_Temp,1
+	cmpwi REG_Temp,CodeAmount
+	blt	SnapPAL_Codes_SceneLoad_BoundTogglesLoop
 
 #CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0

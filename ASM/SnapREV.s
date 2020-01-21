@@ -485,6 +485,39 @@ SnapREV_Codes_SceneLoad_CreateText:
 	li	r5,0x18
 	branchl	r12,memcpy
 
+#Ensure toggles are in bound
+.set REG_Temp,20
+	li	REG_Temp,0
+SnapREV_Codes_SceneLoad_BoundTogglesLoop:
+  bl  SnapREV_CodeOptions_Order
+  mflr  r4
+  mulli r3,REG_Temp,0x4
+  add r3,r3,r4                                #get bl pointer to options info
+#Access pointer
+	bl  SnapREV_ConvertBlPointer
+  lwz r3,SnapREV_CodeOptions_OptionCount(r3)     #get amount of options for this code
+#Get current value
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  lbzx  r4,r4,REG_Temp
+	extsb	r4,r4
+#Check if below 0
+	cmpwi	r4,0
+	blt	SnapREV_Codes_SceneLoad_BoundTogglesZero
+#Check if above max
+	cmpw	r4,r3
+	bge	SnapREV_Codes_SceneLoad_BoundTogglesZero
+#All is good, loop
+	b	SnapREV_Codes_SceneLoad_BoundTogglesIncLoop
+SnapREV_Codes_SceneLoad_BoundTogglesZero:
+	li	r3,0
+  addi	r4,REG_GObjData,OFST_OptionSelections
+  stbx  r3,r4,REG_Temp
+	b	SnapREV_Codes_SceneLoad_BoundTogglesIncLoop
+SnapREV_Codes_SceneLoad_BoundTogglesIncLoop:
+	addi	REG_Temp,REG_Temp,1
+	cmpwi REG_Temp,CodeAmount
+	blt	SnapREV_Codes_SceneLoad_BoundTogglesLoop
+
 #CREATE DESCRIPTION TEXT OBJECT, RETURN POINTER TO STRUCT IN r3
 	li r3,0
 	li r4,0
