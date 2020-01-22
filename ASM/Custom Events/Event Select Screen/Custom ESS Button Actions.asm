@@ -2773,7 +2773,7 @@ Snap102_Codes_SceneLoad_BoundTogglesLoop:
 	blt	Snap102_Codes_SceneLoad_BoundTogglesZero
 #Check if above max
 	cmpw	r4,r3
-	bge	Snap102_Codes_SceneLoad_BoundTogglesZero
+	bgt	Snap102_Codes_SceneLoad_BoundTogglesZero
 #All is good, loop
 	b	Snap102_Codes_SceneLoad_BoundTogglesIncLoop
 Snap102_Codes_SceneLoad_BoundTogglesZero:
@@ -4864,7 +4864,7 @@ Snap101_Codes_SceneLoad_BoundTogglesLoop:
 	blt	Snap101_Codes_SceneLoad_BoundTogglesZero
 #Check if above max
 	cmpw	r4,r3
-	bge	Snap101_Codes_SceneLoad_BoundTogglesZero
+	bgt	Snap101_Codes_SceneLoad_BoundTogglesZero
 #All is good, loop
 	b	Snap101_Codes_SceneLoad_BoundTogglesIncLoop
 Snap101_Codes_SceneLoad_BoundTogglesZero:
@@ -6955,7 +6955,7 @@ Snap100_Codes_SceneLoad_BoundTogglesLoop:
 	blt	Snap100_Codes_SceneLoad_BoundTogglesZero
 #Check if above max
 	cmpw	r4,r3
-	bge	Snap100_Codes_SceneLoad_BoundTogglesZero
+	bgt	Snap100_Codes_SceneLoad_BoundTogglesZero
 #All is good, loop
 	b	Snap100_Codes_SceneLoad_BoundTogglesIncLoop
 Snap100_Codes_SceneLoad_BoundTogglesZero:
@@ -9052,7 +9052,7 @@ SnapPAL_Codes_SceneLoad_BoundTogglesLoop:
 	blt	SnapPAL_Codes_SceneLoad_BoundTogglesZero
 #Check if above max
 	cmpw	r4,r3
-	bge	SnapPAL_Codes_SceneLoad_BoundTogglesZero
+	bgt	SnapPAL_Codes_SceneLoad_BoundTogglesZero
 #All is good, loop
 	b	SnapPAL_Codes_SceneLoad_BoundTogglesIncLoop
 SnapPAL_Codes_SceneLoad_BoundTogglesZero:

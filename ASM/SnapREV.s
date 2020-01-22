@@ -505,7 +505,7 @@ SnapREV_Codes_SceneLoad_BoundTogglesLoop:
 	blt	SnapREV_Codes_SceneLoad_BoundTogglesZero
 #Check if above max
 	cmpw	r4,r3
-	bge	SnapREV_Codes_SceneLoad_BoundTogglesZero
+	bgt	SnapREV_Codes_SceneLoad_BoundTogglesZero
 #All is good, loop
 	b	SnapREV_Codes_SceneLoad_BoundTogglesIncLoop
 SnapREV_Codes_SceneLoad_BoundTogglesZero:
