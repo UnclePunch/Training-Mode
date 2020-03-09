@@ -53,7 +53,7 @@
 80007afc 0000007c 80007afc 0 checkIfHitboxHitsHittableProjectile
 80007b78 00000054 80007b78 0 zz_0007b78_
 80007bcc 0000019c 80007bcc 0 Hitbox_CheckIfProjectileCollidesWithReflect/Absorb/ShieldBox
-80007d68 00000070 80007d68 0 Stages_MovingCollisionUnk(r3=JObj)
+80007d68 00000070 80007d68 0 HSD_JObjSetupMatrix
 80007dd8 000000f4 80007dd8 0 zz_0007dd8_
 80007ecc 00000190 80007ecc 0 Hitbox_Grab_CollisionWithHurtboxCheck
 8000805c 000001ec 8000805c 0 Hitbox_CheckForHitboxCollisionWithHurtbox
@@ -114,7 +114,7 @@
 8000bb24 000000e0 8000bb24 0 zz_000bb24_
 8000bc04 00000124 8000bc04 0 JObj_Something
 8000bd28 0000008c 8000bd28 0 zz_000bd28_
-8000bdb4 0000008c 8000bdb4 0 zz_000bdb4_
+8000bdb4 0000008c 8000bdb4 0 Item_GetNextFrame?
 8000be40 0000008c 8000be40 0 JObj_Something
 8000becc 00000124 8000becc 0 zz_000becc_
 8000bff0 0000008c 8000bff0 0 zz_000bff0_
@@ -166,7 +166,7 @@
 8000dff4 00000144 8000dff4 0 zz_000dff4_
 8000e138 00000064 8000e138 0 zz_000e138_
 8000e19c 00000074 8000e19c 0 zz_000e19c_
-8000e210 00000320 8000e210 0 HUD_GetHUDPositionForPlayerOnscreenCoordinates
+8000e210 00000320 8000e210 0 HUD_GetHUDPositionForPlayerOnscreenCoordinates(r3=CObj,r4=WorldPos,r5=Return,r6=typedef)
 8000e530 00000308 8000e530 0 zz_000e530_
 8000e838 000001b8 8000e838 0 zz_000e838_
 8000e9f0 00000364 8000e9f0 0 zz_000e9f0_
@@ -188,7 +188,7 @@
 800103d8 00000074 800103d8 0 zz_00103d8_
 8001044c 000011a8 8001044c 0 RagdollThink_CollisionUnk
 800115f4 0000011c 800115f4 0 Ragdoll_WindDecayThink
-80011710 000000e4 80011710 0 Ragdoll_InitializeUnk
+80011710 000000e4 80011710 0 Ragdoll_InitializeBoneset
 800117f4 000001e8 800117f4 0 PlayerDisplay_DrawRagdollLines
 800119dc 00000074 800119dc 0 AestheticWindEffect(r3=sourcelocation,r4=duration,f1=radiusSize,f2=effectdegradation,f3=unk)
 80011a50 0000006c 80011a50 0 AestheticWindEffect_Stage?(r3=sourcelocation,r4=duration,f1=radiusSize,f2=effectdegradation,f3=unk)
@@ -484,7 +484,7 @@
 800230c8 00000068 800230c8 0 Audio_GetSSMIDBounds(r3=SSMID,r4=ReturnLowID,r5=ReturnHighID) Return(r3=isDoesntExist?)
 80023130 000000f0 80023130 0 Audio_GetSSMIDFromSFXID
 80023220 00000034 80023220 0 Audio_GetUnkFromSSMID
-80023254 00000198 80023254 0 Audio_Unk
+80023254 00000198 80023254 0 Audio_InitFooter
 800233ec 000002a8 800233ec 0 Audio_CheckIfKirbyTM?
 80023694 00000024 80023694 0 SFX_StopAll_Return_r3=-1
 800236b8 00000024 800236b8 0 SFX_StopSFXInstance?
@@ -510,7 +510,7 @@
 800244f4 000000e0 800244f4 0 zz_00244f4_
 800245d4 00000020 800245d4 0 zz_00245d4_
 800245f4 00000020 800245f4 0 zz_00245f4_
-80024614 00000020 80024614 0 zz_0024614_
+80024614 00000020 80024614 0 Audio_UpdateBGMLevel
 80024634 00000020 80024634 0 Audio_UpdateDSPLevel
 80024654 000004c8 80024654 0 DSP_Process
 80024b1c 0000003c 80024b1c 0 zz_0024b1c_
@@ -550,7 +550,7 @@
 800264e4 0000002c 800264e4 0 SFX_SFXGObj_GetSFXInstanceID
 80026510 000000b4 80026510 0 SFX_SFXGObj_UnkAll? (r3=OwnerGObj)
 800265c4 0000008c 800265c4 0 SFX_SFXGObj_DestroyAll (r3=OwnerGObj)
-80026650 00000160 80026650 0 checkIfAudioCacheIsUpdated
+80026650 00000160 80026650 0 Audio_CheckIfAudioCacheIsUpdated
 800267b0 00000104 800267b0 0 zz_00267b0_
 800268b4 000000f8 800268b4 0 Audio_CheckToUnload
 800269ac 00000258 800269ac 0 Audio_UnloadOldSSM
@@ -562,7 +562,7 @@
 8002702c 0000013c 8002702c 0 Audio_RequestAudioFileLoad (r3=AudioGroup,r4=Bitfield1,r5=Bitfield2)
 80027168 00000320 80027168 0 Audio_CompareAndUpdateAudioCache
 80027488 000001c0 80027488 0 zz_0027488_
-80027648 00000214 80027648 0 ClassicMode_LoadAudioSomething
+80027648 00000214 80027648 0 Audio_WaitForAllSSMs
 8002785c 00000254 8002785c 0 Audio_LoadStageAndCharAudio (andSetDSPEchoLevel)
 80027ab0 0000030c 80027ab0 0 Language_OverwriteAudioFolderName
 80027cc4 000000f8 80027cc4 0 zz_0027cc4_
@@ -711,7 +711,7 @@
 800319c4 0000010c 800319c4 0 zz_00319c4_
 80031ad0 000001e0 80031ad0 0 SetupPlayerSlot
 80031cb0 0000007c 80031cb0 0 LoadCharacter(r3=ExtID,r4=CostumeID)
-80031d2c 0000007c 80031d2c 0 Preload_StartCharacterPreload? (r3 = char external ID, r4 = costume ID)
+80031d2c 0000007c 80031d2c 0 Preload_LoadKirbyAbility(r3=AbilityExtID,r4=KirbyColorID)
 80031da8 00000020 80031da8 0 LoadKirbyHatFile_Prefunction?
 80031dc8 000000f4 80031dc8 0 Kirby_LoadAllLoadedPlayersKirbyHat
 80031ebc 000000f4 80031ebc 0 DestroyPlayer
@@ -1141,7 +1141,7 @@
 8004f400 000004a4 8004f400 0 ECB_CheckAllGroundTypesForCollision(r3=LastKnownPosition,r4=LastGroundID,r5=LastGroundType,r6=SomeFloat,r10=perframe)
 8004f8a4 00000388 8004f8a4 0 zz_004f8a4_
 8004fc2c 0000043c 8004fc2c 0 ECB_StoreCeilingID+Type
-80050068 00000164 80050068 0 zz_0050068_
+80050068 00000164 80050068 0 Collision_CheckImaginary0.1Extension
 800501cc 000003b0 800501cc 0 Raycast_LeftWallLine(r3=ReturnLinePosition,r4=ReturnLineID,r5=ReturnLineType,r6=ReturnUnk,r7=,r8=,r9=r10=OptionalFunction,f1=CurrentX,f2=CurrentY,f3=PrevX,f4=PrevY,r5=0)
 8005057c 0000043c 8005057c 0 Collision_SearchForMovingCollisionRightWall (With Ledge)
 800509b8 000003b0 800509b8 0 Raycast_RightWallLine(r3=ReturnLinePosition,r4=ReturnLineID,r5=ReturnLineType,r6=ReturnUnk,r7=,r8=,r9=r10=OptionalFunction,f1=CurrentX,f2=CurrentY,f3=PrevX,f4=PrevY,r5=0)
@@ -1292,10 +1292,10 @@
 8005be88 0000032c 8005be88 0 Effect_CreateObject
 8005c1b4 00000108 8005c1b4 0 Effect_CreateUnk1
 8005c2bc 00000120 8005c2bc 0 Effect_CreateUnk2
-8005c3dc 000001e8 8005c3dc 0 Effect_CreateUnk3
-8005c5c4 00000130 8005c5c4 0 Effect_CreateUnk4
+8005c3dc 000001e8 8005c3dc 0 Effect_CreateCopyPos(r3=EffectID,r4=Player,r5=JObj)
+8005c5c4 00000130 8005c5c4 0 Effect_CreateCopyPosRot4(r3=EffectID,r4=Player,r5=JObj)
 8005c6f4 00000120 8005c6f4 0 Effect_CreateUnk5
-8005c814 000000f0 8005c814 0 Effect_CreateUnk6
+8005c814 000000f0 8005c814 0 Effect_CreateDefinePosition(r3=EffectID,r4=Player,r5=Position)
 8005c904 000000a0 8005c904 0 Effect_CreateUnk7
 8005c9a4 0000002c 8005c9a4 0 ParticleThink?
 8005c9d0 0000002c 8005c9d0 0 ParticleThink2?
@@ -1336,17 +1336,17 @@
 8005fab8 0000012c 8005fab8 0 zz_005fab8_
 8005fbe4 000000f4 8005fbe4 0 zz_005fbe4_
 8005fcd8 00000104 8005fcd8 0 zz_005fcd8_
-8005fddc 00001f94 8005fddc 0 Textures_DisplayEffectTextures
+8005fddc 00001f94 8005fddc 0 Effect_SpawnSync (r3=GFXID,r4=Player,r5=JObj,r6=JObj)
 80061d70 00001bc0 80061d70 0 DisplayEffect_CharEffect(r3=EffectID,r4=PlayerGObj,r5=va_arg_list)
-80063930 0000396c 80063930 0 DisplayEffect_Texture(r3=EffectID,r4=PlayerGObj,r5=va_arg_list)
+80063930 0000396c 80063930 0 DisplayEffect_Queued(r3=EffectID,r4=PlayerGObj,r5=va_arg_list)
 8006729c 00000070 8006729c 0 LoadCharacterEffectFIle
 8006730c 00000070 8006730c 0 zz_006730c_
 8006737c 000000d0 8006737c 0 loadFile_EfData.dat // r3=whichFile?
-8006744c 000001d8 8006744c 0 decideCommonTexture
+8006744c 000001d8 8006744c 0 Effect_AsyncCheck
 80067610 00000014 80067610 0 zz_0067610_
 80067624 00000064 80067624 0 Effect_CheckQueue
 80067688 00000068 80067688 0 zz_0067688_
-800676f0 00000290 800676f0 0 Effect_QueueEffect
+800676f0 00000290 800676f0 0 Effect_SpawnAsync (r3=Player,r4=GFXPointer?,r5=typedef,r6=GFXID,r7=JObj)
 80067980 00000030 80067980 0 zz_0067980_
 800679b0 000000d4 800679b0 0 CreatePlayerBlockAllocationSkeleton?
 80067a84 00000038 80067a84 0 CreatePlayerBlockAllocationSkeleton?_Prefunction
@@ -1389,7 +1389,7 @@
 8006d9ec 00000060 8006d9ec 0 PlayerThink_CameraBehavior
 8006da4c 00000070 8006da4c 0 PlayerThink_UpdateBonuses
 8006dabc 00000138 8006dabc 0 FreePlayerBlock
-8006dbf4 00000100 8006dbf4 0 zz_006dbf4_
+8006dbf4 00000100 8006dbf4 0 Fighter_JointDepthUnk
 8006dcf4 0000010c 8006dcf4 0 zz_006dcf4_
 8006de00 0000010c 8006de00 0 zz_006de00_
 8006df0c 00000148 8006df0c 0 zz_006df0c_
@@ -1406,15 +1406,15 @@
 8006f368 00000074 8006f368 0 zz_006f368_
 8006f3dc 000000a8 8006f3dc 0 Animation_GetNextAnimationFrameNumber
 8006f484 00000044 8006f484 0 Animation_GetCurrentASFrameLength
-8006f4c8 00000160 8006f4c8 0 zz_006f4c8_
+8006f4c8 00000160 8006f4c8 0 Animation_AnimateDynamics
 8006f628 000001a0 8006f628 0 zz_006f628_
 8006f7c8 0000018c 8006f7c8 0 zz_006f7c8_
 8006f954 00000040 8006f954 0 zz_006f954_
 8006f994 000000c4 8006f994 0 zz_006f994_
 8006fa58 00000130 8006fa58 0 Bone_Unk
 8006fb88 0000015c 8006fb88 0 zz_006fb88_
-8006fce4 00000124 8006fce4 0 zz_006fce4_
-8006fe08 00000040 8006fe08 0 zz_006fe08_
+8006fce4 00000124 8006fce4 0 Animation_DontAnimateDynamics??
+8006fe08 00000040 8006fe08 0 Animation_CheckToAnimateDynamics
 8006fe48 00000054 8006fe48 0 zz_006fe48_
 8006fe9c 000000d8 8006fe9c 0 zz_006fe9c_
 8006ff74 0000009c 8006ff74 0 Bone_ResetAllBoneLocalTranslations
@@ -1432,9 +1432,9 @@
 80070758 00000024 80070758 0 Animation_RemoveAnimation?
 8007077c 00000034 8007077c 0 zz_007077c_
 800707b0 00000154 800707b0 0 zz_00707b0_
-80070904 0000010c 80070904 0 zz_0070904_
+80070904 0000010c 80070904 0 Bone_Unk
 80070a10 00000178 80070a10 0 Bone_AnimateEachBone?
-80070b88 000000c0 80070b88 0 zz_0070b88_
+80070b88 000000c0 80070b88 0 Bone_Unk
 80070c48 0000007c 80070c48 0 zz_0070c48_
 80070cc4 000001b0 80070cc4 0 Item_ChangeHandPosition?
 80070e74 000000b4 80070e74 0 zz_0070e74_
@@ -1555,7 +1555,7 @@
 800753ac 00000028 800753ac 0 zz_00753ac_
 800753d4 00000214 800753d4 0 zz_00753d4_
 800755e8 00000068 800755e8 0 zz_00755e8_
-80075650 000001fc 80075650 0 zz_0075650_
+80075650 000001fc 80075650 0 Kirby_UnkCopyAbility
 8007584c 000000e0 8007584c 0 zz_007584c_
 8007592c 000001c4 8007592c 0 Obj_ChangeRotation_Yaw(r3=PlayerData,r4=BoneID?,f1=RadianDirection)
 80075af0 000001c4 80075af0 0 Obj_ChangeRotation_Pitch(r3=PlayerData,r4=BoneID?,f1=RadianDirection)
@@ -1865,14 +1865,14 @@
 80085560 00000068 80085560 0 zz_0085560_
 800855c8 00000164 800855c8 0 Load_CharID->FileNames
 8008572c 00000060 8008572c 0 fileLoad_PlXX.dat
-8008578c 00000054 8008578c 0 filePreload_Character? (r3 = char internal ID, r4 = color)
+8008578c 00000054 8008578c 0 fileLoad_KbCpXX.dat(r3=InternalID,r4=CostumeID)
 800857e0 00000040 800857e0 0 zz_00857e0_
 80085820 000000c4 80085820 0 loadFile_CharCostumeDat
 800858e4 000000c4 800858e4 0 loadFile_KirbyDat?
 800859a8 0000006c 800859a8 0 zz_00859a8_
 80085a14 000000fc 80085a14 0 Animation_LoadPlAJXX.dat+StoreARAMPointersToAJXX
 80085b10 00000088 80085b10 0 Animation_LoadAnimation+AllocateAnimCache
-80085b98 00000140 80085b98 0 zz_0085b98_
+80085b98 00000140 80085b98 0 Animation_LoadGmRstM**.dat+StoreARAMPointersToAJXX
 80085cd8 00000178 80085cd8 0 Animation_LoadData(r3 = player, r4 = animation source, r5 = animation ID)
 80085e50 00000184 80085e50 0 GetAnimationAddress(r3=player,r4=anim ID)
 80085fd4 0000008c 80085fd4 0 Animation_GetAnimationHeader(r3=player, r4=anim ID)
@@ -1961,7 +1961,7 @@
 80087454 0000000c 80087454 0 Damage_GetKnockbackMagnitude
 80087460 0000000c 80087460 0 DataOffset_GetSpawnNumber
 8008746c 00000050 8008746c 0 zz_008746c_
-800874bc 00000010 800874bc 0 DataOffset_0x221F_Contain00000008
+800874bc 00000010 800874bc 0 DataOffset_CheckIfSlave
 800874cc 0000003c 800874cc 0 zz_00874cc_
 80087508 0000006c 80087508 0 LoadCharacterSynchronously?
 80087574 0000009c 80087574 0 AdventureModeThink_LoadAdditionalKirbyCostumes?
@@ -2584,7 +2584,7 @@
 8009cb08 00000004 8009cb08 0 zz_009cb08_
 8009cb0c 00000004 8009cb0c 0 zz_009cb0c_
 8009cb10 00000030 8009cb10 0 zz_009cb10_
-8009cb40 00000444 8009cb40 0 zz_009cb40_
+8009cb40 00000444 8009cb40 0 Dynamics_ToggleDynamics(r3=Player,r4=BonesetID,r5=isDynamic,r6=numOfBonesToAnimate)
 8009cf84 000000f0 8009cf84 0 Ragdoll_InitializeCharacterRagdoll
 8009d074 00000118 8009d074 0 zz_009d074_
 8009d18c 00000118 8009d18c 0 zz_009d18c_
@@ -2597,7 +2597,7 @@
 8009d920 00000118 8009d920 0 zz_009d920_
 8009da38 00000118 8009da38 0 zz_009da38_
 8009db50 00000104 8009db50 0 zz_009db50_
-8009dc54 00000140 8009dc54 0 zz_009dc54_
+8009dc54 00000140 8009dc54 0 Jigglypuff_InitHeadbandDynamics
 8009dd94 00000314 8009dd94 0 RagdollThink_DynamicsHit
 8009df88 00000120 8009df88 0 RagdollThink_Unk
 8009e044 00000064 8009e044 0 zz_009e044_
@@ -2612,7 +2612,7 @@
 8009e660 000000b4 8009e660 0 Ragdoll_CheckForMarth
 8009e714 000000a0 8009e714 0 AestheticWindEffect_PlayerBoneToEffect(r3=player,r4=boneID,r5=framelength,f1=,f2=,f3/f4=intensity)
 8009e71c 00000098 8009e71c 0 AestheticWindEffect_PlayerBoneToEffect(r3=player,r4=boneID,r5=framelength,f1=,f2=,f3/f4=intensity)
-8009e7b4 00000344 8009e7b4 0 Ragdoll_Unk
+8009e7b4 00000344 8009e7b4 0 Dynamics_CheckToEnableDynamics(r3=Player,r4=DynamicBoneBools)
 8009eaf8 00000020 8009eaf8 0 zz_009eaf8_
 8009eb18 000000f0 8009eb18 0 zz_009eb18_
 8009ec08 00000004 8009ec08 0 zz_009ec08_
@@ -2651,7 +2651,7 @@
 8009f5ac 000001b0 8009f5ac 0 zz_009f5ac_
 8009f75c 0000009c 8009f75c 0 zz_009f75c_
 8009f7f8 0000003c 8009f7f8 0 zz_009f7f8_
-8009f834 00000864 8009f834 0 GFX_Effect_Spawn
+8009f834 00000864 8009f834 0 Effect_ParseAsyncSubaction(r3=Player,r4=GFXID,r5=BoneID,r6=,r7=isRemoveOnStateChange)
 800a0098 000000b0 800a0098 0 zz_00a0098_
 800a0148 0000023c 800a0148 0 zz_00a0148_
 800a0380 00000004 800a0380 0 zz_00a0380_
@@ -3004,7 +3004,7 @@
 800bffd0 000000a4 800bffd0 0 GFX/ColorOverlay_Apply
 800c0074 00000024 800c0074 0 Color_Something2_Prefunction
 800c0098 0000009c 800c0098 0 zz_00c0098_
-800c0134 000000cc 800c0134 0 onActionStateChange
+800c0134 000000cc 800c0134 0 ColorOverlay_OnStateChange
 800c0200 00000158 800c0200 0 ColorOverlay_Remove
 800c0358 000000b0 800c0358 0 zz_00c0358_
 800c0408 00000250 800c0408 0 GFX_UpdatePlayerGFX
@@ -3129,7 +3129,7 @@
 800c5240 00000044 800c5240 0 Items_CheckForHammerItem
 800c5284 00000070 800c5284 0 zz_00c5284_
 800c52f4 000000f0 800c52f4 0 AS_HammerWait
-800c53e4 00000024 800c53e4 0 zz_00c53e4_
+800c53e4 00000024 800c53e4 0 Hammer_CheckIfInHammerState
 800c5408 00000044 800c5408 0 zz_00c5408_
 800c544c 00000040 800c544c 0 zz_00c544c_
 800c548c 00000038 800c548c 0 zz_00c548c_
@@ -3608,7 +3608,7 @@
 800d5a08 00000028 800d5a08 0 zz_00d5a08_
 800d5a30 0000003c 800d5a30 0 zz_00d5a30_
 800d5a6c 00000080 800d5a6c 0 Camera_Rebirth
-800d5aec 0000010c 800d5aec 0 AS_042/043_Landing/LandingSpecialFall
+800d5aec 0000010c 800d5aec 0 AS_042/043_Landing/LandingSpecialFall(r5=IASAFlag)
 800d5bf8 0000005c 800d5bf8 0 AS_042/313_LandingCheck
 800d5c54 0000005c 800d5c54 0 AS_043/313_LandingFallSpecialCheck
 800d5cb0 0000008c 800d5cb0 0 AS_043/313_LandingFallSpecialCheckAgain
@@ -4495,15 +4495,15 @@
 800eeb7c 00000044 800eeb7c 0 zz_00eeb7c_
 800eebc0 00000038 800eebc0 0 zz_00eebc0_
 800eebf8 0000003c 800eebf8 0 zz_00eebf8_
-800eec34 0000011c 800eec34 0 zz_00eec34_
+800eec34 0000011c 800eec34 0 Kirby_LoadHat(r3=InternalID,r4=KirbyCostumeID,r6=MaxCostume
 800eed50 0000014c 800eed50 0 LoadKirbyHatFile(r3=CharHatInternalID)
-800eee0c 00000090 800eee0c 0 zz_00eee0c_
+800eee0c 00000090 800eee0c 0 LoadKirbyHatFile(r3=CharHatInternalID)
 800eee9c 00000028 800eee9c 0 Kirby_LoadAllLoadedPlayersKirbyHat_Prefunction
 800eeec4 00000040 800eeec4 0 Kirby_branchToAbilityLossFunction
 800eef04 00000124 800eef04 0 zz_00eef04_
 800ef028 00000018 800ef028 0 zz_00ef028_
 800ef040 000000a4 800ef040 0 zz_00ef040_
-800ef0e4 00000278 800ef0e4 0 setsUpOutline? (notably 800ef1d8)
+800ef0e4 00000278 800ef0e4 0 Kirby_TObjUnk
 800ef35c 000000dc 800ef35c 0 zz_00ef35c_
 800ef438 00000264 800ef438 0 zz_00ef438_
 800ef69c 000001e0 800ef69c 0 zz_00ef69c_
@@ -5973,9 +5973,9 @@
 8011b93c 0000005c 8011b93c 0 Peach_RemoveDress
 8011b998 00000044 8011b998 0 zz_011b998_
 8011b9dc 00000044 8011b9dc 0 zz_011b9dc_
-8011ba20 00000034 8011ba20 0 checkForDroppedFloatMidAerial
-8011ba54 00000084 8011ba54 0 checkForFloat_Down+X
-8011bad8 00000094 8011bad8 0 checkForFloat_peakOfJump
+8011ba20 00000034 8011ba20 0 Peach_CheckForDroppedFloat
+8011ba54 00000084 8011ba54 0 Peach_CheckForFloat_DownX
+8011bad8 00000094 8011bad8 0 Peach_CheckForFloat_JumpPeak
 8011bb6c 000000cc 8011bb6c 0 AS_PeachFloat
 8011bc38 00000054 8011bc38 0 Animation_PeachFloat
 8011bc8c 0000008c 8011bc8c 0 Interrupt_PeachFloat
@@ -8492,8 +8492,8 @@
 8015ed4c 00000010 8015ed4c 0 Rumble_StoreRumbleFlag
 8015ed5c 0000000c 8015ed5c 0 zz_015ed5c_
 8015ed68 0000000c 8015ed68 0 zz_015ed68_
-8015ed74 0000000c 8015ed74 0 zz_015ed74_
-8015ed80 0000000c 8015ed80 0 zz_015ed80_
+8015ed74 0000000c 8015ed74 0 Sound_GetVolumeBalance
+8015ed80 0000000c 8015ed80 0 Sound_StoreVolumeBalance
 8015ed8c 0000000c 8015ed8c 0 Unlock_GetCharUnlockBitfield
 8015ed98 0000000c 8015ed98 0 zz_015ed98_
 8015eda4 0000000c 8015eda4 0 Unlock_GetStageUnlockBitfield
@@ -8537,7 +8537,7 @@
 801601c4 00000080 801601c4 0 zz_01601c4_
 80160244 0000007c 80160244 0 zz_0160244_
 80160258 00000068 80160258 0 zz_0160258_
-801602c0 000000f0 801602c0 0 zz_01602c0_
+801602c0 000000f0 801602c0 0 Sound_UpdateVolume
 801603b0 00000050 801603b0 0 zz_01603b0_
 80160400 00000038 80160400 0 GetVictoryTheme(r3=ExternalCharID)
 80160438 0000003c 80160438 0 ResultScreen_GetResultScreenAnimation(r3=ExternalCharID)
@@ -13448,7 +13448,7 @@
 8026a810 00000038 8026a810 0 Items_OnSpawnBlrl
 8026a848 000000a4 8026a848 0 zz_026a848_
 8026a8ec 00000268 8026a8ec 0 Items_DestroyItem
-8026ab54 00000084 8026ab54 0 HoldItemBlrl(r3=Player,r4=Item,r5=BoneID)
+8026ab54 00000084 8026ab54 0 HoldItemBlrl(r3=Item,r4=Player,r5=BoneID)
 8026abd8 0000009c 8026abd8 0 Item_Apply/DropItem?
 8026ac74 000000ac 8026ac74 0 zz_026ac74_
 8026ad20 000000a0 8026ad20 0 Items_ThrowItem
@@ -20469,8 +20469,8 @@
 8038d96c 0000006c 8038d96c 0 zz_038d96c_
 8038d9d8 00000084 8038d9d8 0 DSP_SearchForActiveSoundInstance
 8038da5c 00000014 8038da5c 0 zz_038da5c_
-8038da70 0000028c 8038da70 0 Audio_LoadSmash2.sem?
-8038dcfc 00000034 8038dcfc 0 zz_038dcfc_
+8038da70 0000028c 8038da70 0 Audio_LoadSmash2.sem
+8038dcfc 00000034 8038dcfc 0 Audio_UnloadSmash2.sem
 8038dd30 00000304 8038dd30 0 AXDriverSetupAux
 8038e034 000002d8 8038e034 0 zz_038e034_
 8038e30c 00000070 8038e30c 0 Audio_InitReverb?
