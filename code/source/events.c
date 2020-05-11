@@ -1,5 +1,13 @@
 #include "events.h"
 
+void Event_Init(GOBJ *gobj)
+{
+    int *eventData = gobj->userdata;
+    EventData *eventInfo = eventData[0];
+    OSReport("this is %s\n",eventInfo->eventName);
+    return;
+}
+
 /////////////////////
 // Mod Information //
 /////////////////////
@@ -39,7 +47,7 @@ static EventMatchData LCancel_MatchData =
 {
     .timer = MATCH_TIMER_COUNTUP,
     .matchType = MATCH_MATCHTYPE_TIME,
-    .playMusic = true,
+    .playMusic = false,
     .hideGo = true,
     .hideReady = true,
     .isCreateHUD = true,
@@ -54,14 +62,14 @@ static EventMatchData LCancel_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -80,15 +88,17 @@ static EventData LCancel =
     // Event Tutorial File Name
     LCancel_Tut,
     // isChooseCPU
-    false,
+    true,
     // isSelectStage
-    false,
+    true,
     // Score Type
     0,
     // callback priority
     0,
     // Event Callback Function
     LCancel_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &LCancel_MatchData,
     // Menu Data
@@ -140,14 +150,14 @@ static EventMatchData Ledgedash_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -175,6 +185,8 @@ static EventData Ledgedash =
     0,
     // Event Callback Function
     Ledgedash_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Ledgedash_MatchData,
     // Menu Data
@@ -226,14 +238,14 @@ static EventMatchData Combo_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -261,6 +273,8 @@ static EventData Combo =
     0,
     // Event Callback Function
     Combo_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Combo_MatchData,
     // Menu Data
@@ -312,14 +326,14 @@ static EventMatchData AttackOnShield_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -347,6 +361,8 @@ static EventData AttackOnShield =
     0,
     // Event Callback Function
     AttackOnShield_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &AttackOnShield_MatchData,
     // Menu Data
@@ -398,14 +414,14 @@ static EventMatchData Reversal_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -433,6 +449,8 @@ static EventData Reversal =
     0,
     // Event Callback Function
     Reversal_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Reversal_MatchData,
     // Menu Data
@@ -484,14 +502,14 @@ static EventMatchData SDI_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -519,6 +537,8 @@ static EventData SDI =
     0,
     // Event Callback Function
     SDI_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &SDI_MatchData,
     // Menu Data
@@ -570,14 +590,14 @@ static EventMatchData Powershield_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -605,6 +625,8 @@ static EventData Powershield =
     0,
     // Event Callback Function
     Powershield_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Powershield_MatchData,
     // Menu Data
@@ -656,14 +678,14 @@ static EventMatchData Ledgetech_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -691,6 +713,8 @@ static EventData Ledgetech =
     0,
     // Event Callback Function
     Ledgetech_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Ledgetech_MatchData,
     // Menu Data
@@ -742,14 +766,14 @@ static EventMatchData AmsahTech_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -777,6 +801,8 @@ static EventData AmsahTech =
     0,
     // Event Callback Function
     AmsahTech_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &AmsahTech_MatchData,
     // Menu Data
@@ -828,14 +854,14 @@ static EventMatchData ShieldDrop_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -863,6 +889,8 @@ static EventData ShieldDrop =
     0,
     // Event Callback Function
     ShieldDrop_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &ShieldDrop_MatchData,
     // Menu Data
@@ -914,14 +942,14 @@ static EventMatchData WaveshineSDI_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -949,6 +977,8 @@ static EventData WaveshineSDI =
     0,
     // Event Callback Function
     WaveshineSDI_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &WaveshineSDI_MatchData,
     // Menu Data
@@ -1000,14 +1030,14 @@ static EventMatchData SlideOff_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1035,6 +1065,8 @@ static EventData SlideOff =
     0,
     // Event Callback Function
     SlideOff_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &SlideOff_MatchData,
     // Menu Data
@@ -1086,14 +1118,14 @@ static EventMatchData GrabMash_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1121,6 +1153,8 @@ static EventData GrabMash =
     0,
     // Event Callback Function
     GrabMash_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &GrabMash_MatchData,
     // Menu Data
@@ -1172,14 +1206,14 @@ static EventMatchData TechCounter_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1207,6 +1241,8 @@ static EventData TechCounter =
     0,
     // Event Callback Function
     TechCounter_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &TechCounter_MatchData,
     // Menu Data
@@ -1258,14 +1294,14 @@ static EventMatchData ArmadaShine_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1293,6 +1329,8 @@ static EventData ArmadaShine =
     0,
     // Event Callback Function
     ArmadaShine_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &ArmadaShine_MatchData,
     // Menu Data
@@ -1344,14 +1382,14 @@ static EventMatchData SideBSweet_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1379,6 +1417,8 @@ static EventData SideBSweet =
     0,
     // Event Callback Function
     SideBSweet_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &SideBSweet_MatchData,
     // Menu Data
@@ -1430,14 +1470,14 @@ static EventMatchData EscapeSheik_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1465,6 +1505,8 @@ static EventData EscapeSheik =
     0,
     // Event Callback Function
     EscapeSheik_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &EscapeSheik_MatchData,
     // Menu Data
@@ -1516,14 +1558,14 @@ static EventMatchData Eggs_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1551,6 +1593,8 @@ static EventData Eggs =
     0,
     // Event Callback Function
     Eggs_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Eggs_MatchData,
     // Menu Data
@@ -1602,14 +1646,14 @@ static EventMatchData Multishine_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1637,6 +1681,8 @@ static EventData Multishine =
     0,
     // Event Callback Function
     Multishine_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Multishine_MatchData,
     // Menu Data
@@ -1688,14 +1734,14 @@ static EventMatchData Reaction_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1723,6 +1769,8 @@ static EventData Reaction =
     0,
     // Event Callback Function
     Reaction_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Reaction_MatchData,
     // Menu Data
@@ -1774,14 +1822,14 @@ static EventMatchData Ledgestall_MatchData =
     .isShowAnalogStick = true, // 0x40
     .isShowScore = false, // 0x80
 
-    .isRunStockLogic = true, // 0x20
+    .isRunStockLogic = false, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
     .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
-    .timerSeconds = 32, // 0xFFFFFFFF
-    .timerSubSeconds = 8, // 0xFF
+    .timerSeconds = 0, // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
@@ -1809,6 +1857,8 @@ static EventData Ledgestall =
     0,
     // Event Callback Function
     Ledgestall_Think,
+    // Event Init Function
+    Event_Init,
     // Match Data
     &Ledgestall_MatchData,
     // Menu Data
@@ -1898,17 +1948,28 @@ static EventPage **EventPages[] =
 };
 
 
-
 //////////////////////
 /// Init Functions ///
 //////////////////////
 
 void EventInit(int page, int eventID, MatchData *matchData)
 {
+
     // get event pointer
     EventData *event = GetEvent(page,eventID);
 
-    //Build up match info struct
+    //Init default match info
+    matchData->unk1 = 4;
+    matchData->timer_unk2 = 0;
+    matchData->unk2 = 1;
+    matchData->unk7 = 1;
+    matchData->isCheckStockSteal = 1;
+    matchData->unk10 = 3;
+    matchData->isSkipEndCheck = 1;
+    matchData->itemFreq = MATCH_ITEMFREQ_OFF;
+    matchData->onStartMelee = EventLoad;
+
+    //Copy event's match info struct
     EventMatchData *eventMatchData = event->matchData;
     matchData->timer = eventMatchData->timer;
     matchData->matchType = eventMatchData->matchType;
@@ -1931,6 +1992,29 @@ void EventInit(int page, int eventID, MatchData *matchData)
     matchData->timerSubSeconds = eventMatchData->timerSubSeconds;
     matchData->onCheckPause = eventMatchData->onCheckPause;
     matchData->onMatchEnd = eventMatchData->onMatchEnd;
+
+    // Initialize all player data
+    Memcard *memcard = R13_PTR(MEMCARD);
+    CSSBackup eventBackup = memcard->EventBackup;
+    for (int i = 0; i<6; i++)
+    {
+        // initialize data
+        CSS_InitPlayerData(&matchData->playerData[i]);
+
+        // set to enter fall on match start
+        matchData->playerData[i].isEntry = false;
+
+        // copy nametag id for the player
+        if (i == 0)
+        {
+            // Update the player's nametag ID
+            matchData->playerData[i].nametag = eventBackup.nametag;
+
+            // Update the player's rumble setting
+            int tagRumble = CSS_GetNametagRumble(0,matchData->playerData[0].nametag);
+            matchData->playerData[0].isRumble = tagRumble;
+        }
+    }
 
     // Determine the Player
     int player_kind;
@@ -1965,8 +2049,8 @@ void EventInit(int page, int eventID, MatchData *matchData)
         cpu_costume = 0;
     }
 
-    // Check if CPU is using the same color as P1
-    if (player_costume == cpu_costume)
+    // Check if CPU is using the same character and color as P1
+    if ((player_kind == cpu_kind) && (player_costume == cpu_costume))
     {
         // this doesnt account for if theyre both using the last costume
         cpu_costume +=1;
@@ -1975,14 +2059,130 @@ void EventInit(int page, int eventID, MatchData *matchData)
     // Copy player data to match info struct (update their rumble setting 801bb1ec)
     matchData->playerData[0].kind = player_kind;
     matchData->playerData[0].costume = player_costume;
+    matchData->playerData[0].status = 0;
     matchData->playerData[1].kind = cpu_kind;
     matchData->playerData[1].costume = cpu_costume;
+    matchData->playerData[1].status = 1;
 
-    // Update the player's rumble setting
-    int tagRumble = CSS_GetNametagRumble(0,matchData->playerData[0].nametag);
-    matchData->playerData[0].isRumble = tagRumble;
+    // Determine the Stage
+    int stage;
+    // If isSelectStage is true, use the selected stage
+    if (event->isChooseCPU == true)
+    {
+        stage = preload->stage;
+    }
+    // If isSelectStage is false, copy the stage from event data
+    else
+    {
+        stage = eventMatchData->stage;
+    }
+    // Update match struct with this stage
+    matchData->stage = stage;
 
     //Update preload table? (801bb63c)
+
+    return;
+};
+
+void EventLoad()
+{
+    // get this event
+    Memcard *memcard = R13_PTR(MEMCARD);
+    int page = memcard->TM_EventPage;
+    int eventID = memcard->EventBackup.event;
+    EventData* event = GetEvent(page,eventID);
+
+    // Create this event's gobj
+    int pri = event->callbackPriority;
+    void* cb = event->eventOnFrame;
+    GOBJ *gobj = GObj_Create(0,0,0);
+    int *userdata = HSD_MemAlloc(EVENT_DATASIZE);
+    GObj_AddUserData(gobj,4,HSD_Free,userdata);
+    GObj_AddProc(gobj,cb,pri);
+
+    // store pointer to the event's data
+    userdata[0] = event;
+
+    // Run this event's init function
+    if (event->eventOnInit != 0)
+    {
+        event->eventOnInit(gobj);
+    }
+
+    return;
+};
+
+//////////////////////
+/// Hook Functions ///
+//////////////////////
+
+void DebugLogThink(GOBJ *gobj)
+{
+    int *userdata = gobj->userdata;
+    DevText* text = userdata[0];
+    MatchData *matchData = 0x804978a0;//0x80480530;
+
+    // clear text
+    DevelopText_EraseAllText(text);
+    DevelopMode_ResetCursorXY(text,0,0);
+
+    // update text
+    DevelopText_AddString(text,"matchType: %d\n",matchData->matchType);
+    DevelopText_AddString(text,"unk1: %d\n",matchData->unk1);
+    DevelopText_AddString(text,"timer: %d\n",matchData->timer);
+    DevelopText_AddString(text,"timer_unk2: %d\n",matchData->timer_unk2);
+    DevelopText_AddString(text,"unk4: %d\n",matchData->unk4);
+    DevelopText_AddString(text,"hideReady: %d\n",matchData->hideReady);
+    DevelopText_AddString(text,"hideGo: %d\n",matchData->hideGo);
+    DevelopText_AddString(text,"playMusic: %d\n",matchData->playMusic);
+    DevelopText_AddString(text,"unk3: %d\n",matchData->unk3);
+    DevelopText_AddString(text,"timer_unk: %d\n",matchData->timer_unk);
+    DevelopText_AddString(text,"unk2: %d\n",matchData->unk2);
+    DevelopText_AddString(text,"unk9: %d\n",matchData->unk9);
+    DevelopText_AddString(text,"disableOffscreenDamage: %d\n",matchData->disableOffscreenDamage);
+    DevelopText_AddString(text,"unk8: %d\n",matchData->unk8);
+    DevelopText_AddString(text,"isSingleButtonMode: %d\n",matchData->isSingleButtonMode);
+    DevelopText_AddString(text,"isDisablePause: %d\n",matchData->isDisablePause);
+    DevelopText_AddString(text,"unk7: %d\n",matchData->unk7);
+    DevelopText_AddString(text,"isCreateHUD: %d\n",matchData->isCreateHUD);
+    DevelopText_AddString(text,"unk5: %d\n",matchData->unk5);
+    DevelopText_AddString(text,"isShowScore: %d\n",matchData->isShowScore);
+    DevelopText_AddString(text,"isShowAnalogStick: %d\n",matchData->isShowAnalogStick);
+    DevelopText_AddString(text,"isCheckForZRetry: %d\n",matchData->isCheckForZRetry);
+    DevelopText_AddString(text,"isShowZRetry: %d\n",matchData->isShowZRetry);
+    DevelopText_AddString(text,"isCheckForLRAStart: %d\n",matchData->isCheckForLRAStart);
+    DevelopText_AddString(text,"isShowLRAStart: %d\n",matchData->isShowLRAStart);
+    DevelopText_AddString(text,"isHidePauseHUD: %d\n",matchData->isHidePauseHUD);
+    DevelopText_AddString(text,"timerRunOnPause: %d\n",matchData->timerRunOnPause);
+    DevelopText_AddString(text,"unk11: %d\n",matchData->unk11);
+    DevelopText_AddString(text,"isCheckStockSteal: %d\n",matchData->isCheckStockSteal);
+    DevelopText_AddString(text,"isRunStockLogic: %d\n",matchData->isRunStockLogic);
+    DevelopText_AddString(text,"unk10: %d\n",matchData->unk10);
+    DevelopText_AddString(text,"isSkipEndCheck: %d\n",matchData->isSkipEndCheck);
+    DevelopText_AddString(text,"isSkipUnkStockCheck: %d\n",matchData->isSkipUnkStockCheck);
+    DevelopText_AddString(text,"isDisableHit: %d\n",matchData->isDisableHit);
+    DevelopText_AddString(text,"unk12: %d\n",matchData->unk12);
+
+    return;
+}
+
+void OnSceneChange()
+{
+    return;
+    // Create a gobj
+    GOBJ *gobj = GObj_Create(0,0,0);
+    int *userdata = HSD_MemAlloc(64);
+    GObj_AddUserData(gobj,4,HSD_Free,userdata);
+    GObj_AddProc(gobj,DebugLogThink,0);
+
+    // Create some dev text
+    DevText* text = DevelopText_CreateDataTable(13,0,0,28,40,HSD_MemAlloc(0x1000));
+    DevelopText_Activate(0,text);
+    text->cursorBlink = 0;
+    userdata[0] = text;
+    u8 color[] = {0x40,0x50,0x80,180};
+    DevelopText_StoreBGColor(text,&color);
+    DevelopText_StoreTextScale(text,7.5,10);
 
     return;
 };

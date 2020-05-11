@@ -1,5 +1,7 @@
 #include "../../../MexFF/mex.h"
 
+#define EVENT_DATASIZE 128
+
 // Structure Definitions
 typedef struct
 {
@@ -44,7 +46,8 @@ typedef struct
     u8 isSelectStage;
     u8 scoreType;
     u8 callbackPriority;
-    void* eventCallback;
+    void (*eventOnFrame)(GOBJ *gobj);
+    void (*eventOnInit)(GOBJ *gobj);
     EventMatchData* matchData;
     MenuData *menuData;
     int defaultOSD;
@@ -59,3 +62,4 @@ typedef struct
 // Function prototypes
 EventData *GetEvent(int page, int event);
 void EventInit(int page, int eventID, MatchData *matchData);
+void EventLoad();
