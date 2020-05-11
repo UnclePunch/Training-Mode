@@ -1,8 +1,8 @@
 #include "events.h"
 
-////////////////////
-// Version Number //
-////////////////////
+/////////////////////
+// Mod Information //
+/////////////////////
 
 static char TM_Vers[] = {"Training Mode v3.0\n"};
 static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
@@ -57,6 +57,7 @@ static EventMatchData LCancel_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -79,9 +80,9 @@ static EventData LCancel =
     // Event Tutorial File Name
     LCancel_Tut,
     // isChooseCPU
-    true,
+    false,
     // isSelectStage
-    true,
+    false,
     // Score Type
     0,
     // callback priority
@@ -98,11 +99,11 @@ static EventData LCancel =
 
 // L-Cancel Training
 // Event Name
-static char Ledgedash_Name[] = {"L-Cancel Training\n"};
+static char Ledgedash_Name[] = {"Ledgedash Training\n"};
 // Event Description
-static char Ledgedash_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Ledgedash_Desc[] = {"Practice Ledgedashes!\nUse D-Pad to change ledge.\n"};
 // Event Tutorial Filename
-static char Ledgedash_Tut[] = {"TvLC"};
+static char Ledgedash_Tut[] = {"TvLedDa"};
 // Event Menu Data
 static char** Ledgedash_Stale[] = {"Off", "On"};
 static char** Ledgedash_Intang[] = {"On", "Off"};
@@ -142,6 +143,7 @@ static EventMatchData Ledgedash_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -183,9 +185,9 @@ static EventData Ledgedash =
 
 // L-Cancel Training
 // Event Name
-static char Combo_Name[] = {"L-Cancel Training\n"};
+static char Combo_Name[] = {"Combo Training\n"};
 // Event Description
-static char Combo_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Combo_Desc[] = {"L+DPad adjusts percent | DPadDown moves CPU\nDPad right/left saves and loads positions."};
 // Event Tutorial Filename
 static char Combo_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -227,6 +229,7 @@ static EventMatchData Combo_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -268,9 +271,9 @@ static EventData Combo =
 
 // L-Cancel Training
 // Event Name
-static char AttackOnShield_Name[] = {"L-Cancel Training\n"};
+static char AttackOnShield_Name[] = {"Attack on Shield\n"};
 // Event Description
-static char AttackOnShield_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char AttackOnShield_Desc[] = {"Practice attacks on a shielding opponent\nPause to change their OoS option\n"};
 // Event Tutorial Filename
 static char AttackOnShield_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -312,6 +315,7 @@ static EventMatchData AttackOnShield_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -353,9 +357,9 @@ static EventData AttackOnShield =
 
 // L-Cancel Training
 // Event Name
-static char Reversal_Name[] = {"L-Cancel Training\n"};
+static char Reversal_Name[] = {"Reversal Training\n"};
 // Event Description
-static char Reversal_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Reversal_Desc[] = {"Practice OoS punishes! DPad left/right\nmoves characters close and further apart."};
 // Event Tutorial Filename
 static char Reversal_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -397,6 +401,7 @@ static EventMatchData Reversal_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -438,9 +443,9 @@ static EventData Reversal =
 
 // L-Cancel Training
 // Event Name
-static char SDI_Name[] = {"L-Cancel Training\n"};
+static char SDI_Name[] = {"SDI Training\n"};
 // Event Description
-static char SDI_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char SDI_Desc[] = {"Use Smash DI to escape\nFox's up-air attack!"};
 // Event Tutorial Filename
 static char SDI_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -482,6 +487,7 @@ static EventMatchData SDI_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -523,9 +529,9 @@ static EventData SDI =
 
 // L-Cancel Training
 // Event Name
-static char Powershield_Name[] = {"L-Cancel Training\n"};
+static char Powershield_Name[] = {"Powershield Training\n"};
 // Event Description
-static char Powershield_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Powershield_Desc[] = {"Powershield Falco's laser!\nPause to change to fire-rate."};
 // Event Tutorial Filename
 static char Powershield_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -567,6 +573,7 @@ static EventMatchData Powershield_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -608,9 +615,9 @@ static EventData Powershield =
 
 // L-Cancel Training
 // Event Name
-static char Ledgetech_Name[] = {"L-Cancel Training\n"};
+static char Ledgetech_Name[] = {"Ledge-Tech Training\n"};
 // Event Description
-static char Ledgetech_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Ledgetech_Desc[] = {"Practice ledge-teching\nFalco's down-smash"};
 // Event Tutorial Filename
 static char Ledgetech_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -652,6 +659,7 @@ static EventMatchData Ledgetech_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -693,9 +701,9 @@ static EventData Ledgetech =
 
 // L-Cancel Training
 // Event Name
-static char AmsahTech_Name[] = {"L-Cancel Training\n"};
+static char AmsahTech_Name[] = {"Amsah-Tech Training\n"};
 // Event Description
-static char AmsahTech_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char AmsahTech_Desc[] = {"Taunt to have Marth Up-B,\nthen ASDI down and tech!\n"};
 // Event Tutorial Filename
 static char AmsahTech_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -737,6 +745,7 @@ static EventMatchData AmsahTech_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -778,9 +787,9 @@ static EventData AmsahTech =
 
 // L-Cancel Training
 // Event Name
-static char ShieldDrop_Name[] = {"L-Cancel Training\n"};
+static char ShieldDrop_Name[] = {"Shield Drop Training\n"};
 // Event Description
-static char ShieldDrop_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char ShieldDrop_Desc[] = {"Counter with a shield-drop aerial!\nDPad left/right moves players apart."};
 // Event Tutorial Filename
 static char ShieldDrop_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -822,6 +831,7 @@ static EventMatchData ShieldDrop_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -863,9 +873,9 @@ static EventData ShieldDrop =
 
 // L-Cancel Training
 // Event Name
-static char WaveshineSDI_Name[] = {"L-Cancel Training\n"};
+static char WaveshineSDI_Name[] = {"Waveshine SDI\n"};
 // Event Description
-static char WaveshineSDI_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char WaveshineSDI_Desc[] = {"Use Smash DI to get out\nof Fox's waveshine!"};
 // Event Tutorial Filename
 static char WaveshineSDI_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -907,6 +917,7 @@ static EventMatchData WaveshineSDI_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -948,9 +959,9 @@ static EventData WaveshineSDI =
 
 // L-Cancel Training
 // Event Name
-static char SlideOff_Name[] = {"L-Cancel Training\n"};
+static char SlideOff_Name[] = {"Slide-Off Training\n"};
 // Event Description
-static char SlideOff_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char SlideOff_Desc[] = {"Use Slide-Off DI to slide off\nthe platform and counter attack!\n"};
 // Event Tutorial Filename
 static char SlideOff_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -992,6 +1003,7 @@ static EventMatchData SlideOff_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1033,9 +1045,9 @@ static EventData SlideOff =
 
 // L-Cancel Training
 // Event Name
-static char GrabMash_Name[] = {"L-Cancel Training\n"};
+static char GrabMash_Name[] = {"Grab Mash Training\n"};
 // Event Description
-static char GrabMash_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char GrabMash_Desc[] = {"Mash buttons to escape the grab\nas quickly as possible!\n"};
 // Event Tutorial Filename
 static char GrabMash_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1077,6 +1089,7 @@ static EventMatchData GrabMash_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1118,9 +1131,9 @@ static EventData GrabMash =
 
 // L-Cancel Training
 // Event Name
-static char TechCounter_Name[] = {"L-Cancel Training\n"};
+static char TechCounter_Name[] = {"Ledgetech Marth Counter\n"};
 // Event Description
-static char TechCounter_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char TechCounter_Desc[] = {"Practice ledge-teching\nMarth's counter!\n"};
 // Event Tutorial Filename
 static char TechCounter_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1162,6 +1175,7 @@ static EventMatchData TechCounter_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1203,9 +1217,9 @@ static EventData TechCounter =
 
 // L-Cancel Training
 // Event Name
-static char ArmadaShine_Name[] = {"L-Cancel Training\n"};
+static char ArmadaShine_Name[] = {"Armada-Shine Training\n"};
 // Event Description
-static char ArmadaShine_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char ArmadaShine_Desc[] = {"Finish the enemy Fox\nwith an Armada Shine!"};
 // Event Tutorial Filename
 static char ArmadaShine_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1247,6 +1261,7 @@ static EventMatchData ArmadaShine_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1288,9 +1303,9 @@ static EventData ArmadaShine =
 
 // L-Cancel Training
 // Event Name
-static char SideBSweet_Name[] = {"L-Cancel Training\n"};
+static char SideBSweet_Name[] = {"Side-B Sweetspot\n"};
 // Event Description
-static char SideBSweet_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char SideBSweet_Desc[] = {"Use a sweetspot Side-B to avoid Marth's\ndown-tilt and grab the ledge!"};
 // Event Tutorial Filename
 static char SideBSweet_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1332,6 +1347,7 @@ static EventMatchData SideBSweet_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1373,9 +1389,9 @@ static EventData SideBSweet =
 
 // L-Cancel Training
 // Event Name
-static char EscapeSheik_Name[] = {"L-Cancel Training\n"};
+static char EscapeSheik_Name[] = {"Escape Sheik Techchase\n"};
 // Event Description
-static char EscapeSheik_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char EscapeSheik_Desc[] = {"Practice escaping the tech chase with a\nframe perfect shine or jab SDI!\n"};
 // Event Tutorial Filename
 static char EscapeSheik_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1417,6 +1433,7 @@ static EventMatchData EscapeSheik_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1458,9 +1475,9 @@ static EventData EscapeSheik =
 
 // L-Cancel Training
 // Event Name
-static char Eggs_Name[] = {"L-Cancel Training\n"};
+static char Eggs_Name[] = {"Eggs-ercise\n"};
 // Event Description
-static char Eggs_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Eggs_Desc[] = {"Break the eggs! Only strong hits will\nbreak them. DPad down = free practice."};
 // Event Tutorial Filename
 static char Eggs_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1502,6 +1519,7 @@ static EventMatchData Eggs_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1543,9 +1561,9 @@ static EventData Eggs =
 
 // L-Cancel Training
 // Event Name
-static char Multishine_Name[] = {"L-Cancel Training\n"};
+static char Multishine_Name[] = {"Shined Blind\n"};
 // Event Description
-static char Multishine_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Multishine_Desc[] = {"How many shines can you\nperform in 10 seconds?"};
 // Event Tutorial Filename
 static char Multishine_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1587,6 +1605,7 @@ static EventMatchData Multishine_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1628,9 +1647,9 @@ static EventData Multishine =
 
 // L-Cancel Training
 // Event Name
-static char Reaction_Name[] = {"L-Cancel Training\n"};
+static char Reaction_Name[] = {"Reaction Test\n"};
 // Event Description
-static char Reaction_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Reaction_Desc[] = {"Test your reaction time by pressing\nany button when you see/hear Fox shine!"};
 // Event Tutorial Filename
 static char Reaction_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1672,6 +1691,7 @@ static EventMatchData Reaction_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1713,9 +1733,9 @@ static EventData Reaction =
 
 // L-Cancel Training
 // Event Name
-static char Ledgestall_Name[] = {"L-Cancel Training\n"};
+static char Ledgestall_Name[] = {"Under Fire\n"};
 // Event Description
-static char Ledgestall_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+static char Ledgestall_Desc[] = {"Ledgestall to remain\ninvincible while the lava rises!\n"};
 // Event Tutorial Filename
 static char Ledgestall_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -1757,6 +1777,7 @@ static EventMatchData Ledgestall_MatchData =
     .isRunStockLogic = true, // 0x20
     .isDisableHit = false, // 0x20
     .useKOCounter = false,
+    .fighter = -1,
     .cpuFighter = 8, // 0xFF=
     .stage = 16, // 0xFFFF
     .timerSeconds = 32, // 0xFFFFFFFF
@@ -1877,25 +1898,118 @@ static EventPage **EventPages[] =
 };
 
 
+
+//////////////////////
+/// Init Functions ///
+//////////////////////
+
+void EventInit(int page, int eventID, MatchData *matchData)
+{
+    // get event pointer
+    EventData *event = GetEvent(page,eventID);
+
+    //Build up match info struct
+    EventMatchData *eventMatchData = event->matchData;
+    matchData->timer = eventMatchData->timer;
+    matchData->matchType = eventMatchData->matchType;
+    matchData->playMusic = eventMatchData->playMusic;
+    matchData->hideGo = eventMatchData->hideGo;
+    matchData->hideReady = eventMatchData->hideReady;
+    matchData->isCreateHUD = eventMatchData->isCreateHUD;
+    matchData->isDisablePause = eventMatchData->isDisablePause;
+    matchData->timerRunOnPause = eventMatchData->timerRunOnPause;
+    matchData->isHidePauseHUD = eventMatchData->isHidePauseHUD;
+    matchData->isShowLRAStart = eventMatchData->isShowLRAStart;
+    matchData->isCheckForLRAStart = eventMatchData->isCheckForLRAStart;
+    matchData->isShowZRetry = eventMatchData->isShowZRetry;
+    matchData->isCheckForZRetry = eventMatchData->isCheckForZRetry;
+    matchData->isShowAnalogStick = eventMatchData->isShowAnalogStick;
+    matchData->isShowScore = eventMatchData->isShowScore;
+    matchData->isRunStockLogic = eventMatchData->isRunStockLogic;
+    matchData->isDisableHit = eventMatchData->isDisableHit;
+    matchData->timerSeconds = eventMatchData->timerSeconds;
+    matchData->timerSubSeconds = eventMatchData->timerSubSeconds;
+    matchData->onCheckPause = eventMatchData->onCheckPause;
+    matchData->onMatchEnd = eventMatchData->onMatchEnd;
+
+    // Determine the Player
+    int player_kind;
+    int player_costume;
+    Preload *preload = 0x80432078;
+    // If fighter is -1, copy the player from event data
+    if (eventMatchData->fighter == -1)
+    {
+        player_kind = eventMatchData->fighter;
+        player_costume = 0;
+    }
+    // use the fighter chosen on the CSS
+    else
+    {
+        player_kind = preload->fighters[0].kind;
+        player_costume = preload->fighters[0].costume;
+    }
+
+    // Determine the CPU
+    int cpu_kind;
+    int cpu_costume;
+    // If isChooseCPU is true, use the selected CPU
+    if (event->isChooseCPU == true)
+    {
+        cpu_kind = preload->fighters[1].kind;
+        cpu_costume = preload->fighters[1].costume;
+    }
+    // If isChooseCPU is false, copy the CPU from event data
+    else
+    {
+        cpu_kind = eventMatchData->cpuFighter;
+        cpu_costume = 0;
+    }
+
+    // Check if CPU is using the same color as P1
+    if (player_costume == cpu_costume)
+    {
+        // this doesnt account for if theyre both using the last costume
+        cpu_costume +=1;
+    }
+
+    // Copy player data to match info struct (update their rumble setting 801bb1ec)
+    matchData->playerData[0].kind = player_kind;
+    matchData->playerData[0].costume = player_costume;
+    matchData->playerData[1].kind = cpu_kind;
+    matchData->playerData[1].costume = cpu_costume;
+
+    // Update the player's rumble setting
+    int tagRumble = CSS_GetNametagRumble(0,matchData->playerData[0].nametag);
+    matchData->playerData[0].isRumble = tagRumble;
+
+    //Update preload table? (801bb63c)
+
+    return;
+};
+
 ///////////////////////////////
 /// Member-Access Functions ///
 ///////////////////////////////
-char *GetEventName(int page, int event)
+
+EventData *GetEvent(int page, int event)
 {
     EventPage *thisPage = EventPages[page];
     EventData *thisEvent = thisPage->events[event];
+    return (thisEvent);
+}
+char *GetEventName(int page, int event)
+{
+    EventData *thisEvent = GetEvent(page,event);
     return (thisEvent->eventName);
 }
 char *GetEventDesc(int page, int event)
 {
-    EventPage *thisPage = EventPages[page];
-    EventData *thisEvent = thisPage->events[event];
+    EventData *thisEvent = GetEvent(page,event);
     return (thisEvent->eventDescription);
 }
 char *GetEventTut(int page, int event)
 {
-    EventPage *thisPage = EventPages[page];
-    EventData *thisEvent = thisPage->events[event];
+    EventData *thisEvent = GetEvent(page,event);
     return (thisEvent->eventTutorial);
 }
 char *GetPageName(int page)
@@ -1920,4 +2034,29 @@ int GetPageNum()
 {
     int pageNum = (sizeof(EventPages) / 4) - 1;
     return (pageNum);
+}
+u8 GetIsChooseCPU(int page, int event)
+{
+    EventData *thisEvent = GetEvent(page,event);
+    return(thisEvent->isChooseCPU);
+}
+u8 GetIsSelectStage(int page, int event)
+{
+    EventData *thisEvent = GetEvent(page,event);
+    return(thisEvent->isSelectStage);
+}
+s8 GetFighter(int page, int event)
+{
+    EventData *thisEvent = GetEvent(page,event);
+    return(thisEvent->matchData->fighter);
+}
+s8 GetCPUFighter(int page, int event)
+{
+    EventData *thisEvent = GetEvent(page,event);
+    return(thisEvent->matchData->cpuFighter);
+}
+s16 GetStage(int page, int event)
+{
+    EventData *thisEvent = GetEvent(page,event);
+    return(thisEvent->matchData->stage);
 }

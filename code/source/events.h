@@ -1,12 +1,12 @@
 #include "../../../MexFF/mex.h"
 
+// Structure Definitions
 typedef struct
 {
     char *optionName;
     char **optionValues;
     int optionValuesNum;
 }MenuData;
-
 typedef struct
 {
     unsigned int timer : 2;
@@ -27,6 +27,7 @@ typedef struct
     unsigned int isRunStockLogic : 1; // 0x20
     unsigned int isDisableHit : 1; // 0x20
     unsigned int useKOCounter : 1;
+    s8 fighter;    // -1 = use selected fighter
     s8 cpuFighter;    // -1 = use selected CPU
     s16 stage;        // -1 = use selected stage
     unsigned int timerSeconds : 32; // 0xFFFFFFFF
@@ -34,7 +35,6 @@ typedef struct
     void *onCheckPause;
     void *onMatchEnd;
 }EventMatchData;
-
 typedef struct
 {
     char* eventName;
@@ -49,10 +49,13 @@ typedef struct
     MenuData *menuData;
     int defaultOSD;
 }EventData;
-
 typedef struct
 {
     char *name;
     int eventNum;
     EventData **events;
 }EventPage;
+
+// Function prototypes
+EventData *GetEvent(int page, int event);
+void EventInit(int page, int eventID, MatchData *matchData);
