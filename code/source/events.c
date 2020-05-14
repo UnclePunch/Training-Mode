@@ -29,6 +29,7 @@ static char LCancel_Tut[] = {"TvLC"};
 // Event Menu Data
 static char **LCancel_Stale[] = {"Off", "On"};
 static char **LCancel_Intang[] = {"On", "Off"};
+#define LCANCEL_MENUOPTIONNUM 2
 static MenuInfo LCancel_Menu[] =
     {
         {
@@ -103,6 +104,8 @@ static EventInfo LCancel =
         &LCancel_MatchData,
         // Menu Data
         &LCancel_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -191,6 +194,8 @@ static EventInfo Ledgedash =
         &Ledgedash_MatchData,
         // Menu Data
         &Ledgedash_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -279,6 +284,8 @@ static EventInfo Combo =
         &Combo_MatchData,
         // Menu Data
         &Combo_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -367,6 +374,8 @@ static EventInfo AttackOnShield =
         &AttackOnShield_MatchData,
         // Menu Data
         &AttackOnShield_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -455,6 +464,8 @@ static EventInfo Reversal =
         &Reversal_MatchData,
         // Menu Data
         &Reversal_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -543,6 +554,8 @@ static EventInfo SDI =
         &SDI_MatchData,
         // Menu Data
         &SDI_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -631,6 +644,8 @@ static EventInfo Powershield =
         &Powershield_MatchData,
         // Menu Data
         &Powershield_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -719,6 +734,8 @@ static EventInfo Ledgetech =
         &Ledgetech_MatchData,
         // Menu Data
         &Ledgetech_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -807,6 +824,8 @@ static EventInfo AmsahTech =
         &AmsahTech_MatchData,
         // Menu Data
         &AmsahTech_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -895,6 +914,8 @@ static EventInfo ShieldDrop =
         &ShieldDrop_MatchData,
         // Menu Data
         &ShieldDrop_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -983,6 +1004,8 @@ static EventInfo WaveshineSDI =
         &WaveshineSDI_MatchData,
         // Menu Data
         &WaveshineSDI_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1071,6 +1094,8 @@ static EventInfo SlideOff =
         &SlideOff_MatchData,
         // Menu Data
         &SlideOff_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1159,6 +1184,8 @@ static EventInfo GrabMash =
         &GrabMash_MatchData,
         // Menu Data
         &GrabMash_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1247,6 +1274,8 @@ static EventInfo TechCounter =
         &TechCounter_MatchData,
         // Menu Data
         &TechCounter_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1335,6 +1364,8 @@ static EventInfo ArmadaShine =
         &ArmadaShine_MatchData,
         // Menu Data
         &ArmadaShine_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1423,6 +1454,8 @@ static EventInfo SideBSweet =
         &SideBSweet_MatchData,
         // Menu Data
         &SideBSweet_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1511,6 +1544,8 @@ static EventInfo EscapeSheik =
         &EscapeSheik_MatchData,
         // Menu Data
         &EscapeSheik_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1599,6 +1634,8 @@ static EventInfo Eggs =
         &Eggs_MatchData,
         // Menu Data
         &Eggs_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1687,6 +1724,8 @@ static EventInfo Multishine =
         &Multishine_MatchData,
         // Menu Data
         &Multishine_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1775,6 +1814,8 @@ static EventInfo Reaction =
         &Reaction_MatchData,
         // Menu Data
         &Reaction_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1863,6 +1904,8 @@ static EventInfo Ledgestall =
         &Ledgestall_MatchData,
         // Menu Data
         &Ledgestall_Menu,
+        // Menu Option Amount
+        LCANCEL_MENUOPTIONNUM,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -2264,7 +2307,7 @@ void EventMenu_Think(GOBJ *gobj)
     EventInfo *eventInfo = menuData->eventInfo;
 
     // Check if paused
-    if (Pause_CheckStatus(2) == 2)
+    if (Pause_CheckStatus(1) == 2)
     {
         // check if text is created, create it if not
         if (menuData->text == 0)
@@ -2272,18 +2315,106 @@ void EventMenu_Think(GOBJ *gobj)
             EventMenu_Draw(gobj);
         }
 
-        // get player who paused
-        u8 *pauseData = 0x8046b6a0;
-        u8 pauser = pauseData[1];
+        else
+        {
+            // get player who paused
+            u8 *pauseData = 0x8046b6a0;
+            u8 pauser = pauseData[1];
+            // get their rapid inputs
+            HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
+            int inputs = pad->rapidFire;
 
-        // get their rapid inputs
-        HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
-        int inputs = pad->rapidFire;
+            // check for up/down
+            int isChanged = 0;
+            s32 cursor = menuData->cursor;
+            s32 cursor_min = 0;
+            s32 cursor_max = eventInfo->menuOptionNum;
+            // check for dpad up
+            if (inputs &= HSD_BUTTON_UP)
+            {
+                isChanged = 1;
+                cursor += 1;
+                if (cursor > cursor_max)
+                    cursor = cursor_max;
+            }
+            // check for dpad down
+            else if (inputs &= HSD_BUTTON_DOWN)
+            {
+                isChanged = 1;
+                cursor -= 1;
+                if (cursor < cursor_min)
+                    cursor = cursor_min;
+            }
+            // update cursor value
+            menuData->cursor = cursor;
+
+            // check for left/right
+            u8 option = menuData->options[cursor];
+            s32 option_min = 0;
+            s32 option_max = eventInfo->MenuInfo[cursor].optionValuesNum;
+            // check for dpad left
+            if (inputs &= HSD_BUTTON_LEFT)
+            {
+                isChanged = 1;
+                option -= 1;
+                if (option < option_min)
+                    option = option_min;
+            }
+            // check for dpad right
+            else if (inputs &= HSD_BUTTON_RIGHT)
+            {
+                isChanged = 1;
+                option += 1;
+                if (option > option_max)
+                    option = option_max;
+            }
+            // update option value
+            menuData->options[cursor] = option;
+
+            // if anything changed, draw menu
+            if (isChanged != 0)
+            {
+                EventMenu_Draw(gobj);
+            }
+        }
     }
     // Not paused, check if text is created, and free it if so
     else
     {
+        if (menuData->text != 0)
+        {
+            // free text
+            Text_FreeText(menuData->text);
+            menuData->text = 0;
+        }
     }
+
+    return;
+}
+void EventMenu_Draw(GOBJ *gobj)
+{
+    // Get event info
+    MenuData *menuData = gobj->userdata;
+    EventInfo *eventInfo = menuData->eventInfo;
+
+    // free text if it exists
+    if (menuData->text != 0)
+    {
+        // free text
+        Text_FreeText(menuData->text);
+        menuData->text = 0;
+    }
+
+    // create text
+    int *hudData = 0x804a1f58;
+    int canvasIndex = hudData[0];
+    Text *text = Text_CreateText(2, canvasIndex);
+    menuData->text = text;
+    // enable align and kerning
+    text->align = 1;
+    text->kerning = 1;
+    // output test
+    Text_AddSubtext(text, "hi its me");
 
     return;
 }

@@ -51,6 +51,7 @@ typedef struct
     void (*eventOnInit)(GOBJ *gobj);
     EventMatchData *matchData;
     MenuInfo *MenuInfo;
+    int menuOptionNum;
     int defaultOSD;
 } EventInfo;
 typedef struct
@@ -67,7 +68,7 @@ typedef struct
 {
     EventInfo *eventInfo;
     Text *text;
-    int cursor;
+    s32 cursor;
     u8 *options[50];
 } MenuData;
 
