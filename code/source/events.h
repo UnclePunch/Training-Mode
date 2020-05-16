@@ -50,7 +50,7 @@ typedef struct
     void (*eventOnFrame)(GOBJ *gobj);
     void (*eventOnInit)(GOBJ *gobj);
     EventMatchData *matchData;
-    MenuInfo *MenuInfo;
+    MenuInfo *menuInfo;
     int menuOptionNum;
     int defaultOSD;
 } EventInfo;

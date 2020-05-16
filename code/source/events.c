@@ -38,7 +38,7 @@ static MenuInfo LCancel_Menu[] =
             sizeof(LCancel_Stale) / 4,
         },
         {
-            "Option2",
+            "Intangibility",
             LCancel_Intang,
             sizeof(LCancel_Intang) / 4,
         },
@@ -2167,7 +2167,7 @@ void EventLoad()
 void EventMenu_Init(EventInfo *eventInfo)
 {
     // Ensure this event has a menu
-    if (eventInfo->MenuInfo == 0)
+    if (eventInfo->menuInfo == 0)
         return;
 
     // Create a gobj
@@ -2299,7 +2299,6 @@ void OnBoot()
 ///////////////////////////////
 /// Miscellaneous Functions ///
 ///////////////////////////////
-
 void EventMenu_Think(GOBJ *gobj)
 {
     // Get event info
@@ -2312,13 +2311,45 @@ void EventMenu_Think(GOBJ *gobj)
         // check if text is created, create it if not
         if (menuData->text == 0)
         {
+            // draw text
             EventMenu_Draw(gobj);
+
+            /**/ #define TEXT_BGCOLOR{0, 255, 255, 255}
+            // create background
+            TMData *tmData = RTOC_PTR(TM_DATA);
+            JOBJ *jobj = JOBJ_LoadJoint(tmData->messageJoint);
+            // Add to gobj
+            GObj_AddObject(gobj, 3, jobj);
+            // Add gx_link
+            GObj_AddGXLink(gobj, GXLink_Common, 11, 0);
+
+            // Get each corner's joints
+            JOBJ *corners[4];
+            JOBJ_GetChild(jobj, &corners, 1, 2, 3, 4, -1);
+
+            // Modify scale and position
+            jobj->trans.Z = 63;
+            jobj->scale.X = 0.04;
+            jobj->scale.Y = 0.04;
+            jobj->scale.Z = 0.04;
+            corners[0]->trans.X = -8;
+            corners[0]->trans.Y = 8;
+            corners[1]->trans.X = 8;
+            corners[1]->trans.Y = 8;
+            corners[2]->trans.X = -8;
+            corners[2]->trans.Y = -2;
+            corners[3]->trans.X = 8;
+            corners[3]->trans.Y = -2;
+
+            // Change color
+            GXColor gx_color = TEXT_BGCOLOR;
+            jobj->dobj->mobj->mat->diffuse = gx_color;
         }
 
         else
         {
             // get player who paused
-            u8 *pauseData = 0x8046b6a0;
+            u8 *pauseData = (u8 *)0x8046b6a0;
             u8 pauser = pauseData[1];
             // get their rapid inputs
             HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
@@ -2329,44 +2360,64 @@ void EventMenu_Think(GOBJ *gobj)
             s32 cursor = menuData->cursor;
             s32 cursor_min = 0;
             s32 cursor_max = eventInfo->menuOptionNum;
-            // check for dpad up
-            if (inputs &= HSD_BUTTON_UP)
-            {
-                isChanged = 1;
-                cursor += 1;
-                if (cursor > cursor_max)
-                    cursor = cursor_max;
-            }
             // check for dpad down
-            else if (inputs &= HSD_BUTTON_DOWN)
+            if ((inputs & HSD_BUTTON_DOWN) != 0)
             {
-                isChanged = 1;
+                cursor += 1;
+                if (cursor >= cursor_max)
+                {
+                    cursor = (cursor_max - 1);
+                }
+                else
+                {
+                    isChanged = 1;
+                }
+            }
+            // check for dpad up
+            else if ((inputs & HSD_BUTTON_UP) != 0)
+            {
                 cursor -= 1;
                 if (cursor < cursor_min)
+                {
                     cursor = cursor_min;
+                }
+                else
+                {
+                    isChanged = 1;
+                }
             }
             // update cursor value
             menuData->cursor = cursor;
 
             // check for left/right
-            u8 option = menuData->options[cursor];
-            s32 option_min = 0;
-            s32 option_max = eventInfo->MenuInfo[cursor].optionValuesNum;
+            s8 option = menuData->options[cursor];
+            s8 option_min = 0;
+            s8 option_max = eventInfo->menuInfo[cursor].optionValuesNum;
             // check for dpad left
-            if (inputs &= HSD_BUTTON_LEFT)
+            if ((inputs & HSD_BUTTON_LEFT) != 0)
             {
-                isChanged = 1;
                 option -= 1;
                 if (option < option_min)
+                {
                     option = option_min;
+                }
+                else
+                {
+                    isChanged = 1;
+                }
             }
             // check for dpad right
-            else if (inputs &= HSD_BUTTON_RIGHT)
+            else if ((inputs & HSD_BUTTON_RIGHT) != 0)
             {
-                isChanged = 1;
                 option += 1;
-                if (option > option_max)
-                    option = option_max;
+                if (option >= option_max)
+                {
+                    option = (option_max - 1);
+                }
+                else
+                {
+                    isChanged = 1;
+                }
             }
             // update option value
             menuData->options[cursor] = option;
@@ -2375,6 +2426,9 @@ void EventMenu_Think(GOBJ *gobj)
             if (isChanged != 0)
             {
                 EventMenu_Draw(gobj);
+
+                // also play sfx
+                SFX_PlayCommon(2);
             }
         }
     }
@@ -2386,6 +2440,10 @@ void EventMenu_Think(GOBJ *gobj)
             // free text
             Text_FreeText(menuData->text);
             menuData->text = 0;
+
+            // remove jobj
+            GObj_FreeObject(gobj);
+            GObj_DestroyGXLink(gobj);
         }
     }
 
@@ -2393,6 +2451,18 @@ void EventMenu_Think(GOBJ *gobj)
 }
 void EventMenu_Draw(GOBJ *gobj)
 {
+
+#define MENU_CANVASSCALE 0.05
+#define MENU_TEXTSCALE 1
+#define MENU_EVENTXPOS 0
+#define MENU_EVENTYPOS -360
+#define MENU_OPTIONNAMEXPOS -250
+#define MENU_OPTIONNAMEYPOS -280
+#define MENU_OPTIONVALXPOS 250
+#define MENU_OPTIONVALYPOS -280
+#define MENU_TEXTYOFFSET 50
+#define MENU_HIGHLIGHT {255, 211, 0, 255}
+
     // Get event info
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
@@ -2406,6 +2476,7 @@ void EventMenu_Draw(GOBJ *gobj)
     }
 
     // create text
+    int subtext;
     int *hudData = 0x804a1f58;
     int canvasIndex = hudData[0];
     Text *text = Text_CreateText(2, canvasIndex);
@@ -2413,8 +2484,35 @@ void EventMenu_Draw(GOBJ *gobj)
     // enable align and kerning
     text->align = 1;
     text->kerning = 1;
-    // output test
-    Text_AddSubtext(text, "hi its me");
+    // scale canvas
+    text->scale.X = MENU_CANVASSCALE;
+    text->scale.Y = MENU_CANVASSCALE;
+
+    // Display event name
+    Text_AddSubtext(text, MENU_EVENTXPOS, MENU_EVENTYPOS, eventInfo->eventName);
+
+    // Output all options
+    GXColor highlight = MENU_HIGHLIGHT;
+    s32 cursor = menuData->cursor;
+    s32 option_max = eventInfo->menuInfo[cursor].optionValuesNum;
+    for (int i = 0; i < option_max; i++)
+    {
+        // output option name
+        float optionX = MENU_OPTIONNAMEXPOS;
+        float optionY = MENU_OPTIONNAMEYPOS + (i * MENU_TEXTYOFFSET);
+        int optionVal = menuData->options[i];
+        subtext = Text_AddSubtext(text, optionX, optionY, eventInfo->menuInfo[i].optionName);
+
+        // output option value
+        optionX = MENU_OPTIONVALXPOS;
+        optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
+        subtext = Text_AddSubtext(text, optionX, optionY, eventInfo->menuInfo[i].optionValues[optionVal]);
+        // highlight this if this is the cursor
+        if (i == cursor)
+        {
+            Text_SetColor(text, subtext, &highlight);
+        }
+    }
 
     return;
 }
