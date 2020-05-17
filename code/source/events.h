@@ -42,6 +42,7 @@ typedef struct
 {
     char *eventName;
     char *eventDescription;
+    char *eventControls;
     char *eventTutorial;
     u8 isChooseCPU;
     u8 isSelectStage;
@@ -67,7 +68,9 @@ typedef struct
 typedef struct
 {
     EventInfo *eventInfo;
-    Text *text;
+    Text *menu;
+    Text *controls;
+    Text *description;
     s32 cursor;
     u8 *options[50];
 } MenuData;

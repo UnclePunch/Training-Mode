@@ -24,6 +24,8 @@ static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
 static char LCancel_Name[] = {"L-Cancel Training\n"};
 // Event Description
 static char LCancel_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
+// Event Description
+static char Event_Controls[] = {"D-Pad Left = Load State\nD-Pad Right = Save State\n"};
 // Event Tutorial Filename
 static char LCancel_Tut[] = {"TvLC"};
 // Event Menu Data
@@ -86,6 +88,8 @@ static EventInfo LCancel =
         LCancel_Name,
         // Event Description
         LCancel_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         LCancel_Tut,
         // isChooseCPU
@@ -176,6 +180,8 @@ static EventInfo Ledgedash =
         &Ledgedash_Name,
         // Event Description
         &Ledgedash_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Ledgedash_Tut,
         // isChooseCPU
@@ -266,6 +272,8 @@ static EventInfo Combo =
         &Combo_Name,
         // Event Description
         &Combo_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Combo_Tut,
         // isChooseCPU
@@ -356,6 +364,8 @@ static EventInfo AttackOnShield =
         &AttackOnShield_Name,
         // Event Description
         &AttackOnShield_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &AttackOnShield_Tut,
         // isChooseCPU
@@ -446,6 +456,8 @@ static EventInfo Reversal =
         &Reversal_Name,
         // Event Description
         &Reversal_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Reversal_Tut,
         // isChooseCPU
@@ -536,6 +548,8 @@ static EventInfo SDI =
         &SDI_Name,
         // Event Description
         &SDI_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &SDI_Tut,
         // isChooseCPU
@@ -626,6 +640,8 @@ static EventInfo Powershield =
         &Powershield_Name,
         // Event Description
         &Powershield_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Powershield_Tut,
         // isChooseCPU
@@ -716,6 +732,8 @@ static EventInfo Ledgetech =
         &Ledgetech_Name,
         // Event Description
         &Ledgetech_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Ledgetech_Tut,
         // isChooseCPU
@@ -806,6 +824,8 @@ static EventInfo AmsahTech =
         &AmsahTech_Name,
         // Event Description
         &AmsahTech_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &AmsahTech_Tut,
         // isChooseCPU
@@ -896,6 +916,8 @@ static EventInfo ShieldDrop =
         &ShieldDrop_Name,
         // Event Description
         &ShieldDrop_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &ShieldDrop_Tut,
         // isChooseCPU
@@ -986,6 +1008,8 @@ static EventInfo WaveshineSDI =
         &WaveshineSDI_Name,
         // Event Description
         &WaveshineSDI_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &WaveshineSDI_Tut,
         // isChooseCPU
@@ -1076,6 +1100,8 @@ static EventInfo SlideOff =
         &SlideOff_Name,
         // Event Description
         &SlideOff_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &SlideOff_Tut,
         // isChooseCPU
@@ -1166,6 +1192,8 @@ static EventInfo GrabMash =
         &GrabMash_Name,
         // Event Description
         &GrabMash_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &GrabMash_Tut,
         // isChooseCPU
@@ -1256,6 +1284,8 @@ static EventInfo TechCounter =
         &TechCounter_Name,
         // Event Description
         &TechCounter_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &TechCounter_Tut,
         // isChooseCPU
@@ -1346,6 +1376,8 @@ static EventInfo ArmadaShine =
         &ArmadaShine_Name,
         // Event Description
         &ArmadaShine_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &ArmadaShine_Tut,
         // isChooseCPU
@@ -1436,6 +1468,8 @@ static EventInfo SideBSweet =
         &SideBSweet_Name,
         // Event Description
         &SideBSweet_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &SideBSweet_Tut,
         // isChooseCPU
@@ -1526,6 +1560,8 @@ static EventInfo EscapeSheik =
         &EscapeSheik_Name,
         // Event Description
         &EscapeSheik_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &EscapeSheik_Tut,
         // isChooseCPU
@@ -1616,6 +1652,8 @@ static EventInfo Eggs =
         &Eggs_Name,
         // Event Description
         &Eggs_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Eggs_Tut,
         // isChooseCPU
@@ -1706,6 +1744,8 @@ static EventInfo Multishine =
         &Multishine_Name,
         // Event Description
         &Multishine_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Multishine_Tut,
         // isChooseCPU
@@ -1796,6 +1836,8 @@ static EventInfo Reaction =
         &Reaction_Name,
         // Event Description
         &Reaction_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Reaction_Tut,
         // isChooseCPU
@@ -1886,6 +1928,8 @@ static EventInfo Ledgestall =
         &Ledgestall_Name,
         // Event Description
         &Ledgestall_Desc,
+        // Event Controls
+        Event_Controls,
         // Event Tutorial File Name
         &Ledgestall_Tut,
         // isChooseCPU
@@ -2309,41 +2353,89 @@ void EventMenu_Think(GOBJ *gobj)
     if (Pause_CheckStatus(1) == 2)
     {
         // check if text is created, create it if not
-        if (menuData->text == 0)
+        if (menuData->menu == 0)
         {
             // draw text
             EventMenu_Draw(gobj);
 
             /**/ #define TEXT_BGCOLOR{0, 255, 255, 255}
-            // create background
+
+            // create options background
             TMData *tmData = RTOC_PTR(TM_DATA);
-            JOBJ *jobj = JOBJ_LoadJoint(tmData->messageJoint);
+            JOBJ *jobj_options = JOBJ_LoadJoint(tmData->messageJoint);
             // Add to gobj
-            GObj_AddObject(gobj, 3, jobj);
+            GObj_AddObject(gobj, 3, jobj_options);
             // Add gx_link
             GObj_AddGXLink(gobj, GXLink_Common, 11, 0);
-
             // Get each corner's joints
             JOBJ *corners[4];
-            JOBJ_GetChild(jobj, &corners, 1, 2, 3, 4, -1);
-
-            // Modify scale and position
-            jobj->trans.Z = 63;
-            jobj->scale.X = 0.04;
-            jobj->scale.Y = 0.04;
-            jobj->scale.Z = 0.04;
-            corners[0]->trans.X = -8;
-            corners[0]->trans.Y = 8;
-            corners[1]->trans.X = 8;
-            corners[1]->trans.Y = 8;
-            corners[2]->trans.X = -8;
-            corners[2]->trans.Y = -2;
-            corners[3]->trans.X = 8;
-            corners[3]->trans.Y = -2;
-
+            JOBJ_GetChild(jobj_options, &corners, 1, 2, 3, 4, -1);
+// Modify scale and position
+#define OPT_X 0
+#define OPT_Y -1
+#define OPT_WIDTH 55
+#define OPT_HEIGHT 28
+            jobj_options->trans.Z = 63;
+            jobj_options->scale.X = 0.013;
+            jobj_options->scale.Y = 0.013;
+            jobj_options->scale.Z = 0.013;
+            corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
+            corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
+            corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
+            corners[1]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
+            corners[2]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
+            corners[2]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
+            corners[3]->trans.X = (OPT_WIDTH / 2) + OPT_X;
+            corners[3]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
             // Change color
             GXColor gx_color = TEXT_BGCOLOR;
-            jobj->dobj->mobj->mat->diffuse = gx_color;
+            jobj_options->dobj->mobj->mat->diffuse = gx_color;
+
+            // create description background
+            JOBJ *jobj_desc = JOBJ_LoadJoint(tmData->messageJoint);
+            // Add as child
+            JOBJ_AddChild(jobj_options, jobj_desc);
+            // Get each corner's joints
+            JOBJ_GetChild(jobj_desc, &corners, 1, 2, 3, 4, -1);
+// Modify scale and position
+#define DESC_X 0
+#define DESC_Y -22
+#define DESC_WIDTH 60
+#define DESC_HEIGHT 7
+            corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+            corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+            corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+            corners[1]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+            corners[2]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+            corners[2]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+            corners[3]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+            corners[3]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+            // Change color
+            GXColor desc_color = {255, 0, 0, 255};
+            jobj_desc->dobj->mobj->mat->diffuse = desc_color;
+
+            // create controls background
+            JOBJ *jobj_controls = JOBJ_LoadJoint(tmData->messageJoint);
+            // Add as child
+            JOBJ_AddChild(jobj_options, jobj_controls);
+            // Get each corner's joints
+            JOBJ_GetChild(jobj_controls, &corners, 1, 2, 3, 4, -1);
+// Modify scale and position
+#define DESC_X 0
+#define DESC_Y 21
+#define DESC_WIDTH 60
+#define DESC_HEIGHT 8.5
+            corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+            corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+            corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+            corners[1]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+            corners[2]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+            corners[2]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+            corners[3]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+            corners[3]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+            // Change color
+            GXColor controls_color = {0, 255, 0, 255};
+            jobj_controls->dobj->mobj->mat->diffuse = controls_color;
         }
 
         else
@@ -2435,12 +2527,15 @@ void EventMenu_Think(GOBJ *gobj)
     // Not paused, check if text is created, and free it if so
     else
     {
-        if (menuData->text != 0)
+        if (menuData->menu != 0)
         {
             // free text
-            Text_FreeText(menuData->text);
-            menuData->text = 0;
-
+            Text_FreeText(menuData->menu);
+            menuData->menu = 0;
+            Text_FreeText(menuData->controls);
+            menuData->controls = 0;
+            Text_FreeText(menuData->description);
+            menuData->description = 0;
             // remove jobj
             GObj_FreeObject(gobj);
             GObj_DestroyGXLink(gobj);
@@ -2455,11 +2550,13 @@ void EventMenu_Draw(GOBJ *gobj)
 #define MENU_CANVASSCALE 0.05
 #define MENU_TEXTSCALE 1
 #define MENU_EVENTXPOS 0
-#define MENU_EVENTYPOS -360
+#define MENU_EVENTYPOS -420
 #define MENU_OPTIONNAMEXPOS -250
-#define MENU_OPTIONNAMEYPOS -280
+#define MENU_OPTIONNAMEYPOS -200
 #define MENU_OPTIONVALXPOS 250
-#define MENU_OPTIONVALYPOS -280
+#define MENU_OPTIONVALYPOS -200
+#define MENU_DESCXPOS -250
+#define MENU_DESCYPOS 320
 #define MENU_TEXTYOFFSET 50
 #define MENU_HIGHLIGHT {255, 211, 0, 255}
 
@@ -2468,11 +2565,15 @@ void EventMenu_Draw(GOBJ *gobj)
     EventInfo *eventInfo = menuData->eventInfo;
 
     // free text if it exists
-    if (menuData->text != 0)
+    if (menuData->menu != 0)
     {
         // free text
-        Text_FreeText(menuData->text);
-        menuData->text = 0;
+        Text_FreeText(menuData->menu);
+        menuData->menu = 0;
+        Text_FreeText(menuData->controls);
+        menuData->controls = 0;
+        Text_FreeText(menuData->description);
+        menuData->description = 0;
     }
 
     // create text
@@ -2480,16 +2581,13 @@ void EventMenu_Draw(GOBJ *gobj)
     int *hudData = 0x804a1f58;
     int canvasIndex = hudData[0];
     Text *text = Text_CreateText(2, canvasIndex);
-    menuData->text = text;
+    menuData->menu = text;
     // enable align and kerning
     text->align = 1;
     text->kerning = 1;
     // scale canvas
     text->scale.X = MENU_CANVASSCALE;
     text->scale.Y = MENU_CANVASSCALE;
-
-    // Display event name
-    Text_AddSubtext(text, MENU_EVENTXPOS, MENU_EVENTYPOS, eventInfo->eventName);
 
     // Output all options
     GXColor highlight = MENU_HIGHLIGHT;
@@ -2513,6 +2611,30 @@ void EventMenu_Draw(GOBJ *gobj)
             Text_SetColor(text, subtext, &highlight);
         }
     }
+
+    // create controls text
+    Text *controls = Text_CreateText(2, canvasIndex);
+    menuData->controls = controls;
+    // enable align and kerning
+    controls->align = 1;
+    controls->kerning = 1;
+    // scale canvas
+    controls->scale.X = MENU_CANVASSCALE;
+    controls->scale.Y = MENU_CANVASSCALE;
+    // Display event name
+    Text_AddSubtext(controls, MENU_EVENTXPOS, MENU_EVENTYPOS, eventInfo->eventName);
+
+    // create description text
+    Text *desc = Text_CreateText(2, canvasIndex);
+    menuData->description = desc;
+    // enable align and kerning
+    desc->align = 1;
+    desc->kerning = 1;
+    // scale canvas
+    desc->scale.X = MENU_CANVASSCALE;
+    desc->scale.Y = MENU_CANVASSCALE;
+    // Display event name
+    Text_AddSubtext(desc, MENU_DESCXPOS, MENU_DESCYPOS, eventInfo->eventDescription);
 
     return;
 }
