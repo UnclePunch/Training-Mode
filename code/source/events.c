@@ -2544,6 +2544,7 @@ void EventMenu_Think(GOBJ *gobj)
 
     return;
 }
+
 void EventMenu_Draw(GOBJ *gobj)
 {
 
@@ -2551,6 +2552,8 @@ void EventMenu_Draw(GOBJ *gobj)
 #define MENU_TEXTSCALE 1
 #define MENU_EVENTXPOS 0
 #define MENU_EVENTYPOS -420
+#define MENU_CONTROLSXPOS -250
+#define MENU_CONTROLSYPOS -380
 #define MENU_OPTIONNAMEXPOS -250
 #define MENU_OPTIONNAMEYPOS -200
 #define MENU_OPTIONVALXPOS 250
@@ -2623,6 +2626,8 @@ void EventMenu_Draw(GOBJ *gobj)
     controls->scale.Y = MENU_CANVASSCALE;
     // Display event name
     Text_AddSubtext(controls, MENU_EVENTXPOS, MENU_EVENTYPOS, eventInfo->eventName);
+    // Display controls
+    Text_AddSubtext(controls, MENU_CONTROLSXPOS, MENU_CONTROLSYPOS, eventInfo->eventControls);
 
     // create description text
     Text *desc = Text_CreateText(2, canvasIndex);
@@ -2637,6 +2642,12 @@ void EventMenu_Draw(GOBJ *gobj)
     Text_AddSubtext(desc, MENU_DESCXPOS, MENU_DESCYPOS, eventInfo->eventDescription);
 
     return;
+}
+
+int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley)
+{
+
+    return 0;
 }
 
 ///////////////////////////////
