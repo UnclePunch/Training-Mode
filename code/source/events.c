@@ -2232,6 +2232,52 @@ void EventMenu_Init(EventInfo *eventInfo)
 /// Hook Functions ///
 //////////////////////
 
+void MatchThink(GOBJ *gobj)
+{
+    int *userdata = gobj->userdata;
+    int heldInputs = (PAD_TRIGGER_R | PAD_TRIGGER_L);
+    int pressedInputs = PAD_BUTTON_B;
+
+    // loop through all players
+    for (int i = 0; i < 6; i++)
+    {
+        // if they exist
+        if (Fighter_GetSlotType(i) != 3)
+        {
+            // if theyre pressing the buttons
+            GOBJ *fighter = Fighter_GetGObj(i);
+            FighterData *fighter_data = fighter->userdata;
+            if (((fighter_data->input_held & heldInputs) == heldInputs) && (fighter_data->input_pressed & pressedInputs))
+            {
+                // spawn mr saturn
+                SpawnItem spawnItem;
+                spawnItem.parent_gobj = 0;
+                spawnItem.parent_gobj2 = 0;
+                spawnItem.item_id = ITEM_MRSATURN;
+                spawnItem.unk1 = 0;
+                spawnItem.unk2 = 0;
+                spawnItem.pos.X = fighter_data->pos.X;
+                spawnItem.pos.Y = fighter_data->pos.Y;
+                spawnItem.pos.Z = 0;
+                spawnItem.pos2.X = fighter_data->pos.X;
+                spawnItem.pos2.Y = fighter_data->pos.Y;
+                spawnItem.pos2.Z = 0;
+                spawnItem.vel.X = 0;
+                spawnItem.vel.Y = 0;
+                spawnItem.vel.Z = 0;
+                spawnItem.facing_direction = fighter_data->facing_direction;
+                spawnItem.damage = 0;
+                spawnItem.unk5 = 0;
+                spawnItem.unk6 = 0;
+                spawnItem.unk7 = 0x80;
+                GOBJ *item = CreateItem(&spawnItem);
+            }
+        }
+    }
+
+    return;
+}
+
 void DebugLogThink(GOBJ *gobj)
 {
     int *userdata = gobj->userdata;
@@ -2339,6 +2385,16 @@ void OnBoot()
     // OSReport("hi this is boot\n");
     return;
 };
+
+void OnStartMelee()
+{
+    // Create a gobj
+    GOBJ *gobj = GObj_Create(0, 0, 0);
+    int *userdata = HSD_MemAlloc(64);
+    GObj_AddUserData(gobj, 4, HSD_Free, userdata);
+    GObj_AddProc(gobj, MatchThink, 4);
+    return;
+}
 
 ///////////////////////////////
 /// Miscellaneous Functions ///
@@ -2646,6 +2702,28 @@ void EventMenu_Draw(GOBJ *gobj)
 
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley)
 {
+    TextAllocInfo *textInfo = text->allocInfo;
+    char convertedText[100];
+    int currAllocSize = textInfo->size;
+    u8 *oldBuffer = textInfo->start;
+    int currAllocUsed = (&textInfo->curr - &textInfo->start);
+
+    // convert string to menu text
+    int newTextSize = Text_ConvertToMenuText(&convertedText, string);
+
+    // check if i have enough space in my text alloc for this
+    int newSize = (&textInfo->curr - &textInfo->start) + 17 + newTextSize;
+    if (currAllocSize < newSize)
+    {
+        // alloc new buffer
+        textInfo->size = newSize;
+        u8 *newBuffer = Text_Alloc(newSize);
+
+        // copy original data to new buffer
+        memcpy(newBuffer, oldBuffer, currAllocUsed);
+
+        textInfo->start = newBuffer;
+    }
 
     return 0;
 }

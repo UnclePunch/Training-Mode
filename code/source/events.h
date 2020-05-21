@@ -82,4 +82,4 @@ void EventLoad();
 void EventMenu_Init(EventInfo *eventInfo);
 void EventMenu_Think(GOBJ *eventMenu);
 void EventMenu_Draw(GOBJ *eventMenu);
-int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley)
+int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
