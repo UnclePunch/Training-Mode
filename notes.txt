@@ -2,8 +2,9 @@ Free Practice
 
 Menu
 -General Settings
+    -Player Percent (int option)
+    -CPU  Percent (int option)
     -Move Staling
-    -CPU Intangibility
     -Frame Advance (uses L like ultimate)
     -Model Display
         -On
@@ -22,6 +23,7 @@ Menu
         -Toggle (On/Off)
         -Player
         -Row 1 
+            -None
             -Position
             -State Name
             -Velocity - Self
@@ -55,6 +57,11 @@ Menu
         -Row 7
         -Row 8
 -CPU Settings
+    -CPU Intangibility
+    -Infinite Shields
+        -Off
+        -On Until Hit
+        -On
     -Default Behavior
         -Stand
         -Shield
@@ -75,7 +82,7 @@ Menu
     -Reset After Actionable
         -Off
         -On
-    -Counter Action
+    -Counter Action (ground)
         -None
         -Shield
         -Grab
@@ -90,6 +97,20 @@ Menu
         -Bair
         -Uair
         -Jump
+    -Counter Action (air)
+        -Airdodge
+        -Jump Away
+        -Jump Towards
+        -Nair
+        -Fair
+        -Dair
+        -Bair
+        -Uair
+        -Up B
+        -Down B
+        -Fastfall
+        -Wiggle
+        -Wiggle Fastfall
     -Counter After Hits (int option)
     -Counter After Frames (int option)
 -Replay Settings
