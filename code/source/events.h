@@ -4,13 +4,14 @@
 #define TM_DATA -(50 * 4) - 4
 
 // Structure Definitions
-typedef struct
+typedef struct EventMenus EventMenus;
+typedef struct MenuInfo
 {
     char *optionName;
     char **optionValues;
     int optionValuesNum;
 } MenuInfo;
-typedef struct
+typedef struct EventMatchData
 {
     unsigned int timer : 2;
     unsigned int matchType : 3;
@@ -38,7 +39,7 @@ typedef struct
     void *onCheckPause;
     void *onMatchEnd;
 } EventMatchData;
-typedef struct
+typedef struct EventInfo
 {
     char *eventName;
     char *eventDescription;
@@ -55,17 +56,17 @@ typedef struct
     int menuOptionNum;
     int defaultOSD;
 } EventInfo;
-typedef struct
+typedef struct EventPage
 {
     char *name;
     int eventNum;
     EventInfo **events;
 } EventPage;
-typedef struct
+typedef struct TMData
 {
     JOBJDesc *messageJoint;
 } TMData;
-typedef struct
+typedef struct EventMenu
 {
     EventInfo *eventInfo;
     Text *menu;
@@ -75,6 +76,27 @@ typedef struct
     u8 *options[50];
 } MenuData;
 
+typedef struct EventOption
+{
+    u8 option_kind;       // the type of option this is; string, integers, etc
+    u8 option_val;        // value of this option
+    EventMenus *menu;     // pointer to the menu that pressing A opens
+    char *option_name;    // pointer to a string
+    char **option_values; // pointer to an array of strings
+} EventOption;
+
+typedef struct EventMenus
+{
+    u8 option_num;        // number of options this menu contains
+    u8 menu_width;        // how wide to make the menu
+    u8 is_using;          // bool used to know if this menu is focused
+    u8 cursor;            // index of the option currently selected
+    EventOption *options; // pointer to all of this menu's options
+    EventMenus *prev;     // pointer to previous menu, used at runtime
+    JOBJ *joint;          // pointer to this menus joint background
+    Text *text;           // pointer to this options text
+} EventMenus;
+
 // Function prototypes
 EventInfo *GetEvent(int page, int event);
 void EventInit(int page, int eventID, MatchData *matchData);
@@ -83,3 +105,13 @@ void EventMenu_Init(EventInfo *eventInfo);
 void EventMenu_Think(GOBJ *eventMenu);
 void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
+
+static EventOption EvFreeOptions_Main[];
+static EventOption EvFreeOptions_General[];
+static EventMenus EvFreeMenu_General;
+
+// definitions
+#define OPTKIND_MENU 0
+#define OPTKIND_STRING 1
+#define OPTKIND_INT 2
+#define OPTKIND_FLOAT 3

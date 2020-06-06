@@ -1,10 +1,66 @@
 #include "events.h"
 
+static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik"};
+static EventMenus EvFreeMenu_Main = {
+    .option_num = 4,                // number of options this menu contains
+    .menu_width = 200,              // how wide to make the menu
+    .is_using = 0,                  // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                    // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_Main, // pointer to all of this menu's options
+    .prev = 0,                      // pointer to previous menu, used at runtime
+    .joint = 0,                     // pointer to this menus joint background, used at runtime
+    .text = 0,                      // pointer to this options text, used at runtime
+};
+static EventOption EvFreeOptions_Main[] = {
+    {
+        .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
+        .option_val = 0,             // value of this option
+        .menu = &EvFreeMenu_General, // pointer to the menu that pressing A opens
+        .option_name = {"General"},  // pointer to a string
+        .option_values = 0,          // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integers list, etc
+        .option_val = 0,                               // value of this option
+        .menu = 0,                                     // pointer to the menu that pressing A opens
+        .option_name = {"Options"},                    // pointer to a string
+        .option_values = EvFreeOptions_MainCharacters, // pointer to an array of strings
+    },
+};
+
+static EventMenus EvFreeMenu_General = {
+    .option_num = 4,                   // number of options this menu contains
+    .menu_width = 200,                 // how wide to make the menu
+    .is_using = 0,                     // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                       // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_General, // pointer to all of this menu's options
+    .prev = 0,                         // pointer to previous menu, used at runtime
+    .joint = 0,                        // pointer to this menus joint background, used at runtime
+    .text = 0,                         // pointer to this options text, used at runtime
+};
+static EventOption EvFreeOptions_General[] = {
+    {
+        .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
+        .option_val = 0,             // value of this option
+        .menu = 0,                   // pointer to the menu that pressing A opens
+        .option_name = 0,            // pointer to a string
+        .option_values = 0,          // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integers list, etc
+        .option_val = 0,             // value of this option
+        .menu = 0,                   // pointer to the menu that pressing A opens
+        .option_name = 0,            // pointer to a string
+        .option_values = 0,          // pointer to an array of strings
+    },
+};
+
 void Event_Init(GOBJ *gobj)
 {
     int *EventData = gobj->userdata;
     EventInfo *eventInfo = EventData[0];
     OSReport("this is %s\n", eventInfo->eventName);
+    //OSReport("%s", EvFreeOptions_Main[1].option_values[1]);
     return;
 }
 
