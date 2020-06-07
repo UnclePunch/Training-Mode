@@ -1,14 +1,30 @@
 #include "events.h"
 
+void Event_Init(GOBJ *gobj)
+{
+    int *EventData = gobj->userdata;
+    EventInfo *eventInfo = EventData[0];
+    OSReport("this is %s\n", eventInfo->eventName);
+    //OSReport("%s", EvFreeOptions_Main[1].option_values[1]);
+    return;
+}
+
+/////////////////////
+// Mod Information //
+/////////////////////
+
+static char TM_Vers[] = {"Training Mode v3.0\n"};
+static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
+static char Event_Controls[] = {"D-Pad Left = Load State\nD-Pad Right = Save State\n"};
+
+////////////////////////
+/// Event Defintions ///
+////////////////////////
+
+// L-Cancel Training
+
+// Main Menu
 static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik"};
-static EventMenu EvFreeMenu_Main = {
-    .option_num = 2,                // number of options this menu contains
-    .menu_width = 200,              // how wide to make the menu
-    .is_using = 0,                  // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                    // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_Main, // pointer to all of this menu's options
-    .prev = 0,                      // pointer to previous menu, used at runtime
-};
 static EventOption EvFreeOptions_Main[] = {
     {
         .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
@@ -27,110 +43,63 @@ static EventOption EvFreeOptions_Main[] = {
         .option_values = EvFreeOptions_MainCharacters,         // pointer to an array of strings
     },
 };
-
+static EventMenu EvFreeMenu_Main = {
+    .option_num = 2,                // number of options this menu contains
+    .menu_width = 200,              // how wide to make the menu
+    .state = 0,                     // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                    // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_Main, // pointer to all of this menu's options
+    .prev = 0,                      // pointer to previous menu, used at runtime
+};
+// General
+static EventOption EvFreeOptions_General[] = {
+    {
+        .option_kind = OPTKIND_INT,    // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,              // number of values for this option
+        .option_val = 0,               // value of this option
+        .menu = 0,                     // pointer to the menu that pressing A opens
+        .option_name = "Integer Test", // pointer to a string
+        .option_values = 0,            // pointer to an array of strings
+    },
+};
 static EventMenu EvFreeMenu_General = {
-    .option_num = 4,                   // number of options this menu contains
+    .option_num = 1,                   // number of options this menu contains
     .menu_width = 200,                 // how wide to make the menu
-    .is_using = 0,                     // bool used to know if this menu is focused, used at runtime
+    .state = 0,                        // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                       // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_General, // pointer to all of this menu's options
     .prev = 0,                         // pointer to previous menu, used at runtime
 };
-static EventOption EvFreeOptions_General[] = {
-    {
-        .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(0) / 4,  // number of values for this option
-        .option_val = 0,             // value of this option
-        .menu = 0,                   // pointer to the menu that pressing A opens
-        .option_name = 0,            // pointer to a string
-        .option_values = 0,          // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(0) / 4,  // number of values for this option
-        .option_val = 0,             // value of this option
-        .menu = 0,                   // pointer to the menu that pressing A opens
-        .option_name = 0,            // pointer to a string
-        .option_values = 0,          // pointer to an array of strings
-    },
-};
 
-void Event_Init(GOBJ *gobj)
-{
-    int *EventData = gobj->userdata;
-    EventInfo *eventInfo = EventData[0];
-    OSReport("this is %s\n", eventInfo->eventName);
-    //OSReport("%s", EvFreeOptions_Main[1].option_values[1]);
-    return;
-}
-
-/////////////////////
-// Mod Information //
-/////////////////////
-
-static char TM_Vers[] = {"Training Mode v3.0\n"};
-static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
-
-////////////////////////
-/// Event Defintions ///
-////////////////////////
-
-// L-Cancel Training
-// Event Name
-static char LCancel_Name[] = {"L-Cancel Training\n"};
-// Event Description
-static char LCancel_Desc[] = {"Practice L-Cancelling on\na stationary CPU.\n"};
-// Event Description
-static char Event_Controls[] = {"D-Pad Left = Load State\nD-Pad Right = Save State\n"};
-// Event Tutorial Filename
-static char LCancel_Tut[] = {"TvLC"};
-// Event Menu Data
-static char **LCancel_Stale[] = {"Off", "On"};
-static char **LCancel_Intang[] = {"On", "Off"};
-#define LCANCEL_MENUOPTIONNUM 2
-static MenuInfo LCancel_Menu[] =
-    {
-        {
-            "Stale Attacks",
-            LCancel_Stale,
-            sizeof(LCancel_Stale) / 4,
-        },
-        {
-            "Intangibility",
-            LCancel_Intang,
-            sizeof(LCancel_Intang) / 4,
-        },
-};
 // Match Data
-static EventMatchData LCancel_MatchData =
-    {
-        .timer = MATCH_TIMER_COUNTUP,
-        .matchType = MATCH_MATCHTYPE_TIME,
-        .playMusic = false,
-        .hideGo = true,
-        .hideReady = true,
-        .isCreateHUD = true,
-        .isDisablePause = false,
-        // byte 0x3
-        .timerRunOnPause = false,   // 0x01
-        .isHidePauseHUD = true,     // 0x02
-        .isShowLRAStart = true,     // 0x04
-        .isCheckForLRAStart = true, // 0x08
-        .isShowZRetry = true,       // 0x10
-        .isCheckForZRetry = true,   // 0x20
-        .isShowAnalogStick = true,  // 0x40
-        .isShowScore = false,       // 0x80
+static EventMatchData LCancel_MatchData = {
+    .timer = MATCH_TIMER_COUNTUP,
+    .matchType = MATCH_MATCHTYPE_TIME,
+    .playMusic = false,
+    .hideGo = true,
+    .hideReady = true,
+    .isCreateHUD = true,
+    .isDisablePause = false,
+    // byte 0x3
+    .timerRunOnPause = false,   // 0x01
+    .isHidePauseHUD = true,     // 0x02
+    .isShowLRAStart = true,     // 0x04
+    .isCheckForLRAStart = true, // 0x08
+    .isShowZRetry = true,       // 0x10
+    .isCheckForZRetry = true,   // 0x20
+    .isShowAnalogStick = true,  // 0x40
+    .isShowScore = false,       // 0x80
 
-        .isRunStockLogic = false, // 0x20
-        .isDisableHit = false,    // 0x20
-        .useKOCounter = false,
-        .playerKind = -1,
-        .cpuKind = -1,        // 0xFF=
-        .stage = -1,          // 0xFFFF
-        .timerSeconds = 0,    // 0xFFFFFFFF
-        .timerSubSeconds = 0, // 0xFF
-        .onCheckPause = 0,
-        .onMatchEnd = 0,
+    .isRunStockLogic = false, // 0x20
+    .isDisableHit = false,    // 0x20
+    .useKOCounter = false,
+    .playerKind = -1,
+    .cpuKind = -1,        // 0xFF=
+    .stage = -1,          // 0xFFFF
+    .timerSeconds = 0,    // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
+    .onCheckPause = 0,
+    .onMatchEnd = 0,
 };
 // Think Function
 void LCancel_Think(GOBJ *event)
@@ -140,33 +109,20 @@ void LCancel_Think(GOBJ *event)
 // Event Struct
 static EventInfo LCancel = {
     // Event Name
-    LCancel_Name,
-    // Event Description
-    LCancel_Desc,
-    // Event Controls
-    Event_Controls,
-    // Event Tutorial File Name
-    LCancel_Tut,
-    // isChooseCPU
-    false,
-    // isSelectStage
-    true,
-    // Score Type
-    0,
-    // callback priority
-    0,
-    // Event Callback Function
-    LCancel_Think,
-    // Event Init Function
-    Event_Init,
-    // Match Data
-    &LCancel_MatchData,
-    // Menu Data
-    &EvFreeMenu_Main,
-    // Menu Option Amount
-    LCANCEL_MENUOPTIONNUM,
-    // Default OSDs
-    0xFFFFFFFF,
+    .eventName = "L-Cancel Training\n",
+    .eventDescription = "Practice L-Cancelling on\na stationary CPU.\n",
+    .eventControls = "D-Pad Left = Load State\nD-Pad Right = Save State\n",
+    .eventTutorial = "TvLC",
+    .isChooseCPU = false,
+    .isSelectStage = true,
+    .scoreType = 0,
+    .callbackPriority = 0,
+    .eventOnFrame = LCancel_Think,
+    .eventOnInit = Event_Init,
+    .matchData = &LCancel_MatchData,
+    .startMenu = &EvFreeMenu_Main,
+    .menuOptionNum = 0,
+    .defaultOSD = 0xFFFFFFFF,
 };
 
 // Ledgedash Training
@@ -256,7 +212,7 @@ static EventInfo Ledgedash =
         // Menu Data
         &Ledgedash_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -348,7 +304,7 @@ static EventInfo Combo =
         // Menu Data
         &Combo_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -440,7 +396,7 @@ static EventInfo AttackOnShield =
         // Menu Data
         &AttackOnShield_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -532,7 +488,7 @@ static EventInfo Reversal =
         // Menu Data
         &Reversal_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -624,7 +580,7 @@ static EventInfo SDI =
         // Menu Data
         &SDI_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -716,7 +672,7 @@ static EventInfo Powershield =
         // Menu Data
         &Powershield_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -808,7 +764,7 @@ static EventInfo Ledgetech =
         // Menu Data
         &Ledgetech_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -900,7 +856,7 @@ static EventInfo AmsahTech =
         // Menu Data
         &AmsahTech_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -992,7 +948,7 @@ static EventInfo ShieldDrop =
         // Menu Data
         &ShieldDrop_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1084,7 +1040,7 @@ static EventInfo WaveshineSDI =
         // Menu Data
         &WaveshineSDI_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1176,7 +1132,7 @@ static EventInfo SlideOff =
         // Menu Data
         &SlideOff_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1268,7 +1224,7 @@ static EventInfo GrabMash =
         // Menu Data
         &GrabMash_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1360,7 +1316,7 @@ static EventInfo TechCounter =
         // Menu Data
         &TechCounter_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1452,7 +1408,7 @@ static EventInfo ArmadaShine =
         // Menu Data
         &ArmadaShine_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1544,7 +1500,7 @@ static EventInfo SideBSweet =
         // Menu Data
         &SideBSweet_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1636,7 +1592,7 @@ static EventInfo EscapeSheik =
         // Menu Data
         &EscapeSheik_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1728,7 +1684,7 @@ static EventInfo Eggs =
         // Menu Data
         &Eggs_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1820,7 +1776,7 @@ static EventInfo Multishine =
         // Menu Data
         &Multishine_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -1912,7 +1868,7 @@ static EventInfo Reaction =
         // Menu Data
         &Reaction_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -2004,7 +1960,7 @@ static EventInfo Ledgestall =
         // Menu Data
         &Ledgestall_Menu,
         // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
+        0,
         // Default OSDs
         0xFFFFFFFF,
 };
@@ -2014,73 +1970,62 @@ static EventInfo Ledgestall =
 ///////////////////////
 
 // Minigames
-static char Minigames_Name[] = {"Minigames"};
-static EventInfo *Minigames_Events[] =
-    {
-        &Eggs,
-        &Multishine,
-        &Reaction,
-        &Ledgestall,
+static EventInfo *Minigames_Events[] = {
+    &Eggs,
+    &Multishine,
+    &Reaction,
+    &Ledgestall,
 };
-static EventPage Minigames_Page =
-    {
-        Minigames_Name,
-        (sizeof(Minigames_Events) / 4) - 1,
-        Minigames_Events,
+static EventPage Minigames_Page = {
+    .name = "Minigames",
+    (sizeof(Minigames_Events) / 4) - 1,
+    Minigames_Events,
 };
 
 // Page 2 Events
-static char General_Name[] = {"General Tech"};
-static EventInfo *General_Events[] =
-    {
-        // Event 1 - L-Cancel Training
-        &LCancel,
-        &Ledgedash,
-        &Combo,
-        &AttackOnShield,
-        &Reversal,
-        &SDI,
-        &Powershield,
-        &Ledgetech,
-        &AmsahTech,
-        &ShieldDrop,
-        &WaveshineSDI,
-        &SlideOff,
-        &GrabMash,
+static EventInfo *General_Events[] = {
+    // Event 1 - L-Cancel Training
+    &LCancel,
+    &Ledgedash,
+    &Combo,
+    &AttackOnShield,
+    &Reversal,
+    &SDI,
+    &Powershield,
+    &Ledgetech,
+    &AmsahTech,
+    &ShieldDrop,
+    &WaveshineSDI,
+    &SlideOff,
+    &GrabMash,
 };
-static EventPage General_Page =
-    {
-        General_Name,
-        (sizeof(General_Events) / 4) - 1,
-        General_Events,
+static EventPage General_Page = {
+    .name = "General Tech",
+    (sizeof(General_Events) / 4) - 1,
+    General_Events,
 };
 
 // Page 3 Events
-static char Spacie_Name[] = {"Spacie Tech"};
-static EventInfo *Spacie_Events[] =
-    {
-        &TechCounter,
-        &ArmadaShine,
-        &SideBSweet,
-        &EscapeSheik,
+static EventInfo *Spacie_Events[] = {
+    &TechCounter,
+    &ArmadaShine,
+    &SideBSweet,
+    &EscapeSheik,
 };
-static EventPage Spacie_Page =
-    {
-        Spacie_Name,
-        (sizeof(Spacie_Events) / 4) - 1,
-        Spacie_Events,
+static EventPage Spacie_Page = {
+    .name = "Spacie Tech",
+    (sizeof(Spacie_Events) / 4) - 1,
+    Spacie_Events,
 };
 
-///////////////////////
+//////////////////
 /// Page Order ///
-///////////////////////
+//////////////////
 
-// Page Order
-static EventPage **EventPages[] =
-    {
-        &Minigames_Page,
-        &General_Page,
-        &Spacie_Page,
+static EventPage **EventPages[] = {
+    &Minigames_Page,
+    &General_Page,
+    &Spacie_Page,
 };
 
 //////////////////////
@@ -2470,192 +2415,12 @@ void OnStartMelee()
     {                    \
         0, 255, 255, 255 \
     }
+
 void EventMenu_Think(GOBJ *gobj)
 {
     // Get event info
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
-
-    /*
-    // Check if paused
-    if (Pause_CheckStatus(1) == 2)
-    {
-        // check if text is created, create it if not
-        if (menuData->menu == 0)
-        {
-            // draw text
-            EventMenu_Draw(gobj);
-
-            // create options background
-            TMData *tmData = RTOC_PTR(TM_DATA);
-            JOBJ *jobj_options = JOBJ_LoadJoint(tmData->messageJoint);
-            // Add to gobj
-            GObj_AddObject(gobj, 3, jobj_options);
-            // Add gx_link
-            GObj_AddGXLink(gobj, GXLink_Common, 11, 0);
-            // Get each corner's joints
-            JOBJ *corners[4];
-            JOBJ_GetChild(jobj_options, &corners, 1, 2, 3, 4, -1);
-            // Modify scale and position
-            jobj_options->trans.Z = 63;
-            jobj_options->scale.X = 0.013;
-            jobj_options->scale.Y = 0.013;
-            jobj_options->scale.Z = 0.013;
-            corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
-            corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
-            corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
-            corners[1]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
-            corners[2]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
-            corners[2]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
-            corners[3]->trans.X = (OPT_WIDTH / 2) + OPT_X;
-            corners[3]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
-            // Change color
-            GXColor gx_color = TEXT_BGCOLOR;
-            jobj_options->dobj->mobj->mat->diffuse = gx_color;
-
-            // create description background
-            JOBJ *jobj_desc = JOBJ_LoadJoint(tmData->messageJoint);
-            // Add as child
-            JOBJ_AddChild(jobj_options, jobj_desc);
-            // Get each corner's joints
-            JOBJ_GetChild(jobj_desc, &corners, 1, 2, 3, 4, -1);
-            // Modify scale and position
-            corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
-            corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
-            corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
-            corners[1]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
-            corners[2]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
-            corners[2]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
-            corners[3]->trans.X = (DESC_WIDTH / 2) + DESC_X;
-            corners[3]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
-            // Change color
-            GXColor desc_color = {255, 0, 0, 255};
-            jobj_desc->dobj->mobj->mat->diffuse = desc_color;
-
-            // create controls background
-            JOBJ *jobj_controls = JOBJ_LoadJoint(tmData->messageJoint);
-            // Add as child
-            JOBJ_AddChild(jobj_options, jobj_controls);
-            // Get each corner's joints
-            JOBJ_GetChild(jobj_controls, &corners, 1, 2, 3, 4, -1);
-            // Modify scale and position
-            corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
-            corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
-            corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
-            corners[1]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
-            corners[2]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
-            corners[2]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
-            corners[3]->trans.X = (DESC_WIDTH / 2) + DESC_X;
-            corners[3]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
-            // Change color
-            GXColor controls_color = {0, 255, 0, 255};
-            jobj_controls->dobj->mobj->mat->diffuse = controls_color;
-        }
-
-        else
-        {
-            // get player who paused
-            u8 *pauseData = (u8 *)0x8046b6a0;
-            u8 pauser = pauseData[1];
-            // get their rapid inputs
-            HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
-            int inputs = pad->rapidFire;
-
-            // check for up/down
-            int isChanged = 0;
-            s32 cursor = menuData->cursor;
-            s32 cursor_min = 0;
-            s32 cursor_max = eventInfo->menuOptionNum;
-            // check for dpad down
-            if ((inputs & HSD_BUTTON_DOWN) != 0)
-            {
-                cursor += 1;
-                if (cursor >= cursor_max)
-                {
-                    cursor = (cursor_max - 1);
-                }
-                else
-                {
-                    isChanged = 1;
-                }
-            }
-            // check for dpad up
-            else if ((inputs & HSD_BUTTON_UP) != 0)
-            {
-                cursor -= 1;
-                if (cursor < cursor_min)
-                {
-                    cursor = cursor_min;
-                }
-                else
-                {
-                    isChanged = 1;
-                }
-            }
-            // update cursor value
-            menuData->cursor = cursor;
-
-            // check for left/right
-            s8 option = menuData->options[cursor];
-            s8 option_min = 0;
-            s8 option_max = eventInfo->menuInfo[cursor].optionValuesNum;
-            // check for dpad left
-            if ((inputs & HSD_BUTTON_LEFT) != 0)
-            {
-                option -= 1;
-                if (option < option_min)
-                {
-                    option = option_min;
-                }
-                else
-                {
-                    isChanged = 1;
-                }
-            }
-            // check for dpad right
-            else if ((inputs & HSD_BUTTON_RIGHT) != 0)
-            {
-                option += 1;
-                if (option >= option_max)
-                {
-                    option = (option_max - 1);
-                }
-                else
-                {
-                    isChanged = 1;
-                }
-            }
-            // update option value
-            menuData->options[cursor] = option;
-
-            // if anything changed, draw menu
-            if (isChanged != 0)
-            {
-                EventMenu_Draw(gobj);
-
-                // also play sfx
-                SFX_PlayCommon(2);
-            }
-        }
-    }
-    // Not paused, check if text is created, and free it if so
-    else
-    {
-        if (menuData->menu != 0)
-        {
-            // free text
-            Text_FreeText(menuData->menu);
-            menuData->menu = 0;
-            Text_FreeText(menuData->controls);
-            menuData->controls = 0;
-            Text_FreeText(menuData->description);
-            menuData->description = 0;
-            // remove jobj
-            GObj_FreeObject(gobj);
-            GObj_DestroyGXLink(gobj);
-        }
-    }
-*/
 
     // Check if paused
     if (Pause_CheckStatus(1) == 2)
@@ -2670,12 +2435,163 @@ void EventMenu_Think(GOBJ *gobj)
             EventMenu_CreateModel(gobj, currMenu);
             EventMenu_CreatePopup(gobj, currMenu);
             EventMenu_CreateText(gobj, currMenu);
+            EventMenu_Update(gobj, currMenu);
         }
 
         // act on controls
+        else
+        {
+            // get menu variables
+            int isChanged = 0;
+            s32 cursor = currMenu->cursor;
+            s32 cursor_min = 0;
+            s32 cursor_max = currMenu->option_num;
+            EventOption *currOption = &currMenu->options[cursor];
+            // get option variables
+            s16 option_val = currOption->option_val;
+            s16 value_min = 0;
+            s16 value_max = currOption->value_num;
 
-        // update menu
-        EventMenu_Update(gobj, currMenu);
+            // get player who paused
+            u8 *pauseData = (u8 *)0x8046b6a0;
+            u8 pauser = pauseData[1];
+            // get their rapid inputs
+            HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
+            int inputs_rapid = pad->rapidFire;
+            int inputs_held = pad->held;
+            int inputs = inputs_rapid;
+            if ((inputs_held & HSD_TRIGGER_R) != 0)
+            {
+                inputs = inputs_held;
+            }
+
+            // check for dpad down
+            if ((inputs & HSD_BUTTON_DOWN) != 0)
+            {
+                cursor += 1;
+                if (cursor < cursor_max)
+                {
+                    isChanged = 1;
+
+                    // update cursor
+                    currMenu->cursor = cursor;
+
+                    // also play sfx
+                    SFX_PlayCommon(2);
+                }
+            }
+            // check for dpad up
+            else if ((inputs & HSD_BUTTON_UP) != 0)
+            {
+                cursor -= 1;
+                if (cursor >= cursor_min)
+                {
+                    isChanged = 1;
+
+                    // update cursor
+                    currMenu->cursor = cursor;
+
+                    // also play sfx
+                    SFX_PlayCommon(2);
+                }
+            }
+
+            // check for left
+            else if ((inputs & HSD_BUTTON_LEFT) != 0)
+            {
+                if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
+                {
+
+                    option_val -= 1;
+                    if (option_val >= value_min)
+                    {
+                        isChanged = 1;
+
+                        // also play sfx
+                        SFX_PlayCommon(2);
+
+                        // update val
+                        currOption->option_val = option_val;
+                    }
+                }
+            }
+            // check for right
+            else if ((inputs & HSD_BUTTON_RIGHT) != 0)
+            {
+                // check for valid option kind
+                if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
+                {
+                    option_val += 1;
+                    if (option_val < value_max)
+                    {
+                        isChanged = 1;
+
+                        // also play sfx
+                        SFX_PlayCommon(2);
+
+                        // update val
+                        currOption->option_val = option_val;
+                    }
+                }
+            }
+
+            // check for A
+            else if ((inputs_rapid & HSD_BUTTON_A) != 0)
+            {
+                if ((currOption->option_kind == OPTKIND_MENU))
+                {
+                    // access this menu
+                    currMenu->state = 1;
+
+                    // update currMenu
+                    EventMenu *nextMenu = currMenu->options[cursor].menu;
+                    nextMenu->prev = currMenu;
+                    currMenu = nextMenu;
+
+                    // recreate menu's text
+                    EventMenu_CreateText(gobj, currMenu);
+
+                    // request text update
+                    isChanged = 1;
+
+                    // also play sfx
+                    SFX_PlayCommon(1);
+                }
+            }
+            // check to go back a menu
+            else if ((inputs_rapid & HSD_BUTTON_B) != 0)
+            {
+                // check if a prev menu exists
+                EventMenu *prevMenu = currMenu->prev;
+                if (prevMenu != 0)
+                {
+
+                    // update currMenu
+                    EventMenu *prevMenu = currMenu->prev;
+                    currMenu->prev = 0;
+                    currMenu = prevMenu;
+
+                    // close this menu
+                    currMenu->state = 0;
+
+                    // recreate menu's text
+                    EventMenu_CreateText(gobj, currMenu);
+
+                    // request text update
+                    isChanged = 1;
+
+                    // also play sfx
+                    SFX_PlayCommon(0);
+                }
+            }
+
+            // if anything changed, update text
+            if (isChanged != 0)
+            {
+                // update menu
+                EventMenu_Update(gobj, currMenu);
+            }
+        }
     }
 
     // Is not paused
@@ -2705,91 +2621,6 @@ void EventMenu_Think(GOBJ *gobj)
         }
     }
 
-    return;
-}
-
-void EventMenu_Draw(GOBJ *gobj)
-{
-
-    /* 
-    // Get event info
-    MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
-
-    // free text if it exists
-    if (menuData->menu != 0)
-    {
-        // free text
-        Text_FreeText(menuData->menu);
-        menuData->menu = 0;
-        Text_FreeText(menuData->controls);
-        menuData->controls = 0;
-        Text_FreeText(menuData->description);
-        menuData->description = 0;
-    }
-
-    // create text
-    int subtext;
-    int *hudData = 0x804a1f58;
-    int canvasIndex = hudData[0];
-    Text *text = Text_CreateText(2, canvasIndex);
-    menuData->menu = text;
-    // enable align and kerning
-    text->align = 1;
-    text->kerning = 1;
-    // scale canvas
-    text->scale.X = MENU_CANVASSCALE;
-    text->scale.Y = MENU_CANVASSCALE;
-
-    // Output all options
-    GXColor highlight = MENU_HIGHLIGHT;
-    s32 cursor = menuData->cursor;
-    s32 option_max = eventInfo->menuInfo[cursor].optionValuesNum;
-    for (int i = 0; i < option_max; i++)
-    {
-        // output option name
-        float optionX = MENU_OPTIONNAMEXPOS;
-        float optionY = MENU_OPTIONNAMEYPOS + (i * MENU_TEXTYOFFSET);
-        int optionVal = menuData->options[i];
-        subtext = Text_AddSubtext(text, optionX, optionY, eventInfo->menuInfo[i].optionName);
-
-        // output option value
-        optionX = MENU_OPTIONVALXPOS;
-        optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
-        subtext = Text_AddSubtext(text, optionX, optionY, eventInfo->menuInfo[i].optionValues[optionVal]);
-        // highlight this if this is the cursor
-        if (i == cursor)
-        {
-            Text_SetColor(text, subtext, &highlight);
-        }
-    }
-
-    // create controls text
-    Text *controls = Text_CreateText(2, canvasIndex);
-    menuData->controls = controls;
-    // enable align and kerning
-    controls->align = 1;
-    controls->kerning = 1;
-    // scale canvas
-    controls->scale.X = MENU_CANVASSCALE;
-    controls->scale.Y = MENU_CANVASSCALE;
-    // Display event name
-    Text_AddSubtext(controls, MENU_EVENTXPOS, MENU_EVENTYPOS, eventInfo->eventName);
-    // Display controls
-    Text_AddSubtext(controls, MENU_CONTROLSXPOS, MENU_CONTROLSYPOS, eventInfo->eventControls);
-
-    // create description text
-    Text *desc = Text_CreateText(2, canvasIndex);
-    menuData->description = desc;
-    // enable align and kerning
-    desc->align = 1;
-    desc->kerning = 1;
-    // scale canvas
-    desc->scale.X = MENU_CANVASSCALE;
-    desc->scale.Y = MENU_CANVASSCALE;
-    // Display event name
-    Text_AddSubtext(desc, MENU_DESCXPOS, MENU_DESCYPOS, eventInfo->eventDescription);
-*/
     return;
 }
 
@@ -2896,6 +2727,11 @@ void EventMenu_CreatePopup(GOBJ *gobj, EventMenu *menu)
     {                    \
         255, 211, 0, 255 \
     }
+#define MENU_NOHIGHLIGHT   \
+    {                      \
+        255, 255, 255, 255 \
+    }
+
 void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 {
 
@@ -2910,8 +2746,14 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
         // free text
         Text_FreeText(menuData->text_name);
         menuData->text_name = 0;
+    }
+    if (menuData->text_value != 0)
+    {
         Text_FreeText(menuData->text_value);
         menuData->text_value = 0;
+    }
+    if (menuData->text_popup != 0)
+    {
         Text_FreeText(menuData->text_popup);
         menuData->text_popup = 0;
     }
@@ -2970,7 +2812,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // Create Popup //
     //////////////////
 
-    if (menu->is_using == 2)
+    if (menu->state == 2)
     {
 
         text = Text_CreateText(2, canvasIndex);
@@ -3005,6 +2847,7 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     s32 cursor = menu->cursor;
     s32 option_num = menu->option_num;
     GXColor highlight = MENU_HIGHLIGHT;
+    GXColor no_highlight = MENU_NOHIGHLIGHT;
     Text *text;
 
     //////////////////
@@ -3027,6 +2870,10 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
         {
             Text_SetColor(text, i, &highlight);
         }
+        else
+        {
+            Text_SetColor(text, i, &no_highlight);
+        }
     }
 
     ///////////////////
@@ -3039,19 +2886,30 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     {
         // get this option
         EventOption *currOption = &menu->options[i];
+        int optionVal = currOption->option_val;
 
-        // if this option has values
+        // if this option has string values
         if (currOption->option_kind == OPTKIND_STRING)
         {
             // output option value
-            int optionVal = currOption->option_val;
             Text_SetText(text, i, currOption->option_values[optionVal]);
+        }
 
-            // highlight this if this is the cursor
-            if (i == cursor)
-            {
-                Text_SetColor(text, i, &highlight);
-            }
+        // if this option has int values
+        else if (currOption->option_kind == OPTKIND_INT)
+        {
+            // output option value
+            Text_SetText(text, i, "%d", optionVal);
+        }
+
+        // highlight this if this is the cursor
+        if (i == cursor)
+        {
+            Text_SetColor(text, i, &highlight);
+        }
+        else
+        {
+            Text_SetColor(text, i, &no_highlight);
         }
     }
 
@@ -3059,7 +2917,7 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     // Update Popup //
     //////////////////
 
-    if (menu->is_using == 2)
+    if (menu->state == 2)
     {
 
         option_num = menu->options[cursor].value_num;
@@ -3076,6 +2934,10 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
             {
                 Text_SetColor(text, i, &highlight);
             }
+            else
+            {
+                Text_SetColor(text, i, &no_highlight);
+            }
         }
     }
 
@@ -3090,7 +2952,7 @@ EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
     EventMenu *currMenu = eventInfo->startMenu;
 
     // walk through the menus to find the one that is in focus
-    while (currMenu->is_using != 0)
+    while (currMenu->state != 0)
     {
         int cursor = currMenu->cursor;
         currMenu = currMenu->options[cursor].menu;
