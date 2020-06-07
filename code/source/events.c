@@ -1,46 +1,45 @@
 #include "events.h"
 
 static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik"};
-static EventMenus EvFreeMenu_Main = {
-    .option_num = 4,                // number of options this menu contains
+static EventMenu EvFreeMenu_Main = {
+    .option_num = 2,                // number of options this menu contains
     .menu_width = 200,              // how wide to make the menu
     .is_using = 0,                  // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                    // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_Main, // pointer to all of this menu's options
     .prev = 0,                      // pointer to previous menu, used at runtime
-    .joint = 0,                     // pointer to this menus joint background, used at runtime
-    .text = 0,                      // pointer to this options text, used at runtime
 };
 static EventOption EvFreeOptions_Main[] = {
     {
         .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(0) / 4,  // number of values for this option
         .option_val = 0,             // value of this option
         .menu = &EvFreeMenu_General, // pointer to the menu that pressing A opens
         .option_name = {"General"},  // pointer to a string
         .option_values = 0,          // pointer to an array of strings
     },
     {
-        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integers list, etc
-        .option_val = 0,                               // value of this option
-        .menu = 0,                                     // pointer to the menu that pressing A opens
-        .option_name = {"Options"},                    // pointer to a string
-        .option_values = EvFreeOptions_MainCharacters, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                         // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(EvFreeOptions_MainCharacters) / 4, // number of values for this option
+        .option_val = 0,                                       // value of this option
+        .menu = 0,                                             // pointer to the menu that pressing A opens
+        .option_name = {"Characters"},                         // pointer to a string
+        .option_values = EvFreeOptions_MainCharacters,         // pointer to an array of strings
     },
 };
 
-static EventMenus EvFreeMenu_General = {
+static EventMenu EvFreeMenu_General = {
     .option_num = 4,                   // number of options this menu contains
     .menu_width = 200,                 // how wide to make the menu
     .is_using = 0,                     // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                       // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_General, // pointer to all of this menu's options
     .prev = 0,                         // pointer to previous menu, used at runtime
-    .joint = 0,                        // pointer to this menus joint background, used at runtime
-    .text = 0,                         // pointer to this options text, used at runtime
 };
 static EventOption EvFreeOptions_General[] = {
     {
         .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(0) / 4,  // number of values for this option
         .option_val = 0,             // value of this option
         .menu = 0,                   // pointer to the menu that pressing A opens
         .option_name = 0,            // pointer to a string
@@ -48,6 +47,7 @@ static EventOption EvFreeOptions_General[] = {
     },
     {
         .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(0) / 4,  // number of values for this option
         .option_val = 0,             // value of this option
         .menu = 0,                   // pointer to the menu that pressing A opens
         .option_name = 0,            // pointer to a string
@@ -138,36 +138,35 @@ void LCancel_Think(GOBJ *event)
     return;
 }
 // Event Struct
-static EventInfo LCancel =
-    {
-        // Event Name
-        LCancel_Name,
-        // Event Description
-        LCancel_Desc,
-        // Event Controls
-        Event_Controls,
-        // Event Tutorial File Name
-        LCancel_Tut,
-        // isChooseCPU
-        false,
-        // isSelectStage
-        true,
-        // Score Type
-        0,
-        // callback priority
-        0,
-        // Event Callback Function
-        LCancel_Think,
-        // Event Init Function
-        Event_Init,
-        // Match Data
-        &LCancel_MatchData,
-        // Menu Data
-        &LCancel_Menu,
-        // Menu Option Amount
-        LCANCEL_MENUOPTIONNUM,
-        // Default OSDs
-        0xFFFFFFFF,
+static EventInfo LCancel = {
+    // Event Name
+    LCancel_Name,
+    // Event Description
+    LCancel_Desc,
+    // Event Controls
+    Event_Controls,
+    // Event Tutorial File Name
+    LCancel_Tut,
+    // isChooseCPU
+    false,
+    // isSelectStage
+    true,
+    // Score Type
+    0,
+    // callback priority
+    0,
+    // Event Callback Function
+    LCancel_Think,
+    // Event Init Function
+    Event_Init,
+    // Match Data
+    &LCancel_MatchData,
+    // Menu Data
+    &EvFreeMenu_Main,
+    // Menu Option Amount
+    LCANCEL_MENUOPTIONNUM,
+    // Default OSDs
+    0xFFFFFFFF,
 };
 
 // Ledgedash Training
@@ -2267,7 +2266,7 @@ void EventLoad()
 void EventMenu_Init(EventInfo *eventInfo)
 {
     // Ensure this event has a menu
-    if (eventInfo->menuInfo == 0)
+    if (eventInfo->startMenu == 0)
         return;
 
     // Create a gobj
@@ -2455,12 +2454,29 @@ void OnStartMelee()
 ///////////////////////////////
 /// Miscellaneous Functions ///
 ///////////////////////////////
+#define OPT_X 0
+#define OPT_Y -1
+#define OPT_WIDTH 55
+#define OPT_HEIGHT 28
+#define DESC_X 0
+#define DESC_Y -22
+#define DESC_WIDTH 60
+#define DESC_HEIGHT 7
+#define DESC_X 0
+#define DESC_Y 21
+#define DESC_WIDTH 60
+#define DESC_HEIGHT 8.5
+#define TEXT_BGCOLOR     \
+    {                    \
+        0, 255, 255, 255 \
+    }
 void EventMenu_Think(GOBJ *gobj)
 {
     // Get event info
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
 
+    /*
     // Check if paused
     if (Pause_CheckStatus(1) == 2)
     {
@@ -2469,8 +2485,6 @@ void EventMenu_Think(GOBJ *gobj)
         {
             // draw text
             EventMenu_Draw(gobj);
-
-            /**/ #define TEXT_BGCOLOR{0, 255, 255, 255}
 
             // create options background
             TMData *tmData = RTOC_PTR(TM_DATA);
@@ -2482,11 +2496,7 @@ void EventMenu_Think(GOBJ *gobj)
             // Get each corner's joints
             JOBJ *corners[4];
             JOBJ_GetChild(jobj_options, &corners, 1, 2, 3, 4, -1);
-// Modify scale and position
-#define OPT_X 0
-#define OPT_Y -1
-#define OPT_WIDTH 55
-#define OPT_HEIGHT 28
+            // Modify scale and position
             jobj_options->trans.Z = 63;
             jobj_options->scale.X = 0.013;
             jobj_options->scale.Y = 0.013;
@@ -2509,11 +2519,7 @@ void EventMenu_Think(GOBJ *gobj)
             JOBJ_AddChild(jobj_options, jobj_desc);
             // Get each corner's joints
             JOBJ_GetChild(jobj_desc, &corners, 1, 2, 3, 4, -1);
-// Modify scale and position
-#define DESC_X 0
-#define DESC_Y -22
-#define DESC_WIDTH 60
-#define DESC_HEIGHT 7
+            // Modify scale and position
             corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
             corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
             corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
@@ -2532,11 +2538,7 @@ void EventMenu_Think(GOBJ *gobj)
             JOBJ_AddChild(jobj_options, jobj_controls);
             // Get each corner's joints
             JOBJ_GetChild(jobj_controls, &corners, 1, 2, 3, 4, -1);
-// Modify scale and position
-#define DESC_X 0
-#define DESC_Y 21
-#define DESC_WIDTH 60
-#define DESC_HEIGHT 8.5
+            // Modify scale and position
             corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
             corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
             corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
@@ -2653,6 +2655,55 @@ void EventMenu_Think(GOBJ *gobj)
             GObj_DestroyGXLink(gobj);
         }
     }
+*/
+
+    // Check if paused
+    if (Pause_CheckStatus(1) == 2)
+    {
+
+        // Get the current menu
+        EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+
+        // create text if it doesnt exist yet
+        if (menuData->text_name == 0)
+        {
+            EventMenu_CreateModel(gobj, currMenu);
+            EventMenu_CreatePopup(gobj, currMenu);
+            EventMenu_CreateText(gobj, currMenu);
+        }
+
+        // act on controls
+
+        // update menu
+        EventMenu_Update(gobj, currMenu);
+    }
+
+    // Is not paused
+    else
+    {
+        // check to remove
+        if (menuData->text_name != 0)
+        {
+            // remove
+            Text_FreeText(menuData->text_name);
+            menuData->text_name = 0;
+            // remove
+            Text_FreeText(menuData->text_value);
+            menuData->text_value = 0;
+
+            // if mini box exists
+            if (menuData->text_popup != 0)
+            {
+                // remove
+                Text_FreeText(menuData->text_popup);
+                menuData->text_popup = 0;
+            }
+
+            // remove jobj
+            GObj_FreeObject(gobj);
+            GObj_DestroyGXLink(gobj);
+        }
+    }
 
     return;
 }
@@ -2660,21 +2711,7 @@ void EventMenu_Think(GOBJ *gobj)
 void EventMenu_Draw(GOBJ *gobj)
 {
 
-#define MENU_CANVASSCALE 0.05
-#define MENU_TEXTSCALE 1
-#define MENU_EVENTXPOS 0
-#define MENU_EVENTYPOS -420
-#define MENU_CONTROLSXPOS -250
-#define MENU_CONTROLSYPOS -380
-#define MENU_OPTIONNAMEXPOS -250
-#define MENU_OPTIONNAMEYPOS -200
-#define MENU_OPTIONVALXPOS 250
-#define MENU_OPTIONVALYPOS -200
-#define MENU_DESCXPOS -250
-#define MENU_DESCYPOS 320
-#define MENU_TEXTYOFFSET 50
-#define MENU_HIGHLIGHT {255, 211, 0, 255}
-
+    /* 
     // Get event info
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
@@ -2752,8 +2789,314 @@ void EventMenu_Draw(GOBJ *gobj)
     desc->scale.Y = MENU_CANVASSCALE;
     // Display event name
     Text_AddSubtext(desc, MENU_DESCXPOS, MENU_DESCYPOS, eventInfo->eventDescription);
+*/
+    return;
+}
+
+void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
+{
+
+    // create options background
+    TMData *tmData = RTOC_PTR(TM_DATA);
+    JOBJ *jobj_options = JOBJ_LoadJoint(tmData->messageJoint);
+    // Add to gobj
+    GObj_AddObject(gobj, 3, jobj_options);
+    // Add gx_link
+    GObj_AddGXLink(gobj, GXLink_Common, 11, 0);
+    // Get each corner's joints
+    JOBJ *corners[4];
+    JOBJ_GetChild(jobj_options, &corners, 1, 2, 3, 4, -1);
+    // Modify scale and position
+    jobj_options->trans.Z = 63;
+    jobj_options->scale.X = 0.013;
+    jobj_options->scale.Y = 0.013;
+    jobj_options->scale.Z = 0.013;
+    corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
+    corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
+    corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
+    corners[1]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
+    corners[2]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
+    corners[2]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
+    corners[3]->trans.X = (OPT_WIDTH / 2) + OPT_X;
+    corners[3]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
+    // Change color
+    GXColor gx_color = TEXT_BGCOLOR;
+    jobj_options->dobj->mobj->mat->diffuse = gx_color;
+
+    // create description background
+    JOBJ *jobj_desc = JOBJ_LoadJoint(tmData->messageJoint);
+    // Add as child
+    JOBJ_AddChild(jobj_options, jobj_desc);
+    // Get each corner's joints
+    JOBJ_GetChild(jobj_desc, &corners, 1, 2, 3, 4, -1);
+    // Modify scale and position
+    corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+    corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+    corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+    corners[1]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+    corners[2]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+    corners[2]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+    corners[3]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+    corners[3]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+    // Change color
+    GXColor desc_color = {255, 0, 0, 255};
+    jobj_desc->dobj->mobj->mat->diffuse = desc_color;
+
+    // create controls background
+    JOBJ *jobj_controls = JOBJ_LoadJoint(tmData->messageJoint);
+    // Add as child
+    JOBJ_AddChild(jobj_options, jobj_controls);
+    // Get each corner's joints
+    JOBJ_GetChild(jobj_controls, &corners, 1, 2, 3, 4, -1);
+    // Modify scale and position
+    corners[0]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+    corners[0]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+    corners[1]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+    corners[1]->trans.Y = (DESC_HEIGHT / 2) + DESC_Y;
+    corners[2]->trans.X = -(DESC_WIDTH / 2) + DESC_X;
+    corners[2]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+    corners[3]->trans.X = (DESC_WIDTH / 2) + DESC_X;
+    corners[3]->trans.Y = -(DESC_HEIGHT / 2) + DESC_Y;
+    // Change color
+    GXColor controls_color = {0, 255, 0, 255};
+    jobj_controls->dobj->mobj->mat->diffuse = controls_color;
 
     return;
+}
+
+void EventMenu_CreatePopup(GOBJ *gobj, EventMenu *menu)
+{
+    // init variables
+    MenuData *menuData = gobj->userdata;          // userdata
+    int cursor = menu->cursor;                    // get cursor
+    EventOption *option = &menu->options[cursor]; // get highlighted option
+
+    // load popup joint
+    // add as child to gobj joint
+    // adjust scrollbar scale
+    // position popup X and Y (based on cursor value)
+
+    return;
+}
+
+#define MENU_CANVASSCALE 0.05
+#define MENU_TEXTSCALE 1
+#define MENU_EVENTXPOS 0
+#define MENU_EVENTYPOS -420
+#define MENU_CONTROLSXPOS -250
+#define MENU_CONTROLSYPOS -380
+#define MENU_OPTIONNAMEXPOS -250
+#define MENU_OPTIONNAMEYPOS -200
+#define MENU_OPTIONVALXPOS 250
+#define MENU_OPTIONVALYPOS -200
+#define MENU_DESCXPOS -250
+#define MENU_DESCYPOS 320
+#define MENU_TEXTYOFFSET 50
+#define MENU_HIGHLIGHT   \
+    {                    \
+        255, 211, 0, 255 \
+    }
+void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
+{
+
+    // Get event info
+    MenuData *menuData = gobj->userdata;
+    EventInfo *eventInfo = menuData->eventInfo;
+    static char nullString[] = " ";
+
+    // free text if it exists
+    if (menuData->text_name != 0)
+    {
+        // free text
+        Text_FreeText(menuData->text_name);
+        menuData->text_name = 0;
+        Text_FreeText(menuData->text_value);
+        menuData->text_value = 0;
+        Text_FreeText(menuData->text_popup);
+        menuData->text_popup = 0;
+    }
+
+    //////////////////
+    // Create Names //
+    //////////////////
+
+    int subtext;
+    int *hudData = 0x804a1f58;
+    int canvasIndex = hudData[0];
+    Text *text = Text_CreateText(2, canvasIndex);
+    menuData->text_name = text;
+    // enable align and kerning
+    text->align = 1;
+    text->kerning = 1;
+    // scale canvas
+    text->scale.X = MENU_CANVASSCALE;
+    text->scale.Y = MENU_CANVASSCALE;
+
+    // Output all options
+    s32 cursor = menu->cursor;
+    s32 option_num = menu->option_num;
+    GXColor highlight = MENU_HIGHLIGHT;
+    for (int i = 0; i < option_num; i++)
+    {
+        // output option name
+        float optionX = MENU_OPTIONNAMEXPOS;
+        float optionY = MENU_OPTIONNAMEYPOS + (i * MENU_TEXTYOFFSET);
+        subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+    }
+
+    ///////////////////
+    // Create Values //
+    ///////////////////
+
+    text = Text_CreateText(2, canvasIndex);
+    menuData->text_value = text;
+    // enable align and kerning
+    text->align = 1;
+    text->kerning = 1;
+    // scale canvas
+    text->scale.X = MENU_CANVASSCALE;
+    text->scale.Y = MENU_CANVASSCALE;
+
+    // Output all values
+    for (int i = 0; i < option_num; i++)
+    {
+        // output option value
+        float optionX = MENU_OPTIONVALXPOS;
+        float optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
+        subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+    }
+
+    //////////////////
+    // Create Popup //
+    //////////////////
+
+    if (menu->is_using == 2)
+    {
+
+        text = Text_CreateText(2, canvasIndex);
+        menuData->text_popup = text;
+        // enable align and kerning
+        text->align = 1;
+        text->kerning = 1;
+        // scale canvas
+        text->scale.X = MENU_CANVASSCALE;
+        text->scale.Y = MENU_CANVASSCALE;
+
+        option_num = menu->options[cursor].value_num;
+
+        for (int i = 0; i < option_num; i++)
+        {
+            // output option value
+            float optionX = MENU_OPTIONVALXPOS;
+            float optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
+            subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+        }
+    }
+
+    return;
+}
+
+void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
+{
+
+    // Get event info
+    MenuData *menuData = gobj->userdata;
+    EventInfo *eventInfo = menuData->eventInfo;
+    s32 cursor = menu->cursor;
+    s32 option_num = menu->option_num;
+    GXColor highlight = MENU_HIGHLIGHT;
+    Text *text;
+
+    //////////////////
+    // Update Names //
+    //////////////////
+
+    // Output all options
+    text = menuData->text_name;
+    for (int i = 0; i < option_num; i++)
+    {
+        // get this option
+        EventOption *currOption = &menu->options[i];
+
+        // output option name
+        int optionVal = currOption->option_val;
+        Text_SetText(text, i, currOption->option_name);
+
+        // highlight this if this is the cursor
+        if (i == cursor)
+        {
+            Text_SetColor(text, i, &highlight);
+        }
+    }
+
+    ///////////////////
+    // Update Values //
+    ///////////////////
+
+    // Output all values
+    text = menuData->text_value;
+    for (int i = 0; i < option_num; i++)
+    {
+        // get this option
+        EventOption *currOption = &menu->options[i];
+
+        // if this option has values
+        if (currOption->option_kind == OPTKIND_STRING)
+        {
+            // output option value
+            int optionVal = currOption->option_val;
+            Text_SetText(text, i, currOption->option_values[optionVal]);
+
+            // highlight this if this is the cursor
+            if (i == cursor)
+            {
+                Text_SetColor(text, i, &highlight);
+            }
+        }
+    }
+
+    //////////////////
+    // Update Popup //
+    //////////////////
+
+    if (menu->is_using == 2)
+    {
+
+        option_num = menu->options[cursor].value_num;
+        EventOption *currOption = &menu->options[cursor];
+        s32 cursor_popup = currOption->option_val;
+
+        for (int i = 0; i < option_num; i++)
+        {
+            // output option value
+            Text_SetText(text, i, currOption->option_values[i]);
+
+            // highlight this if this is the cursor
+            if (i == cursor_popup)
+            {
+                Text_SetColor(text, i, &highlight);
+            }
+        }
+    }
+
+    return;
+}
+
+EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
+{
+    // Get event info
+    MenuData *menuData = gobj->userdata;
+    EventInfo *eventInfo = menuData->eventInfo;
+    EventMenu *currMenu = eventInfo->startMenu;
+
+    // walk through the menus to find the one that is in focus
+    while (currMenu->is_using != 0)
+    {
+        int cursor = currMenu->cursor;
+        currMenu = currMenu->options[cursor].menu;
+    }
+
+    return currMenu;
 }
 
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley)
