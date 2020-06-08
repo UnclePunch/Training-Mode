@@ -2529,11 +2529,12 @@ void EventMenu_Think(GOBJ *gobj)
             EventMenu_CreateText(gobj, currMenu);
             EventMenu_Update(gobj, currMenu);
 
-            if (currMenu->state == EMSTATE_OPENSUB)
+            if (currMenu->state == EMSTATE_OPENPOP)
             {
-                EventMenu_CreatePopupModel(gobj, currMenu);
-                EventMenu_CreatePopupText(gobj, currMenu);
-                EventMenu_UpdatePopupText(gobj, currMenu);
+                EventOption *currOption = &currMenu->options[currMenu->cursor];
+                EventMenu_CreatePopupModel(gobj, currOption);
+                EventMenu_CreatePopupText(gobj, currOption);
+                EventMenu_UpdatePopupText(gobj, currOption);
             }
         }
 
@@ -2543,7 +2544,7 @@ void EventMenu_Think(GOBJ *gobj)
             // get player who paused
             u8 *pauseData = (u8 *)0x8046b6a0;
             u8 pauser = pauseData[1];
-            // get their rapid inputs
+            // get their  inputs
             HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
             int inputs_rapid = pad->rapidFire;
             int inputs_held = pad->held;
@@ -2718,13 +2719,13 @@ void EventMenu_Think(GOBJ *gobj)
                         currMenu->state = EMSTATE_OPENPOP;
 
                         // init cursor and scroll value
-                        menuData->popup_cursor = 0;
-                        menuData->popup_scroll = currOption->option_val;
-
-                        // correct scroll
-                        blr();
                         s32 cursor = menuData->popup_cursor;
                         s32 scroll = menuData->popup_scroll;
+
+                        cursor = 0;
+                        scroll = currOption->option_val;
+
+                        // correct scroll
                         s32 max_scroll = (currOption->value_num - MENU_POPMAXOPTION);
                         // check if scrolled too far
                         if (scroll > max_scroll)
@@ -2732,6 +2733,11 @@ void EventMenu_Think(GOBJ *gobj)
                             cursor = scroll - max_scroll;
                             scroll = max_scroll;
                         }
+
+                        // update cursor and scroll
+                        blr();
+                        menuData->popup_cursor = cursor;
+                        menuData->popup_scroll = scroll;
 
                         // create popup menu and update
                         EventMenu_CreatePopupModel(gobj, currOption);
@@ -2920,7 +2926,7 @@ void EventMenu_Think(GOBJ *gobj)
                     EventMenu_Update(gobj, currMenu);
 
                     // play sfx
-                    SFX_PlayCommon(1);
+                    SFX_PlayCommon(0);
                 }
 
                 // if anything changed, update text
@@ -3244,41 +3250,13 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
         }
     }
 
-    //////////////////
-    // Update Popup //
-    //////////////////
-
-    if (menu->state == 2)
-    {
-
-        option_num = menu->options[cursor].value_num;
-        EventOption *currOption = &menu->options[cursor + scroll];
-        s32 cursor_popup = currOption->option_val;
-
-        for (int i = 0; i < option_num; i++)
-        {
-            // output option value
-            Text_SetText(text, i, currOption->option_values[i]);
-
-            // highlight this if this is the cursor
-            if (i == cursor_popup)
-            {
-                Text_SetColor(text, i, &highlight);
-            }
-            else
-            {
-                Text_SetColor(text, i, &no_highlight);
-            }
-        }
-    }
-
     return;
 }
 
 #define POPUP_WIDTH 20
 #define POPUP_HEIGHT 20
 #define POPUP_SCALE 0.8
-#define POPUP_X 18
+#define POPUP_X 18.5
 #define POPUP_Y 8
 #define POPUP_CANVASSCALE 0.05
 #define POPUP_TEXTSCALE 1
@@ -3385,20 +3363,44 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
 
     Text *text = menuData->text_popup;
 
-    // Output all values
-    for (int i = 0; i < value_num; i++)
+    // update int list
+    if (option->option_kind == OPTKIND_INT)
     {
-        // output option value
-        Text_SetText(text, i, option->option_values[scroll + i]);
+        // Output all values
+        for (int i = 0; i < value_num; i++)
+        {
+            // output option value
+            Text_SetText(text, i, "%d", scroll + i);
 
-        // highlight this if this is the cursor
-        if (i == cursor)
-        {
-            Text_SetColor(text, i, &highlight);
+            // highlight this if this is the cursor
+            if (i == cursor + scroll)
+            {
+                Text_SetColor(text, i, &highlight);
+            }
+            else
+            {
+                Text_SetColor(text, i, &no_highlight);
+            }
         }
-        else
+    }
+
+    else if (option->option_kind == OPTKIND_STRING)
+    {
+        // Output all values
+        for (int i = 0; i < value_num; i++)
         {
-            Text_SetColor(text, i, &no_highlight);
+            // output option value
+            Text_SetText(text, i, option->option_values[scroll + i]);
+
+            // highlight this if this is the cursor
+            if (i == cursor)
+            {
+                Text_SetColor(text, i, &highlight);
+            }
+            else
+            {
+                Text_SetColor(text, i, &no_highlight);
+            }
         }
     }
 
