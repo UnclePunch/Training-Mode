@@ -16,6 +16,7 @@ void Event_Init(GOBJ *gobj)
 static char TM_Vers[] = {"Training Mode v3.0\n"};
 static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
 static char Event_Controls[] = {"D-Pad Left = Load State\nD-Pad Right = Save State\n"};
+static char nullString[] = " ";
 
 ////////////////////////
 /// Event Defintions ///
@@ -24,11 +25,11 @@ static char Event_Controls[] = {"D-Pad Left = Load State\nD-Pad Right = Save Sta
 // L-Cancel Training
 
 // Main Menu
-static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik"};
+static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik", "Marth", "Jiggly", "Last One"};
 static EventOption EvFreeOptions_Main[] = {
     {
         .option_kind = OPTKIND_MENU, // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(0) / 4,  // number of values for this option
+        .value_num = 0,              // number of values for this option
         .option_val = 0,             // value of this option
         .menu = &EvFreeMenu_General, // pointer to the menu that pressing A opens
         .option_name = {"General"},  // pointer to a string
@@ -45,7 +46,7 @@ static EventOption EvFreeOptions_Main[] = {
 };
 static EventMenu EvFreeMenu_Main = {
     .option_num = 2,                // number of options this menu contains
-    .menu_width = 200,              // how wide to make the menu
+    .scroll = 0,                    // runtime variable used for how far down in the menu to start
     .state = 0,                     // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                    // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_Main, // pointer to all of this menu's options
@@ -54,17 +55,106 @@ static EventMenu EvFreeMenu_Main = {
 // General
 static EventOption EvFreeOptions_General[] = {
     {
-        .option_kind = OPTKIND_INT,    // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,              // number of values for this option
-        .option_val = 0,               // value of this option
-        .menu = 0,                     // pointer to the menu that pressing A opens
-        .option_name = "Integer Test", // pointer to a string
-        .option_values = 0,            // pointer to an array of strings
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 1", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
     },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 2", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 3", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 4", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 5", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 6", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 7", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 8", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 9", // pointer to a string
+        .option_values = 0,              // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,       // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                 // number of values for this option
+        .option_val = 0,                  // value of this option
+        .menu = 0,                        // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 10", // pointer to a string
+        .option_values = 0,               // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,       // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                 // number of values for this option
+        .option_val = 0,                  // value of this option
+        .menu = 0,                        // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 11", // pointer to a string
+        .option_values = 0,               // pointer to an array of strings
+    },
+    {
+        .option_kind = OPTKIND_INT,       // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,                 // number of values for this option
+        .option_val = 0,                  // value of this option
+        .menu = 0,                        // pointer to the menu that pressing A opens
+        .option_name = "Integer Test 12", // pointer to a string
+        .option_values = 0,               // pointer to an array of strings
+    },
+
 };
 static EventMenu EvFreeMenu_General = {
-    .option_num = 1,                   // number of options this menu contains
-    .menu_width = 200,                 // how wide to make the menu
+    .option_num = 12,                  // number of options this menu contains
+    .scroll = 0,                       // runtime variable used for how far down in the menu to start
     .state = 0,                        // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                       // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_General, // pointer to all of this menu's options
@@ -2399,6 +2489,9 @@ void OnStartMelee()
 ///////////////////////////////
 /// Miscellaneous Functions ///
 ///////////////////////////////
+
+#define MENU_MAXOPTION 9
+#define MENU_POPMAXOPTION 4
 #define OPT_X 0
 #define OPT_Y -1
 #define OPT_WIDTH 55
@@ -2433,25 +2526,20 @@ void EventMenu_Think(GOBJ *gobj)
         if (menuData->text_name == 0)
         {
             EventMenu_CreateModel(gobj, currMenu);
-            EventMenu_CreatePopup(gobj, currMenu);
             EventMenu_CreateText(gobj, currMenu);
             EventMenu_Update(gobj, currMenu);
+
+            if (currMenu->state == EMSTATE_OPENSUB)
+            {
+                EventMenu_CreatePopupModel(gobj, currMenu);
+                EventMenu_CreatePopupText(gobj, currMenu);
+                EventMenu_UpdatePopupText(gobj, currMenu);
+            }
         }
 
         // act on controls
         else
         {
-            // get menu variables
-            int isChanged = 0;
-            s32 cursor = currMenu->cursor;
-            s32 cursor_min = 0;
-            s32 cursor_max = currMenu->option_num;
-            EventOption *currOption = &currMenu->options[cursor];
-            // get option variables
-            s16 option_val = currOption->option_val;
-            s16 value_min = 0;
-            s16 value_max = currOption->value_num;
-
             // get player who paused
             u8 *pauseData = (u8 *)0x8046b6a0;
             u8 pauser = pauseData[1];
@@ -2461,135 +2549,386 @@ void EventMenu_Think(GOBJ *gobj)
             int inputs_held = pad->held;
             int inputs = inputs_rapid;
             if ((inputs_held & HSD_TRIGGER_R) != 0)
-            {
                 inputs = inputs_held;
-            }
 
-            // check for dpad down
-            if ((inputs & HSD_BUTTON_DOWN) != 0)
+            // menu think
+            if (currMenu->state == EMSTATE_FOCUS)
             {
-                cursor += 1;
-                if (cursor < cursor_max)
+
+                // get menu variables
+                int isChanged = 0;
+                s32 cursor = currMenu->cursor;
+                s32 scroll = currMenu->scroll;
+                EventOption *currOption = &currMenu->options[cursor + scroll];
+                s32 cursor_min = 0;
+                s32 option_num = currMenu->option_num;
+                s32 cursor_max = option_num;
+                if (cursor_max > MENU_MAXOPTION)
+                    cursor_max = MENU_MAXOPTION;
+
+                // get option variables
+                s16 option_val = currOption->option_val;
+                s16 value_min = 0;
+                s16 value_max = currOption->value_num;
+
+                // check for dpad down
+                if ((inputs & HSD_BUTTON_DOWN) != 0)
                 {
-                    isChanged = 1;
+                    cursor += 1;
 
-                    // update cursor
-                    currMenu->cursor = cursor;
-
-                    // also play sfx
-                    SFX_PlayCommon(2);
-                }
-            }
-            // check for dpad up
-            else if ((inputs & HSD_BUTTON_UP) != 0)
-            {
-                cursor -= 1;
-                if (cursor >= cursor_min)
-                {
-                    isChanged = 1;
-
-                    // update cursor
-                    currMenu->cursor = cursor;
-
-                    // also play sfx
-                    SFX_PlayCommon(2);
-                }
-            }
-
-            // check for left
-            else if ((inputs & HSD_BUTTON_LEFT) != 0)
-            {
-                if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
-                {
-
-                    option_val -= 1;
-                    if (option_val >= value_min)
+                    // cursor is in bounds, move down
+                    if (cursor < cursor_max)
                     {
                         isChanged = 1;
 
+                        // update cursor
+                        currMenu->cursor = cursor;
+
                         // also play sfx
                         SFX_PlayCommon(2);
+                    }
 
-                        // update val
-                        currOption->option_val = option_val;
+                    // cursor overflowed, check to scroll
+                    else
+                    {
+                        // cursor+scroll is in bounds, increment scroll
+                        if ((cursor + scroll) < option_num)
+                        {
+                            // adjust
+                            scroll++;
+                            cursor--;
+
+                            // update cursor
+                            currMenu->cursor = cursor;
+                            currMenu->scroll = scroll;
+
+                            isChanged = 1;
+
+                            // also play sfx
+                            SFX_PlayCommon(2);
+                        }
                     }
                 }
-            }
-            // check for right
-            else if ((inputs & HSD_BUTTON_RIGHT) != 0)
-            {
-                // check for valid option kind
-                if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
+                // check for dpad up
+                else if ((inputs & HSD_BUTTON_UP) != 0)
                 {
-                    option_val += 1;
-                    if (option_val < value_max)
+                    cursor -= 1;
+
+                    // cursor is in bounds, move up
+                    if (cursor >= 0)
                     {
                         isChanged = 1;
 
+                        // update cursor
+                        currMenu->cursor = cursor;
+
                         // also play sfx
                         SFX_PlayCommon(2);
-
-                        // update val
-                        currOption->option_val = option_val;
                     }
+
+                    // cursor overflowed, check to scroll
+                    else
+                    {
+                        // scroll is in bounds, decrement scroll
+                        if (scroll > 0)
+                        {
+                            // adjust
+                            scroll--;
+                            cursor++;
+
+                            // update cursor
+                            currMenu->cursor = cursor;
+                            currMenu->scroll = scroll;
+
+                            isChanged = 1;
+
+                            // also play sfx
+                            SFX_PlayCommon(2);
+                        }
+                    }
+                }
+
+                // check for left
+                else if ((inputs & HSD_BUTTON_LEFT) != 0)
+                {
+                    if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
+                    {
+
+                        option_val -= 1;
+                        if (option_val >= value_min)
+                        {
+                            isChanged = 1;
+
+                            // also play sfx
+                            SFX_PlayCommon(2);
+
+                            // update val
+                            currOption->option_val = option_val;
+                        }
+                    }
+                }
+                // check for right
+                else if ((inputs & HSD_BUTTON_RIGHT) != 0)
+                {
+                    // check for valid option kind
+                    if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
+                    {
+                        option_val += 1;
+                        if (option_val < value_max)
+                        {
+                            isChanged = 1;
+
+                            // also play sfx
+                            SFX_PlayCommon(2);
+
+                            // update val
+                            currOption->option_val = option_val;
+                        }
+                    }
+                }
+
+                // check for A
+                else if ((inputs_rapid & HSD_BUTTON_A) != 0)
+                {
+                    // check to advance a menu
+                    if ((currOption->option_kind == OPTKIND_MENU))
+                    {
+                        // access this menu
+                        currMenu->state = 1;
+
+                        // update currMenu
+                        EventMenu *nextMenu = currMenu->options[cursor].menu;
+                        nextMenu->prev = currMenu;
+                        currMenu = nextMenu;
+
+                        // recreate menu's text
+                        EventMenu_CreateText(gobj, currMenu);
+
+                        // request text update
+                        isChanged = 1;
+
+                        // also play sfx
+                        SFX_PlayCommon(1);
+                    }
+
+                    // check to create a popup
+                    if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT))
+                    {
+                        // access this menu
+                        currMenu->state = EMSTATE_OPENPOP;
+
+                        // init cursor and scroll value
+                        menuData->popup_cursor = 0;
+                        menuData->popup_scroll = currOption->option_val;
+
+                        // correct scroll
+                        blr();
+                        s32 cursor = menuData->popup_cursor;
+                        s32 scroll = menuData->popup_scroll;
+                        s32 max_scroll = (currOption->value_num - MENU_POPMAXOPTION);
+                        // check if scrolled too far
+                        if (scroll > max_scroll)
+                        {
+                            cursor = scroll - max_scroll;
+                            scroll = max_scroll;
+                        }
+
+                        // create popup menu and update
+                        EventMenu_CreatePopupModel(gobj, currOption);
+                        EventMenu_CreatePopupText(gobj, currOption);
+                        EventMenu_UpdatePopupText(gobj, currOption);
+
+                        // also play sfx
+                        SFX_PlayCommon(1);
+                    }
+                }
+                // check to go back a menu
+                else if ((inputs_rapid & HSD_BUTTON_B) != 0)
+                {
+                    // check if a prev menu exists
+                    EventMenu *prevMenu = currMenu->prev;
+                    if (prevMenu != 0)
+                    {
+
+                        // clear previous menu
+                        EventMenu *prevMenu = currMenu->prev;
+                        currMenu->prev = 0;
+
+                        // reset this menu's cursor
+                        currMenu->scroll = 0;
+                        currMenu->cursor = 0;
+
+                        // update currMenu
+                        currMenu = prevMenu;
+
+                        // close this menu
+                        currMenu->state = 0;
+
+                        // recreate menu's text
+                        EventMenu_CreateText(gobj, currMenu);
+
+                        // request text update
+                        isChanged = 1;
+
+                        // also play sfx
+                        SFX_PlayCommon(0);
+                    }
+                }
+
+                // if anything changed, update text
+                if (isChanged != 0)
+                {
+                    // update menu
+                    EventMenu_Update(gobj, currMenu);
                 }
             }
 
-            // check for A
-            else if ((inputs_rapid & HSD_BUTTON_A) != 0)
+            // popup think
+            else if (currMenu->state == EMSTATE_OPENPOP)
             {
-                if ((currOption->option_kind == OPTKIND_MENU))
+
+                // get option variables
+                int isChanged = 0;
+                s32 cursor = menuData->popup_cursor;
+                s32 scroll = menuData->popup_scroll;
+                EventOption *currOption = &currMenu->options[currMenu->cursor];
+                s32 value_num = currOption->value_num;
+                s32 cursor_min = 0;
+                s32 cursor_max = value_num;
+                if (cursor_max > MENU_POPMAXOPTION)
                 {
-                    // access this menu
-                    currMenu->state = 1;
+                    cursor_max = MENU_POPMAXOPTION;
+                }
 
-                    // update currMenu
-                    EventMenu *nextMenu = currMenu->options[cursor].menu;
-                    nextMenu->prev = currMenu;
-                    currMenu = nextMenu;
+                // check for dpad down
+                if ((inputs & HSD_BUTTON_DOWN) != 0)
+                {
+                    cursor += 1;
 
-                    // recreate menu's text
-                    EventMenu_CreateText(gobj, currMenu);
+                    // cursor is in bounds, move down
+                    if (cursor < cursor_max)
+                    {
+                        isChanged = 1;
 
-                    // request text update
-                    isChanged = 1;
+                        // update cursor
+                        menuData->popup_cursor = cursor;
 
-                    // also play sfx
+                        // also play sfx
+                        SFX_PlayCommon(2);
+                    }
+
+                    // cursor overflowed, check to scroll
+                    else
+                    {
+                        // cursor+scroll is in bounds, increment scroll
+                        if ((cursor + scroll) < value_num)
+                        {
+                            // adjust
+                            scroll++;
+                            cursor--;
+
+                            // update cursor
+                            menuData->popup_cursor = cursor;
+                            menuData->popup_scroll = scroll;
+
+                            isChanged = 1;
+
+                            // also play sfx
+                            SFX_PlayCommon(2);
+                        }
+                    }
+                }
+                // check for dpad up
+                else if ((inputs & HSD_BUTTON_UP) != 0)
+                {
+                    cursor -= 1;
+
+                    // cursor is in bounds, move up
+                    if (cursor >= 0)
+                    {
+                        isChanged = 1;
+
+                        // update cursor
+                        menuData->popup_cursor = cursor;
+
+                        // also play sfx
+                        SFX_PlayCommon(2);
+                    }
+
+                    // cursor overflowed, check to scroll
+                    else
+                    {
+                        // scroll is in bounds, decrement scroll
+                        if (scroll > 0)
+                        {
+                            // adjust
+                            scroll--;
+                            cursor++;
+
+                            // update cursor
+                            menuData->popup_cursor = cursor;
+                            menuData->popup_scroll = scroll;
+
+                            isChanged = 1;
+
+                            // also play sfx
+                            SFX_PlayCommon(2);
+                        }
+                    }
+                }
+
+                // check for A
+                else if ((inputs_rapid & HSD_BUTTON_A) != 0)
+                {
+
+                    // update option_val
+                    currOption->option_val = cursor + scroll;
+
+                    // change menu state
+                    currMenu->state = EMSTATE_FOCUS;
+
+                    // remove popup menu
+                    JOBJ *popup_joint;
+                    JOBJ_GetChild(gobj->hsd_object, &popup_joint, 5, -1);
+                    JOBJ_RemoveAll(popup_joint);
+
+                    // remove text
+                    Text_FreeText(menuData->text_popup);
+
+                    // update menu
+                    EventMenu_Update(gobj, currMenu);
+
+                    // play sfx
                     SFX_PlayCommon(1);
                 }
-            }
-            // check to go back a menu
-            else if ((inputs_rapid & HSD_BUTTON_B) != 0)
-            {
-                // check if a prev menu exists
-                EventMenu *prevMenu = currMenu->prev;
-                if (prevMenu != 0)
+                // check to go back a menu
+                else if ((inputs_rapid & HSD_BUTTON_B) != 0)
                 {
 
-                    // update currMenu
-                    EventMenu *prevMenu = currMenu->prev;
-                    currMenu->prev = 0;
-                    currMenu = prevMenu;
+                    // change menu state
+                    currMenu->state = EMSTATE_FOCUS;
 
-                    // close this menu
-                    currMenu->state = 0;
+                    // remove popup menu
+                    JOBJ *popup_joint;
+                    JOBJ_GetChild(gobj->hsd_object, &popup_joint, 5, -1);
+                    JOBJ_RemoveAll(popup_joint);
 
-                    // recreate menu's text
-                    EventMenu_CreateText(gobj, currMenu);
+                    // remove text
+                    Text_FreeText(menuData->text_popup);
 
-                    // request text update
-                    isChanged = 1;
+                    // update menu
+                    EventMenu_Update(gobj, currMenu);
 
-                    // also play sfx
-                    SFX_PlayCommon(0);
+                    // play sfx
+                    SFX_PlayCommon(1);
                 }
-            }
 
-            // if anything changed, update text
-            if (isChanged != 0)
-            {
-                // update menu
-                EventMenu_Update(gobj, currMenu);
+                // if anything changed, update text
+                if (isChanged != 0)
+                {
+                    // update menu
+                    EventMenu_UpdatePopupText(gobj, currOption);
+                }
             }
         }
     }
@@ -2654,6 +2993,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     GXColor gx_color = TEXT_BGCOLOR;
     jobj_options->dobj->mobj->mat->diffuse = gx_color;
 
+    /*
     // create description background
     JOBJ *jobj_desc = JOBJ_LoadJoint(tmData->messageJoint);
     // Add as child
@@ -2691,22 +3031,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // Change color
     GXColor controls_color = {0, 255, 0, 255};
     jobj_controls->dobj->mobj->mat->diffuse = controls_color;
-
-    return;
-}
-
-void EventMenu_CreatePopup(GOBJ *gobj, EventMenu *menu)
-{
-    // init variables
-    MenuData *menuData = gobj->userdata;          // userdata
-    int cursor = menu->cursor;                    // get cursor
-    EventOption *option = &menu->options[cursor]; // get highlighted option
-
-    // load popup joint
-    // add as child to gobj joint
-    // adjust scrollbar scale
-    // position popup X and Y (based on cursor value)
-
+*/
     return;
 }
 
@@ -2777,9 +3102,12 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // Output all options
     s32 cursor = menu->cursor;
     s32 option_num = menu->option_num;
+    if (option_num > MENU_MAXOPTION)
+        option_num = MENU_MAXOPTION;
     GXColor highlight = MENU_HIGHLIGHT;
     for (int i = 0; i < option_num; i++)
     {
+
         // output option name
         float optionX = MENU_OPTIONNAMEXPOS;
         float optionY = MENU_OPTIONNAMEYPOS + (i * MENU_TEXTYOFFSET);
@@ -2845,7 +3173,10 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
     s32 cursor = menu->cursor;
+    s32 scroll = menu->scroll;
     s32 option_num = menu->option_num;
+    if (option_num > MENU_MAXOPTION)
+        option_num = MENU_MAXOPTION;
     GXColor highlight = MENU_HIGHLIGHT;
     GXColor no_highlight = MENU_NOHIGHLIGHT;
     Text *text;
@@ -2859,7 +3190,7 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     for (int i = 0; i < option_num; i++)
     {
         // get this option
-        EventOption *currOption = &menu->options[i];
+        EventOption *currOption = &menu->options[scroll + i];
 
         // output option name
         int optionVal = currOption->option_val;
@@ -2885,7 +3216,7 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     for (int i = 0; i < option_num; i++)
     {
         // get this option
-        EventOption *currOption = &menu->options[i];
+        EventOption *currOption = &menu->options[scroll + i];
         int optionVal = currOption->option_val;
 
         // if this option has string values
@@ -2921,7 +3252,7 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     {
 
         option_num = menu->options[cursor].value_num;
-        EventOption *currOption = &menu->options[cursor];
+        EventOption *currOption = &menu->options[cursor + scroll];
         s32 cursor_popup = currOption->option_val;
 
         for (int i = 0; i < option_num; i++)
@@ -2944,6 +3275,136 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
     return;
 }
 
+#define POPUP_WIDTH 20
+#define POPUP_HEIGHT 20
+#define POPUP_SCALE 0.8
+#define POPUP_X 18
+#define POPUP_Y 8
+#define POPUP_CANVASSCALE 0.05
+#define POPUP_TEXTSCALE 1
+#define POPUP_OPTIONNAMEXPOS -250
+#define POPUP_OPTIONNAMEYPOS -200
+#define POPUP_OPTIONVALXPOS 250
+#define POPUP_OPTIONVALYPOS -200
+#define POPUP_TEXTYOFFSET 50
+#define POPUP_HIGHLIGHT  \
+    {                    \
+        255, 211, 0, 255 \
+    }
+#define POPUP_NOHIGHLIGHT  \
+    {                      \
+        255, 255, 255, 255 \
+    }
+
+void EventMenu_CreatePopupModel(GOBJ *gobj, EventOption *option)
+{
+    // init variables
+    MenuData *menuData = gobj->userdata; // userdata
+
+    // load popup joint
+    // create options background
+    TMData *tmData = RTOC_PTR(TM_DATA);
+    JOBJ *popup_joint = JOBJ_LoadJoint(tmData->messageJoint);
+    // Get each corner's joints
+    JOBJ *corners[4];
+    JOBJ_GetChild(popup_joint, &corners, 1, 2, 3, 4, -1);
+    // Modify scale and position
+    popup_joint->scale.X = POPUP_SCALE;
+    popup_joint->scale.Y = POPUP_SCALE;
+    popup_joint->scale.Z = POPUP_SCALE;
+    corners[0]->trans.X = -(POPUP_WIDTH / 2) + POPUP_X;
+    corners[0]->trans.Y = (POPUP_HEIGHT / 2) + POPUP_Y;
+    corners[1]->trans.X = (POPUP_WIDTH / 2) + POPUP_X;
+    corners[1]->trans.Y = (POPUP_HEIGHT / 2) + POPUP_Y;
+    corners[2]->trans.X = -(POPUP_WIDTH / 2) + POPUP_X;
+    corners[2]->trans.Y = -(POPUP_HEIGHT / 2) + POPUP_Y;
+    corners[3]->trans.X = (POPUP_WIDTH / 2) + POPUP_X;
+    corners[3]->trans.Y = -(POPUP_HEIGHT / 2) + POPUP_Y;
+    // Change color
+    GXColor gx_color = TEXT_BGCOLOR;
+    popup_joint->dobj->mobj->mat->diffuse = gx_color;
+
+    // add as child to gobj joint
+    JOBJ_AddChild(gobj->hsd_object, popup_joint);
+
+    // adjust scrollbar scale
+    // position popup X and Y (based on cursor value)
+
+    return;
+}
+void EventMenu_CreatePopupText(GOBJ *gobj, EventOption *option)
+{
+    // init variables
+    MenuData *menuData = gobj->userdata; // userdata
+    int subtext;
+    int *hudData = 0x804a1f58;
+    int canvasIndex = hudData[0];
+    s32 value_num = option->value_num;
+    if (value_num > MENU_POPMAXOPTION)
+        value_num = MENU_POPMAXOPTION;
+
+    ///////////////////
+    // Create Values //
+    ///////////////////
+
+    Text *text = Text_CreateText(2, canvasIndex);
+    menuData->text_popup = text;
+    // enable align and kerning
+    text->align = 1;
+    text->kerning = 1;
+    // scale canvas
+    text->scale.X = POPUP_CANVASSCALE;
+    text->scale.Y = POPUP_CANVASSCALE;
+
+    // Output all values
+    for (int i = 0; i < value_num; i++)
+    {
+        // output option value
+        float optionX = POPUP_OPTIONVALXPOS;
+        float optionY = POPUP_OPTIONVALYPOS + (i * POPUP_TEXTYOFFSET);
+        subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+    }
+
+    return;
+}
+void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
+{
+    // init variables
+    MenuData *menuData = gobj->userdata; // userdata
+    GXColor highlight = POPUP_HIGHLIGHT;
+    GXColor no_highlight = POPUP_NOHIGHLIGHT;
+    s32 cursor = menuData->popup_cursor;
+    s32 scroll = menuData->popup_scroll;
+    s32 value_num = option->value_num;
+    if (value_num > MENU_POPMAXOPTION)
+        value_num = MENU_POPMAXOPTION;
+
+    ///////////////////
+    // Update Values //
+    ///////////////////
+
+    Text *text = menuData->text_popup;
+
+    // Output all values
+    for (int i = 0; i < value_num; i++)
+    {
+        // output option value
+        Text_SetText(text, i, option->option_values[scroll + i]);
+
+        // highlight this if this is the cursor
+        if (i == cursor)
+        {
+            Text_SetColor(text, i, &highlight);
+        }
+        else
+        {
+            Text_SetColor(text, i, &no_highlight);
+        }
+    }
+
+    return;
+}
+
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
 {
     // Get event info
@@ -2952,7 +3413,7 @@ EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
     EventMenu *currMenu = eventInfo->startMenu;
 
     // walk through the menus to find the one that is in focus
-    while (currMenu->state != 0)
+    while ((currMenu->state == EMSTATE_OPENSUB))
     {
         int cursor = currMenu->cursor;
         currMenu = currMenu->options[cursor].menu;

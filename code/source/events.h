@@ -72,6 +72,8 @@ typedef struct MenuData
     Text *text_name;
     Text *text_value;
     Text *text_popup;
+    u16 popup_cursor;
+    u16 popup_scroll;
 } MenuData;
 
 typedef struct EventOption
@@ -86,7 +88,7 @@ typedef struct EventOption
 typedef struct EventMenu
 {
     u8 option_num;        // number of options this menu contains
-    u8 menu_width;        // how wide to make the menu
+    u8 scroll;            // how wide to make the menu
     u8 state;             // bool used to know if this menu is focused
     u8 cursor;            // index of the option currently selected
     EventOption *options; // pointer to all of this menu's options
@@ -113,8 +115,7 @@ static EventMenu EvFreeMenu_General;
 #define OPTKIND_INT 2
 #define OPTKIND_FLOAT 3
 
-// EventMenu option_kind definitions
-#define OPTKIND_MENU 0
-#define OPTKIND_STRING 1
-#define OPTKIND_INT 2
-#define OPTKIND_FLOAT 3
+// EventMenu state definitions
+#define EMSTATE_FOCUS 0
+#define EMSTATE_OPENSUB 1
+#define EMSTATE_OPENPOP 2
