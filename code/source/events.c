@@ -2532,8 +2532,8 @@ void EventMenu_Think(GOBJ *gobj)
             if (currMenu->state == EMSTATE_OPENPOP)
             {
                 EventOption *currOption = &currMenu->options[currMenu->cursor];
-                EventMenu_CreatePopupModel(gobj, currOption);
-                EventMenu_CreatePopupText(gobj, currOption);
+                EventMenu_CreatePopupModel(gobj, currMenu);
+                EventMenu_CreatePopupText(gobj, currMenu);
                 EventMenu_UpdatePopupText(gobj, currOption);
             }
         }
@@ -2740,8 +2740,8 @@ void EventMenu_Think(GOBJ *gobj)
                         menuData->popup_scroll = scroll;
 
                         // create popup menu and update
-                        EventMenu_CreatePopupModel(gobj, currOption);
-                        EventMenu_CreatePopupText(gobj, currOption);
+                        EventMenu_CreatePopupModel(gobj, currMenu);
+                        EventMenu_CreatePopupText(gobj, currMenu);
                         EventMenu_UpdatePopupText(gobj, currOption);
 
                         // also play sfx
@@ -2952,12 +2952,16 @@ void EventMenu_Think(GOBJ *gobj)
             Text_FreeText(menuData->text_value);
             menuData->text_value = 0;
 
-            // if mini box exists
+            // if popup box exists
             if (menuData->text_popup != 0)
             {
                 // remove
                 Text_FreeText(menuData->text_popup);
                 menuData->text_popup = 0;
+
+                // also close the popup for next time
+                EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+                currMenu->state = EMSTATE_FOCUS;
             }
 
             // remove jobj
@@ -2983,10 +2987,10 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     JOBJ *corners[4];
     JOBJ_GetChild(jobj_options, &corners, 1, 2, 3, 4, -1);
     // Modify scale and position
-    jobj_options->trans.Z = 63;
-    jobj_options->scale.X = 0.013;
-    jobj_options->scale.Y = 0.013;
-    jobj_options->scale.Z = 0.013;
+    jobj_options->trans.Z = 0;
+    jobj_options->scale.X = 1;
+    jobj_options->scale.Y = 1;
+    jobj_options->scale.Z = 1;
     corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
     corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
     corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
@@ -3069,7 +3073,6 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // Get event info
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
-    static char nullString[] = " ";
 
     // free text if it exists
     if (menuData->text_name != 0)
@@ -3140,33 +3143,6 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
         float optionX = MENU_OPTIONVALXPOS;
         float optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
         subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
-    }
-
-    //////////////////
-    // Create Popup //
-    //////////////////
-
-    if (menu->state == 2)
-    {
-
-        text = Text_CreateText(2, canvasIndex);
-        menuData->text_popup = text;
-        // enable align and kerning
-        text->align = 1;
-        text->kerning = 1;
-        // scale canvas
-        text->scale.X = MENU_CANVASSCALE;
-        text->scale.Y = MENU_CANVASSCALE;
-
-        option_num = menu->options[cursor].value_num;
-
-        for (int i = 0; i < option_num; i++)
-        {
-            // output option value
-            float optionX = MENU_OPTIONVALXPOS;
-            float optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
-            subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
-        }
     }
 
     return;
@@ -3256,14 +3232,13 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
 #define POPUP_WIDTH 20
 #define POPUP_HEIGHT 20
 #define POPUP_SCALE 0.8
-#define POPUP_X 18.5
-#define POPUP_Y 8
+#define POPUP_X 17
+#define POPUP_Y 11
+#define POPUP_YOFFSET -3
 #define POPUP_CANVASSCALE 0.05
 #define POPUP_TEXTSCALE 1
-#define POPUP_OPTIONNAMEXPOS -250
-#define POPUP_OPTIONNAMEYPOS -200
-#define POPUP_OPTIONVALXPOS 250
-#define POPUP_OPTIONVALYPOS -200
+#define POPUP_OPTIONVALXPOS 280
+#define POPUP_OPTIONVALYPOS -275
 #define POPUP_TEXTYOFFSET 50
 #define POPUP_HIGHLIGHT  \
     {                    \
@@ -3274,30 +3249,35 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
         255, 255, 255, 255 \
     }
 
-void EventMenu_CreatePopupModel(GOBJ *gobj, EventOption *option)
+void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
     MenuData *menuData = gobj->userdata; // userdata
+    s32 cursor = menu->cursor;
+    EventOption *option = &menu->options[cursor];
 
     // load popup joint
     // create options background
     TMData *tmData = RTOC_PTR(TM_DATA);
     JOBJ *popup_joint = JOBJ_LoadJoint(tmData->messageJoint);
+
     // Get each corner's joints
     JOBJ *corners[4];
     JOBJ_GetChild(popup_joint, &corners, 1, 2, 3, 4, -1);
+
     // Modify scale and position
     popup_joint->scale.X = POPUP_SCALE;
     popup_joint->scale.Y = POPUP_SCALE;
     popup_joint->scale.Z = POPUP_SCALE;
-    corners[0]->trans.X = -(POPUP_WIDTH / 2) + POPUP_X;
-    corners[0]->trans.Y = (POPUP_HEIGHT / 2) + POPUP_Y;
-    corners[1]->trans.X = (POPUP_WIDTH / 2) + POPUP_X;
-    corners[1]->trans.Y = (POPUP_HEIGHT / 2) + POPUP_Y;
-    corners[2]->trans.X = -(POPUP_WIDTH / 2) + POPUP_X;
-    corners[2]->trans.Y = -(POPUP_HEIGHT / 2) + POPUP_Y;
-    corners[3]->trans.X = (POPUP_WIDTH / 2) + POPUP_X;
-    corners[3]->trans.Y = -(POPUP_HEIGHT / 2) + POPUP_Y;
+    corners[0]->trans.X = -(POPUP_WIDTH / 2);
+    corners[0]->trans.Y = (POPUP_HEIGHT / 2);
+    corners[1]->trans.X = (POPUP_WIDTH / 2);
+    corners[1]->trans.Y = (POPUP_HEIGHT / 2);
+    corners[2]->trans.X = -(POPUP_WIDTH / 2);
+    corners[2]->trans.Y = -(POPUP_HEIGHT / 2);
+    corners[3]->trans.X = (POPUP_WIDTH / 2);
+    corners[3]->trans.Y = -(POPUP_HEIGHT / 2);
+
     // Change color
     GXColor gx_color = TEXT_BGCOLOR;
     popup_joint->dobj->mobj->mat->diffuse = gx_color;
@@ -3306,14 +3286,20 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventOption *option)
     JOBJ_AddChild(gobj->hsd_object, popup_joint);
 
     // adjust scrollbar scale
+
     // position popup X and Y (based on cursor value)
+    popup_joint->trans.X = POPUP_X;
+    popup_joint->trans.Y = POPUP_Y + (POPUP_YOFFSET * cursor);
 
     return;
 }
-void EventMenu_CreatePopupText(GOBJ *gobj, EventOption *option)
+
+void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
     MenuData *menuData = gobj->userdata; // userdata
+    s32 cursor = menu->cursor;
+    EventOption *option = &menu->options[cursor];
     int subtext;
     int *hudData = 0x804a1f58;
     int canvasIndex = hudData[0];
@@ -3334,17 +3320,21 @@ void EventMenu_CreatePopupText(GOBJ *gobj, EventOption *option)
     text->scale.X = POPUP_CANVASSCALE;
     text->scale.Y = POPUP_CANVASSCALE;
 
+    // determine base Y value
+    float baseYPos = POPUP_OPTIONVALYPOS + (cursor * MENU_TEXTYOFFSET);
+
     // Output all values
     for (int i = 0; i < value_num; i++)
     {
         // output option value
         float optionX = POPUP_OPTIONVALXPOS;
-        float optionY = POPUP_OPTIONVALYPOS + (i * POPUP_TEXTYOFFSET);
+        float optionY = baseYPos + (i * POPUP_TEXTYOFFSET);
         subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
     }
 
     return;
 }
+
 void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
 {
     // init variables
@@ -3373,7 +3363,7 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
             Text_SetText(text, i, "%d", scroll + i);
 
             // highlight this if this is the cursor
-            if (i == cursor + scroll)
+            if (i == cursor)
             {
                 Text_SetColor(text, i, &highlight);
             }
@@ -3384,6 +3374,7 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
         }
     }
 
+    // update string list
     else if (option->option_kind == OPTKIND_STRING)
     {
         // Output all values
