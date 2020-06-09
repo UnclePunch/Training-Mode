@@ -24,7 +24,19 @@ static char nullString[] = " ";
 
 // L-Cancel Training
 
+void onChangeIntTest(int value)
+{
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+
+    fighter_data->damage_Percent = value;
+    Fighter_SetHUDDamage(0, value);
+
+    return;
+}
+
 // Main Menu
+static char **EvFreeOptions_OffOn[] = {"Off", "On"};
 static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik", "Marth", "Jiggly", "Last One"};
 static EventOption EvFreeOptions_Main[] = {
     {
@@ -34,6 +46,7 @@ static EventOption EvFreeOptions_Main[] = {
         .menu = &EvFreeMenu_General, // pointer to the menu that pressing A opens
         .option_name = {"General"},  // pointer to a string
         .option_values = 0,          // pointer to an array of strings
+        .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                         // the type of option this is; menu, string list, integers list, etc
@@ -42,6 +55,7 @@ static EventOption EvFreeOptions_Main[] = {
         .menu = 0,                                             // pointer to the menu that pressing A opens
         .option_name = {"Characters"},                         // pointer to a string
         .option_values = EvFreeOptions_MainCharacters,         // pointer to an array of strings
+        .onOptionChange = 0,
     },
 };
 static EventMenu EvFreeMenu_Main = {
@@ -59,106 +73,201 @@ static EventOption EvFreeOptions_General[] = {
         .value_num = 255,                // number of values for this option
         .option_val = 0,                 // value of this option
         .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 1", // pointer to a string
+        .option_name = "Player Percent", // pointer to a string
         .option_values = 0,              // pointer to an array of strings
+        .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
+        .option_kind = OPTKIND_INT,   // the type of option this is; menu, string list, integer list, etc
+        .value_num = 255,             // number of values for this option
+        .option_val = 0,              // value of this option
+        .menu = 0,                    // pointer to the menu that pressing A opens
+        .option_name = "CPU Percent", // pointer to a string
+        .option_values = 0,           // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 1,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "Move Staling",        // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 0,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "Frame Advance",       // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 1,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "Model Display",       // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 0,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "Fighter Collision",   // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                         // number of values for this option
+        .option_val = 0,                        // value of this option
+        .menu = 0,                              // pointer to the menu that pressing A opens
+        .option_name = "Environment Collision", // pointer to a string
+        .option_values = EvFreeOptions_OffOn,   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 0,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "DI Display",          // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 0,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "Input Display",       // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_MENU,     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                  // number of values for this option
         .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 2", // pointer to a string
+        .menu = &EvFreeMenu_InfoDisplay, // pointer to the menu that pressing A opens
+        .option_name = "Info Display",   // pointer to a string
         .option_values = 0,              // pointer to an array of strings
+        .onOptionChange = 0,
     },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 3", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 4", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 5", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 6", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 7", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 8", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                // number of values for this option
-        .option_val = 0,                 // value of this option
-        .menu = 0,                       // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 9", // pointer to a string
-        .option_values = 0,              // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,       // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                 // number of values for this option
-        .option_val = 0,                  // value of this option
-        .menu = 0,                        // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 10", // pointer to a string
-        .option_values = 0,               // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,       // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                 // number of values for this option
-        .option_val = 0,                  // value of this option
-        .menu = 0,                        // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 11", // pointer to a string
-        .option_values = 0,               // pointer to an array of strings
-    },
-    {
-        .option_kind = OPTKIND_INT,       // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                 // number of values for this option
-        .option_val = 0,                  // value of this option
-        .menu = 0,                        // pointer to the menu that pressing A opens
-        .option_name = "Integer Test 12", // pointer to a string
-        .option_values = 0,               // pointer to an array of strings
-    },
-
 };
 static EventMenu EvFreeMenu_General = {
-    .option_num = 12,                  // number of options this menu contains
+    .option_num = 10,                  // number of options this menu contains
     .scroll = 0,                       // runtime variable used for how far down in the menu to start
     .state = 0,                        // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                       // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_General, // pointer to all of this menu's options
     .prev = 0,                         // pointer to previous menu, used at runtime
+};
+// Info Display
+static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Blastzone Left/Right", "Blastzone Up/Down"};
+static EventOption EvFreeOptions_InfoDisplay[] = {
+    {
+        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                       // number of values for this option
+        .option_val = 0,                      // value of this option
+        .menu = 0,                            // pointer to the menu that pressing A opens
+        .option_name = "Toggle",              // pointer to a string
+        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_INT, // the type of option this is; menu, string list, integer list, etc
+        .value_num = 4,             // number of values for this option
+        .option_val = 0,            // value of this option
+        .menu = 0,                  // pointer to the menu that pressing A opens
+        .option_name = "Player",    // pointer to a string
+        .option_values = 0,         // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 1,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 1",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 2,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 2",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 3,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 3",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 4,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 4",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 5,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 5",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 6,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 6",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 7,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 7",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 26,                           // number of values for this option
+        .option_val = 8,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Row 8",                    // pointer to a string
+        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+};
+static EventMenu EvFreeMenu_InfoDisplay = {
+    .option_num = 10,                      // number of options this menu contains
+    .scroll = 0,                           // runtime variable used for how far down in the menu to start
+    .state = 0,                            // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                           // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_InfoDisplay, // pointer to all of this menu's options
+    .prev = 0,                             // pointer to previous menu, used at runtime
 };
 
 // Match Data
@@ -194,6 +303,12 @@ static EventMatchData LCancel_MatchData = {
 // Think Function
 void LCancel_Think(GOBJ *event)
 {
+
+    // update menu's percent
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+    //EvFreeOptions_General[0].option_val = fighter_data->damage_Percent;
+
     return;
 }
 // Event Struct
@@ -2315,6 +2430,10 @@ void EventMenu_Init(EventInfo *eventInfo)
     // Add per frame process
     GObj_AddProc(gobj, EventMenu_Think, 0);
 
+    // Create 2 text canvases (menu and popup)
+    menuData->canvas_menu = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_MENU, GXPRI_MENU, 19);
+    menuData->canvas_popup = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_POPUP, GXPRI_POPUP, 19);
+
     return;
 };
 
@@ -2494,6 +2613,7 @@ void OnStartMelee()
 #define MENU_POPMAXOPTION 4
 #define OPT_X 0
 #define OPT_Y -1
+#define OPT_Z 0
 #define OPT_WIDTH 55
 #define OPT_HEIGHT 28
 #define DESC_X 0
@@ -2665,6 +2785,10 @@ void EventMenu_Think(GOBJ *gobj)
 
                             // update val
                             currOption->option_val = option_val;
+
+                            // run on change function if it exists
+                            if (currOption->onOptionChange != 0)
+                                currOption->onOptionChange(currOption->option_val);
                         }
                     }
                 }
@@ -2684,6 +2808,10 @@ void EventMenu_Think(GOBJ *gobj)
 
                             // update val
                             currOption->option_val = option_val;
+
+                            // run on change function if it exists
+                            if (currOption->onOptionChange != 0)
+                                currOption->onOptionChange(currOption->option_val);
                         }
                     }
                 }
@@ -2695,11 +2823,12 @@ void EventMenu_Think(GOBJ *gobj)
                     if ((currOption->option_kind == OPTKIND_MENU))
                     {
                         // access this menu
-                        currMenu->state = 1;
+                        currMenu->state = EMSTATE_OPENSUB;
 
                         // update currMenu
-                        EventMenu *nextMenu = currMenu->options[cursor].menu;
+                        EventMenu *nextMenu = currMenu->options[cursor + scroll].menu;
                         nextMenu->prev = currMenu;
+                        nextMenu->state = EMSTATE_FOCUS;
                         currMenu = nextMenu;
 
                         // recreate menu's text
@@ -2719,14 +2848,15 @@ void EventMenu_Think(GOBJ *gobj)
                         currMenu->state = EMSTATE_OPENPOP;
 
                         // init cursor and scroll value
-                        s32 cursor = menuData->popup_cursor;
-                        s32 scroll = menuData->popup_scroll;
-
-                        cursor = 0;
-                        scroll = currOption->option_val;
+                        s32 cursor = 0;
+                        s32 scroll = currOption->option_val;
 
                         // correct scroll
-                        s32 max_scroll = (currOption->value_num - MENU_POPMAXOPTION);
+                        s32 max_scroll;
+                        if (currOption->value_num <= MENU_POPMAXOPTION)
+                            max_scroll = 0;
+                        else
+                            max_scroll = currOption->value_num - MENU_POPMAXOPTION;
                         // check if scrolled too far
                         if (scroll > max_scroll)
                         {
@@ -2735,7 +2865,6 @@ void EventMenu_Think(GOBJ *gobj)
                         }
 
                         // update cursor and scroll
-                        blr();
                         menuData->popup_cursor = cursor;
                         menuData->popup_scroll = scroll;
 
@@ -2768,7 +2897,7 @@ void EventMenu_Think(GOBJ *gobj)
                         currMenu = prevMenu;
 
                         // close this menu
-                        currMenu->state = 0;
+                        currMenu->state = EMSTATE_FOCUS;
 
                         // recreate menu's text
                         EventMenu_CreateText(gobj, currMenu);
@@ -2890,16 +3019,11 @@ void EventMenu_Think(GOBJ *gobj)
                     // update option_val
                     currOption->option_val = cursor + scroll;
 
-                    // change menu state
-                    currMenu->state = EMSTATE_FOCUS;
+                    // run on change function if it exists
+                    if (currOption->onOptionChange != 0)
+                        currOption->onOptionChange(currOption->option_val);
 
-                    // remove popup menu
-                    JOBJ *popup_joint;
-                    JOBJ_GetChild(gobj->hsd_object, &popup_joint, 5, -1);
-                    JOBJ_RemoveAll(popup_joint);
-
-                    // remove text
-                    Text_FreeText(menuData->text_popup);
+                    EventMenu_DestroyPopup(gobj);
 
                     // update menu
                     EventMenu_Update(gobj, currMenu);
@@ -2911,16 +3035,7 @@ void EventMenu_Think(GOBJ *gobj)
                 else if ((inputs_rapid & HSD_BUTTON_B) != 0)
                 {
 
-                    // change menu state
-                    currMenu->state = EMSTATE_FOCUS;
-
-                    // remove popup menu
-                    JOBJ *popup_joint;
-                    JOBJ_GetChild(gobj->hsd_object, &popup_joint, 5, -1);
-                    JOBJ_RemoveAll(popup_joint);
-
-                    // remove text
-                    Text_FreeText(menuData->text_popup);
+                    EventMenu_DestroyPopup(gobj);
 
                     // update menu
                     EventMenu_Update(gobj, currMenu);
@@ -2955,13 +3070,7 @@ void EventMenu_Think(GOBJ *gobj)
             // if popup box exists
             if (menuData->text_popup != 0)
             {
-                // remove
-                Text_FreeText(menuData->text_popup);
-                menuData->text_popup = 0;
-
-                // also close the popup for next time
-                EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
-                currMenu->state = EMSTATE_FOCUS;
+                EventMenu_DestroyPopup(gobj);
             }
 
             // remove jobj
@@ -2982,12 +3091,12 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
     // Add gx_link
-    GObj_AddGXLink(gobj, GXLink_Common, 11, 0);
+    GObj_AddGXLink(gobj, GXLink_Common, GXRENDER_MENUMODEL, GXPRI_MENUMODEL);
     // Get each corner's joints
     JOBJ *corners[4];
     JOBJ_GetChild(jobj_options, &corners, 1, 2, 3, 4, -1);
     // Modify scale and position
-    jobj_options->trans.Z = 0;
+    jobj_options->trans.Z = OPT_Z;
     jobj_options->scale.X = 1;
     jobj_options->scale.Y = 1;
     jobj_options->scale.Z = 1;
@@ -3047,16 +3156,11 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 
 #define MENU_CANVASSCALE 0.05
 #define MENU_TEXTSCALE 1
-#define MENU_EVENTXPOS 0
-#define MENU_EVENTYPOS -420
-#define MENU_CONTROLSXPOS -250
-#define MENU_CONTROLSYPOS -380
+#define MENU_TEXTZ 0
 #define MENU_OPTIONNAMEXPOS -250
 #define MENU_OPTIONNAMEYPOS -200
 #define MENU_OPTIONVALXPOS 250
 #define MENU_OPTIONVALYPOS -200
-#define MENU_DESCXPOS -250
-#define MENU_DESCYPOS 320
 #define MENU_TEXTYOFFSET 50
 #define MENU_HIGHLIGHT   \
     {                    \
@@ -3097,8 +3201,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     //////////////////
 
     int subtext;
-    int *hudData = 0x804a1f58;
-    int canvasIndex = hudData[0];
+    int canvasIndex = menuData->canvas_menu;
     Text *text = Text_CreateText(2, canvasIndex);
     menuData->text_name = text;
     // enable align and kerning
@@ -3107,6 +3210,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // scale canvas
     text->scale.X = MENU_CANVASSCALE;
     text->scale.Y = MENU_CANVASSCALE;
+    text->trans.Z = MENU_TEXTZ;
 
     // Output all options
     s32 cursor = menu->cursor;
@@ -3135,6 +3239,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // scale canvas
     text->scale.X = MENU_CANVASSCALE;
     text->scale.Y = MENU_CANVASSCALE;
+    text->trans.Z = MENU_TEXTZ;
 
     // Output all values
     for (int i = 0; i < option_num; i++)
@@ -3215,6 +3320,12 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
             Text_SetText(text, i, "%d", optionVal);
         }
 
+        // if this option is a menu
+        else if (currOption->option_kind == OPTKIND_MENU)
+        {
+            Text_SetText(text, i, &nullString);
+        }
+
         // highlight this if this is the cursor
         if (i == cursor)
         {
@@ -3232,12 +3343,14 @@ void EventMenu_Update(GOBJ *gobj, EventMenu *menu)
 #define POPUP_WIDTH 20
 #define POPUP_HEIGHT 20
 #define POPUP_SCALE 0.8
-#define POPUP_X 17
-#define POPUP_Y 11
-#define POPUP_YOFFSET -3
+#define POPUP_X 13
+#define POPUP_Y 9
+#define POPUP_Z 0
+#define POPUP_YOFFSET -2.5
 #define POPUP_CANVASSCALE 0.05
 #define POPUP_TEXTSCALE 1
-#define POPUP_OPTIONVALXPOS 280
+#define POPUP_TEXTZ 0
+#define POPUP_OPTIONVALXPOS 250
 #define POPUP_OPTIONVALYPOS -275
 #define POPUP_TEXTYOFFSET 50
 #define POPUP_HIGHLIGHT  \
@@ -3256,6 +3369,9 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     s32 cursor = menu->cursor;
     EventOption *option = &menu->options[cursor];
 
+    // create popup gobj
+    GOBJ *popup_gobj = GObj_Create(0, 0, 0);
+
     // load popup joint
     // create options background
     TMData *tmData = RTOC_PTR(TM_DATA);
@@ -3269,6 +3385,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     popup_joint->scale.X = POPUP_SCALE;
     popup_joint->scale.Y = POPUP_SCALE;
     popup_joint->scale.Z = POPUP_SCALE;
+    popup_joint->trans.Z = POPUP_Z;
     corners[0]->trans.X = -(POPUP_WIDTH / 2);
     corners[0]->trans.Y = (POPUP_HEIGHT / 2);
     corners[1]->trans.X = (POPUP_WIDTH / 2);
@@ -3282,8 +3399,12 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     GXColor gx_color = TEXT_BGCOLOR;
     popup_joint->dobj->mobj->mat->diffuse = gx_color;
 
-    // add as child to gobj joint
-    JOBJ_AddChild(gobj->hsd_object, popup_joint);
+    // add to gobj
+    GObj_AddObject(popup_gobj, 3, popup_joint);
+    // add gx link
+    GObj_AddGXLink(popup_gobj, GXLink_Common, GXRENDER_POPUPMODEL, GXPRI_POPUPMODEL);
+    // save pointer
+    menuData->popup = popup_gobj;
 
     // adjust scrollbar scale
 
@@ -3297,12 +3418,11 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
 void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
-    MenuData *menuData = gobj->userdata; // userdata
+    MenuData *menuData = gobj->userdata;
     s32 cursor = menu->cursor;
     EventOption *option = &menu->options[cursor];
     int subtext;
-    int *hudData = 0x804a1f58;
-    int canvasIndex = hudData[0];
+    int canvasIndex = menuData->canvas_popup;
     s32 value_num = option->value_num;
     if (value_num > MENU_POPMAXOPTION)
         value_num = MENU_POPMAXOPTION;
@@ -3319,6 +3439,7 @@ void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
     // scale canvas
     text->scale.X = POPUP_CANVASSCALE;
     text->scale.Y = POPUP_CANVASSCALE;
+    text->trans.Z = POPUP_TEXTZ;
 
     // determine base Y value
     float baseYPos = POPUP_OPTIONVALYPOS + (cursor * MENU_TEXTYOFFSET);
@@ -3398,6 +3519,23 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
     return;
 }
 
+void EventMenu_DestroyPopup(GOBJ *gobj)
+{
+    MenuData *menuData = gobj->userdata; // userdata
+
+    // remove text
+    Text_FreeText(menuData->text_popup);
+    menuData->text_popup = 0;
+
+    // destory gobj
+    GObj_Destroy(menuData->popup);
+    menuData->popup = 0;
+
+    // also change the menus state
+    EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+    currMenu->state = EMSTATE_FOCUS;
+}
+
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
 {
     // Get event info
@@ -3406,6 +3544,7 @@ EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
     EventMenu *currMenu = eventInfo->startMenu;
 
     // walk through the menus to find the one that is in focus
+    blr();
     while ((currMenu->state == EMSTATE_OPENSUB))
     {
         int cursor = currMenu->cursor;

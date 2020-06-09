@@ -69,21 +69,25 @@ typedef struct TMData
 typedef struct MenuData
 {
     EventInfo *eventInfo;
+    u16 canvas_menu;
+    u16 canvas_popup;
     Text *text_name;
     Text *text_value;
     Text *text_popup;
     u16 popup_cursor;
     u16 popup_scroll;
+    GOBJ *popup;
 } MenuData;
 
 typedef struct EventOption
 {
-    u8 option_kind;       // the type of option this is; string, integers, etc
-    u8 value_num;         // number of values
-    u16 option_val;       // value of this option
-    EventMenu *menu;      // pointer to the menu that pressing A opens
-    char *option_name;    // pointer to a string
-    void **option_values; // pointer to an array of strings
+    u8 option_kind;                    // the type of option this is; string, integers, etc
+    u8 value_num;                      // number of values
+    u16 option_val;                    // value of this option
+    EventMenu *menu;                   // pointer to the menu that pressing A opens
+    char *option_name;                 // pointer to a string
+    void **option_values;              // pointer to an array of strings
+    void (*onOptionChange)(int value); // function that runs when option is changed
 } EventOption;
 typedef struct EventMenu
 {
@@ -105,9 +109,12 @@ void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj);
 
+void onChangeIntTest(int value);
+
 static EventOption EvFreeOptions_Main[];
 static EventOption EvFreeOptions_General[];
 static EventMenu EvFreeMenu_General;
+static EventMenu EvFreeMenu_InfoDisplay;
 
 // EventOption option_kind definitions
 #define OPTKIND_MENU 0
@@ -119,3 +126,14 @@ static EventMenu EvFreeMenu_General;
 #define EMSTATE_FOCUS 0
 #define EMSTATE_OPENSUB 1
 #define EMSTATE_OPENPOP 2
+
+// GX Link args
+#define GXPRI_MENUMODEL 0
+#define GXRENDER_MENUMODEL 11
+#define GXPRI_POPUPMODEL 2
+#define GXRENDER_POPUPMODEL 11
+
+#define GXPRI_MENU 1
+#define GXRENDER_MENU 11
+#define GXPRI_POPUP 3
+#define GXRENDER_POPUP 11
