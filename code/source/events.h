@@ -2,6 +2,22 @@
 
 #define EVENT_DATASIZE 128
 #define TM_DATA -(50 * 4) - 4
+#define MENU_MAXOPTION 9
+#define MENU_POPMAXOPTION 5
+
+// Custom File Structs
+typedef struct TMData
+{
+    JOBJDesc *messageJoint;
+} TMData;
+typedef struct evMenu
+{
+    JOBJDesc *menu;
+    JOBJDesc *popup;
+    JOBJDesc *scroll;
+    JOBJDesc *check;
+    JOBJDesc *arrow;
+} evMenu;
 
 // Structure Definitions
 typedef struct EventMenu EventMenu;
@@ -62,10 +78,6 @@ typedef struct EventPage
     int eventNum;
     EventInfo **events;
 } EventPage;
-typedef struct TMData
-{
-    JOBJDesc *messageJoint;
-} TMData;
 typedef struct MenuData
 {
     EventInfo *eventInfo;
@@ -74,23 +86,30 @@ typedef struct MenuData
     Text *text_name;
     Text *text_value;
     Text *text_popup;
+    Text *text_title;
+    Text *text_desc;
     u16 popup_cursor;
     u16 popup_scroll;
     GOBJ *popup;
+    evMenu *menu_assets;
+    JOBJ *row_joints[MENU_MAXOPTION][2]; // pointers to row jobjs
+    JOBJ *highlight_menu;                // pointer to the highlight jobj
+    JOBJ *highlight_popup;               // pointer to the highlight jobj
 } MenuData;
-
 typedef struct EventOption
 {
     u8 option_kind;                    // the type of option this is; string, integers, etc
     u8 value_num;                      // number of values
     u16 option_val;                    // value of this option
     EventMenu *menu;                   // pointer to the menu that pressing A opens
-    char *option_name;                 // pointer to a string
+    char *option_name;                 // pointer to the name of this option
+    char *desc;                        // pointer to the description string for this option
     void **option_values;              // pointer to an array of strings
     void (*onOptionChange)(int value); // function that runs when option is changed
 } EventOption;
 typedef struct EventMenu
 {
+    char *name;           // name of this menu
     u8 option_num;        // number of options this menu contains
     u8 scroll;            // how wide to make the menu
     u8 state;             // bool used to know if this menu is focused
@@ -132,8 +151,84 @@ static EventMenu EvFreeMenu_InfoDisplay;
 #define GXRENDER_MENUMODEL 11
 #define GXPRI_POPUPMODEL 2
 #define GXRENDER_POPUPMODEL 11
-
 #define GXPRI_MENU 1
 #define GXRENDER_MENU 11
 #define GXPRI_POPUP 3
 #define GXRENDER_POPUP 11
+
+// menu model
+#define OPT_X 0.5
+#define OPT_Y -1
+#define OPT_Z 0
+#define OPT_WIDTH 55
+#define OPT_HEIGHT 40
+// menu text object
+#define MENU_CANVASSCALE 0.05
+#define MENU_TEXTSCALE 1
+#define MENU_TEXTZ 0
+// menu title
+#define MENU_TITLEXPOS -430
+#define MENU_TITLEYPOS -366
+#define MENU_TITLESCALE 2.3
+// menu description
+#define MENU_DESCXPOS -460
+#define MENU_DESCYPOS 270
+#define MENU_DESCSCALE 1
+// menu option name
+#define MENU_OPTIONNAMEXPOS -430
+#define MENU_OPTIONNAMEYPOS -230
+// menu option value
+#define MENU_OPTIONVALXPOS 250
+#define MENU_OPTIONVALYPOS -230
+#define MENU_TEXTYOFFSET 50
+// menu highlight
+#define MENUHIGHLIGHT_HEIGHT ROWBOX_HEIGHT
+#define MENUHIGHLIGHT_WIDTH (OPT_WIDTH * 0.785)
+#define MENUHIGHLIGHT_X OPT_X
+#define MENUHIGHLIGHT_Y 10.3
+#define MENUHIGHLIGHT_Z 0.01
+#define MENUHIGHLIGHT_YOFFSET ROWBOX_YOFFSET
+#define MENUHIGHLIGHT_COLOR \
+    {                       \
+        255, 211, 0, 255    \
+    }
+
+// row jobj
+#define ROWBOX_HEIGHT 2.3
+#define ROWBOX_WIDTH 18
+#define ROWBOX_X 13
+#define ROWBOX_Y 10.3
+#define ROWBOX_Z 0.01
+#define ROWBOX_YOFFSET -2.5
+// arrow jobj
+#define TICKBOX_SCALE 1.8
+#define TICKBOX_X 11.7
+#define TICKBOX_Y 11.7
+
+// popup model
+#define POPUP_WIDTH ROWBOX_WIDTH
+#define POPUP_HEIGHT 19
+#define POPUP_SCALE 1
+#define POPUP_X 13
+#define POPUP_Y 7.8
+#define POPUP_Z 0
+#define POPUP_YOFFSET -2.5
+// popup text object
+#define POPUP_CANVASSCALE 0.05
+#define POPUP_TEXTSCALE 1
+#define POPUP_TEXTZ 0
+// popup text
+#define POPUP_OPTIONVALXPOS 250
+#define POPUP_OPTIONVALYPOS -280
+#define POPUP_TEXTYOFFSET 50
+// popup highlight
+#define POPUPHIGHLIGHT_HEIGHT ROWBOX_HEIGHT
+#define POPUPHIGHLIGHT_WIDTH (POPUP_WIDTH * 0.785)
+#define POPUPHIGHLIGHT_X 0
+#define POPUPHIGHLIGHT_Y 5
+#define POPUPHIGHLIGHT_Z 1
+#define POPUPHIGHLIGHT_YOFFSET ROWBOX_YOFFSET
+#define POPUPHIGHLIGHT_COLOR \
+    {                        \
+        255, 211, 0, 255     \
+    }
