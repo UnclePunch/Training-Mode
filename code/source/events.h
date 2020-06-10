@@ -171,8 +171,8 @@ static EventMenu EvFreeMenu_InfoDisplay;
 #define MENU_TITLEYPOS -366
 #define MENU_TITLESCALE 2.3
 // menu description
-#define MENU_DESCXPOS -460
-#define MENU_DESCYPOS 270
+#define MENU_DESCXPOS -21.5
+#define MENU_DESCYPOS 13
 #define MENU_DESCSCALE 1
 // menu option name
 #define MENU_OPTIONNAMEXPOS -430

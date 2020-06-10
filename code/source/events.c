@@ -24,7 +24,7 @@ static char nullString[] = " ";
 
 // L-Cancel Training
 
-void onChangeIntTest(int value)
+void EvFree_ChangePlayerPercent(int value)
 {
     GOBJ *fighter = Fighter_GetGObj(0);
     FighterData *fighter_data = fighter->userdata;
@@ -34,7 +34,83 @@ void onChangeIntTest(int value)
 
     return;
 }
+void EvFree_ChangeCPUPercent(int value)
+{
+    GOBJ *fighter = Fighter_GetGObj(1);
+    FighterData *fighter_data = fighter->userdata;
 
+    fighter_data->damage_Percent = value;
+    Fighter_SetHUDDamage(0, value);
+
+    return;
+}
+void EvFree_ChangeModelDisplay(int value)
+{
+
+    // loop through all fighters
+    GOBJ **GOBJList = R13_PTR(-0x3E74);
+    GOBJ *this_fighter = GOBJList[8];
+    while (this_fighter != 0)
+    {
+        // get data
+        FighterData *thisFighterData = this_fighter->userdata;
+
+        // toggle
+        thisFighterData->show_model = value;
+
+        // get next fighter
+        this_fighter = this_fighter->next;
+    }
+
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+
+    return;
+}
+void EvFree_ChangeHitDisplay(int value)
+{
+
+    // loop through all fighters
+    GOBJ **GOBJList = R13_PTR(-0x3E74);
+    GOBJ *this_fighter = GOBJList[8];
+    while (this_fighter != 0)
+    {
+        // get data
+        FighterData *thisFighterData = this_fighter->userdata;
+
+        // toggle
+        thisFighterData->show_hit = value;
+
+        // get next fighter
+        this_fighter = this_fighter->next;
+    }
+
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+
+    return;
+}
+void EvFree_ChangeEnvCollDisplay(int value)
+{
+
+    typedef struct envToggle
+    {
+        unsigned char x80 : 1;
+        unsigned char x40 : 1;
+        unsigned char x20 : 1;
+        unsigned char show_coll : 1;
+        unsigned char x08 : 1;
+        unsigned char x04 : 1;
+        unsigned char x02 : 1;
+        unsigned char x01 : 1;
+    } envToggle;
+
+    u8 *unk = 0x80452c68;
+    OSReport("%d", unk[0x399]);
+    envToggle *toggle = &unk[0x399];
+    toggle->show_coll = value;
+    return;
+}
 // Main Menu
 static char **EvFreeOptions_OffOn[] = {"Off", "On"};
 static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik", "Marth", "Jiggly", "Last One"};
@@ -79,7 +155,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_name = "Player Percent",        // pointer to a string
         .desc = "Adjust the player's percent.", // string describing what this option does
         .option_values = 0,                     // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangePlayerPercent,
     },
     {
         .option_kind = OPTKIND_INT,          // the type of option this is; menu, string list, integer list, etc
@@ -89,26 +165,26 @@ static EventOption EvFreeOptions_General[] = {
         .option_name = "CPU Percent",        // pointer to a string
         .desc = "Adjust the CPU's percent.", // string describing what this option does
         .option_values = 0,                  // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeCPUPercent,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                         // number of values for this option
+        .option_val = 1,                                                                        // value of this option
+        .menu = 0,                                                                              // pointer to the menu that pressing A opens
+        .option_name = "Move Staling",                                                          // pointer to a string
+        .desc = "Toggle the staling of moves. Attacks become \nweaker the more they are used.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                         // number of values for this option
-        .option_val = 1,                        // value of this option
-        .menu = 0,                              // pointer to the menu that pressing A opens
-        .option_name = "Move Staling",          // pointer to a string
-        .desc = "Toggle the staling of moves.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,   // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                                   // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                  // number of values for this option
-        .option_val = 0,                                                 // value of this option
-        .menu = 0,                                                       // pointer to the menu that pressing A opens
-        .option_name = "Frame Advance",                                  // pointer to a string
-        .desc = "Enable frame advance. Press/hold L to advance frames.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                            // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                    // number of values for this option
+        .option_val = 0,                                                   // value of this option
+        .menu = 0,                                                         // pointer to the menu that pressing A opens
+        .option_name = "Frame Advance",                                    // pointer to a string
+        .desc = "Enable frame advance. Press/hold L to advance \nframes.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                              // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -119,46 +195,46 @@ static EventOption EvFreeOptions_General[] = {
         .option_name = "Model Display",                     // pointer to a string
         .desc = "Toggle player and item model visibility.", // string describing what this option does
         .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeModelDisplay,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                                                                                            // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                                                           // number of values for this option
+        .option_val = 0,                                                                                                                                          // value of this option
+        .menu = 0,                                                                                                                                                // pointer to the menu that pressing A opens
+        .option_name = "Fighter Collision",                                                                                                                       // pointer to a string
+        .desc = "Toggle hitbox and hurtbox visualization.\nYellow = hurt, red = hit, purple = grab, \nwhite = trigger, green = reflect, blue = shield/\nabsorb.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                                                                     // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeHitDisplay,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                    // number of values for this option
+        .option_val = 0,                                                                                                   // value of this option
+        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "Environment Collision",                                                                            // pointer to a string
+        .desc = "Toggle environment collision visualization.\nDisplays the players' ECB (environmental \ncollision box).", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeEnvCollDisplay,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                    // number of values for this option
+        .option_val = 0,                                                                                                   // value of this option
+        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "DI Display",                                                                                       // pointer to a string
+        .desc = "Display knockback trajectories during hitlag.\nUse frame advance to see the effects of DI\nin realtime.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                  // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                 // number of values for this option
-        .option_val = 0,                                // value of this option
-        .menu = 0,                                      // pointer to the menu that pressing A opens
-        .option_name = "Fighter Collision",             // pointer to a string
-        .desc = "Toggle hitbox and hurtbox visibility", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,           // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                         // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                        // number of values for this option
-        .option_val = 0,                                       // value of this option
-        .menu = 0,                                             // pointer to the menu that pressing A opens
-        .option_name = "Environment Collision",                // pointer to a string
-        .desc = "Toggle visibility of environment collision.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                  // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                          // number of values for this option
-        .option_val = 0,                                         // value of this option
-        .menu = 0,                                               // pointer to the menu that pressing A opens
-        .option_name = "DI Display",                             // pointer to a string
-        .desc = "Display knockback trajectories during hitlag.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                    // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,        // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                       // number of values for this option
-        .option_val = 0,                      // value of this option
-        .menu = 0,                            // pointer to the menu that pressing A opens
-        .option_name = "Input Display",       // pointer to a string
-        .desc = "Display player inputs.",     // string describing what this option does
-        .option_values = EvFreeOptions_OffOn, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                            // number of values for this option
+        .option_val = 0,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Input Display",            // pointer to a string
+        .desc = "Display player inputs onscreen.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,      // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -332,7 +408,7 @@ void LCancel_Think(GOBJ *event)
     // update menu's percent
     GOBJ *fighter = Fighter_GetGObj(0);
     FighterData *fighter_data = fighter->userdata;
-    //EvFreeOptions_General[0].option_val = fighter_data->damage_Percent;
+    EvFreeOptions_General[0].option_val = fighter_data->damage_Percent;
 
     return;
 }
@@ -3223,18 +3299,6 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     text = Text_CreateText(2, canvasIndex);
     menuData->text_desc = text;
-    // enable align and kerning
-    text->align = 0;
-    text->kerning = 1;
-    // scale canvas
-    text->scale.X = MENU_CANVASSCALE;
-    text->scale.Y = MENU_CANVASSCALE;
-    text->trans.Z = MENU_TEXTZ;
-
-    // output menu title
-    optionX = MENU_DESCXPOS;
-    optionY = MENU_DESCYPOS;
-    subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
 
     //////////////////
     // Create Names //
@@ -3315,8 +3379,32 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     //////////////////
 
     text = menuData->text_desc;
-    Text_SetText(text, 0, menu->options[cursor + scroll].desc);
-    //Text_SetText(text, 0, "Test Description");
+    EventOption *currOption = &menu->options[menu->cursor + menu->scroll];
+    // 0x07, 0xfe, 0x52, 0x01, 0x00 - offset
+    // 0xE, 0x01, 0xE0, 0x01, 0x00 - fit
+    static u8 descHeader[] = {0x16, 0xC, 0xFF, 0xFF, 0xFF};
+    static u8 descTerminator[] = {0x0};
+
+    // scale canvas
+    text->scale.X = MENU_CANVASSCALE;
+    text->scale.Y = MENU_CANVASSCALE;
+    text->trans.X = MENU_DESCXPOS;
+    text->trans.Y = MENU_DESCYPOS;
+    text->trans.Z = MENU_TEXTZ;
+
+    // free current allocation
+    Text_DestroyAlloc(text->textAlloc);
+    // convert description into menu text
+    u8 buffer[400];
+    int menuTextSize = Text_StringToMenuText(&buffer, currOption->desc);
+    // new alloc
+    u8 *textAlloc = Text_Alloc(menuTextSize + sizeof(descHeader) + sizeof(descTerminator));
+    // copy header to new alloc
+    memcpy(textAlloc, &descHeader, sizeof(descHeader));
+    memcpy(textAlloc + sizeof(descHeader), &buffer, menuTextSize);
+    memcpy(textAlloc + sizeof(descHeader) + menuTextSize, &descTerminator, sizeof(descTerminator));
+    // update pointer to alloc
+    text->textAlloc = textAlloc;
 
     //////////////////
     // Update Names //
@@ -3609,7 +3697,6 @@ EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
     EventMenu *currMenu = eventInfo->startMenu;
 
     // walk through the menus to find the one that is in focus
-    blr();
     while ((currMenu->state == EMSTATE_OPENSUB))
     {
         s32 cursor = currMenu->cursor;
