@@ -128,10 +128,16 @@ void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj);
 
-void onChangeIntTest(int value);
+void EvFree_ChangePlayerPercent(int value);
+void EvFree_ChangeCPUPercent(int value);
+void EvFree_ChangeModelDisplay(int value);
+void EvFree_ChangeHitDisplay(int value);
+void EvFree_ChangeEnvCollDisplay(int value);
+void InfoDisplay_Think(GOBJ *gobj);
 
 static EventOption EvFreeOptions_Main[];
 static EventOption EvFreeOptions_General[];
+static EventOption EvFreeOptions_InfoDisplay[];
 static EventMenu EvFreeMenu_General;
 static EventMenu EvFreeMenu_InfoDisplay;
 
@@ -147,14 +153,20 @@ static EventMenu EvFreeMenu_InfoDisplay;
 #define EMSTATE_OPENPOP 2
 
 // GX Link args
-#define GXPRI_MENUMODEL 0
+#define GXPRI_MENUMODEL 80
 #define GXRENDER_MENUMODEL 11
-#define GXPRI_POPUPMODEL 2
-#define GXRENDER_POPUPMODEL 11
-#define GXPRI_MENU 1
+#define GXPRI_MENU GXPRI_MENUMODEL + 1
 #define GXRENDER_MENU 11
-#define GXPRI_POPUP 3
+// popup menu
+#define GXPRI_POPUPMODEL GXPRI_MENU + 1
+#define GXRENDER_POPUPMODEL 11
+#define GXPRI_POPUP GXPRI_POPUPMODEL + 1
 #define GXRENDER_POPUP 11
+// info display
+#define GXPRI_INFDISPTEXT GXPRI_MENUMODEL - 1
+#define GXRENDER_INFDISPTEXT 11
+#define GXPRI_INFDISP GXPRI_INFDISPTEXT - 1
+#define GXRENDER_INFDISP 11
 
 // menu model
 #define OPT_X 0.5
@@ -192,6 +204,21 @@ static EventMenu EvFreeMenu_InfoDisplay;
     {                       \
         255, 211, 0, 255    \
     }
+
+// info display jobj
+#define INFDISP_WIDTH 7
+#define INFDISP_SCALE 4
+#define INFDISP_X -3.2
+#define INFDISP_Y 20
+#define INFDISP_Z 0.01
+#define INFDISP_YOFFSET -2.5
+#define INFDISP_BOTY -0.8
+#define INFDISP_BOTYOFFSET -0.30
+// info display text
+#define INFDISPTEXT_SCALE 0.04
+#define INFDISPTEXT_X -25.5
+#define INFDISPTEXT_Y -21
+#define INFDISPTEXT_YOFFSET 30
 
 // row jobj
 #define ROWBOX_HEIGHT 2.3

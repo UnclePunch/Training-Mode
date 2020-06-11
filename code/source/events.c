@@ -24,93 +24,14 @@ static char nullString[] = " ";
 
 // L-Cancel Training
 
-void EvFree_ChangePlayerPercent(int value)
+typedef struct InfoDisplayData
 {
-    GOBJ *fighter = Fighter_GetGObj(0);
-    FighterData *fighter_data = fighter->userdata;
+    JOBJ *menuModel;
+    JOBJ *botLeftEdge;
+    JOBJ *botRightEdge;
+    Text *text;
+} InfoDisplayData;
 
-    fighter_data->damage_Percent = value;
-    Fighter_SetHUDDamage(0, value);
-
-    return;
-}
-void EvFree_ChangeCPUPercent(int value)
-{
-    GOBJ *fighter = Fighter_GetGObj(1);
-    FighterData *fighter_data = fighter->userdata;
-
-    fighter_data->damage_Percent = value;
-    Fighter_SetHUDDamage(0, value);
-
-    return;
-}
-void EvFree_ChangeModelDisplay(int value)
-{
-
-    // loop through all fighters
-    GOBJ **GOBJList = R13_PTR(-0x3E74);
-    GOBJ *this_fighter = GOBJList[8];
-    while (this_fighter != 0)
-    {
-        // get data
-        FighterData *thisFighterData = this_fighter->userdata;
-
-        // toggle
-        thisFighterData->show_model = value;
-
-        // get next fighter
-        this_fighter = this_fighter->next;
-    }
-
-    GOBJ *fighter = Fighter_GetGObj(0);
-    FighterData *fighter_data = fighter->userdata;
-
-    return;
-}
-void EvFree_ChangeHitDisplay(int value)
-{
-
-    // loop through all fighters
-    GOBJ **GOBJList = R13_PTR(-0x3E74);
-    GOBJ *this_fighter = GOBJList[8];
-    while (this_fighter != 0)
-    {
-        // get data
-        FighterData *thisFighterData = this_fighter->userdata;
-
-        // toggle
-        thisFighterData->show_hit = value;
-
-        // get next fighter
-        this_fighter = this_fighter->next;
-    }
-
-    GOBJ *fighter = Fighter_GetGObj(0);
-    FighterData *fighter_data = fighter->userdata;
-
-    return;
-}
-void EvFree_ChangeEnvCollDisplay(int value)
-{
-
-    typedef struct envToggle
-    {
-        unsigned char x80 : 1;
-        unsigned char x40 : 1;
-        unsigned char x20 : 1;
-        unsigned char show_coll : 1;
-        unsigned char x08 : 1;
-        unsigned char x04 : 1;
-        unsigned char x02 : 1;
-        unsigned char x01 : 1;
-    } envToggle;
-
-    u8 *unk = 0x80452c68;
-    OSReport("%d", unk[0x399]);
-    envToggle *toggle = &unk[0x399];
-    toggle->show_coll = value;
-    return;
-}
 // Main Menu
 static char **EvFreeOptions_OffOn[] = {"Off", "On"};
 static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik", "Marth", "Jiggly", "Last One"};
@@ -371,6 +292,344 @@ static EventMenu EvFreeMenu_InfoDisplay = {
     .prev = 0,                             // pointer to previous menu, used at runtime
 };
 
+// Menu Callbacks
+void EvFree_ChangePlayerPercent(int value)
+{
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+
+    fighter_data->damage_Percent = value;
+    Fighter_SetHUDDamage(0, value);
+
+    return;
+}
+void EvFree_ChangeCPUPercent(int value)
+{
+    GOBJ *fighter = Fighter_GetGObj(1);
+    FighterData *fighter_data = fighter->userdata;
+
+    fighter_data->damage_Percent = value;
+    Fighter_SetHUDDamage(0, value);
+
+    return;
+}
+void EvFree_ChangeModelDisplay(int value)
+{
+
+    // loop through all fighters
+    GOBJ **GOBJList = R13_PTR(-0x3E74);
+    GOBJ *this_fighter = GOBJList[8];
+    while (this_fighter != 0)
+    {
+        // get data
+        FighterData *thisFighterData = this_fighter->userdata;
+
+        // toggle
+        thisFighterData->show_model = value;
+
+        // get next fighter
+        this_fighter = this_fighter->next;
+    }
+
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+
+    return;
+}
+void EvFree_ChangeHitDisplay(int value)
+{
+
+    // loop through all fighters
+    GOBJ **GOBJList = R13_PTR(-0x3E74);
+    GOBJ *this_fighter = GOBJList[8];
+    while (this_fighter != 0)
+    {
+        // get data
+        FighterData *thisFighterData = this_fighter->userdata;
+
+        // toggle
+        thisFighterData->show_hit = value;
+
+        // get next fighter
+        this_fighter = this_fighter->next;
+    }
+
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+
+    return;
+}
+void EvFree_ChangeEnvCollDisplay(int value)
+{
+    MatchCamera *matchCam = 0x80452c68;
+    matchCam->show_coll = value;
+
+    OSReport("%d", matchCam->show_coll);
+    return;
+}
+void InfoDisplay_Think(GOBJ *gobj)
+{
+
+    InfoDisplayData *idData = gobj->userdata;
+    Text *text = idData->text;
+    EventOption *idOptions = &EvFreeOptions_InfoDisplay;
+
+    // check whether to show the menu
+
+    // get the last row enabled
+    int rowsEnabled = 8;
+    while (rowsEnabled > 0)
+    {
+        rowsEnabled--;
+        if (idOptions[rowsEnabled + 2].option_val != 0)
+            break;
+    }
+    // scale window Y based on rows enabled
+    JOBJ *leftCorner = idData->botLeftEdge;
+    JOBJ *rightCorner = idData->botRightEdge;
+    float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
+    leftCorner->trans.Y = yPos;
+    rightCorner->trans.Y = yPos;
+    JOBJ_SetMtxDirtySub(idData->menuModel);
+
+    // update info display strings
+    int ply = idOptions[1].option_val;
+    GOBJ *fighter = Fighter_GetGObj(ply);
+    FighterData *fighter_data;
+    if (fighter != 0)
+        fighter_data = fighter->userdata;
+    for (int i = 0; i < 8; i++)
+    {
+
+        int value = idOptions[i + 2].option_val;
+
+        // hide text if set to 0 or fighter DNE
+        if ((idOptions[i + 2].option_val == 0) || fighter == 0)
+        {
+            Text_SetText(text, i, "");
+        }
+
+        // display info
+        else
+        {
+            switch (value - 1)
+            {
+            case 0:
+            {
+                Text_SetText(text, i, "Pos: (%.2f , %.2f)", fighter_data->pos.X, fighter_data->pos.Y);
+                break;
+            }
+            case 1:
+            {
+                Text_SetText(text, i, "State: %d", fighter_data->state_id);
+                break;
+            }
+            case 2:
+            {
+                Text_SetText(text, i, "SelfVel: (%.3f , %.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
+                break;
+            }
+            case 3:
+            {
+                Text_SetText(text, i, "KBVel: (%.3f , %.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
+                break;
+            }
+            case 4:
+            {
+                Text_SetText(text, i, "TotalVel: (%.3f , %.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
+                break;
+            }
+            case 5:
+            {
+                Text_SetText(text, i, "LStick (Game): (%.4f , %.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                break;
+            }
+            case 6:
+            {
+                HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                Text_SetText(text, i, "LStick (Sys): (%.4f , %.4f)", pad->fstickX, pad->fstickY);
+                break;
+            }
+            case 7:
+            {
+                Text_SetText(text, i, "CStick (Game): (%.4f , %.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
+                break;
+            }
+            case 8:
+            {
+                HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                Text_SetText(text, i, "CStick (Sys): (%.4f , %.4f)", pad->fsubstickX, pad->fsubstickY);
+                break;
+            }
+            case 9:
+            {
+                Text_SetText(text, i, "Trigger (Game): %.4f", fighter_data->input_trigger);
+                break;
+            }
+            case 10:
+            {
+                HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                Text_SetText(text, i, "Trigger (Sys): (%.4f , %.4f)", pad->triggerLeft, pad->triggerLeft);
+                break;
+            }
+            case 11:
+            {
+                Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
+                break;
+            }
+            case 12:
+            {
+                Text_SetText(text, i, "Hitlag: %d", fighter_data->hitlag_frames);
+                break;
+            }
+            case 13:
+            {
+                // get hitstun
+                float hitstun = 0;
+                if (fighter_data->hitstun)
+                    hitstun = AS_FLOAT(fighter_data->stateVar1);
+
+                Text_SetText(text, i, "Hitstun: %.0f", fighter_data->hitstun);
+                break;
+            }
+            case 14:
+            {
+                Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
+                break;
+            }
+            case 15:
+            {
+                Text_SetText(text, i, "Shield Stun: IDK");
+
+                break;
+            }
+            case 16:
+            {
+                float grip = 0;
+                if (fighter_data->grab_victim != 0)
+                    grip = fighter_data->stateVar1;
+
+                Text_SetText(text, i, "Grip Strength: %.0f", grip);
+                break;
+            }
+            case 17:
+            {
+                Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                break;
+            }
+            case 18:
+            {
+                Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                break;
+            }
+            case 19:
+            {
+                Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
+                break;
+            }
+            case 20:
+            {
+                Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
+                break;
+            }
+            case 21:
+            {
+                Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
+                break;
+            }
+            case 22:
+            {
+                Text_SetText(text, i, "Jab Counter: IDK");
+
+                break;
+            }
+            case 23:
+            {
+                Stage *stage = R13_PTR(STAGE);
+                Text_SetText(text, i, "Blastzone L/R: (%.3f,%.3f)", stage->blastzoneLeft, stage->blastzoneRight);
+                break;
+            }
+            case 24:
+            {
+                Stage *stage = R13_PTR(STAGE);
+                Text_SetText(text, i, "Blastzone U/D: (%.3f,%.3f)", stage->blastzoneTop, stage->blastzoneTop);
+                break;
+            }
+            }
+        }
+    }
+
+    return;
+}
+
+// Init Function
+void LCancel_Init(GOBJ *gobj)
+{
+    int *EventData = gobj->userdata;
+    EventInfo *eventInfo = EventData[0];
+    OSReport("this is %s\n", eventInfo->eventName);
+    //OSReport("%s", EvFreeOptions_Main[1].option_values[1]);
+
+    // Create Info Display GOBJ
+    GOBJ *idGOBJ = GObj_Create(0, 0, 0);
+    InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
+    GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
+    // Add per frame process
+    GObj_AddProc(idGOBJ, InfoDisplay_Think, 0);
+    // Load jobj
+    evMenu *menuAssets = R13_PTR(EVMENU_ASSETS);
+    JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
+    idData->menuModel = menu;
+    // Add to gobj
+    GObj_AddObject(idGOBJ, 3, menu);
+    // Add gxlink
+    GObj_AddGXLink(idGOBJ, GXLink_Common, GXRENDER_INFDISP, GXPRI_INFDISP);
+    // Save pointers to corners
+    JOBJ *corners[4];
+    JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
+    idData->botLeftEdge = corners[0];
+    idData->botRightEdge = corners[1];
+    // move into position
+    menu->scale.X = INFDISP_SCALE;
+    menu->scale.Y = INFDISP_SCALE;
+    menu->scale.Z = INFDISP_SCALE;
+    menu->trans.Y = INFDISP_Y;
+    corners[0]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[1]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[2]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[3]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
+    //JOBJ_SetFlags(menu, JOBJ_HIDDEN);
+    menu->dobj->next->mobj->mat->alpha = 0.6;
+
+    // Create text object
+    int canvas_index = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
+    Text *text = Text_CreateText(2, canvas_index);
+    text->kerning = 1;
+    text->scale.X = INFDISPTEXT_SCALE;
+    text->scale.Y = INFDISPTEXT_SCALE;
+    text->trans.X = INFDISPTEXT_X;
+    text->trans.Y = INFDISPTEXT_Y;
+    // Create subtexts for each row
+    for (int i = 0; i < 8; i++)
+    {
+        Text_AddSubtext(text, 0, i * INFDISPTEXT_YOFFSET, &nullString);
+    }
+    idData->text = text;
+
+    return;
+}
+// Think Function
+void LCancel_Think(GOBJ *event)
+{
+
+    // update menu's percent
+    GOBJ *fighter = Fighter_GetGObj(0);
+    FighterData *fighter_data = fighter->userdata;
+    EvFreeOptions_General[0].option_val = fighter_data->damage_Percent;
+
+    return;
+}
+
 // Match Data
 static EventMatchData LCancel_MatchData = {
     .timer = MATCH_TIMER_COUNTUP,
@@ -401,17 +660,6 @@ static EventMatchData LCancel_MatchData = {
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };
-// Think Function
-void LCancel_Think(GOBJ *event)
-{
-
-    // update menu's percent
-    GOBJ *fighter = Fighter_GetGObj(0);
-    FighterData *fighter_data = fighter->userdata;
-    EvFreeOptions_General[0].option_val = fighter_data->damage_Percent;
-
-    return;
-}
 // Event Struct
 static EventInfo LCancel = {
     // Event Name
@@ -424,7 +672,7 @@ static EventInfo LCancel = {
     .scoreType = 0,
     .callbackPriority = 0,
     .eventOnFrame = LCancel_Think,
-    .eventOnInit = Event_Init,
+    .eventOnInit = LCancel_Init,
     .matchData = &LCancel_MatchData,
     .startMenu = &EvFreeMenu_Main,
     .menuOptionNum = 0,
@@ -2670,6 +2918,8 @@ void EventMenu_Init(EventInfo *eventInfo)
     int *symbols;
     File_LoadInitReturnSymbol("EvMn.dat", &symbols, "evMenu", 0);
     menuData->menu_assets = &symbols[0];
+    // also store to r13 in case any code needs to access these assets
+    R13_PTR(EVMENU_ASSETS) = &symbols[0];
 
     return;
 };
