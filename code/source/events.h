@@ -212,7 +212,7 @@ static EventMenu EvFreeMenu_InfoDisplay;
 #define INFDISP_Y 20
 #define INFDISP_Z 0.01
 #define INFDISP_YOFFSET -2.5
-#define INFDISP_BOTY -0.8
+#define INFDISP_BOTY -0.5
 #define INFDISP_BOTYOFFSET -0.30
 // info display text
 #define INFDISPTEXT_SCALE 0.04

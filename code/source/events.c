@@ -179,7 +179,7 @@ static EventMenu EvFreeMenu_General = {
     .prev = 0,                         // pointer to previous menu, used at runtime
 };
 // Info Display
-static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Blastzone Left/Right", "Blastzone Up/Down"};
+static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Blastzone Left/Right", "Blastzone Up/Down"};
 static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
@@ -202,83 +202,83 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 1,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 1",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 2,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 1",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 2,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 2",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 3,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 2",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 3,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 3",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 4,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 3",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 4,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 4",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 0,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 4",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 5,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 5",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 0,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 5",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 6,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 6",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 0,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 6",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 7,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 7",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 0,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 7",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 26,                           // number of values for this option
-        .option_val = 8,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Row 8",                    // pointer to a string
-        .desc = nullString,                        // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay, // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
+        .option_val = 0,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Row 8",                            // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = 0,
     },
 };
@@ -374,189 +374,227 @@ void InfoDisplay_Think(GOBJ *gobj)
     Text *text = idData->text;
     EventOption *idOptions = &EvFreeOptions_InfoDisplay;
 
-    // check whether to show the menu
-
-    // get the last row enabled
-    int rowsEnabled = 8;
-    while (rowsEnabled > 0)
+    // show menu if unpaused and is enabled
+    if ((Pause_CheckStatus(1) != 2) && (idOptions[0].option_val == 1))
     {
-        rowsEnabled--;
-        if (idOptions[rowsEnabled + 2].option_val != 0)
-            break;
+        // get the last row enabled
+        int rowsEnabled = 8;
+        while (rowsEnabled > 0)
+        {
+            if (idOptions[rowsEnabled - 1 + 2].option_val != 0)
+                break;
+            rowsEnabled--;
+        }
+
+        // if every row is disabled, hide it
+        if (rowsEnabled != 0)
+        {
+            // show model and text
+            JOBJ_ClearFlags(idData->menuModel, JOBJ_HIDDEN);
+            idData->text->hidden = 0;
+
+            // scale window Y based on rows enabled
+            JOBJ *leftCorner = idData->botLeftEdge;
+            JOBJ *rightCorner = idData->botRightEdge;
+            float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
+            leftCorner->trans.Y = yPos;
+            rightCorner->trans.Y = yPos;
+            JOBJ_SetMtxDirtySub(idData->menuModel);
+
+            // update info display strings
+            int ply = idOptions[1].option_val;
+            GOBJ *fighter = Fighter_GetGObj(ply);
+            FighterData *fighter_data;
+            if (fighter != 0)
+                fighter_data = fighter->userdata;
+            for (int i = 0; i < 8; i++)
+            {
+
+                int value = idOptions[i + 2].option_val;
+
+                // hide text if set to 0 or fighter DNE
+                if ((idOptions[i + 2].option_val == 0) || fighter == 0)
+                {
+                    Text_SetText(text, i, "");
+                }
+
+                // display info
+                else
+                {
+                    if (value == 1 + 0)
+                    {
+                        Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
+                    }
+                    else if (value == 1 + 1)
+                    {
+                        if (fighter_data->anim_id != -1)
+                        {
+                            SubactionHeader *subHeader = Fighter_GetSubactionHeader(fighter_data, fighter_data->anim_id);
+                            // extract state name from symbol
+                            int pos = 0;
+                            int posStart;
+                            int nameSize = 0;
+                            char *symbol = subHeader->symbol;
+                            for (int i = 0; pos < 50; pos++)
+                            {
+                                // search for "N_"
+                                if ((symbol[pos] == 'N') && (symbol[pos + 1] == '_'))
+                                {
+                                    // posStart = beginning of state name
+                                    pos++;
+                                    posStart = pos + 1;
+
+                                    // search for "_"
+                                    for (int i = 0; pos < 50; pos++)
+                                    {
+                                        if (symbol[pos] == '_')
+                                        {
+                                            nameSize = pos - posStart;
+                                        }
+                                    }
+                                }
+                            }
+                            if (nameSize != 0)
+                            {
+                                // copy string
+                                char stateNameBuffer[50];
+                                memcpy(&stateNameBuffer, &symbol[posStart], nameSize);
+                                stateNameBuffer[nameSize] = 0;
+                                Text_SetText(text, i, "State: %s", &stateNameBuffer);
+                            }
+                        }
+
+                        else
+                            Text_SetText(text, i, "State: %s", "Unknown");
+                    }
+                    else if (value == 1 + 2)
+                    {
+                        float *animStruct = fighter_data->anim_curr_flags_ptr;
+                        Text_SetText(text, i, "State Frame: %3.0f/%-3.0f", fighter_data->stateFrame, animStruct[2]);
+                    }
+                    else if (value == 1 + 3)
+                    {
+                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
+                    }
+                    else if (value == 1 + 4)
+                    {
+                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
+                    }
+                    else if (value == 1 + 5)
+                    {
+                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
+                    }
+                    else if (value == 1 + 6)
+                    {
+                        Text_SetText(text, i, "LStick: (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                    }
+                    else if (value == 1 + 7)
+                    {
+                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                        Text_SetText(text, i, "LStick (Sys): (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
+                    }
+                    else if (value == 1 + 8)
+                    {
+                        Text_SetText(text, i, "CStick : (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
+                    }
+                    else if (value == 1 + 9)
+                    {
+                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                        Text_SetText(text, i, "CStick (Sys): (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
+                    }
+                    else if (value == 1 + 10)
+                    {
+                        Text_SetText(text, i, "Trigger: (%+.3f)", fighter_data->input_trigger);
+                    }
+                    else if (value == 1 + 11)
+                    {
+                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                        Text_SetText(text, i, "Trigger (Sys): (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
+                    }
+                    else if (value == 1 + 12)
+                    {
+                        Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
+                    }
+                    else if (value == 1 + 13)
+                    {
+                        int intang = fighter_data->respawn_intang_left;
+                        if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
+                            intang = fighter_data->ledge_intang_left;
+
+                        Text_SetText(text, i, "Intangibility Timer: %d", intang);
+                    }
+                    else if (value == 1 + 14)
+                    {
+                        Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
+                    }
+                    else if (value == 1 + 15)
+                    {
+                        // get hitstun
+                        float hitstun = 0;
+                        if (fighter_data->hitstun == 1)
+                            hitstun = AS_FLOAT(fighter_data->stateVar1);
+
+                        Text_SetText(text, i, "Hitstun: %.0f", hitstun);
+                    }
+                    else if (value == 1 + 16)
+                    {
+                        Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
+                    }
+                    else if (value == 1 + 17)
+                    {
+                        Text_SetText(text, i, "Shield Stun: IDK");
+                    }
+                    else if (value == 1 + 18)
+                    {
+                        float grip = 0;
+                        if (fighter_data->grab_victim != 0)
+                        {
+                            GOBJ *victim = fighter_data->grab_victim;
+                            FighterData *victim_data = victim->userdata;
+                            grip = victim_data->grab_timer;
+                        }
+
+                        Text_SetText(text, i, "Grip Strength: %.0f", grip);
+                    }
+                    else if (value == 1 + 19)
+                    {
+                        Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                    }
+                    else if (value == 1 + 20)
+                    {
+                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
+                    }
+                    else if (value == 1 + 21)
+                    {
+                        Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
+                    }
+                    else if (value == 1 + 22)
+                    {
+                        Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
+                    }
+                    else if (value == 1 + 23)
+                    {
+                        Text_SetText(text, i, "Jab Counter: IDK");
+                    }
+                    else if (value == 1 + 24)
+                    {
+                        Stage *stage = STAGE;
+                        Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
+                    }
+                    else if (value == 1 + 25)
+                    {
+                        Stage *stage = STAGE;
+                        Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
+                    }
+                }
+            }
+        }
     }
-    // scale window Y based on rows enabled
-    JOBJ *leftCorner = idData->botLeftEdge;
-    JOBJ *rightCorner = idData->botRightEdge;
-    float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
-    leftCorner->trans.Y = yPos;
-    rightCorner->trans.Y = yPos;
-    JOBJ_SetMtxDirtySub(idData->menuModel);
-
-    // update info display strings
-    int ply = idOptions[1].option_val;
-    GOBJ *fighter = Fighter_GetGObj(ply);
-    FighterData *fighter_data;
-    if (fighter != 0)
-        fighter_data = fighter->userdata;
-    for (int i = 0; i < 8; i++)
+    else
     {
-
-        int value = idOptions[i + 2].option_val;
-
-        // hide text if set to 0 or fighter DNE
-        if ((idOptions[i + 2].option_val == 0) || fighter == 0)
-        {
-            Text_SetText(text, i, "");
-        }
-
-        // display info
-        else
-        {
-            switch (value - 1)
-            {
-            case 0:
-            {
-                Text_SetText(text, i, "Pos: (%.2f , %.2f)", fighter_data->pos.X, fighter_data->pos.Y);
-                break;
-            }
-            case 1:
-            {
-                Text_SetText(text, i, "State: %d", fighter_data->state_id);
-                break;
-            }
-            case 2:
-            {
-                Text_SetText(text, i, "SelfVel: (%.3f , %.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
-                break;
-            }
-            case 3:
-            {
-                Text_SetText(text, i, "KBVel: (%.3f , %.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
-                break;
-            }
-            case 4:
-            {
-                Text_SetText(text, i, "TotalVel: (%.3f , %.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
-                break;
-            }
-            case 5:
-            {
-                Text_SetText(text, i, "LStick (Game): (%.4f , %.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
-                break;
-            }
-            case 6:
-            {
-                HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                Text_SetText(text, i, "LStick (Sys): (%.4f , %.4f)", pad->fstickX, pad->fstickY);
-                break;
-            }
-            case 7:
-            {
-                Text_SetText(text, i, "CStick (Game): (%.4f , %.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
-                break;
-            }
-            case 8:
-            {
-                HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                Text_SetText(text, i, "CStick (Sys): (%.4f , %.4f)", pad->fsubstickX, pad->fsubstickY);
-                break;
-            }
-            case 9:
-            {
-                Text_SetText(text, i, "Trigger (Game): %.4f", fighter_data->input_trigger);
-                break;
-            }
-            case 10:
-            {
-                HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                Text_SetText(text, i, "Trigger (Sys): (%.4f , %.4f)", pad->triggerLeft, pad->triggerLeft);
-                break;
-            }
-            case 11:
-            {
-                Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
-                break;
-            }
-            case 12:
-            {
-                Text_SetText(text, i, "Hitlag: %d", fighter_data->hitlag_frames);
-                break;
-            }
-            case 13:
-            {
-                // get hitstun
-                float hitstun = 0;
-                if (fighter_data->hitstun)
-                    hitstun = AS_FLOAT(fighter_data->stateVar1);
-
-                Text_SetText(text, i, "Hitstun: %.0f", fighter_data->hitstun);
-                break;
-            }
-            case 14:
-            {
-                Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
-                break;
-            }
-            case 15:
-            {
-                Text_SetText(text, i, "Shield Stun: IDK");
-
-                break;
-            }
-            case 16:
-            {
-                float grip = 0;
-                if (fighter_data->grab_victim != 0)
-                    grip = fighter_data->stateVar1;
-
-                Text_SetText(text, i, "Grip Strength: %.0f", grip);
-                break;
-            }
-            case 17:
-            {
-                Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
-                break;
-            }
-            case 18:
-            {
-                Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
-                break;
-            }
-            case 19:
-            {
-                Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
-                break;
-            }
-            case 20:
-            {
-                Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
-                break;
-            }
-            case 21:
-            {
-                Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
-                break;
-            }
-            case 22:
-            {
-                Text_SetText(text, i, "Jab Counter: IDK");
-
-                break;
-            }
-            case 23:
-            {
-                Stage *stage = R13_PTR(STAGE);
-                Text_SetText(text, i, "Blastzone L/R: (%.3f,%.3f)", stage->blastzoneLeft, stage->blastzoneRight);
-                break;
-            }
-            case 24:
-            {
-                Stage *stage = R13_PTR(STAGE);
-                Text_SetText(text, i, "Blastzone U/D: (%.3f,%.3f)", stage->blastzoneTop, stage->blastzoneTop);
-                break;
-            }
-            }
-        }
+        // hide model and text
+        JOBJ_SetFlags(idData->menuModel, JOBJ_HIDDEN);
+        idData->text->hidden = 1;
     }
 
     return;
@@ -575,7 +613,7 @@ void LCancel_Init(GOBJ *gobj)
     InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
     GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
     // Add per frame process
-    GObj_AddProc(idGOBJ, InfoDisplay_Think, 0);
+    GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
     // Load jobj
     evMenu *menuAssets = R13_PTR(EVMENU_ASSETS);
     JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
@@ -667,7 +705,7 @@ static EventInfo LCancel = {
     .eventDescription = "Practice L-Cancelling on\na stationary CPU.\n",
     .eventControls = "D-Pad Left = Load State\nD-Pad Right = Save State\n",
     .eventTutorial = "TvLC",
-    .isChooseCPU = false,
+    .isChooseCPU = true,
     .isSelectStage = true,
     .scoreType = 0,
     .callbackPriority = 0,
