@@ -83,6 +83,7 @@ typedef struct MenuData
     EventInfo *eventInfo;
     u16 canvas_menu;
     u16 canvas_popup;
+    u8 isPaused;
     Text *text_name;
     Text *text_value;
     Text *text_popup;
@@ -99,7 +100,7 @@ typedef struct MenuData
 typedef struct EventOption
 {
     u8 option_kind;                    // the type of option this is; string, integers, etc
-    u8 value_num;                      // number of values
+    u16 value_num;                     // number of values
     u16 option_val;                    // value of this option
     EventMenu *menu;                   // pointer to the menu that pressing A opens
     char *option_name;                 // pointer to the name of this option
@@ -118,22 +119,32 @@ typedef struct EventMenu
     EventMenu *prev;      // pointer to previous menu, used at runtime
 } EventMenu;
 
+typedef struct Savestate
+{
+    FighterData fighter_data[2];
+    Playerblock player_block;
+    int stale_queue[11];
+} Savestate;
+
 // Function prototypes
 EventInfo *GetEvent(int page, int event);
 void EventInit(int page, int eventID, MatchData *matchData);
 void EventLoad();
 void EventMenu_Init(EventInfo *eventInfo);
-void EventMenu_Think(GOBJ *eventMenu);
+void EventMenu_Think(GOBJ *eventMenu, int pass);
 void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj);
+static Savestate *savestates[6];
+void Savestate_Save();
+void Savestate_Load();
 
 void EvFree_ChangePlayerPercent(int value);
 void EvFree_ChangeCPUPercent(int value);
 void EvFree_ChangeModelDisplay(int value);
 void EvFree_ChangeHitDisplay(int value);
 void EvFree_ChangeEnvCollDisplay(int value);
-void InfoDisplay_Think(GOBJ *gobj);
+void InfoDisplay_Think(GOBJ *gobj, int pass);
 
 static EventOption EvFreeOptions_Main[];
 static EventOption EvFreeOptions_General[];

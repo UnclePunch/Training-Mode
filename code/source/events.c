@@ -70,7 +70,7 @@ static EventMenu EvFreeMenu_Main = {
 static EventOption EvFreeOptions_General[] = {
     {
         .option_kind = OPTKIND_INT,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                       // number of values for this option
+        .value_num = 999,                       // number of values for this option
         .option_val = 0,                        // value of this option
         .menu = 0,                              // pointer to the menu that pressing A opens
         .option_name = "Player Percent",        // pointer to a string
@@ -80,7 +80,7 @@ static EventOption EvFreeOptions_General[] = {
     },
     {
         .option_kind = OPTKIND_INT,          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 255,                    // number of values for this option
+        .value_num = 999,                    // number of values for this option
         .option_val = 0,                     // value of this option
         .menu = 0,                           // pointer to the menu that pressing A opens
         .option_name = "CPU Percent",        // pointer to a string
@@ -309,7 +309,7 @@ void EvFree_ChangeCPUPercent(int value)
     FighterData *fighter_data = fighter->userdata;
 
     fighter_data->damage_Percent = value;
-    Fighter_SetHUDDamage(0, value);
+    Fighter_SetHUDDamage(1, value);
 
     return;
 }
@@ -367,237 +367,316 @@ void EvFree_ChangeEnvCollDisplay(int value)
     OSReport("%d", matchCam->show_coll);
     return;
 }
-void InfoDisplay_Think(GOBJ *gobj)
+
+// Event Functions
+void InfoDisplay_Think(GOBJ *gobj, int pass)
 {
 
     InfoDisplayData *idData = gobj->userdata;
     Text *text = idData->text;
     EventOption *idOptions = &EvFreeOptions_InfoDisplay;
 
-    // show menu if unpaused and is enabled
-    if ((Pause_CheckStatus(1) != 2) && (idOptions[0].option_val == 1))
+    if (pass == 1)
     {
-        // get the last row enabled
-        int rowsEnabled = 8;
-        while (rowsEnabled > 0)
+        if ((Pause_CheckStatus(1) != 2) && (idOptions[0].option_val == 1))
         {
-            if (idOptions[rowsEnabled - 1 + 2].option_val != 0)
-                break;
-            rowsEnabled--;
-        }
-
-        // if every row is disabled, hide it
-        if (rowsEnabled != 0)
-        {
-            // show model and text
-            JOBJ_ClearFlags(idData->menuModel, JOBJ_HIDDEN);
-            idData->text->hidden = 0;
-
-            // scale window Y based on rows enabled
-            JOBJ *leftCorner = idData->botLeftEdge;
-            JOBJ *rightCorner = idData->botRightEdge;
-            float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
-            leftCorner->trans.Y = yPos;
-            rightCorner->trans.Y = yPos;
-            JOBJ_SetMtxDirtySub(idData->menuModel);
-
-            // update info display strings
-            int ply = idOptions[1].option_val;
-            GOBJ *fighter = Fighter_GetGObj(ply);
-            FighterData *fighter_data;
-            if (fighter != 0)
-                fighter_data = fighter->userdata;
-            for (int i = 0; i < 8; i++)
+            // get the last row enabled
+            int rowsEnabled = 8;
+            while (rowsEnabled > 0)
             {
+                if (idOptions[rowsEnabled - 1 + 2].option_val != 0)
+                    break;
+                rowsEnabled--;
+            }
 
-                int value = idOptions[i + 2].option_val;
+            // if every row is disabled, hide it
+            if (rowsEnabled != 0)
+            {
+                // show model and text
+                JOBJ_ClearFlags(idData->menuModel, JOBJ_HIDDEN);
+                idData->text->hidden = 0;
 
-                // hide text if set to 0 or fighter DNE
-                if ((idOptions[i + 2].option_val == 0) || fighter == 0)
+                // scale window Y based on rows enabled
+                JOBJ *leftCorner = idData->botLeftEdge;
+                JOBJ *rightCorner = idData->botRightEdge;
+                float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
+                leftCorner->trans.Y = yPos;
+                rightCorner->trans.Y = yPos;
+                JOBJ_SetMtxDirtySub(idData->menuModel);
+
+                // update info display strings
+                int ply = idOptions[1].option_val;
+                GOBJ *fighter = Fighter_GetGObj(ply);
+                FighterData *fighter_data;
+                if (fighter != 0)
+                    fighter_data = fighter->userdata;
+                for (int i = 0; i < 8; i++)
                 {
-                    Text_SetText(text, i, "");
-                }
 
-                // display info
-                else
-                {
-                    if (value == 1 + 0)
+                    int value = idOptions[i + 2].option_val;
+
+                    // hide text if set to 0 or fighter DNE
+                    if ((idOptions[i + 2].option_val == 0) || fighter == 0)
                     {
-                        Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
+                        Text_SetText(text, i, "");
                     }
-                    else if (value == 1 + 1)
-                    {
-                        if (fighter_data->anim_id != -1)
-                        {
-                            SubactionHeader *subHeader = Fighter_GetSubactionHeader(fighter_data, fighter_data->anim_id);
-                            // extract state name from symbol
-                            int pos = 0;
-                            int posStart;
-                            int nameSize = 0;
-                            char *symbol = subHeader->symbol;
-                            for (int i = 0; pos < 50; pos++)
-                            {
-                                // search for "N_"
-                                if ((symbol[pos] == 'N') && (symbol[pos + 1] == '_'))
-                                {
-                                    // posStart = beginning of state name
-                                    pos++;
-                                    posStart = pos + 1;
 
-                                    // search for "_"
-                                    for (int i = 0; pos < 50; pos++)
+                    // display info
+                    else
+                    {
+                        if (value == 1 + 0)
+                        {
+                            Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
+                        }
+                        else if (value == 1 + 1)
+                        {
+                            if (fighter_data->anim_id != -1)
+                            {
+                                SubactionHeader *subHeader = Fighter_GetSubactionHeader(fighter_data, fighter_data->anim_id);
+                                // extract state name from symbol
+                                int pos = 0;
+                                int posStart;
+                                int nameSize = 0;
+                                char *symbol = subHeader->symbol;
+                                for (int i = 0; pos < 50; pos++)
+                                {
+                                    // search for "N_"
+                                    if ((symbol[pos] == 'N') && (symbol[pos + 1] == '_'))
                                     {
-                                        if (symbol[pos] == '_')
+                                        // posStart = beginning of state name
+                                        pos++;
+                                        posStart = pos + 1;
+
+                                        // search for "_"
+                                        for (int i = 0; pos < 50; pos++)
                                         {
-                                            nameSize = pos - posStart;
+                                            if (symbol[pos] == '_')
+                                            {
+                                                nameSize = pos - posStart;
+                                            }
                                         }
                                     }
                                 }
+                                if (nameSize != 0)
+                                {
+                                    // copy string
+                                    char stateNameBuffer[50];
+                                    memcpy(&stateNameBuffer, &symbol[posStart], nameSize);
+                                    stateNameBuffer[nameSize] = 0;
+                                    Text_SetText(text, i, "State: %s", &stateNameBuffer);
+                                }
                             }
-                            if (nameSize != 0)
-                            {
-                                // copy string
-                                char stateNameBuffer[50];
-                                memcpy(&stateNameBuffer, &symbol[posStart], nameSize);
-                                stateNameBuffer[nameSize] = 0;
-                                Text_SetText(text, i, "State: %s", &stateNameBuffer);
-                            }
+
+                            else
+                                Text_SetText(text, i, "State: %s", "Unknown");
                         }
-
-                        else
-                            Text_SetText(text, i, "State: %s", "Unknown");
-                    }
-                    else if (value == 1 + 2)
-                    {
-                        float *animStruct = fighter_data->anim_curr_flags_ptr;
-                        Text_SetText(text, i, "State Frame: %3.0f/%-3.0f", fighter_data->stateFrame, animStruct[2]);
-                    }
-                    else if (value == 1 + 3)
-                    {
-                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
-                    }
-                    else if (value == 1 + 4)
-                    {
-                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
-                    }
-                    else if (value == 1 + 5)
-                    {
-                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
-                    }
-                    else if (value == 1 + 6)
-                    {
-                        Text_SetText(text, i, "LStick: (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
-                    }
-                    else if (value == 1 + 7)
-                    {
-                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                        Text_SetText(text, i, "LStick (Sys): (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
-                    }
-                    else if (value == 1 + 8)
-                    {
-                        Text_SetText(text, i, "CStick : (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
-                    }
-                    else if (value == 1 + 9)
-                    {
-                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                        Text_SetText(text, i, "CStick (Sys): (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
-                    }
-                    else if (value == 1 + 10)
-                    {
-                        Text_SetText(text, i, "Trigger: (%+.3f)", fighter_data->input_trigger);
-                    }
-                    else if (value == 1 + 11)
-                    {
-                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                        Text_SetText(text, i, "Trigger (Sys): (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
-                    }
-                    else if (value == 1 + 12)
-                    {
-                        Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
-                    }
-                    else if (value == 1 + 13)
-                    {
-                        int intang = fighter_data->respawn_intang_left;
-                        if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
-                            intang = fighter_data->ledge_intang_left;
-
-                        Text_SetText(text, i, "Intangibility Timer: %d", intang);
-                    }
-                    else if (value == 1 + 14)
-                    {
-                        Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
-                    }
-                    else if (value == 1 + 15)
-                    {
-                        // get hitstun
-                        float hitstun = 0;
-                        if (fighter_data->hitstun == 1)
-                            hitstun = AS_FLOAT(fighter_data->stateVar1);
-
-                        Text_SetText(text, i, "Hitstun: %.0f", hitstun);
-                    }
-                    else if (value == 1 + 16)
-                    {
-                        Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
-                    }
-                    else if (value == 1 + 17)
-                    {
-                        Text_SetText(text, i, "Shield Stun: IDK");
-                    }
-                    else if (value == 1 + 18)
-                    {
-                        float grip = 0;
-                        if (fighter_data->grab_victim != 0)
+                        else if (value == 1 + 2)
                         {
-                            GOBJ *victim = fighter_data->grab_victim;
-                            FighterData *victim_data = victim->userdata;
-                            grip = victim_data->grab_timer;
+                            float *animStruct = fighter_data->anim_curr_flags_ptr;
+                            Text_SetText(text, i, "State Frame: %3.0f/%-3.0f", fighter_data->stateFrame, animStruct[2]);
                         }
+                        else if (value == 1 + 3)
+                        {
+                            Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
+                        }
+                        else if (value == 1 + 4)
+                        {
+                            Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
+                        }
+                        else if (value == 1 + 5)
+                        {
+                            Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
+                        }
+                        else if (value == 1 + 6)
+                        {
+                            Text_SetText(text, i, "LStick:     (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                        }
+                        else if (value == 1 + 7)
+                        {
+                            HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                            Text_SetText(text, i, "LStick Sys: (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
+                        }
+                        else if (value == 1 + 8)
+                        {
+                            Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
+                        }
+                        else if (value == 1 + 9)
+                        {
+                            HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                            Text_SetText(text, i, "CStick Sys: (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
+                        }
+                        else if (value == 1 + 10)
+                        {
+                            Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input_trigger);
+                        }
+                        else if (value == 1 + 11)
+                        {
+                            HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                            Text_SetText(text, i, "Trigger Sys: (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
+                        }
+                        else if (value == 1 + 12)
+                        {
+                            Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
+                        }
+                        else if (value == 1 + 13)
+                        {
+                            int intang = fighter_data->respawn_intang_left;
+                            if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
+                                intang = fighter_data->ledge_intang_left;
 
-                        Text_SetText(text, i, "Grip Strength: %.0f", grip);
-                    }
-                    else if (value == 1 + 19)
-                    {
-                        Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
-                    }
-                    else if (value == 1 + 20)
-                    {
-                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
-                    }
-                    else if (value == 1 + 21)
-                    {
-                        Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
-                    }
-                    else if (value == 1 + 22)
-                    {
-                        Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
-                    }
-                    else if (value == 1 + 23)
-                    {
-                        Text_SetText(text, i, "Jab Counter: IDK");
-                    }
-                    else if (value == 1 + 24)
-                    {
-                        Stage *stage = STAGE;
-                        Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
-                    }
-                    else if (value == 1 + 25)
-                    {
-                        Stage *stage = STAGE;
-                        Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
+                            Text_SetText(text, i, "Intangibility Timer: %d", intang);
+                        }
+                        else if (value == 1 + 14)
+                        {
+                            Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
+                        }
+                        else if (value == 1 + 15)
+                        {
+                            // get hitstun
+                            float hitstun = 0;
+                            if (fighter_data->hitstun == 1)
+                                hitstun = AS_FLOAT(fighter_data->stateVar1);
+
+                            Text_SetText(text, i, "Hitstun: %.0f", hitstun);
+                        }
+                        else if (value == 1 + 16)
+                        {
+                            Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
+                        }
+                        else if (value == 1 + 17)
+                        {
+                            Text_SetText(text, i, "Shield Stun: IDK");
+                        }
+                        else if (value == 1 + 18)
+                        {
+                            float grip = 0;
+                            if (fighter_data->grab_victim != 0)
+                            {
+                                GOBJ *victim = fighter_data->grab_victim;
+                                FighterData *victim_data = victim->userdata;
+                                grip = victim_data->grab_timer;
+                            }
+
+                            Text_SetText(text, i, "Grip Strength: %.0f", grip);
+                        }
+                        else if (value == 1 + 19)
+                        {
+                            Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                        }
+                        else if (value == 1 + 20)
+                        {
+                            Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
+                        }
+                        else if (value == 1 + 21)
+                        {
+                            Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
+                        }
+                        else if (value == 1 + 22)
+                        {
+                            Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
+                        }
+                        else if (value == 1 + 23)
+                        {
+                            Text_SetText(text, i, "Jab Counter: IDK");
+                        }
+                        else if (value == 1 + 24)
+                        {
+                            Stage *stage = STAGE;
+                            Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
+                        }
+                        else if (value == 1 + 25)
+                        {
+                            Stage *stage = STAGE;
+                            Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
+                        }
                     }
                 }
             }
         }
+        else
+        {
+            // hide model and text
+            JOBJ_SetFlags(idData->menuModel, JOBJ_HIDDEN);
+            idData->text->hidden = 1;
+        }
+    }
+    // show menu if unpaused and is enabled
+
+    GXLink_Common(gobj, pass);
+
+    return;
+}
+int Update_CheckPause()
+{
+
+    HSD_Update *update = HSD_UPDATE;
+    int isChange = 0;
+
+    // check if enabled
+    if (EvFreeOptions_General[3].option_val == 1)
+    {
+        // check if unpaused
+        if (update->pause_develop != 1)
+        {
+            // pause
+            isChange = 1;
+        }
     }
     else
     {
-        // hide model and text
-        JOBJ_SetFlags(idData->menuModel, JOBJ_HIDDEN);
-        idData->text->hidden = 1;
+        // check if paused
+        if (update->pause_develop == 1)
+        {
+            // unpause
+            isChange = 1;
+        }
     }
 
-    return;
+    return isChange;
+}
+int Update_CheckAdvance()
+{
+
+    static int timer = 0;
+
+    HSD_Update *update = HSD_UPDATE;
+    int isAdvance = 0;
+
+    GOBJ *fighter = Fighter_GetGObj(0);
+    if (fighter != 0)
+    {
+        FighterData *fighter_data = fighter->userdata;
+        int controller = fighter_data->player_controller_number;
+
+        // get their pad
+        HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
+
+        // check if holding L
+        if ((pad->held & HSD_TRIGGER_L) != 0)
+        {
+            timer++;
+
+            // advance if first press or holding more than 10 frames
+            if (timer == 1 || timer > 30)
+            {
+                isAdvance = 1;
+
+                // remove L input
+                pad->down &= ~HSD_TRIGGER_L;
+                pad->held &= ~HSD_TRIGGER_L;
+                pad->triggerLeft = 0;
+                pad->ftriggerLeft = 0;
+            }
+        }
+
+        else
+        {
+            update->advance = 0;
+            timer = 0;
+        }
+    }
+
+    return isAdvance;
 }
 
 // Init Function
@@ -613,7 +692,7 @@ void LCancel_Init(GOBJ *gobj)
     InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
     GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
     // Add per frame process
-    GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
+    //GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
     // Load jobj
     evMenu *menuAssets = R13_PTR(EVMENU_ASSETS);
     JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
@@ -621,7 +700,7 @@ void LCancel_Init(GOBJ *gobj)
     // Add to gobj
     GObj_AddObject(idGOBJ, 3, menu);
     // Add gxlink
-    GObj_AddGXLink(idGOBJ, GXLink_Common, GXRENDER_INFDISP, GXPRI_INFDISP);
+    GObj_AddGXLink(idGOBJ, InfoDisplay_Think, GXRENDER_INFDISP, GXPRI_INFDISP);
     // Save pointers to corners
     JOBJ *corners[4];
     JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
@@ -654,17 +733,52 @@ void LCancel_Init(GOBJ *gobj)
     }
     idData->text = text;
 
+    // store hsd_update functions
+    HSD_Update *hsd_update = HSD_UPDATE;
+    hsd_update->checkPause = Update_CheckPause;
+    hsd_update->checkAdvance = Update_CheckAdvance;
+
     return;
 }
 // Think Function
 void LCancel_Think(GOBJ *event)
 {
 
-    // update menu's percent
-    GOBJ *fighter = Fighter_GetGObj(0);
-    FighterData *fighter_data = fighter->userdata;
-    EvFreeOptions_General[0].option_val = fighter_data->damage_Percent;
+    // get fighter data
+    GOBJ *hmn = Fighter_GetGObj(0);
+    FighterData *hmn_data = hmn->userdata;
+    GOBJ *cpu = Fighter_GetGObj(1);
+    FighterData *cpu_data = cpu->userdata;
 
+    // update menu's percent
+    EvFreeOptions_General[0].option_val = hmn_data->damage_Percent;
+    EvFreeOptions_General[1].option_val = cpu_data->damage_Percent;
+    // reset stale moves
+    if (EvFreeOptions_General[2].option_val == 0)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            // check if fighter exists
+            GOBJ *fighter = Fighter_GetGObj(i);
+            if (fighter != 0)
+            {
+                // reset stale move table
+                int *staleMoveTable = Fighter_GetStaleMoveTable(i);
+                memset(staleMoveTable, 0, 0x2C);
+            }
+        }
+    }
+    // check for savestate
+    if ((hmn_data->input_pressed & PAD_BUTTON_DPAD_RIGHT) != 0)
+    {
+        // save state
+        Savestate_Save();
+    }
+    else if ((hmn_data->input_pressed & PAD_BUTTON_DPAD_LEFT) != 0)
+    {
+        // load state
+        Savestate_Load();
+    }
     return;
 }
 
@@ -676,7 +790,7 @@ static EventMatchData LCancel_MatchData = {
     .hideGo = true,
     .hideReady = true,
     .isCreateHUD = true,
-    .isDisablePause = false,
+    .isDisablePause = true,
     // byte 0x3
     .timerRunOnPause = false,   // 0x01
     .isHidePauseHUD = true,     // 0x02
@@ -2791,6 +2905,12 @@ void EventLoad()
     // init the pause menu
     EventMenu_Init(eventInfo);
 
+    // init savestate struct
+    for (int i = 0; i < sizeof(savestates) / 4; i++)
+    {
+        savestates[i] = 0;
+    }
+
     // Run this event's init function
     if (eventInfo->eventOnInit != 0)
     {
@@ -2927,6 +3047,137 @@ void OnStartMelee()
 /// Miscellaneous Functions ///
 ///////////////////////////////
 
+void Savestate_Save()
+{
+
+    typedef struct BackupQueue
+    {
+        GOBJ *fighter;
+        FighterData *fighter_data;
+    } BackupQueue;
+
+    // free all savestates
+    for (int i = 0; i < sizeof(savestates) / 4; i++)
+    {
+        if (savestates[i] != 0)
+            HSD_Free(savestates[i]);
+    }
+
+    // loop through all players
+    for (int i = 0; i < 6; i++)
+    {
+        // get fighter gobjs
+        BackupQueue queue[2];
+        for (int j = 0; j < 2; j++)
+        {
+            queue[j].fighter = Fighter_GetSubcharGObj(i, j);
+            if (queue[j].fighter != 0)
+                queue[j].fighter_data = queue[j].fighter->userdata;
+        }
+
+        // if the fighter exists
+        if (queue[0].fighter != 0)
+        {
+
+            // allocate new savestate
+            Savestate *savestate = calloc(sizeof(Savestate));
+
+            // backup playerblock
+            Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
+            memcpy(&savestate->player_block, playerblock, sizeof(Playerblock));
+
+            // backup stale moves
+            int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
+            memcpy(&savestate->stale_queue, staleMoves, 0x2C);
+
+            // backup fighter data
+            for (int j = 0; j < 2; j++)
+            {
+                // if exists
+                if (queue[j].fighter != 0)
+                {
+                    GOBJ *fighter = queue[j].fighter;
+                    FighterData *fighter_data = queue[j].fighter_data;
+
+                    // backup fighter data
+                    memcpy(&savestate->fighter_data[j], fighter_data, sizeof(FighterData));
+                }
+            }
+
+            // store pointer
+            savestates[i] = savestate;
+        }
+    }
+
+    return;
+}
+void Savestate_Load()
+{
+    typedef struct BackupQueue
+    {
+        GOBJ *fighter;
+        FighterData *fighter_data;
+    } BackupQueue;
+
+    blr();
+
+    // loop through all players
+    for (int i = 0; i < 6; i++)
+    {
+        // get fighter gobjs
+        BackupQueue queue[2];
+        for (int j = 0; j < 2; j++)
+        {
+            queue[j].fighter = Fighter_GetSubcharGObj(i, j);
+            if (queue[j].fighter != 0)
+                queue[j].fighter_data = queue[j].fighter->userdata;
+        }
+
+        // if the fighter and backup exists
+        if ((queue[0].fighter != 0) && (savestates[i] != 0))
+        {
+
+            // get savestate
+            Savestate *savestate = savestates[i];
+
+            // restore playerblock
+            Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
+            memcpy(playerblock, &savestate->player_block, sizeof(Playerblock));
+
+            // restore stale moves
+            int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
+            memcpy(staleMoves, &savestate->stale_queue, 0x2C);
+
+            // restore fighter data
+            for (int j = 0; j < 2; j++)
+            {
+                // if exists
+                if (queue[j].fighter != 0)
+                {
+                    GOBJ *fighter = queue[j].fighter;
+                    FighterData *fighter_data = queue[j].fighter_data;
+                    FighterData *backup_data = &savestate->fighter_data[j];
+
+                    // restore facing direction
+                    fighter_data->facing_direction = savestate->fighter_data[j].facing_direction;
+                    // sleep
+                    Fighter_EnterSleep(fighter, 0);
+                    // enter backed up state
+                    ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, backup_data->stateBlend, fighter, backup_data->state_id, 0, 0);
+
+                    // restore fighter data
+                    memcpy(fighter_data, &savestate->fighter_data[j], sizeof(FighterData));
+
+                    // zero pointer to cached animation (fixes fall crash)
+                    fighter_data->anim_persist_ARAM = 0;
+                }
+            }
+        }
+    }
+
+    return;
+}
+
 ////////////////////////////
 /// Event Menu Functions ///
 ////////////////////////////
@@ -2946,7 +3197,9 @@ void EventMenu_Init(EventInfo *eventInfo)
     menuData->eventInfo = eventInfo;
 
     // Add per frame process
-    GObj_AddProc(gobj, EventMenu_Think, 0);
+    //GObj_AddProc(gobj, EventMenu_Think, 0);
+    // Add gx_link
+    GObj_AddGXLink(gobj, EventMenu_Think, GXRENDER_MENUMODEL, GXPRI_MENUMODEL);
 
     // Create 2 text canvases (menu and popup)
     menuData->canvas_menu = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_MENU, GXPRI_MENU, 19);
@@ -2962,37 +3215,88 @@ void EventMenu_Init(EventInfo *eventInfo)
     return;
 };
 
-void EventMenu_Think(GOBJ *gobj)
+void EventMenu_Think(GOBJ *gobj, int pass)
 {
-    // Get event info
-    MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
 
-    // Check if paused
-    if (Pause_CheckStatus(1) == 2)
+    if (pass == 0)
     {
-        // Get the current menu
-        EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+        // Get event info
+        MenuData *menuData = gobj->userdata;
+        EventInfo *eventInfo = menuData->eventInfo;
 
-        // create text if it doesnt exist yet
-        if (menuData->text_name == 0)
+        // check if someone pressed pause
+        int isPress = 0;
+        for (int i = 0; i < 6; i++)
         {
-            EventMenu_CreateModel(gobj, currMenu);
-            EventMenu_CreateText(gobj, currMenu);
-            EventMenu_UpdateText(gobj, currMenu);
 
-            if (currMenu->state == EMSTATE_OPENPOP)
+            // humans only
+            if (Fighter_GetSlotType(i) == 0)
             {
-                EventOption *currOption = &currMenu->options[currMenu->cursor];
-                EventMenu_CreatePopupModel(gobj, currMenu);
-                EventMenu_CreatePopupText(gobj, currMenu);
-                EventMenu_UpdatePopupText(gobj, currOption);
+                GOBJ *fighter = Fighter_GetGObj(i);
+                FighterData *fighter_data = fighter->userdata;
+
+                HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_MASTER);
+
+                if ((pad->down & HSD_BUTTON_START) != 0)
+                {
+                    isPress = 1;
+                }
             }
         }
 
-        // act on controls
-        else
+        // change pause state
+        if (isPress != 0)
         {
+
+            EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+
+            // pause game
+            if (menuData->isPaused == 0)
+            {
+
+                // set state
+                menuData->isPaused = 1;
+
+                // Create menu
+                EventMenu_CreateModel(gobj, currMenu);
+                EventMenu_CreateText(gobj, currMenu);
+                EventMenu_UpdateText(gobj, currMenu);
+                if (currMenu->state == EMSTATE_OPENPOP)
+                {
+                    EventOption *currOption = &currMenu->options[currMenu->cursor];
+                    EventMenu_CreatePopupModel(gobj, currMenu);
+                    EventMenu_CreatePopupText(gobj, currMenu);
+                    EventMenu_UpdatePopupText(gobj, currOption);
+                }
+
+                // Freeze the game
+                Match_FreezeGame(1);
+                SFX_PlayCommon(5);
+                Match_HideHUD();
+            }
+            // unpause game
+            else
+            {
+
+                menuData->isPaused = 0;
+
+                // destroy menu
+                EventMenu_DestroyMenu(gobj);
+
+                // Unfreeze the game
+                Match_UnfreezeGame(1);
+                Match_ShowHUD();
+            }
+        }
+
+        // Check if paused
+        if (menuData->isPaused == 1)
+        {
+            // Get the current menu
+            EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+
+            // act on controls
+
             // menu think
             if (currMenu->state == EMSTATE_FOCUS)
                 EventMenu_MenuThink(gobj, currMenu);
@@ -3001,16 +3305,18 @@ void EventMenu_Think(GOBJ *gobj)
             else if (currMenu->state == EMSTATE_OPENPOP)
                 EventMenu_PopupThink(gobj, currMenu);
         }
-    }
-    // Is not paused
-    else
-    {
-        // check to remove
-        if (menuData->text_name != 0)
+        // Is not paused
+        else
         {
-            EventMenu_DestroyMenu(gobj);
+            // check to remove
+            if (menuData->text_name != 0)
+            {
+                EventMenu_DestroyMenu(gobj);
+            }
         }
     }
+
+    GXLink_Common(gobj, pass);
 
     return;
 }
@@ -3049,7 +3355,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     s16 value_max = currOption->value_num;
 
     // check for dpad down
-    if ((inputs & HSD_BUTTON_DOWN) != 0)
+    if (((inputs & HSD_BUTTON_DOWN) != 0) || ((inputs & HSD_BUTTON_DPAD_DOWN) != 0))
     {
         cursor += 1;
 
@@ -3087,7 +3393,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         }
     }
     // check for dpad up
-    else if ((inputs & HSD_BUTTON_UP) != 0)
+    else if (((inputs & HSD_BUTTON_UP) != 0) || ((inputs & HSD_BUTTON_DPAD_UP) != 0))
     {
         cursor -= 1;
 
@@ -3126,7 +3432,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     }
 
     // check for left
-    else if ((inputs & HSD_BUTTON_LEFT) != 0)
+    else if (((inputs & HSD_BUTTON_LEFT) != 0) || ((inputs & HSD_BUTTON_DPAD_LEFT) != 0))
     {
         if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
         {
@@ -3149,7 +3455,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         }
     }
     // check for right
-    else if ((inputs & HSD_BUTTON_RIGHT) != 0)
+    else if (((inputs & HSD_BUTTON_RIGHT) != 0) || ((inputs & HSD_BUTTON_DPAD_RIGHT) != 0))
     {
         // check for valid option kind
         if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT) || (currOption->option_kind == OPTKIND_FLOAT))
@@ -3264,6 +3570,22 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             // also play sfx
             SFX_PlayCommon(0);
         }
+
+        // no previous menu, unpause
+        else
+        {
+
+            SFX_PlayCommon(0);
+
+            menuData->isPaused = 0;
+
+            // destroy menu
+            EventMenu_DestroyMenu(gobj);
+
+            // Unfreeze the game
+            Match_UnfreezeGame(1);
+            Match_ShowHUD();
+        }
     }
 
     // if anything changed, update text
@@ -3307,7 +3629,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
     }
 
     // check for dpad down
-    if ((inputs & HSD_BUTTON_DOWN) != 0)
+    if (((inputs & HSD_BUTTON_DOWN) != 0) || ((inputs & HSD_BUTTON_DPAD_DOWN) != 0))
     {
         cursor += 1;
 
@@ -3345,7 +3667,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
         }
     }
     // check for dpad up
-    else if ((inputs & HSD_BUTTON_UP) != 0)
+    else if (((inputs & HSD_BUTTON_UP) != 0) || ((inputs & HSD_BUTTON_DPAD_UP) != 0))
     {
         cursor -= 1;
 
@@ -3435,8 +3757,9 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     JOBJ *jobj_options = JOBJ_LoadJoint(menuAssets->menu);
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
-    // Add gx_link
-    GObj_AddGXLink(gobj, GXLink_Common, GXRENDER_MENUMODEL, GXPRI_MENUMODEL);
+    GObj_DestroyGXLink(gobj);
+    GObj_AddGXLink(gobj, EventMenu_Think, GXRENDER_MENUMODEL, GXPRI_MENUMODEL);
+
     // Get each corner's joints
     JOBJ *corners[4];
     JOBJ_GetChild(jobj_options, &corners, 2, 3, 4, 5, -1);
@@ -3787,7 +4110,7 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
 
     // remove jobj
     GObj_FreeObject(gobj);
-    GObj_DestroyGXLink(gobj);
+    //GObj_DestroyGXLink(gobj);
 
     return;
 }
