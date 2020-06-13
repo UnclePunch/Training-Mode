@@ -67,6 +67,7 @@ static EventMenu EvFreeMenu_Main = {
     .prev = 0,                      // pointer to previous menu, used at runtime
 };
 // General
+static char **EvFreeOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
 static EventOption EvFreeOptions_General[] = {
     {
         .option_kind = OPTKIND_INT,             // the type of option this is; menu, string list, integer list, etc
@@ -89,16 +90,6 @@ static EventOption EvFreeOptions_General[] = {
         .onOptionChange = EvFree_ChangeCPUPercent,
     },
     {
-        .option_kind = OPTKIND_STRING,                                                          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                         // number of values for this option
-        .option_val = 1,                                                                        // value of this option
-        .menu = 0,                                                                              // pointer to the menu that pressing A opens
-        .option_name = "Move Staling",                                                          // pointer to a string
-        .desc = "Toggle the staling of moves. Attacks become \nweaker the more they are used.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                   // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
         .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
         .value_num = 2,                                                    // number of values for this option
         .option_val = 0,                                                   // value of this option
@@ -106,6 +97,16 @@ static EventOption EvFreeOptions_General[] = {
         .option_name = "Frame Advance",                                    // pointer to a string
         .desc = "Enable frame advance. Press/hold L to advance \nframes.", // string describing what this option does
         .option_values = EvFreeOptions_OffOn,                              // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                         // number of values for this option
+        .option_val = 1,                                                                        // value of this option
+        .menu = 0,                                                                              // pointer to the menu that pressing A opens
+        .option_name = "Move Staling",                                                          // pointer to a string
+        .desc = "Toggle the staling of moves. Attacks become \nweaker the more they are used.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -159,6 +160,16 @@ static EventOption EvFreeOptions_General[] = {
         .onOptionChange = 0,
     },
     {
+        .option_kind = OPTKIND_STRING,                                                                                       // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_CamMode) / 4,                                                                      // number of values for this option
+        .option_val = 0,                                                                                                     // value of this option
+        .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
+        .option_name = "Camera Mode",                                                                                        // pointer to a string
+        .desc = "Change the camera's behavior.\nIn advanced mode, use CStick while holding\nA/B/X to pan, rotate and zoom.", // string describing what this option does
+        .option_values = EvFreeOptions_CamMode,                                                                              // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeCamMode,
+    },
+    {
         .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                                       // number of values for this option
         .option_val = 0,                                      // value of this option
@@ -171,7 +182,7 @@ static EventOption EvFreeOptions_General[] = {
 };
 static EventMenu EvFreeMenu_General = {
     .name = "General",                 // the name of this menu
-    .option_num = 10,                  // number of options this menu contains
+    .option_num = 11,                  // number of options this menu contains
     .scroll = 0,                       // runtime variable used for how far down in the menu to start
     .state = 0,                        // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                       // index of the option currently selected, used at runtime
@@ -361,10 +372,35 @@ void EvFree_ChangeHitDisplay(int value)
 }
 void EvFree_ChangeEnvCollDisplay(int value)
 {
-    MatchCamera *matchCam = 0x80452c68;
+    MatchCamera *matchCam = MATCH_CAM;
     matchCam->show_coll = value;
 
     OSReport("%d", matchCam->show_coll);
+    return;
+}
+void EvFree_ChangeCamMode(int value)
+{
+
+    MatchCamera *cam = MATCH_CAM;
+
+    // normal cam
+    if (value == 0)
+    {
+        Match_SetNormalCamera();
+    }
+    // zoom cam
+    else if (value == 1)
+    {
+        Match_SetFreeCamera(0, 3);
+        cam->freecam_zoom = 16;
+        cam->freecam_tilt_vertical = 0.1;
+    }
+    // fixed
+    else if (value == 2)
+    {
+        Match_SetFixedCamera();
+    }
+
     return;
 }
 
@@ -378,7 +414,7 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
 
     if (pass == 1)
     {
-        if ((Pause_CheckStatus(1) != 2) && (idOptions[0].option_val == 1))
+        if ((Pause_CheckStatus(1) != 2) && (idOptions[OPTINF_TOGGLE].option_val == 1))
         {
             // get the last row enabled
             int rowsEnabled = 8;
@@ -606,6 +642,120 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
 
     return;
 }
+void DIDraw_Think(GOBJ *gobj, int pass)
+{
+
+    // if toggle enabled
+    if (EvFreeOptions_General[OPTGEN_DI].option_val == 1)
+    {
+        // calculate on first pass
+        if (pass == 0)
+        {
+
+            // loop through all fighters
+            GOBJ **gobj_list = R13_PTR(GOBJLIST);
+            GOBJ *fighter = gobj_list[8];
+            while (fighter != 0)
+            {
+
+                FighterData *fighter_data = fighter->userdata;
+                int ply = fighter_data->ply;
+                DIDraw *didraw = &didraws[ply];
+
+                // if in hitlag and hitstun simulate and update trajectory
+                if ((fighter_data->hitlag == 1) && (fighter_data->hitstun == 1))
+                {
+                    // free old
+                    if (didraw->vertices[ply] != 0)
+                    {
+                        HSD_Free(didraw->vertices[ply]);
+                        didraw->num[ply] = 0;
+                        didraw->vertices[ply] = 0;
+                    }
+
+                    int vertex_num = AS_FLOAT(fighter_data->stateVar1);
+                    didraw->num[ply] = vertex_num;
+
+                    // alloc vertices
+                    didraw->vertices[ply] = calloc(sizeof(Vec2) * vertex_num);
+
+                    // simulate
+                    float gravity = 0;
+                    Vec3 kb = fighter_data->kbVel;
+                    Vec3 pos = fighter_data->pos;
+                    ftCommonData *ftCommon = R13_PTR(-0x514C);
+                    float decay = ftCommon->kb_frameDecay;
+                    for (int i = 0; i < vertex_num; i++)
+                    {
+                        // update gravity
+                        gravity -= fighter_data->gravity;
+                        float terminal_velocity = fighter_data->terminal_velocity * -1;
+                        if (gravity < terminal_velocity)
+                            gravity = terminal_velocity;
+
+                        // decay KB vector
+                        float angle = atan2(kb.Y, kb.X);
+                        kb.X = kb.X - (cos(angle) * decay);
+                        kb.Y = kb.Y - (sin(angle) * decay);
+
+                        // add knockback
+                        VECAdd(&pos, &kb, &pos);
+
+                        // apply gravity
+                        pos.Y += gravity;
+
+                        // save this position
+                        didraw->vertices[ply][i].X = pos.X;
+                        didraw->vertices[ply][i].Y = pos.Y;
+                    }
+                }
+
+                // if not in hitstun, zero out didraw
+                else if (fighter_data->hitstun == 0)
+                {
+                    if (didraw->vertices[ply] != 0)
+                    {
+                        HSD_Free(didraw->vertices[ply]);
+                        didraw->num[ply] = 0;
+                        didraw->vertices[ply] = 0;
+                    }
+                }
+
+                fighter = fighter->next;
+            }
+
+            // draw each
+            for (int i = 0; i < 6; i++)
+            {
+                // for each subchar
+                for (int j = 0; j < 2; j++)
+                {
+                    DIDraw *didraw = &didraws[i];
+                    // if it exists
+                    if (didraw->num != 0)
+                    {
+                        int vertex_num = didraw->num[j];
+                        Vec2 *vertices = didraw->vertices[j];
+
+                        // alloc prim
+                        PRIM *gx = PRIM_NEW(vertex_num, 0x001F1306, 0x00000C55);
+
+                        // draw each
+                        for (int k = 0; k < vertex_num; k++)
+                        {
+                            PRIM_DRAW(gx, vertices[k].X, vertices[k].Y, 0, 0x008affff);
+                        }
+
+                        // close
+                        PRIM_CLOSE();
+                    }
+                }
+            }
+        }
+    }
+
+    return;
+}
 int Update_CheckPause()
 {
 
@@ -613,7 +763,7 @@ int Update_CheckPause()
     int isChange = 0;
 
     // check if enabled
-    if (EvFreeOptions_General[3].option_val == 1)
+    if (EvFreeOptions_General[OPTGEN_FRAME].option_val == 1)
     {
         // check if unpaused
         if (update->pause_develop != 1)
@@ -678,6 +828,41 @@ int Update_CheckAdvance()
 
     return isAdvance;
 }
+void Update_Savestates()
+{
+
+    // not when pause menu is showing
+    if (Pause_CheckStatus(1) != 2)
+    {
+        // loop through all humans
+        for (int i = 0; i < 6; i++)
+        {
+            // check if fighter exists
+            GOBJ *fighter = Fighter_GetGObj(i);
+            if (fighter != 0)
+            {
+                // get fighter data
+                FighterData *fighter_data = fighter->userdata;
+                HSD_Pad *pad = PadGet(fighter_data->ply, PADGET_MASTER);
+
+                // check for savestate
+                int blacklist = (HSD_BUTTON_DPAD_DOWN | HSD_BUTTON_DPAD_UP | HSD_TRIGGER_Z | HSD_TRIGGER_R | HSD_BUTTON_A | HSD_BUTTON_B | HSD_BUTTON_X | HSD_BUTTON_Y | HSD_BUTTON_START);
+                if (((pad->down & HSD_BUTTON_DPAD_RIGHT) != 0) && ((pad->held & (blacklist)) == 0))
+                {
+                    // save state
+                    Savestate_Save();
+                }
+                else if (((pad->down & HSD_BUTTON_DPAD_LEFT) != 0) && ((pad->held & (blacklist)) == 0))
+                {
+                    // load state
+                    Savestate_Load();
+                }
+            }
+        }
+    }
+
+    return;
+}
 
 // Init Function
 void LCancel_Init(GOBJ *gobj)
@@ -733,11 +918,26 @@ void LCancel_Init(GOBJ *gobj)
     }
     idData->text = text;
 
+    // Create DIDraw GOBJ
+    GOBJ *didraw_gobj = GObj_Create(0, 0, 0);
+    // Add gxlink
+    GObj_AddGXLink(didraw_gobj, DIDraw_Think, 6, 0);
+    // init didraw pointers
+    for (int i = 0; i < 6; i++)
+    {
+        // for each subchar
+        for (int j = 0; j < 2; j++)
+        {
+            didraws[i].num[j] = 0;
+            didraws[i].vertices[j] = 0;
+        }
+    }
+
     // store hsd_update functions
     HSD_Update *hsd_update = HSD_UPDATE;
     hsd_update->checkPause = Update_CheckPause;
     hsd_update->checkAdvance = Update_CheckAdvance;
-
+    hsd_update->onFrame = Update_Savestates;
     return;
 }
 // Think Function
@@ -751,10 +951,10 @@ void LCancel_Think(GOBJ *event)
     FighterData *cpu_data = cpu->userdata;
 
     // update menu's percent
-    EvFreeOptions_General[0].option_val = hmn_data->damage_Percent;
-    EvFreeOptions_General[1].option_val = cpu_data->damage_Percent;
+    EvFreeOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
+    EvFreeOptions_General[OPTGEN_CPUPCNT].option_val = cpu_data->damage_Percent;
     // reset stale moves
-    if (EvFreeOptions_General[2].option_val == 0)
+    if (EvFreeOptions_General[OPTGEN_STALE].option_val == 0)
     {
         for (int i = 0; i < 6; i++)
         {
@@ -768,17 +968,7 @@ void LCancel_Think(GOBJ *event)
             }
         }
     }
-    // check for savestate
-    if ((hmn_data->input_pressed & PAD_BUTTON_DPAD_RIGHT) != 0)
-    {
-        // save state
-        Savestate_Save();
-    }
-    else if ((hmn_data->input_pressed & PAD_BUTTON_DPAD_LEFT) != 0)
-    {
-        // load state
-        Savestate_Load();
-    }
+
     return;
 }
 
@@ -822,7 +1012,7 @@ static EventInfo LCancel = {
     .isChooseCPU = true,
     .isSelectStage = true,
     .scoreType = 0,
-    .callbackPriority = 0,
+    .callbackPriority = 2,
     .eventOnFrame = LCancel_Think,
     .eventOnInit = LCancel_Init,
     .matchData = &LCancel_MatchData,
@@ -3056,57 +3246,102 @@ void Savestate_Save()
         FighterData *fighter_data;
     } BackupQueue;
 
-    // free all savestates
-    for (int i = 0; i < sizeof(savestates) / 4; i++)
+    // ensure no players are in problematic states
+    int canSave = 1;
+    GOBJ **gobj_list = R13_PTR(GOBJLIST);
+    GOBJ *fighter = gobj_list[8];
+    while (fighter != 0)
     {
-        if (savestates[i] != 0)
-            HSD_Free(savestates[i]);
+
+        FighterData *fighter_data = fighter->userdata;
+
+        if ((fighter_data->cb_OnDeath != 0) ||
+            (fighter_data->cb_OnDeath2 != 0) ||
+            (fighter_data->cb_OnDeath3 != 0) ||
+            (fighter_data->heldItem != 0) ||
+            (fighter_data->x1978 != 0) ||
+            (fighter_data->accessory != 0))
+        {
+            // cannot save
+            canSave = 0;
+            break;
+        }
+
+        fighter = fighter->next;
     }
 
     // loop through all players
-    for (int i = 0; i < 6; i++)
+    int isSaved = 0;
+    if (canSave == 1)
     {
-        // get fighter gobjs
-        BackupQueue queue[2];
-        for (int j = 0; j < 2; j++)
+
+        // free all savestates
+        for (int i = 0; i < sizeof(savestates) / 4; i++)
         {
-            queue[j].fighter = Fighter_GetSubcharGObj(i, j);
-            if (queue[j].fighter != 0)
-                queue[j].fighter_data = queue[j].fighter->userdata;
+            if (savestates[i] != 0)
+                HSD_Free(savestates[i]);
         }
 
-        // if the fighter exists
-        if (queue[0].fighter != 0)
+        // backup all players
+        for (int i = 0; i < 6; i++)
         {
-
-            // allocate new savestate
-            Savestate *savestate = calloc(sizeof(Savestate));
-
-            // backup playerblock
-            Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
-            memcpy(&savestate->player_block, playerblock, sizeof(Playerblock));
-
-            // backup stale moves
-            int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
-            memcpy(&savestate->stale_queue, staleMoves, 0x2C);
-
-            // backup fighter data
+            // get fighter gobjs
+            BackupQueue queue[2];
             for (int j = 0; j < 2; j++)
             {
-                // if exists
+                queue[j].fighter = Fighter_GetSubcharGObj(i, j);
                 if (queue[j].fighter != 0)
-                {
-                    GOBJ *fighter = queue[j].fighter;
-                    FighterData *fighter_data = queue[j].fighter_data;
-
-                    // backup fighter data
-                    memcpy(&savestate->fighter_data[j], fighter_data, sizeof(FighterData));
-                }
+                    queue[j].fighter_data = queue[j].fighter->userdata;
             }
 
-            // store pointer
-            savestates[i] = savestate;
+            // if the fighter exists
+            if (queue[0].fighter != 0)
+            {
+
+                isSaved = 1;
+
+                // allocate new savestate
+                Savestate *savestate = calloc(sizeof(Savestate));
+
+                // backup playerblock
+                Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
+                memcpy(&savestate->player_block, playerblock, sizeof(Playerblock));
+
+                // backup stale moves
+                int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
+                memcpy(&savestate->stale_queue, staleMoves, 0x2C);
+
+                // backup fighter data
+                for (int j = 0; j < 2; j++)
+                {
+                    // if exists
+                    if (queue[j].fighter != 0)
+                    {
+                        GOBJ *fighter = queue[j].fighter;
+                        FighterData *fighter_data = queue[j].fighter_data;
+
+                        // backup fighter data
+                        memcpy(&savestate->fighter_data[j], fighter_data, sizeof(FighterData));
+
+                        // backup camerabox
+                        memcpy(&savestate->camera[j], fighter_data->cameraBox, sizeof(CameraBox));
+                    }
+                }
+
+                // store pointer
+                savestates[i] = savestate;
+            }
         }
+    }
+
+    // Play SFX
+    if (isSaved == 0)
+    {
+        SFX_PlayCommon(3);
+    }
+    if (isSaved == 1)
+    {
+        SFX_PlayCommon(1);
     }
 
     return;
@@ -3122,6 +3357,7 @@ void Savestate_Load()
     blr();
 
     // loop through all players
+    int isLoaded = 0;
     for (int i = 0; i < 6; i++)
     {
         // get fighter gobjs
@@ -3136,6 +3372,8 @@ void Savestate_Load()
         // if the fighter and backup exists
         if ((queue[0].fighter != 0) && (savestates[i] != 0))
         {
+
+            isLoaded = 1;
 
             // get savestate
             Savestate *savestate = savestates[i];
@@ -3158,21 +3396,92 @@ void Savestate_Load()
                     FighterData *fighter_data = queue[j].fighter_data;
                     FighterData *backup_data = &savestate->fighter_data[j];
 
+                    // backup buttons and collision bubble toggle
+                    int input_lstick_x = fighter_data->input_lstick_x;
+                    int input_lstick_y = fighter_data->input_lstick_y;
+                    int input_held = fighter_data->input_held;
+                    u8 show_model = fighter_data->show_model;
+                    u8 show_hit = fighter_data->show_hit;
+
                     // restore facing direction
                     fighter_data->facing_direction = savestate->fighter_data[j].facing_direction;
                     // sleep
                     Fighter_EnterSleep(fighter, 0);
                     // enter backed up state
-                    ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, backup_data->stateBlend, fighter, backup_data->state_id, 0, 0);
+                    ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, -0, fighter, backup_data->state_id, 0, 0);
+                    fighter_data->stateBlend = 0;
 
                     // restore fighter data
                     memcpy(fighter_data, &savestate->fighter_data[j], sizeof(FighterData));
 
+                    // restore buttons and collision bubble toggle
+                    fighter_data->input_lstick_x = input_lstick_x;
+                    fighter_data->input_lstick_y = input_lstick_y;
+                    fighter_data->input_held = input_held;
+                    fighter_data->show_model = show_model;
+                    fighter_data->show_hit = show_hit;
+
                     // zero pointer to cached animation (fixes fall crash)
                     fighter_data->anim_persist_ARAM = 0;
+
+                    // update colltest frame
+                    fighter_data->collData.coll_test = R13_INT(COLL_TEST);
+
+                    // restore camerabox
+                    memcpy(fighter_data->cameraBox, &savestate->camera[j], sizeof(CameraBox));
+
+                    // stop player SFX
+                    SFX_StopAllFighterSFX(fighter_data);
+
+                    // update jobj position
+                    JOBJ *fighter_jobj = fighter->hsd_object;
+                    fighter_jobj->trans = fighter_data->pos;
+                    /*
+                    // animate it
+                    Fighter_UpdateBonePos(fighter_data, 0);
+                    JOBJ_AnimAll(fighter->hsd_object);
+                    */
+                    // dirtysub their jobj
+                    JOBJ_SetMtxDirtySub(fighter_jobj);
                 }
             }
+
+            // check to recreate HUD
+            MatchHUD *huds = MATCH_HUD;
+            MatchHUD *hud = &huds[i];
+            if (Match_CheckIfStock() == 1)
+            {
+                // remove HUD if no stocks left
+                if (Fighter_GetStocks(i) <= 0)
+                {
+                    hud->is_exist = 0;
+                }
+            }
+            else
+            {
+                // check to create it
+                if (hud->is_exist == 1)
+                {
+                    Match_CreateHUD(i);
+                }
+            }
+
+            // snap camera to the new positions
+            Match_CorrectCamera();
+
+            // stop crowd cheer
+            SFX_StopCrowd();
         }
+    }
+
+    // Play SFX
+    if (isLoaded == 0)
+    {
+        SFX_PlayCommon(3);
+    }
+    if (isLoaded == 1)
+    {
+        SFX_PlayCommon(0);
     }
 
     return;

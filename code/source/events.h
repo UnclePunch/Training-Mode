@@ -122,6 +122,7 @@ typedef struct EventMenu
 typedef struct Savestate
 {
     FighterData fighter_data[2];
+    CameraBox camera[2];
     Playerblock player_block;
     int stale_queue[11];
 } Savestate;
@@ -139,13 +140,21 @@ static Savestate *savestates[6];
 void Savestate_Save();
 void Savestate_Load();
 
+// Labbing event
+typedef struct DIDraw
+{
+    int num[2];        // number of vertices
+    Vec2 *vertices[2]; // pointer to vertices to draw
+} DIDraw;
 void EvFree_ChangePlayerPercent(int value);
 void EvFree_ChangeCPUPercent(int value);
 void EvFree_ChangeModelDisplay(int value);
 void EvFree_ChangeHitDisplay(int value);
 void EvFree_ChangeEnvCollDisplay(int value);
+void EvFree_ChangeCamMode(int value);
 void InfoDisplay_Think(GOBJ *gobj, int pass);
 
+static DIDraw didraws[6];
 static EventOption EvFreeOptions_Main[];
 static EventOption EvFreeOptions_General[];
 static EventOption EvFreeOptions_InfoDisplay[];
@@ -270,3 +279,18 @@ static EventMenu EvFreeMenu_InfoDisplay;
     {                        \
         255, 211, 0, 255     \
     }
+
+// option numbers
+#define OPTGEN_HMNPCNT 0
+#define OPTGEN_CPUPCNT 1
+#define OPTGEN_FRAME 2
+#define OPTGEN_STALE 3
+#define OPTGEN_MODEL 4
+#define OPTGEN_HIT 5
+#define OPTGEN_COLL 6
+#define OPTGEN_DI 7
+#define OPTGEN_INPUT 8
+#define OPTGEN_CAM 9
+#define OPTINF_INFO 10
+
+#define OPTINF_TOGGLE 0
