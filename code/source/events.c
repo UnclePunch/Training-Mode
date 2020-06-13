@@ -400,6 +400,10 @@ void EvFree_ChangeCamMode(int value)
     {
         Match_SetFixedCamera();
     }
+    else if (value == 3)
+    {
+        Match_SetDevelopCamera();
+    }
 
     return;
 }
