@@ -34,7 +34,6 @@ typedef struct InfoDisplayData
 
 // Main Menu
 static char **EvFreeOptions_OffOn[] = {"Off", "On"};
-static char **EvFreeOptions_MainCharacters[] = {"Fox", "Falco", "Sheik", "Marth", "Jiggly", "Last One"};
 static EventOption EvFreeOptions_Main[] = {
     {
         .option_kind = OPTKIND_MENU,                           // the type of option this is; menu, string list, integer list, etc
@@ -47,19 +46,49 @@ static EventOption EvFreeOptions_Main[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                         // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(EvFreeOptions_MainCharacters) / 4, // number of values for this option
-        .option_val = 0,                                       // value of this option
-        .menu = 0,                                             // pointer to the menu that pressing A opens
-        .option_name = {"Characters"},                         // pointer to a string
-        .desc = "This is just a test string.\nDon't mind it.", // string describing what this option does
-        .option_values = EvFreeOptions_MainCharacters,         // pointer to an array of strings
+        .option_kind = OPTKIND_MENU,       // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                    // number of values for this option
+        .option_val = 0,                   // value of this option
+        .menu = &EvFreeMenu_CPU,           // pointer to the menu that pressing A opens
+        .option_name = {"CPU Options"},    // pointer to a string
+        .desc = "Configure CPU behavior.", // string describing what this option does
+        .option_values = 0,                // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_MENU,           // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                        // number of values for this option
+        .option_val = 0,                       // value of this option
+        .menu = &EvFreeMenu_Record,            // pointer to the menu that pressing A opens
+        .option_name = "Recording",            // pointer to a string
+        .desc = "Record and playback inputs.", // string describing what this option does
+        .option_values = 0,                    // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_MENU,                         // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                      // number of values for this option
+        .option_val = 0,                                     // value of this option
+        .menu = 0,                                           // pointer to the menu that pressing A opens
+        .option_name = "Help",                               // pointer to a string
+        .desc = "Put info here on savestates or something.", // string describing what this option does
+        .option_values = 0,                                  // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_MENU,                  // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                               // number of values for this option
+        .option_val = 0,                              // value of this option
+        .menu = 0,                                    // pointer to the menu that pressing A opens
+        .option_name = "Exit",                        // pointer to a string
+        .desc = "Return to the Event Select Screen.", // string describing what this option does
+        .option_values = 0,                           // pointer to an array of strings
         .onOptionChange = 0,
     },
 };
 static EventMenu EvFreeMenu_Main = {
     .name = "Main Menu",            // the name of this menu
-    .option_num = 2,                // number of options this menu contains
+    .option_num = 5,                // number of options this menu contains
     .scroll = 0,                    // runtime variable used for how far down in the menu to start
     .state = 0,                     // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                    // index of the option currently selected, used at runtime
@@ -206,7 +235,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
         .value_num = 2,                            // number of values for this option
-        .option_val = 0,                           // value of this option
+        .option_val = 1,                           // value of this option
         .menu = 0,                                 // pointer to the menu that pressing A opens
         .option_name = "Toggle",                   // pointer to a string
         .desc = "Enable the info display window.", // string describing what this option does
@@ -226,7 +255,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_InfoPresets) / 4, // number of values for this option
-        .option_val = 1,                                   // value of this option
+        .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Preset",                           // pointer to a string
         .desc = nullString,                                // string describing what this option does
@@ -236,7 +265,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 2,                                   // value of this option
+        .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 1",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
@@ -246,7 +275,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 3,                                   // value of this option
+        .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 2",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
@@ -256,7 +285,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 4,                                   // value of this option
+        .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 3",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
@@ -322,6 +351,179 @@ static EventMenu EvFreeMenu_InfoDisplay = {
     .cursor = 0,                           // index of the option currently selected, used at runtime
     .options = &EvFreeOptions_InfoDisplay, // pointer to all of this menu's options
     .prev = 0,                             // pointer to previous menu, used at runtime
+};
+// CPU
+static char **EvFreeValues_Shield[] = {"Off", "On Until Hit", "On"};
+static char **EvFreeValues_CPUBehave[] = {"Stand", "Shield", "Crouch", "Jump"};
+static char **EvFreeValues_TDI[] = {"Random", "Survival", "Combo", "Floorhug", "None"};
+static char **EvFreeValues_SDI[] = {"Random", "None"};
+static char **EvFreeValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
+static char **EvFreeValues_CounterGround[] = {"None", "Shield", "Grab", "Up B", "Down B", "Spotdodge", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
+static char **EvFreeValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
+static EventOption EvFreeOptions_CPU[] = {
+    {
+        .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                     // number of values for this option
+        .option_val = 0,                                    // value of this option
+        .menu = 0,                                          // pointer to the menu that pressing A opens
+        .option_name = {"Intangibility"},                   // pointer to a string
+        .desc = "Toggle the CPU's ability to take damage.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_Shield) / 4,     // number of values for this option
+        .option_val = 0,                                  // value of this option
+        .menu = 0,                                        // pointer to the menu that pressing A opens
+        .option_name = {"Infinite Shields"},              // pointer to a string
+        .desc = "Adjust how shield health deteriorates.", // string describing what this option does
+        .option_values = EvFreeValues_Shield,             // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_CPUBehave) / 4,  // number of values for this option
+        .option_val = 0,                                  // value of this option
+        .menu = 0,                                        // pointer to the menu that pressing A opens
+        .option_name = "Behavior",                        // pointer to a string
+        .desc = "Adjust how the CPU behaves by default.", // string describing what this option does
+        .option_values = EvFreeValues_CPUBehave,          // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                         // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_Tech) / 4,                            // number of values for this option
+        .option_val = 0,                                                       // value of this option
+        .menu = 0,                                                             // pointer to the menu that pressing A opens
+        .option_name = "Tech Option",                                          // pointer to a string
+        .desc = "Adjust what the CPU will do upon colliding with\nthe stage.", // string describing what this option does
+        .option_values = EvFreeValues_Tech,                                    // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                        // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_TDI) / 4,                            // number of values for this option
+        .option_val = 0,                                                      // value of this option
+        .menu = 0,                                                            // pointer to the menu that pressing A opens
+        .option_name = "Trajectory DI",                                       // pointer to a string
+        .desc = "Adjust how the CPU will alter their knockback\ntrajectory.", // string describing what this option does
+        .option_values = EvFreeValues_TDI,                                    // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_SDI) / 4,                               // number of values for this option
+        .option_val = 0,                                                         // value of this option
+        .menu = 0,                                                               // pointer to the menu that pressing A opens
+        .option_name = "Smash DI",                                               // pointer to a string
+        .desc = "Adjust how the CPU will alter their position\nduring hitstop.", // string describing what this option does
+        .option_values = EvFreeValues_SDI,                                       // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                              // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_OffOn) / 4,               // number of values for this option
+        .option_val = 0,                                            // value of this option
+        .menu = 0,                                                  // pointer to the menu that pressing A opens
+        .option_name = "Auto Reset",                                // pointer to a string
+        .desc = "Automatically reset after the CPU is actionable.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                       // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_CounterGround) / 4,                               // number of values for this option
+        .option_val = 0,                                                                   // value of this option
+        .menu = 0,                                                                         // pointer to the menu that pressing A opens
+        .option_name = "Counter Action (Ground)",                                          // pointer to a string
+        .desc = "Select the action to be performed after a\ngrounded CPU's hitstun ends.", // string describing what this option does
+        .option_values = EvFreeValues_CounterGround,                                       // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_CounterAir) / 4,                                   // number of values for this option
+        .option_val = 0,                                                                    // value of this option
+        .menu = 0,                                                                          // pointer to the menu that pressing A opens
+        .option_name = "Counter Action (Air)",                                              // pointer to a string
+        .desc = "Select the action to be performed after an\nairborne CPU's hitstun ends.", // string describing what this option does
+        .option_values = EvFreeValues_CounterAir,                                           // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_INT,                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = 100,                                                     // number of values for this option
+        .option_val = 1,                                                      // value of this option
+        .menu = 0,                                                            // pointer to the menu that pressing A opens
+        .option_name = "Counter After Hits",                                  // pointer to a string
+        .desc = "Adjust the amount of hits taken before the \nCPU counters.", // string describing what this option does
+        .option_values = 0,                                                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_INT,                                                  // the type of option this is; menu, string list, integer list, etc
+        .value_num = 100,                                                            // number of values for this option
+        .option_val = 0,                                                             // value of this option
+        .menu = 0,                                                                   // pointer to the menu that pressing A opens
+        .option_name = "Counter After Frames",                                       // pointer to a string
+        .desc = "Adjust the amount of actionable frames before \nthe CPU counters.", // string describing what this option does
+        .option_values = 0,                                                          // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+};
+static EventMenu EvFreeMenu_CPU = {
+    .name = "CPU Options",         // the name of this menu
+    .option_num = 11,              // number of options this menu contains
+    .scroll = 0,                   // runtime variable used for how far down in the menu to start
+    .state = 0,                    // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                   // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_CPU, // pointer to all of this menu's options
+    .prev = 0,                     // pointer to previous menu, used at runtime
+};
+// Recording
+static char **EvFreeValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3"};
+static char **EvFreeValues_RecordMode[] = {"Record", "Playback"};
+static EventOption EvFreeOptions_Record[] = {
+    {
+        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_RecordSlot) / 4, // number of values for this option
+        .option_val = 1,                                  // value of this option
+        .menu = 0,                                        // pointer to the menu that pressing A opens
+        .option_name = "Record Slot",                     // pointer to a string
+        .desc = "Toggle which slot to record to.",        // string describing what this option does
+        .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_RecordMode) / 4,            // number of values for this option
+        .option_val = 0,                                             // value of this option
+        .menu = 0,                                                   // pointer to the menu that pressing A opens
+        .option_name = "Mode",                                       // pointer to a string
+        .desc = "Toggle between recording and playback of\ninputs.", // string describing what this option does
+        .option_values = EvFreeValues_RecordMode,                    // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_OffOn) / 4,           // number of values for this option
+        .option_val = 0,                                        // value of this option
+        .menu = 0,                                              // pointer to the menu that pressing A opens
+        .option_name = "Reset After Playback",                  // pointer to a string
+        .desc = "Automatically reset after the playback ends.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+};
+static EventMenu EvFreeMenu_Record = {
+    .name = "Recording",              // the name of this menu
+    .option_num = 3,                  // number of options this menu contains
+    .scroll = 0,                      // runtime variable used for how far down in the menu to start
+    .state = 0,                       // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                      // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_Record, // pointer to all of this menu's options
+    .prev = 0,                        // pointer to previous menu, used at runtime
 };
 
 // Menu Callbacks
@@ -499,226 +701,261 @@ void EvFree_ChangeInfoPreset(int value)
     }
 }
 // Event Functions
-void InfoDisplay_Think(GOBJ *gobj, int pass)
+void InfoDisplay_GX(GOBJ *gobj, int pass)
+{
+
+    if (pass == 1)
+    {
+        InfoDisplay_Think(gobj);
+    }
+
+    GXLink_Common(gobj, pass);
+    return;
+}
+void InfoDisplay_Think(GOBJ *gobj)
 {
 
     InfoDisplayData *idData = gobj->userdata;
     Text *text = idData->text;
     EventOption *idOptions = &EvFreeOptions_InfoDisplay;
-
-    if (pass == 1)
+    if ((Pause_CheckStatus(1) != 2) && (idOptions[OPTINF_TOGGLE].option_val == 1))
     {
-        if ((Pause_CheckStatus(1) != 2) && (idOptions[OPTINF_TOGGLE].option_val == 1))
+        // get the last row enabled
+        int rowsEnabled = 8;
+        while (rowsEnabled > 0)
         {
-            // get the last row enabled
-            int rowsEnabled = 8;
-            while (rowsEnabled > 0)
+            if (idOptions[rowsEnabled - 1 + OPTINF_ROW1].option_val != 0)
+                break;
+            rowsEnabled--;
+        }
+
+        // if a row is enabled, display
+        if (rowsEnabled != 0)
+        {
+            // show model and text
+            JOBJ_ClearFlags(idData->menuModel, JOBJ_HIDDEN);
+            idData->text->hidden = 0;
+
+            // scale window Y based on rows enabled
+            JOBJ *leftCorner = idData->botLeftEdge;
+            JOBJ *rightCorner = idData->botRightEdge;
+            float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
+            leftCorner->trans.Y = yPos;
+            rightCorner->trans.Y = yPos;
+            JOBJ_SetMtxDirtySub(idData->menuModel);
+
+            // update info display strings
+            int ply = idOptions[OPTINF_PLAYER].option_val;
+            GOBJ *fighter = Fighter_GetGObj(ply);
+            FighterData *fighter_data;
+            if (fighter != 0)
+                fighter_data = fighter->userdata;
+            for (int i = 0; i < 8; i++)
             {
-                if (idOptions[rowsEnabled - 1 + OPTINF_ROW1].option_val != 0)
-                    break;
-                rowsEnabled--;
-            }
 
-            // if every row is disabled, hide it
-            if (rowsEnabled != 0)
-            {
-                // show model and text
-                JOBJ_ClearFlags(idData->menuModel, JOBJ_HIDDEN);
-                idData->text->hidden = 0;
+                int value = idOptions[i + OPTINF_ROW1].option_val;
 
-                // scale window Y based on rows enabled
-                JOBJ *leftCorner = idData->botLeftEdge;
-                JOBJ *rightCorner = idData->botRightEdge;
-                float yPos = (rowsEnabled * INFDISP_BOTYOFFSET) + INFDISP_BOTY;
-                leftCorner->trans.Y = yPos;
-                rightCorner->trans.Y = yPos;
-                JOBJ_SetMtxDirtySub(idData->menuModel);
-
-                // update info display strings
-                int ply = idOptions[OPTINF_PLAYER].option_val;
-                GOBJ *fighter = Fighter_GetGObj(ply);
-                FighterData *fighter_data;
-                if (fighter != 0)
-                    fighter_data = fighter->userdata;
-                for (int i = 0; i < 8; i++)
+                // hide text if set to 0 or fighter DNE
+                if ((idOptions[i + OPTINF_ROW1].option_val == 0) || fighter == 0)
                 {
+                    Text_SetText(text, i, "");
+                }
 
-                    int value = idOptions[i + OPTINF_ROW1].option_val;
-
-                    // hide text if set to 0 or fighter DNE
-                    if ((idOptions[i + OPTINF_ROW1].option_val == 0) || fighter == 0)
+                // display info
+                else
+                {
+                    if (value == 1 + 0)
                     {
-                        Text_SetText(text, i, "");
+                        Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
                     }
-
-                    // display info
-                    else
+                    else if (value == 1 + 1)
                     {
-                        if (value == 1 + 0)
+                        if (fighter_data->anim_id != -1)
                         {
-                            Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
-                        }
-                        else if (value == 1 + 1)
-                        {
-                            if (fighter_data->anim_id != -1)
+                            SubactionHeader *subHeader = Fighter_GetSubactionHeader(fighter_data, fighter_data->anim_id);
+                            // extract state name from symbol
+                            int pos = 0;
+                            int posStart;
+                            int nameSize = 0;
+                            char *symbol = subHeader->symbol;
+                            for (int i = 0; pos < 50; pos++)
                             {
-                                SubactionHeader *subHeader = Fighter_GetSubactionHeader(fighter_data, fighter_data->anim_id);
-                                // extract state name from symbol
-                                int pos = 0;
-                                int posStart;
-                                int nameSize = 0;
-                                char *symbol = subHeader->symbol;
-                                for (int i = 0; pos < 50; pos++)
+                                // search for "N_"
+                                if ((symbol[pos] == 'N') && (symbol[pos + 1] == '_'))
                                 {
-                                    // search for "N_"
-                                    if ((symbol[pos] == 'N') && (symbol[pos + 1] == '_'))
-                                    {
-                                        // posStart = beginning of state name
-                                        pos++;
-                                        posStart = pos + 1;
+                                    // posStart = beginning of state name
+                                    pos++;
+                                    posStart = pos + 1;
 
-                                        // search for "_"
-                                        for (int i = 0; pos < 50; pos++)
+                                    // search for "_"
+                                    for (int i = 0; pos < 50; pos++)
+                                    {
+                                        if (symbol[pos] == '_')
                                         {
-                                            if (symbol[pos] == '_')
-                                            {
-                                                nameSize = pos - posStart;
-                                            }
+                                            nameSize = pos - posStart;
                                         }
                                     }
                                 }
-                                if (nameSize != 0)
-                                {
-                                    // copy string
-                                    char stateNameBuffer[50];
-                                    memcpy(&stateNameBuffer, &symbol[posStart], nameSize);
-                                    stateNameBuffer[nameSize] = 0;
-                                    Text_SetText(text, i, "State: %s", &stateNameBuffer);
-                                }
                             }
-
-                            else
-                                Text_SetText(text, i, "State: %s", "Unknown");
-                        }
-                        else if (value == 1 + 2)
-                        {
-                            float *animStruct = fighter_data->anim_curr_flags_ptr;
-                            Text_SetText(text, i, "State Frame: %3.0f/%-3.0f", fighter_data->stateFrame, animStruct[2]);
-                        }
-                        else if (value == 1 + 3)
-                        {
-                            Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
-                        }
-                        else if (value == 1 + 4)
-                        {
-                            Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
-                        }
-                        else if (value == 1 + 5)
-                        {
-                            Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
-                        }
-                        else if (value == 1 + 6)
-                        {
-                            Text_SetText(text, i, "LStick:     (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
-                        }
-                        else if (value == 1 + 7)
-                        {
-                            HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                            Text_SetText(text, i, "LStick Sys: (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
-                        }
-                        else if (value == 1 + 8)
-                        {
-                            Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
-                        }
-                        else if (value == 1 + 9)
-                        {
-                            HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                            Text_SetText(text, i, "CStick Sys: (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
-                        }
-                        else if (value == 1 + 10)
-                        {
-                            Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input_trigger);
-                        }
-                        else if (value == 1 + 11)
-                        {
-                            HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
-                            Text_SetText(text, i, "Trigger Sys: (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
-                        }
-                        else if (value == 1 + 12)
-                        {
-                            Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
-                        }
-                        else if (value == 1 + 13)
-                        {
-                            int intang = fighter_data->respawn_intang_left;
-                            if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
-                                intang = fighter_data->ledge_intang_left;
-
-                            Text_SetText(text, i, "Intangibility Timer: %d", intang);
-                        }
-                        else if (value == 1 + 14)
-                        {
-                            Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
-                        }
-                        else if (value == 1 + 15)
-                        {
-                            // get hitstun
-                            float hitstun = 0;
-                            if (fighter_data->hitstun == 1)
-                                hitstun = AS_FLOAT(fighter_data->stateVar1);
-
-                            Text_SetText(text, i, "Hitstun: %.0f", hitstun);
-                        }
-                        else if (value == 1 + 16)
-                        {
-                            Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
-                        }
-                        else if (value == 1 + 17)
-                        {
-                            Text_SetText(text, i, "Shield Stun: IDK");
-                        }
-                        else if (value == 1 + 18)
-                        {
-                            float grip = 0;
-                            if (fighter_data->grab_victim != 0)
+                            if (nameSize != 0)
                             {
-                                GOBJ *victim = fighter_data->grab_victim;
-                                FighterData *victim_data = victim->userdata;
-                                grip = victim_data->grab_timer;
+                                // copy string
+                                char stateNameBuffer[50];
+                                memcpy(&stateNameBuffer, &symbol[posStart], nameSize);
+                                stateNameBuffer[nameSize] = 0;
+                                Text_SetText(text, i, "State: %s", &stateNameBuffer);
                             }
+                        }
 
-                            Text_SetText(text, i, "Grip Strength: %.0f", grip);
-                        }
-                        else if (value == 1 + 19)
+                        else
+                            Text_SetText(text, i, "State: %s", "Unknown");
+                    }
+                    else if (value == 1 + 2)
+                    {
+                        float *animStruct = fighter_data->anim_curr_flags_ptr;
+
+                        // determine how many frames shield stun is
+                        float animFrameTotal = animStruct[2];
+                        float animFrameCurr = fighter_data->stateFrame;
+                        float animSpeed = fighter_data->stateSpeed;
+                        int frameTotal = (animFrameTotal / animSpeed);
+                        int frameCurr = (animFrameCurr / animSpeed);
+                        // 1 index
+                        frameTotal;
+                        frameCurr;
+
+                        Text_SetText(text, i, "State Frame: %d/%d", frameCurr, frameTotal);
+                    }
+                    else if (value == 1 + 3)
+                    {
+                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
+                    }
+                    else if (value == 1 + 4)
+                    {
+                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
+                    }
+                    else if (value == 1 + 5)
+                    {
+                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
+                    }
+                    else if (value == 1 + 6)
+                    {
+                        Text_SetText(text, i, "LStick:     (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                    }
+                    else if (value == 1 + 7)
+                    {
+                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                        Text_SetText(text, i, "LStick Sys: (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
+                    }
+                    else if (value == 1 + 8)
+                    {
+                        Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
+                    }
+                    else if (value == 1 + 9)
+                    {
+                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                        Text_SetText(text, i, "CStick Sys: (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
+                    }
+                    else if (value == 1 + 10)
+                    {
+                        Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input_trigger);
+                    }
+                    else if (value == 1 + 11)
+                    {
+                        HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
+                        Text_SetText(text, i, "Trigger Sys: (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
+                    }
+                    else if (value == 1 + 12)
+                    {
+                        Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
+                    }
+                    else if (value == 1 + 13)
+                    {
+                        int intang = fighter_data->respawn_intang_left;
+                        if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
+                            intang = fighter_data->ledge_intang_left;
+
+                        Text_SetText(text, i, "Intangibility Timer: %d", intang);
+                    }
+                    else if (value == 1 + 14)
+                    {
+                        Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
+                    }
+                    else if (value == 1 + 15)
+                    {
+                        // get hitstun
+                        float hitstun = 0;
+                        if (fighter_data->hitstun == 1)
+                            hitstun = AS_FLOAT(fighter_data->stateVar1);
+
+                        Text_SetText(text, i, "Hitstun: %.0f", hitstun);
+                    }
+                    else if (value == 1 + 16)
+                    {
+                        Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
+                    }
+                    else if (value == 1 + 17)
+                    {
+                        int stunTotal = 0;
+                        int stunLeft = 0;
+
+                        // check if taking shield stun
+                        if (fighter_data->state_id == ASID_GUARDSETOFF)
                         {
-                            Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                            // determine how many frames shield stun is
+                            float frameTotal = JOBJ_GetJointAnimFrameTotal(fighter->hsd_object);
+                            float frameCurr = fighter_data->stateFrame;
+                            float animSpeed = fighter_data->stateSpeed;
+                            stunTotal = (frameTotal / animSpeed);
+                            stunLeft = stunTotal - (frameCurr / animSpeed);
+                            // 0 index
+                            stunTotal++;
+                            stunLeft++;
                         }
-                        else if (value == 1 + 20)
+
+                        Text_SetText(text, i, "Shield Stun: %d/%d", stunLeft, stunTotal);
+                    }
+                    else if (value == 1 + 18)
+                    {
+                        float grip = 0;
+                        if (fighter_data->grab_victim != 0)
                         {
-                            Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
+                            GOBJ *victim = fighter_data->grab_victim;
+                            FighterData *victim_data = victim->userdata;
+                            grip = victim_data->grab_timer;
                         }
-                        else if (value == 1 + 21)
-                        {
-                            Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
-                        }
-                        else if (value == 1 + 22)
-                        {
-                            Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
-                        }
-                        else if (value == 1 + 23)
-                        {
-                            Text_SetText(text, i, "Jab Counter: IDK");
-                        }
-                        else if (value == 1 + 24)
-                        {
-                            Stage *stage = STAGE;
-                            Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
-                        }
-                        else if (value == 1 + 25)
-                        {
-                            Stage *stage = STAGE;
-                            Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
-                        }
+
+                        Text_SetText(text, i, "Grip Strength: %.0f", grip);
+                    }
+                    else if (value == 1 + 19)
+                    {
+                        Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                    }
+                    else if (value == 1 + 20)
+                    {
+                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
+                    }
+                    else if (value == 1 + 21)
+                    {
+                        Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
+                    }
+                    else if (value == 1 + 22)
+                    {
+                        Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
+                    }
+                    else if (value == 1 + 23)
+                    {
+                        Text_SetText(text, i, "Jab Counter: IDK");
+                    }
+                    else if (value == 1 + 24)
+                    {
+                        Stage *stage = STAGE;
+                        Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
+                    }
+                    else if (value == 1 + 25)
+                    {
+                        Stage *stage = STAGE;
+                        Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
                     }
                 }
             }
@@ -730,9 +967,12 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
             idData->text->hidden = 1;
         }
     }
-    // show menu if unpaused and is enabled
-
-    GXLink_Common(gobj, pass);
+    else
+    {
+        // hide model and text
+        JOBJ_SetFlags(idData->menuModel, JOBJ_HIDDEN);
+        idData->text->hidden = 1;
+    }
 
     return;
 }
@@ -1018,12 +1258,12 @@ void Update_Camera()
                     DevCam_AdjustPan(cobj, stickX * -1, stickY * -1);
                 }
                 // adjust zoom
-                if ((held & HSD_BUTTON_Y) != 0)
+                else if ((held & HSD_BUTTON_Y) != 0)
                 {
                     DevCam_AdjustZoom(cobj, stickY);
                 }
                 // adjust rotate
-                if ((held & HSD_BUTTON_B) != 0)
+                else if ((held & HSD_BUTTON_B) != 0)
                 {
                     MatchCamera *matchCam = MATCH_CAM;
                     DevCam_AdjustRotate(cobj, &matchCam->devcam_rot, &matchCam->devcam_pos, stickX, stickY);
@@ -1056,7 +1296,7 @@ void LCancel_Init(GOBJ *gobj)
     // Add to gobj
     GObj_AddObject(idGOBJ, 3, menu);
     // Add gxlink
-    GObj_AddGXLink(idGOBJ, InfoDisplay_Think, GXRENDER_INFDISP, GXPRI_INFDISP);
+    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, GXRENDER_INFDISP, GXPRI_INFDISP);
     // Save pointers to corners
     JOBJ *corners[4];
     JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
@@ -1088,6 +1328,8 @@ void LCancel_Init(GOBJ *gobj)
         Text_AddSubtext(text, 0, i * INFDISPTEXT_YOFFSET, &nullString);
     }
     idData->text = text;
+    // update to show/hide
+    InfoDisplay_Think(idGOBJ);
 
     // Create DIDraw GOBJ
     GOBJ *didraw_gobj = GObj_Create(0, 0, 0);
@@ -1149,6 +1391,7 @@ void LCancel_Think(GOBJ *event)
     // update menu's percent
     EvFreeOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
     EvFreeOptions_General[OPTGEN_CPUPCNT].option_val = cpu_data->damage_Percent;
+
     // reset stale moves
     if (EvFreeOptions_General[OPTGEN_STALE].option_val == 0)
     {
@@ -1163,6 +1406,22 @@ void LCancel_Think(GOBJ *event)
                 memset(staleMoveTable, 0, 0x2C);
             }
         }
+    }
+
+    // apply intangibility
+    if (EvFreeOptions_CPU[OPTCPU_INTANG].option_val == 1)
+    {
+        cpu_data->no_reaction_always = 1;
+        cpu_data->nudge_disable = 1;
+        Fighter_ApplyOverlay(cpu_data, 9, 0);
+        Fighter_UpdateOverlay(cpu);
+        cpu_data->damage_Percent = 0;
+        Fighter_SetHUDDamage(cpu_data->ply, 0);
+    }
+    else
+    {
+        cpu_data->no_reaction_always = 0;
+        cpu_data->nudge_disable = 0;
     }
 
     return;

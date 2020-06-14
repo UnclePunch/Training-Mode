@@ -155,7 +155,8 @@ void EvFree_ChangeEnvCollDisplay(int value);
 void EvFree_ChangeCamMode(int value);
 void EvFree_ChangeInfoPreset(int value);
 void EvFree_ChangeInfoRow(int value);
-void InfoDisplay_Think(GOBJ *gobj, int pass);
+void InfoDisplay_Think(GOBJ *gobj);
+void InfoDisplay_GX(GOBJ *gobj, int pass);
 
 static DIDraw didraws[6];
 static EventOption EvFreeOptions_Main[];
@@ -163,6 +164,8 @@ static EventOption EvFreeOptions_General[];
 static EventOption EvFreeOptions_InfoDisplay[];
 static EventMenu EvFreeMenu_General;
 static EventMenu EvFreeMenu_InfoDisplay;
+static EventMenu EvFreeMenu_CPU;
+static EventMenu EvFreeMenu_Record;
 
 // EventOption option_kind definitions
 #define OPTKIND_MENU 0
@@ -283,7 +286,7 @@ static EventMenu EvFreeMenu_InfoDisplay;
         255, 211, 0, 255     \
     }
 
-// option numbers
+// General Options
 #define OPTGEN_HMNPCNT 0
 #define OPTGEN_CPUPCNT 1
 #define OPTGEN_FRAME 2
@@ -297,6 +300,25 @@ static EventMenu EvFreeMenu_InfoDisplay;
 #define OPTGEN_CAM 10
 #define OPTINF_INFO 11
 
+// CPU Options
+#define OPTCPU_INTANG 0
+#define OPTCPU_SHIELD 1
+#define OPTCPU_BEHAVE 2
+#define OPTCPU_TECH 3
+#define OPTCPU_TDI 4
+#define OPTCPU_SDI 5
+#define OPTCPU_RESET 6
+#define OPTCPU_CTRGRND 7
+#define OPTCPU_CTRAIR 8
+#define OPTCPU_CTRHITS 9
+#define OPTCPU_CTRFRAMES 10
+
+// Recording Options
+#define OPTREC_SLOT 0
+#define OPTREC_MODE 1
+#define OPTREC_RESET 2
+
+// Info Display Options
 #define OPTINF_TOGGLE 0
 #define OPTINF_PLAYER 1
 #define OPTINF_PRESET 2
