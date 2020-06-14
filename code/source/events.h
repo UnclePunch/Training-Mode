@@ -67,6 +67,7 @@ typedef struct EventInfo
     u8 callbackPriority;
     void (*eventOnFrame)(GOBJ *gobj);
     void (*eventOnInit)(GOBJ *gobj);
+    void (*eventUpdate)();
     EventMatchData *matchData;
     EventMenu *startMenu;
     int menuOptionNum;
@@ -152,6 +153,8 @@ void EvFree_ChangeModelDisplay(int value);
 void EvFree_ChangeHitDisplay(int value);
 void EvFree_ChangeEnvCollDisplay(int value);
 void EvFree_ChangeCamMode(int value);
+void EvFree_ChangeInfoPreset(int value);
+void EvFree_ChangeInfoRow(int value);
 void InfoDisplay_Think(GOBJ *gobj, int pass);
 
 static DIDraw didraws[6];
@@ -288,9 +291,13 @@ static EventMenu EvFreeMenu_InfoDisplay;
 #define OPTGEN_MODEL 4
 #define OPTGEN_HIT 5
 #define OPTGEN_COLL 6
-#define OPTGEN_DI 7
-#define OPTGEN_INPUT 8
-#define OPTGEN_CAM 9
-#define OPTINF_INFO 10
+#define OPTGEN_HUD 7
+#define OPTGEN_DI 8
+#define OPTGEN_INPUT 9
+#define OPTGEN_CAM 10
+#define OPTINF_INFO 11
 
 #define OPTINF_TOGGLE 0
+#define OPTINF_PLAYER 1
+#define OPTINF_PRESET 2
+#define OPTINF_ROW1 3

@@ -140,6 +140,16 @@ static EventOption EvFreeOptions_General[] = {
         .onOptionChange = EvFree_ChangeEnvCollDisplay,
     },
     {
+        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                // number of values for this option
+        .option_val = 1,                               // value of this option
+        .menu = 0,                                     // pointer to the menu that pressing A opens
+        .option_name = "HUD",                          // pointer to a string
+        .desc = "Hide the player percents and timer.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,          // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
         .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
         .value_num = 2,                                                                                                    // number of values for this option
         .option_val = 0,                                                                                                   // value of this option
@@ -165,7 +175,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_val = 0,                                                                                                     // value of this option
         .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
         .option_name = "Camera Mode",                                                                                        // pointer to a string
-        .desc = "Change the camera's behavior.\nIn advanced mode, use CStick while holding\nA/B/X to pan, rotate and zoom.", // string describing what this option does
+        .desc = "Change the camera's behavior.\nIn advanced mode, use CStick while holding\nA/B/Y to pan, rotate and zoom.", // string describing what this option does
         .option_values = EvFreeOptions_CamMode,                                                                              // pointer to an array of strings
         .onOptionChange = EvFree_ChangeCamMode,
     },
@@ -182,7 +192,7 @@ static EventOption EvFreeOptions_General[] = {
 };
 static EventMenu EvFreeMenu_General = {
     .name = "General",                 // the name of this menu
-    .option_num = 11,                  // number of options this menu contains
+    .option_num = 12,                  // number of options this menu contains
     .scroll = 0,                       // runtime variable used for how far down in the menu to start
     .state = 0,                        // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                       // index of the option currently selected, used at runtime
@@ -191,6 +201,7 @@ static EventMenu EvFreeMenu_General = {
 };
 // Info Display
 static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Blastzone Left/Right", "Blastzone Up/Down"};
+static char **EvFreeValues_InfoPresets[] = {"None", "Custom", "Ledge", "Damage"};
 static EventOption EvFreeOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
@@ -214,13 +225,23 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoPresets) / 4, // number of values for this option
+        .option_val = 1,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Preset",                           // pointer to a string
+        .desc = nullString,                                // string describing what this option does
+        .option_values = EvFreeValues_InfoPresets,         // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeInfoPreset,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
         .option_val = 2,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 1",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -230,7 +251,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 2",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -240,7 +261,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 3",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -250,7 +271,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 4",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -260,7 +281,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 5",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -270,7 +291,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 6",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -280,7 +301,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 7",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -290,12 +311,12 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_name = "Row 8",                            // pointer to a string
         .desc = nullString,                                // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeInfoRow,
     },
 };
 static EventMenu EvFreeMenu_InfoDisplay = {
     .name = "Info Display",                // the name of this menu
-    .option_num = 10,                      // number of options this menu contains
+    .option_num = 11,                      // number of options this menu contains
     .scroll = 0,                           // runtime variable used for how far down in the menu to start
     .state = 0,                            // bool used to know if this menu is focused, used at runtime
     .cursor = 0,                           // index of the option currently selected, used at runtime
@@ -392,8 +413,8 @@ void EvFree_ChangeCamMode(int value)
     else if (value == 1)
     {
         Match_SetFreeCamera(0, 3);
-        cam->freecam_zoom = 16;
-        cam->freecam_tilt_vertical = 0.1;
+        cam->freecam_fov.X = 140;
+        cam->freecam_rotate.Y = 10;
     }
     // fixed
     else if (value == 2)
@@ -404,10 +425,79 @@ void EvFree_ChangeCamMode(int value)
     {
         Match_SetDevelopCamera();
     }
+    Match_CorrectCamera();
 
     return;
 }
+void EvFree_ChangeInfoRow(int value)
+{
+    EventOption *idOptions = &EvFreeOptions_InfoDisplay;
 
+    // changed option, set preset to custom
+    idOptions[OPTINF_PRESET].option_val = 1;
+}
+void EvFree_ChangeInfoPreset(int value)
+{
+    static int idPresets[][8] =
+        {
+            // None
+            {
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            },
+            // Ledge
+            {
+                2,
+                3,
+                8,
+                7,
+                14,
+                20,
+                21,
+                0,
+            },
+            // Damage
+            {
+                2,
+                3,
+                4,
+                5,
+                6,
+                15,
+                16,
+                18,
+            },
+        };
+
+    EventOption *idOptions = &EvFreeOptions_InfoDisplay;
+    int *currPreset = 0;
+
+    // check for NONE
+    if (value == 0)
+        currPreset = idPresets[0];
+
+    // check for preset
+    value -= 2;
+    if (value >= 0)
+    {
+        currPreset = idPresets[value + 1];
+    }
+
+    // copy values
+    if (currPreset != 0)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            idOptions[i + OPTINF_ROW1].option_val = currPreset[i];
+        }
+    }
+}
 // Event Functions
 void InfoDisplay_Think(GOBJ *gobj, int pass)
 {
@@ -424,7 +514,7 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
             int rowsEnabled = 8;
             while (rowsEnabled > 0)
             {
-                if (idOptions[rowsEnabled - 1 + 2].option_val != 0)
+                if (idOptions[rowsEnabled - 1 + OPTINF_ROW1].option_val != 0)
                     break;
                 rowsEnabled--;
             }
@@ -445,7 +535,7 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
                 JOBJ_SetMtxDirtySub(idData->menuModel);
 
                 // update info display strings
-                int ply = idOptions[1].option_val;
+                int ply = idOptions[OPTINF_PLAYER].option_val;
                 GOBJ *fighter = Fighter_GetGObj(ply);
                 FighterData *fighter_data;
                 if (fighter != 0)
@@ -453,10 +543,10 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
                 for (int i = 0; i < 8; i++)
                 {
 
-                    int value = idOptions[i + 2].option_val;
+                    int value = idOptions[i + OPTINF_ROW1].option_val;
 
                     // hide text if set to 0 or fighter DNE
-                    if ((idOptions[i + 2].option_val == 0) || fighter == 0)
+                    if ((idOptions[i + OPTINF_ROW1].option_val == 0) || fighter == 0)
                     {
                         Text_SetText(text, i, "");
                     }
@@ -646,120 +736,6 @@ void InfoDisplay_Think(GOBJ *gobj, int pass)
 
     return;
 }
-void DIDraw_Think(GOBJ *gobj, int pass)
-{
-
-    // if toggle enabled
-    if (EvFreeOptions_General[OPTGEN_DI].option_val == 1)
-    {
-        // calculate on first pass
-        if (pass == 0)
-        {
-
-            // loop through all fighters
-            GOBJ **gobj_list = R13_PTR(GOBJLIST);
-            GOBJ *fighter = gobj_list[8];
-            while (fighter != 0)
-            {
-
-                FighterData *fighter_data = fighter->userdata;
-                int ply = fighter_data->ply;
-                DIDraw *didraw = &didraws[ply];
-
-                // if in hitlag and hitstun simulate and update trajectory
-                if ((fighter_data->hitlag == 1) && (fighter_data->hitstun == 1))
-                {
-                    // free old
-                    if (didraw->vertices[ply] != 0)
-                    {
-                        HSD_Free(didraw->vertices[ply]);
-                        didraw->num[ply] = 0;
-                        didraw->vertices[ply] = 0;
-                    }
-
-                    int vertex_num = AS_FLOAT(fighter_data->stateVar1);
-                    didraw->num[ply] = vertex_num;
-
-                    // alloc vertices
-                    didraw->vertices[ply] = calloc(sizeof(Vec2) * vertex_num);
-
-                    // simulate
-                    float gravity = 0;
-                    Vec3 kb = fighter_data->kbVel;
-                    Vec3 pos = fighter_data->pos;
-                    ftCommonData *ftCommon = R13_PTR(-0x514C);
-                    float decay = ftCommon->kb_frameDecay;
-                    for (int i = 0; i < vertex_num; i++)
-                    {
-                        // update gravity
-                        gravity -= fighter_data->gravity;
-                        float terminal_velocity = fighter_data->terminal_velocity * -1;
-                        if (gravity < terminal_velocity)
-                            gravity = terminal_velocity;
-
-                        // decay KB vector
-                        float angle = atan2(kb.Y, kb.X);
-                        kb.X = kb.X - (cos(angle) * decay);
-                        kb.Y = kb.Y - (sin(angle) * decay);
-
-                        // add knockback
-                        VECAdd(&pos, &kb, &pos);
-
-                        // apply gravity
-                        pos.Y += gravity;
-
-                        // save this position
-                        didraw->vertices[ply][i].X = pos.X;
-                        didraw->vertices[ply][i].Y = pos.Y;
-                    }
-                }
-
-                // if not in hitstun, zero out didraw
-                else if (fighter_data->hitstun == 0)
-                {
-                    if (didraw->vertices[ply] != 0)
-                    {
-                        HSD_Free(didraw->vertices[ply]);
-                        didraw->num[ply] = 0;
-                        didraw->vertices[ply] = 0;
-                    }
-                }
-
-                fighter = fighter->next;
-            }
-
-            // draw each
-            for (int i = 0; i < 6; i++)
-            {
-                // for each subchar
-                for (int j = 0; j < 2; j++)
-                {
-                    DIDraw *didraw = &didraws[i];
-                    // if it exists
-                    if (didraw->num != 0)
-                    {
-                        int vertex_num = didraw->num[j];
-                        Vec2 *vertices = didraw->vertices[j];
-
-                        // alloc prim
-                        PRIM *gx = PRIM_NEW(vertex_num, 0x001F1306, 0x00000C55);
-
-                        // draw each
-                        for (int k = 0; k < vertex_num; k++)
-                        {
-                            PRIM_DRAW(gx, vertices[k].X, vertices[k].Y, 0, 0x008affff);
-                        }
-
-                        // close
-                        PRIM_CLOSE();
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-}
 int Update_CheckPause()
 {
 
@@ -867,6 +843,197 @@ void Update_Savestates()
 
     return;
 }
+void DIDraw_Update()
+{
+
+    // is on, update di draw
+    if (EvFreeOptions_General[OPTGEN_DI].option_val == 1)
+    {
+        // loop through all fighters
+        GOBJ **gobj_list = R13_PTR(GOBJLIST);
+        GOBJ *fighter = gobj_list[8];
+        while (fighter != 0)
+        {
+
+            FighterData *fighter_data = fighter->userdata;
+            int ply = fighter_data->ply;
+            DIDraw *didraw = &didraws[ply];
+
+            // if in hitlag and hitstun simulate and update trajectory
+            if ((fighter_data->hitlag == 1) && (fighter_data->hitstun == 1))
+            {
+                // free old
+                if (didraw->vertices[ply] != 0)
+                {
+                    HSD_Free(didraw->vertices[ply]);
+                    didraw->num[ply] = 0;
+                    didraw->vertices[ply] = 0;
+                }
+
+                int vertex_num = AS_FLOAT(fighter_data->stateVar1);
+                didraw->num[ply] = vertex_num;
+
+                // alloc vertices
+                didraw->vertices[ply] = calloc(sizeof(Vec2) * vertex_num);
+
+                // simulate
+                float gravity = 0;
+                Vec3 kb = fighter_data->kbVel;
+                Vec3 pos = fighter_data->pos;
+                ftCommonData *ftCommon = R13_PTR(-0x514C);
+                float decay = ftCommon->kb_frameDecay;
+                for (int i = 0; i < vertex_num; i++)
+                {
+                    // update gravity
+                    gravity -= fighter_data->gravity;
+                    float terminal_velocity = fighter_data->terminal_velocity * -1;
+                    if (gravity < terminal_velocity)
+                        gravity = terminal_velocity;
+
+                    // decay KB vector
+                    float angle = atan2(kb.Y, kb.X);
+                    kb.X = kb.X - (cos(angle) * decay);
+                    kb.Y = kb.Y - (sin(angle) * decay);
+
+                    // add knockback
+                    VECAdd(&pos, &kb, &pos);
+
+                    // apply gravity
+                    pos.Y += gravity;
+
+                    // save this position
+                    didraw->vertices[ply][i].X = pos.X;
+                    didraw->vertices[ply][i].Y = pos.Y;
+                }
+            }
+
+            // if not in hitstun, zero out didraw
+            else if (fighter_data->hitstun == 0)
+            {
+                if (didraw->vertices[ply] != 0)
+                {
+                    HSD_Free(didraw->vertices[ply]);
+                    didraw->num[ply] = 0;
+                    didraw->vertices[ply] = 0;
+                }
+            }
+
+            fighter = fighter->next;
+        }
+    }
+
+    // is off, remove all di draw
+    else
+    {
+        // all slots
+        for (int i = 0; i < 6; i++)
+        {
+            DIDraw *didraw = &didraws[i];
+
+            // all subchars
+            for (int j = 0; j < 2; j++)
+            {
+                if (didraw->vertices[j] != 0)
+                {
+                    HSD_Free(didraw->vertices[j]);
+                    didraw->num[j] = 0;
+                    didraw->vertices[j] = 0;
+                }
+            }
+        }
+    }
+
+    return;
+}
+void DIDraw_GX()
+{
+
+    // if toggle enabled
+    if (EvFreeOptions_General[OPTGEN_DI].option_val == 1)
+    {
+
+        // draw each
+        for (int i = 0; i < 6; i++)
+        {
+            // for each subchar
+            for (int j = 0; j < 2; j++)
+            {
+                DIDraw *didraw = &didraws[i];
+                // if it exists
+                if (didraw->num != 0)
+                {
+                    int vertex_num = didraw->num[j];
+                    Vec2 *vertices = didraw->vertices[j];
+
+                    // alloc prim
+                    PRIM *gx = PRIM_NEW(vertex_num, 0x001F1306, 0x00000C55);
+
+                    // draw each
+                    for (int k = 0; k < vertex_num; k++)
+                    {
+                        PRIM_DRAW(gx, vertices[k].X, vertices[k].Y, 0, 0x008affff);
+                    }
+
+                    // close
+                    PRIM_CLOSE();
+                }
+            }
+        }
+    }
+    return;
+}
+void Update_Camera()
+{
+
+    // if camera is set to advanced
+    if (EvFreeOptions_General[OPTGEN_CAM].option_val == 3)
+    {
+
+        // Get player gobj
+        GOBJ *fighter = Fighter_GetGObj(0);
+        if (fighter != 0)
+        {
+
+            // get players inputs
+            FighterData *fighter_data = fighter->userdata;
+            HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_MASTER);
+            int held = pad->held;
+            float stickX = pad->fsubstickX;
+            float stickY = pad->fsubstickY;
+            float deadzone = 0.2;
+
+            if (fabs(stickX) < deadzone)
+                stickX = 0;
+            if (fabs(stickY) < deadzone)
+                stickY = 0;
+
+            // ensure stick exceeds deadzone
+            if ((stickX != 0) || (stickY != 0))
+            {
+                COBJ *cobj = COBJ_GetMatchCamera();
+
+                // adjust pan
+                if ((held & HSD_BUTTON_A) != 0)
+                {
+                    DevCam_AdjustPan(cobj, stickX * -1, stickY * -1);
+                }
+                // adjust zoom
+                if ((held & HSD_BUTTON_Y) != 0)
+                {
+                    DevCam_AdjustZoom(cobj, stickY);
+                }
+                // adjust rotate
+                if ((held & HSD_BUTTON_B) != 0)
+                {
+                    MatchCamera *matchCam = MATCH_CAM;
+                    DevCam_AdjustRotate(cobj, &matchCam->devcam_rot, &matchCam->devcam_pos, stickX, stickY);
+                }
+            }
+        }
+    }
+
+    return;
+}
 
 // Init Function
 void LCancel_Init(GOBJ *gobj)
@@ -925,7 +1092,7 @@ void LCancel_Init(GOBJ *gobj)
     // Create DIDraw GOBJ
     GOBJ *didraw_gobj = GObj_Create(0, 0, 0);
     // Add gxlink
-    GObj_AddGXLink(didraw_gobj, DIDraw_Think, 6, 0);
+    GObj_AddGXLink(didraw_gobj, DIDraw_GX, 6, 0);
     // init didraw pointers
     for (int i = 0; i < 6; i++)
     {
@@ -941,8 +1108,33 @@ void LCancel_Init(GOBJ *gobj)
     HSD_Update *hsd_update = HSD_UPDATE;
     hsd_update->checkPause = Update_CheckPause;
     hsd_update->checkAdvance = Update_CheckAdvance;
-    hsd_update->onFrame = Update_Savestates;
     return;
+}
+// Update Function
+void LCancel_Update()
+{
+    // run savestate code
+    Update_Savestates();
+
+    // update DI draw
+    DIDraw_Update();
+
+    // update advanced cam
+    Update_Camera();
+
+    // toggle hud
+    if (Pause_CheckStatus(1) != 2)
+    {
+        // toggle HUD
+        if (EvFreeOptions_General[OPTGEN_HUD].option_val == 0)
+        {
+            Match_HideHUD();
+        }
+        else
+        {
+            Match_ShowHUD();
+        }
+    }
 }
 // Think Function
 void LCancel_Think(GOBJ *event)
@@ -1019,6 +1211,7 @@ static EventInfo LCancel = {
     .callbackPriority = 2,
     .eventOnFrame = LCancel_Think,
     .eventOnInit = LCancel_Init,
+    .eventUpdate = LCancel_Update,
     .matchData = &LCancel_MatchData,
     .startMenu = &EvFreeMenu_Main,
     .menuOptionNum = 0,
@@ -3109,6 +3302,13 @@ void EventLoad()
     if (eventInfo->eventOnInit != 0)
     {
         eventInfo->eventOnInit(gobj);
+    }
+
+    // Store pointer to this event's update function
+    if (eventInfo->eventUpdate != 0)
+    {
+        HSD_Update *update = HSD_UPDATE;
+        update->onFrame = eventInfo->eventUpdate;
     }
 
     return;
