@@ -24,13 +24,488 @@ static char nullString[] = " ";
 
 // L-Cancel Training
 
-typedef struct InfoDisplayData
-{
-    JOBJ *menuModel;
-    JOBJ *botLeftEdge;
-    JOBJ *botRightEdge;
-    Text *text;
-} InfoDisplayData;
+// CPU Action Definitions
+static CPUAction EvFree_CPUActionShield[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_TRIGGER_R,         // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_GUARDREFLECT, // state to perform this action. -1 for last
+        0,                 // first possible frame to perform this action
+        0,                 // last possible frame to perfrom this action
+        0,                 // left stick X value
+        0,                 // left stick Y value
+        0,                 // c stick X value
+        0,                 // c stick Y value
+        PAD_TRIGGER_R,     // button to input
+        0,                 // is the last input
+        0,                 // specify stick direction
+    },
+    {
+        ASID_GUARD,    // state to perform this action. -1 for last
+        0,             // first possible frame to perform this action
+        0,             // last possible frame to perfrom this action
+        0,             // left stick X value
+        0,             // left stick Y value
+        0,             // c stick X value
+        0,             // c stick Y value
+        PAD_TRIGGER_R, // button to input
+        1,             // is the last input
+        0,             // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionGrab[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_TRIGGER_Z,         // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionUpB[] = {
+    {
+        ASID_ACTIONABLE, // state to perform this action. -1 for last
+        0,               // first possible frame to perform this action
+        0,               // last possible frame to perfrom this action
+        0,               // left stick X value
+        127,             // left stick Y value
+        0,               // c stick X value
+        0,               // c stick Y value
+        PAD_BUTTON_B,    // button to input
+        1,               // is the last input
+        0,               // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionDownB[] = {
+    {
+        ASID_ACTIONABLE, // state to perform this action. -1 for last
+        0,               // first possible frame to perform this action
+        0,               // last possible frame to perfrom this action
+        0,               // left stick X value
+        -127,            // left stick Y value
+        0,               // c stick X value
+        0,               // c stick Y value
+        PAD_BUTTON_B,    // button to input
+        1,               // is the last input
+        0,               // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionSpotdodge[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        -127,                  // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_TRIGGER_R,         // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionRollAway[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        127,                   // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_TRIGGER_R,         // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_GUARDREFLECT, // state to perform this action. -1 for last
+        0,                 // first possible frame to perform this action
+        0,                 // last possible frame to perfrom this action
+        127,               // left stick X value
+        0,                 // left stick Y value
+        0,                 // c stick X value
+        0,                 // c stick Y value
+        PAD_TRIGGER_R,     // button to input
+        1,                 // is the last input
+        2,                 // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionRollTowards[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        -127,                  // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_TRIGGER_R,         // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_GUARDREFLECT, // state to perform this action. -1 for last
+        0,                 // first possible frame to perform this action
+        0,                 // last possible frame to perfrom this action
+        127,               // left stick X value
+        0,                 // left stick Y value
+        0,                 // c stick X value
+        0,                 // c stick Y value
+        PAD_TRIGGER_R,     // button to input
+        1,                 // is the last input
+        1,                 // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionNair[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        PAD_BUTTON_A,       // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionFair[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        127,                // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        3,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionDair[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        -127,               // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionBair[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        127,                // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        4,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionUair[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        127,                // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionJump[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionJumpAway[] = {
+    {
+        ASID_ACTIONABLE, // state to perform this action. -1 for last
+        0,               // first possible frame to perform this action
+        0,               // last possible frame to perfrom this action
+        0,               // left stick X value
+        0,               // left stick Y value
+        0,               // c stick X value
+        0,               // c stick Y value
+        PAD_BUTTON_X,    // button to input
+        0,               // is the last input
+        0,               // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        -127,               // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        2,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionJumpTowards[] = {
+    {
+        ASID_ACTIONABLE, // state to perform this action. -1 for last
+        0,               // first possible frame to perform this action
+        0,               // last possible frame to perfrom this action
+        0,               // left stick X value
+        0,               // left stick Y value
+        0,               // c stick X value
+        0,               // c stick Y value
+        PAD_BUTTON_X,    // button to input
+        0,               // is the last input
+        0,               // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        127,                // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        1,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionAirdodge[] = {
+    {
+        ASID_DAMAGEAIR, // state to perform this action. -1 for last
+        0,              // first possible frame to perform this action
+        0,              // last possible frame to perfrom this action
+        127,            // left stick X value
+        0,              // left stick Y value
+        0,              // c stick X value
+        0,              // c stick Y value
+        0,              // button to input
+        0,              // is the last input
+        0,              // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        PAD_TRIGGER_R,      // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionFFTumble[] = {
+    {
+        ASID_ACTIONABLE, // state to perform this action. -1 for last
+        0,               // first possible frame to perform this action
+        0,               // last possible frame to perfrom this action
+        0,               // left stick X value
+        -127,            // left stick Y value
+        0,               // c stick X value
+        0,               // c stick Y value
+        0,               // button to input
+        1,               // is the last input
+        0,               // specify stick direction
+    },
+    -1,
+};
+static CPUAction EvFree_CPUActionFFWiggle[] = {
+    {
+        ASID_DAMAGEFALL, // state to perform this action. -1 for last
+        0,               // first possible frame to perform this action
+        0,               // last possible frame to perfrom this action
+        127,             // left stick X value
+        0,               // left stick Y value
+        0,               // c stick X value
+        0,               // c stick Y value
+        0,               // button to input
+        0,               // is the last input
+        0,               // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        -127,               // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
+
+static CPUAction *EvFree_CPUActions[] = {
+    // none 0
+    0,
+    // shield 1
+    &EvFree_CPUActionShield,
+    // grab 2
+    &EvFree_CPUActionGrab,
+    // up b 3
+    &EvFree_CPUActionUpB,
+    // down b 4
+    &EvFree_CPUActionDownB,
+    // spotdodge 5
+    &EvFree_CPUActionSpotdodge,
+    // roll away 6
+    &EvFree_CPUActionRollAway,
+    // roll towards 7
+    &EvFree_CPUActionRollTowards,
+    // nair 8
+    &EvFree_CPUActionNair,
+    // fair 9
+    &EvFree_CPUActionFair,
+    // dair 10
+    &EvFree_CPUActionDair,
+    // bair 11
+    &EvFree_CPUActionBair,
+    // uair 12
+    &EvFree_CPUActionUair,
+    // jump 13
+    &EvFree_CPUActionJump,
+    // jump away 14
+    &EvFree_CPUActionJumpAway,
+    // jump towards 15
+    &EvFree_CPUActionJumpTowards,
+    // airdodge 16
+    &EvFree_CPUActionAirdodge,
+    // fastfall 17
+    &EvFree_CPUActionFFTumble,
+    // wiggle fastfall 18
+    &EvFree_CPUActionFFWiggle,
+};
+static u8 GrAcLookup[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+static u8 AirAcLookup[] = {0, 16, 14, 15, 3, 4, 8, 9, 10, 11, 12, 17, 18};
 
 // Main Menu
 static char **EvFreeOptions_OffOn[] = {"Off", "On"};
@@ -66,24 +541,24 @@ static EventOption EvFreeOptions_Main[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_MENU,                         // the type of option this is; menu, string list, integers list, etc
+        .option_kind = OPTKIND_FUNC,                         // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                                      // number of values for this option
         .option_val = 0,                                     // value of this option
         .menu = 0,                                           // pointer to the menu that pressing A opens
         .option_name = "Help",                               // pointer to a string
         .desc = "Put info here on savestates or something.", // string describing what this option does
         .option_values = 0,                                  // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_Exit,
     },
     {
-        .option_kind = OPTKIND_MENU,                  // the type of option this is; menu, string list, integers list, etc
+        .option_kind = OPTKIND_FUNC,                  // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                               // number of values for this option
         .option_val = 0,                              // value of this option
         .menu = 0,                                    // pointer to the menu that pressing A opens
         .option_name = "Exit",                        // pointer to a string
         .desc = "Return to the Event Select Screen.", // string describing what this option does
         .option_values = 0,                           // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_Exit,
     },
 };
 static EventMenu EvFreeMenu_Main = {
@@ -98,6 +573,7 @@ static EventMenu EvFreeMenu_Main = {
 // General
 static char **EvFreeOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
 static EventOption EvFreeOptions_General[] = {
+    // p1 percent
     {
         .option_kind = OPTKIND_INT,             // the type of option this is; menu, string list, integer list, etc
         .value_num = 999,                       // number of values for this option
@@ -108,6 +584,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_values = 0,                     // pointer to an array of strings
         .onOptionChange = EvFree_ChangePlayerPercent,
     },
+    // cpu percent
     {
         .option_kind = OPTKIND_INT,          // the type of option this is; menu, string list, integer list, etc
         .value_num = 999,                    // number of values for this option
@@ -118,6 +595,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_values = 0,                  // pointer to an array of strings
         .onOptionChange = EvFree_ChangeCPUPercent,
     },
+    // frame advance
     {
         .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
         .value_num = 2,                                                    // number of values for this option
@@ -128,86 +606,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_values = EvFreeOptions_OffOn,                              // pointer to an array of strings
         .onOptionChange = 0,
     },
-    {
-        .option_kind = OPTKIND_STRING,                                                          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                         // number of values for this option
-        .option_val = 1,                                                                        // value of this option
-        .menu = 0,                                                                              // pointer to the menu that pressing A opens
-        .option_name = "Move Staling",                                                          // pointer to a string
-        .desc = "Toggle the staling of moves. Attacks become \nweaker the more they are used.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                   // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                     // number of values for this option
-        .option_val = 1,                                    // value of this option
-        .menu = 0,                                          // pointer to the menu that pressing A opens
-        .option_name = "Model Display",                     // pointer to a string
-        .desc = "Toggle player and item model visibility.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeModelDisplay,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                                                                                                                            // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                                                                           // number of values for this option
-        .option_val = 0,                                                                                                                                          // value of this option
-        .menu = 0,                                                                                                                                                // pointer to the menu that pressing A opens
-        .option_name = "Fighter Collision",                                                                                                                       // pointer to a string
-        .desc = "Toggle hitbox and hurtbox visualization.\nYellow = hurt, red = hit, purple = grab, \nwhite = trigger, green = reflect, blue = shield/\nabsorb.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                                                                     // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeHitDisplay,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                   // value of this option
-        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "Environment Collision",                                                                            // pointer to a string
-        .desc = "Toggle environment collision visualization.\nDisplays the players' ECB (environmental \ncollision box).", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeEnvCollDisplay,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                // number of values for this option
-        .option_val = 1,                               // value of this option
-        .menu = 0,                                     // pointer to the menu that pressing A opens
-        .option_name = "HUD",                          // pointer to a string
-        .desc = "Hide the player percents and timer.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,          // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                   // value of this option
-        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "DI Display",                                                                                       // pointer to a string
-        .desc = "Display knockback trajectories during hitlag.\nUse frame advance to see the effects of DI\nin realtime.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                            // number of values for this option
-        .option_val = 0,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Input Display",            // pointer to a string
-        .desc = "Display player inputs onscreen.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,      // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_STRING,                                                                                       // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_CamMode) / 4,                                                                      // number of values for this option
-        .option_val = 0,                                                                                                     // value of this option
-        .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
-        .option_name = "Camera Mode",                                                                                        // pointer to a string
-        .desc = "Change the camera's behavior.\nIn advanced mode, use CStick while holding\nA/B/Y to pan, rotate and zoom.", // string describing what this option does
-        .option_values = EvFreeOptions_CamMode,                                                                              // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeCamMode,
-    },
+    // info display
     {
         .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                                       // number of values for this option
@@ -218,6 +617,95 @@ static EventOption EvFreeOptions_General[] = {
         .option_values = 0,                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
+    // model display
+    {
+        .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                     // number of values for this option
+        .option_val = 1,                                    // value of this option
+        .menu = 0,                                          // pointer to the menu that pressing A opens
+        .option_name = "Model Display",                     // pointer to a string
+        .desc = "Toggle player and item model visibility.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeModelDisplay,
+    },
+    // fighter collision
+    {
+        .option_kind = OPTKIND_STRING,                                                                                                                            // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                                                           // number of values for this option
+        .option_val = 0,                                                                                                                                          // value of this option
+        .menu = 0,                                                                                                                                                // pointer to the menu that pressing A opens
+        .option_name = "Fighter Collision",                                                                                                                       // pointer to a string
+        .desc = "Toggle hitbox and hurtbox visualization.\nYellow = hurt, red = hit, purple = grab, \nwhite = trigger, green = reflect, blue = shield/\nabsorb.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                                                                     // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeHitDisplay,
+    },
+    // environment collision
+    {
+        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                    // number of values for this option
+        .option_val = 0,                                                                                                   // value of this option
+        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "Environment Collision",                                                                            // pointer to a string
+        .desc = "Toggle environment collision visualization.\nDisplays the players' ECB (environmental \ncollision box).", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeEnvCollDisplay,
+    },
+    // camera mode
+    {
+        .option_kind = OPTKIND_STRING,                                                                                       // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_CamMode) / 4,                                                                      // number of values for this option
+        .option_val = 0,                                                                                                     // value of this option
+        .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
+        .option_name = "Camera Mode",                                                                                        // pointer to a string
+        .desc = "Change the camera's behavior.\nIn advanced mode, use CStick while holding\nA/B/Y to pan, rotate and zoom.", // string describing what this option does
+        .option_values = EvFreeOptions_CamMode,                                                                              // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeCamMode,
+    },
+    // hud
+    {
+        .option_kind = OPTKIND_STRING,                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                         // number of values for this option
+        .option_val = 1,                                        // value of this option
+        .menu = 0,                                              // pointer to the menu that pressing A opens
+        .option_name = "HUD",                                   // pointer to a string
+        .desc = "Toggle player percents and timer visibility.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    // di display
+    {
+        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                    // number of values for this option
+        .option_val = 0,                                                                                                   // value of this option
+        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "DI Display",                                                                                       // pointer to a string
+        .desc = "Display knockback trajectories during hitlag.\nUse frame advance to see the effects of DI\nin realtime.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    // input display
+    {
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                            // number of values for this option
+        .option_val = 0,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Input Display",            // pointer to a string
+        .desc = "Display player inputs onscreen.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,      // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    // move staling
+    {
+        .option_kind = OPTKIND_STRING,                                                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                         // number of values for this option
+        .option_val = 1,                                                                        // value of this option
+        .menu = 0,                                                                              // pointer to the menu that pressing A opens
+        .option_name = "Move Staling",                                                          // pointer to a string
+        .desc = "Toggle the staling of moves. Attacks become \nweaker the more they are used.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+
 };
 static EventMenu EvFreeMenu_General = {
     .name = "General",                 // the name of this menu
@@ -434,7 +922,7 @@ static EventOption EvFreeOptions_CPU[] = {
     {
         .option_kind = OPTKIND_STRING,                                                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_CounterGround) / 4,                               // number of values for this option
-        .option_val = 0,                                                                   // value of this option
+        .option_val = 1,                                                                   // value of this option
         .menu = 0,                                                                         // pointer to the menu that pressing A opens
         .option_name = "Counter Action (Ground)",                                          // pointer to a string
         .desc = "Select the action to be performed after a\ngrounded CPU's hitstun ends.", // string describing what this option does
@@ -444,7 +932,7 @@ static EventOption EvFreeOptions_CPU[] = {
     {
         .option_kind = OPTKIND_STRING,                                                      // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_CounterAir) / 4,                                   // number of values for this option
-        .option_val = 0,                                                                    // value of this option
+        .option_val = 1,                                                                    // value of this option
         .menu = 0,                                                                          // pointer to the menu that pressing A opens
         .option_name = "Counter Action (Air)",                                              // pointer to a string
         .desc = "Select the action to be performed after an\nairborne CPU's hitstun ends.", // string describing what this option does
@@ -700,6 +1188,20 @@ void EvFree_ChangeInfoPreset(int value)
         }
     }
 }
+void EvFree_Exit(int value)
+{
+    Match *match = MATCH;
+
+    // end game
+    match->state = 3;
+
+    // Unfreeze
+    EvFreeOptions_General[OPTGEN_FRAME].option_val = 0;
+    //HSD_Update *update = HSD_UPDATE;
+    //update->pause_develop = 0;
+    return;
+}
+
 // Event Functions
 void InfoDisplay_GX(GOBJ *gobj, int pass)
 {
@@ -972,6 +1474,400 @@ void InfoDisplay_Think(GOBJ *gobj)
         // hide model and text
         JOBJ_SetFlags(idData->menuModel, JOBJ_HIDDEN);
         idData->text->hidden = 1;
+    }
+
+    return;
+}
+float Fighter_GetOpponentDir(FighterData *from, FighterData *to)
+{
+    float dir = -1;
+    Vec3 *from_pos = &from->pos;
+    Vec3 *to_pos = &to->pos;
+
+    if (from_pos->X <= to_pos->X)
+        dir = 1;
+
+    return dir;
+}
+int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
+{
+
+    static u8 grActionable[] = {ASID_WAIT, ASID_WALKSLOW, ASID_WALKMIDDLE, ASID_WALKFAST, ASID_RUN, ASID_SQUATWAIT};
+    static u8 airActionable[] = {ASID_JUMPF, ASID_JUMPB, ASID_JUMPAERIALF, ASID_JUMPAERIALB, ASID_FALL, ASID_FALLAERIALF, ASID_FALLAERIALB, ASID_DAMAGEFALL, ASID_DAMAGEFLYROLL, ASID_DAMAGEFLYTOP};
+    static u8 airDamage[] = {ASID_DAMAGEFLYHI, ASID_DAMAGEFLYN, ASID_DAMAGEFLYLW, ASID_DAMAGEFLYTOP, ASID_DAMAGEFLYROLL, ASID_DAMAGEFALL};
+
+    FighterData *cpu_data = cpu->userdata;
+    int isActionable = 0;
+    int cpu_state = cpu_data->state_id;
+
+    // if 0, check the one that corresponds with ground state
+    if (actionable_kind == 0)
+    {
+        actionable_kind = cpu_data->air_state + 1;
+    }
+
+    // ground
+    if (actionable_kind == 1)
+    {
+        // check ground actionable
+        for (int i = 0; i < sizeof(grActionable); i++)
+        {
+            if (cpu_state == grActionable[i])
+            {
+                isActionable = 1;
+                break;
+            }
+        }
+        // landing
+        if ((cpu_data->state_id == ASID_LANDING) && (cpu_data->stateFrame >= cpu_data->normal_landing_lag))
+            isActionable = 1;
+    }
+    // air
+    else if (actionable_kind == 2)
+    {
+        // check air actionable
+        for (int i = 0; i < sizeof(airActionable); i++)
+        {
+            if (cpu_state == airActionable[i])
+            {
+                isActionable = 1;
+                break;
+            }
+        }
+    }
+    // damage state that requires wiggling
+    else if (actionable_kind == 3)
+    {
+        // check air actionable
+        for (int i = 0; i < sizeof(airDamage); i++)
+        {
+            if (cpu_state == airDamage[i])
+            {
+                isActionable = 1;
+                break;
+            }
+        }
+    }
+
+    return isActionable;
+}
+int LCancel_CPUActionThnk(GOBJ *cpu, int action_id, GOBJ *hmn)
+{
+
+    FighterData *cpu_data = cpu->userdata;
+    FighterData *hmn_data = hmn->userdata;
+
+    // get CPU action
+    int action_done = 0;
+    CPUAction *action_list = EvFree_CPUActions[action_id];
+    int cpu_state = cpu_data->state_id;
+    u16 cpu_frame = cpu_data->stateFrame;
+
+    // clear inputs
+    Fighter_ZeroCPUInputs(cpu_data);
+
+    // loop through all inputs
+    int action_parse = 0;
+    CPUAction *action_input = &action_list[action_parse];
+    while ((action_input != 0) && (action_input->state != 0xFFFF))
+    {
+
+        int isState = 0;
+        if ((action_input->state >= ASID_ACTIONABLE) && (action_input->state <= ASID_DAMAGEAIR))
+        {
+
+            isState = CPUAction_CheckActionable(cpu, (action_input->state - ASID_ACTIONABLE));
+        }
+        else if (action_input->state == cpu_state)
+        {
+            isState = 1;
+        }
+
+        // check if this is the current state
+        if (isState == 1)
+        {
+            // check if im on the right frame
+            if (cpu_frame >= action_input->frameLow)
+            {
+
+                // perform this action
+                s8 dir;
+                int held = action_input->input;
+                s8 lstickX = action_input->stickX;
+                s8 lstickY = action_input->stickY;
+                s8 cstickX = action_input->cstickX;
+                s8 cstickY = action_input->cstickY;
+
+                // stick direction
+                switch (action_input->stickDir)
+                {
+                case (STCKDIR_NONE):
+                {
+                    break;
+                }
+                case (STCKDIR_TOWARD):
+                {
+                    dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+                    lstickX *= dir;
+                    break;
+                }
+                case (STCKDIR_AWAY):
+                {
+                    dir = Fighter_GetOpponentDir(cpu_data, hmn_data) * -1;
+                    lstickX *= dir;
+                    break;
+                }
+                case (STCKDIR_FRONT):
+                {
+                    dir = cpu_data->facing_direction;
+                    lstickX *= dir;
+                    cstickX *= dir;
+                    break;
+                }
+                case (STCKDIR_BACK):
+                {
+                    dir = cpu_data->facing_direction;
+                    lstickX *= (dir * -1);
+                    cstickX *= (dir * -1);
+                    break;
+                }
+                }
+
+                blr();
+
+                // perform this action
+                cpu_data->cpu.held = held;
+                cpu_data->cpu.lstickX = lstickX;
+                cpu_data->cpu.lstickY = lstickY;
+                cpu_data->cpu.cstickX = cstickX;
+                cpu_data->cpu.cstickY = cstickY;
+
+                // check if this was the last action
+                if (action_input->isLast == 1)
+                    action_done = 1;
+
+                break;
+            }
+        }
+
+        // get next input
+        action_parse++;
+        action_input = &action_list[action_parse];
+    }
+
+    return action_done;
+}
+void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
+{
+    // get gobjs data
+    LCancelData *eventData = event->userdata;
+    FighterData *hmn_data = hmn->userdata;
+    FighterData *cpu_data = cpu->userdata;
+    GOBJ **gobjlist = R13_PTR(GOBJLIST);
+
+    int cpu_state = eventData->cpu_state;
+
+    // run CPU logic
+    switch (cpu_state)
+    {
+    case CPUSTATE_START:
+    {
+        // check for damage
+        if ((cpu_data->hitstun == 1))
+        {
+            cpu_data->cpu.ai = 15;
+            eventData->cpu_state = CPUSTATE_DMG;
+            goto LCancel_CPUThink_DMG;
+        }
+        else
+        {
+            cpu_data->cpu.ai = 0;
+        }
+
+        break;
+    }
+    case CPUSTATE_DMG:
+    {
+    LCancel_CPUThink_DMG:
+
+        // update move instance
+        if (eventData->cpu_lasthit != cpu_data->damage_instancehitby)
+        {
+            eventData->cpu_hitcount++;
+            eventData->cpu_lasthit = cpu_data->damage_instancehitby;
+            OSReport("hit count %d/%d", eventData->cpu_hitcount, EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val);
+        }
+
+        // SDI and TDI think
+        if (cpu_data->hitlag == 1)
+        {
+            // TDI Think
+            if (cpu_data->hitlag_frames == 1)
+            {
+                OSReport("TDI here");
+            }
+            // SDI Think
+            else
+            {
+                OSReport("SDI here");
+            }
+        }
+
+        // KB Think (tech)
+        else if (cpu_data->hitstun == 1)
+        {
+            int tech_kind = EvFreeOptions_CPU[OPTCPU_TECH].option_val;
+            s8 dir;
+            s8 stickX = 0;
+            s8 sincePress = 0;
+            s8 since2Press = -1;
+
+        TECH_SWITCH:
+            switch (tech_kind)
+            {
+            case (CPUTECH_RANDOM):
+            {
+                tech_kind = (HSD_Randi((sizeof(EvFreeValues_Tech) / 4) - 1) + 1);
+                goto TECH_SWITCH;
+                break;
+            }
+            case (CPUTECH_NEUTRAL):
+            {
+                break;
+            }
+            case (CPUTECH_AWAY):
+            {
+                dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+                stickX = 127 * (dir * -1);
+                break;
+            }
+            case (CPUTECH_TOWARDS):
+            {
+                dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+                stickX = 127 * (dir);
+                break;
+            }
+            case (CPUTECH_NONE):
+            {
+                sincePress = -1;
+                break;
+            }
+            }
+        TECH_INPUT:
+            cpu_data->input_sinceLR = sincePress;
+            cpu_data->input_sinceRapidLR = since2Press;
+            cpu_data->cpu.lstickX = stickX;
+        }
+
+        // Check to counter
+        else
+        {
+            if (eventData->cpu_hitcount >= EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val)
+            {
+                if (eventData->cpu_sincehit >= EvFreeOptions_CPU[OPTCPU_CTRFRAMES].option_val)
+                {
+                    eventData->cpu_state = CPUSTATE_COUNTER;
+                    goto LCancel_CPUThink_COUNTER;
+                }
+
+                else
+                {
+                    // increment frames since being hit
+                    eventData->cpu_sincehit++;
+                }
+            }
+        }
+
+        break;
+    }
+    case CPUSTATE_COUNTER:
+    {
+    LCancel_CPUThink_COUNTER:
+    {
+
+        // get action to perform
+        int action_id;
+        if (cpu_data->air_state == 0)
+        {
+            // get grounded action
+            int grndCtr = EvFreeOptions_CPU[OPTCPU_CTRGRND].option_val;
+            action_id = GrAcLookup[grndCtr];
+        }
+        else
+        {
+            // get air action
+            int airCtr = EvFreeOptions_CPU[OPTCPU_CTRAIR].option_val;
+            action_id = AirAcLookup[airCtr];
+        }
+
+        // perform action
+        int action_done = LCancel_CPUActionThnk(cpu, action_id, hmn);
+
+        // reset
+        if (action_done == 1)
+        {
+            eventData->cpu_state = CPUSTATE_START;
+            eventData->cpu_hitshield = 0;
+            eventData->cpu_hitcount = 0;
+            eventData->cpu_sincehit = 0;
+            eventData->cpu_hitshield = 0;
+            eventData->cpu_lasthit = -1;
+        }
+
+        break;
+    }
+    }
+    }
+    // update state value
+    cpu_state = eventData->cpu_state;
+    OSReport("cpu_state: %d", cpu_state);
+
+    // update cpu_hitshield
+    if (eventData->cpu_hitshield == 0)
+    {
+        GOBJ *fighter = gobjlist[8];
+        while (fighter != 0)
+        {
+            FighterData *fighter_data = fighter->userdata;
+
+            // check if in guard off
+            if (fighter_data->state_id == ASID_GUARDSETOFF)
+            {
+                eventData->cpu_hitshield = 1;
+                break;
+            }
+
+            fighter = fighter->next;
+        }
+    }
+
+    // update shield deterioration
+    int infShield = EvFreeOptions_CPU[OPTCPU_SHIELD].option_val;
+    if (infShield == 1)
+    {
+        if (eventData->cpu_hitshield == 0)
+        {
+            // inf shield
+            GOBJ *fighter = gobjlist[8];
+            while (fighter != 0)
+            {
+                FighterData *fighter_data = fighter->userdata;
+                fighter_data->shield_health = 60;
+                fighter = fighter->next;
+            }
+        }
+    }
+    else if (infShield == 2)
+    {
+        // inf shield
+        GOBJ *fighter = gobjlist[8];
+        while (fighter != 0)
+        {
+            FighterData *fighter_data = fighter->userdata;
+            fighter_data->shield_health = 60;
+
+            fighter = fighter->next;
+        }
     }
 
     return;
@@ -1278,10 +2174,13 @@ void Update_Camera()
 // Init Function
 void LCancel_Init(GOBJ *gobj)
 {
-    int *EventData = gobj->userdata;
-    EventInfo *eventInfo = EventData[0];
+    LCancelData *eventData = gobj->userdata;
+    EventInfo *eventInfo = eventData->eventInfo;
+    GOBJ *hmn = Fighter_GetGObj(0);
+    FighterData *hmn_data = hmn->userdata;
+    GOBJ *cpu = Fighter_GetGObj(1);
+    FighterData *cpu_data = cpu->userdata;
     OSReport("this is %s\n", eventInfo->eventName);
-    //OSReport("%s", EvFreeOptions_Main[1].option_values[1]);
 
     // Create Info Display GOBJ
     GOBJ *idGOBJ = GObj_Create(0, 0, 0);
@@ -1350,6 +2249,10 @@ void LCancel_Init(GOBJ *gobj)
     HSD_Update *hsd_update = HSD_UPDATE;
     hsd_update->checkPause = Update_CheckPause;
     hsd_update->checkAdvance = Update_CheckAdvance;
+
+    // set CPU AI to no_act 15
+    cpu_data->cpu.ai = 0;
+
     return;
 }
 // Update Function
@@ -1381,6 +2284,7 @@ void LCancel_Update()
 // Think Function
 void LCancel_Think(GOBJ *event)
 {
+    LCancelData *eventData = event->userdata;
 
     // get fighter data
     GOBJ *hmn = Fighter_GetGObj(0);
@@ -1423,6 +2327,9 @@ void LCancel_Think(GOBJ *event)
         cpu_data->no_reaction_always = 0;
         cpu_data->nudge_disable = 0;
     }
+
+    // CPU Think
+    LCancel_CPUThink(event, hmn, cpu);
 
     return;
 }
@@ -1467,7 +2374,7 @@ static EventInfo LCancel = {
     .isChooseCPU = true,
     .isSelectStage = true,
     .scoreType = 0,
-    .callbackPriority = 2,
+    .callbackPriority = 3,
     .eventOnFrame = LCancel_Think,
     .eventOnInit = LCancel_Init,
     .eventUpdate = LCancel_Update,
@@ -3541,17 +4448,19 @@ void EventLoad()
     int pri = eventInfo->callbackPriority;
     void *cb = eventInfo->eventOnFrame;
     GOBJ *gobj = GObj_Create(0, 7, 0);
-    int *userdata = HSD_MemAlloc(EVENT_DATASIZE);
+    int *userdata = calloc(EVENT_DATASIZE);
     GObj_AddUserData(gobj, 4, HSD_Free, userdata);
     GObj_AddProc(gobj, cb, pri);
 
     // store pointer to the event's data
     userdata[0] = eventInfo;
+    R13_PTR(EVENT_DATA) = userdata;
 
     // init the pause menu
     EventMenu_Init(eventInfo);
 
     // init savestate struct
+    eventDataBackup = calloc(EVENT_DATASIZE);
     for (int i = 0; i < sizeof(savestates) / 4; i++)
     {
         savestates[i] = 0;
@@ -3738,6 +4647,9 @@ void Savestate_Save()
     if (canSave == 1)
     {
 
+        // backup event data
+        memcpy(eventDataBackup, R13_PTR(EVENT_DATA), EVENT_DATASIZE);
+
         // free all savestates
         for (int i = 0; i < sizeof(savestates) / 4; i++)
         {
@@ -3817,8 +4729,6 @@ void Savestate_Load()
         FighterData *fighter_data;
     } BackupQueue;
 
-    blr();
-
     // loop through all players
     int isLoaded = 0;
     for (int i = 0; i < 6; i++)
@@ -3862,7 +4772,7 @@ void Savestate_Load()
                     // backup buttons and collision bubble toggle
                     int input_lstick_x = fighter_data->input_lstick_x;
                     int input_lstick_y = fighter_data->input_lstick_y;
-                    int input_held = fighter_data->input_held;
+                    int dpad_held = (fighter_data->input_held & PAD_BUTTON_DPAD_LEFT) & (fighter_data->input_held & PAD_BUTTON_DPAD_RIGHT);
                     u8 show_model = fighter_data->show_model;
                     u8 show_hit = fighter_data->show_hit;
 
@@ -3874,13 +4784,21 @@ void Savestate_Load()
                     ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, -0, fighter, backup_data->state_id, 0, 0);
                     fighter_data->stateBlend = 0;
 
+                    // snap dynamic bones in place
+                    /*
+                    if (fighter_data->state_id == ASID_WAIT)
+                    {
+                        Fighter_DisableBlend(fighter, 6);
+                    }
+                    */
+
                     // restore fighter data
                     memcpy(fighter_data, &savestate->fighter_data[j], sizeof(FighterData));
 
                     // restore buttons and collision bubble toggle
                     fighter_data->input_lstick_x = input_lstick_x;
                     fighter_data->input_lstick_y = input_lstick_y;
-                    fighter_data->input_held = input_held;
+                    fighter_data->input_held &= dpad_held;
                     fighter_data->show_model = show_model;
                     fighter_data->show_hit = show_hit;
 
@@ -3937,13 +4855,15 @@ void Savestate_Load()
         }
     }
 
-    // Play SFX
+    // Restore event data and Play SFX
     if (isLoaded == 0)
     {
         SFX_PlayCommon(3);
     }
     if (isLoaded == 1)
     {
+        memcpy(R13_PTR(EVENT_DATA), eventDataBackup, EVENT_DATASIZE);
+
         SFX_PlayCommon(0);
     }
 
@@ -4306,6 +5226,15 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             EventMenu_CreatePopupModel(gobj, currMenu);
             EventMenu_CreatePopupText(gobj, currMenu);
             EventMenu_UpdatePopupText(gobj, currOption);
+
+            // also play sfx
+            SFX_PlayCommon(1);
+        }
+
+        // check to run a function
+        if ((currOption->option_kind == OPTKIND_FUNC))
+        {
+            currOption->onOptionChange(0);
 
             // also play sfx
             SFX_PlayCommon(1);

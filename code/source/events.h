@@ -138,15 +138,48 @@ void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj);
 static Savestate *savestates[6];
+static int *eventDataBackup;
 void Savestate_Save();
 void Savestate_Load();
 
 // Labbing event
+typedef struct LCancelData
+{
+    EventInfo *eventInfo;
+    u8 cpu_state;
+    u8 cpu_hitshield;
+    u8 cpu_hitcount;
+    u8 cpu_sincehit;
+    s16 cpu_lasthit;
+    s32 timer;
+} LCancelData;
+typedef struct InfoDisplayData
+{
+    JOBJ *menuModel;
+    JOBJ *botLeftEdge;
+    JOBJ *botRightEdge;
+    Text *text;
+} InfoDisplayData;
 typedef struct DIDraw
 {
     int num[2];        // number of vertices
     Vec2 *vertices[2]; // pointer to vertices to draw
 } DIDraw;
+typedef struct CPUAction
+{
+    u16 state;                  // state to perform this action. -1 for last
+    u8 frameLow;                // first possible frame to perform this action
+    u8 frameHi;                 // last possible frame to perfrom this action
+    s8 stickX;                  // left stick X value
+    s8 stickY;                  // left stick Y value
+    s8 cstickX;                 // c stick X value
+    s8 cstickY;                 // c stick Y value
+    int input;                  // button to input
+    unsigned char isLast : 1;   // flag to indicate this was the final input
+    unsigned char stickDir : 3; // 0 = none, 1 = towards opponent, 2 = away from opponent, 3 = forward, 4 = backward
+
+} CPUAction;
+
 void EvFree_ChangePlayerPercent(int value);
 void EvFree_ChangeCPUPercent(int value);
 void EvFree_ChangeModelDisplay(int value);
@@ -155,6 +188,7 @@ void EvFree_ChangeEnvCollDisplay(int value);
 void EvFree_ChangeCamMode(int value);
 void EvFree_ChangeInfoPreset(int value);
 void EvFree_ChangeInfoRow(int value);
+void EvFree_Exit(int value);
 void InfoDisplay_Think(GOBJ *gobj);
 void InfoDisplay_GX(GOBJ *gobj, int pass);
 
@@ -172,6 +206,7 @@ static EventMenu EvFreeMenu_Record;
 #define OPTKIND_STRING 1
 #define OPTKIND_INT 2
 #define OPTKIND_FLOAT 3
+#define OPTKIND_FUNC 4
 
 // EventMenu state definitions
 #define EMSTATE_FOCUS 0
@@ -290,15 +325,15 @@ static EventMenu EvFreeMenu_Record;
 #define OPTGEN_HMNPCNT 0
 #define OPTGEN_CPUPCNT 1
 #define OPTGEN_FRAME 2
-#define OPTGEN_STALE 3
+#define OPTINF_INFO 3
 #define OPTGEN_MODEL 4
 #define OPTGEN_HIT 5
 #define OPTGEN_COLL 6
-#define OPTGEN_HUD 7
-#define OPTGEN_DI 8
-#define OPTGEN_INPUT 9
-#define OPTGEN_CAM 10
-#define OPTINF_INFO 11
+#define OPTGEN_CAM 7
+#define OPTGEN_HUD 8
+#define OPTGEN_DI 9
+#define OPTGEN_INPUT 10
+#define OPTGEN_STALE 11
 
 // CPU Options
 #define OPTCPU_INTANG 0
@@ -323,3 +358,33 @@ static EventMenu EvFreeMenu_Record;
 #define OPTINF_PLAYER 1
 #define OPTINF_PRESET 2
 #define OPTINF_ROW1 3
+
+// CPU States
+#define CPUSTATE_START 0
+#define CPUSTATE_DMG 1
+#define CPUSTATE_COUNTER 2
+
+// Tech Definitions
+#define CPUTECH_RANDOM 0
+#define CPUTECH_NEUTRAL 1
+#define CPUTECH_AWAY 2
+#define CPUTECH_TOWARDS 3
+#define CPUTECH_NONE 4
+
+// SDI Definitions
+#define CPUSDI_RANDOM 0
+#define CPUSDI_NONE 1
+
+// TDI Definitions
+#define CPUTDI_RANDOM 0
+#define CPUTDI_SURVIVAL 1
+#define CPUTDI_COMBO 2
+#define CPUTDI_FLOORHUG 3
+#define CPUTDI_NONE 4
+
+// Stick Direction Definitions
+#define STCKDIR_NONE 0
+#define STCKDIR_TOWARD 1
+#define STCKDIR_AWAY 2
+#define STCKDIR_FRONT 3
+#define STCKDIR_BACK 4
