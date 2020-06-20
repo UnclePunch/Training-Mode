@@ -66,6 +66,18 @@ static CPUAction EvFree_CPUActionShield[] = {
 };
 static CPUAction EvFree_CPUActionGrab[] = {
     {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_BUTTON_A | PAD_TRIGGER_R, // button to input
+        1,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
         0,                     // last possible frame to perfrom this action
@@ -81,6 +93,42 @@ static CPUAction EvFree_CPUActionGrab[] = {
 };
 static CPUAction EvFree_CPUActionUpB[] = {
     {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
+        ASID_GUARD,   // state to perform this action. -1 for last
+        0,            // first possible frame to perform this action
+        0,            // last possible frame to perfrom this action
+        0,            // left stick X value
+        0,            // left stick Y value
+        0,            // c stick X value
+        0,            // c stick Y value
+        PAD_BUTTON_X, // button to input
+        0,            // is the last input
+        0,            // specify stick direction
+    },
+    {
+        ASID_KNEEBEND, // state to perform this action. -1 for last
+        0,             // first possible frame to perform this action
+        0,             // last possible frame to perfrom this action
+        0,             // left stick X value
+        127,           // left stick Y value
+        0,             // c stick X value
+        0,             // c stick Y value
+        PAD_BUTTON_B,  // button to input
+        1,             // is the last input
+        0,             // specify stick direction
+    },
+    {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
         0,               // last possible frame to perfrom this action
@@ -95,6 +143,30 @@ static CPUAction EvFree_CPUActionUpB[] = {
     -1,
 };
 static CPUAction EvFree_CPUActionDownB[] = {
+    {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
+        ASID_GUARD,   // state to perform this action. -1 for last
+        0,            // first possible frame to perform this action
+        0,            // last possible frame to perfrom this action
+        0,            // left stick X value
+        0,            // left stick Y value
+        0,            // c stick X value
+        0,            // c stick Y value
+        PAD_BUTTON_X, // button to input
+        1,            // is the last input
+        0,            // specify stick direction
+    },
     {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
@@ -180,6 +252,18 @@ static CPUAction EvFree_CPUActionRollTowards[] = {
 };
 static CPUAction EvFree_CPUActionNair[] = {
     {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
         0,                     // last possible frame to perfrom this action
@@ -206,6 +290,18 @@ static CPUAction EvFree_CPUActionNair[] = {
     -1,
 };
 static CPUAction EvFree_CPUActionFair[] = {
+    {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -234,6 +330,18 @@ static CPUAction EvFree_CPUActionFair[] = {
 };
 static CPUAction EvFree_CPUActionDair[] = {
     {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
         0,                     // last possible frame to perfrom this action
@@ -260,6 +368,18 @@ static CPUAction EvFree_CPUActionDair[] = {
     -1,
 };
 static CPUAction EvFree_CPUActionBair[] = {
+    {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -288,6 +408,18 @@ static CPUAction EvFree_CPUActionBair[] = {
 };
 static CPUAction EvFree_CPUActionUair[] = {
     {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
         0,                     // last possible frame to perfrom this action
@@ -314,6 +446,18 @@ static CPUAction EvFree_CPUActionUair[] = {
     -1,
 };
 static CPUAction EvFree_CPUActionJump[] = {
+    {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -504,8 +648,9 @@ static CPUAction *EvFree_CPUActions[] = {
     // wiggle fastfall 18
     &EvFree_CPUActionFFWiggle,
 };
-static u8 GrAcLookup[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+static u8 GrAcLookup[] = {0, 5, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13};
 static u8 AirAcLookup[] = {0, 16, 14, 15, 3, 4, 8, 9, 10, 11, 12, 17, 18};
+static u8 ShieldAcLookup[] = {0, 2, 13, 5, 3, 4, 8, 9, 10, 11, 12};
 
 // Main Menu
 static char **EvFreeOptions_OffOn[] = {"Off", "On"};
@@ -573,28 +718,6 @@ static EventMenu EvFreeMenu_Main = {
 // General
 static char **EvFreeOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
 static EventOption EvFreeOptions_General[] = {
-    // p1 percent
-    {
-        .option_kind = OPTKIND_INT,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 999,                       // number of values for this option
-        .option_val = 0,                        // value of this option
-        .menu = 0,                              // pointer to the menu that pressing A opens
-        .option_name = "Player Percent",        // pointer to a string
-        .desc = "Adjust the player's percent.", // string describing what this option does
-        .option_values = 0,                     // pointer to an array of strings
-        .onOptionChange = EvFree_ChangePlayerPercent,
-    },
-    // cpu percent
-    {
-        .option_kind = OPTKIND_INT,          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 999,                    // number of values for this option
-        .option_val = 0,                     // value of this option
-        .menu = 0,                           // pointer to the menu that pressing A opens
-        .option_name = "CPU Percent",        // pointer to a string
-        .desc = "Adjust the CPU's percent.", // string describing what this option does
-        .option_values = 0,                  // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeCPUPercent,
-    },
     // frame advance
     {
         .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
@@ -606,16 +729,16 @@ static EventOption EvFreeOptions_General[] = {
         .option_values = EvFreeOptions_OffOn,                              // pointer to an array of strings
         .onOptionChange = 0,
     },
-    // info display
+    // p1 percent
     {
-        .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                                       // number of values for this option
-        .option_val = 0,                                      // value of this option
-        .menu = &EvFreeMenu_InfoDisplay,                      // pointer to the menu that pressing A opens
-        .option_name = "Info Display",                        // pointer to a string
-        .desc = "Display various game information onscreen.", // string describing what this option does
-        .option_values = 0,                                   // pointer to an array of strings
-        .onOptionChange = 0,
+        .option_kind = OPTKIND_INT,             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 999,                       // number of values for this option
+        .option_val = 0,                        // value of this option
+        .menu = 0,                              // pointer to the menu that pressing A opens
+        .option_name = "Player Percent",        // pointer to a string
+        .desc = "Adjust the player's percent.", // string describing what this option does
+        .option_values = 0,                     // pointer to an array of strings
+        .onOptionChange = EvFree_ChangePlayerPercent,
     },
     // model display
     {
@@ -649,6 +772,17 @@ static EventOption EvFreeOptions_General[] = {
         .desc = "Toggle environment collision visualization.\nDisplays the players' ECB (environmental \ncollision box).", // string describing what this option does
         .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
         .onOptionChange = EvFree_ChangeEnvCollDisplay,
+    },
+    // info display
+    {
+        .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                       // number of values for this option
+        .option_val = 0,                                      // value of this option
+        .menu = &EvFreeMenu_InfoDisplay,                      // pointer to the menu that pressing A opens
+        .option_name = "Info Display",                        // pointer to a string
+        .desc = "Display various game information onscreen.", // string describing what this option does
+        .option_values = 0,                                   // pointer to an array of strings
+        .onOptionChange = 0,
     },
     // camera mode
     {
@@ -708,13 +842,13 @@ static EventOption EvFreeOptions_General[] = {
 
 };
 static EventMenu EvFreeMenu_General = {
-    .name = "General",                 // the name of this menu
-    .option_num = 12,                  // number of options this menu contains
-    .scroll = 0,                       // runtime variable used for how far down in the menu to start
-    .state = 0,                        // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                       // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_General, // pointer to all of this menu's options
-    .prev = 0,                         // pointer to previous menu, used at runtime
+    .name = "General",                                                 // the name of this menu
+    .option_num = sizeof(EvFreeOptions_General) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                       // runtime variable used for how far down in the menu to start
+    .state = 0,                                                        // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                       // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_General,                                 // pointer to all of this menu's options
+    .prev = 0,                                                         // pointer to previous menu, used at runtime
 };
 // Info Display
 static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Blastzone Left/Right", "Blastzone Up/Down"};
@@ -843,12 +977,25 @@ static EventMenu EvFreeMenu_InfoDisplay = {
 // CPU
 static char **EvFreeValues_Shield[] = {"Off", "On Until Hit", "On"};
 static char **EvFreeValues_CPUBehave[] = {"Stand", "Shield", "Crouch", "Jump"};
-static char **EvFreeValues_TDI[] = {"Random", "Survival", "Combo", "Floorhug", "None"};
+static char **EvFreeValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "None"};
 static char **EvFreeValues_SDI[] = {"Random", "None"};
 static char **EvFreeValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
-static char **EvFreeValues_CounterGround[] = {"None", "Shield", "Grab", "Up B", "Down B", "Spotdodge", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
+static char **EvFreeValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
+static char **EvFreeValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
 static char **EvFreeValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
+static char **EvFreeValues_CounterShield[] = {"None", "Grab", "Jump", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
 static EventOption EvFreeOptions_CPU[] = {
+    // cpu percent
+    {
+        .option_kind = OPTKIND_INT,          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 999,                    // number of values for this option
+        .option_val = 0,                     // value of this option
+        .menu = 0,                           // pointer to the menu that pressing A opens
+        .option_name = "CPU Percent",        // pointer to a string
+        .desc = "Adjust the CPU's percent.", // string describing what this option does
+        .option_values = 0,                  // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeCPUPercent,
+    },
     {
         .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
         .value_num = 2,                                     // number of values for this option
@@ -862,7 +1009,7 @@ static EventOption EvFreeOptions_CPU[] = {
     {
         .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_Shield) / 4,     // number of values for this option
-        .option_val = 0,                                  // value of this option
+        .option_val = 1,                                  // value of this option
         .menu = 0,                                        // pointer to the menu that pressing A opens
         .option_name = {"Infinite Shields"},              // pointer to a string
         .desc = "Adjust how shield health deteriorates.", // string describing what this option does
@@ -880,13 +1027,13 @@ static EventOption EvFreeOptions_CPU[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                                         // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_Tech) / 4,                            // number of values for this option
-        .option_val = 0,                                                       // value of this option
-        .menu = 0,                                                             // pointer to the menu that pressing A opens
-        .option_name = "Tech Option",                                          // pointer to a string
-        .desc = "Adjust what the CPU will do upon colliding with\nthe stage.", // string describing what this option does
-        .option_values = EvFreeValues_Tech,                                    // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_SDI) / 4,                               // number of values for this option
+        .option_val = 0,                                                         // value of this option
+        .menu = 0,                                                               // pointer to the menu that pressing A opens
+        .option_name = "Smash DI",                                               // pointer to a string
+        .desc = "Adjust how the CPU will alter their position\nduring hitstop.", // string describing what this option does
+        .option_values = EvFreeValues_SDI,                                       // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -900,13 +1047,23 @@ static EventOption EvFreeOptions_CPU[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_SDI) / 4,                               // number of values for this option
-        .option_val = 0,                                                         // value of this option
-        .menu = 0,                                                               // pointer to the menu that pressing A opens
-        .option_name = "Smash DI",                                               // pointer to a string
-        .desc = "Adjust how the CPU will alter their position\nduring hitstop.", // string describing what this option does
-        .option_values = EvFreeValues_SDI,                                       // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                         // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_Tech) / 4,                            // number of values for this option
+        .option_val = 0,                                                       // value of this option
+        .menu = 0,                                                             // pointer to the menu that pressing A opens
+        .option_name = "Tech Option",                                          // pointer to a string
+        .desc = "Adjust what the CPU will do upon colliding with\nthe stage.", // string describing what this option does
+        .option_values = EvFreeValues_Tech,                                    // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_Getup) / 4,                       // number of values for this option
+        .option_val = 0,                                                   // value of this option
+        .menu = 0,                                                         // pointer to the menu that pressing A opens
+        .option_name = "Get Up Option",                                    // pointer to a string
+        .desc = "Adjust what the CPU will do after missing\na tech input", // string describing what this option does
+        .option_values = EvFreeValues_Getup,                               // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -940,13 +1097,13 @@ static EventOption EvFreeOptions_CPU[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_INT,                                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = 100,                                                     // number of values for this option
-        .option_val = 1,                                                      // value of this option
-        .menu = 0,                                                            // pointer to the menu that pressing A opens
-        .option_name = "Counter After Hits",                                  // pointer to a string
-        .desc = "Adjust the amount of hits taken before the \nCPU counters.", // string describing what this option does
-        .option_values = 0,                                                   // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                              // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_CounterShield) / 4,                        // number of values for this option
+        .option_val = 1,                                                            // value of this option
+        .menu = 0,                                                                  // pointer to the menu that pressing A opens
+        .option_name = "Counter Action (Shield)",                                   // pointer to a string
+        .desc = "Select the action to be performed after the\nCPU's shield is hit", // string describing what this option does
+        .option_values = EvFreeValues_CounterShield,                                // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -959,15 +1116,35 @@ static EventOption EvFreeOptions_CPU[] = {
         .option_values = 0,                                                          // pointer to an array of strings
         .onOptionChange = 0,
     },
+    {
+        .option_kind = OPTKIND_INT,                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = 100,                                                     // number of values for this option
+        .option_val = 1,                                                      // value of this option
+        .menu = 0,                                                            // pointer to the menu that pressing A opens
+        .option_name = "Counter After Hits",                                  // pointer to a string
+        .desc = "Adjust the amount of hits taken before the \nCPU counters.", // string describing what this option does
+        .option_values = 0,                                                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_INT,                                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = 100,                                                                     // number of values for this option
+        .option_val = 1,                                                                      // value of this option
+        .menu = 0,                                                                            // pointer to the menu that pressing A opens
+        .option_name = "Counter After Shield Hits",                                           // pointer to a string
+        .desc = "Adjust the amount of hits the CPU's shield\nwill take before they counter.", // string describing what this option does
+        .option_values = 0,                                                                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
 };
 static EventMenu EvFreeMenu_CPU = {
-    .name = "CPU Options",         // the name of this menu
-    .option_num = 11,              // number of options this menu contains
-    .scroll = 0,                   // runtime variable used for how far down in the menu to start
-    .state = 0,                    // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                   // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_CPU, // pointer to all of this menu's options
-    .prev = 0,                     // pointer to previous menu, used at runtime
+    .name = "CPU Options",                                         // the name of this menu
+    .option_num = sizeof(EvFreeOptions_CPU) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                   // runtime variable used for how far down in the menu to start
+    .state = 0,                                                    // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                   // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_CPU,                                 // pointer to all of this menu's options
+    .prev = 0,                                                     // pointer to previous menu, used at runtime
 };
 // Recording
 static char **EvFreeValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3"};
@@ -1266,11 +1443,14 @@ void InfoDisplay_Think(GOBJ *gobj)
                 // display info
                 else
                 {
-                    if (value == 1 + 0)
+                    switch (value - 1)
+                    {
+                    case (0):
                     {
                         Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
+                        break;
                     }
-                    else if (value == 1 + 1)
+                    case (1):
                     {
                         if (fighter_data->anim_id != -1)
                         {
@@ -1311,8 +1491,9 @@ void InfoDisplay_Think(GOBJ *gobj)
 
                         else
                             Text_SetText(text, i, "State: %s", "Unknown");
+                        break;
                     }
-                    else if (value == 1 + 2)
+                    case (2):
                     {
                         float *animStruct = fighter_data->anim_curr_flags_ptr;
 
@@ -1327,63 +1508,76 @@ void InfoDisplay_Think(GOBJ *gobj)
                         frameCurr;
 
                         Text_SetText(text, i, "State Frame: %d/%d", frameCurr, frameTotal);
+                        break;
                     }
-                    else if (value == 1 + 3)
+                    case (3):
                     {
                         Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
+                        break;
                     }
-                    else if (value == 1 + 4)
+                    case (4):
                     {
                         Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
+                        break;
                     }
-                    else if (value == 1 + 5)
+                    case (5):
                     {
                         Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
+                        break;
                     }
-                    else if (value == 1 + 6)
+                    case (6):
                     {
                         Text_SetText(text, i, "LStick:     (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                        break;
                     }
-                    else if (value == 1 + 7)
+                    case (7):
                     {
                         HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
                         Text_SetText(text, i, "LStick Sys: (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
+                        break;
                     }
-                    else if (value == 1 + 8)
+                    case (8):
                     {
                         Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
+                        break;
                     }
-                    else if (value == 1 + 9)
+                    case (9):
                     {
                         HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
                         Text_SetText(text, i, "CStick Sys: (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
+                        break;
                     }
-                    else if (value == 1 + 10)
+                    case (10):
                     {
                         Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input_trigger);
+                        break;
                     }
-                    else if (value == 1 + 11)
+                    case (11):
                     {
                         HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
                         Text_SetText(text, i, "Trigger Sys: (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
+                        break;
                     }
-                    else if (value == 1 + 12)
+                    case (12):
                     {
                         Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
+                        break;
                     }
-                    else if (value == 1 + 13)
+                    case (13):
                     {
                         int intang = fighter_data->respawn_intang_left;
                         if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
                             intang = fighter_data->ledge_intang_left;
 
                         Text_SetText(text, i, "Intangibility Timer: %d", intang);
+                        break;
                     }
-                    else if (value == 1 + 14)
+                    case (14):
                     {
                         Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
+                        break;
                     }
-                    else if (value == 1 + 15)
+                    case (15):
                     {
                         // get hitstun
                         float hitstun = 0;
@@ -1391,12 +1585,14 @@ void InfoDisplay_Think(GOBJ *gobj)
                             hitstun = AS_FLOAT(fighter_data->stateVar1);
 
                         Text_SetText(text, i, "Hitstun: %.0f", hitstun);
+                        break;
                     }
-                    else if (value == 1 + 16)
+                    case (16):
                     {
                         Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
+                        break;
                     }
-                    else if (value == 1 + 17)
+                    case (17):
                     {
                         int stunTotal = 0;
                         int stunLeft = 0;
@@ -1416,8 +1612,9 @@ void InfoDisplay_Think(GOBJ *gobj)
                         }
 
                         Text_SetText(text, i, "Shield Stun: %d/%d", stunLeft, stunTotal);
+                        break;
                     }
-                    else if (value == 1 + 18)
+                    case (18):
                     {
                         float grip = 0;
                         if (fighter_data->grab_victim != 0)
@@ -1428,36 +1625,45 @@ void InfoDisplay_Think(GOBJ *gobj)
                         }
 
                         Text_SetText(text, i, "Grip Strength: %.0f", grip);
+                        break;
                     }
-                    else if (value == 1 + 19)
+                    case (19):
                     {
                         Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                        break;
                     }
-                    else if (value == 1 + 20)
+                    case (20):
                     {
-                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_botY);
+                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_bot.Y);
+                        break;
                     }
-                    else if (value == 1 + 21)
+                    case (21):
                     {
                         Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
+                        break;
                     }
-                    else if (value == 1 + 22)
+                    case (22):
                     {
                         Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
+                        break;
                     }
-                    else if (value == 1 + 23)
+                    case (23):
                     {
                         Text_SetText(text, i, "Jab Counter: IDK");
+                        break;
                     }
-                    else if (value == 1 + 24)
+                    case (24):
                     {
                         Stage *stage = STAGE;
                         Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
+                        break;
                     }
-                    else if (value == 1 + 25)
+                    case (25):
                     {
                         Stage *stage = STAGE;
                         Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
+                        break;
+                    }
                     }
                 }
             }
@@ -1492,7 +1698,7 @@ float Fighter_GetOpponentDir(FighterData *from, FighterData *to)
 int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
 {
 
-    static u8 grActionable[] = {ASID_WAIT, ASID_WALKSLOW, ASID_WALKMIDDLE, ASID_WALKFAST, ASID_RUN, ASID_SQUATWAIT};
+    static u8 grActionable[] = {ASID_WAIT, ASID_WALKSLOW, ASID_WALKMIDDLE, ASID_WALKFAST, ASID_RUN, ASID_SQUATWAIT, ASID_OTTOTTOWAIT, ASID_GUARD};
     static u8 airActionable[] = {ASID_JUMPF, ASID_JUMPB, ASID_JUMPAERIALF, ASID_JUMPAERIALB, ASID_FALL, ASID_FALLAERIALF, ASID_FALLAERIALB, ASID_DAMAGEFALL, ASID_DAMAGEFLYROLL, ASID_DAMAGEFLYTOP};
     static u8 airDamage[] = {ASID_DAMAGEFLYHI, ASID_DAMAGEFLYN, ASID_DAMAGEFLYLW, ASID_DAMAGEFLYTOP, ASID_DAMAGEFLYROLL, ASID_DAMAGEFALL};
 
@@ -1551,7 +1757,7 @@ int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
 
     return isActionable;
 }
-int LCancel_CPUActionThnk(GOBJ *cpu, int action_id, GOBJ *hmn)
+int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
 {
 
     FighterData *cpu_data = cpu->userdata;
@@ -1566,93 +1772,99 @@ int LCancel_CPUActionThnk(GOBJ *cpu, int action_id, GOBJ *hmn)
     // clear inputs
     Fighter_ZeroCPUInputs(cpu_data);
 
-    // loop through all inputs
-    int action_parse = 0;
-    CPUAction *action_input = &action_list[action_parse];
-    while ((action_input != 0) && (action_input->state != 0xFFFF))
+    // if no action, report command as done
+    if (action_id == 0)
+        action_done = 1;
+
+    // perform command
+    else
     {
-
-        int isState = 0;
-        if ((action_input->state >= ASID_ACTIONABLE) && (action_input->state <= ASID_DAMAGEAIR))
+        // loop through all inputs
+        int action_parse = 0;
+        CPUAction *action_input = &action_list[action_parse];
+        while ((action_input != 0) && (action_input->state != 0xFFFF))
         {
 
-            isState = CPUAction_CheckActionable(cpu, (action_input->state - ASID_ACTIONABLE));
-        }
-        else if (action_input->state == cpu_state)
-        {
-            isState = 1;
-        }
-
-        // check if this is the current state
-        if (isState == 1)
-        {
-            // check if im on the right frame
-            if (cpu_frame >= action_input->frameLow)
+            int isState = 0;
+            if ((action_input->state >= ASID_ACTIONABLE) && (action_input->state <= ASID_DAMAGEAIR))
             {
 
-                // perform this action
-                s8 dir;
-                int held = action_input->input;
-                s8 lstickX = action_input->stickX;
-                s8 lstickY = action_input->stickY;
-                s8 cstickX = action_input->cstickX;
-                s8 cstickY = action_input->cstickY;
-
-                // stick direction
-                switch (action_input->stickDir)
-                {
-                case (STCKDIR_NONE):
-                {
-                    break;
-                }
-                case (STCKDIR_TOWARD):
-                {
-                    dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
-                    lstickX *= dir;
-                    break;
-                }
-                case (STCKDIR_AWAY):
-                {
-                    dir = Fighter_GetOpponentDir(cpu_data, hmn_data) * -1;
-                    lstickX *= dir;
-                    break;
-                }
-                case (STCKDIR_FRONT):
-                {
-                    dir = cpu_data->facing_direction;
-                    lstickX *= dir;
-                    cstickX *= dir;
-                    break;
-                }
-                case (STCKDIR_BACK):
-                {
-                    dir = cpu_data->facing_direction;
-                    lstickX *= (dir * -1);
-                    cstickX *= (dir * -1);
-                    break;
-                }
-                }
-
-                blr();
-
-                // perform this action
-                cpu_data->cpu.held = held;
-                cpu_data->cpu.lstickX = lstickX;
-                cpu_data->cpu.lstickY = lstickY;
-                cpu_data->cpu.cstickX = cstickX;
-                cpu_data->cpu.cstickY = cstickY;
-
-                // check if this was the last action
-                if (action_input->isLast == 1)
-                    action_done = 1;
-
-                break;
+                isState = CPUAction_CheckActionable(cpu, (action_input->state - ASID_ACTIONABLE));
             }
-        }
+            else if (action_input->state == cpu_state)
+            {
+                isState = 1;
+            }
 
-        // get next input
-        action_parse++;
-        action_input = &action_list[action_parse];
+            // check if this is the current state
+            if (isState == 1)
+            {
+                // check if im on the right frame
+                if (cpu_frame >= action_input->frameLow)
+                {
+
+                    // perform this action
+                    s8 dir;
+                    int held = action_input->input;
+                    s8 lstickX = action_input->stickX;
+                    s8 lstickY = action_input->stickY;
+                    s8 cstickX = action_input->cstickX;
+                    s8 cstickY = action_input->cstickY;
+
+                    // stick direction
+                    switch (action_input->stickDir)
+                    {
+                    case (STCKDIR_NONE):
+                    {
+                        break;
+                    }
+                    case (STCKDIR_TOWARD):
+                    {
+                        dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+                        lstickX *= dir;
+                        break;
+                    }
+                    case (STCKDIR_AWAY):
+                    {
+                        dir = Fighter_GetOpponentDir(cpu_data, hmn_data) * -1;
+                        lstickX *= dir;
+                        break;
+                    }
+                    case (STCKDIR_FRONT):
+                    {
+                        dir = cpu_data->facing_direction;
+                        lstickX *= dir;
+                        cstickX *= dir;
+                        break;
+                    }
+                    case (STCKDIR_BACK):
+                    {
+                        dir = cpu_data->facing_direction;
+                        lstickX *= (dir * -1);
+                        cstickX *= (dir * -1);
+                        break;
+                    }
+                    }
+
+                    // perform this action
+                    cpu_data->cpu.held = held;
+                    cpu_data->cpu.lstickX = lstickX;
+                    cpu_data->cpu.lstickY = lstickY;
+                    cpu_data->cpu.cstickX = cstickX;
+                    cpu_data->cpu.cstickY = cstickY;
+
+                    // check if this was the last action
+                    if (action_input->isLast == 1)
+                        action_done = 1;
+
+                    break;
+                }
+            }
+
+            // get next input
+            action_parse++;
+            action_input = &action_list[action_parse];
+        }
     }
 
     return action_done;
@@ -1665,162 +1877,458 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     FighterData *cpu_data = cpu->userdata;
     GOBJ **gobjlist = R13_PTR(GOBJLIST);
 
-    int cpu_state = eventData->cpu_state;
+    // noact
+    cpu_data->cpu.ai = 15;
 
-    // run CPU logic
-    switch (cpu_state)
+    // ALWAYS CHECK FOR X AND OVERRIDE STATE
+    // check if damaged
+    if (cpu_data->hitstun == 1)
     {
-    case CPUSTATE_START:
+        eventData->cpu_hitkind = HITKIND_DAMAGE;
+        // go to SDI state
+        eventData->cpu_state = CPUSTATE_SDI;
+        Fighter_ZeroCPUInputs(cpu_data);
+    }
+    if ((cpu_data->state_id == ASID_GUARDSETOFF) || ((cpu_data->kind == 0xE) && (cpu_data->state_id == 344)))
     {
-        // check for damage
-        if ((cpu_data->hitstun == 1))
+        Fighter_ZeroCPUInputs(cpu_data);
+
+        // check if new shield hit
+        if (eventData->cpu_lastshieldstun != cpu_data->moveID)
         {
-            cpu_data->cpu.ai = 15;
-            eventData->cpu_state = CPUSTATE_DMG;
-            goto LCancel_CPUThink_DMG;
+            eventData->cpu_lastshieldstun = cpu_data->moveID;
+            eventData->cpu_hitshieldnum++;
         }
-        else
+
+        eventData->cpu_hitkind = HITKIND_SHIELD;
+        eventData->cpu_state = CPUSTATE_SDI;
+        // go to Shield state
+        //eventData->cpu_state = CPUSTATE_SHIELD;
+    }
+    if ((cpu_data->state_id == ASID_DOWNBOUNDD) || (cpu_data->state_id == ASID_DOWNBOUNDU) || (cpu_data->state_id == ASID_DOWNWAITU) || (cpu_data->state_id == ASID_DOWNWAITD) || (cpu_data->state_id == ASID_PASSIVE) || (cpu_data->state_id == ASID_PASSIVESTANDB) || (cpu_data->state_id == ASID_PASSIVESTANDF))
+        eventData->cpu_state = CPUSTATE_GETUP;
+    if ((cpu_data->state_id == ASID_CLIFFWAIT))
+        eventData->cpu_state = CPUSTATE_RECOVER;
+    if (cpu_data->dead == 1)
+        goto CPUSTATE_ENTERSTART;
+
+    // run CPU state logic
+    static char **CPUStates[] = {"CPUSTATE_START", "CPUSTATE_SDI", "CPUSTATE_TDI", "CPUSTATE_TECH", "CPUSTATE_GETUP", "CPUSTATE_COUNTER", "CPUSTATE_RECOVER"};
+    //OSReport(CPUStates[eventData->cpu_state]);
+    switch (eventData->cpu_state)
+    {
+    // Initial State, hasn't been hit yet
+    case (CPUSTATE_START):
+    CPULOGIC_START:
+    {
+
+        // if in the air somehow, enter recovery
+        if (cpu_data->air_state == 1)
         {
-            cpu_data->cpu.ai = 0;
+            eventData->cpu_state = CPUSTATE_RECOVER;
+            goto CPULOGIC_RECOVER;
+        }
+
+        // clear held inputs
+        Fighter_ZeroCPUInputs(cpu_data);
+
+        // perform default behavior
+        int behavior = EvFreeOptions_CPU[OPTCPU_BEHAVE].option_val;
+        switch (behavior)
+        {
+        case (CPUBEHAVE_STAND):
+        {
+            break;
+        }
+
+        case (CPUBEHAVE_SHIELD):
+        {
+            // hold R
+            cpu_data->cpu.held = PAD_TRIGGER_R;
+            break;
+        }
+
+        case (CPUBEHAVE_CROUCH):
+        {
+            // hold down
+            cpu_data->cpu.lstickY = -127;
+            break;
+        }
+
+        case (CPUBEHAVE_JUMP):
+        {
+            // run jump command
+            LCancel_CPUPerformAction(cpu, 12, hmn);
+            break;
+        }
         }
 
         break;
     }
-    case CPUSTATE_DMG:
+
+    case (CPUSTATE_SDI):
+    CPULOGIC_SDI:
     {
-    LCancel_CPUThink_DMG:
 
         // update move instance
         if (eventData->cpu_lasthit != cpu_data->damage_instancehitby)
         {
-            eventData->cpu_hitcount++;
+            eventData->cpu_sincehit = 0;
+            eventData->cpu_hitnum++;
             eventData->cpu_lasthit = cpu_data->damage_instancehitby;
-            OSReport("hit count %d/%d", eventData->cpu_hitcount, EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val);
+            //OSReport("hit count %d/%d", eventData->cpu_hitnum, EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val);
         }
 
-        // SDI and TDI think
-        if (cpu_data->hitlag == 1)
+        // if no more hitlag, enter tech state
+        if (cpu_data->hitlag == 0)
         {
-            // TDI Think
-            if (cpu_data->hitlag_frames == 1)
-            {
-                OSReport("TDI here");
-            }
-            // SDI Think
+            eventData->cpu_state = CPUSTATE_TECH;
+            goto CPULOGIC_TECH;
+        }
+
+        // if final frame of hitlag, enter TDI state
+        else if (cpu_data->hitlag_frames == 1)
+        {
+            eventData->cpu_state = CPUSTATE_TDI;
+            goto CPULOGIC_TDI;
+        }
+
+        // perform SDI behavior
+
+        break;
+    }
+
+    case (CPUSTATE_TDI):
+    CPULOGIC_TDI:
+    {
+
+        // if no more hitlag, enter tech state. this might never be hit, just being safe
+        if (cpu_data->hitlag == 0)
+        {
+            eventData->cpu_state = CPUSTATE_TECH;
+            goto CPULOGIC_TECH;
+        }
+
+        // perform TDI behavior
+        int tdi_kind = EvFreeOptions_CPU[OPTCPU_TDI].option_val;
+    TDI_SWITCH:
+        switch (tdi_kind)
+        {
+        case (CPUTDI_RANDOM):
+        {
+            tdi_kind = HSD_Randi(CPUTDI_NUM - 1) + 1;
+            goto TDI_SWITCH;
+        }
+
+        case (CPUTDI_IN):
+        {
+            // survival tdi = kb_angle + (XOriginDirection * -1 * pi/2)
+
+            float kb_angle = atan2(cpu_data->kbVel.Y, cpu_data->kbVel.X);
+            float orig_dir;
+            if ((kb_angle > -M_PI / 2) && (kb_angle <= M_PI / 2))
+                orig_dir = -1;
             else
-            {
-                OSReport("SDI here");
-            }
+                orig_dir = 1;
+
+            // get optimal tdi
+            float tdi_angle = kb_angle + (orig_dir * -1 * M_PI / 2);
+
+            // convert to analog input
+            cpu_data->cpu.lstickX = cos(tdi_angle) * 127;
+            cpu_data->cpu.lstickY = sin(tdi_angle) * 127;
+
+            OSReport("kb angle: %f\nsurvival tdi: %f\n", kb_angle, tdi_angle);
+
+            break;
         }
 
-        // KB Think (tech)
-        else if (cpu_data->hitstun == 1)
+        case (CPUTDI_OUT):
+        TDI_OUT:
         {
-            int tech_kind = EvFreeOptions_CPU[OPTCPU_TECH].option_val;
-            s8 dir;
-            s8 stickX = 0;
-            s8 sincePress = 0;
-            s8 since2Press = -1;
 
-        TECH_SWITCH:
-            switch (tech_kind)
+            // combo tdi = kb_angle + (XOriginDirection * pi/2)
+
+            float kb_angle = atan2(cpu_data->kbVel.Y, cpu_data->kbVel.X);
+            float orig_dir;
+            if ((kb_angle > -M_PI / 2) && (kb_angle <= M_PI / 2))
+                orig_dir = -1;
+            else
+                orig_dir = 1;
+
+            // get optimal tdi
+            float tdi_angle = kb_angle + (orig_dir * M_PI / 2);
+
+            // convert to analog input
+            cpu_data->cpu.lstickX = cos(tdi_angle) * 127;
+            cpu_data->cpu.lstickY = sin(tdi_angle) * 127;
+
+            OSReport("kb angle: %f\ncombo tdi: %f\n", kb_angle, tdi_angle);
+
+            break;
+        }
+
+        case (CPUTDI_FLOORHUG):
+        {
+
+            // floothug = full ASDI down + outward DI
+            cpu_data->cpu.cstickY = -127;
+            goto TDI_OUT;
+
+            break;
+        }
+
+        case (CPUTDI_NONE):
+        {
+            Fighter_ZeroCPUInputs(cpu_data);
+            break;
+        }
+        }
+
+        break;
+    }
+
+    case (CPUSTATE_TECH):
+    CPULOGIC_TECH:
+    {
+
+        // if no more hitstun, go to counter
+        if (cpu_data->hitstun == 0)
+        {
+            // also reset stick timer (messes with airdodge wiggle)
+            cpu_data->input_lstick_x = 0;
+            cpu_data->inputtimer_lstick_tilt_x = 254;
+            eventData->cpu_state = CPUSTATE_COUNTER;
+            goto CPULOGIC_COUNTER;
+        }
+
+        // perform tech behavior
+        int tech_kind = EvFreeOptions_CPU[OPTCPU_TECH].option_val;
+        s8 dir;
+        s8 stickX = 0;
+        s8 sincePress = 0;
+        s8 since2Press = -1;
+    TECH_SWITCH:
+        switch (tech_kind)
+        {
+        case (CPUTECH_RANDOM):
+        {
+            tech_kind = (HSD_Randi((sizeof(EvFreeValues_Tech) / 4) - 1) + 1);
+            goto TECH_SWITCH;
+            break;
+        }
+        case (CPUTECH_NEUTRAL):
+        {
+            break;
+        }
+        case (CPUTECH_AWAY):
+        {
+            dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+            stickX = 127 * (dir * -1);
+            break;
+        }
+        case (CPUTECH_TOWARDS):
+        {
+            dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+            stickX = 127 * (dir);
+            break;
+        }
+        case (CPUTECH_NONE):
+        {
+            sincePress = -1;
+            break;
+        }
+        }
+
+        // input tech
+        cpu_data->input_sinceLR = sincePress;
+        cpu_data->input_sinceRapidLR = since2Press;
+        cpu_data->cpu.lstickX = stickX;
+
+        break;
+    }
+
+    case (CPUSTATE_GETUP):
+    CPULOGIC_GETUP:
+    {
+
+        // if im in downwait, perform getup logic
+        if ((cpu_data->state_id == ASID_DOWNWAITD) || (cpu_data->state_id == ASID_DOWNWAITU))
+        {
+            // perform getup behavior
+            int getup = EvFreeOptions_CPU[OPTCPU_GETUP].option_val;
+            s8 dir;
+            int inputs = 0;
+            s8 stickX = 0;
+            s8 stickY = 0;
+
+        GETUP_SWITCH:
+            switch (getup)
             {
-            case (CPUTECH_RANDOM):
+            case (CPUGETUP_RANDOM):
             {
-                tech_kind = (HSD_Randi((sizeof(EvFreeValues_Tech) / 4) - 1) + 1);
-                goto TECH_SWITCH;
+                getup = (HSD_Randi((sizeof(EvFreeValues_Tech) / 4) - 1) + 1);
+                goto GETUP_SWITCH;
                 break;
             }
-            case (CPUTECH_NEUTRAL):
+            case (CPUGETUP_STAND):
             {
+                stickY = 127;
                 break;
             }
-            case (CPUTECH_AWAY):
-            {
-                dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
-                stickX = 127 * (dir * -1);
-                break;
-            }
-            case (CPUTECH_TOWARDS):
+            case (CPUGETUP_TOWARD):
             {
                 dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
                 stickX = 127 * (dir);
                 break;
             }
-            case (CPUTECH_NONE):
+            case (CPUGETUP_AWAY):
             {
-                sincePress = -1;
+                dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
+                stickX = 127 * (dir * -1);
+                break;
+            }
+            case (CPUGETUP_ATTACK):
+            {
+                inputs = PAD_BUTTON_A;
                 break;
             }
             }
-        TECH_INPUT:
-            cpu_data->input_sinceLR = sincePress;
-            cpu_data->input_sinceRapidLR = since2Press;
+
+            // input getup option
+            cpu_data->cpu.held = inputs;
             cpu_data->cpu.lstickX = stickX;
+            cpu_data->cpu.lstickY = stickY;
+
+            OSReport("CPUSTATE_GETUP");
         }
 
-        // Check to counter
+        // if cpu is in any other down state, do nothing
+        else if ((cpu_data->state_id >= ASID_DOWNBOUNDU) && (cpu_data->state_id <= ASID_DOWNSPOTD))
+        {
+            break;
+        }
+
+        // if cpu is not in a down state, enter COUNTER
         else
         {
-            if (eventData->cpu_hitcount >= EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val)
-            {
-                if (eventData->cpu_sincehit >= EvFreeOptions_CPU[OPTCPU_CTRFRAMES].option_val)
-                {
-                    eventData->cpu_state = CPUSTATE_COUNTER;
-                    goto LCancel_CPUThink_COUNTER;
-                }
-
-                else
-                {
-                    // increment frames since being hit
-                    eventData->cpu_sincehit++;
-                }
-            }
+            eventData->cpu_state = CPUSTATE_COUNTER;
+            goto CPULOGIC_COUNTER;
+            break;
         }
 
         break;
     }
-    case CPUSTATE_COUNTER:
-    {
-    LCancel_CPUThink_COUNTER:
+
+    case (CPUSTATE_COUNTER):
+    CPULOGIC_COUNTER:
     {
 
-        // get action to perform
-        int action_id;
-        if (cpu_data->air_state == 0)
+        // check if actionable
+        if (CPUAction_CheckActionable(cpu, 0) != 1)
         {
-            // get grounded action
-            int grndCtr = EvFreeOptions_CPU[OPTCPU_CTRGRND].option_val;
-            action_id = GrAcLookup[grndCtr];
+            break;
+        }
+
+        // increment frames since actionable
+        eventData->cpu_sincehit++;
+
+        // ensure hit count and frame count criteria are met
+        int action_id;
+        if (eventData->cpu_hitkind == HITKIND_DAMAGE)
+        {
+            if ((eventData->cpu_hitnum < EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val) || (eventData->cpu_sincehit < EvFreeOptions_CPU[OPTCPU_CTRFRAMES].option_val))
+            {
+                break;
+            }
+
+            // get counter action
+            if (cpu_data->air_state == 0)
+            {
+                int grndCtr = EvFreeOptions_CPU[OPTCPU_CTRGRND].option_val;
+                action_id = GrAcLookup[grndCtr];
+            }
+            else
+            {
+                int airCtr = EvFreeOptions_CPU[OPTCPU_CTRAIR].option_val;
+                action_id = AirAcLookup[airCtr];
+            }
+        }
+        else if (eventData->cpu_hitkind == HITKIND_SHIELD)
+        {
+
+            // if the shield wasnt hit enough times, return to start
+            if (eventData->cpu_hitshieldnum < EvFreeOptions_CPU[OPTCPU_SHIELDHITS].option_val)
+            {
+                eventData->cpu_state = CPUSTATE_START;
+                goto CPULOGIC_START;
+                break;
+            }
+
+            // if this isnt the frame to counter, do nothing
+            if (eventData->cpu_sincehit < EvFreeOptions_CPU[OPTCPU_CTRFRAMES].option_val)
+            {
+                break;
+            }
+
+            // get action to perform
+            int shieldCtr = EvFreeOptions_CPU[OPTCPU_CTRSHIELD].option_val;
+            action_id = ShieldAcLookup[shieldCtr];
         }
         else
         {
-            // get air action
-            int airCtr = EvFreeOptions_CPU[OPTCPU_CTRAIR].option_val;
-            action_id = AirAcLookup[airCtr];
+            // wasnt hit, fell or something idk. enter start again
+            goto CPUSTATE_ENTERSTART;
         }
 
-        // perform action
-        int action_done = LCancel_CPUActionThnk(cpu, action_id, hmn);
-
-        // reset
-        if (action_done == 1)
+        // if none, enter recover
+        if (action_id == 0)
         {
+            eventData->cpu_state = CPUSTATE_RECOVER;
+            goto CPULOGIC_RECOVER;
+        }
+
+        // perform counter behavior
+        //OSReport("executing input");
+        if (LCancel_CPUPerformAction(cpu, action_id, hmn) == 1)
+        {
+            eventData->cpu_state = CPUSTATE_RECOVER;
+            //goto CPULOGIC_RECOVER;
+        }
+
+        break;
+    }
+
+    case (CPUSTATE_RECOVER):
+    CPULOGIC_RECOVER:
+    {
+
+        // if onstage, go back to start
+        if (cpu_data->air_state == 0)
+        {
+
+        CPUSTATE_ENTERSTART:
+            // clear inputs
+
+            // go to start
             eventData->cpu_state = CPUSTATE_START;
             eventData->cpu_hitshield = 0;
-            eventData->cpu_hitcount = 0;
+            eventData->cpu_hitnum = 0;
             eventData->cpu_sincehit = 0;
             eventData->cpu_hitshield = 0;
             eventData->cpu_lasthit = -1;
+            eventData->cpu_lastshieldstun = -1;
+            eventData->cpu_hitkind = -1;
+            eventData->cpu_hitshieldnum = 0;
+            goto CPULOGIC_START;
         }
+
+        // recover with CPU AI
+        cpu_data->cpu.ai = 0;
 
         break;
     }
     }
-    }
-    // update state value
-    cpu_state = eventData->cpu_state;
-    OSReport("cpu_state: %d", cpu_state);
 
     // update cpu_hitshield
     if (eventData->cpu_hitshield == 0)
@@ -1982,12 +2490,19 @@ void Update_Savestates()
 void DIDraw_Update()
 {
 
-    // is on, update di draw
-    if (EvFreeOptions_General[OPTGEN_DI].option_val == 1)
+    static ECBBones ecb_bones_def = {
+        .topY = 9,
+        .botY = 2.5,
+        .left = {-3.3, 5.7},
+        .right = {3.3, 5.7},
+    };
+
+    // if enabled and pause menu isnt shown, update di draw
+    if ((EvFreeOptions_General[OPTGEN_DI].option_val == 1)) //  && (Pause_CheckStatus(1) != 2)
     {
         // loop through all fighters
-        GOBJ **gobj_list = R13_PTR(GOBJLIST);
-        GOBJ *fighter = gobj_list[8];
+        GOBJList *gobj_list = R13_PTR(GOBJLIST);
+        GOBJ *fighter = gobj_list->fighter;
         while (fighter != 0)
         {
 
@@ -2006,26 +2521,160 @@ void DIDraw_Update()
                     didraw->vertices[ply] = 0;
                 }
 
-                int vertex_num = AS_FLOAT(fighter_data->stateVar1);
-                didraw->num[ply] = vertex_num;
+                //OSReport("######### BEGIN ##########\n");
 
-                // alloc vertices
-                didraw->vertices[ply] = calloc(sizeof(Vec2) * vertex_num);
+                // get player's inputs
+                float lstickX;
+                float lstickY;
+                float cstickX;
+                float cstickY;
+                // for HMN players
+                if (Fighter_GetSlotType(fighter_data->ply) == 0)
+                {
+                    int input_kind;
+                    if (Pause_CheckStatus(0) == 1) // if frame advance enabled, use master inputs
+                        input_kind = PADGET_MASTER;
+                    else
+                        input_kind = PADGET_ENGINE; // no frame advance, use engine inputs
+                    HSD_Pad *pad = PadGet(fighter_data->player_controller_number, input_kind);
+                    lstickX = pad->fstickX;
+                    lstickY = pad->fstickY;
+                    cstickX = pad->fsubstickX;
+                    cstickY = pad->fsubstickY;
+                }
+                // for CPUs
+                else
+                {
+                    lstickX = fighter_data->input_lstick_x;
+                    lstickY = fighter_data->input_lstick_y;
+                    cstickX = fighter_data->input_cstick_x;
+                    cstickY = fighter_data->input_cstick_y;
+                }
 
-                // simulate
-                float gravity = 0;
+                // get kb vector
                 Vec3 kb = fighter_data->kbVel;
+                float kb_angle = atan2(kb.Y, kb.X);
+                // init ASDI vector
+                Vec3 asdi_orig;
+                Vec3 asdi = {0, 0, 0};
+                // get fighter constants
+                ftCommonData *ftCmDt = R13_PTR(PLCO_FTCOMMON);
+
+                // Calculate ASDI
+                float asdi_mag = pow(ftCmDt->asdi_mag, 2);
+                float asdi_units = ftCmDt->asdi_units;
+                // CStick has priority, check if mag > 0.7
+                if (pow(cstickX, 2) + (pow(cstickY, 2)) >= asdi_mag)
+                {
+                    asdi.X = cstickX * asdi_units;
+                    asdi.Y = cstickY * asdi_units;
+                }
+                // now check if lstick mag > 0.7
+                else if (pow(lstickX, 2) + (pow(lstickY, 2)) >= asdi_mag)
+                {
+                    asdi.X = lstickX * asdi_units;
+                    asdi.Y = lstickY * asdi_units;
+                }
+                // Remember original ASDI
+                asdi_orig = asdi;
+                //OSReport("ASDI:  %f , %f\n", asdi.X, asdi.Y);
+
+                // Calculate TDI
+                //OSReport("KB Pre TDI:  %f , %f\n", kb.X, kb.Y);
+                if ((lstickX != 0) || (lstickY != 0)) // exclude input vector 0,0
+                {
+                    // kb vector must exceed 0.00001
+                    float kb_mult = (kb.Y * kb.Y) + (kb.X * kb.X);
+                    if (kb_mult >= 0.00001)
+                    {
+
+                        // get values
+                        float tdi_input = pow((-1 * kb.X * lstickY) + (lstickX * kb.Y), 2) / kb_mult;
+                        float max_angle = ftCmDt->tdi_maxAngle * M_1DEGREE;
+                        float kb_mag = sqrtf(kb_mult);
+
+                        // check to negate
+                        Vec3 inputs = {lstickX, lstickY, 0};
+                        Vec3 result;
+                        VECCrossProduct(&kb, &inputs, &result);
+                        if (result.Z < 0)
+                            tdi_input *= -1;
+
+                        // apply TDI
+                        kb_angle = (max_angle * tdi_input) + kb_angle;
+
+                        // New X KB
+                        kb.X = cos(kb_angle) * kb_mag;
+                        // New Y KB
+                        kb.Y = sin(kb_angle) * kb_mag;
+                    }
+                }
+                //OSReport("KB Post TDI:  %f , %f\n", kb.X, kb.Y);
+
+                //simulation variables
+                int air_state = fighter_data->air_state;
+                float gravity = 0;
                 Vec3 pos = fighter_data->pos;
                 ftCommonData *ftCommon = R13_PTR(-0x514C);
                 float decay = ftCommon->kb_frameDecay;
-                for (int i = 0; i < vertex_num; i++)
+                int hitstun_frames = AS_FLOAT(fighter_data->stateVar1);
+                int vertices_num = 0;    // used to track how many vertices will be needed
+                int override_frames = 0; // used as an alternate countdown
+                DIDrawCalculate *DICollData = calloc(sizeof(DIDrawCalculate) * hitstun_frames);
+                CollData ecb;
+                ECBBones ecb_bones;
+
+                // init ecb struct
+                Coll_InitECB(&ecb);
+                if (fighter_data->air_state == 0) // copy ecb struct if grounded
                 {
+                    memcpy(&ecb.envFlags, &fighter_data->collData.envFlags, 0x28);
+                }
+
+                // simulate each frame of knockback
+                for (int i = 0; i < hitstun_frames; i++)
+                {
+
+                    // update bone positions.  If loop count < noECBUpdate-remaining hitlag fraes, use current ECB bottom Y offset
+                    if (vertices_num < (fighter_data->collData.ecb_lock - fighter_data->hitlag_frames))
+                    {
+
+                        blr();
+
+                        ecb_bones.topY = fighter_data->collData.ecbCurr_top.Y;
+                        ecb_bones.botY = fighter_data->collData.ecbCurr_bot.Y;
+                        ecb_bones.left = fighter_data->collData.ecbCurr_left;
+                        ecb_bones.right = fighter_data->collData.ecbCurr_right;
+
+                        // if grounded, ECB bottom is 0
+                        if (air_state == 0)
+                        {
+                            ecb_bones.botY = 0;
+                        }
+                    }
+                    else
+                    {
+                        // use default ecb size
+                        memcpy(&ecb_bones, &ecb_bones_def, sizeof(ECBBones));
+                    }
+                    // update ecb topN position
+                    ecb.topN_Curr = pos;
+                    ecb.topN_CurrCorrect = pos;
+
+                    // apply ASDI
+                    pos.X += asdi.X;
+                    if (air_state != 0) // only apply Y asdi in the air
+                    {
+                        pos.Y += asdi.Y;
+                    }
+                    asdi.X = 0; // zero out ASDI
+                    asdi.Y = 0; // zero out ASDI
+
                     // update gravity
                     gravity -= fighter_data->gravity;
                     float terminal_velocity = fighter_data->terminal_velocity * -1;
                     if (gravity < terminal_velocity)
                         gravity = terminal_velocity;
-
                     // decay KB vector
                     float angle = atan2(kb.Y, kb.X);
                     kb.X = kb.X - (cos(angle) * decay);
@@ -2033,16 +2682,193 @@ void DIDraw_Update()
 
                     // add knockback
                     VECAdd(&pos, &kb, &pos);
-
                     // apply gravity
                     pos.Y += gravity;
 
-                    // save this position
-                    didraw->vertices[ply][i].X = pos.X;
-                    didraw->vertices[ply][i].Y = pos.Y;
-                }
-            }
+                    // ecb prev = ecb curr
+                    ecb.topN_Prev = ecb.topN_Curr;
+                    // ecb curr = new position
+                    ecb.topN_Curr = pos;
 
+                    // only run X collision checks because theyre expensive
+                    if (vertices_num >= DI_MaxColl)
+                    {
+                        DICollData[i].envFlags = 0; // spoof as not touching
+                        pos = ecb.topN_Curr;        // position = projected
+                    }
+
+                    // update collision
+                    else
+                    {
+                        // ground coll
+                        if (air_state == 0)
+                        {
+                            int result = ECB_CollGround_PassLedge(&ecb, &ecb_bones);
+                            if (result == 0)
+                            {
+                                air_state = 1;
+                            }
+                        }
+                        // air coll
+                        else
+                        {
+                            ECB_CollAir(&ecb, &ecb_bones);
+                        }
+
+                        // get corrected position
+                        pos = ecb.topN_Curr;
+
+                        // increment collision ID
+                        ecb.coll_test += 1;
+
+                        // perform stage collision code
+                        if ((ecb.envFlags & ECB_GROUND) != 0)
+                        {
+                            // check if air->ground just occurred
+                            if (air_state == 1)
+                            {
+                                // set grounded
+                                air_state = 0;
+
+                                // check if over max horizontal velocity
+                                if (kb.X > ftCmDt->kb_maxVelX)
+                                    kb.X = ftCmDt->kb_maxVelX;
+                                if (kb.X < -ftCmDt->kb_maxVelX)
+                                    kb.X = -ftCmDt->kb_maxVelX;
+
+                                // adjust KB direction from slope
+                                kb.X *= ecb.ground_slope.Y;
+                                kb.Y *= ecb.ground_slope.X;
+
+                                // zero out gravity
+                                gravity = 0;
+
+                                // zero out Y KB
+                                kb.Y = 0;
+                            }
+                        }
+                        else if ((ecb.envFlags & ECB_CEIL) != 0)
+                        {
+                            // only run this code when in the air
+                            if (air_state == 1)
+                            {
+                                // combine KB and Gravity
+                                Vec3 kb_temp = kb;
+                                Vec3 vel_temp = {0, gravity, 0};
+                                VECAdd(&vel_temp, &kb_temp, &vel_temp);
+
+                                // apply slope
+                                VECMultAndAdd(&vel_temp, &ecb.ceil_slope);
+
+                                // decay kb
+                                kb.X = vel_temp.X * ftCmDt->kb_bounceDecay;
+                                kb.Y = vel_temp.Y * ftCmDt->kb_bounceDecay;
+                            }
+                        }
+                        else if ((ecb.envFlags & (ECB_WALLLEFT | ECB_WALLRIGHT)) != 0)
+                        {
+                            // only run this code when in the air
+                            if (air_state == 1)
+                            {
+
+                                // get slope
+                                Vec3 *slope;
+                                if ((ecb.envFlags & ECB_WALLLEFT) != 0)
+                                {
+                                    slope = &ecb.leftwall_slope;
+                                }
+                                else
+                                {
+                                    slope = &ecb.rightwall_slope;
+                                }
+
+                                // combine KB and Gravity
+                                Vec3 kb_temp = kb;
+                                Vec3 vel_temp = {0, gravity, 0};
+                                VECAdd(&vel_temp, &kb_temp, &vel_temp);
+
+                                // apply slope
+                                VECMultAndAdd(&vel_temp, slope);
+
+                                // decay kb
+                                kb.X = vel_temp.X * ftCmDt->kb_bounceDecay;
+                                kb.Y = vel_temp.Y * ftCmDt->kb_bounceDecay;
+
+                                // zero gravity
+                                gravity = 0;
+                            }
+                        }
+
+                        // check for slide off
+                        if (((ecb.envFlags & ECB_GROUND) == 0) && ((ecb.envFlags_prev & ECB_GROUND) != 0)) // not touching ground this frame, was touching last frame
+                        {
+                            if (override_frames == 0)
+                                override_frames = 5; // terminate in 5 frames
+                        }
+                    }
+
+                    //OSReport("Frame %d:\nPos: %f, %f\nKB: %f , %f\nVel: 0 , %f\n AirState: %d\n", vertices_num, pos.X, pos.Y, kb.X, kb.Y, gravity, air_state);
+
+                    // save this position
+                    DICollData[i].pos.X = pos.X;
+                    DICollData[i].pos.Y = pos.Y;
+                    DICollData[i].kb_Y = kb.Y;
+                    DICollData[i].ECBLeftY = ecb_bones.left.Y;
+                    DICollData[i].ECBTopY = ecb_bones.topY;
+
+                    // inc vertices count
+                    vertices_num++;
+
+                    // if override frames are set, decrement and exit
+                    if (override_frames > 0)
+                    {
+                        override_frames--;
+                        if (override_frames == 0)
+                            break;
+                    }
+                }
+
+                // alloc draw struct
+                didraw->num[ply] = vertices_num + 2; // +2 for ASDI vertices
+                // alloc vertices
+                didraw->vertices[ply] = calloc(sizeof(Vec2) * (vertices_num + 2));
+
+                // save ASDI first
+                didraw->vertices[ply][0].X = fighter_data->collData.topN_Curr.X;
+                didraw->vertices[ply][0].Y = fighter_data->collData.topN_Curr.Y + fighter_data->collData.ecbCurr_left.Y;
+                didraw->vertices[ply][1].X = fighter_data->collData.topN_Curr.X + asdi_orig.X;
+                didraw->vertices[ply][1].Y = fighter_data->collData.topN_Curr.Y + fighter_data->collData.ecbCurr_left.Y + asdi_orig.Y;
+
+                // save this info to the draw struct
+                for (int i = 0; i < vertices_num; i++)
+                {
+                    didraw->vertices[ply][i + 2].X = DICollData[i].pos.X;
+                    didraw->vertices[ply][i + 2].Y = DICollData[i].pos.Y + ((DICollData[i].ECBLeftY + DICollData[i].ECBTopY) / 2);
+
+                    // get vertex color
+                    static GXColor airColor = {0, 138, 255, 255};
+                    static GXColor groundColor = {255, 255, 255, 255};
+                    static GXColor ceilColor = {255, 0, 0, 255};
+                    static GXColor wallColor = {0, 255, 0, 255};
+                    GXColor *color;
+                    if ((ecb.envFlags & ECB_GROUND) != 0)
+                        color = &groundColor;
+                    else if ((ecb.envFlags & ECB_CEIL) != 0)
+                        color = &ceilColor;
+                    else if ((ecb.envFlags & ECB_WALLLEFT | ECB_WALLRIGHT) != 0)
+                        color = &wallColor;
+                    else
+                        color = &airColor;
+                    // set vertex color
+                    didraw->color.r = color->r;
+                    didraw->color.g = color->g;
+                    didraw->color.b = color->b;
+                    didraw->color.a = color->a;
+                }
+
+                // free the collision info
+                HSD_Free(DICollData);
+            }
             // if not in hitstun, zero out didraw
             else if (fighter_data->hitstun == 0)
             {
@@ -2291,10 +3117,11 @@ void LCancel_Think(GOBJ *event)
     FighterData *hmn_data = hmn->userdata;
     GOBJ *cpu = Fighter_GetGObj(1);
     FighterData *cpu_data = cpu->userdata;
+    HSD_Pad *pad = PadGet(hmn_data->player_controller_number, PADGET_ENGINE);
 
     // update menu's percent
     EvFreeOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
-    EvFreeOptions_General[OPTGEN_CPUPCNT].option_val = cpu_data->damage_Percent;
+    EvFreeOptions_CPU[OPTCPU_PCNT].option_val = cpu_data->damage_Percent;
 
     // reset stale moves
     if (EvFreeOptions_General[OPTGEN_STALE].option_val == 0)
@@ -2326,6 +3153,59 @@ void LCancel_Think(GOBJ *event)
     {
         cpu_data->no_reaction_always = 0;
         cpu_data->nudge_disable = 0;
+    }
+
+    // Move CPU
+    if (pad->down == PAD_BUTTON_DPAD_DOWN)
+    {
+
+        // ensure player is grounded
+        int isGround = 0;
+        if (hmn_data->air_state == 0)
+        {
+
+            // check for ground in front of player
+            Vec3 coll_pos;
+            int line_index;
+            int line_kind;
+            Vec3 line_unk;
+            float fromX = (hmn_data->pos.X) + (hmn_data->facing_direction * 10);
+            float toX = fromX;
+            float fromY = (hmn_data->pos.Y + 5);
+            float toY = fromY - 10;
+            isGround = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+            if (isGround == 1)
+            {
+                // place CPU here
+                cpu_data->pos = coll_pos;
+                cpu_data->collData.ground_index = line_index;
+
+                // facing player
+                cpu_data->facing_direction = hmn_data->facing_direction * -1;
+
+                // set grounded
+                cpu_data->air_state = 0;
+                //Fighter_SetGrounded(cpu);
+
+                // enter wait
+                Fighter_EnterWait(cpu);
+
+                // update ECB
+                cpu_data->collData.topN_Curr = cpu_data->pos; // move current ECB location to new position
+                Coll_ECBCurrToPrev(&cpu_data->collData);
+                cpu_data->cb_Coll(cpu);
+            }
+        }
+
+        // play SFX
+        if (isGround == 0)
+        {
+            SFX_PlayCommon(3);
+        }
+        else
+        {
+            SFX_Play(221);
+        }
     }
 
     // CPU Think
@@ -4716,7 +5596,12 @@ void Savestate_Save()
     }
     if (isSaved == 1)
     {
+        // play sfx
         SFX_PlayCommon(1);
+
+        // if not in frame advance, flash screen
+        if (Pause_CheckStatus(0) != 1)
+            ScreenFlash_Create(2, 0);
     }
 
     return;
@@ -4813,6 +5698,28 @@ void Savestate_Load()
 
                     // stop player SFX
                     SFX_StopAllFighterSFX(fighter_data);
+
+                    /*
+                    // create shield GFX
+                    if (fighter_data->shield == 1)
+                    {
+                        // get gfx ID
+                        int shieldGFX;
+                        static u16 ShieldGFXLookup[] = {1047, 1048, -1, 1049, -1}; // covers GUARDON -> GUARDREFLECT
+                        shieldGFX = ShieldGFXLookup[fighter_data->state_id - ASID_GUARDON];
+
+                        // create GFX
+                        int color_index = Fighter_GetShieldColorIndex(fighter_data->ply);
+                        GXColor *shieldColors = R13_PTR(-0x5194);
+                        GXColor *shieldColor = &shieldColors[color_index];
+                        JOBJ *shieldBone = fighter_data->bones[fighter_data->ftData->modelLookup[0x11]].joint;
+                        int shieldColorParam = (shieldColor->r << 16) | (shieldColor->b << 8) | (shieldColor->g);
+                        Effect_SpawnSync(shieldGFX, fighter, shieldBone, shieldColorParam);
+
+                        // update
+                        Fighter_UpdateShieldGFX(fighter, 1);
+                    }
+                    */
 
                     // update jobj position
                     JOBJ *fighter_jobj = fighter->hsd_object;
@@ -5710,13 +6617,17 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     u8 buffer[400];
     int menuTextSize = Text_StringToMenuText(&buffer, currOption->desc);
     // new alloc
-    u8 *textAlloc = Text_Alloc(menuTextSize + sizeof(descHeader) + sizeof(descTerminator));
+    int allocSize = menuTextSize + sizeof(descHeader) + sizeof(descTerminator);
+    u8 *textAlloc = Text_Alloc(allocSize);
     // copy header to new alloc
     memcpy(textAlloc, &descHeader, sizeof(descHeader));
     memcpy(textAlloc + sizeof(descHeader), &buffer, menuTextSize);
     memcpy(textAlloc + sizeof(descHeader) + menuTextSize, &descTerminator, sizeof(descTerminator));
     // update pointer to alloc
     text->textAlloc = textAlloc;
+    text->allocInfo->start = textAlloc;
+    text->allocInfo->curr = textAlloc + allocSize;
+    text->allocInfo->size = allocSize;
 
     //////////////////
     // Update Names //

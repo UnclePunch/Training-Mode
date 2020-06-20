@@ -148,9 +148,12 @@ typedef struct LCancelData
     EventInfo *eventInfo;
     u8 cpu_state;
     u8 cpu_hitshield;
-    u8 cpu_hitcount;
+    u8 cpu_hitnum;
     u8 cpu_sincehit;
     s16 cpu_lasthit;
+    s16 cpu_lastshieldstun; // last move instance of the opponent in shield stun. used to tell how many times the shield was hit
+    s8 cpu_hitkind;         // how the CPU was hit, damage or shield
+    u8 cpu_hitshieldnum;    // times the CPUs shield was hit
     s32 timer;
 } LCancelData;
 typedef struct InfoDisplayData
@@ -163,8 +166,18 @@ typedef struct InfoDisplayData
 typedef struct DIDraw
 {
     int num[2];        // number of vertices
-    Vec2 *vertices[2]; // pointer to vertices to draw
+    Vec2 *vertices[2]; // pointer to vertex to draw
+    GXColor color;     // color of this vertex
 } DIDraw;
+typedef struct DIDrawCalculate
+{
+    Vec2 pos;       // position of vertices
+    int envFlags;   // environment flags
+    float ECBTopY;  // used for determining middle of body
+    float ECBLeftY; // used for determining middle of body
+    float kb_Y;     // used to determine ceiling KOs
+} DIDrawCalculate;
+
 typedef struct CPUAction
 {
     u16 state;                  // state to perform this action. -1 for last
@@ -322,31 +335,34 @@ static EventMenu EvFreeMenu_Record;
     }
 
 // General Options
-#define OPTGEN_HMNPCNT 0
-#define OPTGEN_CPUPCNT 1
-#define OPTGEN_FRAME 2
-#define OPTINF_INFO 3
-#define OPTGEN_MODEL 4
-#define OPTGEN_HIT 5
-#define OPTGEN_COLL 6
-#define OPTGEN_CAM 7
-#define OPTGEN_HUD 8
-#define OPTGEN_DI 9
-#define OPTGEN_INPUT 10
-#define OPTGEN_STALE 11
+#define OPTGEN_FRAME 0
+#define OPTGEN_HMNPCNT 1
+#define OPTGEN_MODEL 2
+#define OPTGEN_HIT 3
+#define OPTGEN_COLL 4
+#define OPTGEN_INFO 5
+#define OPTGEN_CAM 6
+#define OPTGEN_HUD 7
+#define OPTGEN_DI 8
+#define OPTGEN_INPUT 0
+#define OPTGEN_STALE 10
 
 // CPU Options
-#define OPTCPU_INTANG 0
-#define OPTCPU_SHIELD 1
-#define OPTCPU_BEHAVE 2
-#define OPTCPU_TECH 3
-#define OPTCPU_TDI 4
-#define OPTCPU_SDI 5
-#define OPTCPU_RESET 6
-#define OPTCPU_CTRGRND 7
-#define OPTCPU_CTRAIR 8
-#define OPTCPU_CTRHITS 9
-#define OPTCPU_CTRFRAMES 10
+#define OPTCPU_PCNT 0
+#define OPTCPU_INTANG 1
+#define OPTCPU_SHIELD 2
+#define OPTCPU_BEHAVE 3
+#define OPTCPU_SDI 4
+#define OPTCPU_TDI 5
+#define OPTCPU_TECH 6
+#define OPTCPU_GETUP 7
+#define OPTCPU_RESET 8
+#define OPTCPU_CTRGRND 9
+#define OPTCPU_CTRAIR 10
+#define OPTCPU_CTRSHIELD 11
+#define OPTCPU_CTRFRAMES 12
+#define OPTCPU_CTRHITS 13
+#define OPTCPU_SHIELDHITS 14
 
 // Recording Options
 #define OPTREC_SLOT 0
@@ -361,8 +377,30 @@ static EventMenu EvFreeMenu_Record;
 
 // CPU States
 #define CPUSTATE_START 0
-#define CPUSTATE_DMG 1
-#define CPUSTATE_COUNTER 2
+#define CPUSTATE_SDI 1
+#define CPUSTATE_TDI 2
+#define CPUSTATE_TECH 3
+#define CPUSTATE_GETUP 4
+#define CPUSTATE_COUNTER 5
+#define CPUSTATE_RECOVER 6
+
+// Behavior Definitions
+#define CPUBEHAVE_STAND 0
+#define CPUBEHAVE_SHIELD 1
+#define CPUBEHAVE_CROUCH 2
+#define CPUBEHAVE_JUMP 3
+
+// SDI Definitions
+#define CPUSDI_RANDOM 0
+#define CPUSDI_NONE 1
+
+// TDI Definitions
+#define CPUTDI_RANDOM 0
+#define CPUTDI_IN 1
+#define CPUTDI_OUT 2
+#define CPUTDI_FLOORHUG 3
+#define CPUTDI_NONE 4
+#define CPUTDI_NUM 5
 
 // Tech Definitions
 #define CPUTECH_RANDOM 0
@@ -371,16 +409,12 @@ static EventMenu EvFreeMenu_Record;
 #define CPUTECH_TOWARDS 3
 #define CPUTECH_NONE 4
 
-// SDI Definitions
-#define CPUSDI_RANDOM 0
-#define CPUSDI_NONE 1
-
-// TDI Definitions
-#define CPUTDI_RANDOM 0
-#define CPUTDI_SURVIVAL 1
-#define CPUTDI_COMBO 2
-#define CPUTDI_FLOORHUG 3
-#define CPUTDI_NONE 4
+// Getup Definitions
+#define CPUGETUP_RANDOM 0
+#define CPUGETUP_STAND 1
+#define CPUGETUP_AWAY 2
+#define CPUGETUP_TOWARD 3
+#define CPUGETUP_ATTACK 4
 
 // Stick Direction Definitions
 #define STCKDIR_NONE 0
@@ -388,3 +422,10 @@ static EventMenu EvFreeMenu_Record;
 #define STCKDIR_AWAY 2
 #define STCKDIR_FRONT 3
 #define STCKDIR_BACK 4
+
+// Hit kind defintions
+#define HITKIND_DAMAGE 0
+#define HITKIND_SHIELD 1
+
+// DI Draw Constants
+#define DI_MaxColl 50
