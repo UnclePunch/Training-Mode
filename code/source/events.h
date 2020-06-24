@@ -100,14 +100,15 @@ typedef struct MenuData
 } MenuData;
 typedef struct EventOption
 {
-    u8 option_kind;                    // the type of option this is; string, integers, etc
-    u16 value_num;                     // number of values
-    u16 option_val;                    // value of this option
-    EventMenu *menu;                   // pointer to the menu that pressing A opens
-    char *option_name;                 // pointer to the name of this option
-    char *desc;                        // pointer to the description string for this option
-    void **option_values;              // pointer to an array of strings
-    void (*onOptionChange)(int value); // function that runs when option is changed
+    u8 option_kind;                                                // the type of option this is; string, integers, etc
+    u16 value_num;                                                 // number of values
+    u16 option_val;                                                // value of this option
+    EventMenu *menu;                                               // pointer to the menu that pressing A opens
+    char *option_name;                                             // pointer to the name of this option
+    char *desc;                                                    // pointer to the description string for this option
+    void **option_values;                                          // pointer to an array of strings
+    void (*onOptionChange)(GOBJ *menu_gobj, int value);            // function that runs when option is changed
+    void (*onOptionSelect)(GOBJ *menu_gobj, EventMenu *curr_menu); // function that runs when option is selected
 } EventOption;
 typedef struct EventMenu
 {
@@ -143,9 +144,14 @@ void Savestate_Save();
 void Savestate_Load();
 
 // Labbing event
+typedef struct evLcAssets
+{
+    JOBJDesc *stick;
+} evLcAssets;
 typedef struct LCancelData
 {
     EventInfo *eventInfo;
+    evLcAssets *assets;
     u8 cpu_state;
     u8 cpu_hitshield;
     u8 cpu_hitnum;
@@ -177,6 +183,12 @@ typedef struct DIDrawCalculate
     float ECBLeftY; // used for determining middle of body
     float kb_Y;     // used to determine ceiling KOs
 } DIDrawCalculate;
+typedef struct TDIData
+{
+    EventMenu *curr_menu;
+    JOBJ *stick_curr;
+    JOBJ *stick_prev[6];
+} TDIData;
 
 typedef struct CPUAction
 {
@@ -193,14 +205,16 @@ typedef struct CPUAction
 
 } CPUAction;
 
-void EvFree_ChangePlayerPercent(int value);
-void EvFree_ChangeCPUPercent(int value);
-void EvFree_ChangeModelDisplay(int value);
-void EvFree_ChangeHitDisplay(int value);
-void EvFree_ChangeEnvCollDisplay(int value);
-void EvFree_ChangeCamMode(int value);
-void EvFree_ChangeInfoPreset(int value);
-void EvFree_ChangeInfoRow(int value);
+void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value);
+void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value);
+void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value);
+void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value);
+void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
+void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value);
+void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
+void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
+void EvFree_SelectCustomTDI(GOBJ *menu_gobj, EventMenu *curr_menu);
+void CustomTDIThink_GX(GOBJ *gobj, int pass);
 void EvFree_Exit(int value);
 void InfoDisplay_Think(GOBJ *gobj);
 void InfoDisplay_GX(GOBJ *gobj, int pass);
@@ -214,6 +228,9 @@ static EventMenu EvFreeMenu_InfoDisplay;
 static EventMenu EvFreeMenu_CPU;
 static EventMenu EvFreeMenu_Record;
 
+// Custom TDI definitions
+#define CUSTOMTDI_DATASIZE 32
+
 // EventOption option_kind definitions
 #define OPTKIND_MENU 0
 #define OPTKIND_STRING 1
@@ -225,6 +242,7 @@ static EventMenu EvFreeMenu_Record;
 #define EMSTATE_FOCUS 0
 #define EMSTATE_OPENSUB 1
 #define EMSTATE_OPENPOP 2
+#define EMSTATE_WAIT 3 // pauses menu logic, used for when a custom window is being shown
 
 // GX Link args
 #define GXPRI_MENUMODEL 80
@@ -246,6 +264,7 @@ static EventMenu EvFreeMenu_Record;
 #define OPT_X 0.5
 #define OPT_Y -1
 #define OPT_Z 0
+#define OPT_SCALE 1
 #define OPT_WIDTH 55
 #define OPT_HEIGHT 40
 // menu text object
@@ -354,15 +373,16 @@ static EventMenu EvFreeMenu_Record;
 #define OPTCPU_BEHAVE 3
 #define OPTCPU_SDI 4
 #define OPTCPU_TDI 5
-#define OPTCPU_TECH 6
-#define OPTCPU_GETUP 7
-#define OPTCPU_RESET 8
-#define OPTCPU_CTRGRND 9
-#define OPTCPU_CTRAIR 10
-#define OPTCPU_CTRSHIELD 11
-#define OPTCPU_CTRFRAMES 12
-#define OPTCPU_CTRHITS 13
-#define OPTCPU_SHIELDHITS 14
+#define OPTCPU_CUSTOMTDI 6
+#define OPTCPU_TECH 7
+#define OPTCPU_GETUP 8
+#define OPTCPU_RESET 9
+#define OPTCPU_CTRGRND 10
+#define OPTCPU_CTRAIR 11
+#define OPTCPU_CTRSHIELD 12
+#define OPTCPU_CTRFRAMES 13
+#define OPTCPU_CTRHITS 14
+#define OPTCPU_SHIELDHITS 15
 
 // Recording Options
 #define OPTREC_SLOT 0
@@ -399,8 +419,9 @@ static EventMenu EvFreeMenu_Record;
 #define CPUTDI_IN 1
 #define CPUTDI_OUT 2
 #define CPUTDI_FLOORHUG 3
-#define CPUTDI_NONE 4
-#define CPUTDI_NUM 5
+#define CPUTDI_CUSTOM 4
+#define CPUTDI_NONE 5
+#define CPUTDI_NUM 6
 
 // Tech Definitions
 #define CPUTECH_RANDOM 0

@@ -977,7 +977,7 @@ static EventMenu EvFreeMenu_InfoDisplay = {
 // CPU
 static char **EvFreeValues_Shield[] = {"Off", "On Until Hit", "On"};
 static char **EvFreeValues_CPUBehave[] = {"Stand", "Shield", "Crouch", "Jump"};
-static char **EvFreeValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "None"};
+static char **EvFreeValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "Custom", "None"};
 static char **EvFreeValues_SDI[] = {"Random", "None"};
 static char **EvFreeValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
 static char **EvFreeValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
@@ -1045,6 +1045,17 @@ static EventOption EvFreeOptions_CPU[] = {
         .desc = "Adjust how the CPU will alter their knockback\ntrajectory.", // string describing what this option does
         .option_values = EvFreeValues_TDI,                                    // pointer to an array of strings
         .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_FUNC,                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                        // number of values for this option
+        .option_val = 0,                                                       // value of this option
+        .menu = 0,                                                             // pointer to the menu that pressing A opens
+        .option_name = "Custom TDI",                                           // pointer to a string
+        .desc = "Create custom trajectory DI values for the\nCPU to perform.", // string describing what this option does
+        .option_values = 0,                                                    // pointer to an array of strings
+        .onOptionChange = 0,
+        .onOptionSelect = EvFree_SelectCustomTDI,
     },
     {
         .option_kind = OPTKIND_STRING,                                         // the type of option this is; menu, string list, integer list, etc
@@ -1192,7 +1203,7 @@ static EventMenu EvFreeMenu_Record = {
 };
 
 // Menu Callbacks
-void EvFree_ChangePlayerPercent(int value)
+void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
 {
     GOBJ *fighter = Fighter_GetGObj(0);
     FighterData *fighter_data = fighter->userdata;
@@ -1202,7 +1213,7 @@ void EvFree_ChangePlayerPercent(int value)
 
     return;
 }
-void EvFree_ChangeCPUPercent(int value)
+void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value)
 {
     GOBJ *fighter = Fighter_GetGObj(1);
     FighterData *fighter_data = fighter->userdata;
@@ -1212,7 +1223,7 @@ void EvFree_ChangeCPUPercent(int value)
 
     return;
 }
-void EvFree_ChangeModelDisplay(int value)
+void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value)
 {
 
     // loop through all fighters
@@ -1235,7 +1246,7 @@ void EvFree_ChangeModelDisplay(int value)
 
     return;
 }
-void EvFree_ChangeHitDisplay(int value)
+void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value)
 {
 
     // loop through all fighters
@@ -1258,7 +1269,7 @@ void EvFree_ChangeHitDisplay(int value)
 
     return;
 }
-void EvFree_ChangeEnvCollDisplay(int value)
+void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value)
 {
     MatchCamera *matchCam = MATCH_CAM;
     matchCam->show_coll = value;
@@ -1266,7 +1277,7 @@ void EvFree_ChangeEnvCollDisplay(int value)
     OSReport("%d", matchCam->show_coll);
     return;
 }
-void EvFree_ChangeCamMode(int value)
+void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value)
 {
 
     MatchCamera *cam = MATCH_CAM;
@@ -1296,14 +1307,14 @@ void EvFree_ChangeCamMode(int value)
 
     return;
 }
-void EvFree_ChangeInfoRow(int value)
+void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value)
 {
     EventOption *idOptions = &EvFreeOptions_InfoDisplay;
 
     // changed option, set preset to custom
     idOptions[OPTINF_PRESET].option_val = 1;
 }
-void EvFree_ChangeInfoPreset(int value)
+void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value)
 {
     static int idPresets[][8] =
         {
@@ -2993,6 +3004,86 @@ void Update_Camera()
             }
         }
     }
+
+    return;
+}
+void EvFree_SelectCustomTDI(GOBJ *menu_gobj, EventMenu *curr_menu)
+{
+    MenuData *menu_data = menu_gobj->userdata;
+    LCancelData *event_data = R13_PTR(EVENT_DATA);
+    evMenu *menuAssets = menu_data->menu_assets;
+    evLcAssets *evFreeAssets = event_data->assets;
+
+    // set menu state to wait
+    curr_menu->state = EMSTATE_WAIT;
+
+    // create gobj
+    GOBJ *tdi_gobj = GObj_Create(0, 0, 0);
+    TDIData *userdata = calloc(sizeof(TDIData));
+    GObj_AddUserData(tdi_gobj, 4, HSD_Free, userdata);
+    GObj_AddGXLink(tdi_gobj, CustomTDIThink_GX, GXRENDER_POPUPMODEL, GXPRI_POPUPMODEL);
+
+    // save curr_menu
+    userdata->curr_menu = curr_menu;
+
+    // load bg joint
+    JOBJ *bg_joint = JOBJ_LoadJoint(menuAssets->menu); //JOBJ_LoadJoint(evFreeAssets->stick);
+    // add to gobj
+    GObj_AddObject(tdi_gobj, 3, bg_joint);
+
+    // Get each corner's joints
+    JOBJ *corners[4];
+    JOBJ_GetChild(bg_joint, &corners, 2, 3, 4, 5, -1);
+    // Modify scale and position
+    bg_joint->scale.X = OPT_SCALE;
+    bg_joint->scale.Y = OPT_SCALE;
+    bg_joint->scale.Z = OPT_SCALE;
+    bg_joint->trans.Z = OPT_Z;
+    corners[0]->trans.X = -(OPT_WIDTH / 2);
+    corners[0]->trans.Y = (OPT_HEIGHT / 2);
+    corners[1]->trans.X = (OPT_WIDTH / 2);
+    corners[1]->trans.Y = (OPT_HEIGHT / 2);
+    corners[2]->trans.X = -(OPT_WIDTH / 2);
+    corners[2]->trans.Y = -(OPT_HEIGHT / 2);
+    corners[3]->trans.X = (OPT_WIDTH / 2);
+    corners[3]->trans.Y = -(OPT_HEIGHT / 2);
+
+    /*
+    // Change color
+    GXColor gx_color = TEXT_BGCOLOR;
+    popup_joint->dobj->mobj->mat->diffuse = gx_color;
+*/
+}
+void CustomTDIThink_GX(GOBJ *gobj, int pass)
+{
+    if (pass == 0)
+    {
+        // get data
+        TDIData *tdi_data = gobj->userdata;
+
+        // get player who paused
+        u8 *pauseData = (u8 *)0x8046b6a0;
+        u8 pauser = pauseData[1];
+        // get their  inputs
+        HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
+        int inputs_rapid = pad->rapidFire;
+        int inputs_held = pad->held;
+        int inputs = inputs_rapid;
+        if ((inputs_held & HSD_TRIGGER_R) != 0)
+            inputs = inputs_held;
+
+        // if press B, exit
+        if ((inputs & HSD_BUTTON_B) != 0)
+        {
+            // set menu state to focus
+            tdi_data->curr_menu->state = EMSTATE_FOCUS;
+
+            // destroy
+            GObj_Destroy(gobj);
+        }
+    }
+
+    GXLink_Common(gobj, pass);
 
     return;
 }
@@ -6049,7 +6140,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 
                 // run on change function if it exists
                 if (currOption->onOptionChange != 0)
-                    currOption->onOptionChange(currOption->option_val);
+                    currOption->onOptionChange(gobj, currOption->option_val);
             }
         }
     }
@@ -6072,7 +6163,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 
                 // run on change function if it exists
                 if (currOption->onOptionChange != 0)
-                    currOption->onOptionChange(currOption->option_val);
+                    currOption->onOptionChange(gobj, currOption->option_val);
             }
         }
     }
@@ -6141,10 +6232,13 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         // check to run a function
         if ((currOption->option_kind == OPTKIND_FUNC))
         {
-            currOption->onOptionChange(0);
+            if (currOption->onOptionChange != 0)
+            {
+                currOption->onOptionChange(gobj, 0);
 
-            // also play sfx
-            SFX_PlayCommon(1);
+                // also play sfx
+                SFX_PlayCommon(1);
+            }
         }
     }
     // check to go back a menu
@@ -6322,7 +6416,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 
         // run on change function if it exists
         if (currOption->onOptionChange != 0)
-            currOption->onOptionChange(currOption->option_val);
+            currOption->onOptionChange(gobj, currOption->option_val);
 
         EventMenu_DestroyPopup(gobj);
 
@@ -6585,17 +6679,17 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         option_num = MENU_MAXOPTION;
     Text *text;
 
-    //////////////////
-    // Update Title //
-    //////////////////
+    /* 
+    Update Title
+    */
 
     text = menuData->text_title;
     //Text_SetText(text, 0, "Test Title");
     Text_SetText(text, 0, menu->name);
 
-    //////////////////
-    // Update Descr //
-    //////////////////
+    /* 
+    Update Desscription
+    */
 
     text = menuData->text_desc;
     EventOption *currOption = &menu->options[menu->cursor + menu->scroll];
@@ -6629,9 +6723,9 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     text->allocInfo->curr = textAlloc + allocSize;
     text->allocInfo->size = allocSize;
 
-    //////////////////
-    // Update Names //
-    //////////////////
+    /* 
+    Update Names
+    */
 
     // Output all options
     text = menuData->text_name;
@@ -6645,9 +6739,9 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         Text_SetText(text, i, currOption->option_name);
     }
 
-    ///////////////////
-    // Update Values //
-    ///////////////////
+    /* 
+    Update Values
+    */
 
     // Output all values
     text = menuData->text_value;
@@ -6681,8 +6775,8 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
             JOBJ_ClearFlags(menuData->row_joints[i][0], JOBJ_HIDDEN);
         }
 
-        // if this option is a menu
-        else if (currOption->option_kind == OPTKIND_MENU)
+        // if this option is a menu or function
+        else if ((currOption->option_kind == OPTKIND_MENU) || (currOption->option_kind == OPTKIND_FUNC))
         {
             Text_SetText(text, i, &nullString);
 
