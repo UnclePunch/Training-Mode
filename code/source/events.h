@@ -309,21 +309,6 @@ static EventMenu EvFreeMenu_Record;
         255, 211, 0, 255    \
     }
 
-// info display jobj
-#define INFDISP_WIDTH 7
-#define INFDISP_SCALE 4
-#define INFDISP_X -3.2
-#define INFDISP_Y 20
-#define INFDISP_Z 0.01
-#define INFDISP_YOFFSET -2.5
-#define INFDISP_BOTY -0.5
-#define INFDISP_BOTYOFFSET -0.30
-// info display text
-#define INFDISPTEXT_SCALE 0.04
-#define INFDISPTEXT_X -25.5
-#define INFDISPTEXT_Y -21
-#define INFDISPTEXT_YOFFSET 30
-
 // row jobj
 #define ROWBOX_HEIGHT 2.3
 #define ROWBOX_WIDTH 18
@@ -342,12 +327,12 @@ static EventMenu EvFreeMenu_Record;
 #define POPUP_SCALE 1
 #define POPUP_X 13
 #define POPUP_Y 7.8
-#define POPUP_Z 0
+#define POPUP_Z 0.5
 #define POPUP_YOFFSET -2.5
 // popup text object
 #define POPUP_CANVASSCALE 0.05
 #define POPUP_TEXTSCALE 1
-#define POPUP_TEXTZ 0
+#define POPUP_TEXTZ 0.5
 // popup text
 #define POPUP_OPTIONVALXPOS 250
 #define POPUP_OPTIONVALYPOS -280
@@ -363,6 +348,21 @@ static EventMenu EvFreeMenu_Record;
     {                        \
         255, 211, 0, 255     \
     }
+
+// info display jobj
+#define INFDISP_WIDTH 7
+#define INFDISP_SCALE 4
+#define INFDISP_X -3.2
+#define INFDISP_Y 20
+#define INFDISP_Z 0.01
+#define INFDISP_YOFFSET -2.5
+#define INFDISP_BOTY -0.5
+#define INFDISP_BOTYOFFSET -0.30
+// info display text
+#define INFDISPTEXT_SCALE 0.04
+#define INFDISPTEXT_X -25.5
+#define INFDISPTEXT_Y -21
+#define INFDISPTEXT_YOFFSET 30
 
 // General Options
 #define OPTGEN_FRAME 0
