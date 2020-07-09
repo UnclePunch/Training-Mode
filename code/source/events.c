@@ -703,7 +703,8 @@ static EventOption EvFreeOptions_Main[] = {
         .option_name = "Exit",                        // pointer to a string
         .desc = "Return to the Event Select Screen.", // string describing what this option does
         .option_values = 0,                           // pointer to an array of strings
-        .onOptionChange = EvFree_Exit,
+        .onOptionChange = 0,
+        .onOptionSelect = EvFree_Exit,
     },
 };
 static EventMenu EvFreeMenu_Main = {
@@ -1201,6 +1202,9 @@ static EventMenu EvFreeMenu_Record = {
     .options = &EvFreeOptions_Record, // pointer to all of this menu's options
     .prev = 0,                        // pointer to previous menu, used at runtime
 };
+
+// Static Variables
+static DIDraw didraws[6];
 
 // Menu Callbacks
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
@@ -3007,24 +3011,27 @@ void Update_Camera()
 
     return;
 }
-void EvFree_SelectCustomTDI(GOBJ *menu_gobj, EventMenu *curr_menu)
+GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
 {
     MenuData *menu_data = menu_gobj->userdata;
-    LCancelData *event_data = R13_PTR(EVENT_DATA);
+    GOBJ *event_gobj = event_vars.event_gobj;
+    LCancelData *event_data = event_gobj->userdata;
     evMenu *menuAssets = menu_data->menu_assets;
     evLcAssets *evFreeAssets = event_data->assets;
+    EventMenu *curr_menu = menu_data->currMenu;
 
     // set menu state to wait
     curr_menu->state = EMSTATE_WAIT;
 
+    /*
     // create gobj
     GOBJ *tdi_gobj = GObj_Create(0, 0, 0);
     TDIData *userdata = calloc(sizeof(TDIData));
     GObj_AddUserData(tdi_gobj, 4, HSD_Free, userdata);
-    GObj_AddGXLink(tdi_gobj, CustomTDIThink_GX, GXRENDER_POPUPMODEL, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(tdi_gobj, CustomTDIThink_GX, MENUCAM_GXLINK, GXPRI_POPUPMODEL);
 
-    // save curr_menu
-    userdata->curr_menu = curr_menu;
+    // save menu gobj
+    userdata->menu_gobj = menu_gobj;
 
     // load bg joint
     JOBJ *bg_joint = JOBJ_LoadJoint(menuAssets->menu); //JOBJ_LoadJoint(evFreeAssets->stick);
@@ -3035,18 +3042,56 @@ void EvFree_SelectCustomTDI(GOBJ *menu_gobj, EventMenu *curr_menu)
     JOBJ *corners[4];
     JOBJ_GetChild(bg_joint, &corners, 2, 3, 4, 5, -1);
     // Modify scale and position
-    bg_joint->scale.X = OPT_SCALE;
-    bg_joint->scale.Y = OPT_SCALE;
-    bg_joint->scale.Z = OPT_SCALE;
-    bg_joint->trans.Z = OPT_Z;
-    corners[0]->trans.X = -(OPT_WIDTH / 2);
-    corners[0]->trans.Y = (OPT_HEIGHT / 2);
-    corners[1]->trans.X = (OPT_WIDTH / 2);
-    corners[1]->trans.Y = (OPT_HEIGHT / 2);
-    corners[2]->trans.X = -(OPT_WIDTH / 2);
-    corners[2]->trans.Y = -(OPT_HEIGHT / 2);
-    corners[3]->trans.X = (OPT_WIDTH / 2);
-    corners[3]->trans.Y = -(OPT_HEIGHT / 2);
+    bg_joint->scale.X = POPUP_SCALE;
+    bg_joint->scale.Y = POPUP_SCALE;
+    bg_joint->scale.Z = POPUP_SCALE;
+    bg_joint->trans.Z = POPUP_Z;
+    corners[0]->trans.X = -(POPUP_WIDTH / 2);
+    corners[0]->trans.Y = (POPUP_HEIGHT / 2);
+    corners[1]->trans.X = (POPUP_WIDTH / 2);
+    corners[1]->trans.Y = (POPUP_HEIGHT / 2);
+    corners[2]->trans.X = -(POPUP_WIDTH / 2);
+    corners[2]->trans.Y = -(POPUP_HEIGHT / 2);
+    corners[3]->trans.X = (POPUP_WIDTH / 2);
+    corners[3]->trans.Y = -(POPUP_HEIGHT / 2);
+*/
+
+    // create popup gobj
+    GOBJ *popup_gobj = GObj_Create(0, 0, 0);
+
+    // load popup joint
+    JOBJ *popup_joint = JOBJ_LoadJoint(menuAssets->menu);
+
+    // Get each corner's joints
+    JOBJ *corners[4];
+    JOBJ_GetChild(popup_joint, &corners, 2, 3, 4, 5, -1);
+
+    // Modify scale and position
+    popup_joint->scale.X = POPUP_SCALE;
+    popup_joint->scale.Y = POPUP_SCALE;
+    popup_joint->scale.Z = POPUP_SCALE;
+    popup_joint->trans.Z = POPUP_Z;
+    corners[0]->trans.X = -(POPUP_WIDTH / 2);
+    corners[0]->trans.Y = (POPUP_HEIGHT / 2);
+    corners[1]->trans.X = (POPUP_WIDTH / 2);
+    corners[1]->trans.Y = (POPUP_HEIGHT / 2);
+    corners[2]->trans.X = -(POPUP_WIDTH / 2);
+    corners[2]->trans.Y = -(POPUP_HEIGHT / 2);
+    corners[3]->trans.X = (POPUP_WIDTH / 2);
+    corners[3]->trans.Y = -(POPUP_HEIGHT / 2);
+
+    /*
+    // Change color
+    GXColor gx_color = TEXT_BGCOLOR;
+    popup_joint->dobj->mobj->mat->diffuse = gx_color;
+*/
+
+    // add to gobj
+    GObj_AddObject(popup_gobj, 3, popup_joint);
+    // add gx link
+    GObj_AddGXLink(popup_gobj, GXLink_Common, MENUCAM_GXLINK, GXPRI_POPUPMODEL);
+
+    return popup_gobj;
 
     /*
     // Change color
@@ -3060,6 +3105,7 @@ void CustomTDIThink_GX(GOBJ *gobj, int pass)
     {
         // get data
         TDIData *tdi_data = gobj->userdata;
+        MenuData *menu_data = tdi_data->menu_gobj->userdata;
 
         // get player who paused
         u8 *pauseData = (u8 *)0x8046b6a0;
@@ -3076,7 +3122,10 @@ void CustomTDIThink_GX(GOBJ *gobj, int pass)
         if ((inputs & HSD_BUTTON_B) != 0)
         {
             // set menu state to focus
-            tdi_data->curr_menu->state = EMSTATE_FOCUS;
+            menu_data->currMenu->state = EMSTATE_FOCUS;
+
+            // null pointer
+            menu_data->custom_gobj = 0;
 
             // destroy
             GObj_Destroy(gobj);
@@ -3112,7 +3161,7 @@ void LCancel_Init(GOBJ *gobj)
     // Add to gobj
     GObj_AddObject(idGOBJ, 3, menu);
     // Add gxlink
-    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, GXRENDER_INFDISP, GXPRI_INFDISP);
+    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, MENUCAM_GXLINK, GXPRI_INFDISP);
     // Save pointers to corners
     JOBJ *corners[4];
     JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
@@ -3131,7 +3180,7 @@ void LCancel_Init(GOBJ *gobj)
     menu->dobj->next->mobj->mat->alpha = 0.6;
 
     // Create text object
-    int canvas_index = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
+    int canvas_index = Text_CreateCanvas(2, gobj, 14, 15, 0, MENUCAM_GXLINK, GXPRI_INFDISPTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->kerning = 1;
     text->scale.X = INFDISPTEXT_SCALE;
@@ -3175,8 +3224,6 @@ void LCancel_Init(GOBJ *gobj)
 // Update Function
 void LCancel_Update()
 {
-    // run savestate code
-    Update_Savestates();
 
     // update DI draw
     DIDraw_Update();
@@ -5258,9 +5305,19 @@ static EventPage **EventPages[] = {
     &Spacie_Page,
 };
 
-//////////////////////
-/// Init Functions ///
-//////////////////////
+////////////////////////
+/// Static Variables ///
+////////////////////////
+
+static Savestate *savestates[6];
+static EventInfo *static_eventInfo;
+static MenuData *static_menuData;
+static EventVars event_vars;
+static int *eventDataBackup;
+
+///////////////////////
+/// Event Functions ///
+///////////////////////
 
 void EventInit(int page, int eventID, MatchData *matchData)
 {
@@ -5425,10 +5482,9 @@ void EventLoad()
 
     // store pointer to the event's data
     userdata[0] = eventInfo;
-    R13_PTR(EVENT_DATA) = userdata;
 
     // init the pause menu
-    EventMenu_Init(eventInfo);
+    GOBJ *menu_gobj = EventMenu_Init(eventInfo);
 
     // init savestate struct
     eventDataBackup = calloc(EVENT_DATASIZE);
@@ -5443,15 +5499,49 @@ void EventLoad()
         eventInfo->eventOnInit(gobj);
     }
 
-    // Store pointer to this event's update function
-    if (eventInfo->eventUpdate != 0)
-    {
-        HSD_Update *update = HSD_UPDATE;
-        update->onFrame = eventInfo->eventUpdate;
-    }
+    // Store update function
+    HSD_Update *update = HSD_UPDATE;
+    update->onFrame = EventUpdate;
+
+    // Init static structure containing event variables
+    event_vars.event_info = eventInfo;
+    event_vars.event_gobj = gobj;
+    event_vars.menu_gobj = menu_gobj;
+    R13_PTR(EVENT_VAR) = &event_vars;
 
     return;
 };
+
+void EventUpdate()
+{
+
+    // get event info
+    EventInfo *event_info = event_vars.event_info;
+    GOBJ *menu_gobj = event_vars.menu_gobj;
+
+    // run savestate logic if enabled
+    if (1 == 1)
+    {
+        Update_Savestates();
+    }
+
+    // run menu logic if exists
+    if (menu_gobj != 0)
+    {
+        // update menu
+        EventMenu_Update(menu_gobj);
+    }
+
+    // run custom event update function
+    if (event_info->eventUpdate != 0)
+    {
+        event_info->eventUpdate();
+    }
+    else
+        Develop_UpdateMatchHotkeys();
+
+    return;
+}
 
 //////////////////////
 /// Hook Functions ///
@@ -5593,6 +5683,7 @@ void Savestate_Save()
     int canSave = 1;
     GOBJ **gobj_list = R13_PTR(GOBJLIST);
     GOBJ *fighter = gobj_list[8];
+    GOBJ *event_gobj = event_vars.event_gobj;
     while (fighter != 0)
     {
 
@@ -5619,7 +5710,7 @@ void Savestate_Save()
     {
 
         // backup event data
-        memcpy(eventDataBackup, R13_PTR(EVENT_DATA), EVENT_DATASIZE);
+        memcpy(eventDataBackup, event_gobj->userdata, EVENT_DATASIZE);
 
         // free all savestates
         for (int i = 0; i < sizeof(savestates) / 4; i++)
@@ -5704,6 +5795,8 @@ void Savestate_Load()
         GOBJ *fighter;
         FighterData *fighter_data;
     } BackupQueue;
+
+    GOBJ *event_gobj = event_vars.event_gobj;
 
     // loop through all players
     int isLoaded = 0;
@@ -5860,7 +5953,7 @@ void Savestate_Load()
     }
     if (isLoaded == 1)
     {
-        memcpy(R13_PTR(EVENT_DATA), eventDataBackup, EVENT_DATASIZE);
+        memcpy(event_gobj->userdata, eventDataBackup, EVENT_DATASIZE);
 
         SFX_PlayCommon(0);
     }
@@ -5872,13 +5965,24 @@ void Savestate_Load()
 /// Event Menu Functions ///
 ////////////////////////////
 
-void EventMenu_Init(EventInfo *eventInfo)
+GOBJ *EventMenu_Init(EventInfo *eventInfo)
 {
     // Ensure this event has a menu
     if (eventInfo->startMenu == 0)
-        return;
+        return 0;
 
-    // Create a gobj
+    // Create a cobj for the event menu
+    COBJDesc ***dmgScnMdls = File_GetSymbol(ACCESS_PTR(0x804d6d5c), 0x803f94d0);
+    COBJDesc *cam_desc = dmgScnMdls[1][0];
+    COBJ *cam_cobj = COBJ_LoadDesc(cam_desc);
+    GOBJ *cam_gobj = GObj_Create(19, 20, 0);
+    MenuCamData *menuCamData = calloc(sizeof(MenuCamData));
+    GObj_AddUserData(cam_gobj, 4, HSD_Free, menuCamData);
+    GObj_AddObject(cam_gobj, R13_U8(-0x3E55), cam_cobj);
+    GOBJ_InitCamera(cam_gobj, EventMenu_COBJThink, MENUCAM_GXPRI);
+    cam_gobj->cobj_id = 1 << MENUCAM_GXLINK;
+
+    // Create menu gobj
     GOBJ *gobj = GObj_Create(0, 0, 0);
     MenuData *menuData = calloc(sizeof(MenuData));
     GObj_AddUserData(gobj, 4, HSD_Free, menuData);
@@ -5886,14 +5990,18 @@ void EventMenu_Init(EventInfo *eventInfo)
     // store pointer to the gobj's data
     menuData->eventInfo = eventInfo;
 
-    // Add per frame process
-    //GObj_AddProc(gobj, EventMenu_Think, 0);
     // Add gx_link
-    GObj_AddGXLink(gobj, EventMenu_Think, GXRENDER_MENUMODEL, GXPRI_MENUMODEL);
+    GObj_AddGXLink(gobj, GXLink_Common, MENUCAM_GXLINK, GXPRI_MENUMODEL);
+
+    // save pointer to menu to camera gobj
+    menuCamData->menu = gobj;
 
     // Create 2 text canvases (menu and popup)
-    menuData->canvas_menu = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_MENU, GXPRI_MENU, 19);
-    menuData->canvas_popup = Text_CreateCanvas(2, gobj, 14, 15, 0, GXRENDER_POPUP, GXPRI_POPUP, 19);
+    menuData->canvas_menu = Text_CreateCanvas(2, gobj, 14, 15, 0, MENUCAM_GXLINK, GXPRI_MENU, 19);
+    menuData->canvas_popup = Text_CreateCanvas(2, gobj, 14, 15, 0, MENUCAM_GXLINK, GXPRI_POPUP, 19);
+
+    // Init currMenu
+    menuData->currMenu = eventInfo->startMenu;
 
     // Load EvMn.dat
     int *symbols;
@@ -5902,109 +6010,116 @@ void EventMenu_Init(EventInfo *eventInfo)
     // also store to r13 in case any code needs to access these assets
     R13_PTR(EVMENU_ASSETS) = &symbols[0];
 
-    return;
+    return gobj;
 };
+
+void EventMenu_Update(GOBJ *gobj)
+{
+
+    //MenuCamData *camData = gobj->userdata;
+    MenuData *menuData = gobj->userdata;
+    EventInfo *eventInfo = menuData->eventInfo;
+
+    // Update Pause Status
+    int isPress = 0;
+    for (int i = 0; i < 6; i++)
+    {
+
+        // humans only
+        if (Fighter_GetSlotType(i) == 0)
+        {
+            GOBJ *fighter = Fighter_GetGObj(i);
+            FighterData *fighter_data = fighter->userdata;
+
+            HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_MASTER);
+
+            if ((pad->down & HSD_BUTTON_START) != 0)
+            {
+                isPress = 1;
+                break;
+            }
+        }
+    }
+    // change pause state
+    if (isPress != 0)
+    {
+
+        EventMenu *currMenu = menuData->currMenu;
+        // pause game
+        if (menuData->isPaused == 0)
+        {
+
+            // set state
+            menuData->isPaused = 1;
+
+            // Create menu
+            EventMenu_CreateModel(gobj, currMenu);
+            EventMenu_CreateText(gobj, currMenu);
+            EventMenu_UpdateText(gobj, currMenu);
+            if (currMenu->state == EMSTATE_OPENPOP)
+            {
+                EventOption *currOption = &currMenu->options[currMenu->cursor];
+                EventMenu_CreatePopupModel(gobj, currMenu);
+                EventMenu_CreatePopupText(gobj, currMenu);
+                EventMenu_UpdatePopupText(gobj, currOption);
+            }
+
+            // Freeze the game
+            Match_FreezeGame(1);
+            SFX_PlayCommon(5);
+            Match_HideHUD();
+        }
+        // unpause game
+        else
+        {
+
+            menuData->isPaused = 0;
+
+            // destroy menu
+            EventMenu_DestroyMenu(gobj);
+
+            // Unfreeze the game
+            Match_UnfreezeGame(1);
+            Match_ShowHUD();
+        }
+    }
+
+    // Run Menu Logic
+    if (menuData->isPaused == 1)
+    {
+        // Get the current menu
+        EventMenu *currMenu = menuData->currMenu;
+
+        // menu think
+        if (currMenu->state == EMSTATE_FOCUS)
+            EventMenu_MenuThink(gobj, currMenu);
+
+        // popup think
+        else if (currMenu->state == EMSTATE_OPENPOP)
+            EventMenu_PopupThink(gobj, currMenu);
+
+        // custom gobj think
+        else if (currMenu->state == EMSTATE_WAIT)
+        {
+            // iterate through gobj proc's here
+        }
+    }
+
+    return;
+}
+
+void EventMenu_COBJThink(GOBJ *gobj)
+{
+
+    // do not display menu if a custom gobj is active
+    CObjThink_Common(gobj);
+    return;
+}
 
 void EventMenu_Think(GOBJ *gobj, int pass)
 {
 
-    if (pass == 0)
-    {
-        // Get event info
-        MenuData *menuData = gobj->userdata;
-        EventInfo *eventInfo = menuData->eventInfo;
-
-        // check if someone pressed pause
-        int isPress = 0;
-        for (int i = 0; i < 6; i++)
-        {
-
-            // humans only
-            if (Fighter_GetSlotType(i) == 0)
-            {
-                GOBJ *fighter = Fighter_GetGObj(i);
-                FighterData *fighter_data = fighter->userdata;
-
-                HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_MASTER);
-
-                if ((pad->down & HSD_BUTTON_START) != 0)
-                {
-                    isPress = 1;
-                }
-            }
-        }
-
-        // change pause state
-        if (isPress != 0)
-        {
-
-            EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
-
-            // pause game
-            if (menuData->isPaused == 0)
-            {
-
-                // set state
-                menuData->isPaused = 1;
-
-                // Create menu
-                EventMenu_CreateModel(gobj, currMenu);
-                EventMenu_CreateText(gobj, currMenu);
-                EventMenu_UpdateText(gobj, currMenu);
-                if (currMenu->state == EMSTATE_OPENPOP)
-                {
-                    EventOption *currOption = &currMenu->options[currMenu->cursor];
-                    EventMenu_CreatePopupModel(gobj, currMenu);
-                    EventMenu_CreatePopupText(gobj, currMenu);
-                    EventMenu_UpdatePopupText(gobj, currOption);
-                }
-
-                // Freeze the game
-                Match_FreezeGame(1);
-                SFX_PlayCommon(5);
-                Match_HideHUD();
-            }
-            // unpause game
-            else
-            {
-
-                menuData->isPaused = 0;
-
-                // destroy menu
-                EventMenu_DestroyMenu(gobj);
-
-                // Unfreeze the game
-                Match_UnfreezeGame(1);
-                Match_ShowHUD();
-            }
-        }
-
-        // Check if paused
-        if (menuData->isPaused == 1)
-        {
-            // Get the current menu
-            EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
-
-            // act on controls
-
-            // menu think
-            if (currMenu->state == EMSTATE_FOCUS)
-                EventMenu_MenuThink(gobj, currMenu);
-
-            // popup think
-            else if (currMenu->state == EMSTATE_OPENPOP)
-                EventMenu_PopupThink(gobj, currMenu);
-        }
-        // Is not paused
-        else
-        {
-            // check to remove
-            if (menuData->text_name != 0)
-            {
-                EventMenu_DestroyMenu(gobj);
-            }
-        }
-    }
+    MenuData *menuData = gobj->userdata;
 
     GXLink_Common(gobj, pass);
 
@@ -6182,6 +6297,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             nextMenu->prev = currMenu;
             nextMenu->state = EMSTATE_FOCUS;
             currMenu = nextMenu;
+            menuData->currMenu = currMenu;
 
             // recreate everything
             EventMenu_DestroyMenu(gobj);
@@ -6232,9 +6348,10 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         // check to run a function
         if ((currOption->option_kind == OPTKIND_FUNC))
         {
-            if (currOption->onOptionChange != 0)
+            if (currOption->onOptionSelect != 0)
             {
-                currOption->onOptionChange(gobj, 0);
+                // save pointer to this gobj
+                menuData->custom_gobj = currOption->onOptionSelect(gobj);
 
                 // also play sfx
                 SFX_PlayCommon(1);
@@ -6259,6 +6376,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 
             // update currMenu
             currMenu = prevMenu;
+            menuData->currMenu = currMenu;
 
             // close this menu
             currMenu->state = EMSTATE_FOCUS;
@@ -6460,7 +6578,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
     GObj_DestroyGXLink(gobj);
-    GObj_AddGXLink(gobj, EventMenu_Think, GXRENDER_MENUMODEL, GXPRI_MENUMODEL);
+    GObj_AddGXLink(gobj, EventMenu_Think, MENUCAM_GXLINK, GXPRI_MENUMODEL);
 
     // Get each corner's joints
     JOBJ *corners[4];
@@ -6814,6 +6932,14 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
     if (menuData->text_popup != 0)
         EventMenu_DestroyPopup(gobj);
 
+    // if custom menu gobj exists
+    if (menuData->custom_gobj != 0)
+    {
+        menuData->currMenu->state = EMSTATE_FOCUS;
+        GObj_Destroy(menuData->custom_gobj);
+        menuData->custom_gobj = 0;
+    }
+
     // remove jobj
     GObj_FreeObject(gobj);
     //GObj_DestroyGXLink(gobj);
@@ -6864,7 +6990,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     // add to gobj
     GObj_AddObject(popup_gobj, 3, popup_joint);
     // add gx link
-    GObj_AddGXLink(popup_gobj, GXLink_Common, GXRENDER_POPUPMODEL, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(popup_gobj, GXLink_Common, MENUCAM_GXLINK, GXPRI_POPUPMODEL);
     // save pointer
     menuData->popup = popup_gobj;
 
@@ -7002,54 +7128,8 @@ void EventMenu_DestroyPopup(GOBJ *gobj)
     menuData->popup = 0;
 
     // also change the menus state
-    EventMenu *currMenu = EventMenu_GetCurrentMenu(gobj);
+    EventMenu *currMenu = menuData->currMenu;
     currMenu->state = EMSTATE_FOCUS;
-}
-
-EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj)
-{
-    // Get event info
-    MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
-    EventMenu *currMenu = eventInfo->startMenu;
-
-    // walk through the menus to find the one that is in focus
-    while ((currMenu->state == EMSTATE_OPENSUB))
-    {
-        s32 cursor = currMenu->cursor;
-        s32 scroll = currMenu->scroll;
-        currMenu = currMenu->options[cursor + scroll].menu;
-    }
-
-    return currMenu;
-}
-
-int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley)
-{
-    TextAllocInfo *textInfo = text->allocInfo;
-    char convertedText[100];
-    int currAllocSize = textInfo->size;
-    u8 *oldBuffer = textInfo->start;
-    int currAllocUsed = (&textInfo->curr - &textInfo->start);
-
-    // convert string to menu text
-    int newTextSize = Text_ConvertToMenuText(&convertedText, string);
-
-    // check if i have enough space in my text alloc for this
-    int newSize = (&textInfo->curr - &textInfo->start) + 17 + newTextSize;
-    if (currAllocSize < newSize)
-    {
-        // alloc new buffer
-        textInfo->size = newSize;
-        u8 *newBuffer = Text_Alloc(newSize);
-
-        // copy original data to new buffer
-        memcpy(newBuffer, oldBuffer, currAllocUsed);
-
-        textInfo->start = newBuffer;
-    }
-
-    return 0;
 }
 
 ///////////////////////////////

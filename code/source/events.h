@@ -82,6 +82,7 @@ typedef struct EventPage
 typedef struct MenuData
 {
     EventInfo *eventInfo;
+    EventMenu *currMenu;
     u16 canvas_menu;
     u16 canvas_popup;
     u8 isPaused;
@@ -97,18 +98,23 @@ typedef struct MenuData
     JOBJ *row_joints[MENU_MAXOPTION][2]; // pointers to row jobjs
     JOBJ *highlight_menu;                // pointer to the highlight jobj
     JOBJ *highlight_popup;               // pointer to the highlight jobj
+    GOBJ *custom_gobj;                   // onSelect gobj
 } MenuData;
+typedef struct MenuCamData
+{
+    GOBJ *menu;
+} MenuCamData;
 typedef struct EventOption
 {
-    u8 option_kind;                                                // the type of option this is; string, integers, etc
-    u16 value_num;                                                 // number of values
-    u16 option_val;                                                // value of this option
-    EventMenu *menu;                                               // pointer to the menu that pressing A opens
-    char *option_name;                                             // pointer to the name of this option
-    char *desc;                                                    // pointer to the description string for this option
-    void **option_values;                                          // pointer to an array of strings
-    void (*onOptionChange)(GOBJ *menu_gobj, int value);            // function that runs when option is changed
-    void (*onOptionSelect)(GOBJ *menu_gobj, EventMenu *curr_menu); // function that runs when option is selected
+    u8 option_kind;                                     // the type of option this is; string, integers, etc
+    u16 value_num;                                      // number of values
+    u16 option_val;                                     // value of this option
+    EventMenu *menu;                                    // pointer to the menu that pressing A opens
+    char *option_name;                                  // pointer to the name of this option
+    char *desc;                                         // pointer to the description string for this option
+    void **option_values;                               // pointer to an array of strings
+    void (*onOptionChange)(GOBJ *menu_gobj, int value); // function that runs when option is changed
+    GOBJ *(*onOptionSelect)(GOBJ *menu_gobj);           // function that runs when option is selected
 } EventOption;
 typedef struct EventMenu
 {
@@ -120,7 +126,6 @@ typedef struct EventMenu
     EventOption *options; // pointer to all of this menu's options
     EventMenu *prev;      // pointer to previous menu, used at runtime
 } EventMenu;
-
 typedef struct Savestate
 {
     FighterData fighter_data[2];
@@ -128,20 +133,31 @@ typedef struct Savestate
     Playerblock player_block;
     int stale_queue[11];
 } Savestate;
+typedef struct EventVars
+{
+    EventInfo *event_info; // event information
+    GOBJ *event_gobj;      // event gobj
+    GOBJ *menu_gobj;       // event menu gobj
+} EventVars;
 
 // Function prototypes
 EventInfo *GetEvent(int page, int event);
 void EventInit(int page, int eventID, MatchData *matchData);
 void EventLoad();
-void EventMenu_Init(EventInfo *eventInfo);
+GOBJ *EventMenu_Init(EventInfo *eventInfo);
 void EventMenu_Think(GOBJ *eventMenu, int pass);
+void EventMenu_COBJThink(GOBJ *gobj);
 void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj);
-static Savestate *savestates[6];
-static int *eventDataBackup;
 void Savestate_Save();
 void Savestate_Load();
+void EventUpdate();
+static Savestate *savestates[6];
+static EventInfo *static_eventInfo;
+static MenuData *static_menuData;
+static EventVars event_vars;
+static int *eventDataBackup;
 
 // Labbing event
 typedef struct evLcAssets
@@ -185,7 +201,7 @@ typedef struct DIDrawCalculate
 } DIDrawCalculate;
 typedef struct TDIData
 {
-    EventMenu *curr_menu;
+    GOBJ *menu_gobj;
     JOBJ *stick_curr;
     JOBJ *stick_prev[6];
 } TDIData;
@@ -213,13 +229,12 @@ void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
 void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
-void EvFree_SelectCustomTDI(GOBJ *menu_gobj, EventMenu *curr_menu);
+GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj);
 void CustomTDIThink_GX(GOBJ *gobj, int pass);
 void EvFree_Exit(int value);
 void InfoDisplay_Think(GOBJ *gobj);
 void InfoDisplay_GX(GOBJ *gobj, int pass);
 
-static DIDraw didraws[6];
 static EventOption EvFreeOptions_Main[];
 static EventOption EvFreeOptions_General[];
 static EventOption EvFreeOptions_InfoDisplay[];
@@ -245,20 +260,16 @@ static EventMenu EvFreeMenu_Record;
 #define EMSTATE_WAIT 3 // pauses menu logic, used for when a custom window is being shown
 
 // GX Link args
+#define MENUCAM_GXLINK 12
+#define MENUCAM_GXPRI 8
 #define GXPRI_MENUMODEL 80
-#define GXRENDER_MENUMODEL 11
 #define GXPRI_MENU GXPRI_MENUMODEL + 1
-#define GXRENDER_MENU 11
 // popup menu
 #define GXPRI_POPUPMODEL GXPRI_MENU + 1
-#define GXRENDER_POPUPMODEL 11
 #define GXPRI_POPUP GXPRI_POPUPMODEL + 1
-#define GXRENDER_POPUP 11
 // info display
 #define GXPRI_INFDISPTEXT GXPRI_MENUMODEL - 1
-#define GXRENDER_INFDISPTEXT 11
 #define GXPRI_INFDISP GXPRI_INFDISPTEXT - 1
-#define GXRENDER_INFDISP 11
 
 // menu model
 #define OPT_X 0.5
