@@ -5997,8 +5997,8 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo)
     menuCamData->menu = gobj;
 
     // Create 2 text canvases (menu and popup)
-    menuData->canvas_menu = Text_CreateCanvas(2, gobj, 14, 15, 0, MENUCAM_GXLINK, GXPRI_MENU, 19);
-    menuData->canvas_popup = Text_CreateCanvas(2, gobj, 14, 15, 0, MENUCAM_GXLINK, GXPRI_POPUP, 19);
+    menuData->canvas_menu = Text_CreateCanvas(2, -1, 9, 13, 0, MENUCAM_GXLINK, GXPRI_MENU, 19);
+    menuData->canvas_popup = Text_CreateCanvas(2, -1, 9, 13, 0, MENUCAM_GXLINK, GXPRI_POPUP, 19);
 
     // Init currMenu
     menuData->currMenu = eventInfo->startMenu;
