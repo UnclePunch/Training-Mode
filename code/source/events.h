@@ -260,16 +260,23 @@ static EventMenu EvFreeMenu_Record;
 #define EMSTATE_WAIT 3 // pauses menu logic, used for when a custom window is being shown
 
 // GX Link args
-#define MENUCAM_GXLINK 12
-#define MENUCAM_GXPRI 8
+#define GXLINK_MENUMODEL 11
 #define GXPRI_MENUMODEL 80
-#define GXPRI_MENU GXPRI_MENUMODEL + 1
+#define GXLINK_MENUTEXT 11
+#define GXPRI_MENUTEXT GXPRI_MENUMODEL + 1
 // popup menu
-#define GXPRI_POPUPMODEL GXPRI_MENU + 1
-#define GXPRI_POPUP GXPRI_POPUPMODEL + 1
+#define GXPRI_POPUPMODEL GXPRI_MENUTEXT + 1
+#define GXLINK_POPUPMODEL 11
+#define GXPRI_POPUPTEXT GXPRI_POPUPMODEL + 1
+#define GXLINK_POPUPTEXT 11
 // info display
-#define GXPRI_INFDISPTEXT GXPRI_MENUMODEL - 1
-#define GXPRI_INFDISP GXPRI_INFDISPTEXT - 1
+#define GXPRI_INFDISP GXPRI_MENUMODEL - 2
+#define GXLINK_INFDISP 11
+#define GXPRI_INFDISPTEXT GXPRI_INFDISP + 1
+#define GXLINK_INFDISPTEXT 11
+// cobj
+#define MENUCAM_COBJGXLINK (1 << GXLINK_MENUMODEL) | (1 << GXLINK_MENUTEXT) | (1 << GXLINK_POPUPMODEL) | (1 << GXLINK_POPUPTEXT)
+#define MENUCAM_GXPRI 8
 
 // menu model
 #define OPT_X 0.5
@@ -370,12 +377,11 @@ static EventMenu EvFreeMenu_Record;
 #define OPTGEN_MODEL 2
 #define OPTGEN_HIT 3
 #define OPTGEN_COLL 4
-#define OPTGEN_INFO 5
-#define OPTGEN_CAM 6
-#define OPTGEN_HUD 7
-#define OPTGEN_DI 8
-#define OPTGEN_INPUT 0
-#define OPTGEN_STALE 10
+#define OPTGEN_CAM 5
+#define OPTGEN_HUD 6
+#define OPTGEN_DI 7
+#define OPTGEN_INPUT 8
+#define OPTGEN_STALE 9
 
 // CPU Options
 #define OPTCPU_PCNT 0

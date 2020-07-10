@@ -685,6 +685,17 @@ static EventOption EvFreeOptions_Main[] = {
         .option_values = 0,                    // pointer to an array of strings
         .onOptionChange = 0,
     },
+    // info display
+    {
+        .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                       // number of values for this option
+        .option_val = 0,                                      // value of this option
+        .menu = &EvFreeMenu_InfoDisplay,                      // pointer to the menu that pressing A opens
+        .option_name = "Info Display",                        // pointer to a string
+        .desc = "Display various game information onscreen.", // string describing what this option does
+        .option_values = 0,                                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
     {
         .option_kind = OPTKIND_FUNC,                         // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                                      // number of values for this option
@@ -708,13 +719,13 @@ static EventOption EvFreeOptions_Main[] = {
     },
 };
 static EventMenu EvFreeMenu_Main = {
-    .name = "Main Menu",            // the name of this menu
-    .option_num = 5,                // number of options this menu contains
-    .scroll = 0,                    // runtime variable used for how far down in the menu to start
-    .state = 0,                     // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                    // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_Main, // pointer to all of this menu's options
-    .prev = 0,                      // pointer to previous menu, used at runtime
+    .name = "Main Menu",                                            // the name of this menu
+    .option_num = sizeof(EvFreeOptions_Main) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                    // runtime variable used for how far down in the menu to start
+    .state = 0,                                                     // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                    // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_Main,                                 // pointer to all of this menu's options
+    .prev = 0,                                                      // pointer to previous menu, used at runtime
 };
 // General
 static char **EvFreeOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
@@ -773,17 +784,6 @@ static EventOption EvFreeOptions_General[] = {
         .desc = "Toggle environment collision visualization.\nDisplays the players' ECB (environmental \ncollision box).", // string describing what this option does
         .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
         .onOptionChange = EvFree_ChangeEnvCollDisplay,
-    },
-    // info display
-    {
-        .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                                       // number of values for this option
-        .option_val = 0,                                      // value of this option
-        .menu = &EvFreeMenu_InfoDisplay,                      // pointer to the menu that pressing A opens
-        .option_name = "Info Display",                        // pointer to a string
-        .desc = "Display various game information onscreen.", // string describing what this option does
-        .option_values = 0,                                   // pointer to an array of strings
-        .onOptionChange = 0,
     },
     // camera mode
     {
@@ -1205,6 +1205,7 @@ static EventMenu EvFreeMenu_Record = {
 
 // Static Variables
 static DIDraw didraws[6];
+static GOBJ *infodisp_gobj;
 
 // Menu Callbacks
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
@@ -1397,12 +1398,6 @@ void EvFree_Exit(int value)
 // Event Functions
 void InfoDisplay_GX(GOBJ *gobj, int pass)
 {
-
-    if (pass == 1)
-    {
-        InfoDisplay_Think(gobj);
-    }
-
     GXLink_Common(gobj, pass);
     return;
 }
@@ -3028,7 +3023,7 @@ GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
     GOBJ *tdi_gobj = GObj_Create(0, 0, 0);
     TDIData *userdata = calloc(sizeof(TDIData));
     GObj_AddUserData(tdi_gobj, 4, HSD_Free, userdata);
-    GObj_AddGXLink(tdi_gobj, CustomTDIThink_GX, MENUCAM_GXLINK, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(tdi_gobj, CustomTDIThink_GX, GXLINK_MENUMODEL, GXPRI_POPUPMODEL);
 
     // save menu gobj
     userdata->menu_gobj = menu_gobj;
@@ -3089,7 +3084,7 @@ GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
     // add to gobj
     GObj_AddObject(popup_gobj, 3, popup_joint);
     // add gx link
-    GObj_AddGXLink(popup_gobj, GXLink_Common, MENUCAM_GXLINK, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(popup_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_POPUPMODEL);
 
     return popup_gobj;
 
@@ -3161,7 +3156,7 @@ void LCancel_Init(GOBJ *gobj)
     // Add to gobj
     GObj_AddObject(idGOBJ, 3, menu);
     // Add gxlink
-    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, MENUCAM_GXLINK, GXPRI_INFDISP);
+    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, GXLINK_INFDISP, GXPRI_INFDISP);
     // Save pointers to corners
     JOBJ *corners[4];
     JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
@@ -3178,9 +3173,11 @@ void LCancel_Init(GOBJ *gobj)
     corners[3]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
     //JOBJ_SetFlags(menu, JOBJ_HIDDEN);
     menu->dobj->next->mobj->mat->alpha = 0.6;
+    // static pointer for update function
+    infodisp_gobj = idGOBJ;
 
     // Create text object
-    int canvas_index = Text_CreateCanvas(2, gobj, 14, 15, 0, MENUCAM_GXLINK, GXPRI_INFDISPTEXT, 19);
+    int canvas_index = Text_CreateCanvas(2, gobj, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->kerning = 1;
     text->scale.X = INFDISPTEXT_SCALE;
@@ -3227,6 +3224,9 @@ void LCancel_Update()
 
     // update DI draw
     DIDraw_Update();
+
+    // update info display
+    InfoDisplay_Think(infodisp_gobj);
 
     // update advanced cam
     Update_Camera();
@@ -5980,7 +5980,7 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo)
     GObj_AddUserData(cam_gobj, 4, HSD_Free, menuCamData);
     GObj_AddObject(cam_gobj, R13_U8(-0x3E55), cam_cobj);
     GOBJ_InitCamera(cam_gobj, EventMenu_COBJThink, MENUCAM_GXPRI);
-    cam_gobj->cobj_id = 1 << MENUCAM_GXLINK;
+    cam_gobj->cobj_id = MENUCAM_COBJGXLINK;
 
     // Create menu gobj
     GOBJ *gobj = GObj_Create(0, 0, 0);
@@ -5991,14 +5991,14 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo)
     menuData->eventInfo = eventInfo;
 
     // Add gx_link
-    GObj_AddGXLink(gobj, GXLink_Common, MENUCAM_GXLINK, GXPRI_MENUMODEL);
+    GObj_AddGXLink(gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
     // save pointer to menu to camera gobj
     menuCamData->menu = gobj;
 
     // Create 2 text canvases (menu and popup)
-    menuData->canvas_menu = Text_CreateCanvas(2, -1, 9, 13, 0, MENUCAM_GXLINK, GXPRI_MENU, 19);
-    menuData->canvas_popup = Text_CreateCanvas(2, -1, 9, 13, 0, MENUCAM_GXLINK, GXPRI_POPUP, 19);
+    menuData->canvas_menu = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_MENUTEXT, MENUCAM_GXPRI);
+    menuData->canvas_popup = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_POPUPTEXT, MENUCAM_GXPRI);
 
     // Init currMenu
     menuData->currMenu = eventInfo->startMenu;
@@ -6578,7 +6578,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
     GObj_DestroyGXLink(gobj);
-    GObj_AddGXLink(gobj, EventMenu_Think, MENUCAM_GXLINK, GXPRI_MENUMODEL);
+    GObj_AddGXLink(gobj, EventMenu_Think, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
     // Get each corner's joints
     JOBJ *corners[4];
@@ -6990,7 +6990,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     // add to gobj
     GObj_AddObject(popup_gobj, 3, popup_joint);
     // add gx link
-    GObj_AddGXLink(popup_gobj, GXLink_Common, MENUCAM_GXLINK, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(popup_gobj, GXLink_Common, GXLINK_POPUPMODEL, GXPRI_POPUPMODEL);
     // save pointer
     menuData->popup = popup_gobj;
 
