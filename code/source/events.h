@@ -201,7 +201,6 @@ typedef struct DIDrawCalculate
 } DIDrawCalculate;
 typedef struct TDIData
 {
-    GOBJ *menu_gobj;
     JOBJ *stick_curr;
     JOBJ *stick_prev[6];
 } TDIData;
@@ -230,7 +229,7 @@ void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
 GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj);
-void CustomTDIThink_GX(GOBJ *gobj, int pass);
+void CustomTDI_Update(GOBJ *gobj);
 void EvFree_Exit(int value);
 void InfoDisplay_Think(GOBJ *gobj);
 void InfoDisplay_GX(GOBJ *gobj, int pass);
@@ -260,20 +259,20 @@ static EventMenu EvFreeMenu_Record;
 #define EMSTATE_WAIT 3 // pauses menu logic, used for when a custom window is being shown
 
 // GX Link args
-#define GXLINK_MENUMODEL 11
+#define GXLINK_MENUMODEL 12
 #define GXPRI_MENUMODEL 80
-#define GXLINK_MENUTEXT 11
+#define GXLINK_MENUTEXT 12
 #define GXPRI_MENUTEXT GXPRI_MENUMODEL + 1
 // popup menu
 #define GXPRI_POPUPMODEL GXPRI_MENUTEXT + 1
-#define GXLINK_POPUPMODEL 11
+#define GXLINK_POPUPMODEL 12
 #define GXPRI_POPUPTEXT GXPRI_POPUPMODEL + 1
-#define GXLINK_POPUPTEXT 11
+#define GXLINK_POPUPTEXT 12
 // info display
 #define GXPRI_INFDISP GXPRI_MENUMODEL - 2
-#define GXLINK_INFDISP 11
+#define GXLINK_INFDISP 12
 #define GXPRI_INFDISPTEXT GXPRI_INFDISP + 1
-#define GXLINK_INFDISPTEXT 11
+#define GXLINK_INFDISPTEXT 12
 // cobj
 #define MENUCAM_COBJGXLINK (1 << GXLINK_MENUMODEL) | (1 << GXLINK_MENUTEXT) | (1 << GXLINK_POPUPMODEL) | (1 << GXLINK_POPUPTEXT)
 #define MENUCAM_GXPRI 8
@@ -321,7 +320,7 @@ static EventMenu EvFreeMenu_Record;
 #define ROWBOX_WIDTH 18
 #define ROWBOX_X 13
 #define ROWBOX_Y 10.3
-#define ROWBOX_Z 0.01
+#define ROWBOX_Z 0
 #define ROWBOX_YOFFSET -2.5
 // arrow jobj
 #define TICKBOX_SCALE 1.8
@@ -334,12 +333,12 @@ static EventMenu EvFreeMenu_Record;
 #define POPUP_SCALE 1
 #define POPUP_X 13
 #define POPUP_Y 7.8
-#define POPUP_Z 0.5
+#define POPUP_Z 0.01
 #define POPUP_YOFFSET -2.5
 // popup text object
 #define POPUP_CANVASSCALE 0.05
 #define POPUP_TEXTSCALE 1
-#define POPUP_TEXTZ 0.5
+#define POPUP_TEXTZ 0.01
 // popup text
 #define POPUP_OPTIONVALXPOS 250
 #define POPUP_OPTIONVALYPOS -280

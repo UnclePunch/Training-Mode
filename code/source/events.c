@@ -3018,41 +3018,10 @@ GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
     // set menu state to wait
     curr_menu->state = EMSTATE_WAIT;
 
-    /*
-    // create gobj
+    // create popup gobj
     GOBJ *tdi_gobj = GObj_Create(0, 0, 0);
     TDIData *userdata = calloc(sizeof(TDIData));
     GObj_AddUserData(tdi_gobj, 4, HSD_Free, userdata);
-    GObj_AddGXLink(tdi_gobj, CustomTDIThink_GX, GXLINK_MENUMODEL, GXPRI_POPUPMODEL);
-
-    // save menu gobj
-    userdata->menu_gobj = menu_gobj;
-
-    // load bg joint
-    JOBJ *bg_joint = JOBJ_LoadJoint(menuAssets->menu); //JOBJ_LoadJoint(evFreeAssets->stick);
-    // add to gobj
-    GObj_AddObject(tdi_gobj, 3, bg_joint);
-
-    // Get each corner's joints
-    JOBJ *corners[4];
-    JOBJ_GetChild(bg_joint, &corners, 2, 3, 4, 5, -1);
-    // Modify scale and position
-    bg_joint->scale.X = POPUP_SCALE;
-    bg_joint->scale.Y = POPUP_SCALE;
-    bg_joint->scale.Z = POPUP_SCALE;
-    bg_joint->trans.Z = POPUP_Z;
-    corners[0]->trans.X = -(POPUP_WIDTH / 2);
-    corners[0]->trans.Y = (POPUP_HEIGHT / 2);
-    corners[1]->trans.X = (POPUP_WIDTH / 2);
-    corners[1]->trans.Y = (POPUP_HEIGHT / 2);
-    corners[2]->trans.X = -(POPUP_WIDTH / 2);
-    corners[2]->trans.Y = -(POPUP_HEIGHT / 2);
-    corners[3]->trans.X = (POPUP_WIDTH / 2);
-    corners[3]->trans.Y = -(POPUP_HEIGHT / 2);
-*/
-
-    // create popup gobj
-    GOBJ *popup_gobj = GObj_Create(0, 0, 0);
 
     // load popup joint
     JOBJ *popup_joint = JOBJ_LoadJoint(menuAssets->menu);
@@ -3082,11 +3051,12 @@ GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
 */
 
     // add to gobj
-    GObj_AddObject(popup_gobj, 3, popup_joint);
+    GObj_AddObject(tdi_gobj, 3, popup_joint);
     // add gx link
-    GObj_AddGXLink(popup_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(tdi_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_POPUPMODEL);
+    GObj_AddProc(tdi_gobj, CustomTDI_Update, 0);
 
-    return popup_gobj;
+    return tdi_gobj;
 
     /*
     // Change color
@@ -3094,44 +3064,37 @@ GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
     popup_joint->dobj->mobj->mat->diffuse = gx_color;
 */
 }
-void CustomTDIThink_GX(GOBJ *gobj, int pass)
+void CustomTDI_Update(GOBJ *gobj)
 {
-    if (pass == 0)
+    // get data
+    TDIData *tdi_data = gobj->userdata;
+    MenuData *menu_data = event_vars.menu_gobj->userdata;
+
+    // get player who paused
+    u8 *pauseData = (u8 *)0x8046b6a0;
+    u8 pauser = pauseData[1];
+    // get their  inputs
+    HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
+    int inputs_rapid = pad->rapidFire;
+    int inputs_held = pad->held;
+    int inputs = inputs_rapid;
+    if ((inputs_held & HSD_TRIGGER_R) != 0)
+        inputs = inputs_held;
+
+    // if press B, exit
+    if ((inputs & HSD_BUTTON_B) != 0)
     {
-        // get data
-        TDIData *tdi_data = gobj->userdata;
-        MenuData *menu_data = tdi_data->menu_gobj->userdata;
+        // set menu state to focus
+        menu_data->currMenu->state = EMSTATE_FOCUS;
 
-        // get player who paused
-        u8 *pauseData = (u8 *)0x8046b6a0;
-        u8 pauser = pauseData[1];
-        // get their  inputs
-        HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
-        int inputs_rapid = pad->rapidFire;
-        int inputs_held = pad->held;
-        int inputs = inputs_rapid;
-        if ((inputs_held & HSD_TRIGGER_R) != 0)
-            inputs = inputs_held;
+        // null pointer
+        menu_data->custom_gobj = 0;
 
-        // if press B, exit
-        if ((inputs & HSD_BUTTON_B) != 0)
-        {
-            // set menu state to focus
-            menu_data->currMenu->state = EMSTATE_FOCUS;
-
-            // null pointer
-            menu_data->custom_gobj = 0;
-
-            // destroy
-            GObj_Destroy(gobj);
-        }
+        // destroy
+        GObj_Destroy(gobj);
     }
-
-    GXLink_Common(gobj, pass);
-
     return;
 }
-
 // Init Function
 void LCancel_Init(GOBJ *gobj)
 {
@@ -6099,9 +6062,27 @@ void EventMenu_Update(GOBJ *gobj)
             EventMenu_PopupThink(gobj, currMenu);
 
         // custom gobj think
-        else if (currMenu->state == EMSTATE_WAIT)
+        else if ((currMenu->state == EMSTATE_WAIT) && (menuData->custom_gobj != 0))
         {
+            blr();
+
             // iterate through gobj proc's here
+            GOBJ *custom_gobj = menuData->custom_gobj;
+            GOBJProc **proc_arr = R13_PTR(-0x3E60);
+            u8 max_gproc = ACCESS_U8(0x804ce380 + 0x2);
+            for (int i = 0; i < max_gproc; i++)
+            {
+                GOBJProc *this_proc = proc_arr[i];
+                while ((this_proc != 0) && (this_proc->cb != 0))
+                {
+                    if (this_proc->parentGOBJ == custom_gobj)
+                    {
+                        this_proc->cb(custom_gobj);
+                    }
+
+                    this_proc = this_proc->next;
+                }
+            }
         }
     }
 
@@ -6111,8 +6092,11 @@ void EventMenu_Update(GOBJ *gobj)
 void EventMenu_COBJThink(GOBJ *gobj)
 {
 
+    MenuData *menu_data = event_vars.menu_gobj->userdata;
+
     // do not display menu if a custom gobj is active
-    CObjThink_Common(gobj);
+    if (menu_data->custom_gobj == 0)
+        CObjThink_Common(gobj);
     return;
 }
 
