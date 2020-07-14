@@ -98,12 +98,12 @@ typedef struct MenuData
     JOBJ *row_joints[MENU_MAXOPTION][2]; // pointers to row jobjs
     JOBJ *highlight_menu;                // pointer to the highlight jobj
     JOBJ *highlight_popup;               // pointer to the highlight jobj
-    GOBJ *custom_gobj;                   // onSelect gobj
+    JOBJ *scroll_top;
+    JOBJ *scroll_bot;
+    GOBJ *custom_gobj;                               // onSelect gobj
+    void *(*custom_gobj_think)(GOBJ *custom_gobj);   // per frame function
+    void *(*custom_gobj_destroy)(GOBJ *custom_gobj); // on destroy function
 } MenuData;
-typedef struct MenuCamData
-{
-    GOBJ *menu;
-} MenuCamData;
 typedef struct EventOption
 {
     u8 option_kind;                                     // the type of option this is; string, integers, etc
@@ -136,8 +136,10 @@ typedef struct Savestate
 typedef struct EventVars
 {
     EventInfo *event_info; // event information
+    evMenu *menu_assets;   // menu assets
     GOBJ *event_gobj;      // event gobj
     GOBJ *menu_gobj;       // event menu gobj
+    u8 hide_menu;          // enable this to hide the base menu. used for custom menus.
 } EventVars;
 
 // Function prototypes
@@ -160,9 +162,26 @@ static EventVars event_vars;
 static int *eventDataBackup;
 
 // Labbing event
+
+// Custom TDI definitions
+#define TDI_HITNUM 10
+#define TDI_DISPNUM 4
+// menu model
+#define TDIMENU_SCALE 1
+#define TDIMENU_X 0.5
+#define TDIMENU_Y -1
+#define TDIMENU_Z 0
+#define TDIMENU_WIDTH 55 / TDIMENU_SCALE
+#define TDIMENU_HEIGHT 40 / TDIMENU_SCALE
+// menu text object
+#define TDITEXT_CANVASSCALE 0.05
+#define TDITEXT_TEXTSCALE 1
+#define TDITEXT_TEXTZ 0
+
 typedef struct evLcAssets
 {
     JOBJDesc *stick;
+    JOBJDesc *cstick;
 } evLcAssets;
 typedef struct LCancelData
 {
@@ -177,6 +196,8 @@ typedef struct LCancelData
     s8 cpu_hitkind;         // how the CPU was hit, damage or shield
     u8 cpu_hitshieldnum;    // times the CPUs shield was hit
     s32 timer;
+    u8 tdi_val_num;                // number of custom tdi values set
+    s8 tdi_vals[TDI_HITNUM][2][2]; // contains the custom tdi values
 } LCancelData;
 typedef struct InfoDisplayData
 {
@@ -201,10 +222,10 @@ typedef struct DIDrawCalculate
 } DIDrawCalculate;
 typedef struct TDIData
 {
-    JOBJ *stick_curr;
-    JOBJ *stick_prev[6];
+    JOBJ *stick_curr[2];
+    JOBJ *stick_prev[6][2];
+    Text *text_curr;
 } TDIData;
-
 typedef struct CPUAction
 {
     u16 state;                  // state to perform this action. -1 for last
@@ -228,8 +249,10 @@ void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
 void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
-GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj);
+void EvFree_ChangeHUD(GOBJ *menu_gobj, int value);
+void EvFree_SelectCustomTDI(GOBJ *menu_gobj);
 void CustomTDI_Update(GOBJ *gobj);
+void CustomTDI_Destroy(GOBJ *gobj);
 void EvFree_Exit(int value);
 void InfoDisplay_Think(GOBJ *gobj);
 void InfoDisplay_GX(GOBJ *gobj, int pass);
@@ -241,9 +264,6 @@ static EventMenu EvFreeMenu_General;
 static EventMenu EvFreeMenu_InfoDisplay;
 static EventMenu EvFreeMenu_CPU;
 static EventMenu EvFreeMenu_Record;
-
-// Custom TDI definitions
-#define CUSTOMTDI_DATASIZE 32
 
 // EventOption option_kind definitions
 #define OPTKIND_MENU 0
@@ -278,12 +298,12 @@ static EventMenu EvFreeMenu_Record;
 #define MENUCAM_GXPRI 8
 
 // menu model
+#define OPT_SCALE 1
 #define OPT_X 0.5
 #define OPT_Y -1
 #define OPT_Z 0
-#define OPT_SCALE 1
-#define OPT_WIDTH 55
-#define OPT_HEIGHT 40
+#define OPT_WIDTH 55 / OPT_SCALE
+#define OPT_HEIGHT 40 / OPT_SCALE
 // menu text object
 #define MENU_CANVASSCALE 0.05
 #define MENU_TEXTSCALE 1
@@ -304,6 +324,7 @@ static EventMenu EvFreeMenu_Record;
 #define MENU_OPTIONVALYPOS -230
 #define MENU_TEXTYOFFSET 50
 // menu highlight
+#define MENUHIGHLIGHT_SCALE 1 // OPT_SCALE
 #define MENUHIGHLIGHT_HEIGHT ROWBOX_HEIGHT
 #define MENUHIGHLIGHT_WIDTH (OPT_WIDTH * 0.785)
 #define MENUHIGHLIGHT_X OPT_X
@@ -314,6 +335,19 @@ static EventMenu EvFreeMenu_Record;
     {                       \
         255, 211, 0, 255    \
     }
+// menu scroll
+#define MENUSCROLL_SCALE 2                         // OPT_SCALE
+#define MENUSCROLL_SCALEY 1.105 * MENUSCROLL_SCALE // OPT_SCALE
+#define MENUSCROLL_X 23
+#define MENUSCROLL_Y 12
+#define MENUSCROLL_Z 0.01
+#define MENUSCROLL_PEROPTION 1
+#define MENUSCROLL_MINLENGTH -1
+#define MENUSCROLL_MAXLENGTH -10
+#define MENUSCROLL_COLOR \
+    {                    \
+        255, 211, 0, 255 \
+    }
 
 // row jobj
 #define ROWBOX_HEIGHT 2.3
@@ -322,6 +356,10 @@ static EventMenu EvFreeMenu_Record;
 #define ROWBOX_Y 10.3
 #define ROWBOX_Z 0
 #define ROWBOX_YOFFSET -2.5
+#define ROWBOX_COLOR       \
+    {                      \
+        104, 105, 129, 100 \
+    }
 // arrow jobj
 #define TICKBOX_SCALE 1.8
 #define TICKBOX_X 11.7

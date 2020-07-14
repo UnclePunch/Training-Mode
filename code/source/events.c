@@ -805,7 +805,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_name = "HUD",                                   // pointer to a string
         .desc = "Toggle player percents and timer visibility.", // string describing what this option does
         .option_values = EvFreeOptions_OffOn,                   // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeHUD,
     },
     // di display
     {
@@ -1380,6 +1380,20 @@ void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value)
             idOptions[i + OPTINF_ROW1].option_val = currPreset[i];
         }
     }
+}
+void EvFree_ChangeHUD(GOBJ *menu_gobj, int value)
+{
+    // toggle HUD
+    u8 *hideHUD = (u8 *)(R13 + -0x4948);
+    if (value == 0)
+    {
+        *hideHUD = 1;
+    }
+    else
+    {
+        *hideHUD = 0;
+    }
+    return;
 }
 void EvFree_Exit(int value)
 {
@@ -2088,6 +2102,34 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             break;
         }
 
+        case (CPUTDI_CUSTOM):
+        {
+
+            int cpu_hitnum = eventData->cpu_hitnum;
+
+            blr();
+
+            // ensure we have a DI input for this hitnum
+            if (eventData->tdi_val_num >= cpu_hitnum)
+            {
+
+                cpu_hitnum--;
+
+                // get the stick values for this hit num
+                s8 lstickX = eventData->tdi_vals[cpu_hitnum][0][0];
+                s8 lstickY = eventData->tdi_vals[cpu_hitnum][0][1];
+                s8 cstickX = eventData->tdi_vals[cpu_hitnum][1][0];
+                s8 cstickY = eventData->tdi_vals[cpu_hitnum][1][1];
+
+                cpu_data->cpu.lstickX = ((float)lstickX / 80) / (0.0078125);
+                cpu_data->cpu.lstickY = ((float)lstickY / 80) / (0.0078125);
+                cpu_data->cpu.cstickX = ((float)cstickX / 80) / (0.0078125);
+                cpu_data->cpu.cstickY = ((float)cstickY / 80) / (0.0078125);
+            }
+
+            break;
+        }
+
         case (CPUTDI_NONE):
         {
             Fighter_ZeroCPUInputs(cpu_data);
@@ -2649,8 +2691,6 @@ void DIDraw_Update()
                     if (vertices_num < (fighter_data->collData.ecb_lock - fighter_data->hitlag_frames))
                     {
 
-                        blr();
-
                         ecb_bones.topY = fighter_data->collData.ecbCurr_top.Y;
                         ecb_bones.botY = fighter_data->collData.ecbCurr_bot.Y;
                         ecb_bones.left = fighter_data->collData.ecbCurr_left;
@@ -3006,57 +3046,132 @@ void Update_Camera()
 
     return;
 }
-GOBJ *EvFree_SelectCustomTDI(GOBJ *menu_gobj)
+void EvFree_SelectCustomTDI(GOBJ *menu_gobj)
 {
     MenuData *menu_data = menu_gobj->userdata;
+    EventMenu *curr_menu = menu_data->currMenu;
+    evMenu *menuAssets = event_vars.menu_assets;
     GOBJ *event_gobj = event_vars.event_gobj;
     LCancelData *event_data = event_gobj->userdata;
-    evMenu *menuAssets = menu_data->menu_assets;
     evLcAssets *evFreeAssets = event_data->assets;
-    EventMenu *curr_menu = menu_data->currMenu;
 
     // set menu state to wait
-    curr_menu->state = EMSTATE_WAIT;
+    //curr_menu->state = EMSTATE_WAIT;
 
-    // create popup gobj
+    // create bg gobj
     GOBJ *tdi_gobj = GObj_Create(0, 0, 0);
     TDIData *userdata = calloc(sizeof(TDIData));
     GObj_AddUserData(tdi_gobj, 4, HSD_Free, userdata);
 
-    // load popup joint
-    JOBJ *popup_joint = JOBJ_LoadJoint(menuAssets->menu);
+    // load menu joint
+    JOBJ *tdi_joint = JOBJ_LoadJoint(menuAssets->menu);
+    GObj_AddObject(tdi_gobj, 3, tdi_joint);                                     // add to gobj
+    GObj_AddGXLink(tdi_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL); // add gx link
+    menu_data->custom_gobj_think = CustomTDI_Update;                            // set callback
 
     // Get each corner's joints
     JOBJ *corners[4];
-    JOBJ_GetChild(popup_joint, &corners, 2, 3, 4, 5, -1);
+    JOBJ_GetChild(tdi_joint, &corners, 2, 3, 4, 5, -1);
 
     // Modify scale and position
-    popup_joint->scale.X = POPUP_SCALE;
-    popup_joint->scale.Y = POPUP_SCALE;
-    popup_joint->scale.Z = POPUP_SCALE;
-    popup_joint->trans.Z = POPUP_Z;
-    corners[0]->trans.X = -(POPUP_WIDTH / 2);
-    corners[0]->trans.Y = (POPUP_HEIGHT / 2);
-    corners[1]->trans.X = (POPUP_WIDTH / 2);
-    corners[1]->trans.Y = (POPUP_HEIGHT / 2);
-    corners[2]->trans.X = -(POPUP_WIDTH / 2);
-    corners[2]->trans.Y = -(POPUP_HEIGHT / 2);
-    corners[3]->trans.X = (POPUP_WIDTH / 2);
-    corners[3]->trans.Y = -(POPUP_HEIGHT / 2);
+    tdi_joint->trans.Z = TDIMENU_Z;
+    tdi_joint->scale.X = TDIMENU_SCALE;
+    tdi_joint->scale.Y = TDIMENU_SCALE;
+    tdi_joint->scale.Z = TDIMENU_SCALE;
+    corners[0]->trans.X = -(TDIMENU_WIDTH / 2) + TDIMENU_X;
+    corners[0]->trans.Y = (TDIMENU_HEIGHT / 2) + TDIMENU_Y;
+    corners[1]->trans.X = (TDIMENU_WIDTH / 2) + TDIMENU_X;
+    corners[1]->trans.Y = (TDIMENU_HEIGHT / 2) + TDIMENU_Y;
+    corners[2]->trans.X = -(TDIMENU_WIDTH / 2) + TDIMENU_X;
+    corners[2]->trans.Y = -(TDIMENU_HEIGHT / 2) + TDIMENU_Y;
+    corners[3]->trans.X = (TDIMENU_WIDTH / 2) + TDIMENU_X;
+    corners[3]->trans.Y = -(TDIMENU_HEIGHT / 2) + TDIMENU_Y;
 
-    /*
-    // Change color
-    GXColor gx_color = TEXT_BGCOLOR;
-    popup_joint->dobj->mobj->mat->diffuse = gx_color;
-*/
+    // load current stick joints
+    JOBJ *stick_joint = JOBJ_LoadJoint(event_data->assets->stick);
+    stick_joint->scale.X = 2;
+    stick_joint->scale.Y = 2;
+    stick_joint->scale.Z = 2;
+    stick_joint->trans.X = -6;
+    stick_joint->trans.Y = -6;
+    userdata->stick_curr[0] = stick_joint;
+    JOBJ_AddChild(tdi_gobj->hsd_object, stick_joint);
+    // current c stick
+    stick_joint = JOBJ_LoadJoint(event_data->assets->cstick);
+    stick_joint->scale.X = 2;
+    stick_joint->scale.Y = 2;
+    stick_joint->scale.Z = 2;
+    stick_joint->trans.X = 6;
+    stick_joint->trans.Y = -6;
+    userdata->stick_curr[1] = stick_joint;
+    JOBJ_AddChild(tdi_gobj->hsd_object, stick_joint);
 
-    // add to gobj
-    GObj_AddObject(tdi_gobj, 3, popup_joint);
-    // add gx link
-    GObj_AddGXLink(tdi_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_POPUPMODEL);
-    GObj_AddProc(tdi_gobj, CustomTDI_Update, 0);
+    // create stick curr text
+    Text *text_curr = Text_CreateText(2, menu_data->canvas_menu);
+    userdata->text_curr = text_curr;
+    // enable align and kerning
+    text_curr->align = 0;
+    text_curr->kerning = 1;
+    // scale canvas
+    text_curr->scale.X = MENU_CANVASSCALE;
+    text_curr->scale.Y = MENU_CANVASSCALE;
+    text_curr->trans.Z = MENU_TEXTZ;
+    // create hit num
+    Text_AddSubtext(text_curr, -50, 200, &nullString);
+    // create lstick coords
+    for (int i = 0; i < 2; i++)
+    {
+        Text_AddSubtext(text_curr, -400, (80 + i * 40), &nullString);
+    }
+    // create cstick coords
+    for (int i = 0; i < 2; i++)
+    {
+        Text_AddSubtext(text_curr, 250, (80 + i * 40), &nullString);
+    }
 
-    return tdi_gobj;
+    // create prev sticks
+    for (int i = 0; i < TDI_DISPNUM; i++)
+    {
+        // left stick
+        JOBJ *prevstick_joint = JOBJ_LoadJoint(event_data->assets->stick);
+        prevstick_joint->scale.X = 1;
+        prevstick_joint->scale.Y = 1;
+        prevstick_joint->scale.Z = 1;
+        prevstick_joint->rot.X = 0.4;
+        prevstick_joint->trans.X = -22 + (i * (55 / TDI_DISPNUM));
+        prevstick_joint->trans.Y = 10;
+        JOBJ_SetFlags(prevstick_joint, JOBJ_HIDDEN);
+        userdata->stick_prev[i][0] = prevstick_joint;
+        JOBJ_AddChild(tdi_gobj->hsd_object, prevstick_joint);
+
+        // cstick
+        prevstick_joint = JOBJ_LoadJoint(event_data->assets->cstick);
+        prevstick_joint->scale.X = 1;
+        prevstick_joint->scale.Y = 1;
+        prevstick_joint->scale.Z = 1;
+        prevstick_joint->rot.X = 0.4;
+        prevstick_joint->trans.X = -18 + (i * (55 / TDI_DISPNUM));
+        prevstick_joint->trans.Y = 8;
+        JOBJ_SetFlags(prevstick_joint, JOBJ_HIDDEN);
+        userdata->stick_prev[i][1] = prevstick_joint;
+        JOBJ_AddChild(tdi_gobj->hsd_object, prevstick_joint);
+
+        // create text
+        Text_AddSubtext(text_curr, (-460 + (i * ((55 * 19.6) / TDI_DISPNUM))), -100, &nullString);
+    }
+
+    // create description text
+    Text_AddSubtext(text_curr, -500, 270, "Input TDI angles for the CPU to use.");
+    Text_AddSubtext(text_curr, -500, 315, "A = Save Input  X = Delete Input  B = Return");
+
+    // hide original menu
+    event_vars.hide_menu = 1;
+
+    // set pointers to custom gobj
+    menu_data->custom_gobj = tdi_gobj;
+    menu_data->custom_gobj_destroy = CustomTDI_Destroy;
+
+    return;
 
     /*
     // Change color
@@ -3069,32 +3184,129 @@ void CustomTDI_Update(GOBJ *gobj)
     // get data
     TDIData *tdi_data = gobj->userdata;
     MenuData *menu_data = event_vars.menu_gobj->userdata;
+    LCancelData *event_data = event_vars.event_gobj->userdata;
 
     // get player who paused
     u8 *pauseData = (u8 *)0x8046b6a0;
     u8 pauser = pauseData[1];
     // get their  inputs
     HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
-    int inputs_rapid = pad->rapidFire;
-    int inputs_held = pad->held;
-    int inputs = inputs_rapid;
-    if ((inputs_held & HSD_TRIGGER_R) != 0)
-        inputs = inputs_held;
+    int inputs = pad->down;
 
-    // if press B, exit
+    // if press A, save stick
+    if ((inputs & HSD_BUTTON_A) != 0)
+    {
+        if (event_data->tdi_val_num < TDI_HITNUM)
+        {
+            event_data->tdi_vals[event_data->tdi_val_num][0][0] = (pad->fstickX * 80);
+            event_data->tdi_vals[event_data->tdi_val_num][0][1] = (pad->fstickY * 80);
+            event_data->tdi_vals[event_data->tdi_val_num][1][0] = (pad->fsubstickX * 80);
+            event_data->tdi_vals[event_data->tdi_val_num][1][1] = (pad->fsubstickY * 80);
+            event_data->tdi_val_num++;
+            SFX_PlayCommon(1);
+        }
+    }
+
+    // if press X, go back a hit
+    if ((inputs & HSD_BUTTON_X) != 0)
+    {
+        if (event_data->tdi_val_num > 0)
+        {
+            event_data->tdi_val_num--;
+            SFX_PlayCommon(0);
+        }
+    }
+
+    // if press START, exit
     if ((inputs & HSD_BUTTON_B) != 0)
     {
-        // set menu state to focus
-        menu_data->currMenu->state = EMSTATE_FOCUS;
-
-        // null pointer
-        menu_data->custom_gobj = 0;
-
-        // destroy
-        GObj_Destroy(gobj);
+        CustomTDI_Destroy(gobj);
+        return;
     }
+
+    // update curr lstick
+    JOBJ *stick_curr = tdi_data->stick_curr[0];
+    stick_curr->rot.Y = pad->fstickX * 0.75;
+    stick_curr->rot.X = pad->fstickY * 0.75 * -1;
+    // update curr cstick
+    stick_curr = tdi_data->stick_curr[1];
+    stick_curr->rot.Y = pad->fsubstickX * 0.75;
+    stick_curr->rot.X = pad->fsubstickY * 0.75 * -1;
+
+    // Update curr stick coordinates
+    Text *text_curr = tdi_data->text_curr;
+    Text_SetText(text_curr, 0, "Hit: %d", event_data->tdi_val_num + 1);
+    Text_SetText(text_curr, 1, "X: %+.4f", pad->fstickX);
+    Text_SetText(text_curr, 2, "Y: %+.4f", pad->fstickY);
+    Text_SetText(text_curr, 3, "X: %+.4f", pad->fsubstickX);
+    Text_SetText(text_curr, 4, "Y: %+.4f", pad->fsubstickY);
+
+    // display previous sticks
+    for (int i = 0; i < TDI_DISPNUM; i++)
+    {
+        JOBJ *lstick_prev = tdi_data->stick_prev[i][0];
+        JOBJ *cstick_prev = tdi_data->stick_prev[i][1];
+        int this_hit = i;
+        if (event_data->tdi_val_num > TDI_DISPNUM)
+            this_hit = (event_data->tdi_val_num - TDI_DISPNUM + i);
+
+        // show stick
+        if (i < event_data->tdi_val_num)
+        {
+            // remove hidden flag
+            JOBJ_ClearFlags(lstick_prev, JOBJ_HIDDEN);
+            JOBJ_ClearFlags(cstick_prev, JOBJ_HIDDEN);
+
+            // update rotation
+            lstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][0][0]) * 1 / 80) * 0.75;
+            lstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][0][1]) * 1 / 80) * 0.75 * -1;
+            cstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][1][0]) * 1 / 80) * 0.75;
+            cstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][1][1]) * 1 / 80) * 0.75 * -1;
+
+            // update text
+            Text_SetText(text_curr, i + 5, "Hit %d", this_hit + 1);
+        }
+        // hide stick
+        else
+        {
+            // set hidden flag
+            JOBJ_SetFlags(lstick_prev, JOBJ_HIDDEN);
+            JOBJ_SetFlags(cstick_prev, JOBJ_HIDDEN);
+
+            Text_SetText(text_curr, i + 5, nullString);
+        }
+    }
+
+    // update jobj
+    JOBJ_SetMtxDirtySub(gobj->hsd_object);
+
     return;
 }
+void CustomTDI_Destroy(GOBJ *gobj)
+{
+    // get data
+    TDIData *tdi_data = gobj->userdata;
+    MenuData *menu_data = event_vars.menu_gobj->userdata;
+
+    // set TDI to custom
+    EvFreeOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
+
+    // free text
+    Text_FreeText(tdi_data->text_curr);
+
+    // destroy
+    GObj_Destroy(gobj);
+
+    // null pointers
+    menu_data->custom_gobj = 0;
+    menu_data->custom_gobj_destroy = 0;
+
+    // show original menu
+    event_vars.hide_menu = 0;
+
+    return;
+}
+
 // Init Function
 void LCancel_Init(GOBJ *gobj)
 {
@@ -3113,7 +3325,7 @@ void LCancel_Init(GOBJ *gobj)
     // Add per frame process
     //GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
     // Load jobj
-    evMenu *menuAssets = R13_PTR(EVMENU_ASSETS);
+    evMenu *menuAssets = event_vars.menu_assets;
     JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
     idData->menuModel = menu;
     // Add to gobj
@@ -3179,6 +3391,11 @@ void LCancel_Init(GOBJ *gobj)
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
 
+    // Load EvMnLc.dat
+    int *symbols;
+    File_LoadInitReturnSymbol("EvMnLc.dat", &symbols, "evMenu", 0);
+    eventData->assets = &symbols[0];
+
     return;
 }
 // Update Function
@@ -3193,20 +3410,6 @@ void LCancel_Update()
 
     // update advanced cam
     Update_Camera();
-
-    // toggle hud
-    if (Pause_CheckStatus(1) != 2)
-    {
-        // toggle HUD
-        if (EvFreeOptions_General[OPTGEN_HUD].option_val == 0)
-        {
-            Match_HideHUD();
-        }
-        else
-        {
-            Match_ShowHUD();
-        }
-    }
 }
 // Think Function
 void LCancel_Think(GOBJ *event)
@@ -3329,8 +3532,8 @@ static EventMatchData LCancel_MatchData = {
     .isHidePauseHUD = true,     // 0x02
     .isShowLRAStart = true,     // 0x04
     .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
+    .isShowZRetry = false,      // 0x10
+    .isCheckForZRetry = false,  // 0x20
     .isShowAnalogStick = true,  // 0x40
     .isShowScore = false,       // 0x80
 
@@ -5939,10 +6142,8 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo)
     COBJDesc *cam_desc = dmgScnMdls[1][0];
     COBJ *cam_cobj = COBJ_LoadDesc(cam_desc);
     GOBJ *cam_gobj = GObj_Create(19, 20, 0);
-    MenuCamData *menuCamData = calloc(sizeof(MenuCamData));
-    GObj_AddUserData(cam_gobj, 4, HSD_Free, menuCamData);
     GObj_AddObject(cam_gobj, R13_U8(-0x3E55), cam_cobj);
-    GOBJ_InitCamera(cam_gobj, EventMenu_COBJThink, MENUCAM_GXPRI);
+    GOBJ_InitCamera(cam_gobj, CObjThink_Common, MENUCAM_GXPRI);
     cam_gobj->cobj_id = MENUCAM_COBJGXLINK;
 
     // Create menu gobj
@@ -5956,9 +6157,6 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo)
     // Add gx_link
     GObj_AddGXLink(gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
-    // save pointer to menu to camera gobj
-    menuCamData->menu = gobj;
-
     // Create 2 text canvases (menu and popup)
     menuData->canvas_menu = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_MENUTEXT, MENUCAM_GXPRI);
     menuData->canvas_popup = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_POPUPTEXT, MENUCAM_GXPRI);
@@ -5966,12 +6164,15 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo)
     // Init currMenu
     menuData->currMenu = eventInfo->startMenu;
 
+    // set menu as not hidden
+    event_vars.hide_menu = 0;
+
     // Load EvMn.dat
     int *symbols;
     File_LoadInitReturnSymbol("EvMn.dat", &symbols, "evMenu", 0);
     menuData->menu_assets = &symbols[0];
     // also store to r13 in case any code needs to access these assets
-    R13_PTR(EVMENU_ASSETS) = &symbols[0];
+    event_vars.menu_assets = &symbols[0];
 
     return gobj;
 };
@@ -6053,19 +6254,13 @@ void EventMenu_Update(GOBJ *gobj)
         // Get the current menu
         EventMenu *currMenu = menuData->currMenu;
 
-        // menu think
-        if (currMenu->state == EMSTATE_FOCUS)
-            EventMenu_MenuThink(gobj, currMenu);
-
-        // popup think
-        else if (currMenu->state == EMSTATE_OPENPOP)
-            EventMenu_PopupThink(gobj, currMenu);
-
         // custom gobj think
-        else if ((currMenu->state == EMSTATE_WAIT) && (menuData->custom_gobj != 0))
+        if (menuData->custom_gobj != 0)
         {
-            blr();
 
+            menuData->custom_gobj_think(menuData->custom_gobj);
+
+            /*
             // iterate through gobj proc's here
             GOBJ *custom_gobj = menuData->custom_gobj;
             GOBJProc **proc_arr = R13_PTR(-0x3E60);
@@ -6079,34 +6274,39 @@ void EventMenu_Update(GOBJ *gobj)
                     {
                         this_proc->cb(custom_gobj);
                     }
-
                     this_proc = this_proc->next;
                 }
             }
+            */
+        }
+
+        else
+        {
+            // menu think
+            if (currMenu->state == EMSTATE_FOCUS)
+                EventMenu_MenuThink(gobj, currMenu);
+
+            // popup think
+            else if (currMenu->state == EMSTATE_OPENPOP)
+                EventMenu_PopupThink(gobj, currMenu);
         }
     }
 
     return;
 }
 
-void EventMenu_COBJThink(GOBJ *gobj)
+void EventMenu_MenuGX(GOBJ *gobj, int pass)
 {
-
-    MenuData *menu_data = event_vars.menu_gobj->userdata;
-
-    // do not display menu if a custom gobj is active
-    if (menu_data->custom_gobj == 0)
-        CObjThink_Common(gobj);
+    if (event_vars.hide_menu == 0)
+        GXLink_Common(gobj, pass);
     return;
 }
 
-void EventMenu_Think(GOBJ *gobj, int pass)
+void EventMenu_TextGX(GOBJ *gobj, int pass)
 {
 
-    MenuData *menuData = gobj->userdata;
-
-    GXLink_Common(gobj, pass);
-
+    if (event_vars.hide_menu == 0)
+        Text_GX(gobj, pass);
     return;
 }
 
@@ -6330,16 +6530,14 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         }
 
         // check to run a function
-        if ((currOption->option_kind == OPTKIND_FUNC))
+        if ((currOption->option_kind == OPTKIND_FUNC) && (currOption->onOptionSelect != 0))
         {
-            if (currOption->onOptionSelect != 0)
-            {
-                // save pointer to this gobj
-                menuData->custom_gobj = currOption->onOptionSelect(gobj);
 
-                // also play sfx
-                SFX_PlayCommon(1);
-            }
+            // save pointer to this gobj
+            currOption->onOptionSelect(gobj);
+
+            // also play sfx
+            SFX_PlayCommon(1);
         }
     }
     // check to go back a menu
@@ -6562,16 +6760,16 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
     GObj_DestroyGXLink(gobj);
-    GObj_AddGXLink(gobj, EventMenu_Think, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
+    GObj_AddGXLink(gobj, EventMenu_MenuGX, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
     // Get each corner's joints
     JOBJ *corners[4];
     JOBJ_GetChild(jobj_options, &corners, 2, 3, 4, 5, -1);
     // Modify scale and position
     jobj_options->trans.Z = OPT_Z;
-    jobj_options->scale.X = 1;
-    jobj_options->scale.Y = 1;
-    jobj_options->scale.Z = 1;
+    jobj_options->scale.X = OPT_SCALE;
+    jobj_options->scale.Y = OPT_SCALE;
+    jobj_options->scale.Z = OPT_SCALE;
     corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
     corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
     corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
@@ -6607,7 +6805,10 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
         corners[3]->trans.X = (ROWBOX_WIDTH / 2) + ROWBOX_X;
         corners[3]->trans.Y = -(ROWBOX_HEIGHT / 2) + ROWBOX_Y + (i * ROWBOX_YOFFSET);
         JOBJ_SetFlags(jobj_border, JOBJ_HIDDEN);
+        DOBJ_SetFlags(jobj_border->dobj, DOBJ_HIDDEN);
         jobj_border->dobj->next->mobj->mat->alpha = 0.6;
+        //GXColor border_color = ROWBOX_COLOR;
+        //jobj_border->dobj->next->mobj->mat->diffuse = border_color;
         // store pointer
         menuData->row_joints[i][0] = jobj_border;
 
@@ -6639,9 +6840,9 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     JOBJ_GetChild(jobj_highlight, &corners, 2, 3, 4, 5, -1);
     // Modify scale and position
     jobj_highlight->trans.Z = MENUHIGHLIGHT_Z;
-    jobj_highlight->scale.X = 1;
-    jobj_highlight->scale.Y = 1;
-    jobj_highlight->scale.Z = 1;
+    jobj_highlight->scale.X = MENUHIGHLIGHT_SCALE;
+    jobj_highlight->scale.Y = MENUHIGHLIGHT_SCALE;
+    jobj_highlight->scale.Z = MENUHIGHLIGHT_SCALE;
     corners[0]->trans.X = -(MENUHIGHLIGHT_WIDTH / 2) + MENUHIGHLIGHT_X;
     corners[0]->trans.Y = (MENUHIGHLIGHT_HEIGHT / 2) + MENUHIGHLIGHT_Y;
     corners[1]->trans.X = (MENUHIGHLIGHT_WIDTH / 2) + MENUHIGHLIGHT_X;
@@ -6653,8 +6854,45 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     GXColor highlight = MENUHIGHLIGHT_COLOR;
     jobj_highlight->dobj->next->mobj->mat->alpha = 0.6;
     jobj_highlight->dobj->next->mobj->mat->diffuse = highlight;
-
     menuData->highlight_menu = jobj_highlight;
+
+    // check to create scroll bar
+    if (menuData->currMenu->option_num > MENU_MAXOPTION)
+    {
+        // create scroll bar
+        JOBJ *scroll_jobj = JOBJ_LoadJoint(menuAssets->scroll);
+        // attach to root jobj
+        JOBJ_AddChild(gobj->hsd_object, scroll_jobj);
+        // move it into position
+        JOBJ_GetChild(scroll_jobj, &corners, 2, 3, -1);
+        // scale scrollbar accordingly
+        scroll_jobj->scale.X = MENUSCROLL_SCALE;
+        scroll_jobj->scale.Y = MENUSCROLL_SCALEY;
+        scroll_jobj->scale.Z = MENUSCROLL_SCALE;
+        scroll_jobj->trans.X = MENUSCROLL_X;
+        scroll_jobj->trans.Y = MENUSCROLL_Y;
+        scroll_jobj->trans.Z = MENUSCROLL_Z;
+        menuData->scroll_top = corners[0];
+        menuData->scroll_bot = corners[1];
+        GXColor highlight = MENUSCROLL_COLOR;
+        scroll_jobj->dobj->next->mobj->mat->alpha = 0.6;
+        scroll_jobj->dobj->next->mobj->mat->diffuse = highlight;
+
+        // calculate scrollbar size
+        int max_steps = menuData->currMenu->option_num - MENU_MAXOPTION;
+        float botPos = MENUSCROLL_MAXLENGTH + (max_steps * MENUSCROLL_PEROPTION);
+        if (botPos > MENUSCROLL_MINLENGTH)
+            botPos = MENUSCROLL_MINLENGTH;
+
+        // set size
+        corners[1]->trans.Y = botPos;
+    }
+    else
+    {
+        menuData->scroll_bot = 0;
+        menuData->scroll_top = 0;
+    }
+
     return;
 }
 
@@ -6693,6 +6931,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     //////////////////
 
     text = Text_CreateText(2, canvasIndex);
+    text->gobj->gx_cb = EventMenu_TextGX;
     menuData->text_title = text;
     // enable align and kerning
     text->align = 0;
@@ -6713,6 +6952,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     ////////////////////////
 
     text = Text_CreateText(2, canvasIndex);
+    text->gobj->gx_cb = EventMenu_TextGX;
     menuData->text_desc = text;
 
     //////////////////
@@ -6720,6 +6960,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     //////////////////
 
     text = Text_CreateText(2, canvasIndex);
+    text->gobj->gx_cb = EventMenu_TextGX;
     menuData->text_name = text;
     // enable align and kerning
     text->align = 0;
@@ -6747,6 +6988,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     ///////////////////
 
     text = Text_CreateText(2, canvasIndex);
+    text->gobj->gx_cb = EventMenu_TextGX;
     menuData->text_value = text;
     // enable align and kerning
     text->align = 1;
@@ -6890,7 +7132,23 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     // update cursor position
     JOBJ *highlight_joint = menuData->highlight_menu;
     highlight_joint->trans.Y = cursor * MENUHIGHLIGHT_YOFFSET;
-    JOBJ_SetMtxDirtySub(highlight_joint);
+
+    // update scrollbar position
+    if (menuData->scroll_top != 0)
+    {
+        float curr_steps = menuData->currMenu->scroll;
+        float max_steps;
+        if (menuData->currMenu->option_num < MENU_MAXOPTION)
+            max_steps = 0;
+        else
+            max_steps = menuData->currMenu->option_num - MENU_MAXOPTION;
+
+        // scrollTop = -1 * ((curr_steps/max_steps) * (botY - -10))
+        menuData->scroll_top->trans.Y = -1 * (curr_steps / max_steps) * (menuData->scroll_bot->trans.Y - MENUSCROLL_MAXLENGTH);
+    }
+
+    // update jobj
+    JOBJ_SetMtxDirtySub(gobj->hsd_object);
 
     return;
 }
@@ -6919,10 +7177,17 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
     // if custom menu gobj exists
     if (menuData->custom_gobj != 0)
     {
-        menuData->currMenu->state = EMSTATE_FOCUS;
-        GObj_Destroy(menuData->custom_gobj);
+        // run on destroy function
+        if (menuData->custom_gobj_destroy != 0)
+            menuData->custom_gobj_destroy(menuData->custom_gobj);
+
+        // null pointers
         menuData->custom_gobj = 0;
+        menuData->custom_gobj_destroy = 0;
     }
+
+    // set menu as visible
+    event_vars.hide_menu = 0;
 
     // remove jobj
     GObj_FreeObject(gobj);
@@ -6974,7 +7239,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     // add to gobj
     GObj_AddObject(popup_gobj, 3, popup_joint);
     // add gx link
-    GObj_AddGXLink(popup_gobj, GXLink_Common, GXLINK_POPUPMODEL, GXPRI_POPUPMODEL);
+    GObj_AddGXLink(popup_gobj, EventMenu_MenuGX, GXLINK_POPUPMODEL, GXPRI_POPUPMODEL);
     // save pointer
     menuData->popup = popup_gobj;
 
@@ -7029,6 +7294,7 @@ void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
     ///////////////////
 
     Text *text = Text_CreateText(2, canvasIndex);
+    text->gobj->gx_cb = EventMenu_TextGX;
     menuData->text_popup = text;
     // enable align and kerning
     text->align = 1;
