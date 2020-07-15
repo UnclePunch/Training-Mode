@@ -852,7 +852,7 @@ static EventMenu EvFreeMenu_General = {
     .prev = 0,                                                         // pointer to previous menu, used at runtime
 };
 // Info Display
-static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Blastzone Left/Right", "Blastzone Up/Down"};
+static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Line Info", "Blastzone Left/Right", "Blastzone Up/Down"};
 static char **EvFreeValues_InfoPresets[] = {"None", "Custom", "Ledge", "Damage"};
 static EventOption EvFreeOptions_InfoDisplay[] = {
     {
@@ -1678,11 +1678,31 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (24):
                     {
+                        CollData *colldata = &fighter_data->collData;
+                        int ground = -1;
+                        int ceil = -1;
+                        int left = -1;
+                        int right = -1;
+
+                        if ((colldata->envFlags & ECB_GROUND) != 0)
+                            ground = colldata->ground_index;
+                        if ((colldata->envFlags & ECB_CEIL) != 0)
+                            ceil = colldata->ceil_index;
+                        if ((colldata->envFlags & ECB_WALLLEFT) != 0)
+                            left = colldata->leftwall_index;
+                        if ((colldata->envFlags & ECB_WALLRIGHT) != 0)
+                            right = colldata->rightwall_index;
+
+                        Text_SetText(text, i, "Lines: G:%d, C:%d, L:%d, R:%d,", ground, ceil, left, right);
+                        break;
+                    }
+                    case (25):
+                    {
                         Stage *stage = STAGE;
                         Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
                         break;
                     }
-                    case (25):
+                    case (26):
                     {
                         Stage *stage = STAGE;
                         Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
