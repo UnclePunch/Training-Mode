@@ -107,6 +107,7 @@ typedef struct MenuData
 typedef struct EventOption
 {
     u8 option_kind;                                     // the type of option this is; string, integers, etc
+    u8 disable;                                         // boolean for disabling the option
     u16 value_num;                                      // number of values
     u16 option_val;                                     // value of this option
     EventMenu *menu;                                    // pointer to the menu that pressing A opens
@@ -126,13 +127,19 @@ typedef struct EventMenu
     EventOption *options; // pointer to all of this menu's options
     EventMenu *prev;      // pointer to previous menu, used at runtime
 } EventMenu;
-typedef struct Savestate
+typedef struct FtState
 {
     FighterData fighter_data[2];
     CameraBox camera[2];
     Playerblock player_block;
     int stale_queue[11];
-} Savestate;
+} FtState;
+typedef struct SaveState
+{
+    u8 is_exist;
+    int frame;
+    FtState *ft_state[6];
+} SaveState;
 typedef struct EventVars
 {
     EventInfo *event_info; // event information
@@ -152,14 +159,15 @@ void EventMenu_COBJThink(GOBJ *gobj);
 void EventMenu_Draw(GOBJ *eventMenu);
 int Text_AddSubtextManual(Text *text, char *string, int posx, int posy, int scalex, int scaley);
 EventMenu *EventMenu_GetCurrentMenu(GOBJ *gobj);
-void Savestate_Save();
-void Savestate_Load();
+int Savestate_Save(SaveState *savestate);
+int Savestate_Load(SaveState *savestate);
+void Update_Savestates();
 void EventUpdate();
-static Savestate *savestates[6];
 static EventInfo *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars event_vars;
 static int *eventDataBackup;
+static SaveState stc_savestate;
 
 // Labbing event
 
@@ -198,6 +206,9 @@ typedef struct LCancelData
     s32 timer;
     u8 tdi_val_num;                // number of custom tdi values set
     s8 tdi_vals[TDI_HITNUM][2][2]; // contains the custom tdi values
+    GOBJ *rec_gobj;
+    u8 hmn_controller;
+    u8 cpu_controller;
 } LCancelData;
 typedef struct InfoDisplayData
 {
@@ -240,6 +251,35 @@ typedef struct CPUAction
     unsigned char stickDir : 3; // 0 = none, 1 = towards opponent, 2 = away from opponent, 3 = forward, 4 = backward
 
 } CPUAction;
+typedef struct RecInputs
+{
+    unsigned char btn_dpadup : 1;
+    unsigned char btn_a : 1;
+    unsigned char btn_b : 1;
+    unsigned char btn_x : 1;
+    unsigned char btn_y : 1;
+    unsigned char btn_L : 1;
+    unsigned char btn_R : 1;
+    unsigned char btn_Z : 1;
+    s8 stickX;
+    s8 stickY;
+    s8 substickX;
+    s8 substickY;
+    u8 trigger;
+} RecInputs;
+typedef struct RecInputData
+{
+    int num;
+    RecInputs inputs[2 * 60 * 60]
+} RecInputData;
+typedef struct RecData
+{
+    int timer; // this is updated at runtime to know which frames inputs to use.
+    RecInputData *hmn_inputs[3];
+    RecInputData *cpu_inputs[3];
+    JOBJ *seek_jobj;
+    Text *text;
+} RecData;
 
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value);
 void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value);
@@ -251,6 +291,15 @@ void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
 void EvFree_ChangeHUD(GOBJ *menu_gobj, int value);
 void EvFree_SelectCustomTDI(GOBJ *menu_gobj);
+void DIDraw_GX();
+void Record_ChangeHMNMode(GOBJ *menu_gobj, int value);
+void Record_ChangeCPUMode(GOBJ *menu_gobj, int value);
+void Record_ChangeSlot(GOBJ *menu_gobj, int value);
+void Record_InitState(GOBJ *menu_gobj);
+void Record_RestoreState(GOBJ *menu_gobj);
+void Record_GX(GOBJ *gobj, int pass);
+void Record_Think(GOBJ *rec_gobj);
+void Record_Update(int ply, RecInputData *inputs, int rec_mode);
 void CustomTDI_Update(GOBJ *gobj);
 void CustomTDI_Destroy(GOBJ *gobj);
 void EvFree_Exit(int value);
@@ -439,9 +488,20 @@ static EventMenu EvFreeMenu_Record;
 #define OPTCPU_SHIELDHITS 15
 
 // Recording Options
-#define OPTREC_SLOT 0
-#define OPTREC_MODE 1
-#define OPTREC_RESET 2
+#define OPTREC_SAVE 0
+#define OPTREC_LOAD 1
+#define OPTREC_HMNMODE 2
+#define OPTREC_HMNSLOT 3
+#define OPTREC_CPUMODE 4
+#define OPTREC_CPUSLOT 5
+#define OPTREC_LOOP 6
+#define OPTREC_AUTOLOAD 7
+
+// Recording Modes
+#define RECMODE_OFF 0
+#define RECMODE_CTRL 1
+#define RECMODE_REC 2
+#define RECMODE_PLAY 3
 
 // Info Display Options
 #define OPTINF_TOGGLE 0

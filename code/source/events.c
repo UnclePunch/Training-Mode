@@ -1160,52 +1160,105 @@ static EventMenu EvFreeMenu_CPU = {
 };
 // Recording
 static char **EvFreeValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3"};
-static char **EvFreeValues_RecordMode[] = {"Record", "Playback"};
+static char **EvFreeValues_HMNRecordMode[] = {"Off", "Record", "Playback"};
+static char **EvFreeValues_CPURecordMode[] = {"Off", "Control", "Record", "Playback"};
 static EventOption EvFreeOptions_Record[] = {
+    {
+        .option_kind = OPTKIND_FUNC,                                             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                          // number of values for this option
+        .option_val = 0,                                                         // value of this option
+        .menu = 0,                                                               // pointer to the menu that pressing A opens
+        .option_name = "Save Positions",                                         // pointer to a string
+        .desc = "Save the current fighter positions\nas the initial positions.", // string describing what this option does
+        .option_values = 0,                                                      // pointer to an array of strings
+        .onOptionSelect = Record_InitState,
+    },
+    {
+        .option_kind = OPTKIND_FUNC,                                                                    // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                                                 // number of values for this option
+        .option_val = 0,                                                                                // value of this option
+        .menu = 0,                                                                                      // pointer to the menu that pressing A opens
+        .option_name = "Restore Positions",                                                             // pointer to a string
+        .desc = "Load the original fighter positions. This\ncan also be done in-game by pressing ???.", // string describing what this option does
+        .option_values = 0,                                                                             // pointer to an array of strings
+        .onOptionSelect = Record_RestoreState,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_HMNRecordMode) / 4,         // number of values for this option
+        .option_val = 0,                                             // value of this option
+        .menu = 0,                                                   // pointer to the menu that pressing A opens
+        .option_name = "HMN Mode",                                   // pointer to a string
+        .desc = "Toggle between recording and playback of\ninputs.", // string describing what this option does
+        .option_values = EvFreeValues_HMNRecordMode,                 // pointer to an array of strings
+        .onOptionChange = Record_ChangeHMNMode,
+    },
     {
         .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(EvFreeValues_RecordSlot) / 4, // number of values for this option
         .option_val = 1,                                  // value of this option
         .menu = 0,                                        // pointer to the menu that pressing A opens
-        .option_name = "Record Slot",                     // pointer to a string
+        .option_name = "HMN Record Slot",                 // pointer to a string
         .desc = "Toggle which slot to record to.",        // string describing what this option does
         .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = Record_ChangeSlot,
     },
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_RecordMode) / 4,            // number of values for this option
+        .value_num = sizeof(EvFreeValues_CPURecordMode) / 4,         // number of values for this option
         .option_val = 0,                                             // value of this option
         .menu = 0,                                                   // pointer to the menu that pressing A opens
-        .option_name = "Mode",                                       // pointer to a string
+        .option_name = "CPU Mode",                                   // pointer to a string
         .desc = "Toggle between recording and playback of\ninputs.", // string describing what this option does
-        .option_values = EvFreeValues_RecordMode,                    // pointer to an array of strings
+        .option_values = EvFreeValues_CPURecordMode,                 // pointer to an array of strings
+        .onOptionChange = Record_ChangeCPUMode,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_RecordSlot) / 4, // number of values for this option
+        .option_val = 1,                                  // value of this option
+        .menu = 0,                                        // pointer to the menu that pressing A opens
+        .option_name = "CPU Record Slot",                 // pointer to a string
+        .desc = "Toggle which slot to record to.",        // string describing what this option does
+        .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
+        .onOptionChange = Record_ChangeSlot,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_OffOn) / 4,      // number of values for this option
+        .option_val = 0,                                   // value of this option
+        .menu = 0,                                         // pointer to the menu that pressing A opens
+        .option_name = "Loop Recording",                   // pointer to a string
+        .desc = "Loop the recorded inputs when they end.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,              // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                          // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_OffOn) / 4,           // number of values for this option
-        .option_val = 0,                                        // value of this option
-        .menu = 0,                                              // pointer to the menu that pressing A opens
-        .option_name = "Reset After Playback",                  // pointer to a string
-        .desc = "Automatically reset after the playback ends.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                   // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                       // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_OffOn) / 4,                        // number of values for this option
+        .option_val = 0,                                                     // value of this option
+        .menu = 0,                                                           // pointer to the menu that pressing A opens
+        .option_name = "Auto Restore",                                       // pointer to a string
+        .desc = "Automatically restore positions after the\nplayback ends.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                // pointer to an array of strings
         .onOptionChange = 0,
     },
 };
 static EventMenu EvFreeMenu_Record = {
-    .name = "Recording",              // the name of this menu
-    .option_num = 3,                  // number of options this menu contains
-    .scroll = 0,                      // runtime variable used for how far down in the menu to start
-    .state = 0,                       // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                      // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_Record, // pointer to all of this menu's options
-    .prev = 0,                        // pointer to previous menu, used at runtime
+    .name = "Recording",                                              // the name of this menu
+    .option_num = sizeof(EvFreeOptions_Record) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                      // runtime variable used for how far down in the menu to start
+    .state = 0,                                                       // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                      // index of the option currently selected, used at runtime
+    .options = &EvFreeOptions_Record,                                 // pointer to all of this menu's options
+    .prev = 0,                                                        // pointer to previous menu, used at runtime
 };
 
 // Static Variables
 static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
+static RecData rec_data;
+static SaveState rec_state;
 
 // Menu Callbacks
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
@@ -1395,6 +1448,59 @@ void EvFree_ChangeHUD(GOBJ *menu_gobj, int value)
     }
     return;
 }
+void Record_InitState(GOBJ *menu_gobj)
+{
+    if (Savestate_Save(&rec_state))
+    {
+
+        // enable other options
+        for (int i = 1; i < sizeof(EvFreeOptions_Record) / sizeof(EventOption); i++)
+        {
+            EvFreeOptions_Record[i].disable = 0;
+        }
+
+        // clear slots
+        for (int i = 0; i < 3; i++)
+        {
+            memset(rec_data.hmn_inputs[i], 0, sizeof(RecInputData));
+            memset(rec_data.cpu_inputs[i], 0, sizeof(RecInputData));
+        }
+
+        // copy state to personal savestate
+        memcpy(&stc_savestate, &rec_state, sizeof(SaveState));
+    }
+    return;
+}
+void Record_RestoreState(GOBJ *menu_gobj)
+{
+    Savestate_Load(&rec_state);
+    return;
+}
+void Record_ChangeSlot(GOBJ *menu_gobj, int value)
+{
+
+    // reload save
+    Savestate_Load(&rec_state);
+
+    return;
+}
+void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
+{
+    if (value == 2)
+    {
+        Savestate_Load(&rec_state);
+    }
+    return;
+}
+void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
+{
+    // load state if togglign playback
+    if (value == 3)
+    {
+        Savestate_Load(&rec_state);
+    }
+    return;
+}
 void EvFree_Exit(int value)
 {
     Match *match = MATCH;
@@ -1410,6 +1516,59 @@ void EvFree_Exit(int value)
 }
 
 // Event Functions
+GOBJ *InfoDisplay_Init()
+{
+    // Create Info Display GOBJ
+    GOBJ *idGOBJ = GObj_Create(0, 0, 0);
+    InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
+    GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
+    // Add per frame process
+    //GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
+    // Load jobj
+    evMenu *menuAssets = event_vars.menu_assets;
+    JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
+    idData->menuModel = menu;
+    // Add to gobj
+    GObj_AddObject(idGOBJ, 3, menu);
+    // Add gxlink
+    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, GXLINK_INFDISP, GXPRI_INFDISP);
+    // Save pointers to corners
+    JOBJ *corners[4];
+    JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
+    idData->botLeftEdge = corners[0];
+    idData->botRightEdge = corners[1];
+    // move into position
+    menu->scale.X = INFDISP_SCALE;
+    menu->scale.Y = INFDISP_SCALE;
+    menu->scale.Z = INFDISP_SCALE;
+    menu->trans.Y = INFDISP_Y;
+    corners[0]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[1]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[2]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[3]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
+    //JOBJ_SetFlags(menu, JOBJ_HIDDEN);
+    menu->dobj->next->mobj->mat->alpha = 0.6;
+
+    // Create text object
+    int canvas_index = Text_CreateCanvas(2, idGOBJ, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
+    Text *text = Text_CreateText(2, canvas_index);
+    text->kerning = 1;
+    text->scale.X = INFDISPTEXT_SCALE;
+    text->scale.Y = INFDISPTEXT_SCALE;
+    text->trans.X = INFDISPTEXT_X;
+    text->trans.Y = INFDISPTEXT_Y;
+    // Create subtexts for each row
+    for (int i = 0; i < 8; i++)
+    {
+        Text_AddSubtext(text, 0, i * INFDISPTEXT_YOFFSET, &nullString);
+    }
+    idData->text = text;
+
+    // update to show/hide
+    InfoDisplay_Think(idGOBJ);
+
+    return idGOBJ;
+}
 void InfoDisplay_GX(GOBJ *gobj, int pass)
 {
     GXLink_Common(gobj, pass);
@@ -1551,7 +1710,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (6):
                     {
-                        Text_SetText(text, i, "LStick:     (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                        Text_SetText(text, i, "LStick:      (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
                         break;
                     }
                     case (7):
@@ -2127,8 +2286,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
 
             int cpu_hitnum = eventData->cpu_hitnum;
 
-            blr();
-
             // ensure we have a DI input for this hitnum
             if (eventData->tdi_val_num >= cpu_hitnum)
             {
@@ -2488,72 +2645,52 @@ int Update_CheckAdvance()
     HSD_Update *update = HSD_UPDATE;
     int isAdvance = 0;
 
-    GOBJ *fighter = Fighter_GetGObj(0);
-    if (fighter != 0)
+    int controller = Fighter_GetControllerPort(0);
+
+    // get their pad
+    HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
+
+    // check if holding L
+    if ((pad->held & HSD_TRIGGER_L) != 0)
     {
-        FighterData *fighter_data = fighter->userdata;
-        int controller = fighter_data->player_controller_number;
+        timer++;
 
-        // get their pad
-        HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
-
-        // check if holding L
-        if ((pad->held & HSD_TRIGGER_L) != 0)
+        // advance if first press or holding more than 10 frames
+        if (timer == 1 || timer > 30)
         {
-            timer++;
+            isAdvance = 1;
 
-            // advance if first press or holding more than 10 frames
-            if (timer == 1 || timer > 30)
-            {
-                isAdvance = 1;
-
-                // remove L input
-                pad->down &= ~HSD_TRIGGER_L;
-                pad->held &= ~HSD_TRIGGER_L;
-                pad->triggerLeft = 0;
-                pad->ftriggerLeft = 0;
-            }
+            // remove L input
+            pad->down &= ~HSD_TRIGGER_L;
+            pad->held &= ~HSD_TRIGGER_L;
+            pad->triggerLeft = 0;
+            pad->ftriggerLeft = 0;
         }
+    }
 
-        else
-        {
-            update->advance = 0;
-            timer = 0;
-        }
+    else
+    {
+        update->advance = 0;
+        timer = 0;
     }
 
     return isAdvance;
 }
-void Update_Savestates()
+void DIDraw_Init()
 {
 
-    // not when pause menu is showing
-    if (Pause_CheckStatus(1) != 2)
+    // Create DIDraw GOBJ
+    GOBJ *didraw_gobj = GObj_Create(0, 0, 0);
+    // Add gxlink
+    GObj_AddGXLink(didraw_gobj, DIDraw_GX, 6, 0);
+    // init didraw pointers
+    for (int i = 0; i < 6; i++)
     {
-        // loop through all humans
-        for (int i = 0; i < 6; i++)
+        // for each subchar
+        for (int j = 0; j < 2; j++)
         {
-            // check if fighter exists
-            GOBJ *fighter = Fighter_GetGObj(i);
-            if (fighter != 0)
-            {
-                // get fighter data
-                FighterData *fighter_data = fighter->userdata;
-                HSD_Pad *pad = PadGet(fighter_data->ply, PADGET_MASTER);
-
-                // check for savestate
-                int blacklist = (HSD_BUTTON_DPAD_DOWN | HSD_BUTTON_DPAD_UP | HSD_TRIGGER_Z | HSD_TRIGGER_R | HSD_BUTTON_A | HSD_BUTTON_B | HSD_BUTTON_X | HSD_BUTTON_Y | HSD_BUTTON_START);
-                if (((pad->down & HSD_BUTTON_DPAD_RIGHT) != 0) && ((pad->held & (blacklist)) == 0))
-                {
-                    // save state
-                    Savestate_Save();
-                }
-                else if (((pad->down & HSD_BUTTON_DPAD_LEFT) != 0) && ((pad->held & (blacklist)) == 0))
-                {
-                    // load state
-                    Savestate_Load();
-                }
-            }
+            didraws[i].num[j] = 0;
+            didraws[i].vertices[j] = 0;
         }
     }
 
@@ -3199,6 +3336,328 @@ void EvFree_SelectCustomTDI(GOBJ *menu_gobj)
     popup_joint->dobj->mobj->mat->diffuse = gx_color;
 */
 }
+GOBJ *Record_Init()
+{
+    // Create GOBJ
+    GOBJ *rec_gobj = GObj_Create(0, 7, 0);
+    // Add per frame process
+    GObj_AddProc(rec_gobj, Record_Think, 3);
+
+#define SEEKBG_WIDTH 25
+#define SEEKBG_HEIGHT 3
+#define SEEKBG_X 1.8
+#define SEEKBG_Y -23
+
+    evMenu *menuAssets = event_vars.menu_assets;
+    JOBJ *bg = JOBJ_LoadJoint(menuAssets->popup);
+    // Get each corner's joints
+    JOBJ *corners[4];
+    JOBJ_GetChild(bg, &corners, 2, 3, 4, 5, -1);
+
+    // Modify scale and position
+    bg->trans.Z = -0.1;
+    bg->scale.X = 1;
+    bg->scale.Y = 1;
+    bg->scale.Z = 1;
+    corners[0]->trans.X = -(SEEKBG_WIDTH / 2) + SEEKBG_X;
+    corners[0]->trans.Y = (SEEKBG_HEIGHT / 2) + SEEKBG_Y;
+    corners[1]->trans.X = (SEEKBG_WIDTH / 2) + SEEKBG_X;
+    corners[1]->trans.Y = (SEEKBG_HEIGHT / 2) + SEEKBG_Y;
+    corners[2]->trans.X = -(SEEKBG_WIDTH / 2) + SEEKBG_X;
+    corners[2]->trans.Y = -(SEEKBG_HEIGHT / 2) + SEEKBG_Y;
+    corners[3]->trans.X = (SEEKBG_WIDTH / 2) + SEEKBG_X;
+    corners[3]->trans.Y = -(SEEKBG_HEIGHT / 2) + SEEKBG_Y;
+
+    // Load jobj
+    JOBJ *bar = JOBJ_LoadJoint(menuAssets->popup);
+    JOBJ_AddChild(bg, bar);
+    // Get each corner's joints
+    JOBJ_GetChild(bar, &corners, 2, 3, 4, 5, -1);
+
+#define BAR_WIDTH 16
+#define BAR_HEIGHT 0.5
+#define BAR_X 1.8
+#define BAR_Y -23
+
+    // Modify scale and position
+    bar->trans.Z = 0;
+    bar->scale.X = 1;
+    bar->scale.Y = 1;
+    bar->scale.Z = 1;
+    corners[0]->trans.X = -(BAR_WIDTH / 2) + BAR_X;
+    corners[0]->trans.Y = (BAR_HEIGHT / 2) + BAR_Y;
+    corners[1]->trans.X = (BAR_WIDTH / 2) + BAR_X;
+    corners[1]->trans.Y = (BAR_HEIGHT / 2) + BAR_Y;
+    corners[2]->trans.X = -(BAR_WIDTH / 2) + BAR_X;
+    corners[2]->trans.Y = -(BAR_HEIGHT / 2) + BAR_Y;
+    corners[3]->trans.X = (BAR_WIDTH / 2) + BAR_X;
+    corners[3]->trans.Y = -(BAR_HEIGHT / 2) + BAR_Y;
+
+    GXColor bar_color = {50, 60, 70, 255};
+    bar->dobj->next->mobj->mat->diffuse = bar_color;
+
+    // Load seek jobj
+    JOBJ *seek = JOBJ_LoadJoint(menuAssets->popup);
+    JOBJ_AddChild(bg, seek);
+
+    // Modify scale and position
+    seek->trans.Z = 0;
+    seek->scale.X = 0.6;
+    seek->scale.Y = 2;
+    seek->scale.Z = 1;
+    seek->trans.X = BAR_X - 8;
+    seek->trans.Y = BAR_Y + 0.5;
+    seek->trans.Z = 0;
+
+    GXColor seek_color = {255, 255, 255, 255};
+    seek->dobj->next->mobj->mat->diffuse = seek_color;
+
+    // save seek jobj
+    rec_data.seek_jobj = seek;
+
+    // Add to gobj
+    GObj_AddObject(rec_gobj, 3, bg);
+    // Add gxlink
+    GObj_AddGXLink(rec_gobj, Record_GX, GXLINK_INFDISP, GXPRI_INFDISP);
+
+    // Create text
+    int canvas_index = Text_CreateCanvas(2, rec_gobj, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
+    Text *text = Text_CreateText(2, canvas_index);
+    text->align = 1;
+    text->kerning = 1;
+    text->scale.X = INFDISPTEXT_SCALE;
+    text->scale.Y = INFDISPTEXT_SCALE;
+    text->trans.X = INFDISPTEXT_X;
+    text->trans.Y = INFDISPTEXT_Y;
+    // Create subtexts for each side
+    Text_AddSubtext(text, 420, 1070, &nullString);
+    Text_AddSubtext(text, 420 + 500, 1070, &nullString);
+    rec_data.text = text;
+
+    // set as not exist
+    rec_state.is_exist = 0;
+
+    // disable menu options
+    for (int i = 1; i < sizeof(EvFreeOptions_Record) / sizeof(EventOption); i++)
+    {
+        EvFreeOptions_Record[i].disable = 1;
+    }
+
+    // init savestate struct
+    for (int i = 0; i < sizeof(rec_state.ft_state) / 4; i++)
+    {
+        rec_state.ft_state[i] = 0;
+    }
+
+    // allocate input arrays
+    for (int i = 0; i < 3; i++)
+    {
+        rec_data.hmn_inputs[i] = calloc(sizeof(RecInputData));
+        rec_data.cpu_inputs[i] = calloc(sizeof(RecInputData));
+    }
+
+    return rec_gobj;
+}
+void Record_GX(GOBJ *gobj, int pass)
+{
+
+    // hide seek bar if recording isnt in use
+    if ((rec_state.is_exist == 1) && ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 0) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 0)))
+    {
+
+        if (pass == 0)
+        {
+            RecInputData *hmn_inputs = rec_data.hmn_inputs[EvFreeOptions_Record[OPTREC_HMNSLOT].option_val];
+            RecInputData *cpu_inputs = rec_data.cpu_inputs[EvFreeOptions_Record[OPTREC_CPUSLOT].option_val];
+            JOBJ *seek = rec_data.seek_jobj;
+            Text *text = rec_data.text;
+
+            // get local frame
+            int local_frame = (stc_match->time_frames - 1) - rec_state.frame;
+            int input_num = hmn_inputs->num; // get longest recording
+            if (cpu_inputs->num > hmn_inputs->num)
+                input_num = cpu_inputs->num;
+
+            // hide seek bar during recording
+            if ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 2) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 1))
+            {
+                JOBJ_SetFlags(seek, JOBJ_HIDDEN);
+
+                // update seek bar frames
+                Text_SetText(text, 0, "%d", local_frame + 1);
+                Text_SetText(text, 1, &nullString);
+            }
+            else
+            {
+                JOBJ_ClearFlags(seek, JOBJ_HIDDEN);
+
+                // update seek bar position
+                float range = BAR_WIDTH;
+                float curr_pos;
+                int local_frame_seek = local_frame;
+                if (local_frame > input_num)
+                    local_frame_seek = input_num;
+                curr_pos = (float)local_frame_seek / (float)input_num;
+                seek->trans.X = (BAR_X - 8 - 0.4) + (curr_pos * range);
+                JOBJ_SetMtxDirtySub(seek);
+
+                // update seek bar frames
+                Text_SetText(text, 0, "%d", local_frame_seek + 1);
+                Text_SetText(text, 1, "%d", input_num + 1);
+            }
+        }
+
+        GXLink_Common(gobj, pass);
+    }
+
+    return;
+}
+void Record_Think(GOBJ *rec_gobj)
+{
+
+    RecInputData *hmn_inputs = rec_data.hmn_inputs[EvFreeOptions_Record[OPTREC_HMNSLOT].option_val];
+    RecInputData *cpu_inputs = rec_data.cpu_inputs[EvFreeOptions_Record[OPTREC_CPUSLOT].option_val];
+
+    // ensure the state exists
+    if (rec_state.is_exist == 1)
+    {
+        // get local frame
+        int local_frame = (stc_match->time_frames - 1) - rec_state.frame;
+        int input_num = hmn_inputs->num; // get longest recording
+        if (cpu_inputs->num > hmn_inputs->num)
+            input_num = cpu_inputs->num;
+
+        // auto load state
+        if ((input_num != 0) && (local_frame > input_num))
+        {
+            // not if someone is recording
+            if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 1) && (EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 2))
+            {
+                // check to auto reset
+                if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
+                {
+                    Savestate_Load(&rec_state);
+                }
+                // check to loop inputs
+                else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
+                {
+                    stc_match->time_frames = rec_state.frame;
+                }
+            }
+        }
+
+        // check record mode for HMN
+        int hmn_mode = EvFreeOptions_Record[OPTREC_HMNMODE].option_val;
+        if (hmn_mode > 0) // adjust mode
+            hmn_mode++;
+        Record_Update(0, hmn_inputs, hmn_mode);
+        // check record mode for CPU
+        int cpu_mode = EvFreeOptions_Record[OPTREC_CPUMODE].option_val;
+        Record_Update(1, cpu_inputs, cpu_mode);
+    }
+
+    return;
+}
+void Record_Update(int ply, RecInputData *input_data, int rec_mode)
+{
+
+    GOBJ *fighter = Fighter_GetGObj(ply);
+    FighterData *fighter_data = fighter->userdata;
+    int local_frame = (stc_match->time_frames - 1) - rec_state.frame;
+
+    // Get HSD Pad
+    HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_ENGINE);
+
+    // if the current frame is within the recording frames
+    if ((local_frame >= 0) && ((local_frame) < (2 * 60 * 60)))
+    {
+
+        switch (rec_mode)
+        {
+        case RECMODE_OFF:
+        {
+            break;
+        }
+        case RECMODE_CTRL:
+        {
+            break;
+        }
+        case RECMODE_REC:
+        {
+
+            // store inputs
+            int held = pad->held;
+            RecInputs *inputs = &input_data->inputs[local_frame];
+            inputs->btn_a = !!((held)&HSD_BUTTON_A);
+            inputs->btn_b = !!((held)&HSD_BUTTON_B);
+            inputs->btn_x = !!((held)&HSD_BUTTON_X);
+            inputs->btn_y = !!((held)&HSD_BUTTON_Y);
+            inputs->btn_L = !!((held)&HSD_TRIGGER_L);
+            inputs->btn_R = !!((held)&HSD_TRIGGER_R);
+            inputs->btn_Z = !!((held)&HSD_TRIGGER_Z);
+
+            inputs->stickX = pad->stickX;
+            inputs->stickY = pad->stickY;
+            inputs->substickX = pad->substickX;
+            inputs->substickY = pad->substickY;
+
+            // trigger - find the one pressed down more
+            u8 trigger = pad->triggerLeft;
+            if (pad->triggerRight > trigger)
+                trigger = pad->triggerRight;
+            inputs->trigger = trigger;
+
+            // update input_num
+            input_data->num = local_frame;
+
+            break;
+        }
+        case RECMODE_PLAY:
+        {
+
+            // ensure we have an input for this frame
+            if (local_frame <= input_data->num)
+            {
+                int held;
+                RecInputs *inputs = &input_data->inputs[local_frame];
+                // read inputs
+                held |= inputs->btn_a << 8;
+                held |= inputs->btn_b << 9;
+                held |= inputs->btn_x << 10;
+                held |= inputs->btn_y << 11;
+                held |= inputs->btn_L << 6;
+                held |= inputs->btn_R << 5;
+                held |= inputs->btn_Z << 4;
+                held |= inputs->btn_dpadup << 3;
+                pad->held = held;
+
+                // stick signed bytes
+                pad->stickX = inputs->stickX;
+                pad->stickY = inputs->stickY;
+                pad->substickX = inputs->substickX;
+                pad->substickY = inputs->substickY;
+
+                // stick floats
+                pad->fstickX = ((float)inputs->stickX / 80);
+                pad->fstickY = ((float)inputs->stickY / 80);
+                pad->fsubstickX = ((float)inputs->substickX / 80);
+                pad->fsubstickY = ((float)inputs->substickY / 80);
+
+                // trigger byte
+                pad->triggerRight = inputs->trigger;
+                pad->triggerLeft = 0;
+
+                // trigger float
+                pad->ftriggerRight = ((float)inputs->trigger / 255);
+                pad->ftriggerLeft = 0;
+            }
+            break;
+        }
+        }
+    }
+
+    return;
+}
 void CustomTDI_Update(GOBJ *gobj)
 {
     // get data
@@ -3338,80 +3797,31 @@ void LCancel_Init(GOBJ *gobj)
     FighterData *cpu_data = cpu->userdata;
     OSReport("this is %s\n", eventInfo->eventName);
 
-    // Create Info Display GOBJ
-    GOBJ *idGOBJ = GObj_Create(0, 0, 0);
-    InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
-    GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
-    // Add per frame process
-    //GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
-    // Load jobj
-    evMenu *menuAssets = event_vars.menu_assets;
-    JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
-    idData->menuModel = menu;
-    // Add to gobj
-    GObj_AddObject(idGOBJ, 3, menu);
-    // Add gxlink
-    GObj_AddGXLink(idGOBJ, InfoDisplay_GX, GXLINK_INFDISP, GXPRI_INFDISP);
-    // Save pointers to corners
-    JOBJ *corners[4];
-    JOBJ_GetChild(menu, &corners, 2, 3, 4, 5, -1);
-    idData->botLeftEdge = corners[0];
-    idData->botRightEdge = corners[1];
-    // move into position
-    menu->scale.X = INFDISP_SCALE;
-    menu->scale.Y = INFDISP_SCALE;
-    menu->scale.Z = INFDISP_SCALE;
-    menu->trans.Y = INFDISP_Y;
-    corners[0]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
-    corners[1]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
-    corners[2]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
-    corners[3]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
-    //JOBJ_SetFlags(menu, JOBJ_HIDDEN);
-    menu->dobj->next->mobj->mat->alpha = 0.6;
-    // static pointer for update function
-    infodisp_gobj = idGOBJ;
+    // Init Info Display
+    infodisp_gobj = InfoDisplay_Init(); // static pointer for update function
 
-    // Create text object
-    int canvas_index = Text_CreateCanvas(2, gobj, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
-    Text *text = Text_CreateText(2, canvas_index);
-    text->kerning = 1;
-    text->scale.X = INFDISPTEXT_SCALE;
-    text->scale.Y = INFDISPTEXT_SCALE;
-    text->trans.X = INFDISPTEXT_X;
-    text->trans.Y = INFDISPTEXT_Y;
-    // Create subtexts for each row
-    for (int i = 0; i < 8; i++)
-    {
-        Text_AddSubtext(text, 0, i * INFDISPTEXT_YOFFSET, &nullString);
-    }
-    idData->text = text;
-    // update to show/hide
-    InfoDisplay_Think(idGOBJ);
+    // Init DIDraw
+    DIDraw_Init();
 
-    // Create DIDraw GOBJ
-    GOBJ *didraw_gobj = GObj_Create(0, 0, 0);
-    // Add gxlink
-    GObj_AddGXLink(didraw_gobj, DIDraw_GX, 6, 0);
-    // init didraw pointers
-    for (int i = 0; i < 6; i++)
-    {
-        // for each subchar
-        for (int j = 0; j < 2; j++)
-        {
-            didraws[i].num[j] = 0;
-            didraws[i].vertices[j] = 0;
-        }
-    }
+    // Init Recording
+    Record_Init();
 
     // store hsd_update functions
     HSD_Update *hsd_update = HSD_UPDATE;
     hsd_update->checkPause = Update_CheckPause;
     hsd_update->checkAdvance = Update_CheckAdvance;
 
+    // determine cpu controller
+    eventData->hmn_controller = Fighter_GetControllerPort(hmn_data->ply);
+    u8 cpu_controller = 1;
+    if (eventData->hmn_controller == 1)
+        cpu_controller = 0;
+    eventData->cpu_controller = cpu_controller;
+
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
 
-    // Load EvMnLc.dat
+    // Load this events assets (EvMnLc.dat)
     int *symbols;
     File_LoadInitReturnSymbol("EvMnLc.dat", &symbols, "evMenu", 0);
     eventData->assets = &symbols[0];
@@ -3532,8 +3942,49 @@ void LCancel_Think(GOBJ *event)
         }
     }
 
-    // CPU Think
-    LCancel_CPUThink(event, hmn, cpu);
+    // Adjust control of fighters
+    switch (EvFreeOptions_Record[OPTREC_CPUMODE].option_val)
+    {
+    case RECMODE_OFF:
+    {
+        // human is human
+        hmn_data->player_controller_number = eventData->hmn_controller;
+
+        // cpu is cpu
+        Fighter_SetSlotType(cpu_data->ply, 1);
+        cpu_data->player_controller_number = eventData->cpu_controller;
+
+        break;
+    }
+    case RECMODE_PLAY:
+    {
+
+        // human is human
+        hmn_data->player_controller_number = eventData->hmn_controller;
+
+        // cpu is hmn
+        Fighter_SetSlotType(cpu_data->ply, 0);
+        cpu_data->player_controller_number = eventData->cpu_controller;
+
+        break;
+    }
+    case RECMODE_CTRL:
+    case RECMODE_REC:
+    {
+        // human is human
+        hmn_data->player_controller_number = eventData->cpu_controller;
+
+        // cpu is hmn
+        Fighter_SetSlotType(cpu_data->ply, 0);
+        cpu_data->player_controller_number = eventData->hmn_controller;
+
+        break;
+    }
+    }
+
+    // CPU Think if not using recording
+    if (EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 0)
+        LCancel_CPUThink(event, hmn, cpu);
 
     return;
 }
@@ -5495,7 +5946,7 @@ static EventPage **EventPages[] = {
 /// Static Variables ///
 ////////////////////////
 
-static Savestate *savestates[6];
+static SaveState stc_savestate;
 static EventInfo *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars event_vars;
@@ -5674,9 +6125,10 @@ void EventLoad()
 
     // init savestate struct
     eventDataBackup = calloc(EVENT_DATASIZE);
-    for (int i = 0; i < sizeof(savestates) / 4; i++)
+    stc_savestate.is_exist = 0;
+    for (int i = 0; i < sizeof(stc_savestate.ft_state) / 4; i++)
     {
-        savestates[i] = 0;
+        stc_savestate.ft_state[i] = 0;
     }
 
     // Run this event's init function
@@ -5754,8 +6206,8 @@ void MatchThink(GOBJ *gobj)
                 SpawnItem spawnItem;
                 spawnItem.parent_gobj = 0;
                 spawnItem.parent_gobj2 = 0;
-                spawnItem.item_id = ITEM_MRSATURN;
-                spawnItem.unk1 = 0;
+                spawnItem.it_kind = ITEM_MRSATURN;
+                spawnItem.hold_kind = ITHOLD_HAND;
                 spawnItem.unk2 = 0;
                 spawnItem.pos.X = fighter_data->pos.X;
                 spawnItem.pos.Y = fighter_data->pos.Y;
@@ -5771,7 +6223,7 @@ void MatchThink(GOBJ *gobj)
                 spawnItem.unk5 = 0;
                 spawnItem.unk6 = 0;
                 spawnItem.unk7 = 0x80;
-                GOBJ *item = CreateItem(&spawnItem);
+                GOBJ *item = Item_CreateItem(&spawnItem);
             }
         }
     }
@@ -5856,7 +6308,7 @@ void OnStartMelee()
 /// Miscellaneous Functions ///
 ///////////////////////////////
 
-void Savestate_Save()
+int Savestate_Save(SaveState *savestate)
 {
 
     typedef struct BackupQueue
@@ -5895,14 +6347,17 @@ void Savestate_Save()
     if (canSave == 1)
     {
 
+        // save frame
+        savestate->frame = stc_match->time_frames;
+
         // backup event data
         memcpy(eventDataBackup, event_gobj->userdata, EVENT_DATASIZE);
 
         // free all savestates
-        for (int i = 0; i < sizeof(savestates) / 4; i++)
+        for (int i = 0; i < 6 / 4; i++)
         {
-            if (savestates[i] != 0)
-                HSD_Free(savestates[i]);
+            if (savestate->ft_state[i] != 0)
+                HSD_Free(savestate->ft_state[i]);
         }
 
         // backup all players
@@ -5923,16 +6378,16 @@ void Savestate_Save()
 
                 isSaved = 1;
 
-                // allocate new savestate
-                Savestate *savestate = calloc(sizeof(Savestate));
+                // allocate new state
+                FtState *state = calloc(sizeof(FtState));
 
                 // backup playerblock
                 Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
-                memcpy(&savestate->player_block, playerblock, sizeof(Playerblock));
+                memcpy(&state->player_block, playerblock, sizeof(Playerblock));
 
                 // backup stale moves
                 int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
-                memcpy(&savestate->stale_queue, staleMoves, 0x2C);
+                memcpy(&state->stale_queue, staleMoves, 0x2C);
 
                 // backup fighter data
                 for (int j = 0; j < 2; j++)
@@ -5944,15 +6399,15 @@ void Savestate_Save()
                         FighterData *fighter_data = queue[j].fighter_data;
 
                         // backup fighter data
-                        memcpy(&savestate->fighter_data[j], fighter_data, sizeof(FighterData));
+                        memcpy(&state->fighter_data[j], fighter_data, sizeof(FighterData));
 
                         // backup camerabox
-                        memcpy(&savestate->camera[j], fighter_data->cameraBox, sizeof(CameraBox));
+                        memcpy(&state->camera[j], fighter_data->cameraBox, sizeof(CameraBox));
                     }
                 }
 
                 // store pointer
-                savestates[i] = savestate;
+                savestate->ft_state[i] = state;
             }
         }
     }
@@ -5967,14 +6422,22 @@ void Savestate_Save()
         // play sfx
         SFX_PlayCommon(1);
 
-        // if not in frame advance, flash screen
-        if (Pause_CheckStatus(0) != 1)
-            ScreenFlash_Create(2, 0);
+        // if not in frame advance, flash screen. I wrote it like this because the second condition kept getting optimizing out...
+        if ((Pause_CheckStatus(0) != 1))
+        {
+            if ((Pause_CheckStatus(1) != 2))
+            {
+                ScreenFlash_Create(2, 0);
+            }
+        }
+
+        // set as exist
+        savestate->is_exist = 1;
     }
 
-    return;
+    return isSaved;
 }
-void Savestate_Load()
+int Savestate_Load(SaveState *savestate)
 {
     typedef struct BackupQueue
     {
@@ -5983,6 +6446,10 @@ void Savestate_Load()
     } BackupQueue;
 
     GOBJ *event_gobj = event_vars.event_gobj;
+
+    // return if savestate doesnt exist
+    if (savestate->is_exist == 0)
+        return 0;
 
     // loop through all players
     int isLoaded = 0;
@@ -5998,21 +6465,21 @@ void Savestate_Load()
         }
 
         // if the fighter and backup exists
-        if ((queue[0].fighter != 0) && (savestates[i] != 0))
+        if ((queue[0].fighter != 0) && (savestate->ft_state[i] != 0))
         {
 
             isLoaded = 1;
 
-            // get savestate
-            Savestate *savestate = savestates[i];
+            // get state
+            FtState *state = savestate->ft_state[i];
 
             // restore playerblock
             Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
-            memcpy(playerblock, &savestate->player_block, sizeof(Playerblock));
+            memcpy(playerblock, &state->player_block, sizeof(Playerblock));
 
             // restore stale moves
             int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
-            memcpy(staleMoves, &savestate->stale_queue, 0x2C);
+            memcpy(staleMoves, &state->stale_queue, 0x2C);
 
             // restore fighter data
             for (int j = 0; j < 2; j++)
@@ -6022,7 +6489,7 @@ void Savestate_Load()
                 {
                     GOBJ *fighter = queue[j].fighter;
                     FighterData *fighter_data = queue[j].fighter_data;
-                    FighterData *backup_data = &savestate->fighter_data[j];
+                    FighterData *backup_data = &state->fighter_data[j];
 
                     // backup buttons and collision bubble toggle
                     int input_lstick_x = fighter_data->input_lstick_x;
@@ -6032,11 +6499,11 @@ void Savestate_Load()
                     u8 show_hit = fighter_data->show_hit;
 
                     // restore facing direction
-                    fighter_data->facing_direction = savestate->fighter_data[j].facing_direction;
+                    fighter_data->facing_direction = state->fighter_data[j].facing_direction;
                     // sleep
                     Fighter_EnterSleep(fighter, 0);
                     // enter backed up state
-                    ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, -0, fighter, backup_data->state_id, 0, 0);
+                    ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, -1, fighter, backup_data->state_id, 0, 0);
                     fighter_data->stateBlend = 0;
 
                     // snap dynamic bones in place
@@ -6048,7 +6515,7 @@ void Savestate_Load()
                     */
 
                     // restore fighter data
-                    memcpy(fighter_data, &savestate->fighter_data[j], sizeof(FighterData));
+                    memcpy(fighter_data, &state->fighter_data[j], sizeof(FighterData));
 
                     // restore buttons and collision bubble toggle
                     fighter_data->input_lstick_x = input_lstick_x;
@@ -6064,7 +6531,7 @@ void Savestate_Load()
                     fighter_data->collData.coll_test = R13_INT(COLL_TEST);
 
                     // restore camerabox
-                    memcpy(fighter_data->cameraBox, &savestate->camera[j], sizeof(CameraBox));
+                    memcpy(fighter_data->cameraBox, &state->camera[j], sizeof(CameraBox));
 
                     // stop player SFX
                     SFX_StopAllFighterSFX(fighter_data);
@@ -6139,9 +6606,54 @@ void Savestate_Load()
     }
     if (isLoaded == 1)
     {
+
+        // restore frame
+        Match *match = stc_match;
+        match->time_frames = savestate->frame;
+
+        // update timer
+        int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
+        match->time_seconds = frames / 60;
+        match->time_ms = frames % 60;
+
         memcpy(event_gobj->userdata, eventDataBackup, EVENT_DATASIZE);
 
         SFX_PlayCommon(0);
+    }
+
+    return isLoaded;
+}
+void Update_Savestates()
+{
+
+    // not when pause menu is showing
+    if (Pause_CheckStatus(1) != 2)
+    {
+        // loop through all humans
+        for (int i = 0; i < 6; i++)
+        {
+            // check if fighter exists
+            GOBJ *fighter = Fighter_GetGObj(i);
+            if (fighter != 0)
+            {
+                // get fighter data
+                FighterData *fighter_data = fighter->userdata;
+                HSD_Pad *pad = PadGet(fighter_data->ply, PADGET_MASTER);
+
+                // check for savestate
+                int blacklist = (HSD_BUTTON_DPAD_DOWN | HSD_BUTTON_DPAD_UP | HSD_TRIGGER_Z | HSD_TRIGGER_R | HSD_BUTTON_A | HSD_BUTTON_B | HSD_BUTTON_X | HSD_BUTTON_Y | HSD_BUTTON_START);
+                if (((pad->down & HSD_BUTTON_DPAD_RIGHT) != 0) && ((pad->held & (blacklist)) == 0))
+                {
+                    // save state
+                    Savestate_Save(&stc_savestate);
+                }
+                else if (((pad->down & HSD_BUTTON_DPAD_LEFT) != 0) && ((pad->held & (blacklist)) == 0))
+                {
+                    // load state
+                    Savestate_Load(&stc_savestate);
+                }
+            }
+        }
     }
 
     return;
@@ -6366,29 +6878,49 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     // check for dpad down
     if (((inputs & HSD_BUTTON_DOWN) != 0) || ((inputs & HSD_BUTTON_DPAD_DOWN) != 0))
     {
-        cursor += 1;
 
-        // cursor is in bounds, move down
-        if (cursor < cursor_max)
+        // loop to find next option
+        int count = 1;       //
+        int cursor_next = 0; // how much to move the cursor by
+        while (((cursor + count + scroll) < option_num))
         {
-            isChanged = 1;
+            // option exists, check if its enabled
+            if (currMenu->options[cursor + count + scroll].disable == 0)
+            {
+                cursor_next = count;
+                break;
+            }
 
-            // update cursor
-            currMenu->cursor = cursor;
-
-            // also play sfx
-            SFX_PlayCommon(2);
+            // option is disabled, loop
+            count++;
         }
 
-        // cursor overflowed, check to scroll
-        else
+        // if another option exists, move down
+        if (cursor_next > 0)
         {
-            // cursor+scroll is in bounds, increment scroll
-            if ((cursor + scroll) < option_num)
+            cursor += cursor_next;
+
+            blr();
+
+            // cursor is in bounds, move down
+            if (cursor < cursor_max)
             {
+                isChanged = 1;
+
+                // update cursor
+                currMenu->cursor = cursor;
+
+                // also play sfx
+                SFX_PlayCommon(2);
+            }
+
+            // cursor overflowed, correct it
+            else
+            {
+
                 // adjust
-                scroll++;
-                cursor--;
+                scroll -= (cursor_max - (cursor + 1));
+                cursor = (cursor_max - 1);
 
                 // update cursor
                 currMenu->cursor = cursor;
@@ -6404,29 +6936,46 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     // check for dpad up
     else if (((inputs & HSD_BUTTON_UP) != 0) || ((inputs & HSD_BUTTON_DPAD_UP) != 0))
     {
-        cursor -= 1;
-
-        // cursor is in bounds, move up
-        if (cursor >= 0)
+        // loop to find next option
+        int count = 1;       //
+        int cursor_next = 0; // how much to move the cursor by
+        while (((cursor + scroll - count) >= 0))
         {
-            isChanged = 1;
+            // option exists, check if its enabled
+            if (currMenu->options[cursor + scroll - count].disable == 0)
+            {
+                cursor_next = count;
+                break;
+            }
 
-            // update cursor
-            currMenu->cursor = cursor;
-
-            // also play sfx
-            SFX_PlayCommon(2);
+            // option is disabled, loop
+            count++;
         }
 
-        // cursor overflowed, check to scroll
-        else
+        // if another option exists, move up
+        if (cursor_next > 0)
         {
-            // scroll is in bounds, decrement scroll
-            if (scroll > 0)
+            cursor -= cursor_next;
+
+            // cursor is in bounds, move up
+            if (cursor >= 0)
             {
+                isChanged = 1;
+
+                // update cursor
+                currMenu->cursor = cursor;
+
+                // also play sfx
+                SFX_PlayCommon(2);
+            }
+
+            // cursor overflowed, correct it
+            else
+            {
+
                 // adjust
-                scroll--;
-                cursor++;
+                scroll += cursor; // effectively scroll up by adding a negative number
+                cursor = 0;       // cursor is positioned at 0
 
                 // update cursor
                 currMenu->cursor = cursor;
@@ -6555,6 +7104,9 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 
             // save pointer to this gobj
             currOption->onOptionSelect(gobj);
+
+            // update text
+            EventMenu_UpdateText(gobj, currMenu);
 
             // also play sfx
             SFX_PlayCommon(1);
@@ -7101,6 +7653,24 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         // output option name
         int optionVal = currOption->option_val;
         Text_SetText(text, i, currOption->option_name);
+
+        // output color
+        GXColor color;
+        if (currOption->disable == 0)
+        {
+            color.r = 255;
+            color.b = 255;
+            color.g = 255;
+            color.a = 255;
+        }
+        else
+        {
+            color.r = 128;
+            color.b = 128;
+            color.g = 128;
+            color.a = 0;
+        }
+        Text_SetColor(text, i, &color);
     }
 
     /* 
@@ -7147,6 +7717,24 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
             // show arrow
             //JOBJ_ClearFlags(menuData->row_joints[i][1], JOBJ_HIDDEN);
         }
+
+        // output color
+        GXColor color;
+        if (currOption->disable == 0)
+        {
+            color.r = 255;
+            color.b = 255;
+            color.g = 255;
+            color.a = 255;
+        }
+        else
+        {
+            color.r = 128;
+            color.b = 128;
+            color.g = 128;
+            color.a = 0;
+        }
+        Text_SetColor(text, i, &color);
     }
 
     // update cursor position
