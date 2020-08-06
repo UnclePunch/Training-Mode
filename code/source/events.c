@@ -2256,8 +2256,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             cpu_data->cpu.lstickX = cos(tdi_angle) * 127;
             cpu_data->cpu.lstickY = sin(tdi_angle) * 127;
 
-            OSReport("kb angle: %f\nsurvival tdi: %f\n", kb_angle, tdi_angle);
-
             break;
         }
 
@@ -2280,8 +2278,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             // convert to analog input
             cpu_data->cpu.lstickX = cos(tdi_angle) * 127;
             cpu_data->cpu.lstickY = sin(tdi_angle) * 127;
-
-            OSReport("kb angle: %f\ncombo tdi: %f\n", kb_angle, tdi_angle);
 
             break;
         }
@@ -2443,8 +2439,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             cpu_data->cpu.held = inputs;
             cpu_data->cpu.lstickX = stickX;
             cpu_data->cpu.lstickY = stickY;
-
-            OSReport("CPUSTATE_GETUP");
         }
 
         // if cpu is in any other down state, do nothing
@@ -3886,7 +3880,6 @@ void LCancel_Init(GOBJ *gobj)
     FighterData *hmn_data = hmn->userdata;
     GOBJ *cpu = Fighter_GetGObj(1);
     FighterData *cpu_data = cpu->userdata;
-    OSReport("this is %s\n", eventInfo->eventName);
 
     // Init Info Display
     infodisp_gobj = InfoDisplay_Init(); // static pointer for update function
