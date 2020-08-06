@@ -186,6 +186,17 @@ static SaveState stc_savestate;
 #define TDITEXT_TEXTSCALE 1
 #define TDITEXT_TEXTZ 0
 
+// recording
+#define GXPRI_RECJOINT 80
+#define GXLINK_RECJOINT 13
+#define GXPRI_RECTEXT GXPRI_RECJOINT + 1
+#define GXLINK_RECTEXT 13
+// cobj
+#define RECCAM_COBJGXLINK (1 << GXLINK_RECJOINT) | (1 << GXLINK_RECTEXT)
+#define RECCAM_GXPRI 8
+
+#define REC_LENGTH 1 * 60 * 60
+
 typedef struct evLcAssets
 {
     JOBJDesc *stick;
@@ -269,8 +280,9 @@ typedef struct RecInputs
 } RecInputs;
 typedef struct RecInputData
 {
+    int start_frame; // the frame these inputs start on
     int num;
-    RecInputs inputs[2 * 60 * 60]
+    RecInputs inputs[REC_LENGTH]
 } RecInputData;
 typedef struct RecData
 {
@@ -283,6 +295,7 @@ typedef struct RecData
 
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value);
 void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value);
+void EvFree_ChangeCPUIntang(GOBJ *menu_gobj, int value);
 void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value);
 void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value);
 void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
@@ -297,6 +310,7 @@ void Record_ChangeCPUMode(GOBJ *menu_gobj, int value);
 void Record_ChangeSlot(GOBJ *menu_gobj, int value);
 void Record_InitState(GOBJ *menu_gobj);
 void Record_RestoreState(GOBJ *menu_gobj);
+void Record_CObjThink(GOBJ *gobj);
 void Record_GX(GOBJ *gobj, int pass);
 void Record_Think(GOBJ *rec_gobj);
 void Record_Update(int ply, RecInputData *inputs, int rec_mode);

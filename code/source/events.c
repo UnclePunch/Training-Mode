@@ -1005,7 +1005,7 @@ static EventOption EvFreeOptions_CPU[] = {
         .option_name = {"Intangibility"},                   // pointer to a string
         .desc = "Toggle the CPU's ability to take damage.", // string describing what this option does
         .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = EvFree_ChangeCPUIntang,
     },
     {
         .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
@@ -1281,6 +1281,16 @@ void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value)
 
     return;
 }
+void EvFree_ChangeCPUIntang(GOBJ *menu_gobj, int value)
+{
+    // remove blink GFX if toggling off
+    if (value == 0)
+    {
+        GOBJ *fighter = Fighter_GetGObj(1);
+        Fighter_GFXRemoveAll(fighter);
+    }
+    return;
+}
 void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value)
 {
 
@@ -1462,12 +1472,17 @@ void Record_InitState(GOBJ *menu_gobj)
         // clear slots
         for (int i = 0; i < 3; i++)
         {
+            // clear data
             memset(rec_data.hmn_inputs[i], 0, sizeof(RecInputData));
             memset(rec_data.cpu_inputs[i], 0, sizeof(RecInputData));
+
+            // init frame this recording starts on
+            rec_data.hmn_inputs[i]->start_frame = -1;
+            rec_data.cpu_inputs[i]->start_frame = -1;
         }
 
         // copy state to personal savestate
-        memcpy(&stc_savestate, &rec_state, sizeof(SaveState));
+        //memcpy(&stc_savestate, &rec_state, sizeof(SaveState));
     }
     return;
 }
@@ -3343,6 +3358,16 @@ GOBJ *Record_Init()
     // Add per frame process
     GObj_AddProc(rec_gobj, Record_Think, 3);
 
+    // create cobj
+    GOBJ *cam_gobj = GObj_Create(19, 20, 0);
+    COBJDesc ***dmgScnMdls = File_GetSymbol(ACCESS_PTR(0x804d6d5c), 0x803f94d0);
+    COBJDesc *cam_desc = dmgScnMdls[1][0];
+    COBJ *rec_cobj = COBJ_LoadDesc(cam_desc);
+    // init camera
+    GObj_AddObject(cam_gobj, R13_U8(-0x3E55), rec_cobj);
+    GOBJ_InitCamera(cam_gobj, Record_CObjThink, RECCAM_GXPRI);
+    cam_gobj->cobj_id = RECCAM_COBJGXLINK;
+
 #define SEEKBG_WIDTH 25
 #define SEEKBG_HEIGHT 3
 #define SEEKBG_X 1.8
@@ -3418,10 +3443,10 @@ GOBJ *Record_Init()
     // Add to gobj
     GObj_AddObject(rec_gobj, 3, bg);
     // Add gxlink
-    GObj_AddGXLink(rec_gobj, Record_GX, GXLINK_INFDISP, GXPRI_INFDISP);
+    GObj_AddGXLink(rec_gobj, Record_GX, GXLINK_RECJOINT, GXPRI_RECJOINT);
 
     // Create text
-    int canvas_index = Text_CreateCanvas(2, rec_gobj, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
+    int canvas_index = Text_CreateCanvas(2, rec_gobj, 14, 15, 0, GXLINK_RECTEXT, GXPRI_RECTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->align = 1;
     text->kerning = 1;
@@ -3454,61 +3479,101 @@ GOBJ *Record_Init()
     {
         rec_data.hmn_inputs[i] = calloc(sizeof(RecInputData));
         rec_data.cpu_inputs[i] = calloc(sizeof(RecInputData));
+
+        // init frame this recording starts on
+        rec_data.hmn_inputs[i]->start_frame = -1;
+        rec_data.cpu_inputs[i]->start_frame = -1;
     }
 
     return rec_gobj;
 }
+void Record_CObjThink(GOBJ *gobj)
+{
+    // hide UI if set to off
+    if ((rec_state.is_exist == 1) && ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 0) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 0)))
+    {
+        CObjThink_Common(gobj);
+    }
+
+    return;
+}
 void Record_GX(GOBJ *gobj, int pass)
 {
 
-    // hide seek bar if recording isnt in use
-    if ((rec_state.is_exist == 1) && ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 0) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 0)))
+    // update UI position
+    // the reason im doing this here is because i want it to update in the menu
+    if (pass == 0)
     {
+        RecInputData *hmn_inputs = rec_data.hmn_inputs[EvFreeOptions_Record[OPTREC_HMNSLOT].option_val];
+        RecInputData *cpu_inputs = rec_data.cpu_inputs[EvFreeOptions_Record[OPTREC_CPUSLOT].option_val];
+        JOBJ *seek = rec_data.seek_jobj;
+        Text *text = rec_data.text;
 
-        if (pass == 0)
+        // get curr frame (the current position in the recording)
+        int curr_frame = (stc_match->time_frames - 1) - rec_state.frame;
+
+        // get what frame the longest recording ends on (savestate frame + recording start frame + recording time)
+        int hmn_end_frame = 0;
+        int cpu_end_frame = 0;
+        if (hmn_inputs->start_frame != -1) // ensure a recording exists
         {
-            RecInputData *hmn_inputs = rec_data.hmn_inputs[EvFreeOptions_Record[OPTREC_HMNSLOT].option_val];
-            RecInputData *cpu_inputs = rec_data.cpu_inputs[EvFreeOptions_Record[OPTREC_CPUSLOT].option_val];
-            JOBJ *seek = rec_data.seek_jobj;
-            Text *text = rec_data.text;
-
-            // get local frame
-            int local_frame = (stc_match->time_frames - 1) - rec_state.frame;
-            int input_num = hmn_inputs->num; // get longest recording
-            if (cpu_inputs->num > hmn_inputs->num)
-                input_num = cpu_inputs->num;
-
-            // hide seek bar during recording
-            if ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 2) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 1))
-            {
-                JOBJ_SetFlags(seek, JOBJ_HIDDEN);
-
-                // update seek bar frames
-                Text_SetText(text, 0, "%d", local_frame + 1);
-                Text_SetText(text, 1, &nullString);
-            }
-            else
-            {
-                JOBJ_ClearFlags(seek, JOBJ_HIDDEN);
-
-                // update seek bar position
-                float range = BAR_WIDTH;
-                float curr_pos;
-                int local_frame_seek = local_frame;
-                if (local_frame > input_num)
-                    local_frame_seek = input_num;
-                curr_pos = (float)local_frame_seek / (float)input_num;
-                seek->trans.X = (BAR_X - 8 - 0.4) + (curr_pos * range);
-                JOBJ_SetMtxDirtySub(seek);
-
-                // update seek bar frames
-                Text_SetText(text, 0, "%d", local_frame_seek + 1);
-                Text_SetText(text, 1, "%d", input_num + 1);
-            }
+            hmn_end_frame = (hmn_inputs->start_frame + hmn_inputs->num);
+        }
+        if (cpu_inputs->start_frame != -1) // ensure a recording exists
+        {
+            cpu_end_frame = (cpu_inputs->start_frame + cpu_inputs->num);
         }
 
-        GXLink_Common(gobj, pass);
+        // find the larger recording
+        RecInputData *input_data = hmn_inputs;
+        if (cpu_end_frame > hmn_end_frame)
+            input_data = cpu_inputs;
+
+        // get the frame the recording starts on. i actually hate this code and need to change how this works
+        int rec_start;
+        if (input_data->start_frame == -1) // case 1: recording didnt start, use current frame
+        {
+            rec_start = curr_frame;
+        }
+        else // case 2: recording has started, use the frame saved
+        {
+            rec_start = input_data->start_frame - rec_state.frame;
+        }
+
+        // get end frame
+        int end_frame = rec_start + input_data->num;
+
+        // hide seek bar during recording
+        if ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 2) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 1))
+        {
+            JOBJ_SetFlags(seek, JOBJ_HIDDEN);
+
+            // update seek bar frames
+            Text_SetText(text, 0, "%d", curr_frame + 1);
+            Text_SetText(text, 1, &nullString);
+        }
+        // during playback
+        else
+        {
+            JOBJ_ClearFlags(seek, JOBJ_HIDDEN);
+
+            // update seek bar position
+            float range = BAR_WIDTH;
+            float curr_pos;
+            int local_frame_seek = curr_frame;
+            if (curr_frame > end_frame)
+                local_frame_seek = end_frame;
+            curr_pos = (float)local_frame_seek / (float)end_frame;
+            seek->trans.X = (BAR_X - 8 - 0.4) + (curr_pos * range);
+            JOBJ_SetMtxDirtySub(seek);
+
+            // update seek bar frames
+            Text_SetText(text, 0, "%d", local_frame_seek + 1);
+            Text_SetText(text, 1, "%d", end_frame + 1);
+        }
     }
+
+    GXLink_Common(gobj, pass);
 
     return;
 }
@@ -3563,13 +3628,27 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 
     GOBJ *fighter = Fighter_GetGObj(ply);
     FighterData *fighter_data = fighter->userdata;
-    int local_frame = (stc_match->time_frames - 1) - rec_state.frame;
+
+    // get curr frame (the current position in the recording)
+    int curr_frame = (stc_match->time_frames - 1) - rec_state.frame;
+
+    // get the frame the recording starts on. i actually hate this code and need to change how this works
+    int rec_start;
+    if (input_data->start_frame == -1) // case 1: recording didnt start, use current frame
+    {
+        rec_start = curr_frame;
+    }
+    else // case 2: recording has started, use the frame saved
+    {
+        rec_start = input_data->start_frame - rec_state.frame;
+    }
+    int end_frame = rec_start + input_data->num;
 
     // Get HSD Pad
     HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_ENGINE);
 
-    // if the current frame is within the recording frames
-    if ((local_frame >= 0) && ((local_frame) < (2 * 60 * 60)))
+    // if the current frame before the recording ends
+    if ((curr_frame) < (rec_start + REC_LENGTH))
     {
 
         switch (rec_mode)
@@ -3585,9 +3664,17 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
         case RECMODE_REC:
         {
 
+            // recording has started BUT the player has jumped back behind it, move the start frame back
+            if ((input_data->start_frame == -1) || (curr_frame < rec_start))
+            {
+                input_data->start_frame = (stc_match->time_frames - 1);
+                input_data->num = 0;
+                rec_start = curr_frame;
+            }
+
             // store inputs
             int held = pad->held;
-            RecInputs *inputs = &input_data->inputs[local_frame];
+            RecInputs *inputs = &input_data->inputs[curr_frame];
             inputs->btn_a = !!((held)&HSD_BUTTON_A);
             inputs->btn_b = !!((held)&HSD_BUTTON_B);
             inputs->btn_x = !!((held)&HSD_BUTTON_X);
@@ -3595,6 +3682,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             inputs->btn_L = !!((held)&HSD_TRIGGER_L);
             inputs->btn_R = !!((held)&HSD_TRIGGER_R);
             inputs->btn_Z = !!((held)&HSD_TRIGGER_Z);
+            inputs->btn_dpadup = !!((held)&HSD_BUTTON_DPAD_UP);
 
             inputs->stickX = pad->stickX;
             inputs->stickY = pad->stickY;
@@ -3608,7 +3696,10 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             inputs->trigger = trigger;
 
             // update input_num
-            input_data->num = local_frame;
+            input_data->num = curr_frame - rec_start;
+
+            // clear inputs henceforth
+            //memset(&input_data->inputs[curr_frame + 1], 0, (REC_LENGTH - curr_frame) * sizeof(RecInputs));
 
             break;
         }
@@ -3616,10 +3707,10 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
         {
 
             // ensure we have an input for this frame
-            if (local_frame <= input_data->num)
+            if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= input_data->num))
             {
                 int held;
-                RecInputs *inputs = &input_data->inputs[local_frame];
+                RecInputs *inputs = &input_data->inputs[curr_frame];
                 // read inputs
                 held |= inputs->btn_a << 8;
                 held |= inputs->btn_b << 9;
@@ -6310,7 +6401,6 @@ void OnStartMelee()
 
 int Savestate_Save(SaveState *savestate)
 {
-
     typedef struct BackupQueue
     {
         GOBJ *fighter;
@@ -6899,8 +6989,6 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         if (cursor_next > 0)
         {
             cursor += cursor_next;
-
-            blr();
 
             // cursor is in bounds, move down
             if (cursor < cursor_max)
