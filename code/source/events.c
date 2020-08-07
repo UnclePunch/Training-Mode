@@ -1159,7 +1159,7 @@ static EventMenu EvFreeMenu_CPU = {
     .prev = 0,                                                     // pointer to previous menu, used at runtime
 };
 // Recording
-static char **EvFreeValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3"};
+static char **EvFreeValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6"};
 static char **EvFreeValues_HMNRecordMode[] = {"Off", "Record", "Playback"};
 static char **EvFreeValues_CPURecordMode[] = {"Off", "Control", "Record", "Playback"};
 static EventOption EvFreeOptions_Record[] = {
@@ -1470,7 +1470,7 @@ void Record_InitState(GOBJ *menu_gobj)
         }
 
         // clear slots
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < REC_SLOTS; i++)
         {
             // clear data
             memset(rec_data.hmn_inputs[i], 0, sizeof(RecInputData));
@@ -1494,6 +1494,26 @@ void Record_RestoreState(GOBJ *menu_gobj)
 void Record_ChangeSlot(GOBJ *menu_gobj, int value)
 {
 
+    // if set to random, update random state
+    if (value == 0)
+    {
+
+        MenuData *menu_data = menu_gobj->userdata;
+        int cursor = menu_data->currMenu->cursor;
+
+        // check if toggled HMN
+        if (cursor == OPTREC_HMNSLOT)
+        {
+            rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
+        }
+
+        // check if toggled CPU
+        if (cursor == OPTREC_CPUSLOT)
+        {
+            rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
+        }
+    }
+
     // reload save
     Savestate_Load(&rec_state);
 
@@ -1501,6 +1521,18 @@ void Record_ChangeSlot(GOBJ *menu_gobj, int value)
 }
 void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
 {
+
+    // upon changing to record
+    if (value == 1)
+    {
+        // if set to random
+        if (EvFreeOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+        {
+            EvFreeOptions_Record[OPTREC_HMNSLOT].option_val = 1;
+        }
+    }
+
+    // upon changing to playback
     if (value == 2)
     {
         Savestate_Load(&rec_state);
@@ -1509,7 +1541,19 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
 }
 void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
 {
-    // load state if togglign playback
+
+    // upon changing to record
+    if (value == 2)
+    {
+        // if set to random
+        if (EvFreeOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+        {
+            // change to slot 1
+            EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1;
+        }
+    }
+
+    // upon toggling playback
     if (value == 3)
     {
         Savestate_Load(&rec_state);
@@ -3469,7 +3513,7 @@ GOBJ *Record_Init()
     }
 
     // allocate input arrays
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < REC_SLOTS; i++)
     {
         rec_data.hmn_inputs[i] = calloc(sizeof(RecInputData));
         rec_data.cpu_inputs[i] = calloc(sizeof(RecInputData));
@@ -3498,8 +3542,22 @@ void Record_GX(GOBJ *gobj, int pass)
     // the reason im doing this here is because i want it to update in the menu
     if (pass == 0)
     {
-        RecInputData *hmn_inputs = rec_data.hmn_inputs[EvFreeOptions_Record[OPTREC_HMNSLOT].option_val];
-        RecInputData *cpu_inputs = rec_data.cpu_inputs[EvFreeOptions_Record[OPTREC_CPUSLOT].option_val];
+        // get hmn slot
+        int hmn_slot = EvFreeOptions_Record[OPTREC_HMNSLOT].option_val;
+        if (hmn_slot == 0) // use random slot
+            hmn_slot = rec_data.hmn_rndm_slot;
+        else
+            hmn_slot--;
+
+        // get cpu slot
+        int cpu_slot = EvFreeOptions_Record[OPTREC_CPUSLOT].option_val;
+        if (cpu_slot == 0) // use random slot
+            cpu_slot = rec_data.cpu_rndm_slot;
+        else
+            cpu_slot--;
+
+        RecInputData *hmn_inputs = rec_data.hmn_inputs[hmn_slot];
+        RecInputData *cpu_inputs = rec_data.cpu_inputs[cpu_slot];
         JOBJ *seek = rec_data.seek_jobj;
         Text *text = rec_data.text;
 
@@ -3574,8 +3632,22 @@ void Record_GX(GOBJ *gobj, int pass)
 void Record_Think(GOBJ *rec_gobj)
 {
 
-    RecInputData *hmn_inputs = rec_data.hmn_inputs[EvFreeOptions_Record[OPTREC_HMNSLOT].option_val];
-    RecInputData *cpu_inputs = rec_data.cpu_inputs[EvFreeOptions_Record[OPTREC_CPUSLOT].option_val];
+    // get hmn slot
+    int hmn_slot = EvFreeOptions_Record[OPTREC_HMNSLOT].option_val;
+    if (hmn_slot == 0) // use random slot
+        hmn_slot = rec_data.hmn_rndm_slot;
+    else
+        hmn_slot--;
+
+    // get cpu slot
+    int cpu_slot = EvFreeOptions_Record[OPTREC_CPUSLOT].option_val;
+    if (cpu_slot == 0) // use random slot
+        cpu_slot = rec_data.cpu_rndm_slot;
+    else
+        cpu_slot--;
+
+    RecInputData *hmn_inputs = rec_data.hmn_inputs[hmn_slot];
+    RecInputData *cpu_inputs = rec_data.cpu_inputs[cpu_slot];
 
     // ensure the state exists
     if (rec_state.is_exist == 1)
@@ -3592,6 +3664,17 @@ void Record_Think(GOBJ *rec_gobj)
             // not if someone is recording
             if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 1) && (EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 2))
             {
+
+                // re-roll random slot
+                if (EvFreeOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+                {
+                    rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
+                }
+                if (EvFreeOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+                {
+                    rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
+                }
+
                 // check to auto reset
                 if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
@@ -3742,6 +3825,33 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     }
 
     return;
+}
+int Record_GetRandomSlot(RecInputData **input_data)
+{
+
+    blr();
+
+    // create array of slots in use
+    u8 slot_num = 0;
+    u8 arr[REC_SLOTS];
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        // if this recording slot is in use
+        if (input_data[i]->num != 0)
+        {
+            arr[slot_num] = i;
+            slot_num++;
+        }
+    }
+
+    // ensure at least one slot found
+    if (slot_num == 0)
+    {
+        return 0;
+    }
+
+    // get random slot in use
+    return arr[(HSD_Randi(slot_num))];
 }
 void CustomTDI_Update(GOBJ *gobj)
 {

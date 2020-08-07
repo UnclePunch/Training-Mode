@@ -196,6 +196,7 @@ static SaveState stc_savestate;
 #define RECCAM_GXPRI 8
 
 #define REC_LENGTH 1 * 60 * 60
+#define REC_SLOTS 6
 
 typedef struct evLcAssets
 {
@@ -287,8 +288,10 @@ typedef struct RecInputData
 typedef struct RecData
 {
     int timer; // this is updated at runtime to know which frames inputs to use.
-    RecInputData *hmn_inputs[3];
-    RecInputData *cpu_inputs[3];
+    int hmn_rndm_slot;
+    RecInputData *hmn_inputs[REC_SLOTS];
+    int cpu_rndm_slot;
+    RecInputData *cpu_inputs[REC_SLOTS];
     JOBJ *seek_jobj;
     Text *text;
 } RecData;
@@ -314,6 +317,7 @@ void Record_CObjThink(GOBJ *gobj);
 void Record_GX(GOBJ *gobj, int pass);
 void Record_Think(GOBJ *rec_gobj);
 void Record_Update(int ply, RecInputData *inputs, int rec_mode);
+int Record_GetRandomSlot(RecInputData **input_data);
 void CustomTDI_Update(GOBJ *gobj);
 void CustomTDI_Destroy(GOBJ *gobj);
 void EvFree_Exit(int value);
