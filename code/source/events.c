@@ -3638,7 +3638,7 @@ void Record_GX(GOBJ *gobj, int pass)
             // update seek bar position
             float range = BAR_WIDTH;
             float curr_pos;
-            int local_frame_seek = curr_frame;
+            int local_frame_seek = curr_frame + 1;
             if (curr_frame > end_frame)
                 local_frame_seek = end_frame;
             curr_pos = (float)local_frame_seek / (float)end_frame;
@@ -3646,8 +3646,8 @@ void Record_GX(GOBJ *gobj, int pass)
             JOBJ_SetMtxDirtySub(seek);
 
             // update seek bar frames
-            Text_SetText(text, 0, "%d", local_frame_seek + 1);
-            Text_SetText(text, 1, "%d", end_frame + 1);
+            Text_SetText(text, 0, "%d", local_frame_seek);
+            Text_SetText(text, 1, "%d", end_frame);
         }
     }
 
@@ -3684,8 +3684,10 @@ void Record_Think(GOBJ *rec_gobj)
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
 
+        blr();
+
         // if at the end of the recording
-        if ((input_num != 0) && (local_frame > input_num))
+        if ((input_num != 0) && (local_frame >= input_num))
         {
             // not if actively recording
             if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 1) && (EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 2))
@@ -3698,13 +3700,14 @@ void Record_Think(GOBJ *rec_gobj)
                 if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
                     Savestate_Load(&rec_state);
+                    //stc_match->time_frames = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
                 // check to loop inputs
                 else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
-                    stc_match->time_frames = rec_state.frame;
+                    stc_match->time_frames = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
@@ -3742,7 +3745,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     GOBJ *fighter = Fighter_GetGObj(ply);
     FighterData *fighter_data = fighter->userdata;
 
-    // get curr frame (the current position in the recording)
+    // get curr frame (the time since saving positions)
     int curr_frame = (stc_match->time_frames - rec_state.frame);
 
     // get the frame the recording starts on. i actually hate this code and need to change how this works
@@ -3781,13 +3784,13 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             if ((input_data->start_frame == -1) || (curr_frame < rec_start))
             {
                 input_data->start_frame = (stc_match->time_frames - 1);
-                input_data->num = 0;
-                rec_start = curr_frame;
+                rec_start = curr_frame - 1;
             }
 
             // store inputs
             int held = pad->held;
-            RecInputs *inputs = &input_data->inputs[curr_frame];
+            blr();
+            RecInputs *inputs = &input_data->inputs[curr_frame - 1];
             inputs->btn_a = !!((held)&HSD_BUTTON_A);
             inputs->btn_b = !!((held)&HSD_BUTTON_B);
             inputs->btn_x = !!((held)&HSD_BUTTON_X);
@@ -3809,7 +3812,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             inputs->trigger = trigger;
 
             // update input_num
-            input_data->num = curr_frame - rec_start;
+            input_data->num = (curr_frame - rec_start);
 
             // clear inputs henceforth
             //memset(&input_data->inputs[curr_frame + 1], 0, (REC_LENGTH - curr_frame) * sizeof(RecInputs));
@@ -3818,14 +3821,12 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
         }
         case RECMODE_PLAY:
         {
-
-            blr();
-
             // ensure we have an input for this frame
-            if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= (input_data->num + 1)))
+            if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= (input_data->num)))
             {
                 int held = 0;
-                RecInputs *inputs = &input_data->inputs[curr_frame];
+                blr();
+                RecInputs *inputs = &input_data->inputs[curr_frame - 1];
                 // read inputs
                 held |= inputs->btn_a << 8;
                 held |= inputs->btn_b << 9;
@@ -6747,8 +6748,8 @@ int Savestate_Load(SaveState *savestate)
                     memcpy(fighter_data, &state->fighter_data[j], sizeof(FighterData));
 
                     // restore buttons and collision bubble toggle
-                    fighter_data->input_lstick_x = input_lstick_x;
-                    fighter_data->input_lstick_y = input_lstick_y;
+                    //fighter_data->input_lstick_x = input_lstick_x;
+                    //fighter_data->input_lstick_y = input_lstick_y;
                     fighter_data->input_held &= dpad_held;
                     fighter_data->show_model = show_model;
                     fighter_data->show_hit = show_hit;
