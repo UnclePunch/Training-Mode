@@ -1201,7 +1201,7 @@ static EventOption EvFreeOptions_Record[] = {
         .option_name = "HMN Record Slot",                 // pointer to a string
         .desc = "Toggle which slot to record to.",        // string describing what this option does
         .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
-        .onOptionChange = Record_ChangeSlot,
+        .onOptionChange = Record_ChangeHMNSlot,
     },
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
@@ -1221,7 +1221,7 @@ static EventOption EvFreeOptions_Record[] = {
         .option_name = "CPU Record Slot",                 // pointer to a string
         .desc = "Toggle which slot to record to.",        // string describing what this option does
         .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
-        .onOptionChange = Record_ChangeSlot,
+        .onOptionChange = Record_ChangeCPUSlot,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -1481,6 +1481,12 @@ void Record_InitState(GOBJ *menu_gobj)
             rec_data.cpu_inputs[i]->start_frame = -1;
         }
 
+        // init settings
+        EvFreeOptions_Record[OPTREC_HMNMODE].option_val = 0; // set hmn to off
+        EvFreeOptions_Record[OPTREC_HMNSLOT].option_val = 1; // set hmn to slot 1
+        EvFreeOptions_Record[OPTREC_CPUMODE].option_val = 0; // set cpu to off
+        EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
+
         // copy state to personal savestate
         //memcpy(&stc_savestate, &rec_state, sizeof(SaveState));
     }
@@ -1491,24 +1497,44 @@ void Record_RestoreState(GOBJ *menu_gobj)
     Savestate_Load(&rec_state);
     return;
 }
-void Record_ChangeSlot(GOBJ *menu_gobj, int value)
+void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
 {
-
-    // if set to random, update random state
+    // upon changing to random
     if (value == 0)
     {
+        // if set to record
+        if (EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 1)
+        {
+            // change to slot 1
+            EvFreeOptions_Record[OPTREC_HMNSLOT].option_val = 1;
+        }
 
-        MenuData *menu_data = menu_gobj->userdata;
-        int cursor = menu_data->currMenu->cursor;
-
-        // check if toggled HMN
-        if (cursor == OPTREC_HMNSLOT)
+        // update random slot
+        else
         {
             rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
         }
+    }
 
-        // check if toggled CPU
-        if (cursor == OPTREC_CPUSLOT)
+    // reload save
+    Savestate_Load(&rec_state);
+
+    return;
+}
+void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
+{
+    // upon changing to random
+    if (value == 0)
+    {
+        // if set to record
+        if (EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 2)
+        {
+            // change to slot 1
+            EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1;
+        }
+
+        // update random slot
+        else
         {
             rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
         }
@@ -3658,32 +3684,41 @@ void Record_Think(GOBJ *rec_gobj)
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
 
-        // auto load state
+        // if at the end of the recording
         if ((input_num != 0) && (local_frame > input_num))
         {
-            // not if someone is recording
+            // not if actively recording
             if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 1) && (EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 2))
             {
 
-                // re-roll random slot
-                if (EvFreeOptions_Record[OPTREC_HMNSLOT].option_val == 0)
-                {
-                    rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
-                }
-                if (EvFreeOptions_Record[OPTREC_CPUSLOT].option_val == 0)
-                {
-                    rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
-                }
+                // init flag
+                int is_loop = 0;
 
                 // check to auto reset
                 if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
                     Savestate_Load(&rec_state);
+                    is_loop = 1;
                 }
                 // check to loop inputs
                 else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
                     stc_match->time_frames = rec_state.frame;
+                    is_loop = 1;
+                }
+
+                // if recording looped, check to re-roll random slot
+                if (is_loop == 1)
+                {
+                    // re-roll random slot
+                    if (EvFreeOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+                    {
+                        rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
+                    }
+                    if (EvFreeOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+                    {
+                        rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
+                    }
                 }
             }
         }

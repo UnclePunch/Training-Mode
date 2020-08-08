@@ -308,6 +308,8 @@ void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
 void EvFree_ChangeHUD(GOBJ *menu_gobj, int value);
 void EvFree_SelectCustomTDI(GOBJ *menu_gobj);
 void DIDraw_GX();
+void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value);
+void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value);
 void Record_ChangeHMNMode(GOBJ *menu_gobj, int value);
 void Record_ChangeCPUMode(GOBJ *menu_gobj, int value);
 void Record_ChangeSlot(GOBJ *menu_gobj, int value);
