@@ -3700,6 +3700,7 @@ void Record_Think(GOBJ *rec_gobj)
                     Savestate_Load(&rec_state);
                     is_loop = 1;
                 }
+
                 // check to loop inputs
                 else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
@@ -3742,7 +3743,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     FighterData *fighter_data = fighter->userdata;
 
     // get curr frame (the current position in the recording)
-    int curr_frame = (stc_match->time_frames - 1) - rec_state.frame;
+    int curr_frame = (stc_match->time_frames - rec_state.frame);
 
     // get the frame the recording starts on. i actually hate this code and need to change how this works
     int rec_start;
@@ -3818,10 +3819,12 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
         case RECMODE_PLAY:
         {
 
+            blr();
+
             // ensure we have an input for this frame
-            if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= input_data->num))
+            if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= (input_data->num + 1)))
             {
-                int held;
+                int held = 0;
                 RecInputs *inputs = &input_data->inputs[curr_frame];
                 // read inputs
                 held |= inputs->btn_a << 8;
@@ -3863,8 +3866,6 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 }
 int Record_GetRandomSlot(RecInputData **input_data)
 {
-
-    blr();
 
     // create array of slots in use
     u8 slot_num = 0;
