@@ -1259,6 +1259,7 @@ static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static SaveState rec_state;
+static int game_timer;
 
 // Menu Callbacks
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
@@ -3553,6 +3554,7 @@ GOBJ *Record_Init()
 }
 void Record_CObjThink(GOBJ *gobj)
 {
+
     // hide UI if set to off
     if ((rec_state.is_exist == 1) && ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 0) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 0)))
     {
@@ -3588,7 +3590,7 @@ void Record_GX(GOBJ *gobj, int pass)
         Text *text = rec_data.text;
 
         // get curr frame (the current position in the recording)
-        int curr_frame = (stc_match->time_frames - 1) - rec_state.frame;
+        int curr_frame = (game_timer - 1) - rec_state.frame;
 
         // get what frame the longest recording ends on (savestate frame + recording start frame + recording time)
         int hmn_end_frame = 0;
@@ -3679,7 +3681,7 @@ void Record_Think(GOBJ *rec_gobj)
     if (rec_state.is_exist == 1)
     {
         // get local frame
-        int local_frame = (stc_match->time_frames - 1) - rec_state.frame;
+        int local_frame = (game_timer - 1) - rec_state.frame;
         int input_num = hmn_inputs->num; // get longest recording
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
@@ -3700,14 +3702,14 @@ void Record_Think(GOBJ *rec_gobj)
                 if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
                     Savestate_Load(&rec_state);
-                    //stc_match->time_frames = rec_state.frame + 1;
+                    //game_timer = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
                 // check to loop inputs
                 else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
-                    stc_match->time_frames = rec_state.frame + 1;
+                    game_timer = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
@@ -3746,7 +3748,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     FighterData *fighter_data = fighter->userdata;
 
     // get curr frame (the time since saving positions)
-    int curr_frame = (stc_match->time_frames - rec_state.frame);
+    int curr_frame = (game_timer - rec_state.frame);
 
     // get the frame the recording starts on. i actually hate this code and need to change how this works
     int rec_start;
@@ -3783,7 +3785,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             // recording has started BUT the player has jumped back behind it, move the start frame back
             if ((input_data->start_frame == -1) || (curr_frame < rec_start))
             {
-                input_data->start_frame = (stc_match->time_frames - 1);
+                input_data->start_frame = (game_timer - 1);
                 rec_start = curr_frame - 1;
             }
 
@@ -4049,6 +4051,8 @@ void LCancel_Init(GOBJ *gobj)
         cpu_controller = 0;
     eventData->cpu_controller = cpu_controller;
 
+    game_timer = 0;
+
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
 
@@ -4083,6 +4087,9 @@ void LCancel_Think(GOBJ *event)
     GOBJ *cpu = Fighter_GetGObj(1);
     FighterData *cpu_data = cpu->userdata;
     HSD_Pad *pad = PadGet(hmn_data->player_controller_number, PADGET_ENGINE);
+
+    // inc game timer
+    game_timer++;
 
     // update menu's percent
     EvFreeOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
@@ -6578,7 +6585,7 @@ int Savestate_Save(SaveState *savestate)
     {
 
         // save frame
-        savestate->frame = stc_match->time_frames;
+        savestate->frame = game_timer;
 
         // backup event data
         memcpy(eventDataBackup, event_gobj->userdata, EVENT_DATASIZE);
@@ -6840,6 +6847,7 @@ int Savestate_Load(SaveState *savestate)
         // restore frame
         Match *match = stc_match;
         match->time_frames = savestate->frame;
+        game_timer = savestate->frame;
 
         // update timer
         int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
