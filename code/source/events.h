@@ -195,7 +195,7 @@ static SaveState stc_savestate;
 #define RECCAM_COBJGXLINK (1 << GXLINK_RECJOINT) | (1 << GXLINK_RECTEXT)
 #define RECCAM_GXPRI 8
 
-#define REC_LENGTH 1 //1 * 60 * 60
+#define REC_LENGTH 1 * 60 * 60
 #define REC_SLOTS 6
 
 typedef struct evLcAssets
