@@ -3613,7 +3613,7 @@ void Record_GX(GOBJ *gobj, int pass)
         int rec_start;
         if (input_data->start_frame == -1) // case 1: recording didnt start, use current frame
         {
-            rec_start = curr_frame;
+            rec_start = curr_frame - 1;
         }
         else // case 2: recording has started, use the frame saved
         {
@@ -3689,8 +3689,8 @@ void Record_Think(GOBJ *rec_gobj)
         // if at the end of the recording
         if ((input_num != 0) && (local_frame >= input_num))
         {
-            // not if actively recording
-            if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 1) && (EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 2))
+            // only if in playback
+            if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 2) || (EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 3))
             {
 
                 // init flag
@@ -4129,7 +4129,6 @@ void LCancel_Think(GOBJ *event)
     // Move CPU
     if (pad->down == PAD_BUTTON_DPAD_DOWN)
     {
-
         // ensure player is grounded
         int isGround = 0;
         if (hmn_data->air_state == 0)
