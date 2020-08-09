@@ -3702,7 +3702,7 @@ void Record_Think(GOBJ *rec_gobj)
                 if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
                     Savestate_Load(&rec_state);
-                    //game_timer = rec_state.frame + 1;
+                    game_timer = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
