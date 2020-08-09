@@ -3686,8 +3686,6 @@ void Record_Think(GOBJ *rec_gobj)
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
 
-        blr();
-
         // if at the end of the recording
         if ((input_num != 0) && (local_frame >= input_num))
         {
@@ -3754,7 +3752,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     int rec_start;
     if (input_data->start_frame == -1) // case 1: recording didnt start, use current frame
     {
-        rec_start = curr_frame;
+        rec_start = curr_frame - 1;
     }
     else // case 2: recording has started, use the frame saved
     {
@@ -3791,7 +3789,6 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 
             // store inputs
             int held = pad->held;
-            blr();
             RecInputs *inputs = &input_data->inputs[curr_frame - 1];
             inputs->btn_a = !!((held)&HSD_BUTTON_A);
             inputs->btn_b = !!((held)&HSD_BUTTON_B);
@@ -3823,11 +3820,13 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
         }
         case RECMODE_PLAY:
         {
+
+            blr();
+
             // ensure we have an input for this frame
             if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= (input_data->num)))
             {
                 int held = 0;
-                blr();
                 RecInputs *inputs = &input_data->inputs[curr_frame - 1];
                 // read inputs
                 held |= inputs->btn_a << 8;
