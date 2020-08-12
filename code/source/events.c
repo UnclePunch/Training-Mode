@@ -3306,24 +3306,6 @@ void EvFree_SelectCustomTDI(GOBJ *menu_gobj)
     GObj_AddGXLink(tdi_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL); // add gx link
     menu_data->custom_gobj_think = CustomTDI_Update;                            // set callback
 
-    // Get each corner's joints
-    JOBJ *corners[4];
-    JOBJ_GetChild(tdi_joint, &corners, 2, 3, 4, 5, -1);
-
-    // Modify scale and position
-    tdi_joint->trans.Z = TDIMENU_Z;
-    tdi_joint->scale.X = TDIMENU_SCALE;
-    tdi_joint->scale.Y = TDIMENU_SCALE;
-    tdi_joint->scale.Z = TDIMENU_SCALE;
-    corners[0]->trans.X = -(TDIMENU_WIDTH / 2) + TDIMENU_X;
-    corners[0]->trans.Y = (TDIMENU_HEIGHT / 2) + TDIMENU_Y;
-    corners[1]->trans.X = (TDIMENU_WIDTH / 2) + TDIMENU_X;
-    corners[1]->trans.Y = (TDIMENU_HEIGHT / 2) + TDIMENU_Y;
-    corners[2]->trans.X = -(TDIMENU_WIDTH / 2) + TDIMENU_X;
-    corners[2]->trans.Y = -(TDIMENU_HEIGHT / 2) + TDIMENU_Y;
-    corners[3]->trans.X = (TDIMENU_WIDTH / 2) + TDIMENU_X;
-    corners[3]->trans.Y = -(TDIMENU_HEIGHT / 2) + TDIMENU_Y;
-
     // load current stick joints
     JOBJ *stick_joint = JOBJ_LoadJoint(event_data->assets->stick);
     stick_joint->scale.X = 2;
@@ -7519,26 +7501,6 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     GObj_DestroyGXLink(gobj);
     GObj_AddGXLink(gobj, EventMenu_MenuGX, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
-    // Get each corner's joints
-    JOBJ *corners[4];
-
-    /*
-    JOBJ_GetChild(jobj_options, &corners, 2, 3, 4, 5, -1);
-    // Modify scale and position
-    jobj_options->trans.Z = OPT_Z;
-    jobj_options->scale.X = 5; //OPT_SCALE;
-    jobj_options->scale.Y = 5; //OPT_SCALE;
-    jobj_options->scale.Z = 5; //OPT_SCALE;
-    corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
-    corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
-    corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
-    corners[1]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
-    corners[2]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
-    corners[2]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
-    corners[3]->trans.X = (OPT_WIDTH / 2) + OPT_X;
-    corners[3]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
-    */
-
     // create a border and arrow for every row
     s32 option_num = menu->option_num;
     if (option_num > MENU_MAXOPTION)
@@ -7597,6 +7559,8 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // attach to root jobj
     JOBJ_AddChild(gobj->hsd_object, jobj_highlight);
     // move it into position
+    // Get each corner's joints
+    JOBJ *corners[4];
     JOBJ_GetChild(jobj_highlight, &corners, 2, 3, 4, 5, -1);
     // Modify scale and position
     jobj_highlight->trans.Z = MENUHIGHLIGHT_Z;

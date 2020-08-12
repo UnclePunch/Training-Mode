@@ -391,7 +391,7 @@ static EventMenu EvFreeMenu_Record;
 #define MENU_TITLESCALE 2.3
 // menu description
 #define MENU_DESCXPOS -21.5
-#define MENU_DESCYPOS 13
+#define MENU_DESCYPOS 12
 #define MENU_DESCSCALE 1
 // menu option name
 #define MENU_OPTIONNAMEXPOS -430
@@ -415,7 +415,7 @@ static EventMenu EvFreeMenu_Record;
 // menu scroll
 #define MENUSCROLL_SCALE 2                         // OPT_SCALE
 #define MENUSCROLL_SCALEY 1.105 * MENUSCROLL_SCALE // OPT_SCALE
-#define MENUSCROLL_X 23
+#define MENUSCROLL_X 22.5
 #define MENUSCROLL_Y 12
 #define MENUSCROLL_Z 0.01
 #define MENUSCROLL_PEROPTION 1
