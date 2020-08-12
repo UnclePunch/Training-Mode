@@ -3433,80 +3433,25 @@ GOBJ *Record_Init()
     GOBJ_InitCamera(cam_gobj, Record_CObjThink, RECCAM_GXPRI);
     cam_gobj->cobj_id = RECCAM_COBJGXLINK;
 
-#define SEEKBG_WIDTH 25
-#define SEEKBG_HEIGHT 3
-#define SEEKBG_X 1.8
-#define SEEKBG_Y -23
-
     evMenu *menuAssets = event_vars.menu_assets;
-    JOBJ *bg = JOBJ_LoadJoint(menuAssets->popup);
-    // Get each corner's joints
-    JOBJ *corners[4];
-    JOBJ_GetChild(bg, &corners, 2, 3, 4, 5, -1);
-
-    // Modify scale and position
-    bg->trans.Z = -0.1;
-    bg->scale.X = 1;
-    bg->scale.Y = 1;
-    bg->scale.Z = 1;
-    corners[0]->trans.X = -(SEEKBG_WIDTH / 2) + SEEKBG_X;
-    corners[0]->trans.Y = (SEEKBG_HEIGHT / 2) + SEEKBG_Y;
-    corners[1]->trans.X = (SEEKBG_WIDTH / 2) + SEEKBG_X;
-    corners[1]->trans.Y = (SEEKBG_HEIGHT / 2) + SEEKBG_Y;
-    corners[2]->trans.X = -(SEEKBG_WIDTH / 2) + SEEKBG_X;
-    corners[2]->trans.Y = -(SEEKBG_HEIGHT / 2) + SEEKBG_Y;
-    corners[3]->trans.X = (SEEKBG_WIDTH / 2) + SEEKBG_X;
-    corners[3]->trans.Y = -(SEEKBG_HEIGHT / 2) + SEEKBG_Y;
-
-    // Load jobj
-    JOBJ *bar = JOBJ_LoadJoint(menuAssets->popup);
-    JOBJ_AddChild(bg, bar);
-    // Get each corner's joints
-    JOBJ_GetChild(bar, &corners, 2, 3, 4, 5, -1);
-
-#define BAR_WIDTH 16
-#define BAR_HEIGHT 0.5
-#define BAR_X 1.8
-#define BAR_Y -23
-
-    // Modify scale and position
-    bar->trans.Z = 0;
-    bar->scale.X = 1;
-    bar->scale.Y = 1;
-    bar->scale.Z = 1;
-    corners[0]->trans.X = -(BAR_WIDTH / 2) + BAR_X;
-    corners[0]->trans.Y = (BAR_HEIGHT / 2) + BAR_Y;
-    corners[1]->trans.X = (BAR_WIDTH / 2) + BAR_X;
-    corners[1]->trans.Y = (BAR_HEIGHT / 2) + BAR_Y;
-    corners[2]->trans.X = -(BAR_WIDTH / 2) + BAR_X;
-    corners[2]->trans.Y = -(BAR_HEIGHT / 2) + BAR_Y;
-    corners[3]->trans.X = (BAR_WIDTH / 2) + BAR_X;
-    corners[3]->trans.Y = -(BAR_HEIGHT / 2) + BAR_Y;
-
-    GXColor bar_color = {50, 60, 70, 255};
-    bar->dobj->next->mobj->mat->diffuse = bar_color;
-
-    // Load seek jobj
-    JOBJ *seek = JOBJ_LoadJoint(menuAssets->popup);
-    JOBJ_AddChild(bg, seek);
-
-    // Modify scale and position
-    seek->trans.Z = 0;
-    seek->scale.X = 0.6;
-    seek->scale.Y = 2;
-    seek->scale.Z = 1;
-    seek->trans.X = BAR_X - 8;
-    seek->trans.Y = BAR_Y + 0.5;
-    seek->trans.Z = 0;
-
-    GXColor seek_color = {255, 255, 255, 255};
-    seek->dobj->next->mobj->mat->diffuse = seek_color;
+    JOBJ *playback = JOBJ_LoadJoint(menuAssets->playback);
 
     // save seek jobj
+    JOBJ *seek;
+    JOBJ_GetChild(playback, &seek, REC_SEEKJOINT, -1);
     rec_data.seek_jobj = seek;
 
+    // save left and right seek bounds
+    JOBJ *seek_bound[2];
+    JOBJ_GetChild(playback, &seek_bound, REC_LEFTBOUNDJOINT, REC_RIGHTBOUNDJOINT, -1);
+    Vec3 seek_bound_pos;
+    JOBJ_GetWorldPosition(seek_bound[0], 0, &seek_bound_pos);
+    rec_data.seek_left = seek_bound_pos.X;
+    JOBJ_GetWorldPosition(seek_bound[1], 0, &seek_bound_pos);
+    rec_data.seek_right = seek_bound_pos.X;
+
     // Add to gobj
-    GObj_AddObject(rec_gobj, 3, bg);
+    GObj_AddObject(rec_gobj, 3, playback);
     // Add gxlink
     GObj_AddGXLink(rec_gobj, Record_GX, GXLINK_RECJOINT, GXPRI_RECJOINT);
 
@@ -3517,11 +3462,17 @@ GOBJ *Record_Init()
     text->kerning = 1;
     text->scale.X = INFDISPTEXT_SCALE;
     text->scale.Y = INFDISPTEXT_SCALE;
-    text->trans.X = INFDISPTEXT_X;
-    text->trans.Y = INFDISPTEXT_Y;
+
+    // Get text positions
+    JOBJ *text_joint[2];
+    JOBJ_GetChild(playback, &text_joint, REC_LEFTTEXTJOINT, REC_RIGHTTEXTJOINT, -1);
+    Vec3 text_left, text_right;
+    JOBJ_GetWorldPosition(text_joint[0], 0, &text_left);
+    JOBJ_GetWorldPosition(text_joint[1], 0, &text_right);
+
     // Create subtexts for each side
-    Text_AddSubtext(text, 420, 1070, &nullString);
-    Text_AddSubtext(text, 420 + 500, 1070, &nullString);
+    Text_AddSubtext(text, (text_left.X * 25), -(text_left.Y * 25), &nullString);
+    Text_AddSubtext(text, (text_right.X * 25), -(text_right.Y) * 25, &nullString);
     rec_data.text = text;
 
     // set as not exist
@@ -3638,13 +3589,13 @@ void Record_GX(GOBJ *gobj, int pass)
             JOBJ_ClearFlags(seek, JOBJ_HIDDEN);
 
             // update seek bar position
-            float range = BAR_WIDTH;
+            float range = rec_data.seek_right - rec_data.seek_left;
             float curr_pos;
             int local_frame_seek = curr_frame + 1;
             if (curr_frame > end_frame)
                 local_frame_seek = end_frame;
             curr_pos = (float)local_frame_seek / (float)end_frame;
-            seek->trans.X = (BAR_X - 8 - 0.4) + (curr_pos * range);
+            seek->trans.X = rec_data.seek_left + (curr_pos * range);
             JOBJ_SetMtxDirtySub(seek);
 
             // update seek bar frames
@@ -7570,12 +7521,14 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 
     // Get each corner's joints
     JOBJ *corners[4];
+
+    /*
     JOBJ_GetChild(jobj_options, &corners, 2, 3, 4, 5, -1);
     // Modify scale and position
     jobj_options->trans.Z = OPT_Z;
-    jobj_options->scale.X = OPT_SCALE;
-    jobj_options->scale.Y = OPT_SCALE;
-    jobj_options->scale.Z = OPT_SCALE;
+    jobj_options->scale.X = 5; //OPT_SCALE;
+    jobj_options->scale.Y = 5; //OPT_SCALE;
+    jobj_options->scale.Z = 5; //OPT_SCALE;
     corners[0]->trans.X = -(OPT_WIDTH / 2) + OPT_X;
     corners[0]->trans.Y = (OPT_HEIGHT / 2) + OPT_Y;
     corners[1]->trans.X = (OPT_WIDTH / 2) + OPT_X;
@@ -7584,6 +7537,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     corners[2]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
     corners[3]->trans.X = (OPT_WIDTH / 2) + OPT_X;
     corners[3]->trans.Y = -(OPT_HEIGHT / 2) + OPT_Y;
+    */
 
     // create a border and arrow for every row
     s32 option_num = menu->option_num;

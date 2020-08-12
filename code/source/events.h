@@ -17,6 +17,7 @@ typedef struct evMenu
     JOBJDesc *scroll;
     JOBJDesc *check;
     JOBJDesc *arrow;
+    JOBJDesc *playback;
 } evMenu;
 
 // Structure Definitions
@@ -194,9 +195,14 @@ static SaveState stc_savestate;
 // cobj
 #define RECCAM_COBJGXLINK (1 << GXLINK_RECJOINT) | (1 << GXLINK_RECTEXT)
 #define RECCAM_GXPRI 8
-
+// params
 #define REC_LENGTH 1 * 60 * 60
 #define REC_SLOTS 6
+#define REC_SEEKJOINT 7
+#define REC_LEFTBOUNDJOINT 5
+#define REC_RIGHTBOUNDJOINT 6
+#define REC_LEFTTEXTJOINT 2
+#define REC_RIGHTTEXTJOINT 3
 
 typedef struct evLcAssets
 {
@@ -294,6 +300,8 @@ typedef struct RecData
     RecInputData *cpu_inputs[REC_SLOTS];
     JOBJ *seek_jobj;
     Text *text;
+    float seek_left;
+    float seek_right;
 } RecData;
 
 void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value);
