@@ -35,7 +35,7 @@ static CPUAction EvFree_CPUActionShield[] = {
         0,                     // c stick X value
         0,                     // c stick Y value
         PAD_TRIGGER_R,         // button to input
-        0,                     // is the last input
+        1,                     // is the last input
         0,                     // specify stick direction
     },
     {
@@ -47,7 +47,7 @@ static CPUAction EvFree_CPUActionShield[] = {
         0,                 // c stick X value
         0,                 // c stick Y value
         PAD_TRIGGER_R,     // button to input
-        0,                 // is the last input
+        1,                 // is the last input
         0,                 // specify stick direction
     },
     {
@@ -201,7 +201,7 @@ static CPUAction EvFree_CPUActionRollAway[] = {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
         0,                     // last possible frame to perfrom this action
-        127,                   // left stick X value
+        0,                     // left stick X value
         0,                     // left stick Y value
         0,                     // c stick X value
         0,                     // c stick Y value
@@ -228,7 +228,7 @@ static CPUAction EvFree_CPUActionRollTowards[] = {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
         0,                     // last possible frame to perfrom this action
-        -127,                  // left stick X value
+        0,                     // left stick X value
         0,                     // left stick Y value
         0,                     // c stick X value
         0,                     // c stick Y value
@@ -2056,7 +2056,9 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
     int action_done = 0;
     CPUAction *action_list = EvFree_CPUActions[action_id];
     int cpu_state = cpu_data->state_id;
-    u16 cpu_frame = cpu_data->stateFrame;
+    s16 cpu_frame = cpu_data->stateFrame;
+    if (cpu_frame == -1)
+        cpu_frame = 0;
 
     // clear inputs
     Fighter_ZeroCPUInputs(cpu_data);
@@ -2088,6 +2090,9 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
             // check if this is the current state
             if (isState == 1)
             {
+
+                blr();
+
                 // check if im on the right frame
                 if (cpu_frame >= action_input->frameLow)
                 {
@@ -2455,6 +2460,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         cpu_data->input_sinceLR = sincePress;
         cpu_data->input_sinceRapidLR = since2Press;
         cpu_data->cpu.lstickX = stickX;
+        cpu_data->inputtimer_lstick_smash_x = sinceXSmash;
 
         break;
     }
@@ -2533,10 +2539,25 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     CPULOGIC_COUNTER:
     {
 
-        // check if actionable
-        if (CPUAction_CheckActionable(cpu, 0) != 1)
+        // check if the CPU has been actionable yet
+        if (eventData->cpu_isactionable == 0)
         {
-            break;
+            // check if actionable
+            if (CPUAction_CheckActionable(cpu, 0) == 0)
+            {
+                break;
+            }
+            else
+            {
+                eventData->cpu_isactionable = 1;                  // set actionable flag to begin running code
+                eventData->cpu_groundstate = cpu_data->air_state; // remember initial ground state
+            }
+        }
+
+        // if started in the air, didnt finish action, but now grounded, perform ground action
+        if ((eventData->cpu_groundstate == 1) && (cpu_data->air_state == 0))
+        {
+            eventData->cpu_groundstate = 0;
         }
 
         // increment frames since actionable
@@ -2552,12 +2573,12 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             }
 
             // get counter action
-            if (cpu_data->air_state == 0)
+            if (cpu_data->air_state == 0 || (eventData->cpu_groundstate == 0)) // if am grounded or started grounded
             {
                 int grndCtr = EvFreeOptions_CPU[OPTCPU_CTRGRND].option_val;
                 action_id = GrAcLookup[grndCtr];
             }
-            else
+            else if (cpu_data->air_state == 1) // only if in the air at the time of hitstun ending
             {
                 int airCtr = EvFreeOptions_CPU[OPTCPU_CTRAIR].option_val;
                 action_id = AirAcLookup[airCtr];
@@ -2629,6 +2650,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             eventData->cpu_lastshieldstun = -1;
             eventData->cpu_hitkind = -1;
             eventData->cpu_hitshieldnum = 0;
+            eventData->cpu_isactionable = 0;
             goto CPULOGIC_START;
         }
 
@@ -3561,9 +3583,35 @@ void Record_GX(GOBJ *gobj, int pass)
         {
             JOBJ_SetFlags(seek, JOBJ_HIDDEN);
 
+            // correct record frame
+            if (curr_frame >= REC_LENGTH)
+                curr_frame = REC_LENGTH;
+
             // update seek bar frames
             Text_SetText(text, 0, "%d", curr_frame + 1);
             Text_SetText(text, 1, &nullString);
+
+            // update color
+            GXColor text_color;
+            if (curr_frame == REC_LENGTH)
+            {
+                text_color.r = 255;
+                text_color.g = 57;
+                text_color.b = 62;
+            }
+            else if (((float)curr_frame / (float)REC_LENGTH) >= 0.75)
+            {
+                text_color.r = 255;
+                text_color.g = 124;
+                text_color.b = 36;
+            }
+            else
+            {
+                text_color.r = 255;
+                text_color.g = 255;
+                text_color.b = 255;
+            }
+            Text_SetColor(text, 0, &text_color);
         }
         // during playback
         else
@@ -3574,7 +3622,7 @@ void Record_GX(GOBJ *gobj, int pass)
             float range = rec_data.seek_right - rec_data.seek_left;
             float curr_pos;
             int local_frame_seek = curr_frame + 1;
-            if (curr_frame > end_frame)
+            if (curr_frame >= end_frame)
                 local_frame_seek = end_frame;
             curr_pos = (float)local_frame_seek / (float)end_frame;
             seek->trans.X = rec_data.seek_left + (curr_pos * range);
@@ -3583,6 +3631,13 @@ void Record_GX(GOBJ *gobj, int pass)
             // update seek bar frames
             Text_SetText(text, 0, "%d", local_frame_seek);
             Text_SetText(text, 1, "%d", end_frame);
+
+            // update color
+            GXColor text_color;
+            text_color.r = 255;
+            text_color.g = 255;
+            text_color.b = 255;
+            Text_SetColor(text, 0, &text_color);
         }
     }
 
@@ -3753,9 +3808,6 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
         }
         case RECMODE_PLAY:
         {
-
-            blr();
-
             // ensure we have an input for this frame
             if ((curr_frame >= rec_start) && ((curr_frame - rec_start) <= (input_data->num)))
             {
@@ -7501,6 +7553,9 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     GObj_DestroyGXLink(gobj);
     GObj_AddGXLink(gobj, EventMenu_MenuGX, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
+    // JOBJ array for getting the corner joints
+    JOBJ *corners[4];
+
     // create a border and arrow for every row
     s32 option_num = menu->option_num;
     if (option_num > MENU_MAXOPTION)
@@ -7559,8 +7614,6 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     // attach to root jobj
     JOBJ_AddChild(gobj->hsd_object, jobj_highlight);
     // move it into position
-    // Get each corner's joints
-    JOBJ *corners[4];
     JOBJ_GetChild(jobj_highlight, &corners, 2, 3, 4, 5, -1);
     // Modify scale and position
     jobj_highlight->trans.Z = MENUHIGHLIGHT_Z;

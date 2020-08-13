@@ -196,7 +196,7 @@ static SaveState stc_savestate;
 #define RECCAM_COBJGXLINK (1 << GXLINK_RECJOINT) | (1 << GXLINK_RECTEXT)
 #define RECCAM_GXPRI 8
 // params
-#define REC_LENGTH 1 * 60 * 60
+#define REC_LENGTH (1 * 60 * 60)
 #define REC_SLOTS 6
 #define REC_SEEKJOINT 7
 #define REC_LEFTBOUNDJOINT 5
@@ -221,6 +221,8 @@ typedef struct LCancelData
     s16 cpu_lastshieldstun; // last move instance of the opponent in shield stun. used to tell how many times the shield was hit
     s8 cpu_hitkind;         // how the CPU was hit, damage or shield
     u8 cpu_hitshieldnum;    // times the CPUs shield was hit
+    u8 cpu_isactionable;    // flag that indicates if a cpu has become actionable
+    u8 cpu_groundstate;     // indicates if the player was touching ground upon being actionable
     s32 timer;
     u8 tdi_val_num;                // number of custom tdi values set
     s8 tdi_vals[TDI_HITNUM][2][2]; // contains the custom tdi values
