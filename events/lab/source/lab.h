@@ -187,8 +187,8 @@ static EventMenu EvFreeMenu_Record;
 // info display jobj
 #define INFDISP_WIDTH 7
 #define INFDISP_SCALE 4
-#define INFDISP_X -3.2
-#define INFDISP_Y 20
+#define INFDISP_X -14.5
+#define INFDISP_Y 21.5
 #define INFDISP_Z 0.01
 #define INFDISP_YOFFSET -2.5
 #define INFDISP_BOTY -0.5
@@ -197,7 +197,7 @@ static EventMenu EvFreeMenu_Record;
 #define INFDISPTEXT_SCALE 0.04
 #define INFDISPTEXT_X -25.5
 #define INFDISPTEXT_Y -21
-#define INFDISPTEXT_YOFFSET 30
+#define INFDISPTEXT_YOFFSET 7.5
 
 // General Options
 #define OPTGEN_FRAME 0

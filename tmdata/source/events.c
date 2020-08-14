@@ -1831,13 +1831,6 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo, EventMenu *start_menu)
     // set menu as not hidden
     stc_event_vars.hide_menu = 0;
 
-    // Load EvMn.dat
-    int *symbols;
-    File_LoadInitReturnSymbol("EvMn.dat", &symbols, "evMenu", 0);
-    menuData->menu_assets = &symbols[0];
-    // also store to r13 in case any code needs to access these assets
-    stc_event_vars.menu_assets = &symbols[0];
-
     return gobj;
 };
 
@@ -2457,7 +2450,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     MenuData *menuData = gobj->userdata;
 
     // create options background
-    evMenu *menuAssets = menuData->menu_assets;
+    evMenu *menuAssets = stc_event_vars.menu_assets;
     JOBJ *jobj_options = JOBJ_LoadJoint(menuAssets->menu);
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
@@ -2928,7 +2921,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     EventOption *option = &menu->options[cursor];
 
     // create options background
-    evMenu *menuAssets = menuData->menu_assets;
+    evMenu *menuAssets = stc_event_vars.menu_assets;
 
     // create popup gobj
     GOBJ *popup_gobj = GObj_Create(0, 0, 0);

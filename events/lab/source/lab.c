@@ -1601,11 +1601,17 @@ GOBJ *InfoDisplay_Init()
     menu->scale.X = INFDISP_SCALE;
     menu->scale.Y = INFDISP_SCALE;
     menu->scale.Z = INFDISP_SCALE;
+    menu->trans.X = INFDISP_X;
     menu->trans.Y = INFDISP_Y;
-    corners[0]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
-    corners[1]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
-    corners[2]->trans.X = -(INFDISP_WIDTH / 2) + INFDISP_X;
-    corners[3]->trans.X = (INFDISP_WIDTH / 2) + INFDISP_X;
+    corners[0]->trans.X = -(INFDISP_WIDTH / 2);
+    corners[1]->trans.X = (INFDISP_WIDTH / 2);
+    corners[2]->trans.X = -(INFDISP_WIDTH / 2);
+    corners[3]->trans.X = (INFDISP_WIDTH / 2);
+    corners[0]->trans.Y = 0;
+    corners[1]->trans.Y = 0;
+    corners[2]->trans.Y = 0;
+    corners[3]->trans.Y = 0;
+
     //JOBJ_SetFlags(menu, JOBJ_HIDDEN);
     menu->dobj->next->mobj->mat->alpha = 0.6;
 
@@ -1615,12 +1621,12 @@ GOBJ *InfoDisplay_Init()
     text->kerning = 1;
     text->scale.X = INFDISPTEXT_SCALE;
     text->scale.Y = INFDISPTEXT_SCALE;
-    text->trans.X = INFDISPTEXT_X;
-    text->trans.Y = INFDISPTEXT_Y;
+    //text->trans.X = INFDISPTEXT_X;
+    //text->trans.Y = INFDISPTEXT_Y;
     // Create subtexts for each row
     for (int i = 0; i < 8; i++)
     {
-        Text_AddSubtext(text, 0, i * INFDISPTEXT_YOFFSET, &nullString);
+        Text_AddSubtext(text, (INFDISP_SCALE * INFDISP_X * (25 / INFDISP_SCALE)) - (70 * INFDISP_SCALE), ((i * INFDISPTEXT_YOFFSET * INFDISP_SCALE) - (INFDISP_SCALE * INFDISP_Y * (25 / INFDISP_SCALE))), &nullString);
     }
     idData->text = text;
 

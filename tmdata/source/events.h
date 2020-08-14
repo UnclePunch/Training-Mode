@@ -204,7 +204,7 @@ static EventVars *event_vars;
 
 // menu model
 #define OPT_SCALE 1
-#define OPT_X 0.5
+#define OPT_X 0 //0.5
 #define OPT_Y -1
 #define OPT_Z 0
 #define OPT_WIDTH 55 / OPT_SCALE
@@ -233,7 +233,7 @@ static EventVars *event_vars;
 #define MENUHIGHLIGHT_HEIGHT ROWBOX_HEIGHT
 #define MENUHIGHLIGHT_WIDTH (OPT_WIDTH * 0.785)
 #define MENUHIGHLIGHT_X OPT_X
-#define MENUHIGHLIGHT_Y 10.3
+#define MENUHIGHLIGHT_Y 10.8 //10.3
 #define MENUHIGHLIGHT_Z 0.01
 #define MENUHIGHLIGHT_YOFFSET ROWBOX_YOFFSET
 #define MENUHIGHLIGHT_COLOR \
@@ -257,8 +257,8 @@ static EventVars *event_vars;
 // row jobj
 #define ROWBOX_HEIGHT 2.3
 #define ROWBOX_WIDTH 18
-#define ROWBOX_X 13
-#define ROWBOX_Y 10.3
+#define ROWBOX_X 12.5 //13
+#define ROWBOX_Y 10.8 //10.3
 #define ROWBOX_Z 0
 #define ROWBOX_YOFFSET -2.5
 #define ROWBOX_COLOR       \
@@ -274,8 +274,8 @@ static EventVars *event_vars;
 #define POPUP_WIDTH ROWBOX_WIDTH
 #define POPUP_HEIGHT 19
 #define POPUP_SCALE 1
-#define POPUP_X 13
-#define POPUP_Y 7.8
+#define POPUP_X 12.5
+#define POPUP_Y 8.3
 #define POPUP_Z 0.01
 #define POPUP_YOFFSET -2.5
 // popup text object
