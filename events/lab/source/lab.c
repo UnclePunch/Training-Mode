@@ -1584,8 +1584,6 @@ GOBJ *InfoDisplay_Init()
     GOBJ *idGOBJ = GObj_Create(0, 0, 0);
     InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
     GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
-    // Add per frame process
-    //GObj_AddProc(idGOBJ, InfoDisplay_Think, 22);
     // Load jobj
     evMenu *menuAssets = event_vars->menu_assets;
     JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
@@ -3498,7 +3496,7 @@ void Record_CObjThink(GOBJ *gobj)
 void Record_GX(GOBJ *gobj, int pass)
 {
 
-    int *game_timer = event_vars->game_timer;
+    blr();
 
     // update UI position
     // the reason im doing this here is because i want it to update in the menu
@@ -3524,7 +3522,7 @@ void Record_GX(GOBJ *gobj, int pass)
         Text *text = rec_data.text;
 
         // get curr frame (the current position in the recording)
-        int curr_frame = (game_timer - 1) - rec_state.frame;
+        int curr_frame = (event_vars->game_timer - 1) - rec_state.frame;
 
         // get what frame the longest recording ends on (savestate frame + recording start frame + recording time)
         int hmn_end_frame = 0;
@@ -3627,8 +3625,6 @@ void Record_GX(GOBJ *gobj, int pass)
 void Record_Think(GOBJ *rec_gobj)
 {
 
-    int *game_timer = event_vars->game_timer;
-
     // get hmn slot
     int hmn_slot = EvFreeOptions_Record[OPTREC_HMNSLOT].option_val;
     if (hmn_slot == 0) // use random slot
@@ -3650,7 +3646,7 @@ void Record_Think(GOBJ *rec_gobj)
     if (rec_state.is_exist == 1)
     {
         // get local frame
-        int local_frame = (game_timer - 1) - rec_state.frame;
+        int local_frame = (event_vars->game_timer - 1) - rec_state.frame;
         int input_num = hmn_inputs->num; // get longest recording
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
@@ -3669,14 +3665,14 @@ void Record_Think(GOBJ *rec_gobj)
                 if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
                     event_vars->Savestate_Load(&rec_state);
-                    game_timer = rec_state.frame + 1;
+                    event_vars->game_timer = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
                 // check to loop inputs
                 else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
-                    game_timer = rec_state.frame + 1;
+                    event_vars->game_timer = rec_state.frame + 1;
                     is_loop = 1;
                 }
 
@@ -3711,13 +3707,11 @@ void Record_Think(GOBJ *rec_gobj)
 void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 {
 
-    int *game_timer = event_vars->game_timer;
-
     GOBJ *fighter = Fighter_GetGObj(ply);
     FighterData *fighter_data = fighter->userdata;
 
     // get curr frame (the time since saving positions)
-    int curr_frame = (game_timer - rec_state.frame);
+    int curr_frame = (event_vars->game_timer - rec_state.frame);
 
     // get the frame the recording starts on. i actually hate this code and need to change how this works
     int rec_start;
@@ -3754,7 +3748,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             // recording has started BUT the player has jumped back behind it, move the start frame back
             if ((input_data->start_frame == -1) || (curr_frame < rec_start))
             {
-                input_data->start_frame = (game_timer - 1);
+                input_data->start_frame = (event_vars->game_timer - 1);
                 rec_start = curr_frame - 1;
             }
 
@@ -3997,6 +3991,8 @@ void Event_Init(GOBJ *gobj)
     GOBJ *cpu = Fighter_GetGObj(1);
     FighterData *cpu_data = cpu->userdata;
 
+    event_vars = *event_vars_ptr;
+
     // Init Info Display
     infodisp_gobj = InfoDisplay_Init(); // static pointer for update function
 
@@ -4188,4 +4184,4 @@ void Event_Think(GOBJ *event)
     return;
 }
 // Initial Menu
-static EventMenu *Event_Menu = &EvFreeMenu_General;
+static EventMenu *Event_Menu = &EvFreeMenu_Main;

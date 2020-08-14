@@ -148,6 +148,7 @@ typedef struct EventVars
     int (*Savestate_Save)(SaveState *savestate); // function pointer to save state
     int (*Savestate_Load)(SaveState *savestate); // function pointer to load state
     evFunction evFunction;                       // event specific functions
+    ArchiveInfo *event_archive;                  // event archive header
 } EventVars;
 
 // Function prototypes
@@ -171,7 +172,8 @@ static EventVars stc_event_vars;
 static int *eventDataBackup;
 static SaveState stc_savestate;
 
-static EventVars *event_vars = R13 + (EVENT_VAR);
+static EventVars **event_vars_ptr = R13 + (EVENT_VAR); //
+static EventVars *event_vars;
 
 // EventOption option_kind definitions
 #define OPTKIND_MENU 0

@@ -1210,8 +1210,6 @@ void EventLoad()
     EventInfo *eventInfo = GetEvent(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
-    blr();
-
     // append extension
     static char *extension = ".dat";
     char *buffer[20];
@@ -1220,6 +1218,7 @@ void EventLoad()
 
     // load this events file
     ArchiveInfo *archive = MEX_LoadRelArchive(buffer, evFunction, "evFunction");
+    stc_event_vars.event_archive = archive;
 
     // Create this event's gobj
     int pri = eventInfo->callbackPriority;
@@ -1235,11 +1234,19 @@ void EventLoad()
     // Create a gobj to track match time
     stc_event_vars.game_timer = 0;
     GOBJ *timer_gobj = GObj_Create(0, 7, 0);
-    GObj_AddUserData(timer_gobj, 4, HSD_Free, userdata);
     GObj_AddProc(timer_gobj, Event_IncTimer, 0);
 
     // init the pause menu
     GOBJ *menu_gobj = EventMenu_Init(eventInfo, *evFunction->menu_start);
+
+    blr();
+
+    // Init static structure containing event variables
+    stc_event_vars.event_info = eventInfo;
+    stc_event_vars.event_gobj = gobj;
+    stc_event_vars.menu_gobj = menu_gobj;
+    // store pointer to this structure
+    *event_vars_ptr = &stc_event_vars;
 
     // init savestate struct
     eventDataBackup = calloc(EVENT_DATASIZE);
@@ -1258,14 +1265,6 @@ void EventLoad()
     // Store update function
     HSD_Update *update = HSD_UPDATE;
     update->onFrame = EventUpdate;
-
-    // Init static structure containing event variables
-    stc_event_vars.event_info = eventInfo;
-    stc_event_vars.event_gobj = gobj;
-    stc_event_vars.menu_gobj = menu_gobj;
-
-    // store pointer to this structure
-    event_vars = &stc_event_vars;
 
     return;
 };
@@ -1305,6 +1304,13 @@ void EventUpdate()
 //////////////////////
 /// Hook Functions ///
 //////////////////////
+
+void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt is loaded into memory on boot
+{
+    // get even menu
+    stc_event_vars.menu_assets = File_GetSymbol(archive, "evMenu");
+    return;
+}
 
 void MatchThink(GOBJ *gobj)
 {
