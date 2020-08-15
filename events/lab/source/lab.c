@@ -1603,10 +1603,10 @@ GOBJ *InfoDisplay_Init()
     menu->scale.Z = INFDISP_SCALE;
     menu->trans.X = INFDISP_X;
     menu->trans.Y = INFDISP_Y;
-    corners[0]->trans.X = -(INFDISP_WIDTH / 2);
-    corners[1]->trans.X = (INFDISP_WIDTH / 2);
-    corners[2]->trans.X = -(INFDISP_WIDTH / 2);
-    corners[3]->trans.X = (INFDISP_WIDTH / 2);
+    corners[0]->trans.X = 0;
+    corners[1]->trans.X = INFDISP_WIDTH;
+    corners[2]->trans.X = 0;
+    corners[3]->trans.X = INFDISP_WIDTH;
     corners[0]->trans.Y = 0;
     corners[1]->trans.Y = 0;
     corners[2]->trans.Y = 0;

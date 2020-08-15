@@ -185,9 +185,9 @@ static EventMenu EvFreeMenu_Record;
 #define GXLINK_INFDISPTEXT 12
 
 // info display jobj
-#define INFDISP_WIDTH 7
-#define INFDISP_SCALE 8 // 4
-#define INFDISP_X -14.5
+#define INFDISP_WIDTH 6
+#define INFDISP_SCALE 4
+#define INFDISP_X -26.5
 #define INFDISP_Y 21.5
 #define INFDISP_Z 0.01
 #define INFDISP_YOFFSET -2.5
@@ -195,7 +195,7 @@ static EventMenu EvFreeMenu_Record;
 #define INFDISP_BOTYOFFSET -0.30
 // info display text
 #define INFDISPTEXT_SCALE 0.04
-#define INFDISPTEXT_X -10.8
+#define INFDISPTEXT_X 1
 #define INFDISPTEXT_Y 1
 #define INFDISPTEXT_YOFFSET 30
 
