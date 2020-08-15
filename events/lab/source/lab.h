@@ -149,6 +149,8 @@ void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
 void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
 void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
+void EvFree_ChangeInfoSizePos(GOBJ *menu_gobj, int value);
+void EvFree_ChangeInfoPlayer(GOBJ *menu_gobj, int value);
 void EvFree_ChangeHUD(GOBJ *menu_gobj, int value);
 void EvFree_SelectCustomTDI(GOBJ *menu_gobj);
 void DIDraw_GX();
@@ -246,8 +248,9 @@ static EventMenu EvFreeMenu_Record;
 #define RECMODE_PLAY 3
 
 // Info Display Options
-#define OPTINF_TOGGLE 0
-#define OPTINF_PLAYER 1
+//#define OPTINF_TOGGLE 0
+#define OPTINF_PLAYER 0
+#define OPTINF_SIZE 1
 #define OPTINF_PRESET 2
 #define OPTINF_ROW1 3
 

@@ -831,26 +831,29 @@ static EventMenu EvFreeMenu_General = {
 // Info Display
 static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Line Info", "Blastzone Left/Right", "Blastzone Up/Down"};
 static char **EvFreeValues_InfoPresets[] = {"None", "Custom", "Ledge", "Damage"};
+//static char **EvFreeValues_InfoPosition[] = {"Top Left", "Top Mid", "Top Right", "Bottom Left", "Bottom Mid", "Bottom Right"};
+static char **EvFreeValues_InfoSize[] = {"Small", "Medium", "Large"};
+static char **EvFreeValues_InfoPlayers[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
 static EventOption EvFreeOptions_InfoDisplay[] = {
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                            // number of values for this option
-        .option_val = 1,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Toggle",                   // pointer to a string
-        .desc = "Enable the info display window.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,      // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    {
-        .option_kind = OPTKIND_INT,                              // the type of option this is; menu, string list, integer list, etc
-        .value_num = 4,                                          // number of values for this option
+        .option_kind = OPTKIND_STRING,                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoPlayers) / 4,       // number of values for this option
         .option_val = 0,                                         // value of this option
         .menu = 0,                                               // pointer to the menu that pressing A opens
         .option_name = "Player",                                 // pointer to a string
         .desc = "Toggle which player's information to display.", // string describing what this option does
-        .option_values = 0,                                      // pointer to an array of strings
-        .onOptionChange = 0,
+        .option_values = EvFreeValues_InfoPlayers,               // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeInfoPlayer,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                         // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoSize) / 4,        // number of values for this option
+        .option_val = 1,                                       // value of this option
+        .menu = 0,                                             // pointer to the menu that pressing A opens
+        .option_name = "Size",                                 // pointer to a string
+        .desc = "Change the size of the info display window.", // string describing what this option does
+        .option_values = EvFreeValues_InfoSize,                // pointer to an array of strings
+        .onOptionChange = EvFree_ChangeInfoSizePos,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
@@ -1421,6 +1424,63 @@ void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value)
         }
     }
 }
+void EvFree_ChangeInfoSizePos(GOBJ *menu_gobj, int value)
+{
+    static Vec2 stc_info_pos[] = {
+        {-26.5, 21.5},
+        {-10, 21.5},
+        {6, 21.5},
+        {-26.5, -10.5},
+        {-10, -10.5},
+        {6, -10.5},
+    };
+    static float stc_info_scale[] = {
+        2,
+        3,
+        4,
+    };
+
+    InfoDisplayData *info_data = infodisp_gobj->userdata;
+    JOBJ *info_jobj = info_data->menuModel;
+    Text *info_text = info_data->text;
+    Vec2 *pos = &info_jobj->trans;
+    //Vec2 *pos = &stc_info_pos[EvFreeOptions_InfoDisplay[OPTINF_POS].option_val];
+    float scale = stc_info_scale[EvFreeOptions_InfoDisplay[OPTINF_SIZE].option_val];
+
+    // background scale
+    info_jobj->scale.X = scale;
+    info_jobj->scale.Y = scale;
+
+    // text scale
+    info_text->scale.X = ((scale / 4.0) * INFDISPTEXT_SCALE);
+    info_text->scale.Y = ((scale / 4.0) * INFDISPTEXT_SCALE);
+
+    /*
+    // background position
+    info_jobj->trans.X = pos->X;
+    info_jobj->trans.Y = pos->Y;
+*/
+    // text position
+    info_text->trans.X = pos->X + (INFDISPTEXT_X) * ((scale / 4.0));
+    info_text->trans.Y = ((pos->Y * -1) + (INFDISPTEXT_Y) * ((scale / 4.0)));
+
+    JOBJ_SetMtxDirtySub(info_jobj);
+
+    return;
+}
+void EvFree_ChangeInfoPlayer(GOBJ *menu_gobj, int value)
+{
+    InfoDisplayData *info_data = infodisp_gobj->userdata;
+    JOBJ *info_jobj = info_data->menuModel;
+
+    GXColor *shield_color = *stc_shieldcolors;
+    GXColor *border_color = &info_jobj->dobj->mobj->mat->diffuse;
+    border_color->r = shield_color[value].r;
+    border_color->g = shield_color[value].g;
+    border_color->b = shield_color[value].b;
+
+    return;
+}
 void EvFree_ChangeHUD(GOBJ *menu_gobj, int value)
 {
     // toggle HUD
@@ -1584,6 +1644,7 @@ GOBJ *InfoDisplay_Init()
     GOBJ *idGOBJ = GObj_Create(0, 0, 0);
     InfoDisplayData *idData = calloc(sizeof(InfoDisplayData));
     GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
+    infodisp_gobj = idGOBJ;
     // Load jobj
     evMenu *menuAssets = event_vars->menu_assets;
     JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
@@ -1598,9 +1659,9 @@ GOBJ *InfoDisplay_Init()
     idData->botLeftEdge = corners[0];
     idData->botRightEdge = corners[1];
     // move into position
-    menu->scale.X = INFDISP_SCALE;
-    menu->scale.Y = INFDISP_SCALE;
-    menu->scale.Z = INFDISP_SCALE;
+    //menu->scale.X = INFDISP_SCALE;
+    //menu->scale.Y = INFDISP_SCALE;
+    //menu->scale.Z = INFDISP_SCALE;
     menu->trans.X = INFDISP_X;
     menu->trans.Y = INFDISP_Y;
     corners[0]->trans.X = 0;
@@ -1630,6 +1691,9 @@ GOBJ *InfoDisplay_Init()
     }
     idData->text = text;
 
+    // update size
+    EvFree_ChangeInfoSizePos(0, 0);
+
     // update to show/hide
     InfoDisplay_Think(idGOBJ);
 
@@ -1646,7 +1710,7 @@ void InfoDisplay_Think(GOBJ *gobj)
     InfoDisplayData *idData = gobj->userdata;
     Text *text = idData->text;
     EventOption *idOptions = &EvFreeOptions_InfoDisplay;
-    if ((Pause_CheckStatus(1) != 2) && (idOptions[OPTINF_TOGGLE].option_val == 1))
+    if ((Pause_CheckStatus(1) != 2)) //&& (idOptions[OPTINF_TOGGLE].option_val == 1))
     {
         // get the last row enabled
         int rowsEnabled = 8;
@@ -1696,7 +1760,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     {
                     case (0):
                     {
-                        Text_SetText(text, i, "Pos: (%+.2f , %+.2f)", fighter_data->pos.X, fighter_data->pos.Y);
+                        Text_SetText(text, i, "Pos: (%+.3f , %+.3f)", fighter_data->pos.X, fighter_data->pos.Y);
                         break;
                     }
                     case (1):
@@ -2070,9 +2134,6 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
             // check if this is the current state
             if (isState == 1)
             {
-
-                blr();
-
                 // check if im on the right frame
                 if (cpu_frame >= action_input->frameLow)
                 {
@@ -3502,8 +3563,6 @@ void Record_CObjThink(GOBJ *gobj)
 void Record_GX(GOBJ *gobj, int pass)
 {
 
-    blr();
-
     // update UI position
     // the reason im doing this here is because i want it to update in the menu
     if (pass == 0)
@@ -4000,7 +4059,7 @@ void Event_Init(GOBJ *gobj)
     event_vars = *event_vars_ptr;
 
     // Init Info Display
-    infodisp_gobj = InfoDisplay_Init(); // static pointer for update function
+    InfoDisplay_Init(); // static pointer for update function
 
     // Init DIDraw
     DIDraw_Init();
