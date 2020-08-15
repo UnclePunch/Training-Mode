@@ -1319,10 +1319,7 @@ void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value)
 }
 void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value)
 {
-    MatchCamera *matchCam = MATCH_CAM;
-    matchCam->show_coll = value;
-
-    OSReport("%d", matchCam->show_coll);
+    stc_matchcam->show_coll = value;
     return;
 }
 void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value)
