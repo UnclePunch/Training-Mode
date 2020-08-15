@@ -1680,16 +1680,19 @@ GOBJ *InfoDisplay_Init()
     int canvas_index = Text_CreateCanvas(2, idGOBJ, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->kerning = 1;
-    text->scale.X = ((INFDISP_SCALE / 4.0) * INFDISPTEXT_SCALE);
-    text->scale.Y = ((INFDISP_SCALE / 4.0) * INFDISPTEXT_SCALE);
-    text->trans.X = INFDISP_X + (INFDISPTEXT_X) * ((INFDISP_SCALE / 4.0));
-    text->trans.Y = ((INFDISP_Y * -1) + (INFDISPTEXT_Y) * ((INFDISP_SCALE / 4.0)));
+
     // Create subtexts for each row
     for (int i = 0; i < 8; i++)
     {
         Text_AddSubtext(text, 0, (INFDISPTEXT_YOFFSET * i), &nullString);
     }
     idData->text = text;
+
+    // adjust size based on the console / settings
+    if ((OSGetConsoleType() == OS_CONSOLE_DEVHW3) || (stc_HSD_VI->is_prog == 1)) // 480p / dolphin uses medium by default
+        EvFreeOptions_InfoDisplay[OPT_SCALE].option_val = 1;
+    else // 480i on wii uses large (shitty composite!)
+        EvFreeOptions_InfoDisplay[OPT_SCALE].option_val = 2;
 
     // update size
     EvFree_ChangeInfoSizePos(0, 0);
