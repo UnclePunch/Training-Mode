@@ -1619,14 +1619,14 @@ GOBJ *InfoDisplay_Init()
     int canvas_index = Text_CreateCanvas(2, idGOBJ, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->kerning = 1;
-    text->scale.X = INFDISPTEXT_SCALE;
-    text->scale.Y = INFDISPTEXT_SCALE;
-    //text->trans.X = INFDISPTEXT_X;
-    //text->trans.Y = INFDISPTEXT_Y;
+    text->scale.X = ((INFDISP_SCALE / 4.0) * INFDISPTEXT_SCALE);
+    text->scale.Y = ((INFDISP_SCALE / 4.0) * INFDISPTEXT_SCALE);
+    text->trans.X = INFDISP_X + (INFDISPTEXT_X) * ((INFDISP_SCALE / 4.0));
+    text->trans.Y = ((INFDISP_Y * -1) + (INFDISPTEXT_Y) * ((INFDISP_SCALE / 4.0)));
     // Create subtexts for each row
     for (int i = 0; i < 8; i++)
     {
-        Text_AddSubtext(text, (INFDISP_SCALE * INFDISP_X * (25 / INFDISP_SCALE)) - (70 * INFDISP_SCALE), ((i * INFDISPTEXT_YOFFSET * INFDISP_SCALE) - (INFDISP_SCALE * INFDISP_Y * (25 / INFDISP_SCALE))), &nullString);
+        Text_AddSubtext(text, 0, (INFDISPTEXT_YOFFSET * i), &nullString);
     }
     idData->text = text;
 
