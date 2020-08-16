@@ -21,8 +21,53 @@ static char nullString[] = " ";
 /// Event Defintions ///
 ////////////////////////
 
-// L-Cancel Training
+// Lab
+// Match Data
+static EventMatchData Lab_MatchData = {
+    .timer = MATCH_TIMER_COUNTUP,
+    .matchType = MATCH_MATCHTYPE_TIME,
+    .playMusic = false,
+    .hideGo = true,
+    .hideReady = true,
+    .isCreateHUD = true,
+    .isDisablePause = true,
+    // byte 0x3
+    .timerRunOnPause = false,   // 0x01
+    .isHidePauseHUD = true,     // 0x02
+    .isShowLRAStart = true,     // 0x04
+    .isCheckForLRAStart = true, // 0x08
+    .isShowZRetry = false,      // 0x10
+    .isCheckForZRetry = false,  // 0x20
+    .isShowAnalogStick = true,  // 0x40
+    .isShowScore = false,       // 0x80
 
+    .isRunStockLogic = false, // 0x20
+    .isDisableHit = false,    // 0x20
+    .useKOCounter = false,
+    .playerKind = -1,
+    .cpuKind = -1,        // 0xFF=
+    .stage = -1,          // 0xFFFF
+    .timerSeconds = 0,    // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
+    .onCheckPause = 0,
+    .onMatchEnd = 0,
+};
+// Event Struct
+static EventInfo Lab = {
+    // Event Name
+    .eventName = "Laboratory\n",
+    .eventDescription = "Manual practice with\ncomplete control.\n",
+    .eventTutorial = "",
+    .eventFile = "EvLab",
+    .isChooseCPU = true,
+    .isSelectStage = true,
+    .scoreType = 0,
+    .callbackPriority = 3,
+    .matchData = &Lab_MatchData,
+    .defaultOSD = 0xFFFFFFFF,
+};
+
+// L-Cancel Training
 // Match Data
 static EventMatchData LCancel_MatchData = {
     .timer = MATCH_TIMER_COUNTUP,
@@ -989,7 +1034,7 @@ static EventPage Minigames_Page = {
 
 // Page 2 Events
 static EventInfo *General_Events[] = {
-    // Event 1 - L-Cancel Training
+    &Lab,
     &LCancel,
     &Ledgedash,
     &Combo,

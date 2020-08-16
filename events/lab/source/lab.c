@@ -846,23 +846,23 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .onOptionChange = EvFree_ChangeInfoPlayer,
     },
     {
-        .option_kind = OPTKIND_STRING,                         // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoSize) / 4,        // number of values for this option
-        .option_val = 1,                                       // value of this option
-        .menu = 0,                                             // pointer to the menu that pressing A opens
-        .option_name = "Size",                                 // pointer to a string
-        .desc = "Change the size of the info display window.", // string describing what this option does
-        .option_values = EvFreeValues_InfoSize,                // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                                        // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoSize) / 4,                                                                                       // number of values for this option
+        .option_val = 1,                                                                                                                      // value of this option
+        .menu = 0,                                                                                                                            // pointer to the menu that pressing A opens
+        .option_name = "Size",                                                                                                                // pointer to a string
+        .desc = "Change the size of the info display window.\nLarge is recommended for CRT.\nMedium/Small recommended for Dolphin Emulator.", // string describing what this option does
+        .option_values = EvFreeValues_InfoSize,                                                                                               // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoSizePos,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoPresets) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Preset",                           // pointer to a string
-        .desc = nullString,                                // string describing what this option does
-        .option_values = EvFreeValues_InfoPresets,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                       // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_InfoPresets) / 4,   // number of values for this option
+        .option_val = 0,                                     // value of this option
+        .menu = 0,                                           // pointer to the menu that pressing A opens
+        .option_name = "Preset",                             // pointer to a string
+        .desc = "Choose between pre-configured selections.", // string describing what this option does
+        .option_values = EvFreeValues_InfoPresets,           // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoPreset,
     },
     {
@@ -871,7 +871,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 1",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -881,7 +881,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 2",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -891,7 +891,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 3",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -901,7 +901,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 4",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -911,7 +911,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 5",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -921,7 +921,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 6",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -931,7 +931,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 7",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -941,7 +941,7 @@ static EventOption EvFreeOptions_InfoDisplay[] = {
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Row 8",                            // pointer to a string
-        .desc = nullString,                                // string describing what this option does
+        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
         .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
         .onOptionChange = EvFree_ChangeInfoRow,
     },
@@ -1154,13 +1154,13 @@ static EventOption EvFreeOptions_Record[] = {
         .onOptionSelect = Record_InitState,
     },
     {
-        .option_kind = OPTKIND_FUNC,                                                                    // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                                                                                 // number of values for this option
-        .option_val = 0,                                                                                // value of this option
-        .menu = 0,                                                                                      // pointer to the menu that pressing A opens
-        .option_name = "Restore Positions",                                                             // pointer to a string
-        .desc = "Load the original fighter positions. This\ncan also be done in-game by pressing ???.", // string describing what this option does
-        .option_values = 0,                                                                             // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                            // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                                                         // number of values for this option
+        .option_val = 0,                                                                                        // value of this option
+        .menu = 0,                                                                                              // pointer to the menu that pressing A opens
+        .option_name = "Restore Positions",                                                                     // pointer to a string
+        .desc = "Load the original fighter positions. This\ncan also be done in-game by pressing D-Pad\nleft.", // string describing what this option does
+        .option_values = 0,                                                                                     // pointer to an array of strings
         .onOptionSelect = Record_RestoreState,
     },
     {
@@ -1522,7 +1522,6 @@ void Record_InitState(GOBJ *menu_gobj)
         EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
 
         // copy state to personal savestate
-        blr();
         memcpy(event_vars->savestate, &rec_state, sizeof(SaveState));
     }
     return;
