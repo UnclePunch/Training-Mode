@@ -55,7 +55,7 @@ static EventMatchData Lab_MatchData = {
 // Event Struct
 static EventInfo Lab = {
     // Event Name
-    .eventName = "Laboratory\n",
+    .eventName = "Training Lab\n",
     .eventDescription = "Manual practice with\ncomplete control.\n",
     .eventTutorial = "",
     .eventFile = "EvLab",
@@ -1965,6 +1965,7 @@ void EventMenu_Update(GOBJ *gobj)
             Match_FreezeGame(1);
             SFX_PlayCommon(5);
             Match_HideHUD();
+            Match_AdjustSoundOnPause(1);
         }
         // unpause game
         else
@@ -1978,6 +1979,7 @@ void EventMenu_Update(GOBJ *gobj)
             // Unfreeze the game
             Match_UnfreezeGame(1);
             Match_ShowHUD();
+            Match_AdjustSoundOnPause(0);
         }
     }
 

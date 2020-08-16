@@ -1159,7 +1159,7 @@ static EventOption EvFreeOptions_Record[] = {
         .option_val = 0,                                                                                        // value of this option
         .menu = 0,                                                                                              // pointer to the menu that pressing A opens
         .option_name = "Restore Positions",                                                                     // pointer to a string
-        .desc = "Load the original fighter positions. This\ncan also be done in-game by pressing D-Pad\nleft.", // string describing what this option does
+        .desc = "Load the original fighter positions. This\ncan also be done in-game by pressing\nD-Pad left.", // string describing what this option does
         .option_values = 0,                                                                                     // pointer to an array of strings
         .onOptionSelect = Record_RestoreState,
     },
@@ -1626,6 +1626,9 @@ void EvFree_Exit(int value)
 
     // end game
     match->state = 3;
+
+    // cleanup
+    Match_EndVS();
 
     // Unfreeze
     EvFreeOptions_General[OPTGEN_FRAME].option_val = 0;
