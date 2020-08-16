@@ -1049,6 +1049,7 @@ static EventVars stc_event_vars = {
     .hide_menu = 0,
     .Savestate_Save = Savestate_Save,
     .Savestate_Load = Savestate_Load,
+    .savestate = 0,
 };
 static int *eventDataBackup;
 
@@ -1239,8 +1240,6 @@ void EventLoad()
     // init the pause menu
     GOBJ *menu_gobj = EventMenu_Init(eventInfo, *evFunction->menu_start);
 
-    blr();
-
     // Init static structure containing event variables
     stc_event_vars.event_info = eventInfo;
     stc_event_vars.event_gobj = gobj;
@@ -1255,6 +1254,7 @@ void EventLoad()
     {
         stc_savestate.ft_state[i] = 0;
     }
+    stc_event_vars.savestate = &stc_savestate;
 
     // Run this event's init function
     if (evFunction->Event_Init != 0)
@@ -1411,6 +1411,37 @@ void DebugLogThink(GOBJ *gobj)
 void OnSceneChange()
 {
     // Hook exists at 801a4c94
+
+    // create text canvas
+    int canvas = Text_CreateCanvas(10, 0, 9, 13, 0, 14, 0, 19);
+
+    // create text
+    Text *text = Text_CreateText(10, canvas);
+    // enable align and kerning
+    text->align = 2;
+    text->kerning = 1;
+    // scale canvas
+    text->scale.X = 0.4;
+    text->scale.Y = 0.4;
+    text->trans.X = 615;
+    text->trans.Y = 446;
+
+    // print string
+    static char *watermark = "TM 3.0 Alpha1";
+    int shadow = Text_AddSubtext(text, 2, 2, watermark);
+    GXColor shadow_color = {0, 0, 0, 0};
+    Text_SetColor(text, shadow, &shadow_color);
+
+    int shadow1 = Text_AddSubtext(text, 2, -2, watermark);
+    Text_SetColor(text, shadow1, &shadow_color);
+
+    int shadow2 = Text_AddSubtext(text, -2, 2, watermark);
+    Text_SetColor(text, shadow2, &shadow_color);
+
+    int shadow3 = Text_AddSubtext(text, -2, -2, watermark);
+    Text_SetColor(text, shadow3, &shadow_color);
+
+    Text_AddSubtext(text, 0, 0, watermark);
 
     return;
 };
@@ -2515,6 +2546,8 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 
     // create a highlight jobj
     JOBJ *jobj_highlight = JOBJ_LoadJoint(menuAssets->popup);
+    // remove outline
+    DOBJ_SetFlags(jobj_highlight->dobj, DOBJ_HIDDEN);
     // attach to root jobj
     JOBJ_AddChild(gobj->hsd_object, jobj_highlight);
     // move it into position

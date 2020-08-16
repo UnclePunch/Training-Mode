@@ -633,13 +633,13 @@ static u8 ShieldAcLookup[] = {0, 2, 13, 5, 3, 4, 8, 9, 10, 11, 12};
 static char **EvFreeOptions_OffOn[] = {"Off", "On"};
 static EventOption EvFreeOptions_Main[] = {
     {
-        .option_kind = OPTKIND_MENU,                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                                        // number of values for this option
-        .option_val = 0,                                       // value of this option
-        .menu = &EvFreeMenu_General,                           // pointer to the menu that pressing A opens
-        .option_name = {"General"},                            // pointer to a string
-        .desc = "Toggle percents, overlays, and information.", // string describing what this option does
-        .option_values = 0,                                    // pointer to an array of strings
+        .option_kind = OPTKIND_MENU,                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                                  // number of values for this option
+        .option_val = 0,                                                                 // value of this option
+        .menu = &EvFreeMenu_General,                                                     // pointer to the menu that pressing A opens
+        .option_name = {"General"},                                                      // pointer to a string
+        .desc = "Toggle player percent, overlays,\nframe advance, and camera settings.", // string describing what this option does
+        .option_values = 0,                                                              // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -674,13 +674,13 @@ static EventOption EvFreeOptions_Main[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_FUNC,                         // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                      // number of values for this option
-        .option_val = 0,                                     // value of this option
-        .menu = 0,                                           // pointer to the menu that pressing A opens
-        .option_name = "Help",                               // pointer to a string
-        .desc = "Put info here on savestates or something.", // string describing what this option does
-        .option_values = 0,                                  // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                       // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                    // number of values for this option
+        .option_val = 0,                                                                                                   // value of this option
+        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                             // pointer to a string
+        .desc = "D-Pad Left - Load State\nD-Pad Right - Save State\nD-Pad Down - Move CPU\nHold R in the menu for turbo.", // string describing what this option does
+        .option_values = 0,                                                                                                // pointer to an array of strings
         .onOptionChange = EvFree_Exit,
     },
     {
@@ -709,13 +709,13 @@ static char **EvFreeOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
 static EventOption EvFreeOptions_General[] = {
     // frame advance
     {
-        .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                    // number of values for this option
-        .option_val = 0,                                                   // value of this option
-        .menu = 0,                                                         // pointer to the menu that pressing A opens
-        .option_name = "Frame Advance",                                    // pointer to a string
-        .desc = "Enable frame advance. Press/hold L to advance \nframes.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                              // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                    // number of values for this option
+        .option_val = 0,                                                                                   // value of this option
+        .menu = 0,                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "Frame Advance",                                                                    // pointer to a string
+        .desc = "Enable frame advance. Press L to advance one\nframe. Hold L to advance at normal speed.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                              // pointer to an array of strings
         .onOptionChange = 0,
     },
     // p1 percent
@@ -742,35 +742,35 @@ static EventOption EvFreeOptions_General[] = {
     },
     // fighter collision
     {
-        .option_kind = OPTKIND_STRING,                                                                                                                            // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                                                                           // number of values for this option
-        .option_val = 0,                                                                                                                                          // value of this option
-        .menu = 0,                                                                                                                                                // pointer to the menu that pressing A opens
-        .option_name = "Fighter Collision",                                                                                                                       // pointer to a string
-        .desc = "Toggle hitbox and hurtbox visualization.\nYellow = hurt, red = hit, purple = grab, \nwhite = trigger, green = reflect, blue = shield/\nabsorb.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                                                                     // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                                                           // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                                                          // number of values for this option
+        .option_val = 0,                                                                                                                                         // value of this option
+        .menu = 0,                                                                                                                                               // pointer to the menu that pressing A opens
+        .option_name = "Fighter Collision",                                                                                                                      // pointer to a string
+        .desc = "Toggle hitbox and hurtbox visualization.\nYellow = hurt, red = hit, purple = grab, \nwhite = trigger, green = reflect,\nblue = shield/absorb.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                                                                    // pointer to an array of strings
         .onOptionChange = EvFree_ChangeHitDisplay,
     },
     // environment collision
     {
-        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                   // value of this option
-        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "Environment Collision",                                                                            // pointer to a string
-        .desc = "Toggle environment collision visualization.\nDisplays the players' ECB (environmental \ncollision box).", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                          // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                         // number of values for this option
+        .option_val = 0,                                                                                                        // value of this option
+        .menu = 0,                                                                                                              // pointer to the menu that pressing A opens
+        .option_name = "Environment Collision",                                                                                 // pointer to a string
+        .desc = "Toggle environment collision visualization.\nAlso displays the players' ECB (environmental \ncollision box).", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                                   // pointer to an array of strings
         .onOptionChange = EvFree_ChangeEnvCollDisplay,
     },
     // camera mode
     {
-        .option_kind = OPTKIND_STRING,                                                                                       // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_CamMode) / 4,                                                                      // number of values for this option
-        .option_val = 0,                                                                                                     // value of this option
-        .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
-        .option_name = "Camera Mode",                                                                                        // pointer to a string
-        .desc = "Change the camera's behavior.\nIn advanced mode, use CStick while holding\nA/B/Y to pan, rotate and zoom.", // string describing what this option does
-        .option_values = EvFreeOptions_CamMode,                                                                              // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_CamMode) / 4,                                                                                     // number of values for this option
+        .option_val = 0,                                                                                                                    // value of this option
+        .menu = 0,                                                                                                                          // pointer to the menu that pressing A opens
+        .option_name = "Camera Mode",                                                                                                       // pointer to a string
+        .desc = "Adjust the camera's behavior.\nIn advanced mode, use C-Stick while holding\nA/B/Y to pan, rotate and zoom, respectively.", // string describing what this option does
+        .option_values = EvFreeOptions_CamMode,                                                                                             // pointer to an array of strings
         .onOptionChange = EvFree_ChangeCamMode,
     },
     // hud
@@ -786,13 +786,13 @@ static EventOption EvFreeOptions_General[] = {
     },
     // di display
     {
-        .option_kind = OPTKIND_STRING,                                                                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                   // value of this option
-        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "DI Display",                                                                                       // pointer to a string
-        .desc = "Display knockback trajectories during hitlag.\nUse frame advance to see the effects of DI\nin realtime.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                              // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                                                                                     // number of values for this option
+        .option_val = 0,                                                                                                    // value of this option
+        .menu = 0,                                                                                                          // pointer to the menu that pressing A opens
+        .option_name = "DI Display",                                                                                        // pointer to a string
+        .desc = "Display knockback trajectories.\nUse frame advance to see the effects of DI\nin realtime during hitstop.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                                                                               // pointer to an array of strings
         .onOptionChange = 0,
     },
     // input display
@@ -998,13 +998,13 @@ static EventOption EvFreeOptions_CPU[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CPUBehave) / 4,  // number of values for this option
-        .option_val = 0,                                  // value of this option
-        .menu = 0,                                        // pointer to the menu that pressing A opens
-        .option_name = "Behavior",                        // pointer to a string
-        .desc = "Adjust how the CPU behaves by default.", // string describing what this option does
-        .option_values = EvFreeValues_CPUBehave,          // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_CPUBehave) / 4, // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Behavior",                       // pointer to a string
+        .desc = "Adjust the CPU's default action.",      // string describing what this option does
+        .option_values = EvFreeValues_CPUBehave,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1044,28 +1044,28 @@ static EventOption EvFreeOptions_CPU[] = {
         .option_val = 0,                                                       // value of this option
         .menu = 0,                                                             // pointer to the menu that pressing A opens
         .option_name = "Tech Option",                                          // pointer to a string
-        .desc = "Adjust what the CPU will do upon colliding with\nthe stage.", // string describing what this option does
+        .desc = "Adjust what the CPU will do upon colliding\nwith the stage.", // string describing what this option does
         .option_values = EvFreeValues_Tech,                                    // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_Getup) / 4,                       // number of values for this option
-        .option_val = 0,                                                   // value of this option
-        .menu = 0,                                                         // pointer to the menu that pressing A opens
-        .option_name = "Get Up Option",                                    // pointer to a string
-        .desc = "Adjust what the CPU will do after missing\na tech input", // string describing what this option does
-        .option_values = EvFreeValues_Getup,                               // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_Getup) / 4,                        // number of values for this option
+        .option_val = 0,                                                    // value of this option
+        .menu = 0,                                                          // pointer to the menu that pressing A opens
+        .option_name = "Get Up Option",                                     // pointer to a string
+        .desc = "Adjust what the CPU will do after missing\na tech input.", // string describing what this option does
+        .option_values = EvFreeValues_Getup,                                // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                              // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_OffOn) / 4,               // number of values for this option
-        .option_val = 0,                                            // value of this option
-        .menu = 0,                                                  // pointer to the menu that pressing A opens
-        .option_name = "Auto Reset",                                // pointer to a string
-        .desc = "Automatically reset after the CPU is actionable.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                       // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeOptions_OffOn) / 4,                // number of values for this option
+        .option_val = 0,                                             // value of this option
+        .menu = 0,                                                   // pointer to the menu that pressing A opens
+        .option_name = "Auto Reset",                                 // pointer to a string
+        .desc = "Automatically reset after the CPU is\nactionable.", // string describing what this option does
+        .option_values = EvFreeOptions_OffOn,                        // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1089,13 +1089,13 @@ static EventOption EvFreeOptions_CPU[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                                              // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CounterShield) / 4,                        // number of values for this option
-        .option_val = 1,                                                            // value of this option
-        .menu = 0,                                                                  // pointer to the menu that pressing A opens
-        .option_name = "Counter Action (Shield)",                                   // pointer to a string
-        .desc = "Select the action to be performed after the\nCPU's shield is hit", // string describing what this option does
-        .option_values = EvFreeValues_CounterShield,                                // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                               // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(EvFreeValues_CounterShield) / 4,                         // number of values for this option
+        .option_val = 1,                                                             // value of this option
+        .menu = 0,                                                                   // pointer to the menu that pressing A opens
+        .option_name = "Counter Action (Shield)",                                    // pointer to a string
+        .desc = "Select the action to be performed after the\nCPU's shield is hit.", // string describing what this option does
+        .option_values = EvFreeValues_CounterShield,                                 // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1522,7 +1522,8 @@ void Record_InitState(GOBJ *menu_gobj)
         EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
 
         // copy state to personal savestate
-        //memcpy(&stc_savestate, &rec_state, sizeof(SaveState));
+        blr();
+        memcpy(event_vars->savestate, &rec_state, sizeof(SaveState));
     }
     return;
 }

@@ -147,6 +147,7 @@ typedef struct EventVars
     u8 hide_menu;                                // enable this to hide the base menu. used for custom menus.
     int (*Savestate_Save)(SaveState *savestate); // function pointer to save state
     int (*Savestate_Load)(SaveState *savestate); // function pointer to load state
+    SaveState *savestate;                        // points to the events main savestate
     evFunction evFunction;                       // event specific functions
     ArchiveInfo *event_archive;                  // event archive header
 } EventVars;
