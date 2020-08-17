@@ -2093,6 +2093,19 @@ int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
 
     return isActionable;
 }
+int CPU_IsThrown(GOBJ *cpu)
+{
+    FighterData *cpu_data = cpu->userdata;
+
+    int is_thrown = 0;
+    int cpu_state = cpu_data->state_id;
+
+    // check if thrown
+    if (((cpu_state >= ASID_THROWNF) && (cpu_state <= ASID_THROWNLW)) || (cpu_state == ASID_CAPTURECAPTAIN) || (cpu_state == ASID_THROWNKOOPAF) || (cpu_state == ASID_THROWNKOOPAB) || (cpu_state == ASID_THROWNKOOPAAIRF) || ((cpu_state >= ASID_THROWNFF) && (cpu_state <= ASID_THROWNFLW)))
+        is_thrown = 1;
+
+    return is_thrown;
+}
 int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
 {
 
@@ -2214,6 +2227,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     FighterData *hmn_data = hmn->userdata;
     FighterData *cpu_data = cpu->userdata;
     GOBJ **gobjlist = R13_PTR(GOBJLIST);
+    int cpu_state = cpu_data->state_id;
 
     // noact
     cpu_data->cpu.ai = 15;
@@ -2227,7 +2241,12 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         eventData->cpu_state = CPUSTATE_SDI;
         Fighter_ZeroCPUInputs(cpu_data);
     }
-    if ((cpu_data->state_id == ASID_GUARDSETOFF) || ((cpu_data->kind == 0xE) && (cpu_data->state_id == 344)))
+    // check if being thrown
+    if (CPU_IsThrown(cpu) == 1)
+    {
+        eventData->cpu_state = CPUSTATE_TDI;
+    }
+    if ((cpu_state == ASID_GUARDSETOFF) || ((cpu_data->kind == 0xE) && (cpu_state == 344)))
     {
         Fighter_ZeroCPUInputs(cpu_data);
 
@@ -2243,9 +2262,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         // go to Shield state
         //eventData->cpu_state = CPUSTATE_SHIELD;
     }
-    if ((cpu_data->state_id == ASID_DOWNBOUNDD) || (cpu_data->state_id == ASID_DOWNBOUNDU) || (cpu_data->state_id == ASID_DOWNWAITU) || (cpu_data->state_id == ASID_DOWNWAITD) || (cpu_data->state_id == ASID_PASSIVE) || (cpu_data->state_id == ASID_PASSIVESTANDB) || (cpu_data->state_id == ASID_PASSIVESTANDF))
+    if ((cpu_state == ASID_DOWNBOUNDD) || (cpu_state == ASID_DOWNBOUNDU) || (cpu_state == ASID_DOWNWAITU) || (cpu_state == ASID_DOWNWAITD) || (cpu_state == ASID_PASSIVE) || (cpu_state == ASID_PASSIVESTANDB) || (cpu_state == ASID_PASSIVESTANDF))
         eventData->cpu_state = CPUSTATE_GETUP;
-    if ((cpu_data->state_id == ASID_CLIFFWAIT))
+    if ((cpu_state == ASID_CLIFFWAIT))
         eventData->cpu_state = CPUSTATE_RECOVER;
     if (cpu_data->dead == 1)
         goto CPUSTATE_ENTERSTART;
@@ -2340,15 +2359,35 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     CPULOGIC_TDI:
     {
 
-        // if no more hitlag, enter tech state. this might never be hit, just being safe
-        if (cpu_data->hitlag == 0)
+        int is_thrown = CPU_IsThrown(cpu);
+
+        // if no more hitlag and not being thrown, enter tech state. this might never be hit, just being safe
+        if ((cpu_data->hitlag == 0) && (is_thrown == 0))
         {
             eventData->cpu_state = CPUSTATE_TECH;
             goto CPULOGIC_TECH;
         }
 
+        blr();
+
+        // get knockback value
+        float kb_angle;
+        if (is_thrown == 1)
+        {
+            // if being thrown, get knockback info from attacker
+            FighterData *attacker_data = cpu_data->grab_attacker->userdata;
+            kb_angle = ((float)attacker_data->throw_hitbox[0].angle * M_1DEGREE) * (attacker_data->facing_direction * -1);
+        }
+        else
+        {
+            // not being thrown, get knockback angle normally
+            //kb_angle = Fighter_GetKnockbackAngle(cpu_data) * cpu_data->damage_Direction;
+            kb_angle = atan2(cpu_data->kbVel.Y, cpu_data->kbVel.X);
+        }
+
         // perform TDI behavior
         int tdi_kind = LabOptions_CPU[OPTCPU_TDI].option_val;
+
     TDI_SWITCH:
         switch (tdi_kind)
         {
@@ -2362,7 +2401,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
             // survival tdi = kb_angle + (XOriginDirection * -1 * pi/2)
 
-            float kb_angle = atan2(cpu_data->kbVel.Y, cpu_data->kbVel.X);
             float orig_dir;
             if ((kb_angle > -M_PI / 2) && (kb_angle <= M_PI / 2))
                 orig_dir = -1;
@@ -2385,7 +2423,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
 
             // combo tdi = kb_angle + (XOriginDirection * pi/2)
 
-            float kb_angle = atan2(cpu_data->kbVel.Y, cpu_data->kbVel.X);
             float orig_dir;
             if ((kb_angle > -M_PI / 2) && (kb_angle <= M_PI / 2))
                 orig_dir = -1;
@@ -4166,7 +4203,7 @@ void Event_Think(GOBJ *event)
             int line_index;
             int line_kind;
             Vec3 line_unk;
-            float fromX = (hmn_data->pos.X) + (hmn_data->facing_direction * 10);
+            float fromX = (hmn_data->pos.X) + (hmn_data->facing_direction * 16);
             float toX = fromX;
             float fromY = (hmn_data->pos.Y + 5);
             float toY = fromY - 10;
@@ -4180,6 +4217,11 @@ void Event_Think(GOBJ *event)
                 // facing player
                 cpu_data->facing_direction = hmn_data->facing_direction * -1;
 
+                // update camera box
+                Fighter_UpdateCameraBox(cpu);
+                cpu_data->cameraBox->boundleft_curr = cpu_data->cameraBox->boundleft_proj;
+                cpu_data->cameraBox->boundright_curr = cpu_data->cameraBox->boundright_proj;
+
                 // set grounded
                 cpu_data->air_state = 0;
                 //Fighter_SetGrounded(cpu);
@@ -4191,6 +4233,9 @@ void Event_Think(GOBJ *event)
                 cpu_data->collData.topN_Curr = cpu_data->pos; // move current ECB location to new position
                 Coll_ECBCurrToPrev(&cpu_data->collData);
                 cpu_data->cb_Coll(cpu);
+
+                // savestate
+                event_vars->Savestate_Save(event_vars->savestate);
             }
         }
 
