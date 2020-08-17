@@ -2360,6 +2360,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             // Unfreeze the game
             Match_UnfreezeGame(1);
             Match_ShowHUD();
+            Match_AdjustSoundOnPause(0);
         }
     }
 
@@ -2687,9 +2688,9 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
         menuData->text_popup = 0;
     }
 
-    //////////////////
-    // Create Title //
-    //////////////////
+    /*******************
+    *** Create Title ***
+    *******************/
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
@@ -2708,17 +2709,17 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
     Text_SetScale(text, subtext, MENU_TITLESCALE, MENU_TITLESCALE);
 
-    ////////////////////////
-    // Create Description //
-    ////////////////////////
+    /**************************
+    *** Create Description ***
+    *************************/
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
     menuData->text_desc = text;
 
-    //////////////////
-    // Create Names //
-    //////////////////
+    /*******************
+    *** Create Names ***
+    *******************/
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
@@ -2744,9 +2745,9 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
         subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
     }
 
-    ///////////////////
-    // Create Values //
-    ///////////////////
+    /********************
+    *** Create Values ***
+    ********************/
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
@@ -2793,7 +2794,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     Text_SetText(text, 0, menu->name);
 
     /* 
-    Update Desscription
+    Update Description
     */
 
     text = menuData->text_desc;

@@ -140,19 +140,19 @@ void Event_Init(GOBJ *gobj);
 void Event_Update();
 void Event_Think(GOBJ *event);
 
-void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value);
-void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value);
-void EvFree_ChangeCPUIntang(GOBJ *menu_gobj, int value);
-void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value);
-void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value);
-void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
-void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value);
-void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value);
-void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value);
-void EvFree_ChangeInfoSizePos(GOBJ *menu_gobj, int value);
-void EvFree_ChangeInfoPlayer(GOBJ *menu_gobj, int value);
-void EvFree_ChangeHUD(GOBJ *menu_gobj, int value);
-void EvFree_SelectCustomTDI(GOBJ *menu_gobj);
+void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value);
+void Lab_ChangeCPUPercent(GOBJ *menu_gobj, int value);
+void Lab_ChangeCPUIntang(GOBJ *menu_gobj, int value);
+void Lab_ChangeModelDisplay(GOBJ *menu_gobj, int value);
+void Lab_ChangeHitDisplay(GOBJ *menu_gobj, int value);
+void Lab_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value);
+void Lab_ChangeCamMode(GOBJ *menu_gobj, int value);
+void Lab_ChangeInfoPreset(GOBJ *menu_gobj, int value);
+void Lab_ChangeInfoRow(GOBJ *menu_gobj, int value);
+void Lab_ChangeInfoSizePos(GOBJ *menu_gobj, int value);
+void Lab_ChangeInfoPlayer(GOBJ *menu_gobj, int value);
+void Lab_ChangeHUD(GOBJ *menu_gobj, int value);
+void Lab_SelectCustomTDI(GOBJ *menu_gobj);
 void DIDraw_GX();
 void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value);
 void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value);
@@ -168,17 +168,17 @@ void Record_Update(int ply, RecInputData *inputs, int rec_mode);
 int Record_GetRandomSlot(RecInputData **input_data);
 void CustomTDI_Update(GOBJ *gobj);
 void CustomTDI_Destroy(GOBJ *gobj);
-void EvFree_Exit(int value);
+void Lab_Exit(int value);
 void InfoDisplay_Think(GOBJ *gobj);
 void InfoDisplay_GX(GOBJ *gobj, int pass);
 
-static EventOption EvFreeOptions_Main[];
-static EventOption EvFreeOptions_General[];
-static EventOption EvFreeOptions_InfoDisplay[];
-static EventMenu EvFreeMenu_General;
-static EventMenu EvFreeMenu_InfoDisplay;
-static EventMenu EvFreeMenu_CPU;
-static EventMenu EvFreeMenu_Record;
+static EventOption LabOptions_Main[];
+static EventOption LabOptions_General[];
+static EventOption LabOptions_InfoDisplay[];
+static EventMenu LabMenu_General;
+static EventMenu LabMenu_InfoDisplay;
+static EventMenu LabMenu_CPU;
+static EventMenu LabMenu_Record;
 
 // info display
 #define GXPRI_INFDISP GXPRI_MENUMODEL - 2

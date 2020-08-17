@@ -2,7 +2,7 @@
 static char nullString[] = " ";
 
 // CPU Action Definitions
-static CPUAction EvFree_CPUActionShield[] = {
+static CPUAction Lab_CPUActionShield[] = {
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -41,7 +41,7 @@ static CPUAction EvFree_CPUActionShield[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionGrab[] = {
+static CPUAction Lab_CPUActionGrab[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -68,7 +68,7 @@ static CPUAction EvFree_CPUActionGrab[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionUpB[] = {
+static CPUAction Lab_CPUActionUpB[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -119,7 +119,7 @@ static CPUAction EvFree_CPUActionUpB[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionDownB[] = {
+static CPUAction Lab_CPUActionDownB[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -158,7 +158,7 @@ static CPUAction EvFree_CPUActionDownB[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionSpotdodge[] = {
+static CPUAction Lab_CPUActionSpotdodge[] = {
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -173,7 +173,7 @@ static CPUAction EvFree_CPUActionSpotdodge[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionRollAway[] = {
+static CPUAction Lab_CPUActionRollAway[] = {
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -200,7 +200,7 @@ static CPUAction EvFree_CPUActionRollAway[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionRollTowards[] = {
+static CPUAction Lab_CPUActionRollTowards[] = {
     {
         ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
         0,                     // first possible frame to perform this action
@@ -227,7 +227,7 @@ static CPUAction EvFree_CPUActionRollTowards[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionNair[] = {
+static CPUAction Lab_CPUActionNair[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -266,7 +266,7 @@ static CPUAction EvFree_CPUActionNair[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionFair[] = {
+static CPUAction Lab_CPUActionFair[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -305,7 +305,7 @@ static CPUAction EvFree_CPUActionFair[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionDair[] = {
+static CPUAction Lab_CPUActionDair[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -344,7 +344,7 @@ static CPUAction EvFree_CPUActionDair[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionBair[] = {
+static CPUAction Lab_CPUActionBair[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -383,7 +383,7 @@ static CPUAction EvFree_CPUActionBair[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionUair[] = {
+static CPUAction Lab_CPUActionUair[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -422,7 +422,7 @@ static CPUAction EvFree_CPUActionUair[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionJump[] = {
+static CPUAction Lab_CPUActionJump[] = {
     {
         ASID_GUARD,                   // state to perform this action. -1 for last
         0,                            // first possible frame to perform this action
@@ -461,7 +461,7 @@ static CPUAction EvFree_CPUActionJump[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionJumpAway[] = {
+static CPUAction Lab_CPUActionJumpAway[] = {
     {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
@@ -488,7 +488,7 @@ static CPUAction EvFree_CPUActionJumpAway[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionJumpTowards[] = {
+static CPUAction Lab_CPUActionJumpTowards[] = {
     {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
@@ -515,7 +515,7 @@ static CPUAction EvFree_CPUActionJumpTowards[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionAirdodge[] = {
+static CPUAction Lab_CPUActionAirdodge[] = {
     {
         ASID_DAMAGEAIR, // state to perform this action. -1 for last
         0,              // first possible frame to perform this action
@@ -542,7 +542,7 @@ static CPUAction EvFree_CPUActionAirdodge[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionFFTumble[] = {
+static CPUAction Lab_CPUActionFFTumble[] = {
     {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
@@ -557,7 +557,7 @@ static CPUAction EvFree_CPUActionFFTumble[] = {
     },
     -1,
 };
-static CPUAction EvFree_CPUActionFFWiggle[] = {
+static CPUAction Lab_CPUActionFFWiggle[] = {
     {
         ASID_DAMAGEFALL, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
@@ -585,58 +585,58 @@ static CPUAction EvFree_CPUActionFFWiggle[] = {
     -1,
 };
 
-static CPUAction *EvFree_CPUActions[] = {
+static CPUAction *Lab_CPUActions[] = {
     // none 0
     0,
     // shield 1
-    &EvFree_CPUActionShield,
+    &Lab_CPUActionShield,
     // grab 2
-    &EvFree_CPUActionGrab,
+    &Lab_CPUActionGrab,
     // up b 3
-    &EvFree_CPUActionUpB,
+    &Lab_CPUActionUpB,
     // down b 4
-    &EvFree_CPUActionDownB,
+    &Lab_CPUActionDownB,
     // spotdodge 5
-    &EvFree_CPUActionSpotdodge,
+    &Lab_CPUActionSpotdodge,
     // roll away 6
-    &EvFree_CPUActionRollAway,
+    &Lab_CPUActionRollAway,
     // roll towards 7
-    &EvFree_CPUActionRollTowards,
+    &Lab_CPUActionRollTowards,
     // nair 8
-    &EvFree_CPUActionNair,
+    &Lab_CPUActionNair,
     // fair 9
-    &EvFree_CPUActionFair,
+    &Lab_CPUActionFair,
     // dair 10
-    &EvFree_CPUActionDair,
+    &Lab_CPUActionDair,
     // bair 11
-    &EvFree_CPUActionBair,
+    &Lab_CPUActionBair,
     // uair 12
-    &EvFree_CPUActionUair,
+    &Lab_CPUActionUair,
     // jump 13
-    &EvFree_CPUActionJump,
+    &Lab_CPUActionJump,
     // jump away 14
-    &EvFree_CPUActionJumpAway,
+    &Lab_CPUActionJumpAway,
     // jump towards 15
-    &EvFree_CPUActionJumpTowards,
+    &Lab_CPUActionJumpTowards,
     // airdodge 16
-    &EvFree_CPUActionAirdodge,
+    &Lab_CPUActionAirdodge,
     // fastfall 17
-    &EvFree_CPUActionFFTumble,
+    &Lab_CPUActionFFTumble,
     // wiggle fastfall 18
-    &EvFree_CPUActionFFWiggle,
+    &Lab_CPUActionFFWiggle,
 };
 static u8 GrAcLookup[] = {0, 5, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13};
 static u8 AirAcLookup[] = {0, 16, 14, 15, 3, 4, 8, 9, 10, 11, 12, 17, 18};
 static u8 ShieldAcLookup[] = {0, 2, 13, 5, 3, 4, 8, 9, 10, 11, 12};
 
 // Main Menu
-static char **EvFreeOptions_OffOn[] = {"Off", "On"};
-static EventOption EvFreeOptions_Main[] = {
+static char **LabOptions_OffOn[] = {"Off", "On"};
+static EventOption LabOptions_Main[] = {
     {
         .option_kind = OPTKIND_MENU,                                                     // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                                                                  // number of values for this option
         .option_val = 0,                                                                 // value of this option
-        .menu = &EvFreeMenu_General,                                                     // pointer to the menu that pressing A opens
+        .menu = &LabMenu_General,                                                        // pointer to the menu that pressing A opens
         .option_name = {"General"},                                                      // pointer to a string
         .desc = "Toggle player percent, overlays,\nframe advance, and camera settings.", // string describing what this option does
         .option_values = 0,                                                              // pointer to an array of strings
@@ -646,7 +646,7 @@ static EventOption EvFreeOptions_Main[] = {
         .option_kind = OPTKIND_MENU,       // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                    // number of values for this option
         .option_val = 0,                   // value of this option
-        .menu = &EvFreeMenu_CPU,           // pointer to the menu that pressing A opens
+        .menu = &LabMenu_CPU,              // pointer to the menu that pressing A opens
         .option_name = {"CPU Options"},    // pointer to a string
         .desc = "Configure CPU behavior.", // string describing what this option does
         .option_values = 0,                // pointer to an array of strings
@@ -656,7 +656,7 @@ static EventOption EvFreeOptions_Main[] = {
         .option_kind = OPTKIND_MENU,           // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                        // number of values for this option
         .option_val = 0,                       // value of this option
-        .menu = &EvFreeMenu_Record,            // pointer to the menu that pressing A opens
+        .menu = &LabMenu_Record,               // pointer to the menu that pressing A opens
         .option_name = "Recording",            // pointer to a string
         .desc = "Record and playback inputs.", // string describing what this option does
         .option_values = 0,                    // pointer to an array of strings
@@ -667,7 +667,7 @@ static EventOption EvFreeOptions_Main[] = {
         .option_kind = OPTKIND_MENU,                          // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                                       // number of values for this option
         .option_val = 0,                                      // value of this option
-        .menu = &EvFreeMenu_InfoDisplay,                      // pointer to the menu that pressing A opens
+        .menu = &LabMenu_InfoDisplay,                         // pointer to the menu that pressing A opens
         .option_name = "Info Display",                        // pointer to a string
         .desc = "Display various game information onscreen.", // string describing what this option does
         .option_values = 0,                                   // pointer to an array of strings
@@ -681,7 +681,7 @@ static EventOption EvFreeOptions_Main[] = {
         .option_name = "Help",                                                                                             // pointer to a string
         .desc = "D-Pad Left - Load State\nD-Pad Right - Save State\nD-Pad Down - Move CPU\nHold R in the menu for turbo.", // string describing what this option does
         .option_values = 0,                                                                                                // pointer to an array of strings
-        .onOptionChange = EvFree_Exit,
+        .onOptionChange = Lab_Exit,
     },
     {
         .option_kind = OPTKIND_FUNC,                  // the type of option this is; menu, string list, integers list, etc
@@ -692,21 +692,21 @@ static EventOption EvFreeOptions_Main[] = {
         .desc = "Return to the Event Select Screen.", // string describing what this option does
         .option_values = 0,                           // pointer to an array of strings
         .onOptionChange = 0,
-        .onOptionSelect = EvFree_Exit,
+        .onOptionSelect = Lab_Exit,
     },
 };
-static EventMenu EvFreeMenu_Main = {
-    .name = "Main Menu",                                            // the name of this menu
-    .option_num = sizeof(EvFreeOptions_Main) / sizeof(EventOption), // number of options this menu contains
-    .scroll = 0,                                                    // runtime variable used for how far down in the menu to start
-    .state = 0,                                                     // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                                                    // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_Main,                                 // pointer to all of this menu's options
-    .prev = 0,                                                      // pointer to previous menu, used at runtime
+static EventMenu LabMenu_Main = {
+    .name = "Main Menu",                                         // the name of this menu
+    .option_num = sizeof(LabOptions_Main) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                 // runtime variable used for how far down in the menu to start
+    .state = 0,                                                  // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                 // index of the option currently selected, used at runtime
+    .options = &LabOptions_Main,                                 // pointer to all of this menu's options
+    .prev = 0,                                                   // pointer to previous menu, used at runtime
 };
 // General
-static char **EvFreeOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
-static EventOption EvFreeOptions_General[] = {
+static char **LabOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
+static EventOption LabOptions_General[] = {
     // frame advance
     {
         .option_kind = OPTKIND_STRING,                                                                     // the type of option this is; menu, string list, integer list, etc
@@ -715,7 +715,7 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                                                                         // pointer to the menu that pressing A opens
         .option_name = "Frame Advance",                                                                    // pointer to a string
         .desc = "Enable frame advance. Press L to advance one\nframe. Hold L to advance at normal speed.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                              // pointer to an array of strings
+        .option_values = LabOptions_OffOn,                                                                 // pointer to an array of strings
         .onOptionChange = 0,
     },
     // p1 percent
@@ -727,7 +727,7 @@ static EventOption EvFreeOptions_General[] = {
         .option_name = "Player Percent",        // pointer to a string
         .desc = "Adjust the player's percent.", // string describing what this option does
         .option_values = 0,                     // pointer to an array of strings
-        .onOptionChange = EvFree_ChangePlayerPercent,
+        .onOptionChange = Lab_ChangePlayerPercent,
     },
     // model display
     {
@@ -737,8 +737,8 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                          // pointer to the menu that pressing A opens
         .option_name = "Model Display",                     // pointer to a string
         .desc = "Toggle player and item model visibility.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeModelDisplay,
+        .option_values = LabOptions_OffOn,                  // pointer to an array of strings
+        .onOptionChange = Lab_ChangeModelDisplay,
     },
     // fighter collision
     {
@@ -748,8 +748,8 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                                                                                                                               // pointer to the menu that pressing A opens
         .option_name = "Fighter Collision",                                                                                                                      // pointer to a string
         .desc = "Toggle hitbox and hurtbox visualization.\nYellow = hurt, red = hit, purple = grab, \nwhite = trigger, green = reflect,\nblue = shield/absorb.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                                                                    // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeHitDisplay,
+        .option_values = LabOptions_OffOn,                                                                                                                       // pointer to an array of strings
+        .onOptionChange = Lab_ChangeHitDisplay,
     },
     // environment collision
     {
@@ -759,19 +759,19 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                                                                                              // pointer to the menu that pressing A opens
         .option_name = "Environment Collision",                                                                                 // pointer to a string
         .desc = "Toggle environment collision visualization.\nAlso displays the players' ECB (environmental \ncollision box).", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                                   // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeEnvCollDisplay,
+        .option_values = LabOptions_OffOn,                                                                                      // pointer to an array of strings
+        .onOptionChange = Lab_ChangeEnvCollDisplay,
     },
     // camera mode
     {
         .option_kind = OPTKIND_STRING,                                                                                                      // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_CamMode) / 4,                                                                                     // number of values for this option
+        .value_num = sizeof(LabOptions_CamMode) / 4,                                                                                        // number of values for this option
         .option_val = 0,                                                                                                                    // value of this option
         .menu = 0,                                                                                                                          // pointer to the menu that pressing A opens
         .option_name = "Camera Mode",                                                                                                       // pointer to a string
         .desc = "Adjust the camera's behavior.\nIn advanced mode, use C-Stick while holding\nA/B/Y to pan, rotate and zoom, respectively.", // string describing what this option does
-        .option_values = EvFreeOptions_CamMode,                                                                                             // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeCamMode,
+        .option_values = LabOptions_CamMode,                                                                                                // pointer to an array of strings
+        .onOptionChange = Lab_ChangeCamMode,
     },
     // hud
     {
@@ -781,8 +781,8 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                              // pointer to the menu that pressing A opens
         .option_name = "HUD",                                   // pointer to a string
         .desc = "Toggle player percents and timer visibility.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                   // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeHUD,
+        .option_values = LabOptions_OffOn,                      // pointer to an array of strings
+        .onOptionChange = Lab_ChangeHUD,
     },
     // di display
     {
@@ -792,7 +792,7 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                                                                                          // pointer to the menu that pressing A opens
         .option_name = "DI Display",                                                                                        // pointer to a string
         .desc = "Display knockback trajectories.\nUse frame advance to see the effects of DI\nin realtime during hitstop.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                                               // pointer to an array of strings
+        .option_values = LabOptions_OffOn,                                                                                  // pointer to an array of strings
         .onOptionChange = 0,
     },
     // input display
@@ -803,7 +803,7 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                 // pointer to the menu that pressing A opens
         .option_name = "Input Display",            // pointer to a string
         .desc = "Display player inputs onscreen.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,      // pointer to an array of strings
+        .option_values = LabOptions_OffOn,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     // move staling
@@ -814,158 +814,158 @@ static EventOption EvFreeOptions_General[] = {
         .menu = 0,                                                                              // pointer to the menu that pressing A opens
         .option_name = "Move Staling",                                                          // pointer to a string
         .desc = "Toggle the staling of moves. Attacks become \nweaker the more they are used.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                                   // pointer to an array of strings
+        .option_values = LabOptions_OffOn,                                                      // pointer to an array of strings
         .onOptionChange = 0,
     },
 
 };
-static EventMenu EvFreeMenu_General = {
-    .name = "General",                                                 // the name of this menu
-    .option_num = sizeof(EvFreeOptions_General) / sizeof(EventOption), // number of options this menu contains
-    .scroll = 0,                                                       // runtime variable used for how far down in the menu to start
-    .state = 0,                                                        // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                                                       // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_General,                                 // pointer to all of this menu's options
-    .prev = 0,                                                         // pointer to previous menu, used at runtime
+static EventMenu LabMenu_General = {
+    .name = "General",                                              // the name of this menu
+    .option_num = sizeof(LabOptions_General) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                    // runtime variable used for how far down in the menu to start
+    .state = 0,                                                     // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                    // index of the option currently selected, used at runtime
+    .options = &LabOptions_General,                                 // pointer to all of this menu's options
+    .prev = 0,                                                      // pointer to previous menu, used at runtime
 };
 // Info Display
-static char **EvFreeValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Line Info", "Blastzone Left/Right", "Blastzone Up/Down"};
-static char **EvFreeValues_InfoPresets[] = {"None", "Custom", "Ledge", "Damage"};
-//static char **EvFreeValues_InfoPosition[] = {"Top Left", "Top Mid", "Top Right", "Bottom Left", "Bottom Mid", "Bottom Right"};
-static char **EvFreeValues_InfoSize[] = {"Small", "Medium", "Large"};
-static char **EvFreeValues_InfoPlayers[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
-static EventOption EvFreeOptions_InfoDisplay[] = {
+static char **LabValues_InfoDisplay[] = {"None", "Position", "State Name", "State Frame", "Velocity - Self", "Velocity - KB", "Velocity - Total", "Engine LStick", "System LStick", "Engine CStick", "System CStick", "Engine Trigger", "System Trigger", "Ledgegrab Timer", "Intangibility Timer", "Hitlag", "Hitstun", "Shield Health", "Shield Stun", "Grip Strength", "ECB Lock", "ECB Bottom", "Jumps", "Walljumps", "Jab Counter", "Line Info", "Blastzone Left/Right", "Blastzone Up/Down"};
+static char **LabValues_InfoPresets[] = {"None", "Custom", "Ledge", "Damage"};
+//static char **LabValues_InfoPosition[] = {"Top Left", "Top Mid", "Top Right", "Bottom Left", "Bottom Mid", "Bottom Right"};
+static char **LabValues_InfoSize[] = {"Small", "Medium", "Large"};
+static char **LabValues_InfoPlayers[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
+static EventOption LabOptions_InfoDisplay[] = {
     {
         .option_kind = OPTKIND_STRING,                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoPlayers) / 4,       // number of values for this option
+        .value_num = sizeof(LabValues_InfoPlayers) / 4,          // number of values for this option
         .option_val = 0,                                         // value of this option
         .menu = 0,                                               // pointer to the menu that pressing A opens
         .option_name = "Player",                                 // pointer to a string
         .desc = "Toggle which player's information to display.", // string describing what this option does
-        .option_values = EvFreeValues_InfoPlayers,               // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoPlayer,
+        .option_values = LabValues_InfoPlayers,                  // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoPlayer,
     },
     {
         .option_kind = OPTKIND_STRING,                                                                                                        // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoSize) / 4,                                                                                       // number of values for this option
+        .value_num = sizeof(LabValues_InfoSize) / 4,                                                                                          // number of values for this option
         .option_val = 1,                                                                                                                      // value of this option
         .menu = 0,                                                                                                                            // pointer to the menu that pressing A opens
         .option_name = "Size",                                                                                                                // pointer to a string
         .desc = "Change the size of the info display window.\nLarge is recommended for CRT.\nMedium/Small recommended for Dolphin Emulator.", // string describing what this option does
-        .option_values = EvFreeValues_InfoSize,                                                                                               // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoSizePos,
+        .option_values = LabValues_InfoSize,                                                                                                  // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoSizePos,
     },
     {
         .option_kind = OPTKIND_STRING,                       // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoPresets) / 4,   // number of values for this option
+        .value_num = sizeof(LabValues_InfoPresets) / 4,      // number of values for this option
         .option_val = 0,                                     // value of this option
         .menu = 0,                                           // pointer to the menu that pressing A opens
         .option_name = "Preset",                             // pointer to a string
         .desc = "Choose between pre-configured selections.", // string describing what this option does
-        .option_values = EvFreeValues_InfoPresets,           // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoPreset,
+        .option_values = LabValues_InfoPresets,              // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoPreset,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 1",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 1",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 2",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 2",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 3",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 3",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 4",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 4",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 5",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 5",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 6",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 6",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 7",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 7",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
     {
-        .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_InfoDisplay) / 4, // number of values for this option
-        .option_val = 0,                                   // value of this option
-        .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Row 8",                            // pointer to a string
-        .desc = "Adjust what is displayed in this row.",   // string describing what this option does
-        .option_values = EvFreeValues_InfoDisplay,         // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeInfoRow,
+        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_InfoDisplay) / 4,  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Row 8",                          // pointer to a string
+        .desc = "Adjust what is displayed in this row.", // string describing what this option does
+        .option_values = LabValues_InfoDisplay,          // pointer to an array of strings
+        .onOptionChange = Lab_ChangeInfoRow,
     },
 };
-static EventMenu EvFreeMenu_InfoDisplay = {
-    .name = "Info Display",                // the name of this menu
-    .option_num = 11,                      // number of options this menu contains
-    .scroll = 0,                           // runtime variable used for how far down in the menu to start
-    .state = 0,                            // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                           // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_InfoDisplay, // pointer to all of this menu's options
-    .prev = 0,                             // pointer to previous menu, used at runtime
+static EventMenu LabMenu_InfoDisplay = {
+    .name = "Info Display",             // the name of this menu
+    .option_num = 11,                   // number of options this menu contains
+    .scroll = 0,                        // runtime variable used for how far down in the menu to start
+    .state = 0,                         // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                        // index of the option currently selected, used at runtime
+    .options = &LabOptions_InfoDisplay, // pointer to all of this menu's options
+    .prev = 0,                          // pointer to previous menu, used at runtime
 };
 // CPU
-static char **EvFreeValues_Shield[] = {"Off", "On Until Hit", "On"};
-static char **EvFreeValues_CPUBehave[] = {"Stand", "Shield", "Crouch", "Jump"};
-static char **EvFreeValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "Custom", "None"};
-static char **EvFreeValues_SDI[] = {"Random", "None"};
-static char **EvFreeValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
-static char **EvFreeValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
-static char **EvFreeValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
-static char **EvFreeValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
-static char **EvFreeValues_CounterShield[] = {"None", "Grab", "Jump", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
-static EventOption EvFreeOptions_CPU[] = {
+static char **LabValues_Shield[] = {"Off", "On Until Hit", "On"};
+static char **LabValues_CPUBehave[] = {"Stand", "Shield", "Crouch", "Jump"};
+static char **LabValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "Custom", "None"};
+static char **LabValues_SDI[] = {"Random", "None"};
+static char **LabValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
+static char **LabValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
+static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
+static char **LabValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
+static char **LabValues_CounterShield[] = {"None", "Grab", "Jump", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
+static EventOption LabOptions_CPU[] = {
     // cpu percent
     {
         .option_kind = OPTKIND_INT,          // the type of option this is; menu, string list, integer list, etc
@@ -975,7 +975,7 @@ static EventOption EvFreeOptions_CPU[] = {
         .option_name = "CPU Percent",        // pointer to a string
         .desc = "Adjust the CPU's percent.", // string describing what this option does
         .option_values = 0,                  // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeCPUPercent,
+        .onOptionChange = Lab_ChangeCPUPercent,
     },
     {
         .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
@@ -984,47 +984,47 @@ static EventOption EvFreeOptions_CPU[] = {
         .menu = 0,                                          // pointer to the menu that pressing A opens
         .option_name = {"Intangibility"},                   // pointer to a string
         .desc = "Toggle the CPU's ability to take damage.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,               // pointer to an array of strings
-        .onOptionChange = EvFree_ChangeCPUIntang,
+        .option_values = LabOptions_OffOn,                  // pointer to an array of strings
+        .onOptionChange = Lab_ChangeCPUIntang,
     },
     {
         .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_Shield) / 4,     // number of values for this option
+        .value_num = sizeof(LabValues_Shield) / 4,        // number of values for this option
         .option_val = 1,                                  // value of this option
         .menu = 0,                                        // pointer to the menu that pressing A opens
         .option_name = {"Infinite Shields"},              // pointer to a string
         .desc = "Adjust how shield health deteriorates.", // string describing what this option does
-        .option_values = EvFreeValues_Shield,             // pointer to an array of strings
+        .option_values = LabValues_Shield,                // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                   // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CPUBehave) / 4, // number of values for this option
-        .option_val = 0,                                 // value of this option
-        .menu = 0,                                       // pointer to the menu that pressing A opens
-        .option_name = "Behavior",                       // pointer to a string
-        .desc = "Adjust the CPU's default action.",      // string describing what this option does
-        .option_values = EvFreeValues_CPUBehave,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_CPUBehave) / 4, // number of values for this option
+        .option_val = 0,                              // value of this option
+        .menu = 0,                                    // pointer to the menu that pressing A opens
+        .option_name = "Behavior",                    // pointer to a string
+        .desc = "Adjust the CPU's default action.",   // string describing what this option does
+        .option_values = LabValues_CPUBehave,         // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_SDI) / 4,                               // number of values for this option
+        .value_num = sizeof(LabValues_SDI) / 4,                                  // number of values for this option
         .option_val = 0,                                                         // value of this option
         .menu = 0,                                                               // pointer to the menu that pressing A opens
         .option_name = "Smash DI",                                               // pointer to a string
         .desc = "Adjust how the CPU will alter their position\nduring hitstop.", // string describing what this option does
-        .option_values = EvFreeValues_SDI,                                       // pointer to an array of strings
+        .option_values = LabValues_SDI,                                          // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                        // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_TDI) / 4,                            // number of values for this option
+        .value_num = sizeof(LabValues_TDI) / 4,                               // number of values for this option
         .option_val = 0,                                                      // value of this option
         .menu = 0,                                                            // pointer to the menu that pressing A opens
         .option_name = "Trajectory DI",                                       // pointer to a string
         .desc = "Adjust how the CPU will alter their knockback\ntrajectory.", // string describing what this option does
-        .option_values = EvFreeValues_TDI,                                    // pointer to an array of strings
+        .option_values = LabValues_TDI,                                       // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1036,66 +1036,66 @@ static EventOption EvFreeOptions_CPU[] = {
         .desc = "Create custom trajectory DI values for the\nCPU to perform.", // string describing what this option does
         .option_values = 0,                                                    // pointer to an array of strings
         .onOptionChange = 0,
-        .onOptionSelect = EvFree_SelectCustomTDI,
+        .onOptionSelect = Lab_SelectCustomTDI,
     },
     {
         .option_kind = OPTKIND_STRING,                                         // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_Tech) / 4,                            // number of values for this option
+        .value_num = sizeof(LabValues_Tech) / 4,                               // number of values for this option
         .option_val = 0,                                                       // value of this option
         .menu = 0,                                                             // pointer to the menu that pressing A opens
         .option_name = "Tech Option",                                          // pointer to a string
         .desc = "Adjust what the CPU will do upon colliding\nwith the stage.", // string describing what this option does
-        .option_values = EvFreeValues_Tech,                                    // pointer to an array of strings
+        .option_values = LabValues_Tech,                                       // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                      // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_Getup) / 4,                        // number of values for this option
+        .value_num = sizeof(LabValues_Getup) / 4,                           // number of values for this option
         .option_val = 0,                                                    // value of this option
         .menu = 0,                                                          // pointer to the menu that pressing A opens
         .option_name = "Get Up Option",                                     // pointer to a string
         .desc = "Adjust what the CPU will do after missing\na tech input.", // string describing what this option does
-        .option_values = EvFreeValues_Getup,                                // pointer to an array of strings
+        .option_values = LabValues_Getup,                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_OffOn) / 4,                // number of values for this option
+        .value_num = sizeof(LabOptions_OffOn) / 4,                   // number of values for this option
         .option_val = 0,                                             // value of this option
         .menu = 0,                                                   // pointer to the menu that pressing A opens
         .option_name = "Auto Reset",                                 // pointer to a string
         .desc = "Automatically reset after the CPU is\nactionable.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                        // pointer to an array of strings
+        .option_values = LabOptions_OffOn,                           // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CounterGround) / 4,                               // number of values for this option
+        .value_num = sizeof(LabValues_CounterGround) / 4,                                  // number of values for this option
         .option_val = 1,                                                                   // value of this option
         .menu = 0,                                                                         // pointer to the menu that pressing A opens
         .option_name = "Counter Action (Ground)",                                          // pointer to a string
         .desc = "Select the action to be performed after a\ngrounded CPU's hitstun ends.", // string describing what this option does
-        .option_values = EvFreeValues_CounterGround,                                       // pointer to an array of strings
+        .option_values = LabValues_CounterGround,                                          // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                                      // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CounterAir) / 4,                                   // number of values for this option
+        .value_num = sizeof(LabValues_CounterAir) / 4,                                      // number of values for this option
         .option_val = 1,                                                                    // value of this option
         .menu = 0,                                                                          // pointer to the menu that pressing A opens
         .option_name = "Counter Action (Air)",                                              // pointer to a string
         .desc = "Select the action to be performed after an\nairborne CPU's hitstun ends.", // string describing what this option does
-        .option_values = EvFreeValues_CounterAir,                                           // pointer to an array of strings
+        .option_values = LabValues_CounterAir,                                              // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                               // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CounterShield) / 4,                         // number of values for this option
+        .value_num = sizeof(LabValues_CounterShield) / 4,                            // number of values for this option
         .option_val = 1,                                                             // value of this option
         .menu = 0,                                                                   // pointer to the menu that pressing A opens
         .option_name = "Counter Action (Shield)",                                    // pointer to a string
         .desc = "Select the action to be performed after the\nCPU's shield is hit.", // string describing what this option does
-        .option_values = EvFreeValues_CounterShield,                                 // pointer to an array of strings
+        .option_values = LabValues_CounterShield,                                    // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1129,20 +1129,20 @@ static EventOption EvFreeOptions_CPU[] = {
         .onOptionChange = 0,
     },
 };
-static EventMenu EvFreeMenu_CPU = {
-    .name = "CPU Options",                                         // the name of this menu
-    .option_num = sizeof(EvFreeOptions_CPU) / sizeof(EventOption), // number of options this menu contains
-    .scroll = 0,                                                   // runtime variable used for how far down in the menu to start
-    .state = 0,                                                    // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                                                   // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_CPU,                                 // pointer to all of this menu's options
-    .prev = 0,                                                     // pointer to previous menu, used at runtime
+static EventMenu LabMenu_CPU = {
+    .name = "CPU Options",                                      // the name of this menu
+    .option_num = sizeof(LabOptions_CPU) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                // runtime variable used for how far down in the menu to start
+    .state = 0,                                                 // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                // index of the option currently selected, used at runtime
+    .options = &LabOptions_CPU,                                 // pointer to all of this menu's options
+    .prev = 0,                                                  // pointer to previous menu, used at runtime
 };
 // Recording
-static char **EvFreeValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6"};
-static char **EvFreeValues_HMNRecordMode[] = {"Off", "Record", "Playback"};
-static char **EvFreeValues_CPURecordMode[] = {"Off", "Control", "Record", "Playback"};
-static EventOption EvFreeOptions_Record[] = {
+static char **LabValues_RecordSlot[] = {"Random", "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6"};
+static char **LabValues_HMNRecordMode[] = {"Off", "Record", "Playback"};
+static char **LabValues_CPURecordMode[] = {"Off", "Control", "Record", "Playback"};
+static EventOption LabOptions_Record[] = {
     {
         .option_kind = OPTKIND_FUNC,                                             // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                                                          // number of values for this option
@@ -1165,73 +1165,73 @@ static EventOption EvFreeOptions_Record[] = {
     },
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_HMNRecordMode) / 4,         // number of values for this option
+        .value_num = sizeof(LabValues_HMNRecordMode) / 4,            // number of values for this option
         .option_val = 0,                                             // value of this option
         .menu = 0,                                                   // pointer to the menu that pressing A opens
         .option_name = "HMN Mode",                                   // pointer to a string
         .desc = "Toggle between recording and playback of\ninputs.", // string describing what this option does
-        .option_values = EvFreeValues_HMNRecordMode,                 // pointer to an array of strings
+        .option_values = LabValues_HMNRecordMode,                    // pointer to an array of strings
         .onOptionChange = Record_ChangeHMNMode,
     },
     {
-        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_RecordSlot) / 4, // number of values for this option
-        .option_val = 1,                                  // value of this option
-        .menu = 0,                                        // pointer to the menu that pressing A opens
-        .option_name = "HMN Record Slot",                 // pointer to a string
-        .desc = "Toggle which slot to record to.",        // string describing what this option does
-        .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_RecordSlot) / 4, // number of values for this option
+        .option_val = 1,                               // value of this option
+        .menu = 0,                                     // pointer to the menu that pressing A opens
+        .option_name = "HMN Record Slot",              // pointer to a string
+        .desc = "Toggle which slot to record to.",     // string describing what this option does
+        .option_values = LabValues_RecordSlot,         // pointer to an array of strings
         .onOptionChange = Record_ChangeHMNSlot,
     },
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_CPURecordMode) / 4,         // number of values for this option
+        .value_num = sizeof(LabValues_CPURecordMode) / 4,            // number of values for this option
         .option_val = 0,                                             // value of this option
         .menu = 0,                                                   // pointer to the menu that pressing A opens
         .option_name = "CPU Mode",                                   // pointer to a string
         .desc = "Toggle between recording and playback of\ninputs.", // string describing what this option does
-        .option_values = EvFreeValues_CPURecordMode,                 // pointer to an array of strings
+        .option_values = LabValues_CPURecordMode,                    // pointer to an array of strings
         .onOptionChange = Record_ChangeCPUMode,
     },
     {
-        .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeValues_RecordSlot) / 4, // number of values for this option
-        .option_val = 1,                                  // value of this option
-        .menu = 0,                                        // pointer to the menu that pressing A opens
-        .option_name = "CPU Record Slot",                 // pointer to a string
-        .desc = "Toggle which slot to record to.",        // string describing what this option does
-        .option_values = EvFreeValues_RecordSlot,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_RecordSlot) / 4, // number of values for this option
+        .option_val = 1,                               // value of this option
+        .menu = 0,                                     // pointer to the menu that pressing A opens
+        .option_name = "CPU Record Slot",              // pointer to a string
+        .desc = "Toggle which slot to record to.",     // string describing what this option does
+        .option_values = LabValues_RecordSlot,         // pointer to an array of strings
         .onOptionChange = Record_ChangeCPUSlot,
     },
     {
         .option_kind = OPTKIND_STRING,                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_OffOn) / 4,      // number of values for this option
+        .value_num = sizeof(LabOptions_OffOn) / 4,         // number of values for this option
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
         .option_name = "Loop Recording",                   // pointer to a string
         .desc = "Loop the recorded inputs when they end.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,              // pointer to an array of strings
+        .option_values = LabOptions_OffOn,                 // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                                       // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(EvFreeOptions_OffOn) / 4,                        // number of values for this option
+        .value_num = sizeof(LabOptions_OffOn) / 4,                           // number of values for this option
         .option_val = 0,                                                     // value of this option
         .menu = 0,                                                           // pointer to the menu that pressing A opens
         .option_name = "Auto Restore",                                       // pointer to a string
         .desc = "Automatically restore positions after the\nplayback ends.", // string describing what this option does
-        .option_values = EvFreeOptions_OffOn,                                // pointer to an array of strings
+        .option_values = LabOptions_OffOn,                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
 };
-static EventMenu EvFreeMenu_Record = {
-    .name = "Recording",                                              // the name of this menu
-    .option_num = sizeof(EvFreeOptions_Record) / sizeof(EventOption), // number of options this menu contains
-    .scroll = 0,                                                      // runtime variable used for how far down in the menu to start
-    .state = 0,                                                       // bool used to know if this menu is focused, used at runtime
-    .cursor = 0,                                                      // index of the option currently selected, used at runtime
-    .options = &EvFreeOptions_Record,                                 // pointer to all of this menu's options
-    .prev = 0,                                                        // pointer to previous menu, used at runtime
+static EventMenu LabMenu_Record = {
+    .name = "Recording",                                           // the name of this menu
+    .option_num = sizeof(LabOptions_Record) / sizeof(EventOption), // number of options this menu contains
+    .scroll = 0,                                                   // runtime variable used for how far down in the menu to start
+    .state = 0,                                                    // bool used to know if this menu is focused, used at runtime
+    .cursor = 0,                                                   // index of the option currently selected, used at runtime
+    .options = &LabOptions_Record,                                 // pointer to all of this menu's options
+    .prev = 0,                                                     // pointer to previous menu, used at runtime
 };
 
 // Static Variables
@@ -1241,7 +1241,7 @@ static RecData rec_data;
 static SaveState rec_state;
 
 // Menu Callbacks
-void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
+void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value)
 {
     GOBJ *fighter = Fighter_GetGObj(0);
     FighterData *fighter_data = fighter->userdata;
@@ -1251,7 +1251,7 @@ void EvFree_ChangePlayerPercent(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value)
+void Lab_ChangeCPUPercent(GOBJ *menu_gobj, int value)
 {
     GOBJ *fighter = Fighter_GetGObj(1);
     FighterData *fighter_data = fighter->userdata;
@@ -1261,7 +1261,7 @@ void EvFree_ChangeCPUPercent(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeCPUIntang(GOBJ *menu_gobj, int value)
+void Lab_ChangeCPUIntang(GOBJ *menu_gobj, int value)
 {
     // remove blink GFX if toggling off
     if (value == 0)
@@ -1271,7 +1271,7 @@ void EvFree_ChangeCPUIntang(GOBJ *menu_gobj, int value)
     }
     return;
 }
-void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value)
+void Lab_ChangeModelDisplay(GOBJ *menu_gobj, int value)
 {
 
     // loop through all fighters
@@ -1294,7 +1294,7 @@ void EvFree_ChangeModelDisplay(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value)
+void Lab_ChangeHitDisplay(GOBJ *menu_gobj, int value)
 {
 
     // loop through all fighters
@@ -1317,12 +1317,12 @@ void EvFree_ChangeHitDisplay(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value)
+void Lab_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value)
 {
     stc_matchcam->show_coll = value;
     return;
 }
-void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value)
+void Lab_ChangeCamMode(GOBJ *menu_gobj, int value)
 {
 
     MatchCamera *cam = MATCH_CAM;
@@ -1352,14 +1352,14 @@ void EvFree_ChangeCamMode(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeInfoRow(GOBJ *menu_gobj, int value)
+void Lab_ChangeInfoRow(GOBJ *menu_gobj, int value)
 {
-    EventOption *idOptions = &EvFreeOptions_InfoDisplay;
+    EventOption *idOptions = &LabOptions_InfoDisplay;
 
     // changed option, set preset to custom
     idOptions[OPTINF_PRESET].option_val = 1;
 }
-void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value)
+void Lab_ChangeInfoPreset(GOBJ *menu_gobj, int value)
 {
     static int idPresets[][8] =
         {
@@ -1398,7 +1398,7 @@ void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value)
             },
         };
 
-    EventOption *idOptions = &EvFreeOptions_InfoDisplay;
+    EventOption *idOptions = &LabOptions_InfoDisplay;
     int *currPreset = 0;
 
     // check for NONE
@@ -1421,7 +1421,7 @@ void EvFree_ChangeInfoPreset(GOBJ *menu_gobj, int value)
         }
     }
 }
-void EvFree_ChangeInfoSizePos(GOBJ *menu_gobj, int value)
+void Lab_ChangeInfoSizePos(GOBJ *menu_gobj, int value)
 {
     static Vec2 stc_info_pos[] = {
         {-26.5, 21.5},
@@ -1441,8 +1441,8 @@ void EvFree_ChangeInfoSizePos(GOBJ *menu_gobj, int value)
     JOBJ *info_jobj = info_data->menuModel;
     Text *info_text = info_data->text;
     Vec2 *pos = &info_jobj->trans;
-    //Vec2 *pos = &stc_info_pos[EvFreeOptions_InfoDisplay[OPTINF_POS].option_val];
-    float scale = stc_info_scale[EvFreeOptions_InfoDisplay[OPTINF_SIZE].option_val];
+    //Vec2 *pos = &stc_info_pos[LabOptions_InfoDisplay[OPTINF_POS].option_val];
+    float scale = stc_info_scale[LabOptions_InfoDisplay[OPTINF_SIZE].option_val];
 
     // background scale
     info_jobj->scale.X = scale;
@@ -1465,7 +1465,7 @@ void EvFree_ChangeInfoSizePos(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeInfoPlayer(GOBJ *menu_gobj, int value)
+void Lab_ChangeInfoPlayer(GOBJ *menu_gobj, int value)
 {
     InfoDisplayData *info_data = infodisp_gobj->userdata;
     JOBJ *info_jobj = info_data->menuModel;
@@ -1478,7 +1478,7 @@ void EvFree_ChangeInfoPlayer(GOBJ *menu_gobj, int value)
 
     return;
 }
-void EvFree_ChangeHUD(GOBJ *menu_gobj, int value)
+void Lab_ChangeHUD(GOBJ *menu_gobj, int value)
 {
     // toggle HUD
     u8 *hideHUD = (u8 *)(R13 + -0x4948);
@@ -1498,9 +1498,9 @@ void Record_InitState(GOBJ *menu_gobj)
     {
 
         // enable other options
-        for (int i = 1; i < sizeof(EvFreeOptions_Record) / sizeof(EventOption); i++)
+        for (int i = 1; i < sizeof(LabOptions_Record) / sizeof(EventOption); i++)
         {
-            EvFreeOptions_Record[i].disable = 0;
+            LabOptions_Record[i].disable = 0;
         }
 
         // clear slots
@@ -1516,13 +1516,13 @@ void Record_InitState(GOBJ *menu_gobj)
         }
 
         // init settings
-        EvFreeOptions_Record[OPTREC_HMNMODE].option_val = 0; // set hmn to off
-        EvFreeOptions_Record[OPTREC_HMNSLOT].option_val = 1; // set hmn to slot 1
-        EvFreeOptions_Record[OPTREC_CPUMODE].option_val = 0; // set cpu to off
-        EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
+        LabOptions_Record[OPTREC_HMNMODE].option_val = 0; // set hmn to off
+        LabOptions_Record[OPTREC_HMNSLOT].option_val = 1; // set hmn to slot 1
+        LabOptions_Record[OPTREC_CPUMODE].option_val = 0; // set cpu to off
+        LabOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
 
-        // copy state to personal savestate
-        memcpy(event_vars->savestate, &rec_state, sizeof(SaveState));
+        // also save to personal savestate
+        event_vars->Savestate_Save(event_vars->savestate);
     }
     return;
 }
@@ -1537,10 +1537,10 @@ void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
     if (value == 0)
     {
         // if set to record
-        if (EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 1)
+        if (LabOptions_Record[OPTREC_HMNMODE].option_val == 1)
         {
             // change to slot 1
-            EvFreeOptions_Record[OPTREC_HMNSLOT].option_val = 1;
+            LabOptions_Record[OPTREC_HMNSLOT].option_val = 1;
         }
 
         // update random slot
@@ -1561,10 +1561,10 @@ void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
     if (value == 0)
     {
         // if set to record
-        if (EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 2)
+        if (LabOptions_Record[OPTREC_CPUMODE].option_val == 2)
         {
             // change to slot 1
-            EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1;
+            LabOptions_Record[OPTREC_CPUSLOT].option_val = 1;
         }
 
         // update random slot
@@ -1586,9 +1586,9 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
     if (value == 1)
     {
         // if set to random
-        if (EvFreeOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+        if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
         {
-            EvFreeOptions_Record[OPTREC_HMNSLOT].option_val = 1;
+            LabOptions_Record[OPTREC_HMNSLOT].option_val = 1;
         }
     }
 
@@ -1606,10 +1606,10 @@ void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
     if (value == 2)
     {
         // if set to random
-        if (EvFreeOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+        if (LabOptions_Record[OPTREC_CPUSLOT].option_val == 0)
         {
             // change to slot 1
-            EvFreeOptions_Record[OPTREC_CPUSLOT].option_val = 1;
+            LabOptions_Record[OPTREC_CPUSLOT].option_val = 1;
         }
     }
 
@@ -1620,7 +1620,7 @@ void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
     }
     return;
 }
-void EvFree_Exit(int value)
+void Lab_Exit(int value)
 {
     Match *match = MATCH;
 
@@ -1631,7 +1631,7 @@ void EvFree_Exit(int value)
     Match_EndVS();
 
     // Unfreeze
-    EvFreeOptions_General[OPTGEN_FRAME].option_val = 0;
+    LabOptions_General[OPTGEN_FRAME].option_val = 0;
     //HSD_Update *update = HSD_UPDATE;
     //update->pause_develop = 0;
     return;
@@ -1690,12 +1690,12 @@ GOBJ *InfoDisplay_Init()
 
     // adjust size based on the console / settings
     if ((OSGetConsoleType() == OS_CONSOLE_DEVHW3) || (stc_HSD_VI->is_prog == 1)) // 480p / dolphin uses medium by default
-        EvFreeOptions_InfoDisplay[OPT_SCALE].option_val = 1;
+        LabOptions_InfoDisplay[OPT_SCALE].option_val = 1;
     else // 480i on wii uses large (shitty composite!)
-        EvFreeOptions_InfoDisplay[OPT_SCALE].option_val = 2;
+        LabOptions_InfoDisplay[OPT_SCALE].option_val = 2;
 
     // update size
-    EvFree_ChangeInfoSizePos(0, 0);
+    Lab_ChangeInfoSizePos(0, 0);
 
     // update to show/hide
     InfoDisplay_Think(idGOBJ);
@@ -1712,7 +1712,7 @@ void InfoDisplay_Think(GOBJ *gobj)
 
     InfoDisplayData *idData = gobj->userdata;
     Text *text = idData->text;
-    EventOption *idOptions = &EvFreeOptions_InfoDisplay;
+    EventOption *idOptions = &LabOptions_InfoDisplay;
     if ((Pause_CheckStatus(1) != 2)) //&& (idOptions[OPTINF_TOGGLE].option_val == 1))
     {
         // get the last row enabled
@@ -2101,7 +2101,7 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
 
     // get CPU action
     int action_done = 0;
-    CPUAction *action_list = EvFree_CPUActions[action_id];
+    CPUAction *action_list = Lab_CPUActions[action_id];
     int cpu_state = cpu_data->state_id;
     s16 cpu_frame = cpu_data->stateFrame;
     if (cpu_frame == -1)
@@ -2271,7 +2271,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         Fighter_ZeroCPUInputs(cpu_data);
 
         // perform default behavior
-        int behavior = EvFreeOptions_CPU[OPTCPU_BEHAVE].option_val;
+        int behavior = LabOptions_CPU[OPTCPU_BEHAVE].option_val;
         switch (behavior)
         {
         case (CPUBEHAVE_STAND):
@@ -2314,7 +2314,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             eventData->cpu_sincehit = 0;
             eventData->cpu_hitnum++;
             eventData->cpu_lasthit = cpu_data->damage_instancehitby;
-            //OSReport("hit count %d/%d", eventData->cpu_hitnum, EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val);
+            //OSReport("hit count %d/%d", eventData->cpu_hitnum, LabOptions_CPU[OPTCPU_CTRHITS].option_val);
         }
 
         // if no more hitlag, enter tech state
@@ -2348,7 +2348,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // perform TDI behavior
-        int tdi_kind = EvFreeOptions_CPU[OPTCPU_TDI].option_val;
+        int tdi_kind = LabOptions_CPU[OPTCPU_TDI].option_val;
     TDI_SWITCH:
         switch (tdi_kind)
         {
@@ -2463,7 +2463,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // perform tech behavior
-        int tech_kind = EvFreeOptions_CPU[OPTCPU_TECH].option_val;
+        int tech_kind = LabOptions_CPU[OPTCPU_TECH].option_val;
         s8 dir;
         s8 stickX = 0;
         s8 sincePress = 0;
@@ -2474,7 +2474,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
         case (CPUTECH_RANDOM):
         {
-            tech_kind = (HSD_Randi((sizeof(EvFreeValues_Tech) / 4) - 1) + 1);
+            tech_kind = (HSD_Randi((sizeof(LabValues_Tech) / 4) - 1) + 1);
             goto TECH_SWITCH;
             break;
         }
@@ -2518,7 +2518,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         if ((cpu_data->state_id == ASID_DOWNWAITD) || (cpu_data->state_id == ASID_DOWNWAITU))
         {
             // perform getup behavior
-            int getup = EvFreeOptions_CPU[OPTCPU_GETUP].option_val;
+            int getup = LabOptions_CPU[OPTCPU_GETUP].option_val;
             s8 dir;
             int inputs = 0;
             s8 stickX = 0;
@@ -2529,7 +2529,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             {
             case (CPUGETUP_RANDOM):
             {
-                getup = (HSD_Randi((sizeof(EvFreeValues_Tech) / 4) - 1) + 1);
+                getup = (HSD_Randi((sizeof(LabValues_Tech) / 4) - 1) + 1);
                 goto GETUP_SWITCH;
                 break;
             }
@@ -2612,7 +2612,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         int action_id;
         if (eventData->cpu_hitkind == HITKIND_DAMAGE)
         {
-            if ((eventData->cpu_hitnum < EvFreeOptions_CPU[OPTCPU_CTRHITS].option_val) || (eventData->cpu_sincehit < EvFreeOptions_CPU[OPTCPU_CTRFRAMES].option_val))
+            if ((eventData->cpu_hitnum < LabOptions_CPU[OPTCPU_CTRHITS].option_val) || (eventData->cpu_sincehit < LabOptions_CPU[OPTCPU_CTRFRAMES].option_val))
             {
                 break;
             }
@@ -2620,12 +2620,12 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             // get counter action
             if (cpu_data->air_state == 0 || (eventData->cpu_groundstate == 0)) // if am grounded or started grounded
             {
-                int grndCtr = EvFreeOptions_CPU[OPTCPU_CTRGRND].option_val;
+                int grndCtr = LabOptions_CPU[OPTCPU_CTRGRND].option_val;
                 action_id = GrAcLookup[grndCtr];
             }
             else if (cpu_data->air_state == 1) // only if in the air at the time of hitstun ending
             {
-                int airCtr = EvFreeOptions_CPU[OPTCPU_CTRAIR].option_val;
+                int airCtr = LabOptions_CPU[OPTCPU_CTRAIR].option_val;
                 action_id = AirAcLookup[airCtr];
             }
         }
@@ -2633,7 +2633,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
 
             // if the shield wasnt hit enough times, return to start
-            if (eventData->cpu_hitshieldnum < EvFreeOptions_CPU[OPTCPU_SHIELDHITS].option_val)
+            if (eventData->cpu_hitshieldnum < LabOptions_CPU[OPTCPU_SHIELDHITS].option_val)
             {
                 eventData->cpu_state = CPUSTATE_START;
                 goto CPULOGIC_START;
@@ -2641,13 +2641,13 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             }
 
             // if this isnt the frame to counter, do nothing
-            if (eventData->cpu_sincehit < EvFreeOptions_CPU[OPTCPU_CTRFRAMES].option_val)
+            if (eventData->cpu_sincehit < LabOptions_CPU[OPTCPU_CTRFRAMES].option_val)
             {
                 break;
             }
 
             // get action to perform
-            int shieldCtr = EvFreeOptions_CPU[OPTCPU_CTRSHIELD].option_val;
+            int shieldCtr = LabOptions_CPU[OPTCPU_CTRSHIELD].option_val;
             action_id = ShieldAcLookup[shieldCtr];
         }
         else
@@ -2726,7 +2726,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     }
 
     // update shield deterioration
-    int infShield = EvFreeOptions_CPU[OPTCPU_SHIELD].option_val;
+    int infShield = LabOptions_CPU[OPTCPU_SHIELD].option_val;
     if (infShield == 1)
     {
         if (eventData->cpu_hitshield == 0)
@@ -2763,7 +2763,7 @@ int Update_CheckPause()
     int isChange = 0;
 
     // check if enabled
-    if (EvFreeOptions_General[OPTGEN_FRAME].option_val == 1)
+    if (LabOptions_General[OPTGEN_FRAME].option_val == 1)
     {
         // check if unpaused
         if (update->pause_develop != 1)
@@ -2854,7 +2854,7 @@ void DIDraw_Update()
     };
 
     // if enabled and pause menu isnt shown, update di draw
-    if ((EvFreeOptions_General[OPTGEN_DI].option_val == 1)) //  && (Pause_CheckStatus(1) != 2)
+    if ((LabOptions_General[OPTGEN_DI].option_val == 1)) //  && (Pause_CheckStatus(1) != 2)
     {
         // loop through all fighters
         GOBJList *gobj_list = R13_PTR(GOBJLIST);
@@ -3265,7 +3265,7 @@ void DIDraw_GX()
 {
 
     // if toggle enabled
-    if (EvFreeOptions_General[OPTGEN_DI].option_val == 1)
+    if (LabOptions_General[OPTGEN_DI].option_val == 1)
     {
 
         // draw each
@@ -3302,7 +3302,7 @@ void Update_Camera()
 {
 
     // if camera is set to advanced
-    if (EvFreeOptions_General[OPTGEN_CAM].option_val == 3)
+    if (LabOptions_General[OPTGEN_CAM].option_val == 3)
     {
 
         // Get player gobj
@@ -3350,14 +3350,14 @@ void Update_Camera()
 
     return;
 }
-void EvFree_SelectCustomTDI(GOBJ *menu_gobj)
+void Lab_SelectCustomTDI(GOBJ *menu_gobj)
 {
     MenuData *menu_data = menu_gobj->userdata;
     EventMenu *curr_menu = menu_data->currMenu;
     evMenu *menuAssets = event_vars->menu_assets;
     GOBJ *event_gobj = event_vars->event_gobj;
     LCancelData *event_data = event_gobj->userdata;
-    evLcAssets *evFreeAssets = event_data->assets;
+    evLcAssets *LabAssets = event_data->assets;
 
     // set menu state to wait
     //curr_menu->state = EMSTATE_WAIT;
@@ -3528,9 +3528,9 @@ GOBJ *Record_Init()
     rec_state.is_exist = 0;
 
     // disable menu options
-    for (int i = 1; i < sizeof(EvFreeOptions_Record) / sizeof(EventOption); i++)
+    for (int i = 1; i < sizeof(LabOptions_Record) / sizeof(EventOption); i++)
     {
-        EvFreeOptions_Record[i].disable = 1;
+        LabOptions_Record[i].disable = 1;
     }
 
     // init savestate struct
@@ -3556,7 +3556,7 @@ void Record_CObjThink(GOBJ *gobj)
 {
 
     // hide UI if set to off
-    if ((rec_state.is_exist == 1) && ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val != 0) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val != 0)))
+    if ((rec_state.is_exist == 1) && ((LabOptions_Record[OPTREC_CPUMODE].option_val != 0) || (LabOptions_Record[OPTREC_HMNMODE].option_val != 0)))
     {
         CObjThink_Common(gobj);
     }
@@ -3571,14 +3571,14 @@ void Record_GX(GOBJ *gobj, int pass)
     if (pass == 0)
     {
         // get hmn slot
-        int hmn_slot = EvFreeOptions_Record[OPTREC_HMNSLOT].option_val;
+        int hmn_slot = LabOptions_Record[OPTREC_HMNSLOT].option_val;
         if (hmn_slot == 0) // use random slot
             hmn_slot = rec_data.hmn_rndm_slot;
         else
             hmn_slot--;
 
         // get cpu slot
-        int cpu_slot = EvFreeOptions_Record[OPTREC_CPUSLOT].option_val;
+        int cpu_slot = LabOptions_Record[OPTREC_CPUSLOT].option_val;
         if (cpu_slot == 0) // use random slot
             cpu_slot = rec_data.cpu_rndm_slot;
         else
@@ -3624,7 +3624,7 @@ void Record_GX(GOBJ *gobj, int pass)
         int end_frame = rec_start + input_data->num;
 
         // hide seek bar during recording
-        if ((EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 2) || (EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 1))
+        if ((LabOptions_Record[OPTREC_CPUMODE].option_val == 2) || (LabOptions_Record[OPTREC_HMNMODE].option_val == 1))
         {
             JOBJ_SetFlags(seek, JOBJ_HIDDEN);
 
@@ -3694,14 +3694,14 @@ void Record_Think(GOBJ *rec_gobj)
 {
 
     // get hmn slot
-    int hmn_slot = EvFreeOptions_Record[OPTREC_HMNSLOT].option_val;
+    int hmn_slot = LabOptions_Record[OPTREC_HMNSLOT].option_val;
     if (hmn_slot == 0) // use random slot
         hmn_slot = rec_data.hmn_rndm_slot;
     else
         hmn_slot--;
 
     // get cpu slot
-    int cpu_slot = EvFreeOptions_Record[OPTREC_CPUSLOT].option_val;
+    int cpu_slot = LabOptions_Record[OPTREC_CPUSLOT].option_val;
     if (cpu_slot == 0) // use random slot
         cpu_slot = rec_data.cpu_rndm_slot;
     else
@@ -3723,14 +3723,14 @@ void Record_Think(GOBJ *rec_gobj)
         if ((input_num != 0) && (local_frame >= input_num))
         {
             // only if in playback
-            if ((EvFreeOptions_Record[OPTREC_HMNMODE].option_val == 2) || (EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 3))
+            if ((LabOptions_Record[OPTREC_HMNMODE].option_val == 2) || (LabOptions_Record[OPTREC_CPUMODE].option_val == 3))
             {
 
                 // init flag
                 int is_loop = 0;
 
                 // check to auto reset
-                if ((EvFreeOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
+                if ((LabOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
                     event_vars->Savestate_Load(&rec_state);
                     event_vars->game_timer = rec_state.frame + 1;
@@ -3738,7 +3738,7 @@ void Record_Think(GOBJ *rec_gobj)
                 }
 
                 // check to loop inputs
-                else if ((EvFreeOptions_Record[OPTREC_LOOP].option_val == 1))
+                else if ((LabOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
                     event_vars->game_timer = rec_state.frame + 1;
                     is_loop = 1;
@@ -3748,11 +3748,11 @@ void Record_Think(GOBJ *rec_gobj)
                 if (is_loop == 1)
                 {
                     // re-roll random slot
-                    if (EvFreeOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+                    if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
                     {
                         rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
                     }
-                    if (EvFreeOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+                    if (LabOptions_Record[OPTREC_CPUSLOT].option_val == 0)
                     {
                         rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
                     }
@@ -3761,12 +3761,12 @@ void Record_Think(GOBJ *rec_gobj)
         }
 
         // check record mode for HMN
-        int hmn_mode = EvFreeOptions_Record[OPTREC_HMNMODE].option_val;
+        int hmn_mode = LabOptions_Record[OPTREC_HMNMODE].option_val;
         if (hmn_mode > 0) // adjust mode
             hmn_mode++;
         Record_Update(0, hmn_inputs, hmn_mode);
         // check record mode for CPU
-        int cpu_mode = EvFreeOptions_Record[OPTREC_CPUMODE].option_val;
+        int cpu_mode = LabOptions_Record[OPTREC_CPUMODE].option_val;
         Record_Update(1, cpu_inputs, cpu_mode);
     }
 
@@ -4031,7 +4031,7 @@ void CustomTDI_Destroy(GOBJ *gobj)
     MenuData *menu_data = event_vars->menu_gobj->userdata;
 
     // set TDI to custom
-    EvFreeOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
+    LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
 
     // free text
     Text_FreeText(tdi_data->text_curr);
@@ -4118,11 +4118,11 @@ void Event_Think(GOBJ *event)
     HSD_Pad *pad = PadGet(hmn_data->player_controller_number, PADGET_ENGINE);
 
     // update menu's percent
-    EvFreeOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
-    EvFreeOptions_CPU[OPTCPU_PCNT].option_val = cpu_data->damage_Percent;
+    LabOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
+    LabOptions_CPU[OPTCPU_PCNT].option_val = cpu_data->damage_Percent;
 
     // reset stale moves
-    if (EvFreeOptions_General[OPTGEN_STALE].option_val == 0)
+    if (LabOptions_General[OPTGEN_STALE].option_val == 0)
     {
         for (int i = 0; i < 6; i++)
         {
@@ -4138,7 +4138,7 @@ void Event_Think(GOBJ *event)
     }
 
     // apply intangibility
-    if (EvFreeOptions_CPU[OPTCPU_INTANG].option_val == 1)
+    if (LabOptions_CPU[OPTCPU_INTANG].option_val == 1)
     {
         cpu_data->no_reaction_always = 1;
         cpu_data->nudge_disable = 1;
@@ -4206,7 +4206,7 @@ void Event_Think(GOBJ *event)
     }
 
     // Adjust control of fighters
-    switch (EvFreeOptions_Record[OPTREC_CPUMODE].option_val)
+    switch (LabOptions_Record[OPTREC_CPUMODE].option_val)
     {
     case RECMODE_OFF:
     {
@@ -4246,10 +4246,10 @@ void Event_Think(GOBJ *event)
     }
 
     // CPU Think if not using recording
-    if (EvFreeOptions_Record[OPTREC_CPUMODE].option_val == 0)
+    if (LabOptions_Record[OPTREC_CPUMODE].option_val == 0)
         LCancel_CPUThink(event, hmn, cpu);
 
     return;
 }
 // Initial Menu
-static EventMenu *Event_Menu = &EvFreeMenu_Main;
+static EventMenu *Event_Menu = &LabMenu_Main;
