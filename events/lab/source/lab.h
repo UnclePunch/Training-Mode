@@ -135,6 +135,18 @@ typedef struct RecData
     float seek_left;
     float seek_right;
 } RecData;
+typedef struct RecordingSavestate
+{
+    u8 is_exist;
+    int frame;
+    FtState ft_state[6];
+} RecordingSavestate;
+typedef struct RecordingSave
+{
+    RecordingSavestate savestate;
+    RecInputData hmn_inputs[REC_SLOTS];
+    RecInputData cpu_inputs[REC_SLOTS];
+} RecordingSave;
 
 void Event_Init(GOBJ *gobj);
 void Event_Update();

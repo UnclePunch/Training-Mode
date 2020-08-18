@@ -1251,6 +1251,94 @@ static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static SaveState rec_state;
 
+// lz77 functions courtesy of https://github.com/andyherbert/lz1
+int x_to_the_n(int x, int n)
+{
+    int i; /* Variable used in loop counter */
+    int number = 1;
+
+    for (i = 0; i < n; ++i)
+        number *= x;
+
+    return (number);
+}
+u32 lz77_compress(u8 *uncompressed_text, u32 uncompressed_size, u8 *compressed_text, u8 pointer_length_width)
+{
+    u16 pointer_pos, temp_pointer_pos, output_pointer, pointer_length, temp_pointer_length;
+    u32 compressed_pointer, output_size, coding_pos, output_lookahead_ref, look_behind, look_ahead;
+    u16 pointer_pos_max, pointer_length_max;
+    pointer_pos_max = x_to_the_n(2, 16 - pointer_length_width);
+    pointer_length_max = x_to_the_n(2, pointer_length_width);
+
+    *((u32 *)compressed_text) = uncompressed_size;
+    *(compressed_text + 4) = pointer_length_width;
+    compressed_pointer = output_size = 5;
+
+    for (coding_pos = 0; coding_pos < uncompressed_size; ++coding_pos)
+    {
+        pointer_pos = 0;
+        pointer_length = 0;
+        for (temp_pointer_pos = 1; (temp_pointer_pos < pointer_pos_max) && (temp_pointer_pos <= coding_pos); ++temp_pointer_pos)
+        {
+            look_behind = coding_pos - temp_pointer_pos;
+            look_ahead = coding_pos;
+            for (temp_pointer_length = 0; uncompressed_text[look_ahead++] == uncompressed_text[look_behind++]; ++temp_pointer_length)
+                if (temp_pointer_length == pointer_length_max)
+                    break;
+            if (temp_pointer_length > pointer_length)
+            {
+                pointer_pos = temp_pointer_pos;
+                pointer_length = temp_pointer_length;
+                if (pointer_length == pointer_length_max)
+                    break;
+            }
+        }
+        coding_pos += pointer_length;
+        if ((coding_pos == uncompressed_size) && pointer_length)
+        {
+            output_pointer = (pointer_length == 1) ? 0 : ((pointer_pos << pointer_length_width) | (pointer_length - 2));
+            output_lookahead_ref = coding_pos - 1;
+        }
+        else
+        {
+            output_pointer = (pointer_pos << pointer_length_width) | (pointer_length ? (pointer_length - 1) : 0);
+            output_lookahead_ref = coding_pos;
+        }
+        *((u16 *)(compressed_text + compressed_pointer)) = output_pointer;
+        compressed_pointer += 2;
+        *(compressed_text + compressed_pointer++) = *(uncompressed_text + output_lookahead_ref);
+        output_size += 3;
+    }
+
+    return output_size;
+}
+u32 lz77_decompress(u8 *compressed_text, u8 *uncompressed_text)
+{
+    u8 pointer_length_width;
+    u16 input_pointer, pointer_length, pointer_pos, pointer_length_mask;
+    u32 compressed_pointer, coding_pos, pointer_offset, uncompressed_size;
+
+    uncompressed_size = *((u32 *)compressed_text);
+    pointer_length_width = *(compressed_text + 4);
+    compressed_pointer = 5;
+
+    pointer_length_mask = x_to_the_n(2, pointer_length_width) - 1;
+
+    for (coding_pos = 0; coding_pos < uncompressed_size; ++coding_pos)
+    {
+        input_pointer = *((u16 *)(compressed_text + compressed_pointer));
+        compressed_pointer += 2;
+        pointer_pos = input_pointer >> pointer_length_width;
+        pointer_length = pointer_pos ? ((input_pointer & pointer_length_mask) + 1) : 0;
+        if (pointer_pos)
+            for (pointer_offset = coding_pos - pointer_pos; pointer_length > 0; --pointer_length)
+                uncompressed_text[coding_pos++] = uncompressed_text[pointer_offset++];
+        *(uncompressed_text + coding_pos) = *(compressed_text + compressed_pointer++);
+    }
+
+    return coding_pos;
+}
+
 // Menu Callbacks
 void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value)
 {
@@ -1540,6 +1628,33 @@ void Record_InitState(GOBJ *menu_gobj)
 void Record_RestoreState(GOBJ *menu_gobj)
 {
     event_vars->Savestate_Load(&rec_state);
+
+    // debug compression
+    blr();
+    RecordingSave *rec_save = calloc(sizeof(RecordingSave));
+    rec_save->savestate.frame = rec_state.frame;
+    rec_save->savestate.is_exist = rec_state.is_exist;
+    // copy ft_states
+    for (int i = 0; i < 6; i++)
+    {
+        if (event_vars->savestate->ft_state[i] != 0)
+            memcpy(&rec_save->savestate.ft_state[i], rec_state.ft_state[i], sizeof(FtState));
+    }
+    // copy recordings
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
+        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
+    }
+    u8 *rec_compress = calloc(sizeof(RecordingSave));
+    int pre_tick = OSGetTick();
+    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
+    int post_tick = OSGetTick();
+    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
+    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2f%%\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)compress_size / (float)sizeof(RecordingSave)) * 100, time_dif);
+    HSD_Free(rec_compress);
+    HSD_Free(rec_save);
+
     return;
 }
 void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
