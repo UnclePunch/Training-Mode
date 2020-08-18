@@ -1062,7 +1062,7 @@ static EventOption LabOptions_CPU[] = {
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(LabValues_GrabEscape) / 4,               // number of values for this option
-        .option_val = 1,                                             // value of this option
+        .option_val = CPUMASH_HIGH,                                  // value of this option
         .menu = 0,                                                   // pointer to the menu that pressing A opens
         .option_name = "Grab Escape",                                // pointer to a string
         .desc = "Adjust how the CPU will attempt to escape\ngrabs.", // string describing what this option does
