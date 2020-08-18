@@ -1256,11 +1256,11 @@ void EventLoad()
     EventInfo *eventInfo = GetEvent(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
+    blr();
     // append extension
-    static char *extension = ".dat";
+    static char *extension = "%s.dat";
     char *buffer[20];
-    strcpy(buffer, eventInfo->eventFile);
-    strcat(buffer, extension);
+    sprintf(buffer, extension, eventInfo->eventFile);
 
     // load this events file
     ArchiveInfo *archive = MEX_LoadRelArchive(buffer, evFunction, "evFunction");
