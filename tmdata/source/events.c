@@ -1623,7 +1623,7 @@ int Savestate_Save(SaveState *savestate)
         // play sfx
         SFX_PlayCommon(1);
 
-        // if not in frame advance, flash screen. I wrote it like this because the second condition kept getting optimizing out...
+        // if not in frame advance, flash screen. I wrote it like this because the second condition kept getting optimized out
         if ((Pause_CheckStatus(0) != 1))
         {
             if ((Pause_CheckStatus(1) != 2))
@@ -1773,23 +1773,22 @@ int Savestate_Load(SaveState *savestate)
             }
 
             // check to recreate HUD
-            MatchHUD *huds = MATCH_HUD;
-            MatchHUD *hud = &huds[i];
+            MatchHUD *hud = &stc_matchhud[i];
+
+            // check if fighter is perm dead
             if (Match_CheckIfStock() == 1)
             {
                 // remove HUD if no stocks left
                 if (Fighter_GetStocks(i) <= 0)
                 {
-                    hud->is_exist = 0;
+                    hud->is_removed = 0;
                 }
             }
-            else
+
+            // check to create it
+            if (hud->is_removed == 1)
             {
-                // check to create it
-                if (hud->is_exist == 1)
-                {
-                    Match_CreateHUD(i);
-                }
+                Match_CreateHUD(i);
             }
 
             // snap camera to the new positions

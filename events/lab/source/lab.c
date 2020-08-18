@@ -2360,8 +2360,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     case (CPUSTATE_GRABBED):
     CPULOGIC_GRABBED:
     {
-        blr();
-
         // if no longer being grabbed, exit
         if (CPU_IsGrabbed(cpu) == 0)
         {
