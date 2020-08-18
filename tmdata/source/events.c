@@ -1256,7 +1256,6 @@ void EventLoad()
     EventInfo *eventInfo = GetEvent(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
-    blr();
     // append extension
     static char *extension = "%s.dat";
     char *buffer[20];

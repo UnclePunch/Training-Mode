@@ -965,6 +965,7 @@ static char **LabValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack
 static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
 static char **LabValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
 static char **LabValues_CounterShield[] = {"None", "Grab", "Jump", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
+static char **LabValues_GrabEscape[] = {"None", "Medium", "High", "Perfect"};
 static EventOption LabOptions_CPU[] = {
     // cpu percent
     {
@@ -1056,6 +1057,16 @@ static EventOption LabOptions_CPU[] = {
         .option_name = "Get Up Option",                                     // pointer to a string
         .desc = "Adjust what the CPU will do after missing\na tech input.", // string describing what this option does
         .option_values = LabValues_Getup,                                   // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_GrabEscape) / 4,               // number of values for this option
+        .option_val = 1,                                             // value of this option
+        .menu = 0,                                                   // pointer to the menu that pressing A opens
+        .option_name = "Grab Escape",                                // pointer to a string
+        .desc = "Adjust how the CPU will attempt to escape\ngrabs.", // string describing what this option does
+        .option_values = LabValues_GrabEscape,                       // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1759,14 +1770,14 @@ void InfoDisplay_Think(GOBJ *gobj)
                 // display info
                 else
                 {
-                    switch (value - 1)
+                    switch (value)
                     {
-                    case (0):
+                    case (INFDISPROW_POS):
                     {
                         Text_SetText(text, i, "Pos: (%+.3f , %+.3f)", fighter_data->pos.X, fighter_data->pos.Y);
                         break;
                     }
-                    case (1):
+                    case (INFDISPROW_STATE):
                     {
                         if (fighter_data->anim_id != -1)
                         {
@@ -1809,7 +1820,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                             Text_SetText(text, i, "State: %s", "Unknown");
                         break;
                     }
-                    case (2):
+                    case (INFDISPROW_FRAME):
                     {
                         float *animStruct = fighter_data->anim_curr_flags_ptr;
 
@@ -1826,60 +1837,60 @@ void InfoDisplay_Think(GOBJ *gobj)
                         Text_SetText(text, i, "State Frame: %d/%d", frameCurr, frameTotal);
                         break;
                     }
-                    case (3):
+                    case (INFDISPROW_SELFVEL):
                     {
                         Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
                         break;
                     }
-                    case (4):
+                    case (INFDISPROW_KBVEL):
                     {
                         Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
                         break;
                     }
-                    case (5):
+                    case (INFDISPROW_TOTALVEL):
                     {
                         Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
                         break;
                     }
-                    case (6):
+                    case (INFDISPROW_ENGLSTICK):
                     {
                         Text_SetText(text, i, "LStick:      (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
                         break;
                     }
-                    case (7):
+                    case (INFDISPROW_SYSLSTICK):
                     {
                         HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
                         Text_SetText(text, i, "LStick Sys: (%+.4f , %+.4f)", pad->fstickX, pad->fstickY);
                         break;
                     }
-                    case (8):
+                    case (INFDISPROW_ENGCSTICK):
                     {
                         Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
                         break;
                     }
-                    case (9):
+                    case (INFDISPROW_SYSCSTICK):
                     {
                         HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
                         Text_SetText(text, i, "CStick Sys: (%+.4f , %+.4f)", pad->fsubstickX, pad->fsubstickY);
                         break;
                     }
-                    case (10):
+                    case (INFDISPROW_ENGTRIGGER):
                     {
                         Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input_trigger);
                         break;
                     }
-                    case (11):
+                    case (INFDISPROW_SYSTRIGGER):
                     {
                         HSD_Pad *pad = PadGet(ply, PADGET_MASTER);
                         Text_SetText(text, i, "Trigger Sys: (%+.3f , %+.3f)", pad->ftriggerLeft, pad->ftriggerRight);
                         break;
                     }
-                    case (12):
+                    case (INFDISPROW_LEDGECOOLDOWN):
                     {
                         Text_SetText(text, i, "Ledgegrab Timer: %d", fighter_data->ledge_cooldown);
                         break;
                     }
-                    case (13):
+                    case (INFDISPROW_INTANGREMAIN):
                     {
                         int intang = fighter_data->respawn_intang_left;
                         if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
@@ -1888,12 +1899,12 @@ void InfoDisplay_Think(GOBJ *gobj)
                         Text_SetText(text, i, "Intangibility Timer: %d", intang);
                         break;
                     }
-                    case (14):
+                    case (INFDISPROW_HITSTOP):
                     {
                         Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
                         break;
                     }
-                    case (15):
+                    case (INFDISPROW_HITSTUN):
                     {
                         // get hitstun
                         float hitstun = 0;
@@ -1903,12 +1914,12 @@ void InfoDisplay_Think(GOBJ *gobj)
                         Text_SetText(text, i, "Hitstun: %.0f", hitstun);
                         break;
                     }
-                    case (16):
+                    case (INFDISPROW_SHIELDHEALTH):
                     {
                         Text_SetText(text, i, "Shield Health: %.3f", fighter_data->shield_health);
                         break;
                     }
-                    case (17):
+                    case (INFDISPROW_SHIELDSTUN):
                     {
                         int stunTotal = 0;
                         int stunLeft = 0;
@@ -1930,7 +1941,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                         Text_SetText(text, i, "Shield Stun: %d/%d", stunLeft, stunTotal);
                         break;
                     }
-                    case (18):
+                    case (INFDISPROW_GRIP):
                     {
                         float grip = 0;
                         if (fighter_data->grab_victim != 0)
@@ -1943,32 +1954,32 @@ void InfoDisplay_Think(GOBJ *gobj)
                         Text_SetText(text, i, "Grip Strength: %.0f", grip);
                         break;
                     }
-                    case (19):
+                    case (INFDISPROW_ECBLOCK):
                     {
                         Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
                         break;
                     }
-                    case (20):
+                    case (INFDISPROW_ECBBOT):
                     {
                         Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_bot.Y);
                         break;
                     }
-                    case (21):
+                    case (INFDISPROW_JUMPS):
                     {
                         Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
                         break;
                     }
-                    case (22):
+                    case (INFDISPROW_WALLJUMPS):
                     {
                         Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
                         break;
                     }
-                    case (23):
+                    case (INFDISPROW_JAB):
                     {
                         Text_SetText(text, i, "Jab Counter: IDK");
                         break;
                     }
-                    case (24):
+                    case (INFDISPROW_LINE):
                     {
                         CollData *colldata = &fighter_data->collData;
                         int ground = -1;
@@ -1988,13 +1999,13 @@ void InfoDisplay_Think(GOBJ *gobj)
                         Text_SetText(text, i, "Lines: G:%d, C:%d, L:%d, R:%d,", ground, ceil, left, right);
                         break;
                     }
-                    case (25):
+                    case (INFDISPROW_BLASTLR):
                     {
                         Stage *stage = STAGE;
                         Text_SetText(text, i, "Blastzone L/R: (%+.3f,%+.3f)", stage->blastzoneLeft, stage->blastzoneRight);
                         break;
                     }
-                    case (26):
+                    case (INFDISPROW_BLASTUD):
                     {
                         Stage *stage = STAGE;
                         Text_SetText(text, i, "Blastzone U/D: (%.2f,%.2f)", stage->blastzoneTop, stage->blastzoneBottom);
@@ -2105,6 +2116,19 @@ int CPU_IsThrown(GOBJ *cpu)
         is_thrown = 1;
 
     return is_thrown;
+}
+int CPU_IsGrabbed(GOBJ *cpu)
+{
+    FighterData *cpu_data = cpu->userdata;
+
+    int is_grabbed = 0;
+    int cpu_state = cpu_data->state_id;
+
+    // check if thrown
+    if ((cpu_state == ASID_CAPTUREWAITHI) || (cpu_state == ASID_CAPTUREWAITLW) || (cpu_state == ASID_CAPTUREWAITKOOPA) || (cpu_state == ASID_CAPTUREWAITKOOPAAIR) || (cpu_state == ASID_CAPTUREWAITKIRBY) || (cpu_state == ASID_DAMAGEICE) || (cpu_state == ASID_CAPTUREMASTERHAND) || (cpu_state == ASID_YOSHIEGG) || (cpu_state == ASID_CAPTUREKIRBYYOSHI) || (cpu_state == ASID_KIRBYYOSHIEGG) || (cpu_state == ASID_CAPTURELEADEAD) || (cpu_state == ASID_CAPTURELIKELIKE) || (cpu_state == ASID_CAPTUREWAITCRAZYHAND) || ((cpu_state >= ASID_SHOULDEREDWAIT) && (cpu_state <= ASID_SHOULDEREDTURN)))
+        is_grabbed = 1;
+
+    return is_grabbed;
 }
 int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
 {
@@ -2233,6 +2257,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     cpu_data->cpu.ai = 15;
 
     // ALWAYS CHECK FOR X AND OVERRIDE STATE
+
     // check if damaged
     if (cpu_data->hitstun == 1)
     {
@@ -2241,11 +2266,17 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         eventData->cpu_state = CPUSTATE_SDI;
         Fighter_ZeroCPUInputs(cpu_data);
     }
+    // check if being held in a grab
+    if (CPU_IsGrabbed(cpu) == 1)
+    {
+        eventData->cpu_state = CPUSTATE_GRABBED;
+    }
     // check if being thrown
     if (CPU_IsThrown(cpu) == 1)
     {
         eventData->cpu_state = CPUSTATE_TDI;
     }
+    // check for shield hit
     if ((cpu_state == ASID_GUARDSETOFF) || ((cpu_data->kind == 0xE) && (cpu_state == 344)))
     {
         Fighter_ZeroCPUInputs(cpu_data);
@@ -2262,10 +2293,13 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         // go to Shield state
         //eventData->cpu_state = CPUSTATE_SHIELD;
     }
+    // check for missed tech
     if ((cpu_state == ASID_DOWNBOUNDD) || (cpu_state == ASID_DOWNBOUNDU) || (cpu_state == ASID_DOWNWAITU) || (cpu_state == ASID_DOWNWAITD) || (cpu_state == ASID_PASSIVE) || (cpu_state == ASID_PASSIVESTANDB) || (cpu_state == ASID_PASSIVESTANDF))
         eventData->cpu_state = CPUSTATE_GETUP;
+    // check for cliffgrab
     if ((cpu_state == ASID_CLIFFWAIT))
         eventData->cpu_state = CPUSTATE_RECOVER;
+    // check if dead
     if (cpu_data->dead == 1)
         goto CPUSTATE_ENTERSTART;
 
@@ -2323,6 +2357,72 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         break;
     }
 
+    case (CPUSTATE_GRABBED):
+    CPULOGIC_GRABBED:
+    {
+        blr();
+
+        // if no longer being grabbed, exit
+        if (CPU_IsGrabbed(cpu) == 0)
+        {
+            eventData->cpu_state = CPUSTATE_RECOVER;
+            goto CPULOGIC_RECOVER;
+        }
+
+        switch (LabOptions_CPU[OPTCPU_MASH].option_val)
+        {
+        case (CPUMASH_NONE):
+        {
+            Fighter_ZeroCPUInputs(cpu_data);
+            break;
+        }
+        case (CPUMASH_MED):
+        {
+            if (HSD_Randi(100) <= CPUMASHRNG_MED)
+            {
+                // remove last frame inputs
+                cpu_data->input_held = 0;
+                cpu_data->input_lstick_x = 0;
+                cpu_data->input_lstick_y = 0;
+
+                // input
+                cpu_data->cpu.held = PAD_BUTTON_A;
+                cpu_data->cpu.lstickX = 127;
+            }
+            break;
+        }
+        case (CPUMASH_HIGH):
+        {
+            if (HSD_Randi(100) <= CPUMASHRNG_HIGH)
+            {
+                // remove last frame inputs
+                cpu_data->input_held = 0;
+                cpu_data->input_lstick_x = 0;
+                cpu_data->input_lstick_y = 0;
+
+                // input
+                cpu_data->cpu.held = PAD_BUTTON_A;
+                cpu_data->cpu.lstickX = 127;
+            }
+            break;
+        }
+        case (CPUMASH_PERFECT):
+        {
+            // remove last frame inputs
+            cpu_data->input_held = 0;
+            cpu_data->input_lstick_x = 0;
+            cpu_data->input_lstick_y = 0;
+
+            // input
+            cpu_data->cpu.held = PAD_BUTTON_A;
+            cpu_data->cpu.lstickX = 127;
+            break;
+        }
+        }
+
+        break;
+    }
+
     case (CPUSTATE_SDI):
     CPULOGIC_SDI:
     {
@@ -2367,8 +2467,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             eventData->cpu_state = CPUSTATE_TECH;
             goto CPULOGIC_TECH;
         }
-
-        blr();
 
         // get knockback value
         float kb_angle;
