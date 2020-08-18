@@ -1823,16 +1823,19 @@ void InfoDisplay_Think(GOBJ *gobj)
                     case (INFDISPROW_FRAME):
                     {
                         float *animStruct = fighter_data->anim_curr_flags_ptr;
+                        int frameCurr = 0;
+                        int frameTotal = 0;
 
-                        // determine how many frames shield stun is
-                        float animFrameTotal = animStruct[2];
-                        float animFrameCurr = fighter_data->stateFrame;
-                        float animSpeed = fighter_data->stateSpeed;
-                        int frameTotal = (animFrameTotal / animSpeed);
-                        int frameCurr = (animFrameCurr / animSpeed);
-                        // 1 index
-                        frameTotal;
-                        frameCurr;
+                        // if exists
+                        if (animStruct != 0)
+                        {
+                            // determine how many frames shield stun is
+                            float animFrameTotal = animStruct[2];
+                            float animFrameCurr = fighter_data->stateFrame;
+                            float animSpeed = fighter_data->stateSpeed;
+                            frameTotal = (animFrameTotal / animSpeed);
+                            frameCurr = (animFrameCurr / animSpeed);
+                        }
 
                         Text_SetText(text, i, "State Frame: %d/%d", frameCurr, frameTotal);
                         break;
