@@ -1234,6 +1234,26 @@ static EventOption LabOptions_Record[] = {
         .option_values = LabOptions_OffOn,                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
+    {
+        .option_kind = OPTKIND_FUNC,   // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                // number of values for this option
+        .option_val = 0,               // value of this option
+        .menu = 0,                     // pointer to the menu that pressing A opens
+        .option_name = "Memcard Save", // pointer to a string
+        .desc = "",                    // string describing what this option does
+        .option_values = 0,            // pointer to an array of strings
+        .onOptionSelect = Recording_MemcardSave,
+    },
+    {
+        .option_kind = OPTKIND_FUNC,   // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                // number of values for this option
+        .option_val = 0,               // value of this option
+        .menu = 0,                     // pointer to the menu that pressing A opens
+        .option_name = "Memcard Load", // pointer to a string
+        .desc = "",                    // string describing what this option does
+        .option_values = 0,            // pointer to an array of strings
+        .onOptionSelect = Recording_MemcardLoad,
+    },
 };
 static EventMenu LabMenu_Record = {
     .name = "Recording",                                           // the name of this menu
@@ -1250,6 +1270,9 @@ static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static SaveState rec_state;
+static int save_id = 0x00D0C0DE;
+static char stc_save_name[32] = "Training Mode Input Recording   ";
+static char *stc_save_desc = "%d/%d/%d %d:%2d";
 
 // lz77 functions courtesy of https://github.com/andyherbert/lz1
 int x_to_the_n(int x, int n)
@@ -1338,6 +1361,157 @@ u32 lz77_decompress(u8 *compressed_text, u8 *uncompressed_text)
 
     return coding_pos;
 }
+void Recording_MemcardSave(GOBJ *menu_gobj)
+{
+    // debug compression
+    blr();
+    RecordingSave *rec_save = calloc(sizeof(RecordingSave));
+    rec_save->savestate.frame = rec_state.frame;
+    rec_save->savestate.is_exist = rec_state.is_exist;
+    // copy ft_states
+    for (int i = 0; i < 6; i++)
+    {
+        if (event_vars->savestate->ft_state[i] != 0)
+            memcpy(&rec_save->savestate.ft_state[i], rec_state.ft_state[i], sizeof(FtState));
+    }
+    // copy recordings
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
+        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
+    }
+    u8 *rec_compress = calloc(sizeof(RecordingSave));
+    int pre_tick = OSGetTick();
+    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
+    int post_tick = OSGetTick();
+    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
+    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2f%%\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)compress_size / (float)sizeof(RecordingSave)) * 100, time_dif);
+
+    Memcard_UpdateSnapshotList(0);
+
+    // search for snapshot with ID 26cf6cf5
+    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
+    {
+        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
+
+        // delete existing
+        if (snap_info->snap_id == save_id)
+        {
+            // delete it
+            Memcard_DeleteSnapshot(0, i);
+            while (Memcard_CheckStatus() == 11)
+            {
+            }
+        }
+    }
+
+    // get curr date
+    OSCalendarTime td;
+    OSTicksToCalendarTime(OSGetTime(), &td);
+    sprintf(stc_memcard_info->file_desc, stc_save_desc, td.mon + 1, td.mday, td.year, td.hour, td.min);
+    memcpy(stc_memcard_info->file_name, &stc_save_name, sizeof(stc_save_name));
+
+    // setup save
+    char *save_id_string[32];
+    sprintf(save_id_string, "%d", save_id);
+    MemcardSave memcard_save;
+    memcard_save.data = rec_compress;
+    memcard_save.x4 = 3;
+    memcard_save.size = compress_size;
+    memcard_save.xc = -1;
+    Memcard_CreateSnapshot(0, save_id_string, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+
+    // wait to load
+    while (Memcard_CheckStatus() == 11)
+    {
+    }
+
+    HSD_Free(rec_compress);
+    HSD_Free(rec_save);
+
+    return;
+}
+void Recording_MemcardLoad(GOBJ *menu_gobj)
+{
+    Memcard_UpdateSnapshotList(0);
+
+    // search for snapshot with ID 0x00D0C0DE
+    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
+    {
+        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
+        if (snap_info->snap_id == save_id)
+        {
+            // setup load
+            char *save_id_string[32];
+            sprintf(save_id_string, "%d", save_id);
+            int save_size = snap_info->block_size * 8192;
+            MemcardSave memcard_save;
+            memcard_save.data = HSD_MemAlloc(save_size);
+            memcard_save.x4 = 3;
+            memcard_save.size = save_size;
+            memcard_save.xc = -1;
+            Memcard_LoadSnapshot(0, save_id_string, &memcard_save, &stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+
+            // wait to load
+            int memcard_status = Memcard_CheckStatus();
+            while (memcard_status == 11)
+            {
+                memcard_status = Memcard_CheckStatus();
+            }
+
+            // if file loaded successfully
+            if (memcard_status == 0)
+            {
+                // decompress
+                blr();
+                RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
+                lz77_decompress(memcard_save.data, rec_save);
+
+                rec_state.frame = rec_save->savestate.frame;
+                rec_state.is_exist = rec_save->savestate.is_exist;
+                // copy ft_states
+                for (int i = 0; i < 6; i++)
+                {
+                    FtState *ft_state = rec_state.ft_state[i];
+                    FtState *ft_state_loaded = &rec_save->savestate.ft_state[i];
+
+                    // free if exists
+                    if (ft_state != 0)
+                        HSD_Free(ft_state);
+
+                    // if restored savestate exists (this is shitty, need to refactor savestates to make this cleaner)
+                    if (ft_state_loaded->fighter_data[0].fighter != 0) // yuck yuck yuck
+                    {
+                        ft_state = HSD_MemAlloc(sizeof(FtState));
+                        memcpy(ft_state, ft_state_loaded, sizeof(FtState));
+
+                        rec_state.ft_state[i] = ft_state;
+                    }
+                }
+                // copy recordings
+                for (int i = 0; i < REC_SLOTS; i++)
+                {
+                    memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
+                    memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
+                }
+
+                HSD_Free(rec_save);
+
+                // init savestate
+                Record_OnSuccessfulSave();
+
+                // restore these positions
+                event_vars->Savestate_Load(&rec_state);
+            }
+
+            HSD_Free(memcard_save.data);
+
+            break;
+        }
+    }
+
+    return;
+}
 
 // Menu Callbacks
 void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value)
@@ -1372,7 +1546,6 @@ void Lab_ChangeCPUIntang(GOBJ *menu_gobj, int value)
 }
 void Lab_ChangeModelDisplay(GOBJ *menu_gobj, int value)
 {
-
     // loop through all fighters
     GOBJ **GOBJList = R13_PTR(-0x3E74);
     GOBJ *this_fighter = GOBJList[8];
@@ -1395,7 +1568,6 @@ void Lab_ChangeModelDisplay(GOBJ *menu_gobj, int value)
 }
 void Lab_ChangeHitDisplay(GOBJ *menu_gobj, int value)
 {
-
     // loop through all fighters
     GOBJ **GOBJList = R13_PTR(-0x3E74);
     GOBJ *this_fighter = GOBJList[8];
@@ -1423,7 +1595,6 @@ void Lab_ChangeEnvCollDisplay(GOBJ *menu_gobj, int value)
 }
 void Lab_ChangeCamMode(GOBJ *menu_gobj, int value)
 {
-
     MatchCamera *cam = MATCH_CAM;
 
     // normal cam
@@ -1596,64 +1767,13 @@ void Record_InitState(GOBJ *menu_gobj)
     if (event_vars->Savestate_Save(&rec_state))
     {
 
-        // enable other options
-        for (int i = 1; i < sizeof(LabOptions_Record) / sizeof(EventOption); i++)
-        {
-            LabOptions_Record[i].disable = 0;
-        }
-
-        // clear slots
-        for (int i = 0; i < REC_SLOTS; i++)
-        {
-            // clear data
-            memset(rec_data.hmn_inputs[i], 0, sizeof(RecInputData));
-            memset(rec_data.cpu_inputs[i], 0, sizeof(RecInputData));
-
-            // init frame this recording starts on
-            rec_data.hmn_inputs[i]->start_frame = -1;
-            rec_data.cpu_inputs[i]->start_frame = -1;
-        }
-
-        // init settings
-        LabOptions_Record[OPTREC_HMNMODE].option_val = 0; // set hmn to off
-        LabOptions_Record[OPTREC_HMNSLOT].option_val = 1; // set hmn to slot 1
-        LabOptions_Record[OPTREC_CPUMODE].option_val = 0; // set cpu to off
-        LabOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
-
-        // also save to personal savestate
-        event_vars->Savestate_Save(event_vars->savestate);
+        Record_OnSuccessfulSave();
     }
     return;
 }
 void Record_RestoreState(GOBJ *menu_gobj)
 {
     event_vars->Savestate_Load(&rec_state);
-
-    // debug compression
-    blr();
-    RecordingSave *rec_save = calloc(sizeof(RecordingSave));
-    rec_save->savestate.frame = rec_state.frame;
-    rec_save->savestate.is_exist = rec_state.is_exist;
-    // copy ft_states
-    for (int i = 0; i < 6; i++)
-    {
-        if (event_vars->savestate->ft_state[i] != 0)
-            memcpy(&rec_save->savestate.ft_state[i], rec_state.ft_state[i], sizeof(FtState));
-    }
-    // copy recordings
-    for (int i = 0; i < REC_SLOTS; i++)
-    {
-        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
-        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
-    }
-    u8 *rec_compress = calloc(sizeof(RecordingSave));
-    int pre_tick = OSGetTick();
-    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
-    int post_tick = OSGetTick();
-    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
-    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2f%%\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)compress_size / (float)sizeof(RecordingSave)) * 100, time_dif);
-    HSD_Free(rec_compress);
-    HSD_Free(rec_save);
 
     return;
 }
@@ -1707,7 +1827,6 @@ void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
 }
 void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
 {
-
     // upon changing to record
     if (value == 1)
     {
@@ -1727,7 +1846,6 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
 }
 void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
 {
-
     // upon changing to record
     if (value == 2)
     {
@@ -1835,7 +1953,6 @@ void InfoDisplay_GX(GOBJ *gobj, int pass)
 }
 void InfoDisplay_Think(GOBJ *gobj)
 {
-
     InfoDisplayData *idData = gobj->userdata;
     Text *text = idData->text;
     EventOption *idOptions = &LabOptions_InfoDisplay;
@@ -2162,7 +2279,6 @@ float Fighter_GetOpponentDir(FighterData *from, FighterData *to)
 }
 int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
 {
-
     static u8 grActionable[] = {ASID_WAIT, ASID_WALKSLOW, ASID_WALKMIDDLE, ASID_WALKFAST, ASID_RUN, ASID_SQUATWAIT, ASID_OTTOTTOWAIT, ASID_GUARD};
     static u8 airActionable[] = {ASID_JUMPF, ASID_JUMPB, ASID_JUMPAERIALF, ASID_JUMPAERIALB, ASID_FALL, ASID_FALLAERIALF, ASID_FALLAERIALB, ASID_DAMAGEFALL, ASID_DAMAGEFLYROLL, ASID_DAMAGEFLYTOP};
     static u8 airDamage[] = {ASID_DAMAGEFLYHI, ASID_DAMAGEFLYN, ASID_DAMAGEFLYLW, ASID_DAMAGEFLYTOP, ASID_DAMAGEFLYROLL, ASID_DAMAGEFALL};
@@ -2250,7 +2366,6 @@ int CPU_IsGrabbed(GOBJ *cpu)
 }
 int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
 {
-
     FighterData *cpu_data = cpu->userdata;
     FighterData *hmn_data = hmn->userdata;
 
@@ -3009,7 +3124,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
 }
 int Update_CheckPause()
 {
-
     HSD_Update *update = HSD_UPDATE;
     int isChange = 0;
 
@@ -3037,7 +3151,6 @@ int Update_CheckPause()
 }
 int Update_CheckAdvance()
 {
-
     static int timer = 0;
 
     HSD_Update *update = HSD_UPDATE;
@@ -3076,7 +3189,6 @@ int Update_CheckAdvance()
 }
 void DIDraw_Init()
 {
-
     // Create DIDraw GOBJ
     GOBJ *didraw_gobj = GObj_Create(0, 0, 0);
     // Add gxlink
@@ -3096,7 +3208,6 @@ void DIDraw_Init()
 }
 void DIDraw_Update()
 {
-
     static ECBBones ecb_bones_def = {
         .topY = 9,
         .botY = 2.5,
@@ -3514,7 +3625,6 @@ void DIDraw_Update()
 }
 void DIDraw_GX()
 {
-
     // if toggle enabled
     if (LabOptions_General[OPTGEN_DI].option_val == 1)
     {
@@ -3551,7 +3661,6 @@ void DIDraw_GX()
 }
 void Update_Camera()
 {
-
     // if camera is set to advanced
     if (LabOptions_General[OPTGEN_CAM].option_val == 3)
     {
@@ -3801,11 +3910,14 @@ GOBJ *Record_Init()
         rec_data.cpu_inputs[i]->start_frame = -1;
     }
 
+    // init memcard stuff
+    Memcard_InitUnk();
+    Memcard_InitSnapshotList(HSD_MemAlloc(2112), HSD_MemAlloc(256064));
+
     return rec_gobj;
 }
 void Record_CObjThink(GOBJ *gobj)
 {
-
     // hide UI if set to off
     if ((rec_state.is_exist == 1) && ((LabOptions_Record[OPTREC_CPUMODE].option_val != 0) || (LabOptions_Record[OPTREC_HMNMODE].option_val != 0)))
     {
@@ -3816,7 +3928,6 @@ void Record_CObjThink(GOBJ *gobj)
 }
 void Record_GX(GOBJ *gobj, int pass)
 {
-
     // update UI position
     // the reason im doing this here is because i want it to update in the menu
     if (pass == 0)
@@ -3943,7 +4054,6 @@ void Record_GX(GOBJ *gobj, int pass)
 }
 void Record_Think(GOBJ *rec_gobj)
 {
-
     // get hmn slot
     int hmn_slot = LabOptions_Record[OPTREC_HMNSLOT].option_val;
     if (hmn_slot == 0) // use random slot
@@ -4025,7 +4135,6 @@ void Record_Think(GOBJ *rec_gobj)
 }
 void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 {
-
     GOBJ *fighter = Fighter_GetGObj(ply);
     FighterData *fighter_data = fighter->userdata;
 
@@ -4149,7 +4258,6 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 }
 int Record_GetRandomSlot(RecInputData **input_data)
 {
-
     // create array of slots in use
     u8 slot_num = 0;
     u8 arr[REC_SLOTS];
@@ -4171,6 +4279,37 @@ int Record_GetRandomSlot(RecInputData **input_data)
 
     // get random slot in use
     return arr[(HSD_Randi(slot_num))];
+}
+void Record_OnSuccessfulSave()
+{
+    // enable other options
+    for (int i = 1; i < sizeof(LabOptions_Record) / sizeof(EventOption); i++)
+    {
+        LabOptions_Record[i].disable = 0;
+    }
+
+    // clear slots
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        // clear data
+        memset(rec_data.hmn_inputs[i], 0, sizeof(RecInputData));
+        memset(rec_data.cpu_inputs[i], 0, sizeof(RecInputData));
+
+        // init frame this recording starts on
+        rec_data.hmn_inputs[i]->start_frame = -1;
+        rec_data.cpu_inputs[i]->start_frame = -1;
+    }
+
+    // init settings
+    LabOptions_Record[OPTREC_HMNMODE].option_val = 0; // set hmn to off
+    LabOptions_Record[OPTREC_HMNSLOT].option_val = 1; // set hmn to slot 1
+    LabOptions_Record[OPTREC_CPUMODE].option_val = 0; // set cpu to off
+    LabOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
+
+    // also save to personal savestate
+    event_vars->Savestate_Save(event_vars->savestate);
+
+    return;
 }
 void CustomTDI_Update(GOBJ *gobj)
 {
@@ -4346,7 +4485,6 @@ void Event_Init(GOBJ *gobj)
 // Update Function
 void Event_Update()
 {
-
     // update DI draw
     DIDraw_Update();
 

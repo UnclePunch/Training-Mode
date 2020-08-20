@@ -171,6 +171,8 @@ void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value);
 void Record_ChangeHMNMode(GOBJ *menu_gobj, int value);
 void Record_ChangeCPUMode(GOBJ *menu_gobj, int value);
 void Record_ChangeSlot(GOBJ *menu_gobj, int value);
+void Recording_MemcardSave(GOBJ *menu_gobj);
+void Recording_MemcardLoad(GOBJ *menu_gobj);
 void Record_InitState(GOBJ *menu_gobj);
 void Record_RestoreState(GOBJ *menu_gobj);
 void Record_CObjThink(GOBJ *gobj);

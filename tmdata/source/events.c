@@ -2261,6 +2261,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             SFX_PlayCommon(1);
         }
 
+        /*
         // check to create a popup
         if ((currOption->option_kind == OPTKIND_STRING) || (currOption->option_kind == OPTKIND_INT))
         {
@@ -2296,6 +2297,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             // also play sfx
             SFX_PlayCommon(1);
         }
+        */
 
         // check to run a function
         if ((currOption->option_kind == OPTKIND_FUNC) && (currOption->onOptionSelect != 0))
