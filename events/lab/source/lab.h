@@ -143,6 +143,7 @@ typedef struct OptFtState
     float stateFrame;
     float stateSpeed;
     float stateBlend;
+    Vec4 XRotN_rot; // XRotN
     struct
     {                                                          //
         Vec3 animVel;                                          // 0x74

@@ -4746,7 +4746,7 @@ int Record_OptimizedSave()
                         ft_state->grab.grab_attacker = Record_GOBJToID(ft_state->grab.grab_attacker);
                         ft_state->grab.grab_victim = Record_GOBJToID(ft_state->grab.grab_victim);
 
-                        // convert pointers
+                        // convert hitbox pointers
                         for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
                         {
 
@@ -4770,6 +4770,13 @@ int Record_OptimizedSave()
                         {
 
                             ft_state->unk_hitbox.victims[k].victim_data = Record_FtDataToID(ft_state->unk_hitbox.victims[k].victim_data);
+                        }
+
+                        // copy XRotN rotation
+                        s8 XRotN_id = Fighter_BoneLookup(fighter_data, XRotN);
+                        if (XRotN_id != -1)
+                        {
+                            ft_state->XRotN_rot = fighter_data->bones[XRotN_id].joint->rot;
                         }
                     }
                 }
@@ -4938,8 +4945,15 @@ int Record_OptimizedLoad()
                     if (fighter_data->flags.is_thrown == 1)
                         anim_source = fighter_data->grab.grab_attacker;
                     Fighter_SetAllHurtboxesNotUpdated(fighter);
-                    ActionStateChange(ft_state->stateFrame, ft_state->stateSpeed, -1, fighter, ft_state->state_id, ASC_UPDATE_SCRIPT, 0);
+                    ActionStateChange(ft_state->stateFrame, ft_state->stateSpeed, -1, fighter, ft_state->state_id, 0, anim_source);
                     fighter_data->stateBlend = 0;
+
+                    // restore XRotN rotation
+                    s8 XRotN_id = Fighter_BoneLookup(fighter_data, XRotN);
+                    if (XRotN_id != -1)
+                    {
+                        fighter_data->bones[XRotN_id].joint->rot = ft_state->XRotN_rot;
+                    }
 
                     // restore fighter variables
                     memcpy(&fighter_data->fighter_var, &ft_state->fighter_var, sizeof(fighter_data->fighter_var)); // copy hitbox
