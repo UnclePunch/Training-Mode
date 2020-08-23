@@ -1371,7 +1371,7 @@ void MatchThink(GOBJ *gobj)
             // if theyre pressing the buttons
             GOBJ *fighter = Fighter_GetGObj(i);
             FighterData *fighter_data = fighter->userdata;
-            if (((fighter_data->input_held & heldInputs) == heldInputs) && (fighter_data->input_pressed & pressedInputs))
+            if (((fighter_data->input.held & heldInputs) == heldInputs) && (fighter_data->input.pressed & pressedInputs))
             {
                 // spawn mr saturn
                 SpawnItem spawnItem;
@@ -1380,11 +1380,11 @@ void MatchThink(GOBJ *gobj)
                 spawnItem.it_kind = ITEM_MRSATURN;
                 spawnItem.hold_kind = ITHOLD_HAND;
                 spawnItem.unk2 = 0;
-                spawnItem.pos.X = fighter_data->pos.X;
-                spawnItem.pos.Y = fighter_data->pos.Y;
+                spawnItem.pos.X = fighter_data->phys.pos.X;
+                spawnItem.pos.Y = fighter_data->phys.pos.Y;
                 spawnItem.pos.Z = 0;
-                spawnItem.pos2.X = fighter_data->pos.X;
-                spawnItem.pos2.Y = fighter_data->pos.Y;
+                spawnItem.pos2.X = fighter_data->phys.pos.X;
+                spawnItem.pos2.Y = fighter_data->phys.pos.Y;
                 spawnItem.pos2.Z = 0;
                 spawnItem.vel.X = 0;
                 spawnItem.vel.Y = 0;
@@ -1693,14 +1693,21 @@ int Savestate_Load(SaveState *savestate)
                     FighterData *backup_data = &state->fighter_data[j];
 
                     // backup buttons and collision bubble toggle
-                    int input_lstick_x = fighter_data->input_lstick_x;
-                    int input_lstick_y = fighter_data->input_lstick_y;
-                    int dpad_held = (fighter_data->input_held & PAD_BUTTON_DPAD_LEFT) & (fighter_data->input_held & PAD_BUTTON_DPAD_RIGHT);
+                    int input_lstick_x = fighter_data->input.lstick_x;
+                    int input_lstick_y = fighter_data->input.lstick_y;
+                    int dpad_held = (fighter_data->input.held & PAD_BUTTON_DPAD_LEFT) & (fighter_data->input.held & PAD_BUTTON_DPAD_RIGHT);
                     u8 show_model = fighter_data->show_model;
                     u8 show_hit = fighter_data->show_hit;
 
+                    // restore fighter data
+                    memcpy(fighter_data, &state->fighter_data[j], sizeof(FighterData));
+
+                    // zero pointer to cached animations to force anim load (fixes fall crash)
+                    fighter_data->anim_curr_ARAM = 0;
+                    fighter_data->anim_persist_ARAM = 0;
+
                     // restore facing direction
-                    fighter_data->facing_direction = state->fighter_data[j].facing_direction;
+                    fighter_data->facing_direction = backup_data->facing_direction;
                     // sleep
                     Fighter_EnterSleep(fighter, 0);
                     // enter backed up state
@@ -1715,18 +1722,12 @@ int Savestate_Load(SaveState *savestate)
                     }
                     */
 
-                    // restore fighter data
-                    memcpy(fighter_data, &state->fighter_data[j], sizeof(FighterData));
-
                     // restore buttons and collision bubble toggle
-                    //fighter_data->input_lstick_x = input_lstick_x;
-                    //fighter_data->input_lstick_y = input_lstick_y;
-                    fighter_data->input_held &= dpad_held;
+                    //fighter_data->input.lstick_x = input_lstick_x;
+                    //fighter_data->input.lstick_y = input_lstick_y;
+                    fighter_data->input.held &= dpad_held;
                     fighter_data->show_model = show_model;
                     fighter_data->show_hit = show_hit;
-
-                    // zero pointer to cached animation (fixes fall crash)
-                    fighter_data->anim_persist_ARAM = 0;
 
                     // update colltest frame
                     fighter_data->collData.coll_test = R13_INT(COLL_TEST);
@@ -1761,7 +1762,7 @@ int Savestate_Load(SaveState *savestate)
 
                     // update jobj position
                     JOBJ *fighter_jobj = fighter->hsd_object;
-                    fighter_jobj->trans = fighter_data->pos;
+                    fighter_jobj->trans = fighter_data->phys.pos;
                     /*
                     // animate it
                     Fighter_UpdateBonePos(fighter_data, 0);

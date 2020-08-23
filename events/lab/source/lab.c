@@ -1235,24 +1235,24 @@ static EventOption LabOptions_Record[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_FUNC,   // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                // number of values for this option
-        .option_val = 0,               // value of this option
-        .menu = 0,                     // pointer to the menu that pressing A opens
-        .option_name = "Memcard Save", // pointer to a string
-        .desc = "",                    // string describing what this option does
-        .option_values = 0,            // pointer to an array of strings
-        .onOptionSelect = Recording_MemcardSave,
+        .option_kind = OPTKIND_FUNC,     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                  // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Optimized Save", // pointer to a string
+        .desc = "",                      // string describing what this option does
+        .option_values = 0,              // pointer to an array of strings
+        .onOptionSelect = Record_OptimizedSave,
     },
     {
-        .option_kind = OPTKIND_FUNC,   // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                // number of values for this option
-        .option_val = 0,               // value of this option
-        .menu = 0,                     // pointer to the menu that pressing A opens
-        .option_name = "Memcard Load", // pointer to a string
-        .desc = "",                    // string describing what this option does
-        .option_values = 0,            // pointer to an array of strings
-        .onOptionSelect = Recording_MemcardLoad,
+        .option_kind = OPTKIND_FUNC,     // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                  // number of values for this option
+        .option_val = 0,                 // value of this option
+        .menu = 0,                       // pointer to the menu that pressing A opens
+        .option_name = "Optimized Load", // pointer to a string
+        .desc = "",                      // string describing what this option does
+        .option_values = 0,              // pointer to an array of strings
+        .onOptionSelect = Record_OptimizedLoad,
     },
 };
 static EventMenu LabMenu_Record = {
@@ -1273,6 +1273,8 @@ static SaveState rec_state;
 static int save_id = 0x00D0C0DE;
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static char *stc_save_desc = "%d/%d/%d %d:%2d";
+static RecordingSavestate *stc_optstate;
+static DevText *stc_devtext;
 
 // lz77 functions courtesy of https://github.com/andyherbert/lz1
 int x_to_the_n(int x, int n)
@@ -1361,157 +1363,6 @@ u32 lz77_decompress(u8 *compressed_text, u8 *uncompressed_text)
 
     return coding_pos;
 }
-void Recording_MemcardSave(GOBJ *menu_gobj)
-{
-    // debug compression
-    blr();
-    RecordingSave *rec_save = calloc(sizeof(RecordingSave));
-    rec_save->savestate.frame = rec_state.frame;
-    rec_save->savestate.is_exist = rec_state.is_exist;
-    // copy ft_states
-    for (int i = 0; i < 6; i++)
-    {
-        if (event_vars->savestate->ft_state[i] != 0)
-            memcpy(&rec_save->savestate.ft_state[i], rec_state.ft_state[i], sizeof(FtState));
-    }
-    // copy recordings
-    for (int i = 0; i < REC_SLOTS; i++)
-    {
-        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
-        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
-    }
-    u8 *rec_compress = calloc(sizeof(RecordingSave));
-    int pre_tick = OSGetTick();
-    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
-    int post_tick = OSGetTick();
-    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
-    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2f%%\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)compress_size / (float)sizeof(RecordingSave)) * 100, time_dif);
-
-    Memcard_UpdateSnapshotList(0);
-
-    // search for snapshot with ID 26cf6cf5
-    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
-    {
-        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
-
-        // delete existing
-        if (snap_info->snap_id == save_id)
-        {
-            // delete it
-            Memcard_DeleteSnapshot(0, i);
-            while (Memcard_CheckStatus() == 11)
-            {
-            }
-        }
-    }
-
-    // get curr date
-    OSCalendarTime td;
-    OSTicksToCalendarTime(OSGetTime(), &td);
-    sprintf(stc_memcard_info->file_desc, stc_save_desc, td.mon + 1, td.mday, td.year, td.hour, td.min);
-    memcpy(stc_memcard_info->file_name, &stc_save_name, sizeof(stc_save_name));
-
-    // setup save
-    char *save_id_string[32];
-    sprintf(save_id_string, "%d", save_id);
-    MemcardSave memcard_save;
-    memcard_save.data = rec_compress;
-    memcard_save.x4 = 3;
-    memcard_save.size = compress_size;
-    memcard_save.xc = -1;
-    Memcard_CreateSnapshot(0, save_id_string, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
-
-    // wait to load
-    while (Memcard_CheckStatus() == 11)
-    {
-    }
-
-    HSD_Free(rec_compress);
-    HSD_Free(rec_save);
-
-    return;
-}
-void Recording_MemcardLoad(GOBJ *menu_gobj)
-{
-    Memcard_UpdateSnapshotList(0);
-
-    // search for snapshot with ID 0x00D0C0DE
-    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
-    {
-        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
-        if (snap_info->snap_id == save_id)
-        {
-            // setup load
-            char *save_id_string[32];
-            sprintf(save_id_string, "%d", save_id);
-            int save_size = snap_info->block_size * 8192;
-            MemcardSave memcard_save;
-            memcard_save.data = HSD_MemAlloc(save_size);
-            memcard_save.x4 = 3;
-            memcard_save.size = save_size;
-            memcard_save.xc = -1;
-            Memcard_LoadSnapshot(0, save_id_string, &memcard_save, &stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
-
-            // wait to load
-            int memcard_status = Memcard_CheckStatus();
-            while (memcard_status == 11)
-            {
-                memcard_status = Memcard_CheckStatus();
-            }
-
-            // if file loaded successfully
-            if (memcard_status == 0)
-            {
-                // decompress
-                blr();
-                RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
-                lz77_decompress(memcard_save.data, rec_save);
-
-                rec_state.frame = rec_save->savestate.frame;
-                rec_state.is_exist = rec_save->savestate.is_exist;
-                // copy ft_states
-                for (int i = 0; i < 6; i++)
-                {
-                    FtState *ft_state = rec_state.ft_state[i];
-                    FtState *ft_state_loaded = &rec_save->savestate.ft_state[i];
-
-                    // free if exists
-                    if (ft_state != 0)
-                        HSD_Free(ft_state);
-
-                    // if restored savestate exists (this is shitty, need to refactor savestates to make this cleaner)
-                    if (ft_state_loaded->fighter_data[0].fighter != 0) // yuck yuck yuck
-                    {
-                        ft_state = HSD_MemAlloc(sizeof(FtState));
-                        memcpy(ft_state, ft_state_loaded, sizeof(FtState));
-
-                        rec_state.ft_state[i] = ft_state;
-                    }
-                }
-                // copy recordings
-                for (int i = 0; i < REC_SLOTS; i++)
-                {
-                    memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
-                    memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
-                }
-
-                HSD_Free(rec_save);
-
-                // init savestate
-                Record_OnSuccessfulSave();
-
-                // restore these positions
-                event_vars->Savestate_Load(&rec_state);
-            }
-
-            HSD_Free(memcard_save.data);
-
-            break;
-        }
-    }
-
-    return;
-}
 
 // Menu Callbacks
 void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value)
@@ -1519,7 +1370,7 @@ void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value)
     GOBJ *fighter = Fighter_GetGObj(0);
     FighterData *fighter_data = fighter->userdata;
 
-    fighter_data->damage_Percent = value;
+    fighter_data->dmg.percent = value;
     Fighter_SetHUDDamage(0, value);
 
     return;
@@ -1529,7 +1380,7 @@ void Lab_ChangeCPUPercent(GOBJ *menu_gobj, int value)
     GOBJ *fighter = Fighter_GetGObj(1);
     FighterData *fighter_data = fighter->userdata;
 
-    fighter_data->damage_Percent = value;
+    fighter_data->dmg.percent = value;
     Fighter_SetHUDDamage(1, value);
 
     return;
@@ -1762,108 +1613,6 @@ void Lab_ChangeHUD(GOBJ *menu_gobj, int value)
     }
     return;
 }
-void Record_InitState(GOBJ *menu_gobj)
-{
-    if (event_vars->Savestate_Save(&rec_state))
-    {
-
-        Record_OnSuccessfulSave();
-    }
-    return;
-}
-void Record_RestoreState(GOBJ *menu_gobj)
-{
-    event_vars->Savestate_Load(&rec_state);
-
-    return;
-}
-void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
-{
-    // upon changing to random
-    if (value == 0)
-    {
-        // if set to record
-        if (LabOptions_Record[OPTREC_HMNMODE].option_val == 1)
-        {
-            // change to slot 1
-            LabOptions_Record[OPTREC_HMNSLOT].option_val = 1;
-        }
-
-        // update random slot
-        else
-        {
-            rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
-        }
-    }
-
-    // reload save
-    event_vars->Savestate_Load(&rec_state);
-
-    return;
-}
-void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
-{
-    // upon changing to random
-    if (value == 0)
-    {
-        // if set to record
-        if (LabOptions_Record[OPTREC_CPUMODE].option_val == 2)
-        {
-            // change to slot 1
-            LabOptions_Record[OPTREC_CPUSLOT].option_val = 1;
-        }
-
-        // update random slot
-        else
-        {
-            rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
-        }
-    }
-
-    // reload save
-    event_vars->Savestate_Load(&rec_state);
-
-    return;
-}
-void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
-{
-    // upon changing to record
-    if (value == 1)
-    {
-        // if set to random
-        if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
-        {
-            LabOptions_Record[OPTREC_HMNSLOT].option_val = 1;
-        }
-    }
-
-    // upon changing to playback
-    if (value == 2)
-    {
-        event_vars->Savestate_Load(&rec_state);
-    }
-    return;
-}
-void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
-{
-    // upon changing to record
-    if (value == 2)
-    {
-        // if set to random
-        if (LabOptions_Record[OPTREC_CPUSLOT].option_val == 0)
-        {
-            // change to slot 1
-            LabOptions_Record[OPTREC_CPUSLOT].option_val = 1;
-        }
-    }
-
-    // upon toggling playback
-    if (value == 3)
-    {
-        event_vars->Savestate_Load(&rec_state);
-    }
-    return;
-}
 void Lab_Exit(int value)
 {
     Match *match = MATCH;
@@ -2006,7 +1755,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     {
                     case (INFDISPROW_POS):
                     {
-                        Text_SetText(text, i, "Pos: (%+.3f , %+.3f)", fighter_data->pos.X, fighter_data->pos.Y);
+                        Text_SetText(text, i, "Pos: (%+.3f , %+.3f)", fighter_data->phys.pos.X, fighter_data->phys.pos.Y);
                         break;
                     }
                     case (INFDISPROW_STATE):
@@ -2074,22 +1823,22 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_SELFVEL):
                     {
-                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->selfVel.X, fighter_data->selfVel.Y);
+                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->phys.selfVel.X, fighter_data->phys.selfVel.Y);
                         break;
                     }
                     case (INFDISPROW_KBVEL):
                     {
-                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->kbVel.X, fighter_data->kbVel.Y);
+                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->phys.kbVel.X, fighter_data->phys.kbVel.Y);
                         break;
                     }
                     case (INFDISPROW_TOTALVEL):
                     {
-                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->selfVel.X + fighter_data->kbVel.X, fighter_data->selfVel.Y + fighter_data->kbVel.Y);
+                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->phys.selfVel.X + fighter_data->phys.kbVel.X, fighter_data->phys.selfVel.Y + fighter_data->phys.kbVel.Y);
                         break;
                     }
                     case (INFDISPROW_ENGLSTICK):
                     {
-                        Text_SetText(text, i, "LStick:      (%+.4f , %+.4f)", fighter_data->input_lstick_x, fighter_data->input_lstick_y);
+                        Text_SetText(text, i, "LStick:      (%+.4f , %+.4f)", fighter_data->input.lstick_x, fighter_data->input.lstick_y);
                         break;
                     }
                     case (INFDISPROW_SYSLSTICK):
@@ -2100,7 +1849,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_ENGCSTICK):
                     {
-                        Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input_cstick_x, fighter_data->input_cstick_y);
+                        Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input.cstick_x, fighter_data->input.cstick_y);
                         break;
                     }
                     case (INFDISPROW_SYSCSTICK):
@@ -2111,7 +1860,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_ENGTRIGGER):
                     {
-                        Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input_trigger);
+                        Text_SetText(text, i, "Trigger:     (%+.3f)", fighter_data->input.trigger);
                         break;
                     }
                     case (INFDISPROW_SYSTRIGGER):
@@ -2127,24 +1876,24 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_INTANGREMAIN):
                     {
-                        int intang = fighter_data->respawn_intang_left;
-                        if (fighter_data->ledge_intang_left > fighter_data->respawn_intang_left)
-                            intang = fighter_data->ledge_intang_left;
+                        int intang = fighter_data->hurtstatus.respawn_intang_left;
+                        if (fighter_data->hurtstatus.ledge_intang_left > fighter_data->hurtstatus.respawn_intang_left)
+                            intang = fighter_data->hurtstatus.ledge_intang_left;
 
                         Text_SetText(text, i, "Intangibility Timer: %d", intang);
                         break;
                     }
                     case (INFDISPROW_HITSTOP):
                     {
-                        Text_SetText(text, i, "Hitlag: %.0f", fighter_data->hitlag_frames);
+                        Text_SetText(text, i, "Hitlag: %.0f", fighter_data->dmg.hitlag_frames);
                         break;
                     }
                     case (INFDISPROW_HITSTUN):
                     {
                         // get hitstun
                         float hitstun = 0;
-                        if (fighter_data->hitstun == 1)
-                            hitstun = AS_FLOAT(fighter_data->stateVar1);
+                        if (fighter_data->flags.hitstun == 1)
+                            hitstun = AS_FLOAT(fighter_data->state_var.stateVar1);
 
                         Text_SetText(text, i, "Hitstun: %.0f", hitstun);
                         break;
@@ -2179,11 +1928,11 @@ void InfoDisplay_Think(GOBJ *gobj)
                     case (INFDISPROW_GRIP):
                     {
                         float grip = 0;
-                        if (fighter_data->grab_victim != 0)
+                        if (fighter_data->grab.grab_victim != 0)
                         {
-                            GOBJ *victim = fighter_data->grab_victim;
+                            GOBJ *victim = fighter_data->grab.grab_victim;
                             FighterData *victim_data = victim->userdata;
-                            grip = victim_data->grab_timer;
+                            grip = victim_data->grab.grab_timer;
                         }
 
                         Text_SetText(text, i, "Grip Strength: %.0f", grip);
@@ -2201,12 +1950,12 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_JUMPS):
                     {
-                        Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jumps_used, fighter_data->max_jumps);
+                        Text_SetText(text, i, "Jumps: %d/%d", fighter_data->jump.jumps_used, fighter_data->attr.max_jumps);
                         break;
                     }
                     case (INFDISPROW_WALLJUMPS):
                     {
-                        Text_SetText(text, i, "Walljumps: %d", fighter_data->walljumps_used);
+                        Text_SetText(text, i, "Walljumps: %d", fighter_data->jump.walljumps_used);
                         break;
                     }
                     case (INFDISPROW_JAB):
@@ -2269,8 +2018,8 @@ void InfoDisplay_Think(GOBJ *gobj)
 float Fighter_GetOpponentDir(FighterData *from, FighterData *to)
 {
     float dir = -1;
-    Vec3 *from_pos = &from->pos;
-    Vec3 *to_pos = &to->pos;
+    Vec3 *from_pos = &from->phys.pos;
+    Vec3 *to_pos = &to->phys.pos;
 
     if (from_pos->X <= to_pos->X)
         dir = 1;
@@ -2290,7 +2039,7 @@ int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
     // if 0, check the one that corresponds with ground state
     if (actionable_kind == 0)
     {
-        actionable_kind = cpu_data->air_state + 1;
+        actionable_kind = cpu_data->phys.air_state + 1;
     }
 
     // ground
@@ -2306,7 +2055,7 @@ int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
             }
         }
         // landing
-        if ((cpu_data->state_id == ASID_LANDING) && (cpu_data->stateFrame >= cpu_data->normal_landing_lag))
+        if ((cpu_data->state_id == ASID_LANDING) && (cpu_data->stateFrame >= cpu_data->attr.normal_landing_lag))
             isActionable = 1;
     }
     // air
@@ -2492,7 +2241,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     // ALWAYS CHECK FOR X AND OVERRIDE STATE
 
     // check if damaged
-    if (cpu_data->hitstun == 1)
+    if (cpu_data->flags.hitstun == 1)
     {
         eventData->cpu_hitkind = HITKIND_DAMAGE;
         // go to SDI state
@@ -2533,7 +2282,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     if ((cpu_state == ASID_CLIFFWAIT))
         eventData->cpu_state = CPUSTATE_RECOVER;
     // check if dead
-    if (cpu_data->dead == 1)
+    if (cpu_data->flags.dead == 1)
         goto CPUSTATE_ENTERSTART;
 
     // run CPU state logic
@@ -2547,7 +2296,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     {
 
         // if in the air somehow, enter recovery
-        if (cpu_data->air_state == 1)
+        if (cpu_data->phys.air_state == 1)
         {
             eventData->cpu_state = CPUSTATE_RECOVER;
             goto CPULOGIC_RECOVER;
@@ -2612,9 +2361,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             if (HSD_Randi(100) <= CPUMASHRNG_MED)
             {
                 // remove last frame inputs
-                cpu_data->input_held = 0;
-                cpu_data->input_lstick_x = 0;
-                cpu_data->input_lstick_y = 0;
+                cpu_data->input.held = 0;
+                cpu_data->input.lstick_x = 0;
+                cpu_data->input.lstick_y = 0;
 
                 // input
                 cpu_data->cpu.held = PAD_BUTTON_A;
@@ -2627,9 +2376,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             if (HSD_Randi(100) <= CPUMASHRNG_HIGH)
             {
                 // remove last frame inputs
-                cpu_data->input_held = 0;
-                cpu_data->input_lstick_x = 0;
-                cpu_data->input_lstick_y = 0;
+                cpu_data->input.held = 0;
+                cpu_data->input.lstick_x = 0;
+                cpu_data->input.lstick_y = 0;
 
                 // input
                 cpu_data->cpu.held = PAD_BUTTON_A;
@@ -2640,9 +2389,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         case (CPUMASH_PERFECT):
         {
             // remove last frame inputs
-            cpu_data->input_held = 0;
-            cpu_data->input_lstick_x = 0;
-            cpu_data->input_lstick_y = 0;
+            cpu_data->input.held = 0;
+            cpu_data->input.lstick_x = 0;
+            cpu_data->input.lstick_y = 0;
 
             // input
             cpu_data->cpu.held = PAD_BUTTON_A;
@@ -2659,23 +2408,23 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     {
 
         // update move instance
-        if (eventData->cpu_lasthit != cpu_data->damage_instancehitby)
+        if (eventData->cpu_lasthit != cpu_data->dmg.instancehitby)
         {
             eventData->cpu_sincehit = 0;
             eventData->cpu_hitnum++;
-            eventData->cpu_lasthit = cpu_data->damage_instancehitby;
+            eventData->cpu_lasthit = cpu_data->dmg.instancehitby;
             //OSReport("hit count %d/%d", eventData->cpu_hitnum, LabOptions_CPU[OPTCPU_CTRHITS].option_val);
         }
 
         // if no more hitlag, enter tech state
-        if (cpu_data->hitlag == 0)
+        if (cpu_data->flags.hitlag == 0)
         {
             eventData->cpu_state = CPUSTATE_TECH;
             goto CPULOGIC_TECH;
         }
 
         // if final frame of hitlag, enter TDI state
-        else if (cpu_data->hitlag_frames == 1)
+        else if (cpu_data->dmg.hitlag_frames == 1)
         {
             eventData->cpu_state = CPUSTATE_TDI;
             goto CPULOGIC_TDI;
@@ -2693,7 +2442,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         int is_thrown = CPU_IsThrown(cpu);
 
         // if no more hitlag and not being thrown, enter tech state. this might never be hit, just being safe
-        if ((cpu_data->hitlag == 0) && (is_thrown == 0))
+        if ((cpu_data->flags.hitlag == 0) && (is_thrown == 0))
         {
             eventData->cpu_state = CPUSTATE_TECH;
             goto CPULOGIC_TECH;
@@ -2704,14 +2453,14 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         if (is_thrown == 1)
         {
             // if being thrown, get knockback info from attacker
-            FighterData *attacker_data = cpu_data->grab_attacker->userdata;
+            FighterData *attacker_data = cpu_data->grab.grab_attacker->userdata;
             kb_angle = ((float)attacker_data->throw_hitbox[0].angle * M_1DEGREE) * (attacker_data->facing_direction * -1);
         }
         else
         {
             // not being thrown, get knockback angle normally
-            //kb_angle = Fighter_GetKnockbackAngle(cpu_data) * cpu_data->damage_Direction;
-            kb_angle = atan2(cpu_data->kbVel.Y, cpu_data->kbVel.X);
+            //kb_angle = Fighter_GetKnockbackAngle(cpu_data) * cpu_data->dmg.direction;
+            kb_angle = atan2(cpu_data->phys.kbVel.Y, cpu_data->phys.kbVel.X);
         }
 
         // perform TDI behavior
@@ -2819,11 +2568,11 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     {
 
         // if no more hitstun, go to counter
-        if (cpu_data->hitstun == 0)
+        if (cpu_data->flags.hitstun == 0)
         {
             // also reset stick timer (messes with airdodge wiggle)
-            cpu_data->input_lstick_x = 0;
-            cpu_data->inputtimer_lstick_tilt_x = 254;
+            cpu_data->input.lstick_x = 0;
+            cpu_data->input.timer_lstick_tilt_x = 254;
             eventData->cpu_state = CPUSTATE_COUNTER;
             goto CPULOGIC_COUNTER;
         }
@@ -2868,10 +2617,10 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // input tech
-        cpu_data->input_sinceLR = sincePress;
-        cpu_data->input_sinceRapidLR = since2Press;
+        cpu_data->input.timer_LR = sincePress;
+        cpu_data->input.sinceRapidLR = since2Press;
         cpu_data->cpu.lstickX = stickX;
-        cpu_data->inputtimer_lstick_smash_x = sinceXSmash;
+        cpu_data->input.timer_lstick_smash_x = sinceXSmash;
 
         break;
     }
@@ -2960,13 +2709,13 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             }
             else
             {
-                eventData->cpu_isactionable = 1;                  // set actionable flag to begin running code
-                eventData->cpu_groundstate = cpu_data->air_state; // remember initial ground state
+                eventData->cpu_isactionable = 1;                       // set actionable flag to begin running code
+                eventData->cpu_groundstate = cpu_data->phys.air_state; // remember initial ground state
             }
         }
 
         // if started in the air, didnt finish action, but now grounded, perform ground action
-        if ((eventData->cpu_groundstate == 1) && (cpu_data->air_state == 0))
+        if ((eventData->cpu_groundstate == 1) && (cpu_data->phys.air_state == 0))
         {
             eventData->cpu_groundstate = 0;
         }
@@ -2984,12 +2733,12 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             }
 
             // get counter action
-            if (cpu_data->air_state == 0 || (eventData->cpu_groundstate == 0)) // if am grounded or started grounded
+            if (cpu_data->phys.air_state == 0 || (eventData->cpu_groundstate == 0)) // if am grounded or started grounded
             {
                 int grndCtr = LabOptions_CPU[OPTCPU_CTRGRND].option_val;
                 action_id = GrAcLookup[grndCtr];
             }
-            else if (cpu_data->air_state == 1) // only if in the air at the time of hitstun ending
+            else if (cpu_data->phys.air_state == 1) // only if in the air at the time of hitstun ending
             {
                 int airCtr = LabOptions_CPU[OPTCPU_CTRAIR].option_val;
                 action_id = AirAcLookup[airCtr];
@@ -3045,7 +2794,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     {
 
         // if onstage, go back to start
-        if (cpu_data->air_state == 0)
+        if (cpu_data->phys.air_state == 0)
         {
 
         CPUSTATE_ENTERSTART:
@@ -3229,7 +2978,7 @@ void DIDraw_Update()
             DIDraw *didraw = &didraws[ply];
 
             // if in hitlag and hitstun simulate and update trajectory
-            if ((fighter_data->hitlag == 1) && (fighter_data->hitstun == 1))
+            if ((fighter_data->flags.hitlag == 1) && (fighter_data->flags.hitstun == 1))
             {
                 // free old
                 if (didraw->vertices[ply] != 0)
@@ -3263,14 +3012,14 @@ void DIDraw_Update()
                 // for CPUs
                 else
                 {
-                    lstickX = fighter_data->input_lstick_x;
-                    lstickY = fighter_data->input_lstick_y;
-                    cstickX = fighter_data->input_cstick_x;
-                    cstickY = fighter_data->input_cstick_y;
+                    lstickX = fighter_data->input.lstick_x;
+                    lstickY = fighter_data->input.lstick_y;
+                    cstickX = fighter_data->input.cstick_x;
+                    cstickY = fighter_data->input.cstick_y;
                 }
 
                 // get kb vector
-                Vec3 kb = fighter_data->kbVel;
+                Vec3 kb = fighter_data->phys.kbVel;
                 float kb_angle = atan2(kb.Y, kb.X);
                 // init ASDI vector
                 Vec3 asdi_orig;
@@ -3330,12 +3079,12 @@ void DIDraw_Update()
                 //OSReport("KB Post TDI:  %f , %f\n", kb.X, kb.Y);
 
                 //simulation variables
-                int air_state = fighter_data->air_state;
+                int air_state = fighter_data->phys.air_state;
                 float gravity = 0;
-                Vec3 pos = fighter_data->pos;
+                Vec3 pos = fighter_data->phys.pos;
                 ftCommonData *ftCommon = R13_PTR(-0x514C);
                 float decay = ftCommon->kb_frameDecay;
-                int hitstun_frames = AS_FLOAT(fighter_data->stateVar1);
+                int hitstun_frames = AS_FLOAT(fighter_data->state_var.stateVar1);
                 int vertices_num = 0;    // used to track how many vertices will be needed
                 int override_frames = 0; // used as an alternate countdown
                 DIDrawCalculate *DICollData = calloc(sizeof(DIDrawCalculate) * hitstun_frames);
@@ -3344,7 +3093,7 @@ void DIDraw_Update()
 
                 // init ecb struct
                 Coll_InitECB(&ecb);
-                if (fighter_data->air_state == 0) // copy ecb struct if grounded
+                if (fighter_data->phys.air_state == 0) // copy ecb struct if grounded
                 {
                     memcpy(&ecb.envFlags, &fighter_data->collData.envFlags, 0x28);
                 }
@@ -3354,7 +3103,7 @@ void DIDraw_Update()
                 {
 
                     // update bone positions.  If loop count < noECBUpdate-remaining hitlag fraes, use current ECB bottom Y offset
-                    if (vertices_num < (fighter_data->collData.ecb_lock - fighter_data->hitlag_frames))
+                    if (vertices_num < (fighter_data->collData.ecb_lock - fighter_data->dmg.hitlag_frames))
                     {
 
                         ecb_bones.topY = fighter_data->collData.ecbCurr_top.Y;
@@ -3387,8 +3136,8 @@ void DIDraw_Update()
                     asdi.Y = 0; // zero out ASDI
 
                     // update gravity
-                    gravity -= fighter_data->gravity;
-                    float terminal_velocity = fighter_data->terminal_velocity * -1;
+                    gravity -= fighter_data->attr.gravity;
+                    float terminal_velocity = fighter_data->attr.terminal_velocity * -1;
                     if (gravity < terminal_velocity)
                         gravity = terminal_velocity;
                     // decay KB vector
@@ -3586,7 +3335,7 @@ void DIDraw_Update()
                 HSD_Free(DICollData);
             }
             // if not in hitstun, zero out didraw
-            else if (fighter_data->hitstun == 0)
+            else if (fighter_data->flags.hitstun == 0)
             {
                 if (didraw->vertices[ply] != 0)
                 {
@@ -3825,6 +3574,135 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     popup_joint->dobj->mobj->mat->diffuse = gx_color;
 */
 }
+void CustomTDI_Update(GOBJ *gobj)
+{
+    // get data
+    TDIData *tdi_data = gobj->userdata;
+    MenuData *menu_data = event_vars->menu_gobj->userdata;
+    LCancelData *event_data = event_vars->event_gobj->userdata;
+
+    // get player who paused
+    u8 *pauseData = (u8 *)0x8046b6a0;
+    u8 pauser = pauseData[1];
+    // get their  inputs
+    HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
+    int inputs = pad->down;
+
+    // if press A, save stick
+    if ((inputs & HSD_BUTTON_A) != 0)
+    {
+        if (event_data->tdi_val_num < TDI_HITNUM)
+        {
+            event_data->tdi_vals[event_data->tdi_val_num][0][0] = (pad->fstickX * 80);
+            event_data->tdi_vals[event_data->tdi_val_num][0][1] = (pad->fstickY * 80);
+            event_data->tdi_vals[event_data->tdi_val_num][1][0] = (pad->fsubstickX * 80);
+            event_data->tdi_vals[event_data->tdi_val_num][1][1] = (pad->fsubstickY * 80);
+            event_data->tdi_val_num++;
+            SFX_PlayCommon(1);
+        }
+    }
+
+    // if press X, go back a hit
+    if ((inputs & HSD_BUTTON_X) != 0)
+    {
+        if (event_data->tdi_val_num > 0)
+        {
+            event_data->tdi_val_num--;
+            SFX_PlayCommon(0);
+        }
+    }
+
+    // if press START, exit
+    if ((inputs & HSD_BUTTON_B) != 0)
+    {
+        CustomTDI_Destroy(gobj);
+        return;
+    }
+
+    // update curr lstick
+    JOBJ *stick_curr = tdi_data->stick_curr[0];
+    stick_curr->rot.Y = pad->fstickX * 0.75;
+    stick_curr->rot.X = pad->fstickY * 0.75 * -1;
+    // update curr cstick
+    stick_curr = tdi_data->stick_curr[1];
+    stick_curr->rot.Y = pad->fsubstickX * 0.75;
+    stick_curr->rot.X = pad->fsubstickY * 0.75 * -1;
+
+    // Update curr stick coordinates
+    Text *text_curr = tdi_data->text_curr;
+    Text_SetText(text_curr, 0, "Hit: %d", event_data->tdi_val_num + 1);
+    Text_SetText(text_curr, 1, "X: %+.4f", pad->fstickX);
+    Text_SetText(text_curr, 2, "Y: %+.4f", pad->fstickY);
+    Text_SetText(text_curr, 3, "X: %+.4f", pad->fsubstickX);
+    Text_SetText(text_curr, 4, "Y: %+.4f", pad->fsubstickY);
+
+    // display previous sticks
+    for (int i = 0; i < TDI_DISPNUM; i++)
+    {
+        JOBJ *lstick_prev = tdi_data->stick_prev[i][0];
+        JOBJ *cstick_prev = tdi_data->stick_prev[i][1];
+        int this_hit = i;
+        if (event_data->tdi_val_num > TDI_DISPNUM)
+            this_hit = (event_data->tdi_val_num - TDI_DISPNUM + i);
+
+        // show stick
+        if (i < event_data->tdi_val_num)
+        {
+            // remove hidden flag
+            JOBJ_ClearFlags(lstick_prev, JOBJ_HIDDEN);
+            JOBJ_ClearFlags(cstick_prev, JOBJ_HIDDEN);
+
+            // update rotation
+            lstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][0][0]) * 1 / 80) * 0.75;
+            lstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][0][1]) * 1 / 80) * 0.75 * -1;
+            cstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][1][0]) * 1 / 80) * 0.75;
+            cstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][1][1]) * 1 / 80) * 0.75 * -1;
+
+            // update text
+            Text_SetText(text_curr, i + 5, "Hit %d", this_hit + 1);
+        }
+        // hide stick
+        else
+        {
+            // set hidden flag
+            JOBJ_SetFlags(lstick_prev, JOBJ_HIDDEN);
+            JOBJ_SetFlags(cstick_prev, JOBJ_HIDDEN);
+
+            Text_SetText(text_curr, i + 5, nullString);
+        }
+    }
+
+    // update jobj
+    JOBJ_SetMtxDirtySub(gobj->hsd_object);
+
+    return;
+}
+void CustomTDI_Destroy(GOBJ *gobj)
+{
+    // get data
+    TDIData *tdi_data = gobj->userdata;
+    MenuData *menu_data = event_vars->menu_gobj->userdata;
+
+    // set TDI to custom
+    LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
+
+    // free text
+    Text_FreeText(tdi_data->text_curr);
+
+    // destroy
+    GObj_Destroy(gobj);
+
+    // null pointers
+    menu_data->custom_gobj = 0;
+    menu_data->custom_gobj_destroy = 0;
+
+    // show original menu
+    event_vars->hide_menu = 0;
+
+    return;
+}
+
+// Recording Functions
 GOBJ *Record_Init()
 {
     // Create GOBJ
@@ -3914,6 +3792,23 @@ GOBJ *Record_Init()
     Memcard_InitUnk();
     Memcard_InitSnapshotList(HSD_MemAlloc(2112), HSD_MemAlloc(256064));
 
+    // temp alloc debug opt savestate
+    stc_optstate = HSD_MemAlloc(sizeof(RecordingSavestate));
+
+    /*
+    // init dev text
+    int height = 18;
+    int width = 28;
+    int x = -50;
+    int y = 410;
+    DevText *dev_text = DevelopText_CreateDataTable(x, y, 0, width, height, HSD_MemAlloc(height * width * 2));
+    stc_devtext = dev_text;
+    DevelopText_Activate(0, dev_text);
+    dev_text->cursorBlink = 0;
+    GXColor color = {21, 20, 59, 135};
+    DevelopText_StoreBGColor(dev_text, &color);
+    DevelopText_StoreTextScale(dev_text, 7.5, 10);
+    */
     return rec_gobj;
 }
 void Record_CObjThink(GOBJ *gobj)
@@ -4130,7 +4025,16 @@ void Record_Think(GOBJ *rec_gobj)
         int cpu_mode = LabOptions_Record[OPTREC_CPUMODE].option_val;
         Record_Update(1, cpu_inputs, cpu_mode);
     }
+    /*
+    GOBJ *cpu = Fighter_GetGObj(1);
+    FighterData *cpu_data = cpu->userdata;
 
+    DevText *dev_text = stc_devtext;
+    // clear text
+    DevelopText_EraseAllText(dev_text);
+    DevelopMode_ResetCursorXY(dev_text, 0, 0);
+    DevelopText_AddString(dev_text, "isthrown: %d\n", cpu_data->flags.is_thrown);
+    */
     return;
 }
 void Record_Update(int ply, RecInputData *input_data, int rec_mode)
@@ -4256,6 +4160,108 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 
     return;
 }
+void Record_InitState(GOBJ *menu_gobj)
+{
+    if (event_vars->Savestate_Save(&rec_state))
+    {
+
+        Record_OnSuccessfulSave();
+    }
+    return;
+}
+void Record_RestoreState(GOBJ *menu_gobj)
+{
+    event_vars->Savestate_Load(&rec_state);
+
+    return;
+}
+void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
+{
+    // upon changing to random
+    if (value == 0)
+    {
+        // if set to record
+        if (LabOptions_Record[OPTREC_HMNMODE].option_val == 1)
+        {
+            // change to slot 1
+            LabOptions_Record[OPTREC_HMNSLOT].option_val = 1;
+        }
+
+        // update random slot
+        else
+        {
+            rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
+        }
+    }
+
+    // reload save
+    event_vars->Savestate_Load(&rec_state);
+
+    return;
+}
+void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
+{
+    // upon changing to random
+    if (value == 0)
+    {
+        // if set to record
+        if (LabOptions_Record[OPTREC_CPUMODE].option_val == 2)
+        {
+            // change to slot 1
+            LabOptions_Record[OPTREC_CPUSLOT].option_val = 1;
+        }
+
+        // update random slot
+        else
+        {
+            rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
+        }
+    }
+
+    // reload save
+    event_vars->Savestate_Load(&rec_state);
+
+    return;
+}
+void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
+{
+    // upon changing to record
+    if (value == 1)
+    {
+        // if set to random
+        if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+        {
+            LabOptions_Record[OPTREC_HMNSLOT].option_val = 1;
+        }
+    }
+
+    // upon changing to playback
+    if (value == 2)
+    {
+        event_vars->Savestate_Load(&rec_state);
+    }
+    return;
+}
+void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
+{
+    // upon changing to record
+    if (value == 2)
+    {
+        // if set to random
+        if (LabOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+        {
+            // change to slot 1
+            LabOptions_Record[OPTREC_CPUSLOT].option_val = 1;
+        }
+    }
+
+    // upon toggling playback
+    if (value == 3)
+    {
+        event_vars->Savestate_Load(&rec_state);
+    }
+    return;
+}
 int Record_GetRandomSlot(RecInputData **input_data)
 {
     // create array of slots in use
@@ -4311,132 +4317,879 @@ void Record_OnSuccessfulSave()
 
     return;
 }
-void CustomTDI_Update(GOBJ *gobj)
+void Record_MemcardSave(GOBJ *menu_gobj)
 {
-    // get data
-    TDIData *tdi_data = gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
-    LCancelData *event_data = event_vars->event_gobj->userdata;
 
-    // get player who paused
-    u8 *pauseData = (u8 *)0x8046b6a0;
-    u8 pauser = pauseData[1];
-    // get their  inputs
-    HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
-    int inputs = pad->down;
+#if TM_DEBUG == 1
+    int save_pre_tick = OSGetTick();
+#endif
 
-    // if press A, save stick
-    if ((inputs & HSD_BUTTON_A) != 0)
+    // debug compression
+    RecordingSave *rec_save = calloc(sizeof(RecordingSave));
+    rec_save->savestate.frame = rec_state.frame;
+    // copy ft_states
+    for (int i = 0; i < 6; i++) // loop through all fighters
     {
-        if (event_data->tdi_val_num < TDI_HITNUM)
+        for (int j = 0; j < 2; j++) // loop through all subfighters
         {
-            event_data->tdi_vals[event_data->tdi_val_num][0][0] = (pad->fstickX * 80);
-            event_data->tdi_vals[event_data->tdi_val_num][0][1] = (pad->fstickY * 80);
-            event_data->tdi_vals[event_data->tdi_val_num][1][0] = (pad->fsubstickX * 80);
-            event_data->tdi_vals[event_data->tdi_val_num][1][1] = (pad->fsubstickY * 80);
-            event_data->tdi_val_num++;
-            SFX_PlayCommon(1);
+            if (rec_state.ft_state[i] != 0)
+            {
+                OptFtState *ft_state = &rec_save->savestate.ft_state[i][j];
+                FighterData *fighter_data = &rec_state.ft_state[i]->fighter_data[j];
+
+                // if fighter exists
+                if (fighter_data->fighter != 0)
+                {
+                    ft_state->is_exist = 1;
+                    ft_state->state_id = fighter_data->state_id;
+                    ft_state->facing_direction = fighter_data->facing_direction;
+                    ft_state->stateFrame = fighter_data->stateFrame;
+                    ft_state->stateSpeed = fighter_data->stateSpeed;
+                    ft_state->stateBlend = fighter_data->stateBlend;
+                    memcpy(&ft_state->phys, &fighter_data->phys, sizeof(fighter_data->phys));             // copy physics
+                    memcpy(&ft_state->color, &fighter_data->color, sizeof(fighter_data->color));          // copy color overlay
+                    memcpy(&ft_state->input, &fighter_data->input, sizeof(fighter_data->input));          // copy inputs
+                    memcpy(&ft_state->collData, &fighter_data->collData, sizeof(fighter_data->collData)); // copy collision
+
+                    memcpy(&ft_state->cameraBox, fighter_data->cameraBox, sizeof(CameraBox));                         // copy camerabox
+                    memcpy(&ft_state->hitbox, &fighter_data->hitbox, sizeof(fighter_data->hitbox));                   // copy hitbox
+                    memcpy(&ft_state->throw_hitbox, &fighter_data->throw_hitbox, sizeof(fighter_data->throw_hitbox)); // copy hitbox
+                    memcpy(&ft_state->unk_hitbox, &fighter_data->unk_hitbox, sizeof(fighter_data->unk_hitbox));       // copy hitbox
+
+                    // convert pointers
+                    for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
+                    {
+
+                        ft_state->hitbox[k].bone = Record_BoneToID(fighter_data, ft_state->hitbox[k].bone);
+                        for (int l = 0; l < (sizeof(fighter_data->hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                        {
+                            ft_state->hitbox[k].victims[l].victim_data = Record_FtDataToID(ft_state->hitbox[k].victims[l].victim_data);
+                        }
+                    }
+                    for (int k = 0; k < (sizeof(fighter_data->throw_hitbox) / sizeof(ftHit)); k++)
+                    {
+                        ft_state->throw_hitbox[k].bone = Record_BoneToID(fighter_data, ft_state->throw_hitbox[k].bone);
+                        for (int l = 0; l < (sizeof(fighter_data->throw_hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                        {
+                            ft_state->throw_hitbox[k].victims[l].victim_data = Record_FtDataToID(ft_state->throw_hitbox[k].victims[l].victim_data);
+                        }
+                    }
+
+                    ft_state->unk_hitbox.bone = Record_BoneToID(fighter_data, ft_state->unk_hitbox.bone);
+                    for (int k = 0; k < (sizeof(fighter_data->unk_hitbox.victims) / sizeof(HitVictim)); k++) // pointers to hitbox victims
+                    {
+
+                        ft_state->unk_hitbox.victims[k].victim_data = Record_FtDataToID(ft_state->unk_hitbox.victims[k].victim_data);
+                    }
+                }
+            }
+        }
+    }
+    // copy recordings
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
+        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
+    }
+
+    // compress savestate
+    u8 *rec_compress = calloc(sizeof(RecordingSave));
+    int pre_tick = OSGetTick();
+    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
+    int post_tick = OSGetTick();
+    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
+    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2f%%\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)compress_size / (float)sizeof(RecordingSave)) * 100, time_dif);
+
+    Memcard_UpdateSnapshotList(0);
+
+    // search for snapshot with ID 26cf6cf5
+    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
+    {
+        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
+
+        // delete existing
+        if (snap_info->snap_id == save_id)
+        {
+            // delete it
+            Memcard_DeleteSnapshot(0, i);
+
+            // wait to finish deleting
+            while (Memcard_CheckStatus() == 11)
+            {
+            }
         }
     }
 
-    // if press X, go back a hit
-    if ((inputs & HSD_BUTTON_X) != 0)
+    // get curr date
+    OSCalendarTime td;
+    OSTicksToCalendarTime(OSGetTime(), &td);
+    sprintf(stc_memcard_info->file_desc, stc_save_desc, td.mon + 1, td.mday, td.year, td.hour, td.min);
+    memcpy(stc_memcard_info->file_name, &stc_save_name, sizeof(stc_save_name));
+
+    // setup save
+    char *save_id_string[32];
+    sprintf(save_id_string, "%d", save_id);
+    MemcardSave memcard_save;
+    memcard_save.data = rec_compress;
+    memcard_save.x4 = 3;
+    memcard_save.size = compress_size;
+    memcard_save.xc = -1;
+    Memcard_CreateSnapshot(0, save_id_string, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+
+    // wait to load
+    while (Memcard_CheckStatus() == 11)
     {
-        if (event_data->tdi_val_num > 0)
-        {
-            event_data->tdi_val_num--;
-            SFX_PlayCommon(0);
-        }
     }
 
-    // if press START, exit
-    if ((inputs & HSD_BUTTON_B) != 0)
-    {
-        CustomTDI_Destroy(gobj);
-        return;
-    }
+    HSD_Free(rec_compress);
+    HSD_Free(rec_save);
 
-    // update curr lstick
-    JOBJ *stick_curr = tdi_data->stick_curr[0];
-    stick_curr->rot.Y = pad->fstickX * 0.75;
-    stick_curr->rot.X = pad->fstickY * 0.75 * -1;
-    // update curr cstick
-    stick_curr = tdi_data->stick_curr[1];
-    stick_curr->rot.Y = pad->fsubstickX * 0.75;
-    stick_curr->rot.X = pad->fsubstickY * 0.75 * -1;
-
-    // Update curr stick coordinates
-    Text *text_curr = tdi_data->text_curr;
-    Text_SetText(text_curr, 0, "Hit: %d", event_data->tdi_val_num + 1);
-    Text_SetText(text_curr, 1, "X: %+.4f", pad->fstickX);
-    Text_SetText(text_curr, 2, "Y: %+.4f", pad->fstickY);
-    Text_SetText(text_curr, 3, "X: %+.4f", pad->fsubstickX);
-    Text_SetText(text_curr, 4, "Y: %+.4f", pad->fsubstickY);
-
-    // display previous sticks
-    for (int i = 0; i < TDI_DISPNUM; i++)
-    {
-        JOBJ *lstick_prev = tdi_data->stick_prev[i][0];
-        JOBJ *cstick_prev = tdi_data->stick_prev[i][1];
-        int this_hit = i;
-        if (event_data->tdi_val_num > TDI_DISPNUM)
-            this_hit = (event_data->tdi_val_num - TDI_DISPNUM + i);
-
-        // show stick
-        if (i < event_data->tdi_val_num)
-        {
-            // remove hidden flag
-            JOBJ_ClearFlags(lstick_prev, JOBJ_HIDDEN);
-            JOBJ_ClearFlags(cstick_prev, JOBJ_HIDDEN);
-
-            // update rotation
-            lstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][0][0]) * 1 / 80) * 0.75;
-            lstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][0][1]) * 1 / 80) * 0.75 * -1;
-            cstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][1][0]) * 1 / 80) * 0.75;
-            cstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][1][1]) * 1 / 80) * 0.75 * -1;
-
-            // update text
-            Text_SetText(text_curr, i + 5, "Hit %d", this_hit + 1);
-        }
-        // hide stick
-        else
-        {
-            // set hidden flag
-            JOBJ_SetFlags(lstick_prev, JOBJ_HIDDEN);
-            JOBJ_SetFlags(cstick_prev, JOBJ_HIDDEN);
-
-            Text_SetText(text_curr, i + 5, nullString);
-        }
-    }
-
-    // update jobj
-    JOBJ_SetMtxDirtySub(gobj->hsd_object);
+#if TM_DEBUG == 1
+    int save_post_tick = OSGetTick();
+    int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
+    OSReport("processed memcard save in %dms\n", save_time);
+#endif
 
     return;
 }
-void CustomTDI_Destroy(GOBJ *gobj)
+void Record_MemcardLoad(GOBJ *menu_gobj)
 {
-    // get data
-    TDIData *tdi_data = gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
 
-    // set TDI to custom
-    LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
+    Memcard_UpdateSnapshotList(0);
 
-    // free text
-    Text_FreeText(tdi_data->text_curr);
+    // search for snapshot with ID 0x00D0C0DE
+    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
+    {
+        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
+        if (snap_info->snap_id == save_id)
+        {
 
-    // destroy
-    GObj_Destroy(gobj);
+#if TM_DEBUG == 1
+            int load_pre_tick = OSGetTick();
+#endif
 
-    // null pointers
-    menu_data->custom_gobj = 0;
-    menu_data->custom_gobj_destroy = 0;
+            // setup load
+            char *save_id_string[32];
+            sprintf(save_id_string, "%d", save_id);
+            int save_size = snap_info->block_size * 8192;
+            MemcardSave memcard_save;
+            memcard_save.data = HSD_MemAlloc(save_size);
+            memcard_save.x4 = 3;
+            memcard_save.size = save_size;
+            memcard_save.xc = -1;
+            Memcard_LoadSnapshot(0, save_id_string, &memcard_save, &stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
 
-    // show original menu
-    event_vars->hide_menu = 0;
+            // wait to load
+            int memcard_status = Memcard_CheckStatus();
+            while (memcard_status == 11)
+            {
+                memcard_status = Memcard_CheckStatus();
+            }
+
+            // if file loaded successfully
+            if (memcard_status == 0)
+            {
+                // decompress
+                RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
+                lz77_decompress(memcard_save.data, rec_save);
+
+                rec_state.frame = rec_save->savestate.frame;
+
+                // copy ft_states
+                for (int i = 0; i < 6; i++) // loop through all fighters
+                {
+                    for (int j = 0; j < 2; j++) // loop through all subfighters
+                    {
+                        if (rec_save->savestate.ft_state[i][j].is_exist == 1)
+                        {
+                            OptFtState *ft_state = &rec_save->savestate.ft_state[i][j];
+                            FighterData *fighter_data = &rec_state.ft_state[i]->fighter_data[j];
+
+                            fighter_data->state_id = ft_state->state_id;
+                            fighter_data->facing_direction = ft_state->facing_direction;
+                            fighter_data->stateFrame = ft_state->stateFrame;
+                            fighter_data->stateSpeed = ft_state->stateSpeed;
+                            fighter_data->stateBlend = ft_state->stateBlend;
+
+                            // restore phys struct
+                            memcpy(&fighter_data->phys, &ft_state->phys, sizeof(fighter_data->phys)); // copy physics
+
+                            // restore color
+                            for (int k = 0; k < (sizeof(fighter_data->color) / sizeof(ColorOverlay)); k++)
+                            {
+                                ColorOverlay *thiscolor = &fighter_data->color[i];
+                                ColorOverlay *savedcolor = &ft_state->color[i];
+
+                                thiscolor->timer = savedcolor->timer;
+                                thiscolor->loop = savedcolor->loop;
+                                thiscolor->hex = savedcolor->hex;
+                                thiscolor->red = savedcolor->red;
+                                thiscolor->blue = savedcolor->blue;
+                                thiscolor->green = savedcolor->green;
+                                thiscolor->alpha = savedcolor->alpha;
+                                thiscolor->redblink = savedcolor->redblink;
+                                thiscolor->blueblink = savedcolor->blueblink;
+                                thiscolor->greenblink = savedcolor->greenblink;
+                                thiscolor->alphablink = savedcolor->alphablink;
+                                thiscolor->enable = savedcolor->enable;
+                            }
+
+                            // restore inputs
+                            memcpy(&fighter_data->input, &ft_state->input, sizeof(fighter_data->input)); // copy inputs
+
+                            // restore coll data
+                            CollData *thiscoll = &fighter_data->collData;
+                            CollData *savedcoll = &ft_state->collData;
+                            GOBJ *gobj = thiscoll->gobj;                                                          // 0x0
+                            JOBJ *joint_1 = thiscoll->joint_1;                                                    // 0x108
+                            JOBJ *joint_2 = thiscoll->joint_2;                                                    // 0x10c
+                            JOBJ *joint_3 = thiscoll->joint_3;                                                    // 0x110
+                            JOBJ *joint_4 = thiscoll->joint_4;                                                    // 0x114
+                            JOBJ *joint_5 = thiscoll->joint_5;                                                    // 0x118
+                            JOBJ *joint_6 = thiscoll->joint_6;                                                    // 0x11c
+                            JOBJ *joint_7 = thiscoll->joint_7;                                                    // 0x120
+                            memcpy(&fighter_data->collData, &ft_state->collData, sizeof(fighter_data->collData)); // copy collision
+                            thiscoll->gobj = gobj;
+                            thiscoll->joint_1 = joint_1;
+                            thiscoll->joint_2 = joint_2;
+                            thiscoll->joint_3 = joint_3;
+                            thiscoll->joint_4 = joint_4;
+                            thiscoll->joint_5 = joint_5;
+                            thiscoll->joint_6 = joint_6;
+                            thiscoll->joint_7 = joint_7;
+
+                            // restore camera box
+                            CameraBox *thiscam = &rec_state.ft_state[i]->camera[j];
+                            CameraBox *savedcam = &ft_state->cameraBox;
+                            void *alloc = thiscam->alloc;
+                            CameraBox *next = thiscam->next;
+                            memcpy(thiscam, savedcam, sizeof(CameraBox)); // copy camerabox
+                            thiscam->alloc = alloc;
+                            thiscam->next = next;
+
+                            // restore hitboxes
+                            memcpy(&fighter_data->hitbox, &ft_state->hitbox, sizeof(fighter_data->hitbox));                   // copy hitbox
+                            memcpy(&fighter_data->throw_hitbox, &ft_state->throw_hitbox, sizeof(fighter_data->throw_hitbox)); // copy hitbox
+                            memcpy(&fighter_data->unk_hitbox, &ft_state->unk_hitbox, sizeof(fighter_data->unk_hitbox));       // copy hitbox
+
+                            // convert pointers
+                            for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
+                            {
+                                fighter_data->hitbox[k].bone = Record_IDToBone(fighter_data, ft_state->hitbox[k].bone);
+                                for (int l = 0; l < (sizeof(fighter_data->hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                                {
+                                    fighter_data->hitbox[k].victims[l].victim_data = Record_IDToFtData(ft_state->hitbox[k].victims[l].victim_data);
+                                }
+                            }
+                            for (int k = 0; k < (sizeof(fighter_data->throw_hitbox) / sizeof(ftHit)); k++)
+                            {
+                                fighter_data->throw_hitbox[k].bone = Record_IDToBone(fighter_data, ft_state->throw_hitbox[k].bone);
+                                for (int l = 0; l < (sizeof(fighter_data->throw_hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                                {
+                                    fighter_data->throw_hitbox[k].victims[l].victim_data = Record_IDToFtData(ft_state->throw_hitbox[k].victims[l].victim_data);
+                                }
+                            }
+                            fighter_data->unk_hitbox.bone = Record_IDToBone(fighter_data, ft_state->unk_hitbox.bone);
+                            for (int k = 0; k < (sizeof(fighter_data->unk_hitbox.victims) / sizeof(HitVictim)); k++) // pointers to hitbox victims
+                            {
+
+                                fighter_data->unk_hitbox.victims[k].victim_data = Record_IDToFtData(ft_state->unk_hitbox.victims[k].victim_data);
+                            }
+                        }
+                    }
+                }
+
+                // copy recordings
+                for (int i = 0; i < REC_SLOTS; i++)
+                {
+                    memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
+                    memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
+                }
+
+                HSD_Free(rec_save);
+
+                // init savestate
+                Record_OnSuccessfulSave();
+
+                // restore these positions
+                event_vars->Savestate_Load(&rec_state);
+
+                // also save to personal savestate
+                event_vars->Savestate_Save(event_vars->savestate);
+            }
+
+            HSD_Free(memcard_save.data);
+
+#if TM_DEBUG == 1
+            int load_post_tick = OSGetTick();
+            int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
+            OSReport("processed memcard load in %dms\n", load_time);
+#endif
+
+            break;
+        }
+    }
 
     return;
+}
+int Record_OptimizedSave()
+{
+    typedef struct BackupQueue
+    {
+        GOBJ *fighter;
+        FighterData *fighter_data;
+    } BackupQueue;
+
+    RecordingSavestate *savestate = stc_optstate;
+
+#if TM_DEBUG == 1
+    int save_pre_tick = OSGetTick();
+#endif
+
+    // ensure no players are in problematic states
+    int canSave = 1;
+    GOBJ **gobj_list = R13_PTR(GOBJLIST);
+    GOBJ *fighter = gobj_list[8];
+    while (fighter != 0)
+    {
+
+        FighterData *fighter_data = fighter->userdata;
+
+        if ((fighter_data->cb_OnDeath != 0) ||
+            (fighter_data->cb_OnDeath2 != 0) ||
+            (fighter_data->cb_OnDeath3 != 0) ||
+            (fighter_data->heldItem != 0) ||
+            (fighter_data->x1978 != 0) ||
+            (fighter_data->accessory != 0))
+        {
+            // cannot save
+            canSave = 0;
+            break;
+        }
+
+        fighter = fighter->next;
+    }
+
+    // loop through all players
+    int isSaved = 0;
+    if (canSave == 1)
+    {
+
+        // save frame
+        savestate->frame = stc_event_vars.game_timer;
+
+        // backup all players
+        for (int i = 0; i < 6; i++)
+        {
+            // get fighter gobjs
+            BackupQueue queue[2];
+            for (int j = 0; j < 2; j++)
+            {
+                GOBJ *fighter = 0;
+                FighterData *fighter_data = 0;
+
+                // get fighter gobj and data if they exist
+                fighter = Fighter_GetSubcharGObj(i, j);
+                if (fighter != 0)
+                    fighter_data = fighter->userdata;
+
+                // store fighter pointers
+                queue[j].fighter = fighter;
+                queue[j].fighter_data = fighter_data;
+            }
+
+            // if the main fighter exists
+            if (queue[0].fighter != 0)
+            {
+
+                isSaved = 1;
+
+                // backup each subfighters data
+                for (int j = 0; j < 2; j++)
+                {
+                    // if exists
+                    if (queue[j].fighter != 0)
+                    {
+
+                        OptFtState *ft_state = &savestate->ft_state[i][j];
+                        FighterData *fighter_data = queue[j].fighter_data;
+
+                        // backup to ft_state
+                        ft_state->is_exist = 1;
+                        ft_state->state_id = fighter_data->state_id;
+                        ft_state->facing_direction = fighter_data->facing_direction;
+                        ft_state->stateFrame = fighter_data->stateFrame;
+                        ft_state->stateSpeed = fighter_data->stateSpeed;
+                        ft_state->stateBlend = fighter_data->stateBlend;
+                        memcpy(&ft_state->phys, &fighter_data->phys, sizeof(fighter_data->phys));                         // copy physics
+                        memcpy(&ft_state->color, &fighter_data->color, sizeof(fighter_data->color));                      // copy color overlay
+                        memcpy(&ft_state->input, &fighter_data->input, sizeof(fighter_data->input));                      // copy inputs
+                        memcpy(&ft_state->collData, &fighter_data->collData, sizeof(fighter_data->collData));             // copy collision
+                        memcpy(&ft_state->cameraBox, fighter_data->cameraBox, sizeof(CameraBox));                         // copy camerabox
+                        memcpy(&ft_state->hitbox, &fighter_data->hitbox, sizeof(fighter_data->hitbox));                   // copy hitbox
+                        memcpy(&ft_state->throw_hitbox, &fighter_data->throw_hitbox, sizeof(fighter_data->throw_hitbox)); // copy hitbox
+                        memcpy(&ft_state->unk_hitbox, &fighter_data->unk_hitbox, sizeof(fighter_data->unk_hitbox));       // copy hitbox
+                        memcpy(&ft_state->flags, &fighter_data->flags, sizeof(fighter_data->flags));                      // copy flags
+                        memcpy(&ft_state->fighter_var, &fighter_data->fighter_var, sizeof(fighter_data->fighter_var));    // copy var
+                        memcpy(&ft_state->state_var, &fighter_data->state_var, sizeof(fighter_data->state_var));          // copy var
+                        memcpy(&ft_state->ftcmd_var, &fighter_data->ftcmd_var, sizeof(fighter_data->ftcmd_var));          // copy var
+                        memcpy(&ft_state->jump, &fighter_data->jump, sizeof(fighter_data->jump));                         // copy var
+                        memcpy(&ft_state->smash, &fighter_data->smash, sizeof(fighter_data->smash));                      // copy var
+                        memcpy(&ft_state->hurtstatus, &fighter_data->hurtstatus, sizeof(fighter_data->hurtstatus));       // copy var
+
+                        // copy dmg
+                        memcpy(&ft_state->dmg, &fighter_data->dmg, sizeof(fighter_data->dmg));
+                        ft_state->dmg.source = Record_GOBJToID(ft_state->dmg.source);
+
+                        // copy grab
+                        memcpy(&ft_state->grab, &fighter_data->grab, sizeof(fighter_data->grab));
+                        ft_state->grab.grab_attacker = Record_GOBJToID(ft_state->grab.grab_attacker);
+                        ft_state->grab.grab_victim = Record_GOBJToID(ft_state->grab.grab_victim);
+
+                        // convert pointers
+                        for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
+                        {
+
+                            ft_state->hitbox[k].bone = Record_BoneToID(fighter_data, ft_state->hitbox[k].bone);
+                            for (int l = 0; l < (sizeof(fighter_data->hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                            {
+                                ft_state->hitbox[k].victims[l].victim_data = Record_FtDataToID(ft_state->hitbox[k].victims[l].victim_data);
+                            }
+                        }
+                        for (int k = 0; k < (sizeof(fighter_data->throw_hitbox) / sizeof(ftHit)); k++)
+                        {
+                            ft_state->throw_hitbox[k].bone = Record_BoneToID(fighter_data, ft_state->throw_hitbox[k].bone);
+                            for (int l = 0; l < (sizeof(fighter_data->throw_hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                            {
+                                ft_state->throw_hitbox[k].victims[l].victim_data = Record_FtDataToID(ft_state->throw_hitbox[k].victims[l].victim_data);
+                            }
+                        }
+
+                        ft_state->unk_hitbox.bone = Record_BoneToID(fighter_data, ft_state->unk_hitbox.bone);
+                        for (int k = 0; k < (sizeof(fighter_data->unk_hitbox.victims) / sizeof(HitVictim)); k++) // pointers to hitbox victims
+                        {
+
+                            ft_state->unk_hitbox.victims[k].victim_data = Record_FtDataToID(ft_state->unk_hitbox.victims[k].victim_data);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Play SFX
+    if (isSaved == 0)
+    {
+        SFX_PlayCommon(3);
+    }
+    if (isSaved == 1)
+    {
+        // play sfx
+        SFX_PlayCommon(1);
+
+        // if not in frame advance, flash screen. I wrote it like this because the second condition kept getting optimized out
+        if ((Pause_CheckStatus(0) != 1))
+        {
+            if ((Pause_CheckStatus(1) != 2))
+            {
+                ScreenFlash_Create(2, 0);
+            }
+        }
+    }
+
+#if TM_DEBUG == 1
+    int save_post_tick = OSGetTick();
+    int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
+    OSReport("processed save in %dms\n", save_time);
+#endif
+
+    return isSaved;
+}
+int Record_OptimizedLoad()
+{
+    typedef struct BackupQueue
+    {
+        GOBJ *fighter;
+        FighterData *fighter_data;
+    } BackupQueue;
+
+    RecordingSavestate *savestate = stc_optstate;
+
+#if TM_DEBUG == 1
+    int load_pre_tick = OSGetTick();
+#endif
+
+    // loop through all players
+    int isLoaded = 0;
+    for (int i = 0; i < 6; i++)
+    {
+        // get fighter gobjs
+        BackupQueue queue[2];
+        for (int j = 0; j < 2; j++)
+        {
+            GOBJ *fighter = 0;
+            FighterData *fighter_data = 0;
+
+            // get fighter gobj and data if they exist
+            fighter = Fighter_GetSubcharGObj(i, j);
+            if (fighter != 0)
+                fighter_data = fighter->userdata;
+
+            // store fighter pointers
+            queue[j].fighter = fighter;
+            queue[j].fighter_data = fighter_data;
+        }
+
+        // if the main fighter and backup exists
+        if ((queue[0].fighter != 0) && (savestate->ft_state[i]->is_exist == 1))
+        {
+
+            isLoaded = 1;
+
+            // restore fighter data
+            for (int j = 0; j < 2; j++)
+            {
+
+                GOBJ *fighter = queue[j].fighter;
+
+                if (fighter != 0)
+                {
+
+                    // get state
+                    OptFtState *ft_state = savestate->ft_state[i];
+                    FighterData *fighter_data = queue[j].fighter_data;
+
+                    // sleep
+                    Fighter_EnterSleep(fighter, 0);
+
+                    fighter_data->state_id = ft_state->state_id;
+                    fighter_data->facing_direction = ft_state->facing_direction;
+                    fighter_data->stateFrame = ft_state->stateFrame;
+                    fighter_data->stateSpeed = ft_state->stateSpeed;
+                    fighter_data->stateBlend = ft_state->stateBlend;
+
+                    // restore phys struct
+                    memcpy(&fighter_data->phys, &ft_state->phys, sizeof(fighter_data->phys)); // copy physics
+
+                    // restore inputs
+                    memcpy(&fighter_data->input, &ft_state->input, sizeof(fighter_data->input)); // copy inputs
+
+                    // restore coll data
+                    CollData *thiscoll = &fighter_data->collData;
+                    CollData *savedcoll = &ft_state->collData;
+                    GOBJ *gobj = thiscoll->gobj;                                                          // 0x0
+                    JOBJ *joint_1 = thiscoll->joint_1;                                                    // 0x108
+                    JOBJ *joint_2 = thiscoll->joint_2;                                                    // 0x10c
+                    JOBJ *joint_3 = thiscoll->joint_3;                                                    // 0x110
+                    JOBJ *joint_4 = thiscoll->joint_4;                                                    // 0x114
+                    JOBJ *joint_5 = thiscoll->joint_5;                                                    // 0x118
+                    JOBJ *joint_6 = thiscoll->joint_6;                                                    // 0x11c
+                    JOBJ *joint_7 = thiscoll->joint_7;                                                    // 0x120
+                    memcpy(&fighter_data->collData, &ft_state->collData, sizeof(fighter_data->collData)); // copy collision
+                    thiscoll->gobj = gobj;
+                    thiscoll->joint_1 = joint_1;
+                    thiscoll->joint_2 = joint_2;
+                    thiscoll->joint_3 = joint_3;
+                    thiscoll->joint_4 = joint_4;
+                    thiscoll->joint_5 = joint_5;
+                    thiscoll->joint_6 = joint_6;
+                    thiscoll->joint_7 = joint_7;
+
+                    // restore hitboxes
+                    memcpy(&fighter_data->hitbox, &ft_state->hitbox, sizeof(fighter_data->hitbox));                   // copy hitbox
+                    memcpy(&fighter_data->throw_hitbox, &ft_state->throw_hitbox, sizeof(fighter_data->throw_hitbox)); // copy hitbox
+                    memcpy(&fighter_data->unk_hitbox, &ft_state->unk_hitbox, sizeof(fighter_data->unk_hitbox));       // copy hitbox
+
+                    // copy grab
+                    memcpy(&fighter_data->grab, &ft_state->grab, sizeof(fighter_data->grab));
+                    fighter_data->grab.grab_attacker = Record_IDToGOBJ(fighter_data->grab.grab_attacker);
+                    fighter_data->grab.grab_victim = Record_IDToGOBJ(fighter_data->grab.grab_victim);
+
+                    // convert pointers
+                    for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
+                    {
+                        fighter_data->hitbox[k].bone = Record_IDToBone(fighter_data, ft_state->hitbox[k].bone);
+                        for (int l = 0; l < (sizeof(fighter_data->hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                        {
+                            fighter_data->hitbox[k].victims[l].victim_data = Record_IDToFtData(ft_state->hitbox[k].victims[l].victim_data);
+                        }
+                    }
+                    for (int k = 0; k < (sizeof(fighter_data->throw_hitbox) / sizeof(ftHit)); k++)
+                    {
+                        fighter_data->throw_hitbox[k].bone = Record_IDToBone(fighter_data, ft_state->throw_hitbox[k].bone);
+                        for (int l = 0; l < (sizeof(fighter_data->throw_hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                        {
+                            fighter_data->throw_hitbox[k].victims[l].victim_data = Record_IDToFtData(ft_state->throw_hitbox[k].victims[l].victim_data);
+                        }
+                    }
+                    fighter_data->unk_hitbox.bone = Record_IDToBone(fighter_data, ft_state->unk_hitbox.bone);
+                    for (int k = 0; k < (sizeof(fighter_data->unk_hitbox.victims) / sizeof(HitVictim)); k++) // pointers to hitbox victims
+                    {
+
+                        fighter_data->unk_hitbox.victims[k].victim_data = Record_IDToFtData(ft_state->unk_hitbox.victims[k].victim_data);
+                    }
+
+                    // zero pointer to cached animations to force anim load (fixes fall crash)
+                    fighter_data->anim_curr_ARAM = 0;
+                    fighter_data->anim_persist_ARAM = 0;
+
+                    // enter backed up state
+                    GOBJ *anim_source = 0;
+                    if (fighter_data->flags.is_thrown == 1)
+                        anim_source = fighter_data->grab.grab_attacker;
+                    Fighter_SetAllHurtboxesNotUpdated(fighter);
+                    ActionStateChange(ft_state->stateFrame, ft_state->stateSpeed, -1, fighter, ft_state->state_id, ASC_UPDATE_SCRIPT, 0);
+                    fighter_data->stateBlend = 0;
+
+                    // restore fighter variables
+                    memcpy(&fighter_data->fighter_var, &ft_state->fighter_var, sizeof(fighter_data->fighter_var)); // copy hitbox
+
+                    // restore state variables
+                    memcpy(&fighter_data->state_var, &ft_state->state_var, sizeof(fighter_data->state_var)); // copy hitbox
+
+                    // restore ftcmd variables
+                    memcpy(&fighter_data->ftcmd_var, &ft_state->ftcmd_var, sizeof(fighter_data->ftcmd_var)); // copy hitbox
+
+                    // restore damage variables
+                    memcpy(&fighter_data->dmg, &ft_state->dmg, sizeof(fighter_data->dmg)); // copy hitbox
+                    fighter_data->dmg.source = Record_IDToGOBJ(fighter_data->dmg.source);
+
+                    // restore jump variables
+                    memcpy(&fighter_data->jump, &ft_state->jump, sizeof(fighter_data->jump)); // copy hitbox
+
+                    // restore flags
+                    memcpy(&fighter_data->flags, &ft_state->flags, sizeof(fighter_data->flags)); // copy hitbox
+
+                    // restore hurtstatus variables
+                    memcpy(&fighter_data->hurtstatus, &ft_state->hurtstatus, sizeof(fighter_data->hurtstatus)); // copy hitbox
+
+                    // update jobj position
+                    JOBJ *fighter_jobj = fighter->hsd_object;
+                    fighter_jobj->trans = fighter_data->phys.pos;
+                    // dirtysub their jobj
+                    JOBJ_SetMtxDirtySub(fighter_jobj);
+
+                    // update hurtbox position
+                    Fighter_UpdateHurtboxes(fighter_data);
+
+                    // restore color
+                    for (int k = 0; k < (sizeof(fighter_data->color) / sizeof(ColorOverlay)); k++)
+                    {
+                        ColorOverlay *thiscolor = &fighter_data->color[i];
+                        ColorOverlay *savedcolor = &ft_state->color[i];
+
+                        thiscolor->timer = savedcolor->timer;
+                        thiscolor->loop = savedcolor->loop;
+                        thiscolor->hex = savedcolor->hex;
+                        thiscolor->red = savedcolor->red;
+                        thiscolor->blue = savedcolor->blue;
+                        thiscolor->green = savedcolor->green;
+                        thiscolor->alpha = savedcolor->alpha;
+                        thiscolor->redblink = savedcolor->redblink;
+                        thiscolor->blueblink = savedcolor->blueblink;
+                        thiscolor->greenblink = savedcolor->greenblink;
+                        thiscolor->alphablink = savedcolor->alphablink;
+                        thiscolor->enable = savedcolor->enable;
+                    }
+
+                    // restore smash variables
+                    memcpy(&fighter_data->smash, &ft_state->smash, sizeof(fighter_data->smash)); // copy hitbox
+
+                    // stop player SFX
+                    SFX_StopAllFighterSFX(fighter_data);
+
+                    // update colltest frame
+                    fighter_data->collData.coll_test = *stc_colltest;
+
+                    // restore camera box
+                    CameraBox *thiscam = fighter_data->cameraBox;
+                    CameraBox *savedcam = &ft_state->cameraBox;
+                    void *alloc = thiscam->alloc;
+                    CameraBox *next = thiscam->next;
+                    memcpy(thiscam, savedcam, sizeof(CameraBox)); // copy camerabox
+                    thiscam->alloc = alloc;
+                    thiscam->next = next;
+
+                    // update their IK
+                    Fighter_UpdateIK(fighter);
+
+#if TM_DEBUG == 1
+                    int dyn_pre_tick = OSGetTick();
+#endif
+                    int dyn_proc_num = 45;
+
+                    // simulate dynamics a bunch to fall in place
+                    for (int d = 0; d < dyn_proc_num; d++)
+                    {
+                        Fighter_ProcDynamics(fighter);
+                    }
+
+#if TM_DEBUG == 1
+                    int dyn_post_tick = OSGetTick();
+                    int dyn_time = OSTicksToMilliseconds(dyn_post_tick - dyn_pre_tick);
+                    OSReport("processed dyn %d times in %dms\n", dyn_proc_num, dyn_time);
+#endif
+                }
+            }
+        }
+
+        // check to recreate HUD
+        MatchHUD *hud = &stc_matchhud[i];
+
+        // check if fighter is perm dead
+        if (Match_CheckIfStock() == 1)
+        {
+            // remove HUD if no stocks left
+            if (Fighter_GetStocks(i) <= 0)
+            {
+                hud->is_removed = 0;
+            }
+        }
+
+        // check to create it
+        if (hud->is_removed == 1)
+        {
+            Match_CreateHUD(i);
+        }
+
+        // snap camera to the new positions
+        Match_CorrectCamera();
+
+        // stop crowd cheer
+        SFX_StopCrowd();
+    }
+
+    // Restore event data and Play SFX
+    if (isLoaded == 0)
+    {
+        SFX_PlayCommon(3);
+    }
+    if (isLoaded == 1)
+    {
+
+        // restore frame
+        Match *match = stc_match;
+        match->time_frames = savestate->frame;
+        stc_event_vars.game_timer = savestate->frame;
+
+        // update timer
+        int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
+        match->time_seconds = frames / 60;
+        match->time_ms = frames % 60;
+
+        SFX_PlayCommon(0);
+    }
+
+#if TM_DEBUG == 1
+    int load_post_tick = OSGetTick();
+    int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
+    OSReport("processed load in %dms\n", load_time);
+    sizeof(OptFtState);
+#endif
+
+    return isLoaded;
+}
+int Record_GOBJToID(GOBJ *gobj)
+{
+    // ensure valid pointer
+    if (gobj == 0)
+        return -1;
+
+    // ensure its a fighter
+    if (gobj->entity_class != 4)
+        return -1;
+
+    // access the data
+    FighterData *ft_data = gobj->userdata;
+    u8 ply = ft_data->ply;
+    u8 ms = ft_data->flags.ms;
+
+    return ((ply << 4) | ms);
+}
+int Record_FtDataToID(FighterData *fighter_data)
+{
+    // ensure valid pointer
+    if (fighter_data == 0)
+        return -1;
+
+    // ensure its a fighter
+    if (fighter_data->fighter == 0)
+        return -1;
+
+    // get ply and ms
+    u8 ply = fighter_data->ply;
+    u8 ms = fighter_data->flags.ms;
+
+    return ((ply << 4) | ms);
+}
+int Record_BoneToID(FighterData *fighter_data, JOBJ *bone)
+{
+
+    // ensure bone exists
+    if (bone == 0)
+        return -1;
+
+    int bone_id = -1;
+
+    // painstakingly look for a match
+    for (int i = 0; i < fighter_data->bone_num; i++)
+    {
+        if (bone == fighter_data->bones[i].joint)
+        {
+            bone_id = i;
+            break;
+        }
+    }
+
+    // no bone found
+    if (bone_id == -1)
+    {
+        assert("no bone found");
+    }
+
+    return bone_id;
+}
+GOBJ *Record_IDToGOBJ(int id)
+{
+    // ensure valid pointer
+    if (id == -1)
+        return 0;
+
+    // get ply and ms
+    u8 ply = (id >> 4) & 0xF;
+    u8 ms = id & 0xF;
+
+    // get the gobj for this fighter
+    GOBJ *gobj = Fighter_GetSubcharGObj(ply, ms);
+
+    return gobj;
+}
+FighterData *Record_IDToFtData(int id)
+{
+    // ensure valid pointer
+    if (id == -1)
+        return 0;
+
+    // get ply and ms
+    u8 ply = (id >> 4) & 0xF;
+    u8 ms = id & 0xF;
+
+    // get the gobj for this fighter
+    GOBJ *gobj = Fighter_GetSubcharGObj(ply, ms);
+    FighterData *fighter_data = gobj->userdata;
+
+    return fighter_data;
+}
+JOBJ *Record_IDToBone(FighterData *fighter_data, int id)
+{
+    // ensure valid pointer
+    if (id == -1)
+        return 0;
+
+    // get the bone
+    JOBJ *bone = fighter_data->bones[id].joint;
+
+    return bone;
 }
 
 // Init Function
@@ -4507,8 +5260,8 @@ void Event_Think(GOBJ *event)
     HSD_Pad *pad = PadGet(hmn_data->player_controller_number, PADGET_ENGINE);
 
     // update menu's percent
-    LabOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->damage_Percent;
-    LabOptions_CPU[OPTCPU_PCNT].option_val = cpu_data->damage_Percent;
+    LabOptions_General[OPTGEN_HMNPCNT].option_val = hmn_data->dmg.percent;
+    LabOptions_CPU[OPTCPU_PCNT].option_val = cpu_data->dmg.percent;
 
     // reset stale moves
     if (LabOptions_General[OPTGEN_STALE].option_val == 0)
@@ -4529,17 +5282,17 @@ void Event_Think(GOBJ *event)
     // apply intangibility
     if (LabOptions_CPU[OPTCPU_INTANG].option_val == 1)
     {
-        cpu_data->no_reaction_always = 1;
-        cpu_data->nudge_disable = 1;
+        cpu_data->flags.no_reaction_always = 1;
+        cpu_data->flags.nudge_disable = 1;
         Fighter_ApplyOverlay(cpu_data, 9, 0);
         Fighter_UpdateOverlay(cpu);
-        cpu_data->damage_Percent = 0;
+        cpu_data->dmg.percent = 0;
         Fighter_SetHUDDamage(cpu_data->ply, 0);
     }
     else
     {
-        cpu_data->no_reaction_always = 0;
-        cpu_data->nudge_disable = 0;
+        cpu_data->flags.no_reaction_always = 0;
+        cpu_data->flags.nudge_disable = 0;
     }
 
     // Move CPU
@@ -4547,7 +5300,7 @@ void Event_Think(GOBJ *event)
     {
         // ensure player is grounded
         int isGround = 0;
-        if (hmn_data->air_state == 0)
+        if (hmn_data->phys.air_state == 0)
         {
 
             // check for ground in front of player
@@ -4555,15 +5308,15 @@ void Event_Think(GOBJ *event)
             int line_index;
             int line_kind;
             Vec3 line_unk;
-            float fromX = (hmn_data->pos.X) + (hmn_data->facing_direction * 16);
+            float fromX = (hmn_data->phys.pos.X) + (hmn_data->facing_direction * 16);
             float toX = fromX;
-            float fromY = (hmn_data->pos.Y + 5);
+            float fromY = (hmn_data->phys.pos.Y + 5);
             float toY = fromY - 10;
             isGround = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
             if (isGround == 1)
             {
                 // place CPU here
-                cpu_data->pos = coll_pos;
+                cpu_data->phys.pos = coll_pos;
                 cpu_data->collData.ground_index = line_index;
 
                 // facing player
@@ -4575,14 +5328,14 @@ void Event_Think(GOBJ *event)
                 cpu_data->cameraBox->boundright_curr = cpu_data->cameraBox->boundright_proj;
 
                 // set grounded
-                cpu_data->air_state = 0;
+                cpu_data->phys.air_state = 0;
                 //Fighter_SetGrounded(cpu);
 
                 // enter wait
                 Fighter_EnterWait(cpu);
 
                 // update ECB
-                cpu_data->collData.topN_Curr = cpu_data->pos; // move current ECB location to new position
+                cpu_data->collData.topN_Curr = cpu_data->phys.pos; // move current ECB location to new position
                 Coll_ECBCurrToPrev(&cpu_data->collData);
                 cpu_data->cb_Coll(cpu);
 
