@@ -135,7 +135,7 @@ typedef struct RecData
     float seek_left;
     float seek_right;
 } RecData;
-typedef struct OptFtState
+typedef struct OptFtStateData
 {
     int is_exist;
     int state_id;
@@ -530,11 +530,98 @@ typedef struct OptFtState
         int ledge_intang_left;   // 0x1990
         int respawn_intang_left; // 0x1994
     } hurtstatus;
+    struct
+    {
+        float health;          // 0x1998
+        float lightshield_amt; // 0x199c
+        int dmg_taken;         // 0x19a0, seems to be all damage taken during the frame, is reset at the end of the frame
+        int dmg_taken2;        // 0x19a4, idk there so many of these
+        GOBJ *dmg_source;      // 0x19a8, points to the entity that hit the shield
+        float hit_direction;   // 0x19ac
+        int hit_attr;          // 0x19b0, attribute of the hitbox that collided
+        float x19b4;           // 0x19b4
+        float x19b8;           // 0x19b8
+        int dmg_taken3;        // 0x19bc, seems to be the most recent amount of damage taken
+    } shield;
+    struct
+    {
+        JOBJ *bone;                   // 0x19c0
+        unsigned char is_checked : 1; // 0x19d0 0x80. is checked for collision when 0
+        Vec3 pos;                     // 19d4
+        Vec3 offset;                  // 0x19d4
+        float size_mult;              // 0x19e0
+    } shield_bubble;
+    struct
+    {
+        JOBJ *bone;                   // 0x19e4
+        unsigned char is_checked : 1; // 0x19d0 0x80. is checked for collision when 0
+        Vec3 pos;                     // 0x19d4
+        Vec3 offset;                  // 0x19f8
+        float size_mult;              // 0x1a04
+    } reflect_bubble;
+    struct
+    {
+        JOBJ *bone;                   // 0x1a08
+        unsigned char is_checked : 1; // 0x1a0c 0x80. is checked for collision when 0
+        Vec3 pos;                     // 0x1a10
+        Vec3 offset;                  // 0x1a1c
+        float size_mult;              // 0x1a28
+    } absorb_bubble;
+    struct
+    {                        //
+        float hit_direction; // 0x1a2c
+        int max_dmg;         // 0x1a30
+        float dmg_mult;      // 0x1a34
+        int is_break;        // 0x1a38
+    } reflect_hit;           //
+    struct
+    {                        //
+        int x1a3c;           // 0x1a3c
+        float hit_direction; // 0x1a40
+        int dmg_taken;       // 0x1a44
+        int hits_taken;      // 0x1a48
+    } absorb_hit;            //
+    struct
+    {
+        void (*OnGrabFighter_Self)(GOBJ *fighter);   // 0x2190
+        void (*x2194)(GOBJ *fighter);                // 0x2194
+        void (*OnGrabFighter_Victim)(GOBJ *fighter); // 0x2198
+        void (*IASA)(GOBJ *fighter);                 // 0x219C
+        void (*Anim)(GOBJ *fighter);                 // 0x21A0
+        void (*Phys)(GOBJ *fighter);                 // 0x21a4
+        void (*Coll)(GOBJ *fighter);                 // 0x21a8
+        void (*Cam)(GOBJ *fighter);                  // 0x21ac
+        void (*Accessory1)(GOBJ *fighter);           // 0x21b0
+        void (*Accessory2)(GOBJ *fighter);           // 0x21b4
+        void (*Accessory3)(GOBJ *fighter);           // 0x21b8
+        void (*Accessory4)(GOBJ *fighter);           // 0x21bc
+        void (*OnGiveDamage)(GOBJ *fighter);         // 0x21c0
+        void (*OnShieldHit)(GOBJ *fighter);          // 0x21c4
+        void (*OnReflectHit)(GOBJ *fighter);         // 0x21c8
+        void (*x21cc)(GOBJ *fighter);                // 0x21cc
+        void (*EveryHitlag)(GOBJ *fighter);          // 0x21d0
+        void (*EnterHitlag)(GOBJ *fighter);          // 0x21d4
+        void (*ExitHitlag)(GOBJ *fighter);           // 0x21d8
+        void (*OnTakeDamage)(GOBJ *fighter);         // 0x21dc
+        void (*OnDeath)(GOBJ *fighter);              // 0x21e0
+        void (*OnDeath2)(GOBJ *fighter);             // 0x21e4
+        void (*OnDeath3)(GOBJ *fighter);             // 0x21e8
+        void (*OnActionStateChange)(GOBJ *fighter);  // 0x21ec
+        void (*OnTakeDamage2)(GOBJ *fighter);        // 0x21f0
+        void (*OnHurtboxDetect)(GOBJ *fighter);      // 0x21f4
+        void (*OnSpin)(GOBJ *fighter);               // 0x21f8
+    } cb;
+} OptFtStateData;
+typedef struct OptFtState
+{
+    OptFtStateData data[2];
+    Playerblock player_block;
+    int stale_queue[11];
 } OptFtState;
 typedef struct RecordingSavestate
 {
     int frame;
-    OptFtState ft_state[6][2];
+    OptFtState ft_state[6];
 } RecordingSavestate;
 typedef struct RecordingSave
 {
