@@ -620,6 +620,7 @@ typedef struct OptFtState
 } OptFtState;
 typedef struct RecordingSavestate
 {
+    int is_exist;
     int frame;
     OptFtState ft_state[6];
 } RecordingSavestate;

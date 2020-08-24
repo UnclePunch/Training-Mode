@@ -1269,11 +1269,10 @@ static EventMenu LabMenu_Record = {
 static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
-static SaveState rec_state;
+static RecordingSavestate *rec_state;
 static int save_id = 0x00D0C0DE;
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static char *stc_save_desc = "%d/%d/%d %d:%2d";
-static RecordingSavestate *stc_optstate;
 static DevText *stc_devtext;
 
 // lz77 functions courtesy of https://github.com/andyherbert/lz1
@@ -3762,19 +3761,15 @@ GOBJ *Record_Init()
     Text_AddSubtext(text, (text_right.X * 25), -(text_right.Y) * 25, &nullString);
     rec_data.text = text;
 
+    // alloc rec_state
+    rec_state = calloc(sizeof(RecordingSavestate));
     // set as not exist
-    rec_state.is_exist = 0;
+    rec_state->is_exist = 0;
 
     // disable menu options
     for (int i = 1; i < sizeof(LabOptions_Record) / sizeof(EventOption); i++)
     {
         LabOptions_Record[i].disable = 1;
-    }
-
-    // init savestate struct
-    for (int i = 0; i < sizeof(rec_state.ft_state) / 4; i++)
-    {
-        rec_state.ft_state[i] = 0;
     }
 
     // allocate input arrays
@@ -3791,9 +3786,6 @@ GOBJ *Record_Init()
     // init memcard stuff
     Memcard_InitUnk();
     Memcard_InitSnapshotList(HSD_MemAlloc(2112), HSD_MemAlloc(256064));
-
-    // temp alloc debug opt savestate
-    stc_optstate = HSD_MemAlloc(sizeof(RecordingSavestate));
 
     /*
     // init dev text
@@ -3814,7 +3806,7 @@ GOBJ *Record_Init()
 void Record_CObjThink(GOBJ *gobj)
 {
     // hide UI if set to off
-    if ((rec_state.is_exist == 1) && ((LabOptions_Record[OPTREC_CPUMODE].option_val != 0) || (LabOptions_Record[OPTREC_HMNMODE].option_val != 0)))
+    if ((rec_state->is_exist == 1) && ((LabOptions_Record[OPTREC_CPUMODE].option_val != 0) || (LabOptions_Record[OPTREC_HMNMODE].option_val != 0)))
     {
         CObjThink_Common(gobj);
     }
@@ -3847,7 +3839,7 @@ void Record_GX(GOBJ *gobj, int pass)
         Text *text = rec_data.text;
 
         // get curr frame (the current position in the recording)
-        int curr_frame = (event_vars->game_timer - 1) - rec_state.frame;
+        int curr_frame = (event_vars->game_timer - 1) - rec_state->frame;
 
         // get what frame the longest recording ends on (savestate frame + recording start frame + recording time)
         int hmn_end_frame = 0;
@@ -3874,7 +3866,7 @@ void Record_GX(GOBJ *gobj, int pass)
         }
         else // case 2: recording has started, use the frame saved
         {
-            rec_start = input_data->start_frame - rec_state.frame;
+            rec_start = input_data->start_frame - rec_state->frame;
         }
 
         // get end frame
@@ -3967,10 +3959,10 @@ void Record_Think(GOBJ *rec_gobj)
     RecInputData *cpu_inputs = rec_data.cpu_inputs[cpu_slot];
 
     // ensure the state exists
-    if (rec_state.is_exist == 1)
+    if (rec_state->is_exist == 1)
     {
         // get local frame
-        int local_frame = (event_vars->game_timer - 1) - rec_state.frame;
+        int local_frame = (event_vars->game_timer - 1) - rec_state->frame;
         int input_num = hmn_inputs->num; // get longest recording
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
@@ -3988,15 +3980,15 @@ void Record_Think(GOBJ *rec_gobj)
                 // check to auto reset
                 if ((LabOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
-                    event_vars->Savestate_Load(&rec_state);
-                    event_vars->game_timer = rec_state.frame + 1;
+                    Record_OptimizedLoad(rec_state);
+                    event_vars->game_timer = rec_state->frame + 1;
                     is_loop = 1;
                 }
 
                 // check to loop inputs
                 else if ((LabOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
-                    event_vars->game_timer = rec_state.frame + 1;
+                    event_vars->game_timer = rec_state->frame + 1;
                     is_loop = 1;
                 }
 
@@ -4043,7 +4035,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     FighterData *fighter_data = fighter->userdata;
 
     // get curr frame (the time since saving positions)
-    int curr_frame = (event_vars->game_timer - rec_state.frame);
+    int curr_frame = (event_vars->game_timer - rec_state->frame);
 
     // get the frame the recording starts on. i actually hate this code and need to change how this works
     int rec_start;
@@ -4053,7 +4045,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     }
     else // case 2: recording has started, use the frame saved
     {
-        rec_start = input_data->start_frame - rec_state.frame;
+        rec_start = input_data->start_frame - rec_state->frame;
     }
     int end_frame = rec_start + input_data->num;
 
@@ -4162,7 +4154,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 }
 void Record_InitState(GOBJ *menu_gobj)
 {
-    if (event_vars->Savestate_Save(&rec_state))
+    if (Record_OptimizedSave(rec_state))
     {
 
         Record_OnSuccessfulSave();
@@ -4171,7 +4163,7 @@ void Record_InitState(GOBJ *menu_gobj)
 }
 void Record_RestoreState(GOBJ *menu_gobj)
 {
-    event_vars->Savestate_Load(&rec_state);
+    Record_OptimizedLoad(rec_state);
 
     return;
 }
@@ -4195,7 +4187,7 @@ void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
     }
 
     // reload save
-    event_vars->Savestate_Load(&rec_state);
+    Record_OptimizedLoad(rec_state);
 
     return;
 }
@@ -4219,7 +4211,7 @@ void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
     }
 
     // reload save
-    event_vars->Savestate_Load(&rec_state);
+    Record_OptimizedLoad(rec_state);
 
     return;
 }
@@ -4238,7 +4230,7 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
     // upon changing to playback
     if (value == 2)
     {
-        event_vars->Savestate_Load(&rec_state);
+        Record_OptimizedLoad(rec_state);
     }
     return;
 }
@@ -4258,7 +4250,7 @@ void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
     // upon toggling playback
     if (value == 3)
     {
-        event_vars->Savestate_Load(&rec_state);
+        Record_OptimizedLoad(rec_state);
     }
     return;
 }
@@ -4333,13 +4325,12 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     memcpy(&rec_save->match_data, &stc_match->match_data, sizeof(MatchData));
 
     // savestate
-    Record_OptimizedSave(stc_optstate);
+    //Record_OptimizedSave(rec_state);
 
     // copy savestate to buffer
-    memcpy(&rec_save->savestate, stc_optstate, sizeof(RecordingSavestate));
+    memcpy(&rec_save->savestate, rec_state, sizeof(RecordingSavestate));
 
     // copy recordings
-    blr();
     for (int i = 0; i < REC_SLOTS; i++)
     {
         memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
@@ -4352,7 +4343,7 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
     int post_tick = OSGetTick();
     int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
-    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2f%%\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)compress_size / (float)sizeof(RecordingSave)) * 100, time_dif);
+    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2fx\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)sizeof(RecordingSave) / (float)compress_size), time_dif);
 
     Memcard_UpdateSnapshotList(0);
 
@@ -4448,13 +4439,12 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                 lz77_decompress(memcard_save.data, rec_save);
 
                 // copy buffer to savestate
-                memcpy(stc_optstate, &rec_save->savestate, sizeof(RecordingSavestate));
+                memcpy(rec_state, &rec_save->savestate, sizeof(RecordingSavestate));
 
                 // init savestate
                 Record_OnSuccessfulSave();
 
                 // copy recordings
-                blr();
                 for (int i = 0; i < REC_SLOTS; i++)
                 {
                     memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
@@ -4464,9 +4454,8 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                 HSD_Free(rec_save);
 
                 // load state
-                Record_OptimizedLoad(stc_optstate);
+                Record_OptimizedLoad(rec_state);
 
-                // also save to personal savestate
                 //event_vars->Savestate_Save(event_vars->savestate);
             }
 
@@ -4525,8 +4514,10 @@ int Record_OptimizedSave(RecordingSavestate *savestate)
     if (canSave == 1)
     {
 
+        savestate->is_exist = 1;
+
         // save frame
-        savestate->frame = stc_event_vars.game_timer;
+        savestate->frame = event_vars->game_timer;
 
         // backup all players
         for (int i = 0; i < 6; i++)
@@ -4998,7 +4989,7 @@ int Record_OptimizedLoad(RecordingSavestate *savestate)
         // restore frame
         Match *match = stc_match;
         match->time_frames = savestate->frame;
-        stc_event_vars.game_timer = savestate->frame;
+        event_vars->game_timer = savestate->frame;
 
         // update timer
         int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
@@ -5270,7 +5261,7 @@ void Event_Think(GOBJ *event)
                 cpu_data->cb.Coll(cpu);
 
                 // savestate
-                event_vars->Savestate_Save(event_vars->savestate);
+                Record_OptimizedSave(rec_state);
             }
         }
 
