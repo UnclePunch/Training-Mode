@@ -625,7 +625,7 @@ typedef struct RecordingSavestate
 } RecordingSavestate;
 typedef struct RecordingSave
 {
-    int *match_info; // this will point to a struct containing match info
+    MatchData match_data; // this will point to a struct containing match info
     RecordingSavestate savestate;
     RecInputData hmn_inputs[REC_SLOTS];
     RecInputData cpu_inputs[REC_SLOTS];
@@ -662,8 +662,8 @@ void Record_CObjThink(GOBJ *gobj);
 void Record_GX(GOBJ *gobj, int pass);
 void Record_Think(GOBJ *rec_gobj);
 void Record_Update(int ply, RecInputData *inputs, int rec_mode);
-int Record_OptimizedSave();
-int Record_OptimizedLoad();
+int Record_OptimizedSave(RecordingSavestate *savestate);
+int Record_OptimizedLoad(RecordingSavestate *savestate);
 int Record_GetRandomSlot(RecInputData **input_data);
 int Record_GOBJToID(GOBJ *gobj);
 int Record_FtDataToID(FighterData *fighter_data);

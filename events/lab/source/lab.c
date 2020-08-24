@@ -1242,7 +1242,7 @@ static EventOption LabOptions_Record[] = {
         .option_name = "Optimized Save", // pointer to a string
         .desc = "",                      // string describing what this option does
         .option_values = 0,              // pointer to an array of strings
-        .onOptionSelect = Record_OptimizedSave,
+        .onOptionSelect = Record_MemcardSave,
     },
     {
         .option_kind = OPTKIND_FUNC,     // the type of option this is; menu, string list, integer list, etc
@@ -1252,7 +1252,7 @@ static EventOption LabOptions_Record[] = {
         .option_name = "Optimized Load", // pointer to a string
         .desc = "",                      // string describing what this option does
         .option_values = 0,              // pointer to an array of strings
-        .onOptionSelect = Record_OptimizedLoad,
+        .onOptionSelect = Record_MemcardLoad,
     },
 };
 static EventMenu LabMenu_Record = {
@@ -4324,8 +4324,27 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     int save_pre_tick = OSGetTick();
 #endif
 
-    // debug compression
+    // alloc a buffer to transfer to memcard
     RecordingSave *rec_save = calloc(sizeof(RecordingSave));
+
+    sizeof(OptFtState);
+
+    // copy match data to buffer
+    memcpy(&rec_save->match_data, &stc_match->match_data, sizeof(MatchData));
+
+    // savestate
+    Record_OptimizedSave(stc_optstate);
+
+    // copy savestate to buffer
+    memcpy(&rec_save->savestate, stc_optstate, sizeof(RecordingSavestate));
+
+    // copy recordings
+    blr();
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
+        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
+    }
 
     // compress savestate
     u8 *rec_compress = calloc(sizeof(RecordingSave));
@@ -4428,16 +4447,27 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                 RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
                 lz77_decompress(memcard_save.data, rec_save);
 
-                HSD_Free(rec_save);
+                // copy buffer to savestate
+                memcpy(stc_optstate, &rec_save->savestate, sizeof(RecordingSavestate));
 
                 // init savestate
                 Record_OnSuccessfulSave();
 
-                // restore these positions
-                event_vars->Savestate_Load(&rec_state);
+                // copy recordings
+                blr();
+                for (int i = 0; i < REC_SLOTS; i++)
+                {
+                    memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
+                    memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
+                }
+
+                HSD_Free(rec_save);
+
+                // load state
+                Record_OptimizedLoad(stc_optstate);
 
                 // also save to personal savestate
-                event_vars->Savestate_Save(event_vars->savestate);
+                //event_vars->Savestate_Save(event_vars->savestate);
             }
 
             HSD_Free(memcard_save.data);
@@ -4454,15 +4484,13 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
 
     return;
 }
-int Record_OptimizedSave()
+int Record_OptimizedSave(RecordingSavestate *savestate)
 {
     typedef struct BackupQueue
     {
         GOBJ *fighter;
         FighterData *fighter_data;
     } BackupQueue;
-
-    RecordingSavestate *savestate = stc_optstate;
 
 #if TM_DEBUG == 1
     int save_pre_tick = OSGetTick();
@@ -4653,15 +4681,13 @@ int Record_OptimizedSave()
 
     return isSaved;
 }
-int Record_OptimizedLoad()
+int Record_OptimizedLoad(RecordingSavestate *savestate)
 {
     typedef struct BackupQueue
     {
         GOBJ *fighter;
         FighterData *fighter_data;
     } BackupQueue;
-
-    RecordingSavestate *savestate = stc_optstate;
 
 #if TM_DEBUG == 1
     int load_pre_tick = OSGetTick();
@@ -4698,7 +4724,12 @@ int Record_OptimizedLoad()
 
             // restore playerblock
             Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
+            GOBJ *fighter_gobj[2];
+            fighter_gobj[0] = playerblock->fighterData;
+            fighter_gobj[1] = playerblock->fighterDataSub;
             memcpy(playerblock, &ft_state->player_block, sizeof(Playerblock));
+            playerblock->fighterData = fighter_gobj[0];
+            playerblock->fighterDataSub = fighter_gobj[1];
 
             // restore stale moves
             int *stale_queue = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
