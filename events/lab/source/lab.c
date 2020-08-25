@@ -1271,6 +1271,7 @@ static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static RecordingSavestate *rec_state;
 static int save_id = 0x00D0C0DE;
+static char *tm_filename = "TM_DEBUG";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static char *stc_save_desc = "%d/%d/%d %d:%2d";
 static DevText *stc_devtext;
@@ -3784,7 +3785,7 @@ GOBJ *Record_Init()
     }
 
     // init memcard stuff
-    Memcard_InitUnk();
+    Memcard_InitWorkArea();
     Memcard_InitSnapshotList(HSD_MemAlloc(2112), HSD_MemAlloc(256064));
 
     /*
@@ -4309,6 +4310,16 @@ void Record_OnSuccessfulSave()
 
     return;
 }
+void Memcard_Wait()
+{
+
+    while (stc_memcard_work->is_done == 0)
+    {
+        blr2();
+    }
+
+    return;
+}
 void Record_MemcardSave(GOBJ *menu_gobj)
 {
 
@@ -4335,31 +4346,64 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     }
 
     // compress savestate
-    u8 *rec_compress = calloc(sizeof(RecordingSave));
+    u8 *save_buffer = calloc(sizeof(RecordingSave));
     int pre_tick = OSGetTick();
-    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), rec_compress, 8);
+    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), save_buffer, 8);
     int post_tick = OSGetTick();
     int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
+
+#if TM_DEBUG == 1
     OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2fx\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)sizeof(RecordingSave) / (float)compress_size), time_dif);
+#endif
 
-    Memcard_UpdateSnapshotList(0);
-
-    // search for snapshot with ID 26cf6cf5
-    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
+    // check if file exists and delete it
+    s32 memSize, sectorSize;
+    if (CARDProbeEx(0, &memSize, &sectorSize) == CARD_RESULT_READY)
     {
-        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
-
-        // delete existing
-        if (snap_info->snap_id == save_id)
+        // mount card
+        stc_memcard_work->is_done = 0;
+        if (CARDMountAsync(0, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
         {
-            // delete it
-            Memcard_DeleteSnapshot(0, i);
-
-            // wait to finish deleting
-            while (Memcard_CheckStatus() == 11)
+            // check card
+            Memcard_Wait();
+            stc_memcard_work->is_done = 0;
+            if (CARDCheckAsync(0, Memcard_RemovedCallback) == CARD_RESULT_READY)
             {
+                Memcard_Wait();
+                // get free blocks
+                s32 byteNotUsed, filesNotUsed;
+                if (CARDFreeBlocks(0, &byteNotUsed, &filesNotUsed) == CARD_RESULT_READY)
+                {
+                    // search for file with name TM_DEBUG
+                    for (int i = 0; i < CARD_MAX_FILE; i++)
+                    {
+                        CARDStat card_stat;
+
+                        if (CARDGetStatus(0, i, &card_stat) == CARD_RESULT_READY)
+                        {
+                            // check company code
+                            if (strncmp(os_info->company, card_stat.company, sizeof(os_info->company)) == 0)
+                            {
+                                // check game name
+                                if (strncmp(os_info->gameName, card_stat.gameName, sizeof(os_info->gameName)) == 0)
+                                {
+                                    // check file name
+                                    if (strncmp(tm_filename, card_stat.fileName, sizeof(tm_filename)) == 0)
+                                    {
+                                        // delete
+                                        CARDDeleteAsync(0, tm_filename, Memcard_RemovedCallback);
+                                        stc_memcard_work->is_done = 0;
+                                        Memcard_Wait();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        CARDUnmount(0);
     }
 
     // get curr date
@@ -4369,22 +4413,17 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     memcpy(stc_memcard_info->file_name, &stc_save_name, sizeof(stc_save_name));
 
     // setup save
-    char *save_id_string[32];
-    sprintf(save_id_string, "%d", save_id);
     MemcardSave memcard_save;
-    memcard_save.data = rec_compress;
+    memcard_save.data = save_buffer;
     memcard_save.x4 = 3;
     memcard_save.size = compress_size;
     memcard_save.xc = -1;
-    Memcard_CreateSnapshot(0, save_id_string, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+    Memcard_CreateSnapshot(0, tm_filename, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
 
     // wait to load
     while (Memcard_CheckStatus() == 11)
     {
     }
-
-    HSD_Free(rec_compress);
-    HSD_Free(rec_save);
 
 #if TM_DEBUG == 1
     int save_post_tick = OSGetTick();
@@ -4392,80 +4431,130 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     OSReport("processed memcard save in %dms\n", save_time);
 #endif
 
+    /*
+
+    */
+
+    HSD_Free(save_buffer);
+    HSD_Free(rec_save);
+
     return;
 }
 void Record_MemcardLoad(GOBJ *menu_gobj)
 {
 
-    Memcard_UpdateSnapshotList(0);
-
-    // search for snapshot with ID 0x00D0C0DE
-    for (int i = 0; i < stc_memcard_info->snap_list->snap_num; i++)
+    // search card for this save file
+    u8 file_found = 0;
+    int file_size;
+    s32 memSize, sectorSize;
+    if (CARDProbeEx(0, &memSize, &sectorSize) == CARD_RESULT_READY)
     {
-        SnapshotInfo *snap_info = &stc_memcard_info->snap_list->snap_info[i];
-        if (snap_info->snap_id == save_id)
+        // mount card
+        stc_memcard_work->is_done = 0;
+        if (CARDMountAsync(0, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
         {
-
-#if TM_DEBUG == 1
-            int load_pre_tick = OSGetTick();
-#endif
-
-            // setup load
-            char *save_id_string[32];
-            sprintf(save_id_string, "%d", save_id);
-            int save_size = snap_info->block_size * 8192;
-            MemcardSave memcard_save;
-            memcard_save.data = HSD_MemAlloc(save_size);
-            memcard_save.x4 = 3;
-            memcard_save.size = save_size;
-            memcard_save.xc = -1;
-            Memcard_LoadSnapshot(0, save_id_string, &memcard_save, &stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
-
-            // wait to load
-            int memcard_status = Memcard_CheckStatus();
-            while (memcard_status == 11)
+            // check card
+            Memcard_Wait();
+            stc_memcard_work->is_done = 0;
+            if (CARDCheckAsync(0, Memcard_RemovedCallback) == CARD_RESULT_READY)
             {
-                memcard_status = Memcard_CheckStatus();
-            }
-
-            // if file loaded successfully
-            if (memcard_status == 0)
-            {
-                // decompress
-                RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
-                lz77_decompress(memcard_save.data, rec_save);
-
-                // copy buffer to savestate
-                memcpy(rec_state, &rec_save->savestate, sizeof(RecordingSavestate));
-
-                // init savestate
-                Record_OnSuccessfulSave();
-
-                // copy recordings
-                for (int i = 0; i < REC_SLOTS; i++)
+                Memcard_Wait();
+                // get free blocks
+                s32 byteNotUsed, filesNotUsed;
+                if (CARDFreeBlocks(0, &byteNotUsed, &filesNotUsed) == CARD_RESULT_READY)
                 {
-                    memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
-                    memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
+
+                    // search for file with name TM_DEBUG
+                    for (int i = 0; i < CARD_MAX_FILE; i++)
+                    {
+
+                        CARDStat card_stat;
+
+                        if (CARDGetStatus(0, i, &card_stat) == CARD_RESULT_READY)
+                        {
+                            // check company code
+                            if (strncmp(os_info->company, card_stat.company, sizeof(os_info->company)) == 0)
+                            {
+                                // check game name
+                                if (strncmp(os_info->gameName, card_stat.gameName, sizeof(os_info->gameName)) == 0)
+                                {
+                                    // check file name
+                                    if (strncmp(tm_filename, card_stat.fileName, sizeof(tm_filename)) == 0)
+                                    {
+                                        OSReport("found existing file %s with size %d\n", card_stat.fileName, card_stat.length);
+                                        file_found = 1;
+                                        file_size = card_stat.length;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-
-                HSD_Free(rec_save);
-
-                // load state
-                event_vars->Savestate_Load(rec_state);
-
-                //event_vars->Savestate_Save(event_vars->savestate);
             }
 
-            HSD_Free(memcard_save.data);
+            CARDUnmount(0);
+        }
+    }
+
+    // if found, load it
+    if (file_found == 1)
+    {
 
 #if TM_DEBUG == 1
-            int load_post_tick = OSGetTick();
-            int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
-            OSReport("processed memcard load in %dms\n", load_time);
+        int load_pre_tick = OSGetTick();
 #endif
 
-            break;
+        // setup load
+        int save_size = file_size;
+        MemcardSave memcard_save;
+        memcard_save.data = HSD_MemAlloc(save_size);
+        memcard_save.x4 = 3;
+        memcard_save.size = save_size;
+        memcard_save.xc = -1;
+        Memcard_LoadSnapshot(0, tm_filename, &memcard_save, &stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+
+        // wait to load
+        int memcard_status = Memcard_CheckStatus();
+        while (memcard_status == 11)
+        {
+            memcard_status = Memcard_CheckStatus();
         }
+
+        // if file loaded successfully
+        if (memcard_status == 0)
+        {
+            // decompress
+            RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
+            lz77_decompress(memcard_save.data, rec_save);
+
+            // copy buffer to savestate
+            memcpy(rec_state, &rec_save->savestate, sizeof(RecordingSavestate));
+
+            // init savestate
+            Record_OnSuccessfulSave();
+
+            // copy recordings
+            for (int i = 0; i < REC_SLOTS; i++)
+            {
+                memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
+                memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
+            }
+
+            HSD_Free(rec_save);
+
+            // load state
+            event_vars->Savestate_Load(rec_state);
+
+            //event_vars->Savestate_Save(event_vars->savestate);
+        }
+
+        HSD_Free(memcard_save.data);
+
+#if TM_DEBUG == 1
+        int load_post_tick = OSGetTick();
+        int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
+        OSReport("processed memcard load in %dms\n", load_time);
+#endif
     }
 
     return;
@@ -4507,10 +4596,8 @@ void Event_Init(GOBJ *gobj)
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
 
-    // Load this events assets (EvMnLc.dat)
-    int *symbols;
-    File_LoadInitReturnSymbol("EvMnLc.dat", &symbols, "evMenu", 0);
-    eventData->assets = &symbols[0];
+    // get this events assets
+    eventData->assets = File_GetSymbol(event_vars->event_archive, "labData");
 
     return;
 }
