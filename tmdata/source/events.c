@@ -1082,7 +1082,7 @@ static EventPage **EventPages[] = {
 /// Static Variables ///
 ////////////////////////
 
-static SaveState stc_savestate;
+static Savestate *stc_savestate;
 static EventInfo *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars stc_event_vars = {
@@ -1292,13 +1292,10 @@ void EventLoad()
     *event_vars_ptr = &stc_event_vars;
 
     // init savestate struct
+    stc_savestate = calloc(sizeof(Savestate));
     eventDataBackup = calloc(EVENT_DATASIZE);
-    stc_savestate.is_exist = 0;
-    for (int i = 0; i < sizeof(stc_savestate.ft_state) / 4; i++)
-    {
-        stc_savestate.ft_state[i] = 0;
-    }
-    stc_event_vars.savestate = &stc_savestate;
+    stc_savestate->is_exist = 0;
+    stc_event_vars.savestate = stc_savestate;
 
     // Run this event's init function
     if (evFunction->Event_Init != 0)
@@ -1510,7 +1507,7 @@ void OnStartMelee()
 /// Miscellaneous Functions ///
 ///////////////////////////////
 
-int Savestate_Save(SaveState *savestate)
+int Savestate_Save(Savestate *savestate)
 {
     typedef struct BackupQueue
     {
@@ -1518,19 +1515,22 @@ int Savestate_Save(SaveState *savestate)
         FighterData *fighter_data;
     } BackupQueue;
 
+#if TM_DEBUG == 1
+    int save_pre_tick = OSGetTick();
+#endif
+
     // ensure no players are in problematic states
     int canSave = 1;
     GOBJ **gobj_list = R13_PTR(GOBJLIST);
     GOBJ *fighter = gobj_list[8];
-    GOBJ *event_gobj = stc_event_vars.event_gobj;
     while (fighter != 0)
     {
 
         FighterData *fighter_data = fighter->userdata;
 
-        if ((fighter_data->cb_OnDeath != 0) ||
-            (fighter_data->cb_OnDeath2 != 0) ||
-            (fighter_data->cb_OnDeath3 != 0) ||
+        if ((fighter_data->cb.OnDeath != 0) ||
+            (fighter_data->cb.OnDeath2 != 0) ||
+            (fighter_data->cb.OnDeath3 != 0) ||
             (fighter_data->heldItem != 0) ||
             (fighter_data->x1978 != 0) ||
             (fighter_data->accessory != 0))
@@ -1548,18 +1548,10 @@ int Savestate_Save(SaveState *savestate)
     if (canSave == 1)
     {
 
+        savestate->is_exist = 1;
+
         // save frame
         savestate->frame = stc_event_vars.game_timer;
-
-        // backup event data
-        memcpy(eventDataBackup, event_gobj->userdata, EVENT_DATASIZE);
-
-        // free all savestates
-        for (int i = 0; i < 6 / 4; i++)
-        {
-            if (savestate->ft_state[i] != 0)
-                HSD_Free(savestate->ft_state[i]);
-        }
 
         // backup all players
         for (int i = 0; i < 6; i++)
@@ -1568,47 +1560,120 @@ int Savestate_Save(SaveState *savestate)
             BackupQueue queue[2];
             for (int j = 0; j < 2; j++)
             {
-                queue[j].fighter = Fighter_GetSubcharGObj(i, j);
-                if (queue[j].fighter != 0)
-                    queue[j].fighter_data = queue[j].fighter->userdata;
+                GOBJ *fighter = 0;
+                FighterData *fighter_data = 0;
+
+                // get fighter gobj and data if they exist
+                fighter = Fighter_GetSubcharGObj(i, j);
+                if (fighter != 0)
+                    fighter_data = fighter->userdata;
+
+                // store fighter pointers
+                queue[j].fighter = fighter;
+                queue[j].fighter_data = fighter_data;
             }
 
-            // if the fighter exists
+            // if the main fighter exists
             if (queue[0].fighter != 0)
             {
 
+                FtState *ft_state = &savestate->ft_state[i];
+
                 isSaved = 1;
 
-                // allocate new state
-                FtState *state = calloc(sizeof(FtState));
-
-                // backup playerblock
+                // save playerblock
                 Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
-                memcpy(&state->player_block, playerblock, sizeof(Playerblock));
+                memcpy(&ft_state->player_block, playerblock, sizeof(Playerblock));
 
-                // backup stale moves
-                int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
-                memcpy(&state->stale_queue, staleMoves, 0x2C);
+                // save stale moves
+                int *stale_queue = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
+                memcpy(&ft_state->stale_queue, stale_queue, sizeof(ft_state->stale_queue));
 
-                // backup fighter data
+                // backup each subfighters data
                 for (int j = 0; j < 2; j++)
                 {
                     // if exists
                     if (queue[j].fighter != 0)
                     {
-                        GOBJ *fighter = queue[j].fighter;
+
+                        FtStateData *ft_data = &ft_state->data[j];
                         FighterData *fighter_data = queue[j].fighter_data;
 
-                        // backup fighter data
-                        memcpy(&state->fighter_data[j], fighter_data, sizeof(FighterData));
+                        // backup to ft_state
+                        ft_data->is_exist = 1;
+                        ft_data->state_id = fighter_data->state_id;
+                        ft_data->facing_direction = fighter_data->facing_direction;
+                        ft_data->stateFrame = fighter_data->stateFrame;
+                        ft_data->stateSpeed = fighter_data->stateSpeed;
+                        ft_data->stateBlend = fighter_data->stateBlend;
+                        memcpy(&ft_data->phys, &fighter_data->phys, sizeof(fighter_data->phys));                               // copy physics
+                        memcpy(&ft_data->color, &fighter_data->color, sizeof(fighter_data->color));                            // copy color overlay
+                        memcpy(&ft_data->input, &fighter_data->input, sizeof(fighter_data->input));                            // copy inputs
+                        memcpy(&ft_data->collData, &fighter_data->collData, sizeof(fighter_data->collData));                   // copy collision
+                        memcpy(&ft_data->cameraBox, fighter_data->cameraBox, sizeof(CameraBox));                               // copy camerabox
+                        memcpy(&ft_data->hitbox, &fighter_data->hitbox, sizeof(fighter_data->hitbox));                         // copy hitbox
+                        memcpy(&ft_data->throw_hitbox, &fighter_data->throw_hitbox, sizeof(fighter_data->throw_hitbox));       // copy hitbox
+                        memcpy(&ft_data->unk_hitbox, &fighter_data->unk_hitbox, sizeof(fighter_data->unk_hitbox));             // copy hitbox
+                        memcpy(&ft_data->flags, &fighter_data->flags, sizeof(fighter_data->flags));                            // copy flags
+                        memcpy(&ft_data->fighter_var, &fighter_data->fighter_var, sizeof(fighter_data->fighter_var));          // copy var
+                        memcpy(&ft_data->state_var, &fighter_data->state_var, sizeof(fighter_data->state_var));                // copy var
+                        memcpy(&ft_data->ftcmd_var, &fighter_data->ftcmd_var, sizeof(fighter_data->ftcmd_var));                // copy var
+                        memcpy(&ft_data->jump, &fighter_data->jump, sizeof(fighter_data->jump));                               // copy var
+                        memcpy(&ft_data->smash, &fighter_data->smash, sizeof(fighter_data->smash));                            // copy var
+                        memcpy(&ft_data->hurtstatus, &fighter_data->hurtstatus, sizeof(fighter_data->hurtstatus));             // copy var
+                        memcpy(&ft_data->shield, &fighter_data->shield, sizeof(fighter_data->shield));                         // copy hitbox
+                        memcpy(&ft_data->shield_bubble, &fighter_data->shield_bubble, sizeof(fighter_data->shield_bubble));    // copy hitbox
+                        memcpy(&ft_data->reflect_bubble, &fighter_data->reflect_bubble, sizeof(fighter_data->reflect_bubble)); // copy hitbox
+                        memcpy(&ft_data->absorb_bubble, &fighter_data->absorb_bubble, sizeof(fighter_data->absorb_bubble));    // copy hitbox
+                        memcpy(&ft_data->reflect_hit, &fighter_data->reflect_hit, sizeof(fighter_data->reflect_hit));          // copy hitbox
+                        memcpy(&ft_data->absorb_hit, &fighter_data->absorb_hit, sizeof(fighter_data->absorb_hit));             // copy hitbox
 
-                        // backup camerabox
-                        memcpy(&state->camera[j], fighter_data->cameraBox, sizeof(CameraBox));
+                        // copy dmg
+                        memcpy(&ft_data->dmg, &fighter_data->dmg, sizeof(fighter_data->dmg));
+                        ft_data->dmg.source = GOBJToID(ft_data->dmg.source);
+
+                        // copy grab
+                        memcpy(&ft_data->grab, &fighter_data->grab, sizeof(fighter_data->grab));
+                        ft_data->grab.grab_attacker = GOBJToID(ft_data->grab.grab_attacker);
+                        ft_data->grab.grab_victim = GOBJToID(ft_data->grab.grab_victim);
+
+                        // copy callbacks
+                        memcpy(&ft_data->cb, &fighter_data->cb, sizeof(fighter_data->cb)); // copy hitbox
+
+                        // convert hitbox pointers
+                        for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
+                        {
+
+                            ft_data->hitbox[k].bone = BoneToID(fighter_data, ft_data->hitbox[k].bone);
+                            for (int l = 0; l < (sizeof(fighter_data->hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                            {
+                                ft_data->hitbox[k].victims[l].victim_data = FtDataToID(ft_data->hitbox[k].victims[l].victim_data);
+                            }
+                        }
+                        for (int k = 0; k < (sizeof(fighter_data->throw_hitbox) / sizeof(ftHit)); k++)
+                        {
+                            ft_data->throw_hitbox[k].bone = BoneToID(fighter_data, ft_data->throw_hitbox[k].bone);
+                            for (int l = 0; l < (sizeof(fighter_data->throw_hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                            {
+                                ft_data->throw_hitbox[k].victims[l].victim_data = FtDataToID(ft_data->throw_hitbox[k].victims[l].victim_data);
+                            }
+                        }
+
+                        ft_data->unk_hitbox.bone = BoneToID(fighter_data, ft_data->unk_hitbox.bone);
+                        for (int k = 0; k < (sizeof(fighter_data->unk_hitbox.victims) / sizeof(HitVictim)); k++) // pointers to hitbox victims
+                        {
+
+                            ft_data->unk_hitbox.victims[k].victim_data = FtDataToID(ft_data->unk_hitbox.victims[k].victim_data);
+                        }
+
+                        // copy XRotN rotation
+                        s8 XRotN_id = Fighter_BoneLookup(fighter_data, XRotN);
+                        if (XRotN_id != -1)
+                        {
+                            ft_data->XRotN_rot = fighter_data->bones[XRotN_id].joint->rot;
+                        }
                     }
                 }
-
-                // store pointer
-                savestate->ft_state[i] = state;
             }
         }
     }
@@ -1631,14 +1696,17 @@ int Savestate_Save(SaveState *savestate)
                 ScreenFlash_Create(2, 0);
             }
         }
-
-        // set as exist
-        savestate->is_exist = 1;
     }
+
+#if TM_DEBUG == 1
+    int save_post_tick = OSGetTick();
+    int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
+    OSReport("processed save in %dms\n", save_time);
+#endif
 
     return isSaved;
 }
-int Savestate_Load(SaveState *savestate)
+int Savestate_Load(Savestate *savestate)
 {
     typedef struct BackupQueue
     {
@@ -1646,11 +1714,9 @@ int Savestate_Load(SaveState *savestate)
         FighterData *fighter_data;
     } BackupQueue;
 
-    GOBJ *event_gobj = stc_event_vars.event_gobj;
-
-    // return if savestate doesnt exist
-    if (savestate->is_exist == 0)
-        return 0;
+#if TM_DEBUG == 1
+    int load_pre_tick = OSGetTick();
+#endif
 
     // loop through all players
     int isLoaded = 0;
@@ -1660,87 +1726,227 @@ int Savestate_Load(SaveState *savestate)
         BackupQueue queue[2];
         for (int j = 0; j < 2; j++)
         {
-            queue[j].fighter = Fighter_GetSubcharGObj(i, j);
-            if (queue[j].fighter != 0)
-                queue[j].fighter_data = queue[j].fighter->userdata;
+            GOBJ *fighter = 0;
+            FighterData *fighter_data = 0;
+
+            // get fighter gobj and data if they exist
+            fighter = Fighter_GetSubcharGObj(i, j);
+            if (fighter != 0)
+                fighter_data = fighter->userdata;
+
+            // store fighter pointers
+            queue[j].fighter = fighter;
+            queue[j].fighter_data = fighter_data;
         }
 
-        // if the fighter and backup exists
-        if ((queue[0].fighter != 0) && (savestate->ft_state[i] != 0))
+        // if the main fighter and backup exists
+        if ((queue[0].fighter != 0) && (savestate->ft_state[i].data[0].is_exist == 1))
         {
+
+            FtState *ft_state = &savestate->ft_state[i];
 
             isLoaded = 1;
 
-            // get state
-            FtState *state = savestate->ft_state[i];
-
             // restore playerblock
             Playerblock *playerblock = Fighter_GetPlayerblock(queue[0].fighter_data->ply);
-            memcpy(playerblock, &state->player_block, sizeof(Playerblock));
+            GOBJ *fighter_gobj[2];
+            fighter_gobj[0] = playerblock->fighterData;
+            fighter_gobj[1] = playerblock->fighterDataSub;
+            memcpy(playerblock, &ft_state->player_block, sizeof(Playerblock));
+            playerblock->fighterData = fighter_gobj[0];
+            playerblock->fighterDataSub = fighter_gobj[1];
 
             // restore stale moves
-            int *staleMoves = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
-            memcpy(staleMoves, &state->stale_queue, 0x2C);
+            int *stale_queue = Fighter_GetStaleMoveTable(queue[0].fighter_data->ply);
+            memcpy(stale_queue, &ft_state->stale_queue, sizeof(ft_state->stale_queue));
 
             // restore fighter data
             for (int j = 0; j < 2; j++)
             {
-                // if exists
-                if (queue[j].fighter != 0)
+
+                GOBJ *fighter = queue[j].fighter;
+
+                if (fighter != 0)
                 {
-                    GOBJ *fighter = queue[j].fighter;
+
+                    // get state
+                    FtStateData *ft_data = &ft_state->data[j];
                     FighterData *fighter_data = queue[j].fighter_data;
-                    FighterData *backup_data = &state->fighter_data[j];
 
-                    // backup buttons and collision bubble toggle
-                    int input_lstick_x = fighter_data->input.lstick_x;
-                    int input_lstick_y = fighter_data->input.lstick_y;
-                    int dpad_held = (fighter_data->input.held & PAD_BUTTON_DPAD_LEFT) & (fighter_data->input.held & PAD_BUTTON_DPAD_RIGHT);
-                    u8 show_model = fighter_data->show_model;
-                    u8 show_hit = fighter_data->show_hit;
+                    // sleep
+                    Fighter_EnterSleep(fighter, 0);
 
-                    // restore fighter data
-                    memcpy(fighter_data, &state->fighter_data[j], sizeof(FighterData));
+                    fighter_data->state_id = ft_data->state_id;
+                    fighter_data->facing_direction = ft_data->facing_direction;
+                    fighter_data->stateFrame = ft_data->stateFrame;
+                    fighter_data->stateSpeed = ft_data->stateSpeed;
+                    fighter_data->stateBlend = ft_data->stateBlend;
+
+                    // restore phys struct
+                    memcpy(&fighter_data->phys, &ft_data->phys, sizeof(fighter_data->phys)); // copy physics
+
+                    // restore inputs
+                    memcpy(&fighter_data->input, &ft_data->input, sizeof(fighter_data->input)); // copy inputs
+
+                    // restore coll data
+                    CollData *thiscoll = &fighter_data->collData;
+                    CollData *savedcoll = &ft_data->collData;
+                    GOBJ *gobj = thiscoll->gobj;                                                         // 0x0
+                    JOBJ *joint_1 = thiscoll->joint_1;                                                   // 0x108
+                    JOBJ *joint_2 = thiscoll->joint_2;                                                   // 0x10c
+                    JOBJ *joint_3 = thiscoll->joint_3;                                                   // 0x110
+                    JOBJ *joint_4 = thiscoll->joint_4;                                                   // 0x114
+                    JOBJ *joint_5 = thiscoll->joint_5;                                                   // 0x118
+                    JOBJ *joint_6 = thiscoll->joint_6;                                                   // 0x11c
+                    JOBJ *joint_7 = thiscoll->joint_7;                                                   // 0x120
+                    memcpy(&fighter_data->collData, &ft_data->collData, sizeof(fighter_data->collData)); // copy collision
+                    thiscoll->gobj = gobj;
+                    thiscoll->joint_1 = joint_1;
+                    thiscoll->joint_2 = joint_2;
+                    thiscoll->joint_3 = joint_3;
+                    thiscoll->joint_4 = joint_4;
+                    thiscoll->joint_5 = joint_5;
+                    thiscoll->joint_6 = joint_6;
+                    thiscoll->joint_7 = joint_7;
+
+                    // restore hitboxes
+                    memcpy(&fighter_data->hitbox, &ft_data->hitbox, sizeof(fighter_data->hitbox));                   // copy hitbox
+                    memcpy(&fighter_data->throw_hitbox, &ft_data->throw_hitbox, sizeof(fighter_data->throw_hitbox)); // copy hitbox
+                    memcpy(&fighter_data->unk_hitbox, &ft_data->unk_hitbox, sizeof(fighter_data->unk_hitbox));       // copy hitbox
+
+                    // copy grab
+                    memcpy(&fighter_data->grab, &ft_data->grab, sizeof(fighter_data->grab));
+                    fighter_data->grab.grab_attacker = IDToGOBJ(fighter_data->grab.grab_attacker);
+                    fighter_data->grab.grab_victim = IDToGOBJ(fighter_data->grab.grab_victim);
+
+                    // convert pointers
+                    for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
+                    {
+                        fighter_data->hitbox[k].bone = IDToBone(fighter_data, ft_data->hitbox[k].bone);
+                        for (int l = 0; l < (sizeof(fighter_data->hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                        {
+                            fighter_data->hitbox[k].victims[l].victim_data = IDToFtData(ft_data->hitbox[k].victims[l].victim_data);
+                        }
+                    }
+                    for (int k = 0; k < (sizeof(fighter_data->throw_hitbox) / sizeof(ftHit)); k++)
+                    {
+                        fighter_data->throw_hitbox[k].bone = IDToBone(fighter_data, ft_data->throw_hitbox[k].bone);
+                        for (int l = 0; l < (sizeof(fighter_data->throw_hitbox->victims) / sizeof(HitVictim)); l++) // pointers to hitbox victims
+                        {
+                            fighter_data->throw_hitbox[k].victims[l].victim_data = IDToFtData(ft_data->throw_hitbox[k].victims[l].victim_data);
+                        }
+                    }
+                    fighter_data->unk_hitbox.bone = IDToBone(fighter_data, ft_data->unk_hitbox.bone);
+                    for (int k = 0; k < (sizeof(fighter_data->unk_hitbox.victims) / sizeof(HitVictim)); k++) // pointers to hitbox victims
+                    {
+
+                        fighter_data->unk_hitbox.victims[k].victim_data = IDToFtData(ft_data->unk_hitbox.victims[k].victim_data);
+                    }
+
+                    // restore fighter variables
+                    memcpy(&fighter_data->fighter_var, &ft_data->fighter_var, sizeof(fighter_data->fighter_var)); // copy hitbox
 
                     // zero pointer to cached animations to force anim load (fixes fall crash)
                     fighter_data->anim_curr_ARAM = 0;
                     fighter_data->anim_persist_ARAM = 0;
 
-                    // restore facing direction
-                    fighter_data->facing_direction = backup_data->facing_direction;
-                    // sleep
-                    Fighter_EnterSleep(fighter, 0);
                     // enter backed up state
-                    ActionStateChange(backup_data->stateFrame, backup_data->stateSpeed, -1, fighter, backup_data->state_id, 0, 0);
+                    GOBJ *anim_source = 0;
+                    if (fighter_data->flags.is_thrown == 1)
+                        anim_source = fighter_data->grab.grab_attacker;
+                    Fighter_SetAllHurtboxesNotUpdated(fighter);
+                    ActionStateChange(ft_data->stateFrame, ft_data->stateSpeed, -1, fighter, ft_data->state_id, 0, anim_source);
                     fighter_data->stateBlend = 0;
 
-                    // snap dynamic bones in place
-                    /*
-                    if (fighter_data->state_id == ASID_WAIT)
+                    // restore XRotN rotation
+                    s8 XRotN_id = Fighter_BoneLookup(fighter_data, XRotN);
+                    if (XRotN_id != -1)
                     {
-                        Fighter_DisableBlend(fighter, 6);
+                        fighter_data->bones[XRotN_id].joint->rot = ft_data->XRotN_rot;
                     }
-                    */
 
-                    // restore buttons and collision bubble toggle
-                    //fighter_data->input.lstick_x = input_lstick_x;
-                    //fighter_data->input.lstick_y = input_lstick_y;
-                    fighter_data->input.held &= dpad_held;
-                    fighter_data->show_model = show_model;
-                    fighter_data->show_hit = show_hit;
+                    // restore state variables
+                    memcpy(&fighter_data->state_var, &ft_data->state_var, sizeof(fighter_data->state_var)); // copy hitbox
 
-                    // update colltest frame
-                    fighter_data->collData.coll_test = R13_INT(COLL_TEST);
+                    // restore ftcmd variables
+                    memcpy(&fighter_data->ftcmd_var, &ft_data->ftcmd_var, sizeof(fighter_data->ftcmd_var)); // copy hitbox
 
-                    // restore camerabox
-                    memcpy(fighter_data->cameraBox, &state->camera[j], sizeof(CameraBox));
+                    // restore damage variables
+                    memcpy(&fighter_data->dmg, &ft_data->dmg, sizeof(fighter_data->dmg)); // copy hitbox
+                    fighter_data->dmg.source = IDToGOBJ(fighter_data->dmg.source);
+
+                    // restore jump variables
+                    memcpy(&fighter_data->jump, &ft_data->jump, sizeof(fighter_data->jump)); // copy hitbox
+
+                    // restore flags
+                    memcpy(&fighter_data->flags, &ft_data->flags, sizeof(fighter_data->flags)); // copy hitbox
+
+                    // restore hurtstatus variables
+                    memcpy(&fighter_data->hurtstatus, &ft_data->hurtstatus, sizeof(fighter_data->hurtstatus)); // copy hitbox
+
+                    // update jobj position
+                    JOBJ *fighter_jobj = fighter->hsd_object;
+                    fighter_jobj->trans = fighter_data->phys.pos;
+                    // dirtysub their jobj
+                    JOBJ_SetMtxDirtySub(fighter_jobj);
+
+                    // update hurtbox position
+                    Fighter_UpdateHurtboxes(fighter_data);
+
+                    // restore color
+                    for (int k = 0; k < (sizeof(fighter_data->color) / sizeof(ColorOverlay)); k++)
+                    {
+                        ColorOverlay *thiscolor = &fighter_data->color[i];
+                        ColorOverlay *savedcolor = &ft_data->color[i];
+
+                        thiscolor->timer = savedcolor->timer;
+                        thiscolor->loop = savedcolor->loop;
+                        thiscolor->hex = savedcolor->hex;
+                        thiscolor->red = savedcolor->red;
+                        thiscolor->blue = savedcolor->blue;
+                        thiscolor->green = savedcolor->green;
+                        thiscolor->alpha = savedcolor->alpha;
+                        thiscolor->redblink = savedcolor->redblink;
+                        thiscolor->blueblink = savedcolor->blueblink;
+                        thiscolor->greenblink = savedcolor->greenblink;
+                        thiscolor->alphablink = savedcolor->alphablink;
+                        thiscolor->enable = savedcolor->enable;
+                    }
+
+                    // restore smash variables
+                    memcpy(&fighter_data->smash, &ft_data->smash, sizeof(fighter_data->smash)); // copy hitbox
+
+                    // restore shield/reflect/absorb variables
+                    memcpy(&fighter_data->shield, &ft_data->shield, sizeof(fighter_data->shield));                         // copy hitbox
+                    memcpy(&fighter_data->shield_bubble, &ft_data->shield_bubble, sizeof(fighter_data->shield_bubble));    // copy hitbox
+                    memcpy(&fighter_data->reflect_bubble, &ft_data->reflect_bubble, sizeof(fighter_data->reflect_bubble)); // copy hitbox
+                    memcpy(&fighter_data->absorb_bubble, &ft_data->absorb_bubble, sizeof(fighter_data->absorb_bubble));    // copy hitbox
+                    memcpy(&fighter_data->reflect_hit, &ft_data->reflect_hit, sizeof(fighter_data->reflect_hit));          // copy hitbox
+                    memcpy(&fighter_data->absorb_hit, &ft_data->absorb_hit, sizeof(fighter_data->absorb_hit));             // copy hitbox
+
+                    // restore callback functions
+                    memcpy(&fighter_data->cb, &ft_data->cb, sizeof(fighter_data->cb)); // copy hitbox
 
                     // stop player SFX
                     SFX_StopAllFighterSFX(fighter_data);
 
-                    /*
-                    // create shield GFX
-                    if (fighter_data->shield == 1)
+                    // update colltest frame
+                    fighter_data->collData.coll_test = *stc_colltest;
+
+                    // restore camera box
+                    CameraBox *thiscam = fighter_data->cameraBox;
+                    CameraBox *savedcam = &ft_data->cameraBox;
+                    void *alloc = thiscam->alloc;
+                    CameraBox *next = thiscam->next;
+                    memcpy(thiscam, savedcam, sizeof(CameraBox)); // copy camerabox
+                    thiscam->alloc = alloc;
+                    thiscam->next = next;
+
+                    // update their IK
+                    Fighter_UpdateIK(fighter);
+
+                    // if shield is up, update shield
+                    if (fighter_data->flags.is_shielding)
                     {
                         // get gfx ID
                         int shieldGFX;
@@ -1755,49 +1961,55 @@ int Savestate_Load(SaveState *savestate)
                         int shieldColorParam = (shieldColor->r << 16) | (shieldColor->b << 8) | (shieldColor->g);
                         Effect_SpawnSync(shieldGFX, fighter, shieldBone, shieldColorParam);
 
-                        // update
-                        Fighter_UpdateShieldGFX(fighter, 1);
+                        Fighter_UpdateShield(fighter, 1);
                     }
-                    */
 
-                    // update jobj position
-                    JOBJ *fighter_jobj = fighter->hsd_object;
-                    fighter_jobj->trans = fighter_data->phys.pos;
-                    /*
-                    // animate it
-                    Fighter_UpdateBonePos(fighter_data, 0);
-                    JOBJ_AnimAll(fighter->hsd_object);
-                    */
-                    // dirtysub their jobj
-                    JOBJ_SetMtxDirtySub(fighter_jobj);
+#if TM_DEBUG == 1
+                    int dyn_pre_tick = OSGetTick();
+#endif
+                    int dyn_proc_num = 45;
+
+                    // simulate dynamics a bunch to fall in place
+                    for (int d = 0; d < dyn_proc_num; d++)
+                    {
+                        Fighter_ProcDynamics(fighter);
+                    }
+
+#if TM_DEBUG == 1
+                    int dyn_post_tick = OSGetTick();
+                    int dyn_time = OSTicksToMilliseconds(dyn_post_tick - dyn_pre_tick);
+                    OSReport("processed dyn %d times in %dms\n", dyn_proc_num, dyn_time);
+#endif
                 }
             }
-
-            // check to recreate HUD
-            MatchHUD *hud = &stc_matchhud[i];
-
-            // check if fighter is perm dead
-            if (Match_CheckIfStock() == 1)
-            {
-                // remove HUD if no stocks left
-                if (Fighter_GetStocks(i) <= 0)
-                {
-                    hud->is_removed = 0;
-                }
-            }
-
-            // check to create it
-            if (hud->is_removed == 1)
-            {
-                Match_CreateHUD(i);
-            }
-
-            // snap camera to the new positions
-            Match_CorrectCamera();
-
-            // stop crowd cheer
-            SFX_StopCrowd();
         }
+
+        sizeof(FtStateData);
+
+        // check to recreate HUD
+        MatchHUD *hud = &stc_matchhud[i];
+
+        // check if fighter is perm dead
+        if (Match_CheckIfStock() == 1)
+        {
+            // remove HUD if no stocks left
+            if (Fighter_GetStocks(i) <= 0)
+            {
+                hud->is_removed = 0;
+            }
+        }
+
+        // check to create it
+        if (hud->is_removed == 1)
+        {
+            Match_CreateHUD(i);
+        }
+
+        // snap camera to the new positions
+        Match_CorrectCamera();
+
+        // stop crowd cheer
+        SFX_StopCrowd();
     }
 
     // Restore event data and Play SFX
@@ -1818,10 +2030,15 @@ int Savestate_Load(SaveState *savestate)
         match->time_seconds = frames / 60;
         match->time_ms = frames % 60;
 
-        memcpy(event_gobj->userdata, eventDataBackup, EVENT_DATASIZE);
-
         SFX_PlayCommon(0);
     }
+
+#if TM_DEBUG == 1
+    int load_post_tick = OSGetTick();
+    int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
+    OSReport("processed load in %dms\n", load_time);
+    sizeof(FtState);
+#endif
 
     return isLoaded;
 }
@@ -1847,12 +2064,12 @@ void Update_Savestates()
                 if (((pad->down & HSD_BUTTON_DPAD_RIGHT) != 0) && ((pad->held & (blacklist)) == 0))
                 {
                     // save state
-                    Savestate_Save(&stc_savestate);
+                    Savestate_Save(stc_savestate);
                 }
                 else if (((pad->down & HSD_BUTTON_DPAD_LEFT) != 0) && ((pad->held & (blacklist)) == 0))
                 {
                     // load state
-                    Savestate_Load(&stc_savestate);
+                    Savestate_Load(stc_savestate);
                 }
             }
         }
@@ -1860,6 +2077,111 @@ void Update_Savestates()
 
     return;
 }
+int GOBJToID(GOBJ *gobj)
+{
+    // ensure valid pointer
+    if (gobj == 0)
+        return -1;
+
+    // ensure its a fighter
+    if (gobj->entity_class != 4)
+        return -1;
+
+    // access the data
+    FighterData *ft_data = gobj->userdata;
+    u8 ply = ft_data->ply;
+    u8 ms = ft_data->flags.ms;
+
+    return ((ply << 4) | ms);
+}
+int FtDataToID(FighterData *fighter_data)
+{
+    // ensure valid pointer
+    if (fighter_data == 0)
+        return -1;
+
+    // ensure its a fighter
+    if (fighter_data->fighter == 0)
+        return -1;
+
+    // get ply and ms
+    u8 ply = fighter_data->ply;
+    u8 ms = fighter_data->flags.ms;
+
+    return ((ply << 4) | ms);
+}
+int BoneToID(FighterData *fighter_data, JOBJ *bone)
+{
+
+    // ensure bone exists
+    if (bone == 0)
+        return -1;
+
+    int bone_id = -1;
+
+    // painstakingly look for a match
+    for (int i = 0; i < fighter_data->bone_num; i++)
+    {
+        if (bone == fighter_data->bones[i].joint)
+        {
+            bone_id = i;
+            break;
+        }
+    }
+
+#if TM_DEBUG == 1
+    // no bone found
+    if (bone_id == -1)
+    {
+        assert("no bone found");
+    }
+#endif
+
+    return bone_id;
+}
+GOBJ *IDToGOBJ(int id)
+{
+    // ensure valid pointer
+    if (id == -1)
+        return 0;
+
+    // get ply and ms
+    u8 ply = (id >> 4) & 0xF;
+    u8 ms = id & 0xF;
+
+    // get the gobj for this fighter
+    GOBJ *gobj = Fighter_GetSubcharGObj(ply, ms);
+
+    return gobj;
+}
+FighterData *IDToFtData(int id)
+{
+    // ensure valid pointer
+    if (id == -1)
+        return 0;
+
+    // get ply and ms
+    u8 ply = (id >> 4) & 0xF;
+    u8 ms = id & 0xF;
+
+    // get the gobj for this fighter
+    GOBJ *gobj = Fighter_GetSubcharGObj(ply, ms);
+    FighterData *fighter_data = gobj->userdata;
+
+    return fighter_data;
+}
+JOBJ *IDToBone(FighterData *fighter_data, int id)
+{
+    // ensure valid pointer
+    if (id == -1)
+        return 0;
+
+    // get the bone
+    JOBJ *bone = fighter_data->bones[id].joint;
+
+    return bone;
+}
+
 void Event_IncTimer(GOBJ *gobj)
 {
     stc_event_vars.game_timer++;
