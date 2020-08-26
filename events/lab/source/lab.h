@@ -34,15 +34,16 @@
 #define REC_LEFTTEXTJOINT 2
 #define REC_RIGHTTEXTJOINT 3
 
-typedef struct evLcAssets
+typedef struct LabData
 {
     JOBJDesc *stick;
     JOBJDesc *cstick;
-} evLcAssets;
+    void *save_icon;
+    void *save_banner;
+} LabData;
 typedef struct LCancelData
 {
     EventInfo *eventInfo;
-    evLcAssets *assets;
     u8 cpu_state;
     u8 cpu_hitshield;
     u8 cpu_hitnum;

@@ -1270,7 +1270,7 @@ static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static RecordingSavestate *rec_state;
-static int save_id = 0x00D0C0DE;
+static LabData *stc_lab_data;
 static char *tm_filename = "TM_DEBUG";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static char *stc_save_desc = "%d/%d/%d %d:%2d";
@@ -3466,7 +3466,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     evMenu *menuAssets = event_vars->menu_assets;
     GOBJ *event_gobj = event_vars->event_gobj;
     LCancelData *event_data = event_gobj->userdata;
-    evLcAssets *LabAssets = event_data->assets;
+    LabData *LabAssets = stc_lab_data;
 
     // set menu state to wait
     //curr_menu->state = EMSTATE_WAIT;
@@ -3483,7 +3483,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     menu_data->custom_gobj_think = CustomTDI_Update;                            // set callback
 
     // load current stick joints
-    JOBJ *stick_joint = JOBJ_LoadJoint(event_data->assets->stick);
+    JOBJ *stick_joint = JOBJ_LoadJoint(stc_lab_data->stick);
     stick_joint->scale.X = 2;
     stick_joint->scale.Y = 2;
     stick_joint->scale.Z = 2;
@@ -3492,7 +3492,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     userdata->stick_curr[0] = stick_joint;
     JOBJ_AddChild(tdi_gobj->hsd_object, stick_joint);
     // current c stick
-    stick_joint = JOBJ_LoadJoint(event_data->assets->cstick);
+    stick_joint = JOBJ_LoadJoint(stc_lab_data->cstick);
     stick_joint->scale.X = 2;
     stick_joint->scale.Y = 2;
     stick_joint->scale.Z = 2;
@@ -3528,7 +3528,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     for (int i = 0; i < TDI_DISPNUM; i++)
     {
         // left stick
-        JOBJ *prevstick_joint = JOBJ_LoadJoint(event_data->assets->stick);
+        JOBJ *prevstick_joint = JOBJ_LoadJoint(stc_lab_data->stick);
         prevstick_joint->scale.X = 1;
         prevstick_joint->scale.Y = 1;
         prevstick_joint->scale.Z = 1;
@@ -3540,7 +3540,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
         JOBJ_AddChild(tdi_gobj->hsd_object, prevstick_joint);
 
         // cstick
-        prevstick_joint = JOBJ_LoadJoint(event_data->assets->cstick);
+        prevstick_joint = JOBJ_LoadJoint(stc_lab_data->cstick);
         prevstick_joint->scale.X = 1;
         prevstick_joint->scale.Y = 1;
         prevstick_joint->scale.Z = 1;
@@ -4418,7 +4418,7 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     memcard_save.x4 = 3;
     memcard_save.size = compress_size;
     memcard_save.xc = -1;
-    Memcard_CreateSnapshot(0, tm_filename, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+    Memcard_CreateSnapshot(0, tm_filename, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_lab_data->save_banner, stc_lab_data->save_icon, 0);
 
     // wait to load
     while (Memcard_CheckStatus() == 11)
@@ -4597,7 +4597,7 @@ void Event_Init(GOBJ *gobj)
     cpu_data->cpu.ai = 0;
 
     // get this events assets
-    eventData->assets = File_GetSymbol(event_vars->event_archive, "labData");
+    stc_lab_data = File_GetSymbol(event_vars->event_archive, "labData");
 
     return;
 }
