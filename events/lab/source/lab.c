@@ -979,14 +979,14 @@ static EventOption LabOptions_CPU[] = {
         .onOptionChange = Lab_ChangeCPUPercent,
     },
     {
-        .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                     // number of values for this option
-        .option_val = 0,                                    // value of this option
-        .menu = 0,                                          // pointer to the menu that pressing A opens
-        .option_name = {"Intangibility"},                   // pointer to a string
-        .desc = "Toggle the CPU's ability to take damage.", // string describing what this option does
-        .option_values = LabOptions_OffOn,                  // pointer to an array of strings
-        .onOptionChange = Lab_ChangeCPUIntang,
+        .option_kind = OPTKIND_STRING,                // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_CPUBehave) / 4, // number of values for this option
+        .option_val = 0,                              // value of this option
+        .menu = 0,                                    // pointer to the menu that pressing A opens
+        .option_name = "Behavior",                    // pointer to a string
+        .desc = "Adjust the CPU's default action.",   // string describing what this option does
+        .option_values = LabValues_CPUBehave,         // pointer to an array of strings
+        .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_STRING,                    // the type of option this is; menu, string list, integer list, etc
@@ -999,14 +999,14 @@ static EventOption LabOptions_CPU[] = {
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(LabValues_CPUBehave) / 4, // number of values for this option
-        .option_val = 0,                              // value of this option
-        .menu = 0,                                    // pointer to the menu that pressing A opens
-        .option_name = "Behavior",                    // pointer to a string
-        .desc = "Adjust the CPU's default action.",   // string describing what this option does
-        .option_values = LabValues_CPUBehave,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .option_kind = OPTKIND_STRING,                      // the type of option this is; menu, string list, integer list, etc
+        .value_num = 2,                                     // number of values for this option
+        .option_val = 0,                                    // value of this option
+        .menu = 0,                                          // pointer to the menu that pressing A opens
+        .option_name = {"Intangibility"},                   // pointer to a string
+        .desc = "Toggle the CPU's ability to take damage.", // string describing what this option does
+        .option_values = LabOptions_OffOn,                  // pointer to an array of strings
+        .onOptionChange = Lab_ChangeCPUIntang,
     },
     {
         .option_kind = OPTKIND_STRING,                                           // the type of option this is; menu, string list, integer list, etc
@@ -1269,7 +1269,7 @@ static EventMenu LabMenu_Record = {
 static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
-static RecordingSavestate *rec_state;
+static Savestate *rec_state;
 static LabData *stc_lab_data;
 static char *tm_filename = "TM_DEBUG";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
@@ -3763,7 +3763,7 @@ GOBJ *Record_Init()
     rec_data.text = text;
 
     // alloc rec_state
-    rec_state = calloc(sizeof(RecordingSavestate));
+    rec_state = calloc(sizeof(Savestate));
     // set as not exist
     rec_state->is_exist = 0;
 
@@ -4330,13 +4330,13 @@ void Record_MemcardSave(GOBJ *menu_gobj)
     // alloc a buffer to transfer to memcard
     RecordingSave *rec_save = calloc(sizeof(RecordingSave));
 
-    sizeof(OptFtState);
+    sizeof(FtState);
 
     // copy match data to buffer
     memcpy(&rec_save->match_data, &stc_match->match_data, sizeof(MatchData));
 
     // copy savestate to buffer
-    memcpy(&rec_save->savestate, rec_state, sizeof(RecordingSavestate));
+    memcpy(&rec_save->savestate, rec_state, sizeof(Savestate));
 
     // copy recordings
     for (int i = 0; i < REC_SLOTS; i++)
@@ -4528,7 +4528,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
             lz77_decompress(memcard_save.data, rec_save);
 
             // copy buffer to savestate
-            memcpy(rec_state, &rec_save->savestate, sizeof(RecordingSavestate));
+            memcpy(rec_state, &rec_save->savestate, sizeof(Savestate));
 
             // init savestate
             Record_OnSuccessfulSave();
