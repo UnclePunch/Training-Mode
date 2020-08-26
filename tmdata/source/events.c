@@ -4,8 +4,9 @@ void Event_Init(GOBJ *gobj)
 {
     int *EventData = gobj->userdata;
     EventInfo *eventInfo = EventData[0];
+#if TM_DEBUG == 1
     OSReport("this is %s\n", eventInfo->eventName);
-    //OSReport("%s", EvFreeOptions_Main[1].option_values[1]);
+#endif
     return;
 }
 

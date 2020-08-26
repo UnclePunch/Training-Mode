@@ -4481,8 +4481,11 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                                     // check file name
                                     if (strncmp(tm_filename, card_stat.fileName, sizeof(tm_filename)) == 0)
                                     {
-                                        OSReport("found existing file %s with size %d\n", card_stat.fileName, card_stat.length);
+#if TM_DEBUG == 1
+                                        OSReport("found recording file %s with size %d\n", card_stat.fileName, card_stat.length);
+#endif
                                         file_found = 1;
+                                        blr();
                                         file_size = card_stat.length;
                                     }
                                 }
@@ -4505,13 +4508,13 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
 #endif
 
         // setup load
-        int save_size = file_size;
         MemcardSave memcard_save;
-        memcard_save.data = HSD_MemAlloc(save_size);
+        blr();
+        memcard_save.data = HSD_MemAlloc(file_size);
         memcard_save.x4 = 3;
-        memcard_save.size = save_size;
+        memcard_save.size = file_size;
         memcard_save.xc = -1;
-        Memcard_LoadSnapshot(0, tm_filename, &memcard_save, &stc_memcard_info->file_name, stc_memcard_info->icon_data->icon, stc_memcard_info->icon_data->banner, 0);
+        Memcard_LoadSnapshot(0, tm_filename, &memcard_save, &stc_memcard_info->file_name, stc_lab_data->save_banner, stc_lab_data->save_icon, 0);
 
         // wait to load
         int memcard_status = Memcard_CheckStatus();
