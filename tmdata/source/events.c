@@ -1947,7 +1947,7 @@ int Savestate_Load(Savestate *savestate)
                     Fighter_UpdateIK(fighter);
 
                     // if shield is up, update shield
-                    if (fighter_data->flags.is_shielding)
+                    if ((fighter_data->state_id >= ASID_GUARDON) && (fighter_data->state_id <= ASID_GUARDREFLECT))
                     {
                         // get gfx ID
                         int shieldGFX;
@@ -1983,34 +1983,34 @@ int Savestate_Load(Savestate *savestate)
 #endif
                 }
             }
-        }
 
-        sizeof(FtStateData);
+            sizeof(FtStateData);
 
-        // check to recreate HUD
-        MatchHUD *hud = &stc_matchhud[i];
+            // check to recreate HUD
+            MatchHUD *hud = &stc_matchhud[i];
 
-        // check if fighter is perm dead
-        if (Match_CheckIfStock() == 1)
-        {
-            // remove HUD if no stocks left
-            if (Fighter_GetStocks(i) <= 0)
+            // check if fighter is perm dead
+            if (Match_CheckIfStock() == 1)
             {
-                hud->is_removed = 0;
+                // remove HUD if no stocks left
+                if (Fighter_GetStocks(i) <= 0)
+                {
+                    hud->is_removed = 0;
+                }
             }
+
+            // check to create it
+            if (hud->is_removed == 1)
+            {
+                Match_CreateHUD(i);
+            }
+
+            // snap camera to the new positions
+            Match_CorrectCamera();
+
+            // stop crowd cheer
+            SFX_StopCrowd();
         }
-
-        // check to create it
-        if (hud->is_removed == 1)
-        {
-            Match_CreateHUD(i);
-        }
-
-        // snap camera to the new positions
-        Match_CorrectCamera();
-
-        // stop crowd cheer
-        SFX_StopCrowd();
     }
 
     // Restore event data and Play SFX
