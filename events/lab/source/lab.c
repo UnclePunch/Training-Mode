@@ -1069,6 +1069,7 @@ static EventOption LabOptions_CPU[] = {
         .option_values = LabValues_GrabEscape,                       // pointer to an array of strings
         .onOptionChange = 0,
     },
+    /*
     {
         .option_kind = OPTKIND_STRING,                               // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(LabOptions_OffOn) / 4,                   // number of values for this option
@@ -1079,6 +1080,7 @@ static EventOption LabOptions_CPU[] = {
         .option_values = LabOptions_OffOn,                           // pointer to an array of strings
         .onOptionChange = 0,
     },
+*/
     {
         .option_kind = OPTKIND_STRING,                                                     // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(LabValues_CounterGround) / 4,                                  // number of values for this option
@@ -1234,6 +1236,7 @@ static EventOption LabOptions_Record[] = {
         .option_values = LabOptions_OffOn,                                   // pointer to an array of strings
         .onOptionChange = 0,
     },
+    /*
     {
         .option_kind = OPTKIND_FUNC,    // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                 // number of values for this option
@@ -1254,6 +1257,7 @@ static EventOption LabOptions_Record[] = {
         .option_values = 0,             // pointer to an array of strings
         .onOptionSelect = Record_MemcardLoad,
     },
+*/
 };
 static EventMenu LabMenu_Record = {
     .name = "Recording",                                           // the name of this menu
@@ -3512,7 +3516,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     text_curr->scale.Y = MENU_CANVASSCALE;
     text_curr->trans.Z = MENU_TEXTZ;
     // create hit num
-    Text_AddSubtext(text_curr, -50, 200, &nullString);
+    Text_AddSubtext(text_curr, -50, 185, &nullString);
     // create lstick coords
     for (int i = 0; i < 2; i++)
     {
@@ -3556,8 +3560,8 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     }
 
     // create description text
-    Text_AddSubtext(text_curr, -500, 270, "Input TDI angles for the CPU to use.");
-    Text_AddSubtext(text_curr, -500, 315, "A = Save Input  X = Delete Input  B = Return");
+    Text_AddSubtext(text_curr, -460, 240, "Input TDI angles for the CPU to use.");
+    Text_AddSubtext(text_curr, -460, 285, "A = Save Input  X = Delete Input  B = Return");
 
     // hide original menu
     event_vars->hide_menu = 1;
@@ -3612,7 +3616,7 @@ void CustomTDI_Update(GOBJ *gobj)
         }
     }
 
-    // if press START, exit
+    // if press B, exit
     if ((inputs & HSD_BUTTON_B) != 0)
     {
         CustomTDI_Destroy(gobj);
@@ -3682,9 +3686,13 @@ void CustomTDI_Destroy(GOBJ *gobj)
     // get data
     TDIData *tdi_data = gobj->userdata;
     MenuData *menu_data = event_vars->menu_gobj->userdata;
+    LCancelData *event_data = event_vars->event_gobj->userdata;
 
     // set TDI to custom
-    LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
+    if (event_data->tdi_val_num > 0)
+        LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
+    else
+        LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_RANDOM;
 
     // free text
     Text_FreeText(tdi_data->text_curr);
@@ -3698,6 +3706,9 @@ void CustomTDI_Destroy(GOBJ *gobj)
 
     // show original menu
     event_vars->hide_menu = 0;
+
+    // play sfx
+    SFX_PlayCommon(0);
 
     return;
 }
@@ -4709,7 +4720,7 @@ void Event_Think(GOBJ *event)
                 cpu_data->cb.Coll(cpu);
 
                 // savestate
-                event_vars->Savestate_Save(rec_state);
+                event_vars->Savestate_Save(event_vars->savestate);
             }
         }
 

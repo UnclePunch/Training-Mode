@@ -1554,6 +1554,9 @@ int Savestate_Save(Savestate *savestate)
         // save frame
         savestate->frame = stc_event_vars.game_timer;
 
+        // save event data
+        memcpy(&savestate->event_data, stc_event_vars.event_gobj->userdata, sizeof(savestate->event_data));
+
         // backup all players
         for (int i = 0; i < 6; i++)
         {
@@ -1894,11 +1897,15 @@ int Savestate_Load(Savestate *savestate)
                     // update hurtbox position
                     Fighter_UpdateHurtboxes(fighter_data);
 
+                    // remove color overlay
+                    Fighter_ColorRemove(fighter_data, 9);
+
+                    blr();
                     // restore color
                     for (int k = 0; k < (sizeof(fighter_data->color) / sizeof(ColorOverlay)); k++)
                     {
-                        ColorOverlay *thiscolor = &fighter_data->color[i];
-                        ColorOverlay *savedcolor = &ft_data->color[i];
+                        ColorOverlay *thiscolor = &fighter_data->color[k];
+                        ColorOverlay *savedcolor = &ft_data->color[k];
 
                         thiscolor->timer = savedcolor->timer;
                         thiscolor->loop = savedcolor->loop;
@@ -2030,6 +2037,9 @@ int Savestate_Load(Savestate *savestate)
         int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
         match->time_seconds = frames / 60;
         match->time_ms = frames % 60;
+
+        // restore event data
+        memcpy(stc_event_vars.event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
 
         SFX_PlayCommon(0);
     }

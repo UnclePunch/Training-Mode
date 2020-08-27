@@ -150,7 +150,7 @@ typedef struct FtStateData
         int unknownFC;                                         // 0xFC
         int unknown100;                                        // 0x100
     } phys;                                                    //
-    ColorOverlay color[2];
+    ColorOverlay color[3];
     struct
     {                               //
         float lstick_x;             // 0x620
@@ -605,6 +605,7 @@ typedef struct Savestate
 {
     int is_exist;
     int frame;
+    u8 event_data[EVENT_DATASIZE];
     FtState ft_state[6];
 } Savestate;
 typedef struct evFunction

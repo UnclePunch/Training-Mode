@@ -7,8 +7,8 @@
 #define TDI_DISPNUM 4
 // menu model
 #define TDIMENU_SCALE 1
-#define TDIMENU_X 0.5
-#define TDIMENU_Y -1
+#define TDIMENU_X 0
+#define TDIMENU_Y 0
 #define TDIMENU_Z 0
 #define TDIMENU_WIDTH 55 / TDIMENU_SCALE
 #define TDIMENU_HEIGHT 40 / TDIMENU_SCALE
@@ -247,7 +247,7 @@ enum cpu_option
     OPTCPU_TECH,
     OPTCPU_GETUP,
     OPTCPU_MASH,
-    OPTCPU_RESET,
+    //OPTCPU_RESET,
     OPTCPU_CTRGRND,
     OPTCPU_CTRAIR,
     OPTCPU_CTRSHIELD,
