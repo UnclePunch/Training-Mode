@@ -1550,58 +1550,11 @@ void Lab_ChangeInfoPreset(GOBJ *menu_gobj, int value)
 }
 void Lab_ChangeInfoSizePos(GOBJ *menu_gobj, int value)
 {
-    static Vec2 stc_info_pos[] = {
-        {-26.5, 21.5},
-        {-10, 21.5},
-        {6, 21.5},
-        {-26.5, -10.5},
-        {-10, -10.5},
-        {6, -10.5},
-    };
-    static float stc_info_scale[] = {
-        2,
-        3,
-        4,
-    };
-
-    InfoDisplayData *info_data = infodisp_gobj->userdata;
-    JOBJ *info_jobj = info_data->menuModel;
-    Text *info_text = info_data->text;
-    Vec2 *pos = &info_jobj->trans;
-    //Vec2 *pos = &stc_info_pos[LabOptions_InfoDisplay[OPTINF_POS].option_val];
-    float scale = stc_info_scale[LabOptions_InfoDisplay[OPTINF_SIZE].option_val];
-
-    // background scale
-    info_jobj->scale.X = scale;
-    info_jobj->scale.Y = scale;
-
-    // text scale
-    info_text->scale.X = ((scale / 4.0) * INFDISPTEXT_SCALE);
-    info_text->scale.Y = ((scale / 4.0) * INFDISPTEXT_SCALE);
-
-    /*
-    // background position
-    info_jobj->trans.X = pos->X;
-    info_jobj->trans.Y = pos->Y;
-*/
-    // text position
-    info_text->trans.X = pos->X + (INFDISPTEXT_X) * ((scale / 4.0));
-    info_text->trans.Y = ((pos->Y * -1) + (INFDISPTEXT_Y) * ((scale / 4.0)));
-
-    JOBJ_SetMtxDirtySub(info_jobj);
 
     return;
 }
 void Lab_ChangeInfoPlayer(GOBJ *menu_gobj, int value)
 {
-    InfoDisplayData *info_data = infodisp_gobj->userdata;
-    JOBJ *info_jobj = info_data->menuModel;
-
-    GXColor *shield_color = *stc_shieldcolors;
-    GXColor *border_color = &info_jobj->dobj->mobj->mat->diffuse;
-    border_color->r = shield_color[value].r;
-    border_color->g = shield_color[value].g;
-    border_color->b = shield_color[value].b;
 
     return;
 }
@@ -1708,6 +1661,21 @@ void InfoDisplay_GX(GOBJ *gobj, int pass)
 }
 void InfoDisplay_Think(GOBJ *gobj)
 {
+
+    static Vec2 stc_info_pos[] = {
+        {-26.5, 21.5},
+        {-10, 21.5},
+        {6, 21.5},
+        {-26.5, -10.5},
+        {-10, -10.5},
+        {6, -10.5},
+    };
+    static float stc_info_scale[] = {
+        2,
+        3,
+        4,
+    };
+
     InfoDisplayData *idData = gobj->userdata;
     Text *text = idData->text;
     EventOption *idOptions = &LabOptions_InfoDisplay;
@@ -2004,6 +1972,38 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                 }
             }
+
+            // adjust scale
+            JOBJ *info_jobj = idData->menuModel;
+            Text *info_text = idData->text;
+            Vec2 *pos = &info_jobj->trans;
+            //Vec2 *pos = &stc_info_pos[LabOptions_InfoDisplay[OPTINF_POS].option_val];
+            float scale = stc_info_scale[LabOptions_InfoDisplay[OPTINF_SIZE].option_val];
+            // background scale
+            info_jobj->scale.X = scale;
+            info_jobj->scale.Y = scale;
+            // text scale
+            info_text->scale.X = ((scale / 4.0) * INFDISPTEXT_SCALE);
+            info_text->scale.Y = ((scale / 4.0) * INFDISPTEXT_SCALE);
+            /*
+            // background position
+            info_jobj->trans.X = pos->X;
+            info_jobj->trans.Y = pos->Y;
+            */
+            // text position
+            info_text->trans.X = pos->X + (INFDISPTEXT_X * (scale / 4.0));
+            info_text->trans.Y = (pos->Y * -1) + (INFDISPTEXT_Y * (scale / 4.0));
+
+            // model color
+            int info_player = LabOptions_InfoDisplay[OPTINF_PLAYER].option_val;
+            GXColor *shield_color = *stc_shieldcolors;
+            GXColor *border_color = &info_jobj->dobj->mobj->mat->diffuse;
+            border_color->r = shield_color[info_player].r;
+            border_color->g = shield_color[info_player].g;
+            border_color->b = shield_color[info_player].b;
+
+            // update jobj
+            JOBJ_SetMtxDirtySub(info_jobj);
         }
         else
         {
@@ -3952,7 +3952,6 @@ void Record_GX(GOBJ *gobj, int pass)
             JOBJ_ClearFlags(seek, JOBJ_HIDDEN);
 
             // if playing back with no recording, adjust both numbers
-            blr();
             int local_frame_seek = curr_frame + 1;
             if (curr_frame >= end_frame)
             {
