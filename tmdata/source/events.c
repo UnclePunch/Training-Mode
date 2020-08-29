@@ -2271,7 +2271,7 @@ void EventMenu_Update(GOBJ *gobj)
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
 
-    // Update Pause Status
+    // Check if being pressed
     int isPress = 0;
     for (int i = 0; i < 6; i++)
     {
@@ -2281,8 +2281,9 @@ void EventMenu_Update(GOBJ *gobj)
         {
             GOBJ *fighter = Fighter_GetGObj(i);
             FighterData *fighter_data = fighter->userdata;
+            int controller_index = Fighter_GetControllerPort(i);
 
-            HSD_Pad *pad = PadGet(fighter_data->player_controller_number, PADGET_MASTER);
+            HSD_Pad *pad = PadGet(controller_index, PADGET_MASTER);
 
             if ((pad->down & HSD_BUTTON_START) != 0)
             {
@@ -2291,6 +2292,7 @@ void EventMenu_Update(GOBJ *gobj)
             }
         }
     }
+
     // change pause state
     if (isPress != 0)
     {

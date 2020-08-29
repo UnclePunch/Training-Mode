@@ -4846,7 +4846,7 @@ void Event_Think(GOBJ *event)
     }
 
     // CPU Think if not using recording
-    if (LabOptions_Record[OPTREC_CPUMODE].option_val == 0)
+    if ((LabOptions_Record[OPTREC_CPUMODE].option_val == 0) && (LabOptions_Record[OPTREC_HMNMODE].option_val == 0))
         LCancel_CPUThink(event, hmn, cpu);
 
     return;
