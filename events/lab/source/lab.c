@@ -463,56 +463,58 @@ static CPUAction Lab_CPUActionJump[] = {
 };
 static CPUAction Lab_CPUActionJumpAway[] = {
     {
+        ASID_JUMPS, // state to perform this action. -1 for last
+        0,          // first possible frame to perform this action
+        0,          // last possible frame to perfrom this action
+        127,        // left stick X value
+        0,          // left stick Y value
+        0,          // c stick X value
+        0,          // c stick Y value
+        0,          // button to input
+        0,          // is the last input
+        2,          // specify stick direction
+    },
+    {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
         0,               // last possible frame to perfrom this action
-        0,               // left stick X value
+        127,             // left stick X value
         0,               // left stick Y value
         0,               // c stick X value
         0,               // c stick Y value
         PAD_BUTTON_X,    // button to input
         0,               // is the last input
-        0,               // specify stick direction
+        2,               // specify stick direction
     },
-    {
-        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
-        0,                  // first possible frame to perform this action
-        0,                  // last possible frame to perfrom this action
-        -127,               // left stick X value
-        0,                  // left stick Y value
-        0,                  // c stick X value
-        0,                  // c stick Y value
-        0,                  // button to input
-        1,                  // is the last input
-        2,                  // specify stick direction
-    },
+
     -1,
 };
 static CPUAction Lab_CPUActionJumpTowards[] = {
     {
+        ASID_JUMPS, // state to perform this action. -1 for last
+        0,          // first possible frame to perform this action
+        0,          // last possible frame to perfrom this action
+        127,        // left stick X value
+        0,          // left stick Y value
+        0,          // c stick X value
+        0,          // c stick Y value
+        0,          // button to input
+        0,          // is the last input
+        1,          // specify stick direction
+    },
+    {
         ASID_ACTIONABLE, // state to perform this action. -1 for last
         0,               // first possible frame to perform this action
         0,               // last possible frame to perfrom this action
-        0,               // left stick X value
+        127,             // left stick X value
         0,               // left stick Y value
         0,               // c stick X value
         0,               // c stick Y value
         PAD_BUTTON_X,    // button to input
         0,               // is the last input
-        0,               // specify stick direction
+        1,               // specify stick direction
     },
-    {
-        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
-        0,                  // first possible frame to perform this action
-        0,                  // last possible frame to perfrom this action
-        127,                // left stick X value
-        0,                  // left stick Y value
-        0,                  // c stick X value
-        0,                  // c stick Y value
-        0,                  // button to input
-        1,                  // is the last input
-        1,                  // specify stick direction
-    },
+
     -1,
 };
 static CPUAction Lab_CPUActionAirdodge[] = {
@@ -860,7 +862,7 @@ static EventOption LabOptions_InfoDisplay[] = {
         .value_num = sizeof(LabValues_InfoPresets) / 4,      // number of values for this option
         .option_val = 0,                                     // value of this option
         .menu = 0,                                           // pointer to the menu that pressing A opens
-        .option_name = "Preset",                             // pointer to a string
+        .option_name = "Display Preset",                     // pointer to a string
         .desc = "Choose between pre-configured selections.", // string describing what this option does
         .option_values = LabValues_InfoPresets,              // pointer to an array of strings
         .onOptionChange = Lab_ChangeInfoPreset,
@@ -2030,24 +2032,26 @@ float Fighter_GetOpponentDir(FighterData *from, FighterData *to)
 
     return dir;
 }
-int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
+int CPUAction_CheckMultipleState(GOBJ *cpu, int group_kind)
 {
     static u8 grActionable[] = {ASID_WAIT, ASID_WALKSLOW, ASID_WALKMIDDLE, ASID_WALKFAST, ASID_RUN, ASID_SQUATWAIT, ASID_OTTOTTOWAIT, ASID_GUARD};
     static u8 airActionable[] = {ASID_JUMPF, ASID_JUMPB, ASID_JUMPAERIALF, ASID_JUMPAERIALB, ASID_FALL, ASID_FALLAERIALF, ASID_FALLAERIALB, ASID_DAMAGEFALL, ASID_DAMAGEFLYROLL, ASID_DAMAGEFLYTOP};
     static u8 airDamage[] = {ASID_DAMAGEFLYHI, ASID_DAMAGEFLYN, ASID_DAMAGEFLYLW, ASID_DAMAGEFLYTOP, ASID_DAMAGEFLYROLL, ASID_DAMAGEFALL};
+    static u8 jumpStates[] = {ASID_JUMPF, ASID_JUMPB, ASID_JUMPAERIALF, ASID_JUMPAERIALB};
+    static u8 fallStates[] = {ASID_FALL, ASID_FALLAERIAL, ASID_FALLAERIALF, ASID_FALLAERIALB};
 
     FighterData *cpu_data = cpu->userdata;
     int isActionable = 0;
     int cpu_state = cpu_data->state_id;
 
     // if 0, check the one that corresponds with ground state
-    if (actionable_kind == 0)
+    if (group_kind == 0)
     {
-        actionable_kind = cpu_data->phys.air_state + 1;
+        group_kind = cpu_data->phys.air_state + 1;
     }
 
     // ground
-    if (actionable_kind == 1)
+    if (group_kind == 1)
     {
         // check ground actionable
         for (int i = 0; i < sizeof(grActionable); i++)
@@ -2063,7 +2067,7 @@ int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
             isActionable = 1;
     }
     // air
-    else if (actionable_kind == 2)
+    else if (group_kind == 2)
     {
         // check air actionable
         for (int i = 0; i < sizeof(airActionable); i++)
@@ -2076,12 +2080,36 @@ int CPUAction_CheckActionable(GOBJ *cpu, int actionable_kind)
         }
     }
     // damage state that requires wiggling
-    else if (actionable_kind == 3)
+    else if (group_kind == 3)
     {
         // check air actionable
         for (int i = 0; i < sizeof(airDamage); i++)
         {
             if (cpu_state == airDamage[i])
+            {
+                isActionable = 1;
+                break;
+            }
+        }
+    }
+    // jump states
+    else if (group_kind == 4)
+    {
+        for (int i = 0; i < sizeof(jumpStates); i++)
+        {
+            if (cpu_state == jumpStates[i])
+            {
+                isActionable = 1;
+                break;
+            }
+        }
+    }
+    // fall states
+    else if (group_kind == 5)
+    {
+        for (int i = 0; i < sizeof(fallStates); i++)
+        {
+            if (cpu_state == fallStates[i])
             {
                 isActionable = 1;
                 break;
@@ -2147,10 +2175,9 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
         {
 
             int isState = 0;
-            if ((action_input->state >= ASID_ACTIONABLE) && (action_input->state <= ASID_DAMAGEAIR))
+            if ((action_input->state >= ASID_ACTIONABLE) && (action_input->state <= ASID_FALLS))
             {
-
-                isState = CPUAction_CheckActionable(cpu, (action_input->state - ASID_ACTIONABLE));
+                isState = CPUAction_CheckMultipleState(cpu, (action_input->state - ASID_ACTIONABLE));
             }
             else if (action_input->state == cpu_state)
             {
@@ -2707,7 +2734,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         if (eventData->cpu_isactionable == 0)
         {
             // check if actionable
-            if (CPUAction_CheckActionable(cpu, 0) == 0)
+            if (CPUAction_CheckMultipleState(cpu, 0) == 0)
             {
                 break;
             }
@@ -3924,12 +3951,18 @@ void Record_GX(GOBJ *gobj, int pass)
         {
             JOBJ_ClearFlags(seek, JOBJ_HIDDEN);
 
+            // if playing back with no recording, adjust both numbers
+            blr();
+            int local_frame_seek = curr_frame + 1;
+            if (curr_frame >= end_frame)
+            {
+                local_frame_seek = curr_frame + 1;
+                end_frame = curr_frame + 1;
+            }
+
             // update seek bar position
             float range = rec_data.seek_right - rec_data.seek_left;
             float curr_pos;
-            int local_frame_seek = curr_frame + 1;
-            if (curr_frame >= end_frame)
-                local_frame_seek = end_frame;
             curr_pos = (float)local_frame_seek / (float)end_frame;
             seek->trans.X = rec_data.seek_left + (curr_pos * range);
             JOBJ_SetMtxDirtySub(seek);
@@ -4496,7 +4529,6 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                                         OSReport("found recording file %s with size %d\n", card_stat.fileName, card_stat.length);
 #endif
                                         file_found = 1;
-                                        blr();
                                         file_size = card_stat.length;
                                     }
                                 }
@@ -4520,7 +4552,6 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
 
         // setup load
         MemcardSave memcard_save;
-        blr();
         memcard_save.data = HSD_MemAlloc(file_size);
         memcard_save.x4 = 3;
         memcard_save.size = file_size;
@@ -4695,29 +4726,69 @@ void Event_Think(GOBJ *event)
             isGround = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
             if (isGround == 1)
             {
-                // place CPU here
-                cpu_data->phys.pos = coll_pos;
-                cpu_data->collData.ground_index = line_index;
 
-                // facing player
-                cpu_data->facing_direction = hmn_data->facing_direction * -1;
+                // do this for every subfighter (thanks for complicated code ice climbers)
+                for (int i = 0; i < 2; i++)
+                {
+                    GOBJ *this_fighter = Fighter_GetSubcharGObj(cpu_data->ply, i);
 
-                // update camera box
-                Fighter_UpdateCameraBox(cpu);
-                cpu_data->cameraBox->boundleft_curr = cpu_data->cameraBox->boundleft_proj;
-                cpu_data->cameraBox->boundright_curr = cpu_data->cameraBox->boundright_proj;
+                    if (this_fighter != 0)
+                    {
 
-                // set grounded
-                cpu_data->phys.air_state = 0;
-                //Fighter_SetGrounded(cpu);
+                        FighterData *this_fighter_data = this_fighter->userdata;
 
-                // enter wait
-                Fighter_EnterWait(cpu);
+                        // place CPU here
+                        this_fighter_data->phys.pos = coll_pos;
+                        this_fighter_data->collData.ground_index = line_index;
 
-                // update ECB
-                cpu_data->collData.topN_Curr = cpu_data->phys.pos; // move current ECB location to new position
-                Coll_ECBCurrToPrev(&cpu_data->collData);
-                cpu_data->cb.Coll(cpu);
+                        // facing player
+                        this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
+
+                        // update camera box
+                        Fighter_UpdateCameraBox(this_fighter);
+                        this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
+                        this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
+
+                        // set grounded
+                        this_fighter_data->phys.air_state = 0;
+                        //Fighter_SetGrounded(this_fighter);
+
+                        // kill velocity
+                        Fighter_KillAllVelocity(this_fighter);
+
+                        // enter wait
+                        Fighter_EnterWait(this_fighter);
+
+                        // update ECB
+                        this_fighter_data->collData.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
+                        Coll_ECBCurrToPrev(&this_fighter_data->collData);
+                        this_fighter_data->cb.Coll(this_fighter);
+
+                        // init CPU logic (for nana's popo position history...)
+                        int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
+                        int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
+                        Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
+
+                        // place subfighter in the Z axis
+                        if (this_fighter_data->flags.ms == 1)
+                        {
+                            ftCommonData *ft_common = *stc_ftcommon;
+                            this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+                        }
+                    }
+                }
+
+                // reset CPU think variables
+                eventData->cpu_state = CPUSTATE_START;
+                eventData->cpu_hitshield = 0;
+                eventData->cpu_hitnum = 0;
+                eventData->cpu_sincehit = 0;
+                eventData->cpu_hitshield = 0;
+                eventData->cpu_lasthit = -1;
+                eventData->cpu_lastshieldstun = -1;
+                eventData->cpu_hitkind = -1;
+                eventData->cpu_hitshieldnum = 0;
+                eventData->cpu_isactionable = 0;
 
                 // savestate
                 event_vars->Savestate_Save(event_vars->savestate);

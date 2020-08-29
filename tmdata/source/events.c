@@ -57,7 +57,7 @@ static EventMatchData Lab_MatchData = {
 static EventInfo Lab = {
     // Event Name
     .eventName = "Training Lab\n",
-    .eventDescription = "Manual practice with\ncomplete control.\n",
+    .eventDescription = "Free practice with\ncomplete control.\n",
     .eventTutorial = "",
     .eventFile = "EvLab",
     .isChooseCPU = true,
@@ -1900,25 +1900,25 @@ int Savestate_Load(Savestate *savestate)
                     // remove color overlay
                     Fighter_ColorRemove(fighter_data, 9);
 
-                    blr();
                     // restore color
                     for (int k = 0; k < (sizeof(fighter_data->color) / sizeof(ColorOverlay)); k++)
                     {
+
                         ColorOverlay *thiscolor = &fighter_data->color[k];
                         ColorOverlay *savedcolor = &ft_data->color[k];
 
-                        thiscolor->timer = savedcolor->timer;
-                        thiscolor->loop = savedcolor->loop;
-                        thiscolor->hex = savedcolor->hex;
-                        thiscolor->red = savedcolor->red;
-                        thiscolor->blue = savedcolor->blue;
-                        thiscolor->green = savedcolor->green;
-                        thiscolor->alpha = savedcolor->alpha;
-                        thiscolor->redblink = savedcolor->redblink;
-                        thiscolor->blueblink = savedcolor->blueblink;
-                        thiscolor->greenblink = savedcolor->greenblink;
-                        thiscolor->alphablink = savedcolor->alphablink;
-                        thiscolor->enable = savedcolor->enable;
+                        // backup nono pointers
+                        int *ptr1 = thiscolor->ptr1;
+                        int *ptr2 = thiscolor->ptr2;
+                        int *alloc = thiscolor->alloc;
+
+                        // mempcy entire
+                        memcpy(thiscolor, savedcolor, sizeof(ColorOverlay));
+
+                        // restore nono pointers
+                        thiscolor->ptr1 = ptr1;
+                        thiscolor->ptr2 = ptr2;
+                        thiscolor->alloc = alloc;
                     }
 
                     // restore smash variables
@@ -1972,6 +1972,8 @@ int Savestate_Load(Savestate *savestate)
                         Fighter_UpdateShield(fighter, 1);
                     }
 
+                    // process dynamics
+
 #if TM_DEBUG == 1
                     int dyn_pre_tick = OSGetTick();
 #endif
@@ -1988,6 +1990,26 @@ int Savestate_Load(Savestate *savestate)
                     int dyn_time = OSTicksToMilliseconds(dyn_post_tick - dyn_pre_tick);
                     OSReport("processed dyn %d times in %dms\n", dyn_proc_num, dyn_time);
 #endif
+
+                    // remove all items belonging to this fighter
+                    GOBJList *gobj_list = *stc_gobj_list;
+                    GOBJ *item = gobj_list->item;
+                    while (item != 0)
+                    {
+
+                        // get next
+                        GOBJ *next_item = item->next;
+
+                        // check to delete
+                        ItemData *item_data = item->userdata;
+                        if (fighter == item_data->fighter)
+                        {
+                            // destroy it
+                            Item_Destroy(item);
+                        }
+
+                        item = next_item;
+                    }
                 }
             }
 
