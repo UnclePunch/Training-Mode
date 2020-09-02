@@ -19,6 +19,7 @@ typedef struct evMenu
     JOBJDesc *check;
     JOBJDesc *arrow;
     JOBJDesc *playback;
+    JOBJDesc *message;
 } evMenu;
 
 // Structure Definitions
@@ -651,6 +652,7 @@ FighterData *IDToFtData(int id);
 JOBJ *IDToBone(FighterData *fighter_data, int id);
 void EventUpdate();
 void Event_IncTimer(GOBJ *gobj);
+void Test_Think(GOBJ *gobj);
 static EventInfo *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars stc_event_vars;

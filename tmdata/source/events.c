@@ -14,7 +14,7 @@ void Event_Init(GOBJ *gobj)
 // Mod Information //
 /////////////////////
 
-static char TM_Vers[] = {"Training Mode v3.0 ALPHA\n"};
+static char TM_Vers[] = {"TM 3.0 Alpha2\n"};
 static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
 static char nullString[] = " ";
 
@@ -1099,6 +1099,20 @@ static EventVars stc_event_vars = {
 };
 static int *eventDataBackup;
 
+typedef struct TestData
+{
+    int timer;
+    Text *text;
+} TestData;
+
+#define TEST_TIMER (3 * 60)
+#define TEST_SCALE 75
+#define TEST_X 320
+#define TEST_Y -240
+#define TEXT_BASESCALE 0.04
+#define TEXT_BASEX 0
+#define TEXT_BASEY 0
+
 ///////////////////////
 /// Event Functions ///
 ///////////////////////
@@ -1469,21 +1483,21 @@ void OnSceneChange()
     text->trans.Y = 446;
 
     // print string
-    static char *watermark = "TM 3.0 Alpha1";
-    int shadow = Text_AddSubtext(text, 2, 2, watermark);
+    //static char *watermark = "TM 3.0 Alpha1";
+    int shadow = Text_AddSubtext(text, 2, 2, TM_Vers);
     GXColor shadow_color = {0, 0, 0, 0};
     Text_SetColor(text, shadow, &shadow_color);
 
-    int shadow1 = Text_AddSubtext(text, 2, -2, watermark);
+    int shadow1 = Text_AddSubtext(text, 2, -2, TM_Vers);
     Text_SetColor(text, shadow1, &shadow_color);
 
-    int shadow2 = Text_AddSubtext(text, -2, 2, watermark);
+    int shadow2 = Text_AddSubtext(text, -2, 2, TM_Vers);
     Text_SetColor(text, shadow2, &shadow_color);
 
-    int shadow3 = Text_AddSubtext(text, -2, -2, watermark);
+    int shadow3 = Text_AddSubtext(text, -2, -2, TM_Vers);
     Text_SetColor(text, shadow3, &shadow_color);
 
-    Text_AddSubtext(text, 0, 0, watermark);
+    Text_AddSubtext(text, 0, 0, TM_Vers);
 
     return;
 };

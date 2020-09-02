@@ -461,6 +461,57 @@ static CPUAction Lab_CPUActionJump[] = {
     },
     -1,
 };
+static CPUAction Lab_CPUActionJumpFull[] = {
+    {
+        ASID_GUARD,                   // state to perform this action. -1 for last
+        0,                            // first possible frame to perform this action
+        0,                            // last possible frame to perfrom this action
+        0,                            // left stick X value
+        0,                            // left stick Y value
+        0,                            // c stick X value
+        0,                            // c stick Y value
+        PAD_TRIGGER_R | PAD_BUTTON_X, // button to input
+        0,                            // is the last input
+        0,                            // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_X,          // button to input
+        0,                     // is the last input
+        0,                     // specify stick direction
+    },
+    {
+        ASID_KNEEBEND, // state to perform this action. -1 for last
+        0,             // first possible frame to perform this action
+        0,             // last possible frame to perfrom this action
+        0,             // left stick X value
+        0,             // left stick Y value
+        0,             // c stick X value
+        0,             // c stick Y value
+        PAD_BUTTON_X,  // button to input
+        0,             // is the last input
+        0,             // specify stick direction
+    },
+    {
+        ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
+        0,                  // first possible frame to perform this action
+        0,                  // last possible frame to perfrom this action
+        0,                  // left stick X value
+        0,                  // left stick Y value
+        0,                  // c stick X value
+        0,                  // c stick Y value
+        0,                  // button to input
+        1,                  // is the last input
+        0,                  // specify stick direction
+    },
+    -1,
+};
 static CPUAction Lab_CPUActionJumpAway[] = {
     {
         ASID_JUMPS, // state to perform this action. -1 for last
@@ -586,6 +637,66 @@ static CPUAction Lab_CPUActionFFWiggle[] = {
     },
     -1,
 };
+static CPUAction Lab_CPUActionJab[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_A,          // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction Lab_CPUActionFTilt[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        80,                    // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_A,          // button to input
+        1,                     // is the last input
+        1,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction Lab_CPUActionUTilt[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        80,                    // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_A,          // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction Lab_CPUActionDTilt[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        -80,                   // left stick Y value
+        0,                     // c stick X value
+        0,                     // c stick Y value
+        PAD_BUTTON_A,          // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
 
 static CPUAction *Lab_CPUActions[] = {
     // none 0
@@ -614,22 +725,56 @@ static CPUAction *Lab_CPUActions[] = {
     &Lab_CPUActionBair,
     // uair 12
     &Lab_CPUActionUair,
-    // jump 13
+    // short hop 13
     &Lab_CPUActionJump,
-    // jump away 14
+    // full hop 14
+    &Lab_CPUActionJumpFull,
+    // jump away 15
     &Lab_CPUActionJumpAway,
-    // jump towards 15
+    // jump towards 16
     &Lab_CPUActionJumpTowards,
-    // airdodge 16
+    // airdodge 17
     &Lab_CPUActionAirdodge,
-    // fastfall 17
+    // fastfall 18
     &Lab_CPUActionFFTumble,
-    // wiggle fastfall 18
+    // wiggle fastfall 19
     &Lab_CPUActionFFWiggle,
+    // wiggle fastfall 19
+    &Lab_CPUActionJab,
+    &Lab_CPUActionFTilt,
+    &Lab_CPUActionUTilt,
+    &Lab_CPUActionDTilt,
 };
-static u8 GrAcLookup[] = {0, 5, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13};
-static u8 AirAcLookup[] = {0, 16, 14, 15, 3, 4, 8, 9, 10, 11, 12, 17, 18};
-static u8 ShieldAcLookup[] = {0, 2, 13, 5, 3, 4, 8, 9, 10, 11, 12};
+enum CPU_ACTIONS
+{
+    CPUACT_NONE,
+    CPUACT_SHIELD,
+    CPUACT_GRAB,
+    CPUACT_UPB,
+    CPUACT_DOWNB,
+    CPUACT_SPOTDODGE,
+    CPUACT_ROLLAWAY,
+    CPUACT_ROLLTOWARDS,
+    CPUACT_NAIR,
+    CPUACT_FAIR,
+    CPUACT_DAIR,
+    CPUACT_BAIR,
+    CPUACT_UAIR,
+    CPUACT_SHORTHOP,
+    CPUACT_FULLHOP,
+    CPUACT_JUMPAWAY,
+    CPUACT_JUMPTOWARDS,
+    CPUACT_AIRDODGE,
+    CPUACT_FFTUMBLE,
+    CPUACT_FFWIGGLE,
+    CPUACT_JAB,
+    CPUACT_FTILT,
+    CPUACT_UTILT,
+    CPUACT_DTILT,
+};
+static u8 GrAcLookup[] = {CPUACT_NONE, CPUACT_SPOTDODGE, CPUACT_SHIELD, CPUACT_GRAB, CPUACT_UPB, CPUACT_DOWNB, CPUACT_ROLLAWAY, CPUACT_ROLLTOWARDS, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_JAB, CPUACT_FTILT, CPUACT_UTILT, CPUACT_DTILT, CPUACT_SHORTHOP, CPUACT_FULLHOP};
+static u8 AirAcLookup[] = {CPUACT_NONE, CPUACT_AIRDODGE, CPUACT_JUMPAWAY, CPUACT_JUMPTOWARDS, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_BAIR};
+static u8 ShieldAcLookup[] = {CPUACT_NONE, CPUACT_GRAB, CPUACT_SHORTHOP, CPUACT_FULLHOP, CPUACT_SPOTDODGE, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR};
 
 // Main Menu
 static char **LabOptions_OffOn[] = {"Off", "On"};
@@ -964,9 +1109,9 @@ static char **LabValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "C
 static char **LabValues_SDI[] = {"Random", "None"};
 static char **LabValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
 static char **LabValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
-static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jump"};
+static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jab", "Forward Tilt", "Up Tilt", "Down Tilt", "Short Hop", "Full Hop"};
 static char **LabValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
-static char **LabValues_CounterShield[] = {"None", "Grab", "Jump", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
+static char **LabValues_CounterShield[] = {"None", "Grab", "Short Hop", "Full Hop", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
 static char **LabValues_GrabEscape[] = {"None", "Medium", "High", "Perfect"};
 static EventOption LabOptions_CPU[] = {
     // cpu percent
@@ -1169,13 +1314,13 @@ static EventOption LabOptions_Record[] = {
         .onOptionSelect = Record_InitState,
     },
     {
-        .option_kind = OPTKIND_FUNC,                                                                            // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                                                                                         // number of values for this option
-        .option_val = 0,                                                                                        // value of this option
-        .menu = 0,                                                                                              // pointer to the menu that pressing A opens
-        .option_name = "Restore Positions",                                                                     // pointer to a string
-        .desc = "Load the original fighter positions. This\ncan also be done in-game by pressing\nD-Pad left.", // string describing what this option does
-        .option_values = 0,                                                                                     // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                                          // number of values for this option
+        .option_val = 0,                                                                         // value of this option
+        .menu = 0,                                                                               // pointer to the menu that pressing A opens
+        .option_name = "Restore Positions",                                                      // pointer to a string
+        .desc = "Load the saved fighter positions and \nstart the sequence from the beginning.", // string describing what this option does
+        .option_values = 0,                                                                      // pointer to an array of strings
         .onOptionSelect = Record_RestoreState,
     },
     {
@@ -1189,13 +1334,13 @@ static EventOption LabOptions_Record[] = {
         .onOptionChange = Record_ChangeHMNMode,
     },
     {
-        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(LabValues_RecordSlot) / 4, // number of values for this option
-        .option_val = 1,                               // value of this option
-        .menu = 0,                                     // pointer to the menu that pressing A opens
-        .option_name = "HMN Record Slot",              // pointer to a string
-        .desc = "Toggle which slot to record to.",     // string describing what this option does
-        .option_values = LabValues_RecordSlot,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                       // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_RecordSlot) / 4,                                                                       // number of values for this option
+        .option_val = 1,                                                                                                     // value of this option
+        .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
+        .option_name = "HMN Record Slot",                                                                                    // pointer to a string
+        .desc = "Toggle which recording slot to save inputs \nto. Maximum of 6 and can be set to random \nduring playback.", // string describing what this option does
+        .option_values = LabValues_RecordSlot,                                                                               // pointer to an array of strings
         .onOptionChange = Record_ChangeHMNSlot,
     },
     {
@@ -1209,13 +1354,13 @@ static EventOption LabOptions_Record[] = {
         .onOptionChange = Record_ChangeCPUMode,
     },
     {
-        .option_kind = OPTKIND_STRING,                 // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(LabValues_RecordSlot) / 4, // number of values for this option
-        .option_val = 1,                               // value of this option
-        .menu = 0,                                     // pointer to the menu that pressing A opens
-        .option_name = "CPU Record Slot",              // pointer to a string
-        .desc = "Toggle which slot to record to.",     // string describing what this option does
-        .option_values = LabValues_RecordSlot,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                                       // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_RecordSlot) / 4,                                                                       // number of values for this option
+        .option_val = 1,                                                                                                     // value of this option
+        .menu = 0,                                                                                                           // pointer to the menu that pressing A opens
+        .option_name = "CPU Record Slot",                                                                                    // pointer to a string
+        .desc = "Toggle which recording slot to save inputs \nto. Maximum of 6 and can be set to random \nduring playback.", // string describing what this option does
+        .option_values = LabValues_RecordSlot,                                                                               // pointer to an array of strings
         .onOptionChange = Record_ChangeCPUSlot,
     },
     {
@@ -1223,19 +1368,19 @@ static EventOption LabOptions_Record[] = {
         .value_num = sizeof(LabOptions_OffOn) / 4,         // number of values for this option
         .option_val = 0,                                   // value of this option
         .menu = 0,                                         // pointer to the menu that pressing A opens
-        .option_name = "Loop Recording",                   // pointer to a string
+        .option_name = "Loop Input Playback",              // pointer to a string
         .desc = "Loop the recorded inputs when they end.", // string describing what this option does
         .option_values = LabOptions_OffOn,                 // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
-        .option_kind = OPTKIND_STRING,                                       // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(LabOptions_OffOn) / 4,                           // number of values for this option
-        .option_val = 0,                                                     // value of this option
-        .menu = 0,                                                           // pointer to the menu that pressing A opens
-        .option_name = "Auto Restore",                                       // pointer to a string
-        .desc = "Automatically restore positions after the\nplayback ends.", // string describing what this option does
-        .option_values = LabOptions_OffOn,                                   // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                              // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabOptions_OffOn) / 4,                                  // number of values for this option
+        .option_val = 0,                                                            // value of this option
+        .menu = 0,                                                                  // pointer to the menu that pressing A opens
+        .option_name = "Auto Restore",                                              // pointer to a string
+        .desc = "Automatically restore saved positions \nafter the playback ends.", // string describing what this option does
+        .option_values = LabOptions_OffOn,                                          // pointer to an array of strings
         .onOptionChange = 0,
     },
     /*
@@ -1276,13 +1421,13 @@ static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static Savestate *rec_state;
-static LabData *stc_lab_data;
+static Arch_LabData *stc_lab_data;
 static char *tm_filename = "TM_DEBUG";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static char *stc_save_desc = "%d/%d/%d %d:%2d";
 static DevText *stc_devtext;
 
-// lz77 functions courtesy of https://github.com/andyherbert/lz1
+// lz77 functions credited to https://github.com/andyherbert/lz1
 int x_to_the_n(int x, int n)
 {
     int i; /* Variable used in loop counter */
@@ -3497,7 +3642,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     evMenu *menuAssets = event_vars->menu_assets;
     GOBJ *event_gobj = event_vars->event_gobj;
     LCancelData *event_data = event_gobj->userdata;
-    LabData *LabAssets = stc_lab_data;
+    Arch_LabData *LabAssets = stc_lab_data;
 
     // set menu state to wait
     //curr_menu->state = EMSTATE_WAIT;
@@ -3736,6 +3881,176 @@ void CustomTDI_Destroy(GOBJ *gobj)
 
     // play sfx
     SFX_PlayCommon(0);
+
+    return;
+}
+void Inputs_GX(GOBJ *gobj, int pass)
+{
+    // only render when enabled and unpaused
+    if ((LabOptions_General[OPTGEN_INPUT].option_val == 1) && (Pause_CheckStatus(1) != 2))
+    {
+        GXLink_Common(gobj, pass);
+    }
+
+    return;
+}
+void Inputs_Think(GOBJ *gobj)
+{
+    InputData *input_data = gobj->userdata;
+
+    // update controllers
+    for (int i = 0; i < (sizeof(input_data->controller_joint) / 4); i++)
+    {
+        JOBJ *controller = input_data->controller_joint[i];
+
+        if (controller != 0)
+        {
+
+            // get port and controller data
+            int port = Fighter_GetControllerPort(i);
+            HSD_Pad *pad = PadGet(port, PADGET_ENGINE);
+
+            // move lstick
+            JOBJ *lstick_joint;
+            JOBJ_GetChild(controller, &lstick_joint, 10, -1);
+            lstick_joint->trans.X = (pad->fstickX * 2.3);
+            lstick_joint->trans.Y = (pad->fstickY * 2.3);
+
+            // move lstick
+            JOBJ *rstick_joint;
+            JOBJ_GetChild(controller, &rstick_joint, 8, -1);
+            rstick_joint->trans.X = (pad->fsubstickX * 2.3);
+            rstick_joint->trans.Y = (pad->fsubstickY * 2.3);
+
+            // move ltrigger
+            JOBJ *ltrig_joint;
+            JOBJ_GetChild(controller, &ltrig_joint, button_lookup[BTN_L].jobj, -1);
+            ltrig_joint->trans.X = (pad->ftriggerLeft * 0.5) + input_data->ltrig_origin.X;
+            ltrig_joint->trans.Z = (pad->ftriggerLeft * 1.5) + input_data->ltrig_origin.Y;
+
+            // move rtrigger
+            JOBJ *rtrig_joint;
+            JOBJ_GetChild(controller, &rtrig_joint, button_lookup[BTN_R].jobj, -1);
+            rtrig_joint->trans.X = (pad->ftriggerRight * -0.5) + input_data->rtrig_origin.X;
+            rtrig_joint->trans.Z = (pad->ftriggerRight * 1.5) + input_data->rtrig_origin.Y;
+
+            // update button colors
+            int held = pad->held;
+            for (int i = 0; i < (BTN_NUM); i++)
+            {
+
+                // Get buttons jobj and dobj from the lookup table
+                JOBJ *button_jobj;
+                JOBJ_GetChild(controller, &button_jobj, button_lookup[i].jobj, -1);
+                DOBJ *button_dobj = JOBJ_GetDObj(button_jobj, button_lookup[i].dobj);
+
+                // check if button is pressed
+                if (held & button_bits[i])
+                {
+                    // make white i guess for now
+                    GXColor color_pressed = INPUT_COLOR_PRESSED;
+                    button_dobj->mobj->mat->diffuse = color_pressed;
+                }
+                // not pressed, make the default color
+                else
+                {
+                    GXColor *color_released = &button_colors[i];
+                    button_dobj->mobj->mat->diffuse = *color_released;
+                }
+            }
+
+            JOBJ_SetMtxDirtySub(controller);
+        }
+    }
+
+    // toggle visibility
+    JOBJ *root = gobj->hsd_object;
+    if ((LabOptions_General[OPTGEN_INPUT].option_val == 1) && (Pause_CheckStatus(1) != 2))
+    {
+        Match_HideTimer();
+        JOBJ_ClearFlags(root, JOBJ_HIDDEN);
+    }
+    else if ((LabOptions_General[OPTGEN_INPUT].option_val == 0) && (Pause_CheckStatus(1) != 2))
+    {
+        Match_ShowTimer();
+        JOBJ_SetFlags(root, JOBJ_HIDDEN);
+    }
+
+    /*
+        // toggle timer visibility
+        if (LabOptions_General[OPTGEN_INPUT].option_val == 1)
+            Match_HideTimer();
+        else if (Pause_CheckStatus(1) != 2)
+            Match_ShowTimer();
+*/
+    return;
+}
+void Inputs_Init()
+{
+    // Create Input Display GOBJ
+    GOBJ *input_gobj = GObj_Create(0, 0, 0);
+    InputData *input_data = calloc(sizeof(InputData));
+    GObj_AddUserData(input_gobj, 4, HSD_Free, input_data);
+    GObj_AddProc(input_gobj, Inputs_Think, 4);
+
+    // alloc a dummy root jobj
+    JOBJDesc *root_desc = calloc(sizeof(JOBJDesc));
+    root_desc->flags = JOBJ_ROOT_XLU | JOBJ_ROOT_TEXEDGE;
+    root_desc->scale.X = 1;
+    root_desc->scale.Y = 1;
+    root_desc->scale.Z = 1;
+    JOBJ *root = JOBJ_LoadJoint(root_desc);
+
+    // init jobj pointers
+    for (int i = 0; i < (sizeof(input_data->controller_joint) / 4); i++)
+    {
+        input_data->controller_joint[i] = 0;
+    }
+
+    // count humans in this match
+    int hmn_count = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        if (Fighter_GetSlotType(i) == 0)
+            hmn_count++;
+    }
+
+    // create X controllers
+    int found_origin = 0;
+    for (int i = 0; i < hmn_count; i++)
+    {
+
+        JOBJ *controller = JOBJ_LoadJoint(stc_lab_data->controller); // Load jobj
+        input_data->controller_joint[i] = controller;                // store jobj pointer
+
+        // Add to root
+        JOBJ_AddChild(root, controller);
+
+        if (found_origin == 0)
+        {
+            // save trigger origins
+            JOBJ *ltrig_jobj, *rtrig_jobj;
+            JOBJ_GetChild(controller, &ltrig_jobj, button_lookup[BTN_L].jobj, -1);
+            JOBJ_GetChild(controller, &rtrig_jobj, button_lookup[BTN_R].jobj, -1);
+            input_data->ltrig_origin.X = ltrig_jobj->trans.X;
+            input_data->ltrig_origin.Y = ltrig_jobj->trans.Z;
+            input_data->rtrig_origin.X = rtrig_jobj->trans.X;
+            input_data->rtrig_origin.Y = rtrig_jobj->trans.Z;
+
+            found_origin = 1;
+        }
+
+        /*
+        // adjust size based on the console / settings
+        if ((OSGetConsoleType() == OS_CONSOLE_DEVHW3) || (stc_HSD_VI->is_prog == 1)) // 480p / dolphin uses medium by default
+            LabOptions_InfoDisplay[OPT_SCALE].option_val = 1;
+        else // 480i on wii uses large (shitty composite!)
+            LabOptions_InfoDisplay[OPT_SCALE].option_val = 2;
+        */
+    }
+
+    GObj_AddObject(input_gobj, 3, root);                              // add to gobj
+    GObj_AddGXLink(input_gobj, Inputs_GX, INPUT_GXLINK, INPUT_GXPRI); // add gx link
 
     return;
 }
@@ -4014,8 +4329,9 @@ void Record_Think(GOBJ *rec_gobj)
         // if at the end of the recording
         if ((input_num != 0) && (local_frame >= input_num))
         {
-            // only if in playback
-            if ((LabOptions_Record[OPTREC_HMNMODE].option_val == 2) || (LabOptions_Record[OPTREC_CPUMODE].option_val == 3))
+
+            // but not during a recording
+            if ((LabOptions_Record[OPTREC_HMNMODE].option_val != 1) && (LabOptions_Record[OPTREC_CPUMODE].option_val != 2))
             {
 
                 // init flag
@@ -4276,6 +4592,19 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
     {
         event_vars->Savestate_Load(rec_state);
     }
+
+    // disable loop options if recording is in use
+    if ((LabOptions_Record[OPTREC_HMNMODE].option_val != 1) && (LabOptions_Record[OPTREC_CPUMODE].option_val != 2))
+    {
+        LabOptions_Record[OPTREC_LOOP].disable = 0;
+        LabOptions_Record[OPTREC_AUTOLOAD].disable = 0;
+    }
+    else
+    {
+        LabOptions_Record[OPTREC_LOOP].disable = 1;
+        LabOptions_Record[OPTREC_AUTOLOAD].disable = 1;
+    }
+
     return;
 }
 void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
@@ -4296,6 +4625,19 @@ void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
     {
         event_vars->Savestate_Load(rec_state);
     }
+
+    // disable loop options if recording is in use
+    if ((LabOptions_Record[OPTREC_HMNMODE].option_val != 1) && (LabOptions_Record[OPTREC_CPUMODE].option_val != 2))
+    {
+        LabOptions_Record[OPTREC_LOOP].disable = 0;
+        LabOptions_Record[OPTREC_AUTOLOAD].disable = 0;
+    }
+    else
+    {
+        LabOptions_Record[OPTREC_LOOP].disable = 1;
+        LabOptions_Record[OPTREC_AUTOLOAD].disable = 1;
+    }
+
     return;
 }
 int Record_GetRandomSlot(RecInputData **input_data)
@@ -4616,6 +4958,9 @@ void Event_Init(GOBJ *gobj)
 
     event_vars = *event_vars_ptr;
 
+    // get this events assets
+    stc_lab_data = File_GetSymbol(event_vars->event_archive, "labData");
+
     // Init Info Display
     InfoDisplay_Init(); // static pointer for update function
 
@@ -4624,6 +4969,9 @@ void Event_Init(GOBJ *gobj)
 
     // Init Recording
     Record_Init();
+
+    // Init Input Display
+    Inputs_Init();
 
     // store hsd_update functions
     HSD_Update *hsd_update = HSD_UPDATE;
@@ -4639,9 +4987,6 @@ void Event_Init(GOBJ *gobj)
 
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
-
-    // get this events assets
-    stc_lab_data = File_GetSymbol(event_vars->event_archive, "labData");
 
     return;
 }
@@ -4727,6 +5072,7 @@ void Event_Think(GOBJ *event)
             {
 
                 // do this for every subfighter (thanks for complicated code ice climbers)
+                int is_moved = 0;
                 for (int i = 0; i < 2; i++)
                 {
                     GOBJ *this_fighter = Fighter_GetSubcharGObj(cpu_data->ply, i);
@@ -4736,61 +5082,71 @@ void Event_Think(GOBJ *event)
 
                         FighterData *this_fighter_data = this_fighter->userdata;
 
-                        // place CPU here
-                        this_fighter_data->phys.pos = coll_pos;
-                        this_fighter_data->collData.ground_index = line_index;
-
-                        // facing player
-                        this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
-
-                        // update camera box
-                        Fighter_UpdateCameraBox(this_fighter);
-                        this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
-                        this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
-
-                        // set grounded
-                        this_fighter_data->phys.air_state = 0;
-                        //Fighter_SetGrounded(this_fighter);
-
-                        // kill velocity
-                        Fighter_KillAllVelocity(this_fighter);
-
-                        // enter wait
-                        Fighter_EnterWait(this_fighter);
-
-                        // update ECB
-                        this_fighter_data->collData.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
-                        Coll_ECBCurrToPrev(&this_fighter_data->collData);
-                        this_fighter_data->cb.Coll(this_fighter);
-
-                        // init CPU logic (for nana's popo position history...)
-                        int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
-                        int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
-                        Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
-
-                        // place subfighter in the Z axis
-                        if (this_fighter_data->flags.ms == 1)
+                        if ((this_fighter_data->flags.sleep == 0) && (this_fighter_data->flags.dead == 0))
                         {
-                            ftCommonData *ft_common = *stc_ftcommon;
-                            this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+
+                            is_moved = 1;
+
+                            // place CPU here
+                            this_fighter_data->phys.pos = coll_pos;
+                            this_fighter_data->collData.ground_index = line_index;
+
+                            // facing player
+                            this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
+
+                            // update camera box
+                            Fighter_UpdateCameraBox(this_fighter);
+                            this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
+                            this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
+
+                            // set grounded
+                            this_fighter_data->phys.air_state = 0;
+                            //Fighter_SetGrounded(this_fighter);
+
+                            // kill velocity
+                            Fighter_KillAllVelocity(this_fighter);
+
+                            // enter wait
+                            Fighter_EnterWait(this_fighter);
+
+                            // update ECB
+                            this_fighter_data->collData.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
+                            Coll_ECBCurrToPrev(&this_fighter_data->collData);
+                            this_fighter_data->cb.Coll(this_fighter);
+
+                            // init CPU logic (for nana's popo position history...)
+                            int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
+                            int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
+                            Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
+
+                            // place subfighter in the Z axis
+                            if (this_fighter_data->flags.ms == 1)
+                            {
+                                ftCommonData *ft_common = *stc_ftcommon;
+                                this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+                            }
                         }
                     }
                 }
 
-                // reset CPU think variables
-                eventData->cpu_state = CPUSTATE_START;
-                eventData->cpu_hitshield = 0;
-                eventData->cpu_hitnum = 0;
-                eventData->cpu_sincehit = 0;
-                eventData->cpu_hitshield = 0;
-                eventData->cpu_lasthit = -1;
-                eventData->cpu_lastshieldstun = -1;
-                eventData->cpu_hitkind = -1;
-                eventData->cpu_hitshieldnum = 0;
-                eventData->cpu_isactionable = 0;
+                if (is_moved == 1)
+                {
 
-                // savestate
-                event_vars->Savestate_Save(event_vars->savestate);
+                    // reset CPU think variables
+                    eventData->cpu_state = CPUSTATE_START;
+                    eventData->cpu_hitshield = 0;
+                    eventData->cpu_hitnum = 0;
+                    eventData->cpu_sincehit = 0;
+                    eventData->cpu_hitshield = 0;
+                    eventData->cpu_lasthit = -1;
+                    eventData->cpu_lastshieldstun = -1;
+                    eventData->cpu_hitkind = -1;
+                    eventData->cpu_hitshieldnum = 0;
+                    eventData->cpu_isactionable = 0;
+
+                    // savestate
+                    event_vars->Savestate_Save(event_vars->savestate);
+                }
             }
         }
 

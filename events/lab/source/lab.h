@@ -34,13 +34,89 @@
 #define REC_LEFTTEXTJOINT 2
 #define REC_RIGHTTEXTJOINT 3
 
-typedef struct LabData
+// input display
+typedef struct ButtonLookup
+{
+    u8 jobj;
+    u8 dobj;
+} ButtonLookup;
+typedef enum buttons_enum
+{
+    BTN_A,
+    BTN_B,
+    BTN_X,
+    BTN_Y,
+    BTN_START,
+    BTN_DPADUP,
+    BTN_DPADRIGHT,
+    BTN_DPADLEFT,
+    BTN_DPADDOWN,
+    BTN_L,
+    BTN_R,
+    BTN_Z,
+    BTN_NUM,
+} buttons_enum;
+static ButtonLookup button_lookup[] = {
+    {1, 0},  // A
+    {2, 0},  // B
+    {3, 0},  // X
+    {4, 0},  // Y
+    {5, 0},  // Start
+    {6, 1},  // Dpad Up
+    {6, 2},  // Dpad Right
+    {6, 3},  // Dpad Left
+    {6, 4},  // Dpad Down
+    {11, 0}, // L
+    {12, 0}, // R
+    {13, 0}, // Z
+};
+static GXColor button_colors[] = {
+    {50, 180, 50, 255},   // A
+    {255, 50, 50, 255},   // B
+    {127, 127, 127, 255}, // X
+    {127, 127, 127, 255}, // Y
+    {192, 192, 192, 255}, // Start
+    {192, 192, 192, 255}, // Dpad Up
+    {192, 192, 192, 255}, // Dpad Right
+    {192, 192, 192, 255}, // Dpad Left
+    {192, 192, 192, 255}, // Dpad Down
+    {127, 127, 127, 255}, // L
+    {127, 127, 127, 255}, // R
+    {0, 0, 255, 255},     // Z
+};
+static int button_bits[] = {
+    HSD_BUTTON_A,          // A
+    HSD_BUTTON_B,          // B
+    HSD_BUTTON_X,          // X
+    HSD_BUTTON_Y,          // Y
+    HSD_BUTTON_START,      // Start
+    HSD_BUTTON_DPAD_UP,    // Dpad Up
+    HSD_BUTTON_DPAD_RIGHT, // Dpad Right
+    HSD_BUTTON_DPAD_LEFT,  // Dpad Left
+    HSD_BUTTON_DPAD_DOWN,  // Dpad Down
+    HSD_TRIGGER_L,         // L
+    HSD_TRIGGER_R,         // R
+    HSD_TRIGGER_Z,         // Z
+};
+// GX
+#define INPUT_GXLINK 12
+#define INPUT_GXPRI 80
+// params
+#define INPUT_SHELL_JOBJ 14
+#define INPUT_SHELL_DOBJ 0
+#define INPUT_COLOR_PRESSED \
+    {                       \
+        255, 255, 255, 255  \
+    }
+
+typedef struct Arch_LabData
 {
     JOBJDesc *stick;
     JOBJDesc *cstick;
     void *save_icon;
     void *save_banner;
-} LabData;
+    JOBJDesc *controller;
+} Arch_LabData;
 typedef struct LCancelData
 {
     EventInfo *eventInfo;
@@ -143,6 +219,12 @@ typedef struct RecordingSave
     RecInputData hmn_inputs[REC_SLOTS];
     RecInputData cpu_inputs[REC_SLOTS];
 } RecordingSave;
+typedef struct InputData
+{
+    JOBJ *controller_joint[4];
+    Vec2 ltrig_origin;
+    Vec2 rtrig_origin;
+} InputData;
 
 void Event_Init(GOBJ *gobj);
 void Event_Update();
