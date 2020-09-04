@@ -618,17 +618,18 @@ typedef struct evFunction
 } evFunction;
 typedef struct EventVars
 {
-    EventInfo *event_info;                       // event information
-    evMenu *menu_assets;                         // menu assets
-    GOBJ *event_gobj;                            // event gobj
-    GOBJ *menu_gobj;                             // event menu gobj
-    int game_timer;                              // amount of game frames passed
-    u8 hide_menu;                                // enable this to hide the base menu. used for custom menus.
-    int (*Savestate_Save)(Savestate *savestate); // function pointer to save state
-    int (*Savestate_Load)(Savestate *savestate); // function pointer to load state
-    Savestate *savestate;                        // points to the events main savestate
-    evFunction evFunction;                       // event specific functions
-    ArchiveInfo *event_archive;                  // event archive header
+    EventInfo *event_info;                                                                  // event information
+    evMenu *menu_assets;                                                                    // menu assets
+    GOBJ *event_gobj;                                                                       // event gobj
+    GOBJ *menu_gobj;                                                                        // event menu gobj
+    int game_timer;                                                                         // amount of game frames passed
+    u8 hide_menu;                                                                           // enable this to hide the base menu. used for custom menus.
+    int (*Savestate_Save)(Savestate *savestate);                                            // function pointer to save state
+    int (*Savestate_Load)(Savestate *savestate);                                            // function pointer to load state
+    void (*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to load state
+    Savestate *savestate;                                                                   // points to the events main savestate
+    evFunction evFunction;                                                                  // event specific functions
+    ArchiveInfo *event_archive;                                                             // event archive header
 } EventVars;
 
 // Function prototypes
@@ -658,7 +659,7 @@ static MenuData *static_menuData;
 static EventVars stc_event_vars;
 static int *eventDataBackup;
 
-static EventVars **event_vars_ptr = R13 + (EVENT_VAR); //
+static EventVars **event_vars_ptr = R13 + (-0x4A0C); //
 static EventVars *event_vars;
 
 // EventOption option_kind definitions
@@ -783,3 +784,74 @@ static EventVars *event_vars;
     {                        \
         255, 211, 0, 255     \
     }
+
+// Message
+void Message_Init();
+void Message_Display(int msg_kind, int queue_num, int msg_color, char *format, ...);
+void Message_Manager(GOBJ *mngr_gobj);
+void Message_Destroy(GOBJ **msg_queue, int msg_num);
+void Message_Add(GOBJ *msg_gobj, int queue_num);
+
+#define MSGQUEUE_NUM 7
+#define MSGQUEUE_SIZE 5
+#define MSGQUEUE_GENERAL 6
+enum MsgState
+{
+    MSGSTATE_CREATE,
+    MSGSTATE_WAIT,
+    MSGSTATE_REMOVE,
+};
+enum MsgArea
+{
+    MSGKIND_P1,
+    MSGKIND_P2,
+    MSGKIND_P3,
+    MSGKIND_P4,
+    MSGKIND_P5,
+    MSGKIND_P6,
+    MSGKIND_GENERAL,
+};
+typedef struct MsgData
+{
+    int state;
+    int timer;
+    int lifetime;
+    Text *text;
+    int kind;
+} MsgData;
+typedef struct MsgMngrData
+{
+    int state;
+    int canvas;
+    GOBJ *msg_queue[MSGQUEUE_NUM][MSGQUEUE_SIZE]; // array 7 is for miscellaneous messages, not related to a player
+} MsgMngrData;
+static GOBJ *stc_msgmgr;
+static int stc_msg_queue_offsets[] = {5, 5, 5, 5, 5, 5, -5}; // Y offsets for each message in the queue
+static Vec3 stc_msg_queue_general_pos = {-21, 18.5, 0};
+enum MsgColors
+{
+    MSGCOLOR_WHITE,
+    MSGCOLOR_GREEN,
+    MSGCOLOR_RED,
+    MSGCOLOR_YELLOW
+};
+static GXColor stc_msg_colors[] = {
+    {255, 255, 255, 255},
+    {141, 255, 110, 255},
+    {255, 162, 186, 255},
+    {255, 240, 0, 255},
+};
+
+#define MSG_TIMER (2 * 60)
+#define MSG_LINEMAX 3  // lines per message
+#define MSG_CHARMAX 32 // characters per line
+#define MSG_HUDYOFFSET 8
+#define MSGJOINT_SCALE 3
+#define MSGJOINT_X 0
+#define MSGJOINT_Y 0
+#define MSGJOINT_Z 0
+#define MSGTEXT_BASESCALE 1.5
+#define MSGTEXT_BASEWIDTH (300 / MSGTEXT_BASESCALE)
+#define MSGTEXT_BASEX 0
+#define MSGTEXT_BASEY -1
+#define MSGTEXT_YOFFSET 30

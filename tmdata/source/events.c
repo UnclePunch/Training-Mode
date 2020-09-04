@@ -1,4 +1,5 @@
 #include "events.h"
+#include <stdarg.h>
 
 void Event_Init(GOBJ *gobj)
 {
@@ -1095,23 +1096,10 @@ static EventVars stc_event_vars = {
     .hide_menu = 0,
     .Savestate_Save = Savestate_Save,
     .Savestate_Load = Savestate_Load,
+    .Message_Display = Message_Display,
     .savestate = 0,
 };
 static int *eventDataBackup;
-
-typedef struct TestData
-{
-    int timer;
-    Text *text;
-} TestData;
-
-#define TEST_TIMER (3 * 60)
-#define TEST_SCALE 75
-#define TEST_X 320
-#define TEST_Y -240
-#define TEXT_BASESCALE 0.04
-#define TEXT_BASEX 0
-#define TEXT_BASEY 0
 
 ///////////////////////
 /// Event Functions ///
@@ -1368,102 +1356,6 @@ void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt i
     return;
 }
 
-void MatchThink(GOBJ *gobj)
-{
-    int *userdata = gobj->userdata;
-    int heldInputs = (PAD_TRIGGER_R | PAD_TRIGGER_L);
-    int pressedInputs = PAD_BUTTON_B;
-
-    // loop through all players
-    for (int i = 0; i < 6; i++)
-    {
-        // if they exist
-        if (Fighter_GetSlotType(i) != 3)
-        {
-            // if theyre pressing the buttons
-            GOBJ *fighter = Fighter_GetGObj(i);
-            FighterData *fighter_data = fighter->userdata;
-            if (((fighter_data->input.held & heldInputs) == heldInputs) && (fighter_data->input.pressed & pressedInputs))
-            {
-                // spawn mr saturn
-                SpawnItem spawnItem;
-                spawnItem.parent_gobj = 0;
-                spawnItem.parent_gobj2 = 0;
-                spawnItem.it_kind = ITEM_MRSATURN;
-                spawnItem.hold_kind = ITHOLD_HAND;
-                spawnItem.unk2 = 0;
-                spawnItem.pos.X = fighter_data->phys.pos.X;
-                spawnItem.pos.Y = fighter_data->phys.pos.Y;
-                spawnItem.pos.Z = 0;
-                spawnItem.pos2.X = fighter_data->phys.pos.X;
-                spawnItem.pos2.Y = fighter_data->phys.pos.Y;
-                spawnItem.pos2.Z = 0;
-                spawnItem.vel.X = 0;
-                spawnItem.vel.Y = 0;
-                spawnItem.vel.Z = 0;
-                spawnItem.facing_direction = fighter_data->facing_direction;
-                spawnItem.damage = 0;
-                spawnItem.unk5 = 0;
-                spawnItem.unk6 = 0;
-                spawnItem.unk7 = 0x80;
-                GOBJ *item = Item_CreateItem(&spawnItem);
-            }
-        }
-    }
-
-    return;
-}
-
-void DebugLogThink(GOBJ *gobj)
-{
-    int *userdata = gobj->userdata;
-    DevText *text = userdata[0];
-    MatchData *matchData = 0x804978a0; //0x80480530;
-
-    // clear text
-    DevelopText_EraseAllText(text);
-    DevelopMode_ResetCursorXY(text, 0, 0);
-
-    // update text
-    DevelopText_AddString(text, "matchType: %d\n", matchData->matchType);
-    DevelopText_AddString(text, "hudPos: %d\n", matchData->hudPos);
-    DevelopText_AddString(text, "timer: %d\n", matchData->timer);
-    DevelopText_AddString(text, "timer_unk2: %d\n", matchData->timer_unk2);
-    DevelopText_AddString(text, "unk4: %d\n", matchData->unk4);
-    DevelopText_AddString(text, "hideReady: %d\n", matchData->hideReady);
-    DevelopText_AddString(text, "hideGo: %d\n", matchData->hideGo);
-    DevelopText_AddString(text, "playMusic: %d\n", matchData->playMusic);
-    DevelopText_AddString(text, "unk3: %d\n", matchData->unk3);
-    DevelopText_AddString(text, "timer_unk: %d\n", matchData->timer_unk);
-    DevelopText_AddString(text, "unk2: %d\n", matchData->unk2);
-    DevelopText_AddString(text, "unk9: %d\n", matchData->unk9);
-    DevelopText_AddString(text, "disableOffscreenDamage: %d\n", matchData->disableOffscreenDamage);
-    DevelopText_AddString(text, "unk8: %d\n", matchData->unk8);
-    DevelopText_AddString(text, "isSingleButtonMode: %d\n", matchData->isSingleButtonMode);
-    DevelopText_AddString(text, "isDisablePause: %d\n", matchData->isDisablePause);
-    DevelopText_AddString(text, "unk7: %d\n", matchData->unk7);
-    DevelopText_AddString(text, "isCreateHUD: %d\n", matchData->isCreateHUD);
-    DevelopText_AddString(text, "unk5: %d\n", matchData->unk5);
-    DevelopText_AddString(text, "isShowScore: %d\n", matchData->isShowScore);
-    DevelopText_AddString(text, "isShowAnalogStick: %d\n", matchData->isShowAnalogStick);
-    DevelopText_AddString(text, "isCheckForZRetry: %d\n", matchData->isCheckForZRetry);
-    DevelopText_AddString(text, "isShowZRetry: %d\n", matchData->isShowZRetry);
-    DevelopText_AddString(text, "isCheckForLRAStart: %d\n", matchData->isCheckForLRAStart);
-    DevelopText_AddString(text, "isShowLRAStart: %d\n", matchData->isShowLRAStart);
-    DevelopText_AddString(text, "isHidePauseHUD: %d\n", matchData->isHidePauseHUD);
-    DevelopText_AddString(text, "timerRunOnPause: %d\n", matchData->timerRunOnPause);
-    DevelopText_AddString(text, "unk11: %d\n", matchData->unk11);
-    DevelopText_AddString(text, "isCheckStockSteal: %d\n", matchData->isCheckStockSteal);
-    DevelopText_AddString(text, "isRunStockLogic: %d\n", matchData->isRunStockLogic);
-    DevelopText_AddString(text, "unk10: %d\n", matchData->unk10);
-    DevelopText_AddString(text, "isSkipEndCheck: %d\n", matchData->isSkipEndCheck);
-    DevelopText_AddString(text, "isSkipUnkStockCheck: %d\n", matchData->isSkipUnkStockCheck);
-    DevelopText_AddString(text, "isDisableHit: %d\n", matchData->isDisableHit);
-    DevelopText_AddString(text, "unk12: %d\n", matchData->unk12);
-
-    return;
-}
-
 void OnSceneChange()
 {
     // Hook exists at 801a4c94
@@ -1510,11 +1402,9 @@ void OnBoot()
 
 void OnStartMelee()
 {
-    // Create a gobj
-    GOBJ *gobj = GObj_Create(0, 0, 0);
-    int *userdata = HSD_MemAlloc(64);
-    GObj_AddUserData(gobj, 4, HSD_Free, userdata);
-    GObj_AddProc(gobj, MatchThink, 4);
+
+    Message_Init();
+
     return;
 }
 
@@ -2232,6 +2122,283 @@ JOBJ *IDToBone(FighterData *fighter_data, int id)
 void Event_IncTimer(GOBJ *gobj)
 {
     stc_event_vars.game_timer++;
+    return;
+}
+
+// Message Functions
+void Message_Init()
+{
+    // Create manager GOBJ
+    GOBJ *mgr_gobj = GObj_Create(0, 7, 0);
+    MsgMngrData *mgr_data = calloc(sizeof(MsgMngrData));
+    GObj_AddUserData(mgr_gobj, 4, HSD_Free, mgr_data);
+    GObj_AddProc(mgr_gobj, Message_Manager, 18);
+
+    // create text canvas
+    int canvas = Text_CreateCanvas(2, mgr_gobj, 14, 15, 0, 11, 81, 19);
+    mgr_data->canvas = canvas;
+
+    // store gobj pointer
+    stc_msgmgr = mgr_gobj;
+
+    return;
+}
+void Message_Display(int msg_kind, int queue_num, int msg_color, char *format, ...)
+{
+
+    va_list args;
+
+    MsgMngrData *mgr_data = stc_msgmgr->userdata;
+
+    // Create GOBJ
+    GOBJ *msg_gobj = GObj_Create(0, 7, 0);
+    MsgData *msg_data = calloc(sizeof(MsgData));
+    GObj_AddUserData(msg_gobj, 4, HSD_Free, msg_data);
+    GObj_AddGXLink(msg_gobj, GXLink_Common, 11, 80);
+    JOBJ *msg_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->message);
+    GObj_AddObject(msg_gobj, 3, msg_jobj);
+    msg_data->lifetime = MSG_TIMER;
+    msg_data->kind = msg_kind;
+    msg_jobj->scale.X = MSGJOINT_SCALE;
+    msg_jobj->scale.Y = MSGJOINT_SCALE;
+    msg_jobj->scale.Z = MSGJOINT_SCALE;
+    msg_jobj->trans.X = MSGJOINT_X;
+    msg_jobj->trans.Y = MSGJOINT_Y;
+    msg_jobj->trans.Z = MSGJOINT_Z;
+
+    // Create text object
+    Text *msg_text = Text_CreateText(2, mgr_data->canvas);
+    msg_data->text = msg_text;
+    msg_text->kerning = 1;
+    msg_text->align = 1;
+    msg_text->use_aspect = 1;
+    msg_text->color = stc_msg_colors[msg_color];
+
+    // adjust scale
+    Vec3 scale = msg_jobj->scale;
+    // background scale
+    msg_jobj->scale = scale;
+    // text scale
+    msg_text->scale.X = (scale.X * 0.01) * MSGTEXT_BASESCALE;
+    msg_text->scale.Y = (scale.Y * 0.01) * MSGTEXT_BASESCALE;
+    msg_text->aspect.X = MSGTEXT_BASEWIDTH;
+
+    JOBJ_SetMtxDirtySub(msg_jobj);
+
+    // build string
+    char buffer[(MSG_LINEMAX * MSG_CHARMAX) + 1];
+    va_start(args, format);
+    vsprintf(buffer, format, args);
+    va_end(args);
+    char *msg = &buffer;
+
+    // count newlines
+    int line_num = 1;
+    int line_length_arr[MSG_LINEMAX];
+    char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
+    msg_cursor_prev = msg;
+    msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
+    while (msg_cursor_curr != 0)                     // if occurrence found, increment values
+    {
+        // check if exceeds max lines
+        if (line_num >= MSG_LINEMAX)
+            assert("MSG_LINEMAX exceeded!");
+
+        // Save information about this line
+        line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
+        line_num++;                                                        // increment number of newlines found
+        msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
+        msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
+    }
+
+    // get last lines length
+    msg_cursor_curr = strchr(msg_cursor_prev, 0);
+    line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
+
+    // copy each line to an individual char array
+    char *msg_cursor = &msg;
+    for (int i = 0; i < line_num; i++)
+    {
+
+        // check if over char max
+        u8 line_length = line_length_arr[i];
+        if (line_length > MSG_CHARMAX)
+            assert("MSG_CHARMAX exceeded!");
+
+        // copy char array
+        char msg_line[MSG_CHARMAX + 1];
+        memcpy(msg_line, msg, line_length);
+
+        // add null terminator
+        msg_line[line_length] = '\0';
+
+        // increment msg
+        msg += (line_length + 1); // +1 to skip past newline
+
+        // print line
+        int y_base = (line_num - 1) * ((-1 * MSGTEXT_YOFFSET) / 2);
+        int y_delta = (i * MSGTEXT_YOFFSET);
+        Text_AddSubtext(msg_text, 0, y_base + y_delta, msg_line);
+    }
+
+    // Add to queue
+    Message_Add(msg_gobj, queue_num);
+
+    return;
+}
+void Message_Manager(GOBJ *mngr_gobj)
+{
+    MsgMngrData *mgr_data = mngr_gobj->userdata;
+
+    // Iterate through each queue
+    for (int i = 0; i < MSGQUEUE_NUM; i++)
+    {
+        GOBJ **msg_queue = &mgr_data->msg_queue[i];
+
+        // update each message's lifetime
+        for (int j = (MSGQUEUE_SIZE - 2); j >= 0; j--)
+        {
+            GOBJ *this_msg_gobj = msg_queue[j];
+
+            // if message exists
+            if (this_msg_gobj != 0)
+            {
+                MsgData *this_msg_data = this_msg_gobj->userdata;
+
+                // decrement
+                this_msg_data->lifetime--;
+
+                // if expired, delete message
+                if (this_msg_data->lifetime == 0)
+                {
+                    Message_Destroy(msg_queue, j);
+                }
+            }
+        }
+
+        // update each message's position and bar position
+        for (int j = 0; j < MSGQUEUE_SIZE; j++)
+        {
+            GOBJ *this_msg_gobj = msg_queue[j];
+
+            // if message exists
+            if (this_msg_gobj != 0)
+            {
+                MsgData *this_msg_data = this_msg_gobj->userdata;
+                Text *this_msg_text = this_msg_data->text;
+                JOBJ *this_msg_jobj = this_msg_gobj->hsd_object;
+
+                // Get the base position for this queue
+                Vec3 base_pos;
+                float pos_delta = (float)stc_msg_queue_offsets[i];
+                if (i < 6)
+                {
+                    Vec3 *hud_pos = Match_GetPlayerHUDPos(i);
+
+                    base_pos.X = hud_pos->X;
+                    base_pos.Y = hud_pos->Y + MSG_HUDYOFFSET;
+                    base_pos.Z = hud_pos->Z;
+                }
+                else if (i == MSGQUEUE_GENERAL)
+                {
+                    base_pos = stc_msg_queue_general_pos;
+                }
+
+                // Get this messages position
+                Vec3 this_msg_pos;
+                this_msg_pos.X = base_pos.X;
+                this_msg_pos.Y = base_pos.Y + ((float)j * pos_delta);
+
+                int lifetime = this_msg_data->lifetime;
+                Vec3 scale = this_msg_jobj->scale;
+
+                // BG position
+                this_msg_jobj->trans.X = this_msg_pos.X;
+                this_msg_jobj->trans.Y = this_msg_pos.Y;
+                // text position
+                this_msg_text->trans.X = this_msg_pos.X + (MSGTEXT_BASEX * (scale.X / 4.0));
+                this_msg_text->trans.Y = (this_msg_pos.Y * -1) + (MSGTEXT_BASEY * (scale.Y / 4.0));
+
+                // adjust bar
+                JOBJ *bar;
+                JOBJ_GetChild(this_msg_jobj, &bar, 4, -1);
+                bar->trans.X = (float)lifetime / (float)MSG_TIMER;
+
+                JOBJ_SetMtxDirtySub(this_msg_jobj);
+            }
+        }
+    }
+}
+void Message_Destroy(GOBJ **msg_queue, int msg_num)
+{
+
+    GOBJ *msg_gobj = msg_queue[msg_num];
+    MsgData *msg_data = msg_gobj->userdata;
+
+    // Destroy text
+    Text *text = msg_data->text;
+    if (text != 0)
+        Text_FreeText(text);
+
+    // Destroy GOBJ
+    GObj_Destroy(msg_gobj);
+
+    // null pointer
+    msg_queue[msg_num] = 0;
+
+    // shift others
+    for (int i = (msg_num); i < (MSGQUEUE_SIZE - 1); i++)
+    {
+        msg_queue[i] = msg_queue[i + 1];
+    }
+
+    return;
+}
+void Message_Add(GOBJ *msg_gobj, int queue_num)
+{
+
+    MsgData *msg_data = msg_gobj->userdata;
+    MsgMngrData *mgr_data = stc_msgmgr->userdata;
+    GOBJ **msg_queue = &mgr_data->msg_queue[queue_num];
+
+    // ensure this queue exists
+    if (queue_num >= MSGQUEUE_NUM)
+        assert("queue_num over!");
+
+    // remove any existing messages of this kind
+    blr();
+    for (int i = 0; i < MSGQUEUE_SIZE; i++)
+    {
+        GOBJ *this_msg_gobj = msg_queue[i];
+
+        // if it exists
+        if (this_msg_gobj != 0)
+        {
+            MsgData *this_msg_data = this_msg_gobj->userdata;
+
+            // Remove this message if its of the same kind
+            if (this_msg_data->kind == msg_data->kind)
+            {
+                Message_Destroy(msg_queue, i);
+            }
+        }
+    }
+
+    // first remove last message in the queue
+    if (msg_queue[MSGQUEUE_SIZE - 1] != 0)
+    {
+        Message_Destroy(msg_queue, MSGQUEUE_SIZE - 1);
+    }
+
+    // shift other messages
+    for (int i = (MSGQUEUE_SIZE - 2); i >= 0; i--)
+    {
+        msg_queue[i + 1] = msg_queue[i];
+    }
+
+    // add this new message
+    msg_queue[0] = msg_gobj;
+
     return;
 }
 
