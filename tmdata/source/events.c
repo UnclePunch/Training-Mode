@@ -2143,7 +2143,7 @@ void Message_Init()
 
     return;
 }
-void Message_Display(int msg_kind, int queue_num, int msg_color, char *format, ...)
+GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, ...)
 {
 
     va_list args;
@@ -2244,7 +2244,7 @@ void Message_Display(int msg_kind, int queue_num, int msg_color, char *format, .
     // Add to queue
     Message_Add(msg_gobj, queue_num);
 
-    return;
+    return msg_gobj;
 }
 void Message_Manager(GOBJ *mngr_gobj)
 {

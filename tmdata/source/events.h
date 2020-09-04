@@ -618,18 +618,18 @@ typedef struct evFunction
 } evFunction;
 typedef struct EventVars
 {
-    EventInfo *event_info;                                                                  // event information
-    evMenu *menu_assets;                                                                    // menu assets
-    GOBJ *event_gobj;                                                                       // event gobj
-    GOBJ *menu_gobj;                                                                        // event menu gobj
-    int game_timer;                                                                         // amount of game frames passed
-    u8 hide_menu;                                                                           // enable this to hide the base menu. used for custom menus.
-    int (*Savestate_Save)(Savestate *savestate);                                            // function pointer to save state
-    int (*Savestate_Load)(Savestate *savestate);                                            // function pointer to load state
-    void (*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to load state
-    Savestate *savestate;                                                                   // points to the events main savestate
-    evFunction evFunction;                                                                  // event specific functions
-    ArchiveInfo *event_archive;                                                             // event archive header
+    EventInfo *event_info;                                                                   // event information
+    evMenu *menu_assets;                                                                     // menu assets
+    GOBJ *event_gobj;                                                                        // event gobj
+    GOBJ *menu_gobj;                                                                         // event menu gobj
+    int game_timer;                                                                          // amount of game frames passed
+    u8 hide_menu;                                                                            // enable this to hide the base menu. used for custom menus.
+    int (*Savestate_Save)(Savestate *savestate);                                             // function pointer to save state
+    int (*Savestate_Load)(Savestate *savestate);                                             // function pointer to load state
+    GOBJ *(*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to load state
+    Savestate *savestate;                                                                    // points to the events main savestate
+    evFunction evFunction;                                                                   // event specific functions
+    ArchiveInfo *event_archive;                                                              // event archive header
 } EventVars;
 
 // Function prototypes
@@ -787,7 +787,7 @@ static EventVars *event_vars;
 
 // Message
 void Message_Init();
-void Message_Display(int msg_kind, int queue_num, int msg_color, char *format, ...);
+GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, ...);
 void Message_Manager(GOBJ *mngr_gobj);
 void Message_Destroy(GOBJ **msg_queue, int msg_num);
 void Message_Add(GOBJ *msg_gobj, int queue_num);
@@ -850,8 +850,8 @@ static GXColor stc_msg_colors[] = {
 #define MSGJOINT_X 0
 #define MSGJOINT_Y 0
 #define MSGJOINT_Z 0
-#define MSGTEXT_BASESCALE 1.5
-#define MSGTEXT_BASEWIDTH (300 / MSGTEXT_BASESCALE)
+#define MSGTEXT_BASESCALE 1.4
+#define MSGTEXT_BASEWIDTH (330 / MSGTEXT_BASESCALE)
 #define MSGTEXT_BASEX 0
 #define MSGTEXT_BASEY -1
 #define MSGTEXT_YOFFSET 30
