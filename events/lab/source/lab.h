@@ -19,11 +19,10 @@
 
 // recording
 #define GXPRI_RECJOINT 80
-#define GXLINK_RECJOINT 13
+#define REC_GXLINK 18
 #define GXPRI_RECTEXT GXPRI_RECJOINT + 1
-#define GXLINK_RECTEXT 13
 // cobj
-#define RECCAM_COBJGXLINK (1 << GXLINK_RECJOINT) | (1 << GXLINK_RECTEXT)
+#define RECCAM_COBJGXLINK (1 << REC_GXLINK)
 #define RECCAM_GXPRI 8
 // params
 #define REC_LENGTH (1 * 60 * 60)

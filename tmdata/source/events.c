@@ -2128,6 +2128,18 @@ void Event_IncTimer(GOBJ *gobj)
 // Message Functions
 void Message_Init()
 {
+
+    // create cobj
+    GOBJ *cam_gobj = GObj_Create(19, 20, 0);
+    COBJDesc *cam_desc = stc_event_vars.menu_assets->hud_cobjdesc;
+    COBJ *cam_cobj = COBJ_LoadDescSetScissor(cam_desc);
+    blr();
+    cam_cobj->scissor_bottom = 400;
+    // init camera
+    GObj_AddObject(cam_gobj, R13_U8(-0x3E55), cam_cobj); //R13_U8(-0x3E55)
+    GOBJ_InitCamera(cam_gobj, Message_CObjThink, MSG_COBJLGXPRI);
+    cam_gobj->cobj_links = MSG_COBJLGXLINKS;
+
     // Create manager GOBJ
     GOBJ *mgr_gobj = GObj_Create(0, 7, 0);
     MsgMngrData *mgr_data = calloc(sizeof(MsgMngrData));
@@ -2135,7 +2147,7 @@ void Message_Init()
     GObj_AddProc(mgr_gobj, Message_Manager, 18);
 
     // create text canvas
-    int canvas = Text_CreateCanvas(2, mgr_gobj, 14, 15, 0, 11, 81, 19);
+    int canvas = Text_CreateCanvas(2, mgr_gobj, 14, 15, 0, MSG_GXLINK, MSGTEXT_GXPRI, 19);
     mgr_data->canvas = canvas;
 
     // store gobj pointer
@@ -2154,9 +2166,9 @@ GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, 
     GOBJ *msg_gobj = GObj_Create(0, 7, 0);
     MsgData *msg_data = calloc(sizeof(MsgData));
     GObj_AddUserData(msg_gobj, 4, HSD_Free, msg_data);
-    GObj_AddGXLink(msg_gobj, GXLink_Common, 11, 80);
+    GObj_AddGXLink(msg_gobj, GXLink_Common, MSG_GXLINK, MSG_GXPRI);
     JOBJ *msg_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->message);
-    GObj_AddObject(msg_gobj, 3, msg_jobj);
+    GObj_AddObject(msg_gobj, R13_U8(-0x3E55), msg_jobj);
     msg_data->lifetime = MSG_TIMER;
     msg_data->kind = msg_kind;
     msg_jobj->scale.X = MSGJOINT_SCALE;
@@ -2290,7 +2302,7 @@ void Message_Manager(GOBJ *mngr_gobj)
 
                 // Get the base position for this queue
                 Vec3 base_pos;
-                float pos_delta = (float)stc_msg_queue_offsets[i];
+                float pos_delta = stc_msg_queue_offsets[i];
                 if (i < 6)
                 {
                     Vec3 *hud_pos = Match_GetPlayerHUDPos(i);
@@ -2366,7 +2378,6 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
         assert("queue_num over!");
 
     // remove any existing messages of this kind
-    blr();
     for (int i = 0; i < MSGQUEUE_SIZE; i++)
     {
         GOBJ *this_msg_gobj = msg_queue[i];
@@ -2401,6 +2412,13 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
 
     return;
 }
+void Message_CObjThink(GOBJ *gobj)
+{
+
+    CObjThink_Common(gobj);
+
+    return;
+}
 
 ////////////////////////////
 /// Event Menu Functions ///
@@ -2419,7 +2437,7 @@ GOBJ *EventMenu_Init(EventInfo *eventInfo, EventMenu *start_menu)
     GOBJ *cam_gobj = GObj_Create(19, 20, 0);
     GObj_AddObject(cam_gobj, R13_U8(-0x3E55), cam_cobj);
     GOBJ_InitCamera(cam_gobj, CObjThink_Common, MENUCAM_GXPRI);
-    cam_gobj->cobj_id = MENUCAM_COBJGXLINK;
+    cam_gobj->cobj_links = MENUCAM_COBJGXLINK;
 
     // Create menu gobj
     GOBJ *gobj = GObj_Create(0, 0, 0);

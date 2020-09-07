@@ -7,10 +7,6 @@
 #define MENU_POPMAXOPTION 5
 
 // Custom File Structs
-typedef struct TMData
-{
-    JOBJDesc *messageJoint;
-} TMData;
 typedef struct evMenu
 {
     JOBJDesc *menu;
@@ -20,6 +16,7 @@ typedef struct evMenu
     JOBJDesc *arrow;
     JOBJDesc *playback;
     JOBJDesc *message;
+    COBJDesc *hud_cobjdesc;
 } evMenu;
 
 // Structure Definitions
@@ -791,6 +788,7 @@ GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, 
 void Message_Manager(GOBJ *mngr_gobj);
 void Message_Destroy(GOBJ **msg_queue, int msg_num);
 void Message_Add(GOBJ *msg_gobj, int queue_num);
+void Message_CObjThink(GOBJ *gobj);
 
 #define MSGQUEUE_NUM 7
 #define MSGQUEUE_SIZE 5
@@ -826,7 +824,7 @@ typedef struct MsgMngrData
     GOBJ *msg_queue[MSGQUEUE_NUM][MSGQUEUE_SIZE]; // array 7 is for miscellaneous messages, not related to a player
 } MsgMngrData;
 static GOBJ *stc_msgmgr;
-static int stc_msg_queue_offsets[] = {5, 5, 5, 5, 5, 5, -5}; // Y offsets for each message in the queue
+static float stc_msg_queue_offsets[] = {5.15, 5.15, 5.15, 5.15, 5.15, 5.15, -5.15}; // Y offsets for each message in the queue
 static Vec3 stc_msg_queue_general_pos = {-21, 18.5, 0};
 enum MsgColors
 {
@@ -855,3 +853,10 @@ static GXColor stc_msg_colors[] = {
 #define MSGTEXT_BASEX 0
 #define MSGTEXT_BASEY -1
 #define MSGTEXT_YOFFSET 30
+
+// GX stuff
+#define MSG_GXLINK 13
+#define MSG_GXPRI 80
+#define MSGTEXT_GXPRI MSG_GXPRI + 1
+#define MSG_COBJLGXLINKS (1 << MSG_GXLINK)
+#define MSG_COBJLGXPRI 8

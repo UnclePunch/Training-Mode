@@ -4071,7 +4071,7 @@ GOBJ *Record_Init()
     // init camera
     GObj_AddObject(cam_gobj, R13_U8(-0x3E55), rec_cobj);
     GOBJ_InitCamera(cam_gobj, Record_CObjThink, RECCAM_GXPRI);
-    cam_gobj->cobj_id = RECCAM_COBJGXLINK;
+    cam_gobj->cobj_links = RECCAM_COBJGXLINK;
 
     evMenu *menuAssets = event_vars->menu_assets;
     JOBJ *playback = JOBJ_LoadJoint(menuAssets->playback);
@@ -4093,10 +4093,10 @@ GOBJ *Record_Init()
     // Add to gobj
     GObj_AddObject(rec_gobj, 3, playback);
     // Add gxlink
-    GObj_AddGXLink(rec_gobj, Record_GX, GXLINK_RECJOINT, GXPRI_RECJOINT);
+    GObj_AddGXLink(rec_gobj, Record_GX, REC_GXLINK, GXPRI_RECJOINT);
 
     // Create text
-    int canvas_index = Text_CreateCanvas(2, rec_gobj, 14, 15, 0, GXLINK_RECTEXT, GXPRI_RECTEXT, 19);
+    int canvas_index = Text_CreateCanvas(2, rec_gobj, 14, 15, 0, REC_GXLINK, GXPRI_RECTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->align = 1;
     text->kerning = 1;
