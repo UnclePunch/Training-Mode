@@ -2483,7 +2483,7 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
             MsgData *this_msg_data = this_msg_gobj->userdata;
 
             // Remove this message if its of the same kind
-            if ((this_msg_data->kind == msg_data->kind) && (this_msg_data->state != MSGSTATE_DELETE))
+            if ((this_msg_data->kind == msg_data->kind))
             {
 
                 Message_Destroy(msg_queue, i); // remove the message and shift others

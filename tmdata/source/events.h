@@ -848,8 +848,8 @@ static GXColor stc_msg_colors[] = {
     {255, 240, 0, 255},
 };
 
-#define MSGTIMER_SHIFT 4
-#define MSGTIMER_DELETE 4
+#define MSGTIMER_SHIFT 8
+#define MSGTIMER_DELETE 8
 #define MSG_LIFETIME (2 * 60)
 #define MSG_LINEMAX 3  // lines per message
 #define MSG_CHARMAX 32 // characters per line
