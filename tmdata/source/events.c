@@ -2133,7 +2133,6 @@ void Message_Init()
     GOBJ *cam_gobj = GObj_Create(19, 20, 0);
     COBJDesc *cam_desc = stc_event_vars.menu_assets->hud_cobjdesc;
     COBJ *cam_cobj = COBJ_LoadDescSetScissor(cam_desc);
-    blr();
     cam_cobj->scissor_bottom = 400;
     // init camera
     GObj_AddObject(cam_gobj, R13_U8(-0x3E55), cam_cobj); //R13_U8(-0x3E55)
@@ -2169,8 +2168,9 @@ GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, 
     GObj_AddGXLink(msg_gobj, GXLink_Common, MSG_GXLINK, MSG_GXPRI);
     JOBJ *msg_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->message);
     GObj_AddObject(msg_gobj, R13_U8(-0x3E55), msg_jobj);
-    msg_data->lifetime = MSG_TIMER;
+    msg_data->lifetime = MSG_LIFETIME;
     msg_data->kind = msg_kind;
+    msg_data->timer = MSG_SHIFTTIMER;
     msg_jobj->scale.X = MSGJOINT_SCALE;
     msg_jobj->scale.Y = MSGJOINT_SCALE;
     msg_jobj->scale.Z = MSGJOINT_SCALE;
@@ -2316,10 +2316,26 @@ void Message_Manager(GOBJ *mngr_gobj)
                     base_pos = stc_msg_queue_general_pos;
                 }
 
+                // check if the message moved this frame
+                blr();
+                if ((this_msg_data->orig_index != j))
+                {
+                    this_msg_data->orig_index = j; // moved so update this
+                    this_msg_data->timer = MSG_SHIFTTIMER;
+                }
+
                 // Get this messages position
                 Vec3 this_msg_pos;
                 this_msg_pos.X = base_pos.X;
-                this_msg_pos.Y = base_pos.Y + ((float)j * pos_delta);
+                //this_msg_pos.Y = base_pos.Y + ((float)j * pos_delta);
+
+                // get position
+                float t = (((float)MSG_SHIFTTIMER - this_msg_data->timer) / MSG_SHIFTTIMER);
+                if (this_msg_data->timer > 0)
+                    this_msg_data->timer--;
+                float final_pos = base_pos.Y + ((float)j * pos_delta);
+                float initial_pos = base_pos.Y + ((float)this_msg_data->prev_index * pos_delta);
+                this_msg_pos.Y = (BezierBlend(t) * (final_pos - initial_pos)) + initial_pos;
 
                 int lifetime = this_msg_data->lifetime;
                 Vec3 scale = this_msg_jobj->scale;
@@ -2334,7 +2350,7 @@ void Message_Manager(GOBJ *mngr_gobj)
                 // adjust bar
                 JOBJ *bar;
                 JOBJ_GetChild(this_msg_jobj, &bar, 4, -1);
-                bar->trans.X = (float)lifetime / (float)MSG_TIMER;
+                bar->trans.X = (float)lifetime / (float)MSG_LIFETIME;
 
                 JOBJ_SetMtxDirtySub(this_msg_jobj);
             }
@@ -2362,6 +2378,14 @@ void Message_Destroy(GOBJ **msg_queue, int msg_num)
     for (int i = (msg_num); i < (MSGQUEUE_SIZE - 1); i++)
     {
         msg_queue[i] = msg_queue[i + 1];
+
+        // update its prev pos
+        GOBJ *this_msg_gobj = msg_queue[i];
+        if (this_msg_gobj != 0)
+        {
+            MsgData *this_msg_data = this_msg_gobj->userdata;
+            this_msg_data->prev_index = i + 1; // prev position
+        }
     }
 
     return;
@@ -2390,7 +2414,11 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
             // Remove this message if its of the same kind
             if (this_msg_data->kind == msg_data->kind)
             {
-                Message_Destroy(msg_queue, i);
+                Message_Destroy(msg_queue, i); // remove the message and shift others
+
+                // if the message we're replacing is the most recent message, do not animate it
+                if (i == 0)
+                    msg_data->timer = 0;
             }
         }
     }
@@ -2404,11 +2432,24 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
     // shift other messages
     for (int i = (MSGQUEUE_SIZE - 2); i >= 0; i--)
     {
+        // shift message
         msg_queue[i + 1] = msg_queue[i];
+
+        // update its prev pos
+        GOBJ *this_msg_gobj = msg_queue[i + 1];
+        if (this_msg_gobj != 0)
+        {
+            MsgData *this_msg_data = this_msg_gobj->userdata;
+            this_msg_data->prev_index = i; // prev position
+        }
     }
 
     // add this new message
     msg_queue[0] = msg_gobj;
+
+    // set prev pos to -1 (slides in)
+    msg_data->prev_index = -1;
+    msg_data->orig_index = 0;
 
     return;
 }
@@ -2418,6 +2459,11 @@ void Message_CObjThink(GOBJ *gobj)
     CObjThink_Common(gobj);
 
     return;
+}
+
+float BezierBlend(float t)
+{
+    return t * t * (3.0f - 2.0f * t);
 }
 
 ////////////////////////////

@@ -1,10 +1,15 @@
 #include "../../../MexTK/mex.h"
 
-#define TM_DEBUG 0
+#define TM_DEBUG 1
 #define EVENT_DATASIZE 128
 #define TM_DATA -(50 * 4) - 4
 #define MENU_MAXOPTION 9
 #define MENU_POPMAXOPTION 5
+
+#ifndef TM_DEBUG
+#define OSReport (void)sizeof
+#define assert (void)sizeof
+#endif
 
 // Custom File Structs
 typedef struct evMenu
@@ -789,15 +794,16 @@ void Message_Manager(GOBJ *mngr_gobj);
 void Message_Destroy(GOBJ **msg_queue, int msg_num);
 void Message_Add(GOBJ *msg_gobj, int queue_num);
 void Message_CObjThink(GOBJ *gobj);
+float BezierBlend(float t);
 
 #define MSGQUEUE_NUM 7
 #define MSGQUEUE_SIZE 5
 #define MSGQUEUE_GENERAL 6
 enum MsgState
 {
-    MSGSTATE_CREATE,
+    MSGSTATE_SHIFT,
     MSGSTATE_WAIT,
-    MSGSTATE_REMOVE,
+    MSGSTATE_DELETE,
 };
 enum MsgArea
 {
@@ -811,11 +817,13 @@ enum MsgArea
 };
 typedef struct MsgData
 {
-    int state;
-    int timer;
-    int lifetime;
-    Text *text;
-    int kind;
+    Text *text;     // text pointer
+    int kind;       // the type of message this is
+    int state;      // unused atm
+    int prev_index; // used to animate the messages position during shifts
+    int orig_index; // used to tell if the message moved throughout the course of the frame
+    int timer;      // used to track animation frame
+    int lifetime;   // amount of frames this message is alive for
 } MsgData;
 typedef struct MsgMngrData
 {
@@ -840,7 +848,9 @@ static GXColor stc_msg_colors[] = {
     {255, 240, 0, 255},
 };
 
-#define MSG_TIMER (2 * 60)
+#define MSG_SHIFTTIMER 4
+#define MSG_DELETETIMER 4
+#define MSG_LIFETIME (2 * 60)
 #define MSG_LINEMAX 3  // lines per message
 #define MSG_CHARMAX 32 // characters per line
 #define MSG_HUDYOFFSET 8
