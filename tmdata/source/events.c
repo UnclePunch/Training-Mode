@@ -2170,7 +2170,8 @@ GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, 
     GObj_AddObject(msg_gobj, R13_U8(-0x3E55), msg_jobj);
     msg_data->lifetime = MSG_LIFETIME;
     msg_data->kind = msg_kind;
-    msg_data->timer = MSG_SHIFTTIMER;
+    msg_data->state = MSGSTATE_SHIFT;
+    msg_data->timer = MSGTIMER_SHIFT;
     msg_jobj->scale.X = MSGJOINT_SCALE;
     msg_jobj->scale.Y = MSGJOINT_SCALE;
     msg_jobj->scale.Z = MSGJOINT_SCALE;
@@ -2267,8 +2268,8 @@ void Message_Manager(GOBJ *mngr_gobj)
     {
         GOBJ **msg_queue = &mgr_data->msg_queue[i];
 
-        // update each message's lifetime
-        for (int j = (MSGQUEUE_SIZE - 2); j >= 0; j--)
+        // anim update (time based logic)
+        for (int j = (MSGQUEUE_SIZE - 2); j >= 0; j--) // iterate through backwards (because deletions)
         {
             GOBJ *this_msg_gobj = msg_queue[j];
 
@@ -2276,19 +2277,65 @@ void Message_Manager(GOBJ *mngr_gobj)
             if (this_msg_gobj != 0)
             {
                 MsgData *this_msg_data = this_msg_gobj->userdata;
+                Text *this_msg_text = this_msg_data->text;
+                JOBJ *this_msg_jobj = this_msg_gobj->hsd_object;
 
-                // decrement
-                this_msg_data->lifetime--;
-
-                // if expired, delete message
-                if (this_msg_data->lifetime == 0)
+                // check if the message moved this frame
+                if (this_msg_data->orig_index != j)
                 {
-                    Message_Destroy(msg_queue, j);
+                    this_msg_data->orig_index = j;         // moved so update this
+                    this_msg_data->state = MSGSTATE_SHIFT; // enter shift
+                    this_msg_data->timer = MSGTIMER_SHIFT; // shift timer
+                }
+
+                // decrement state timer if above 0
+                if (this_msg_data->timer > 0)
+                    this_msg_data->timer--;
+
+                switch (this_msg_data->state)
+                {
+                case (MSGSTATE_WAIT):
+                case (MSGSTATE_SHIFT):
+                {
+
+                    // decrement lifetime
+                    if (this_msg_data->lifetime > 0)
+                        this_msg_data->lifetime--;
+
+                    // if lifetime is ended, enter delete state
+                    if (this_msg_data->lifetime <= 0)
+                    {
+                        // if using frame advance, instantly remove this message
+                        if (Pause_CheckStatus(0) == 1)
+                        {
+                            Message_Destroy(msg_queue, j);
+                        }
+                        else
+                        {
+                            this_msg_data->state = MSGSTATE_DELETE;
+                            this_msg_data->timer = MSGTIMER_DELETE;
+                        }
+                    }
+
+                    break;
+                }
+
+                case (MSGSTATE_DELETE):
+                {
+
+                    // if timer is ended, remove the message
+                    if ((this_msg_data->timer <= 0))
+                    {
+                        Message_Destroy(msg_queue, j);
+                    }
+
+                    break;
+                }
                 }
             }
         }
 
-        // update each message's position and bar position
+        // position update (update messages' onscreen positions)
         for (int j = 0; j < MSGQUEUE_SIZE; j++)
         {
             GOBJ *this_msg_gobj = msg_queue[j];
@@ -2300,8 +2347,9 @@ void Message_Manager(GOBJ *mngr_gobj)
                 Text *this_msg_text = this_msg_data->text;
                 JOBJ *this_msg_jobj = this_msg_gobj->hsd_object;
 
-                // Get the base position for this queue
+                // Get the onscreen position for this queue
                 Vec3 base_pos;
+                Vec3 this_msg_pos;
                 float pos_delta = stc_msg_queue_offsets[i];
                 if (i < 6)
                 {
@@ -2315,42 +2363,65 @@ void Message_Manager(GOBJ *mngr_gobj)
                 {
                     base_pos = stc_msg_queue_general_pos;
                 }
+                this_msg_pos.X = base_pos.X; // Get this messages position
 
-                // check if the message moved this frame
-                blr();
-                if ((this_msg_data->orig_index != j))
+                switch (this_msg_data->state)
                 {
-                    this_msg_data->orig_index = j; // moved so update this
-                    this_msg_data->timer = MSG_SHIFTTIMER;
+                case (MSGSTATE_WAIT):
+                case (MSGSTATE_SHIFT):
+                {
+
+                    // get time
+                    float t = (((float)MSGTIMER_SHIFT - this_msg_data->timer) / MSGTIMER_SHIFT);
+
+                    // get initial and final position for animation
+                    float final_pos = base_pos.Y + ((float)j * pos_delta);
+                    float initial_pos = base_pos.Y + ((float)this_msg_data->prev_index * pos_delta);
+                    if (Pause_CheckStatus(0) == 1) // if using frame advance, do not animate
+                    {
+                        this_msg_pos.Y = final_pos;
+                    }
+                    else
+                    {
+                        this_msg_pos.Y = (BezierBlend(t) * (final_pos - initial_pos)) + initial_pos;
+                    }
+
+                    int lifetime = this_msg_data->lifetime;
+                    Vec3 scale = this_msg_jobj->scale;
+
+                    // BG position
+                    this_msg_jobj->trans.X = this_msg_pos.X;
+                    this_msg_jobj->trans.Y = this_msg_pos.Y;
+                    // text position
+                    this_msg_text->trans.X = this_msg_pos.X + (MSGTEXT_BASEX * (scale.X / 4.0));
+                    this_msg_text->trans.Y = (this_msg_pos.Y * -1) + (MSGTEXT_BASEY * (scale.Y / 4.0));
+
+                    // adjust bar
+                    JOBJ *bar;
+                    JOBJ_GetChild(this_msg_jobj, &bar, 4, -1);
+                    bar->trans.X = (float)lifetime / (float)MSG_LIFETIME;
+
+                    break;
                 }
+                case (MSGSTATE_DELETE):
+                {
+                    // get time
+                    float t = ((this_msg_data->timer) / (float)MSGTIMER_DELETE);
 
-                // Get this messages position
-                Vec3 this_msg_pos;
-                this_msg_pos.X = base_pos.X;
-                //this_msg_pos.Y = base_pos.Y + ((float)j * pos_delta);
+                    int lifetime = this_msg_data->lifetime;
+                    Vec3 *scale = &this_msg_jobj->scale;
+                    Vec3 *pos = &this_msg_jobj->trans;
 
-                // get position
-                float t = (((float)MSG_SHIFTTIMER - this_msg_data->timer) / MSG_SHIFTTIMER);
-                if (this_msg_data->timer > 0)
-                    this_msg_data->timer--;
-                float final_pos = base_pos.Y + ((float)j * pos_delta);
-                float initial_pos = base_pos.Y + ((float)this_msg_data->prev_index * pos_delta);
-                this_msg_pos.Y = (BezierBlend(t) * (final_pos - initial_pos)) + initial_pos;
+                    // BG scale
+                    scale->Y = BezierBlend(t);
+                    // text scale
+                    this_msg_text->scale.Y = (scale->Y * 0.01) * MSGTEXT_BASESCALE;
+                    // text position
+                    this_msg_text->trans.Y = (pos->Y * -1) + (MSGTEXT_BASEY * (scale->Y / 4.0));
 
-                int lifetime = this_msg_data->lifetime;
-                Vec3 scale = this_msg_jobj->scale;
-
-                // BG position
-                this_msg_jobj->trans.X = this_msg_pos.X;
-                this_msg_jobj->trans.Y = this_msg_pos.Y;
-                // text position
-                this_msg_text->trans.X = this_msg_pos.X + (MSGTEXT_BASEX * (scale.X / 4.0));
-                this_msg_text->trans.Y = (this_msg_pos.Y * -1) + (MSGTEXT_BASEY * (scale.Y / 4.0));
-
-                // adjust bar
-                JOBJ *bar;
-                JOBJ_GetChild(this_msg_jobj, &bar, 4, -1);
-                bar->trans.X = (float)lifetime / (float)MSG_LIFETIME;
+                    break;
+                }
+                }
 
                 JOBJ_SetMtxDirtySub(this_msg_jobj);
             }
@@ -2412,13 +2483,18 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
             MsgData *this_msg_data = this_msg_gobj->userdata;
 
             // Remove this message if its of the same kind
-            if (this_msg_data->kind == msg_data->kind)
+            if ((this_msg_data->kind == msg_data->kind) && (this_msg_data->state != MSGSTATE_DELETE))
             {
+
                 Message_Destroy(msg_queue, i); // remove the message and shift others
 
-                // if the message we're replacing is the most recent message, do not animate it
+                // if the message we're replacing is the most recent message, instantly
+                // remove the old one and do not animate the new one
                 if (i == 0)
+                {
+                    msg_data->state = MSGSTATE_WAIT;
                     msg_data->timer = 0;
+                }
             }
         }
     }

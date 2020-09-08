@@ -801,8 +801,8 @@ float BezierBlend(float t);
 #define MSGQUEUE_GENERAL 6
 enum MsgState
 {
-    MSGSTATE_SHIFT,
     MSGSTATE_WAIT,
+    MSGSTATE_SHIFT,
     MSGSTATE_DELETE,
 };
 enum MsgArea
@@ -848,8 +848,8 @@ static GXColor stc_msg_colors[] = {
     {255, 240, 0, 255},
 };
 
-#define MSG_SHIFTTIMER 4
-#define MSG_DELETETIMER 4
+#define MSGTIMER_SHIFT 4
+#define MSGTIMER_DELETE 4
 #define MSG_LIFETIME (2 * 60)
 #define MSG_LINEMAX 3  // lines per message
 #define MSG_CHARMAX 32 // characters per line
