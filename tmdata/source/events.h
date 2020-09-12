@@ -88,13 +88,14 @@ typedef struct EventOption
 } EventOption;
 struct EventMenu
 {
-    char *name;           // name of this menu
-    u8 option_num;        // number of options this menu contains
-    u8 scroll;            // how wide to make the menu
-    u8 state;             // bool used to know if this menu is focused
-    u8 cursor;            // index of the option currently selected
-    EventOption *options; // pointer to all of this menu's options
-    EventMenu *prev;      // pointer to previous menu, used at runtime
+    char *name;                         // name of this menu
+    u8 option_num;                      // number of options this menu contains
+    u8 scroll;                          // how wide to make the menu
+    u8 state;                           // bool used to know if this menu is focused
+    u8 cursor;                          // index of the option currently selected
+    EventOption *options;               // pointer to all of this menu's options
+    EventMenu *prev;                    // pointer to previous menu, used at runtime
+    int (*menu_think)(GOBJ *menu_gobj); // function that runs every frame of this menu. returns a bool which indicates if basic menu code should be execution
 };
 typedef struct MenuData
 {
@@ -118,7 +119,7 @@ typedef struct MenuData
     JOBJ *scroll_top;
     JOBJ *scroll_bot;
     GOBJ *custom_gobj;                               // onSelect gobj
-    void *(*custom_gobj_think)(GOBJ *custom_gobj);   // per frame function
+    int (*custom_gobj_think)(GOBJ *custom_gobj);     // per frame function. Returns bool indicating if the program should check to unpause
     void *(*custom_gobj_destroy)(GOBJ *custom_gobj); // on destroy function
 } MenuData;
 typedef struct FtStateData
@@ -848,8 +849,8 @@ static GXColor stc_msg_colors[] = {
     {255, 240, 0, 255},
 };
 
-#define MSGTIMER_SHIFT 8
-#define MSGTIMER_DELETE 8
+#define MSGTIMER_SHIFT 6
+#define MSGTIMER_DELETE 6
 #define MSG_LIFETIME (2 * 60)
 #define MSG_LINEMAX 3  // lines per message
 #define MSG_CHARMAX 32 // characters per line

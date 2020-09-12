@@ -1383,17 +1383,17 @@ static EventOption LabOptions_Record[] = {
         .option_values = LabOptions_OffOn,                                          // pointer to an array of strings
         .onOptionChange = 0,
     },
-    /*
     {
-        .option_kind = OPTKIND_FUNC,    // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,                 // number of values for this option
-        .option_val = 0,                // value of this option
-        .menu = 0,                      // pointer to the menu that pressing A opens
-        .option_name = "MC Debug Save", // pointer to a string
-        .desc = "",                     // string describing what this option does
-        .option_values = 0,             // pointer to an array of strings
-        .onOptionSelect = Record_MemcardSave,
+        .option_kind = OPTKIND_FUNC,                                                             // the type of option this is; menu, string list, integer list, etc
+        .value_num = 0,                                                                          // number of values for this option
+        .option_val = 0,                                                                         // value of this option
+        .menu = 0,                                                                               // pointer to the menu that pressing A opens
+        .option_name = "Export",                                                                 // pointer to a string
+        .desc = "Export the recording to a memory card\nfor later use or to share with others.", // string describing what this option does
+        .option_values = 0,                                                                      // pointer to an array of strings
+        .onOptionSelect = Export_Init,
     },
+    /*
     {
         .option_kind = OPTKIND_FUNC,    // the type of option this is; menu, string list, integer list, etc
         .value_num = 0,                 // number of values for this option
@@ -1421,10 +1421,12 @@ static DIDraw didraws[6];
 static GOBJ *infodisp_gobj;
 static RecData rec_data;
 static Savestate *rec_state;
+static _HSD_ImageDesc snap_image = {0};
+static u8 snap_status;
+static u8 export_status;
 static Arch_LabData *stc_lab_data;
-static char *tm_filename = "TM_DEBUG";
+static char *tm_filename = "TMREC_%d%d%d_%02d%02d%02d";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
-static char *stc_save_desc = "%d/%d/%d %d:%2d";
 static DevText *stc_devtext;
 
 // lz77 functions credited to https://github.com/andyherbert/lz1
@@ -3757,11 +3759,8 @@ void CustomTDI_Update(GOBJ *gobj)
     MenuData *menu_data = event_vars->menu_gobj->userdata;
     LCancelData *event_data = event_vars->event_gobj->userdata;
 
-    // get player who paused
-    u8 *pauseData = (u8 *)0x8046b6a0;
-    u8 pauser = pauseData[1];
-    // get their  inputs
-    HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
+    // get pausing players inputs
+    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
     int inputs = pad->down;
 
     // if press A, save stick
@@ -3867,17 +3866,16 @@ void CustomTDI_Destroy(GOBJ *gobj)
         LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_RANDOM;
 
     // free text
-    Text_FreeText(tdi_data->text_curr);
+    Text_Destroy(tdi_data->text_curr);
 
     // destroy
     GObj_Destroy(gobj);
 
-    // null pointers
-    menu_data->custom_gobj = 0;
-    menu_data->custom_gobj_destroy = 0;
-
-    // show original menu
+    // show menu
     event_vars->hide_menu = 0;
+    menu_data->custom_gobj = 0;
+    menu_data->custom_gobj_think = 0;
+    menu_data->custom_gobj_destroy = 0;
 
     // play sfx
     SFX_PlayCommon(0);
@@ -4140,6 +4138,13 @@ GOBJ *Record_Init()
     // init memcard stuff
     Memcard_InitWorkArea();
     Memcard_InitSnapshotList(HSD_MemAlloc(2112), HSD_MemAlloc(256064));
+
+    // Create snapshot cam
+    snap_image.img_ptr = 0;
+    GOBJ *snap_gobj = GObj_Create(18, 18, 0);
+    GOBJ_InitCamera(snap_gobj, Snap_CObjThink, 4);
+    GX_AllocImageData(&snap_image, 640, 480, 4, 2006);
+    export_status = EXSTAT_NONE;
 
     /*
     // init dev text
@@ -4693,6 +4698,9 @@ void Record_OnSuccessfulSave()
     // also save to personal savestate
     event_vars->Savestate_Save(event_vars->savestate);
 
+    // take screenshot
+    snap_status = 1;
+
     return;
 }
 void Memcard_Wait()
@@ -4705,126 +4713,7 @@ void Memcard_Wait()
 
     return;
 }
-void Record_MemcardSave(GOBJ *menu_gobj)
-{
-
-#if TM_DEBUG == 1
-    int save_pre_tick = OSGetTick();
-#endif
-
-    // alloc a buffer to transfer to memcard
-    RecordingSave *rec_save = calloc(sizeof(RecordingSave));
-
-    sizeof(FtState);
-
-    // copy match data to buffer
-    memcpy(&rec_save->match_data, &stc_match->match_data, sizeof(MatchData));
-
-    // copy savestate to buffer
-    memcpy(&rec_save->savestate, rec_state, sizeof(Savestate));
-
-    // copy recordings
-    for (int i = 0; i < REC_SLOTS; i++)
-    {
-        memcpy(&rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
-        memcpy(&rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
-    }
-
-    // compress savestate
-    u8 *save_buffer = calloc(sizeof(RecordingSave));
-    int pre_tick = OSGetTick();
-    u32 compress_size = lz77_compress(rec_save, sizeof(RecordingSave), save_buffer, 8);
-    int post_tick = OSGetTick();
-    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
-
-#if TM_DEBUG == 1
-    OSReport("orig size: %d\ncompressed size: %d\ncompression rate: %.2fx\ncompleted in %dms", sizeof(RecordingSave), compress_size, ((float)sizeof(RecordingSave) / (float)compress_size), time_dif);
-#endif
-
-    // check if file exists and delete it
-    s32 memSize, sectorSize;
-    if (CARDProbeEx(0, &memSize, &sectorSize) == CARD_RESULT_READY)
-    {
-        // mount card
-        stc_memcard_work->is_done = 0;
-        if (CARDMountAsync(0, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
-        {
-            // check card
-            Memcard_Wait();
-            stc_memcard_work->is_done = 0;
-            if (CARDCheckAsync(0, Memcard_RemovedCallback) == CARD_RESULT_READY)
-            {
-                Memcard_Wait();
-                // get free blocks
-                s32 byteNotUsed, filesNotUsed;
-                if (CARDFreeBlocks(0, &byteNotUsed, &filesNotUsed) == CARD_RESULT_READY)
-                {
-                    // search for file with name TM_DEBUG
-                    for (int i = 0; i < CARD_MAX_FILE; i++)
-                    {
-                        CARDStat card_stat;
-
-                        if (CARDGetStatus(0, i, &card_stat) == CARD_RESULT_READY)
-                        {
-                            // check company code
-                            if (strncmp(os_info->company, card_stat.company, sizeof(os_info->company)) == 0)
-                            {
-                                // check game name
-                                if (strncmp(os_info->gameName, card_stat.gameName, sizeof(os_info->gameName)) == 0)
-                                {
-                                    // check file name
-                                    if (strncmp(tm_filename, card_stat.fileName, sizeof(tm_filename)) == 0)
-                                    {
-                                        // delete
-                                        CARDDeleteAsync(0, tm_filename, Memcard_RemovedCallback);
-                                        stc_memcard_work->is_done = 0;
-                                        Memcard_Wait();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        CARDUnmount(0);
-    }
-
-    // get curr date
-    OSCalendarTime td;
-    OSTicksToCalendarTime(OSGetTime(), &td);
-    sprintf(stc_memcard_info->file_desc, stc_save_desc, td.mon + 1, td.mday, td.year, td.hour, td.min);
-    memcpy(stc_memcard_info->file_name, &stc_save_name, sizeof(stc_save_name));
-
-    // setup save
-    MemcardSave memcard_save;
-    memcard_save.data = save_buffer;
-    memcard_save.x4 = 3;
-    memcard_save.size = compress_size;
-    memcard_save.xc = -1;
-    Memcard_CreateSnapshot(0, tm_filename, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_lab_data->save_banner, stc_lab_data->save_icon, 0);
-
-    // wait to load
-    while (Memcard_CheckStatus() == 11)
-    {
-    }
-
-#if TM_DEBUG == 1
-    int save_post_tick = OSGetTick();
-    int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
-    OSReport("processed memcard save in %dms\n", save_time);
-#endif
-
-    /*
-
-    */
-
-    HSD_Free(save_buffer);
-    HSD_Free(rec_save);
-
-    return;
-}
+/*
 void Record_MemcardLoad(GOBJ *menu_gobj)
 {
 
@@ -4910,11 +4799,11 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
         if (memcard_status == 0)
         {
             // decompress
-            RecordingSave *rec_save = calloc(sizeof(RecordingSave) * 1.06);
-            lz77_decompress(memcard_save.data, rec_save);
+            stc_rec_save = calloc(sizeof(RecordingSave) * 1.06);
+            lz77_decompress(memcard_save.data, stc_rec_save);
 
             // copy buffer to savestate
-            memcpy(rec_state, &rec_save->savestate, sizeof(Savestate));
+            memcpy(rec_state, &stc_rec_save->savestate, sizeof(Savestate));
 
             // init savestate
             Record_OnSuccessfulSave();
@@ -4922,11 +4811,11 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
             // copy recordings
             for (int i = 0; i < REC_SLOTS; i++)
             {
-                memcpy(rec_data.hmn_inputs[i], &rec_save->hmn_inputs[i], sizeof(RecInputData));
-                memcpy(rec_data.cpu_inputs[i], &rec_save->cpu_inputs[i], sizeof(RecInputData));
+                memcpy(rec_data.hmn_inputs[i], &stc_rec_save->hmn_inputs[i], sizeof(RecInputData));
+                memcpy(rec_data.cpu_inputs[i], &stc_rec_save->cpu_inputs[i], sizeof(RecInputData));
             }
 
-            HSD_Free(rec_save);
+            HSD_Free(stc_rec_save);
 
             // load state
             event_vars->Savestate_Load(rec_state);
@@ -4944,6 +4833,1093 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
     }
 
     return;
+}
+*/
+int Record_MenuThink(GOBJ *menu_gobj)
+{
+
+    int is_update = 1;
+
+    // check to run export logic
+    if (export_status != EXSTAT_NONE)
+    {
+        is_update = Record_ExportThink();
+    }
+
+    return is_update;
+}
+void Record_StartExport(GOBJ *menu_gobj)
+{
+
+    export_status = EXSTAT_REQSAVE;
+
+    return;
+}
+void Snap_CObjThink(GOBJ *gobj)
+{
+
+    // logic based on state
+    switch (snap_status)
+    {
+    case (1):
+    {
+        // take snap
+        HSD_ImageDescCopyFromEFB(&snap_image, 0, 0, 0);
+        snap_status = 0;
+        OSReport("got snap!\n");
+
+        break;
+    }
+    }
+
+    return;
+}
+
+static RecordingSave *stc_rec_save;
+static u8 *save_buffer;
+static u32 stc_compress_size;
+static MemcardSave memcard_save;
+static int chunk_num;
+static int save_pre_tick;
+static char *slots_names[] = {"A", "B"};
+
+// Export functions
+static char *keyboard_rows[2][4] = {
+    {"1234567890", "qwertyuiop", "asdfghjkl-", "zxcvbnm,./"},
+    {"!@#$%^&*()", "QWERTYUIOP", "ASDFGHJKL: ", "ZXCVBNM<>?"}};
+void Export_Init(GOBJ *menu_gobj)
+{
+
+    MenuData *menu_data = menu_gobj->userdata;
+    EventMenu *curr_menu = menu_data->currMenu;
+    evMenu *menuAssets = event_vars->menu_assets;
+
+    // create gobj
+    GOBJ *export_gobj = GObj_Create(0, 0, 0);
+    ExportData *export_data = calloc(sizeof(ExportData));
+    GObj_AddUserData(export_gobj, 4, HSD_Free, export_data);
+
+    // load menu joint
+    JOBJ *export_joint = JOBJ_LoadJoint(stc_lab_data->export_menu);
+    GObj_AddObject(export_gobj, 3, export_joint);                                  // add to gobj
+    GObj_AddGXLink(export_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL); // add gx link
+    menu_data->custom_gobj_think = Export_Think;                                   // set callback
+
+    // save jobj pointers
+    JOBJ_GetChild(export_joint, &export_data->memcard_jobj[0], EXP_MEMCARDAJOBJ, -1);
+    JOBJ_GetChild(export_joint, &export_data->memcard_jobj[1], EXP_MEMCARDBJOBJ, -1);
+    JOBJ_GetChild(export_joint, &export_data->screenshot_jobj, EXP_SCREENSHOTJOBJ, -1);
+    JOBJ_GetChild(export_joint, &export_data->textbox_jobj, EXP_TEXTBOXJOBJ, -1);
+
+    // hide all
+    JOBJ_SetFlags(export_data->memcard_jobj[0], JOBJ_HIDDEN);
+    JOBJ_SetFlags(export_data->memcard_jobj[1], JOBJ_HIDDEN);
+    JOBJ_SetFlags(export_data->screenshot_jobj, JOBJ_HIDDEN);
+    JOBJ_SetFlags(export_data->textbox_jobj, JOBJ_HIDDEN);
+
+    // set pointer to image data
+    blr();
+    export_data->screenshot_jobj->dobj->mobj->tobj->imagedesc = &snap_image;
+
+    save_pre_tick = OSGetTick();
+
+    // alloc a buffer to transfer to memcard
+    stc_rec_save = calloc(sizeof(RecordingSave));
+
+    // copy match data to buffer
+    memcpy(&stc_rec_save->match_data, &stc_match->match_data, sizeof(MatchData));
+
+    // copy savestate to buffer
+    memcpy(&stc_rec_save->savestate, rec_state, sizeof(Savestate));
+
+    // copy recordings
+    for (int i = 0; i < REC_SLOTS; i++)
+    {
+        memcpy(&stc_rec_save->hmn_inputs[i], rec_data.hmn_inputs[i], sizeof(RecInputData));
+        memcpy(&stc_rec_save->cpu_inputs[i], rec_data.cpu_inputs[i], sizeof(RecInputData));
+    }
+
+    // compress savestate
+    save_buffer = calloc(sizeof(RecordingSave));
+    int pre_tick = OSGetTick();
+    stc_compress_size = lz77_compress(stc_rec_save, sizeof(RecordingSave), save_buffer, 8);
+    int post_tick = OSGetTick();
+    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
+
+    OSReport("compressed %d bytes to %d bytes (%.2fx) in %dms\n", sizeof(RecordingSave), stc_compress_size, ((float)sizeof(RecordingSave) / (float)stc_compress_size), time_dif);
+
+    // alloc filename buffer
+    export_data->filename_buffer = calloc(32 + 2); // +2 for terminator and cursor
+    export_data->filename_buffer[0] = '_';
+
+    // initialize memcard menu
+    Export_SelCardInit(export_gobj);
+
+    event_vars->hide_menu = 1;                       // hide original menu
+    menu_data->custom_gobj = export_gobj;            // set custom gobj
+    menu_data->custom_gobj_think = Export_Think;     // set think function
+    menu_data->custom_gobj_destroy = Export_Destroy; // set destroy function
+
+    return;
+}
+int Export_Think(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+    int can_unpause = 0;
+
+    switch (export_data->menu_index)
+    {
+    case (EXMENU_SELCARD):
+    {
+        can_unpause = Export_SelCardThink(export_gobj);
+        break;
+    }
+    case (EXMENU_NAME):
+    {
+        can_unpause = Export_EnterNameThink(export_gobj);
+        break;
+    }
+    case (EXMENU_CONFIRM):
+    {
+        can_unpause = Export_ConfirmThink(export_gobj);
+        break;
+    }
+    }
+
+    return can_unpause;
+}
+void Export_Destroy(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+    MenuData *menu_data = event_vars->menu_gobj->userdata;
+
+    switch (export_data->menu_index)
+    {
+    case (EXMENU_SELCARD):
+    {
+        Export_SelCardExit(export_gobj);
+        break;
+    }
+    case (EXMENU_NAME):
+    {
+        Export_EnterNameExit(export_gobj);
+        break;
+    }
+    }
+
+    // free buffer allocs
+    HSD_Free(save_buffer);
+    HSD_Free(stc_rec_save);
+    HSD_Free(export_data->filename_buffer);
+
+    // destroy gobj
+    GObj_Destroy(export_gobj);
+
+    // show menu
+    event_vars->hide_menu = 0;
+    menu_data->custom_gobj = 0;
+    menu_data->custom_gobj_think = 0;
+    menu_data->custom_gobj_destroy = 0;
+
+    return;
+}
+void Export_SelCardInit(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+    MenuData *menu_data = event_vars->menu_gobj->userdata;
+
+    // show menu jobjs
+    JOBJ_ClearFlags(export_data->memcard_jobj[0], JOBJ_HIDDEN);
+    JOBJ_ClearFlags(export_data->memcard_jobj[1], JOBJ_HIDDEN);
+
+    // create text
+    Text *text_misc = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_misc = text_misc;
+    // enable align and kerning
+    text_misc->align = 1;
+    text_misc->kerning = 1;
+    // scale canvas
+    text_misc->scale.X = MENU_CANVASSCALE;
+    text_misc->scale.Y = MENU_CANVASSCALE;
+    text_misc->trans.Z = MENU_TEXTZ;
+
+    // create title text
+    Text *text_title = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_title = text_title;
+    // enable align and kerning
+    text_title->align = 0;
+    text_title->kerning = 1;
+    // scale canvas
+    text_title->trans.X = -23;
+    text_title->trans.Y = -18;
+    text_title->scale.X = MENU_CANVASSCALE * 2;
+    text_title->scale.Y = MENU_CANVASSCALE * 2;
+    text_title->trans.Z = MENU_TEXTZ;
+
+    // create desc text
+    Text *text_desc = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_desc = text_desc;
+    // enable align and kerning
+    text_desc->align = 0;
+    text_desc->kerning = 1;
+    // scale canvas
+    text_desc->trans.X = -23;
+    text_desc->trans.Y = 12;
+    text_desc->scale.X = MENU_CANVASSCALE;
+    text_desc->scale.Y = MENU_CANVASSCALE;
+    text_desc->trans.Z = MENU_TEXTZ;
+
+    Text_AddSubtext(text_title, 0, 0, "Select a Memory Card"); // add title
+    Text_AddSubtext(text_desc, 0, 0, "");                      // add description
+
+    // add dummy text
+    Text_AddSubtext(text_misc, -165, 67, "Slot A");
+    Text_AddSubtext(text_misc, 165, 67, "Slot B");
+
+    // init memcard inserted status
+    for (int i = 0; i < 2; i++)
+    {
+        export_data->is_inserted[i] = 0;
+    }
+
+    // init cursor
+    export_data->menu_index = EXMENU_SELCARD;
+    export_data->slot = 0;
+
+    return;
+}
+int Export_SelCardThink(GOBJ *export_gobj)
+{
+
+    ExportData *export_data = export_gobj->userdata;
+
+    int req_blocks = (divide_roundup(stc_compress_size, 8192) + 1);
+
+    // get pausing players inputs
+    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    int inputs = pad->down;
+
+    // update memcard info
+    for (int i = 0; i < 2; i++)
+    {
+        // probe slot
+        u8 is_inserted;
+
+        s32 memSize, sectorSize;
+        if (CARDProbeEx(i, &memSize, &sectorSize) == CARD_RESULT_READY)
+        {
+            // if it was just inserted, get info
+            if (export_data->is_inserted[i] == 0)
+            {
+                // mount card
+                stc_memcard_work->is_done = 0;
+                if (CARDMountAsync(i, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
+                {
+                    // check card
+                    Memcard_Wait();
+                    stc_memcard_work->is_done = 0;
+                    if (CARDCheckAsync(i, Memcard_RemovedCallback) == CARD_RESULT_READY)
+                    {
+                        Memcard_Wait();
+
+                        // if we get this far, a valid memcard is inserted
+                        is_inserted = 1;
+
+                        // get free blocks
+                        s32 byteNotUsed, filesNotUsed;
+                        if (CARDFreeBlocks(i, &byteNotUsed, &filesNotUsed) == CARD_RESULT_READY)
+                        {
+                            export_data->free_blocks[i] = (byteNotUsed / 8192);
+                            export_data->free_files[i] = filesNotUsed;
+                        }
+                    }
+                    else
+                        is_inserted = 0;
+
+                    CARDUnmount(i);
+                }
+                else
+                    is_inserted = 0;
+            }
+            else
+                is_inserted = 1;
+        }
+        else
+            is_inserted = 0;
+
+        export_data->is_inserted[i] = is_inserted;
+    }
+
+    // if left
+    if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
+    {
+        if (export_data->slot > 0)
+        {
+            export_data->slot--;
+            SFX_PlayCommon(2);
+        }
+    }
+
+    // if right
+    if ((inputs & HSD_BUTTON_RIGHT) || (inputs & HSD_BUTTON_DPAD_RIGHT))
+    {
+        if (export_data->slot < 1)
+        {
+            export_data->slot++;
+            SFX_PlayCommon(2);
+        }
+    }
+
+    int cursor = export_data->slot;
+    // if press A,
+    if ((inputs & HSD_BUTTON_A) || (inputs & HSD_BUTTON_START))
+    {
+        // ensure it can be saved
+        if ((export_data->is_inserted[cursor] == 1) && (export_data->free_files[cursor] >= 1) && (export_data->free_blocks[cursor] >= req_blocks))
+        {
+            // can save move to next screen
+            Export_SelCardExit(export_gobj);
+
+            // init next menu
+            Export_EnterNameInit(export_gobj);
+
+            SFX_PlayCommon(1);
+
+            return;
+        }
+    }
+
+    // if press B,
+    if ((inputs & HSD_BUTTON_B))
+    {
+        Export_Destroy(export_gobj);
+
+        // play sfx
+        SFX_PlayCommon(0);
+
+        return;
+    }
+
+    // update selection
+    Text *text = export_data->text_misc;
+    for (int i = 0; i < 2; i++)
+    {
+        static GXColor white = {255, 255, 255, 255};
+        static GXColor yellow = {201, 178, 0, 255};
+        GXColor *color;
+
+        // highlight cursor only
+        if (export_data->slot == i)
+            color = &yellow;
+        else
+            color = &white;
+
+        Text_SetColor(text, i, color);
+    }
+
+    // update description
+    Text *text_desc = export_data->text_desc;
+    if (export_data->is_inserted[cursor] == 0)
+    {
+        Text_SetText(text_desc, 0, "No device is inserted in Slot %s.", slots_names[cursor]);
+    }
+    else if (export_data->free_files[cursor] < 1)
+    {
+        Text_SetText(text_desc, 0, "The memory card in Slot %s does not \nhave enough free files. 1 free file is \nrequired to save.", slots_names[cursor]);
+    }
+    else if (export_data->free_blocks[cursor] < req_blocks)
+    {
+        Text_SetText(text_desc, 0, "The memory card in Slot %s does not \nhave enough free blocks. %d blocks is \nrequired to save.", slots_names[cursor], req_blocks);
+    }
+    else
+    {
+        Text_SetText(text_desc, 0, "Slot %s: %d free blocks. %d blocks will be used.", slots_names[cursor], export_data->free_blocks[cursor], req_blocks);
+    }
+    return 1;
+}
+void Export_SelCardExit(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+
+    // hide menu jobjs
+    JOBJ_SetFlags(export_data->memcard_jobj[0], JOBJ_HIDDEN);
+    JOBJ_SetFlags(export_data->memcard_jobj[1], JOBJ_HIDDEN);
+
+    Text_Destroy(export_data->text_title);
+    Text_Destroy(export_data->text_desc);
+    Text_Destroy(export_data->text_misc);
+}
+void Export_EnterNameInit(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+    MenuData *menu_data = event_vars->menu_gobj->userdata;
+
+    // show menu jobjs
+    JOBJ_ClearFlags(export_data->screenshot_jobj, JOBJ_HIDDEN);
+    JOBJ_ClearFlags(export_data->textbox_jobj, JOBJ_HIDDEN);
+
+    // create keyboard text
+    Text *text_keyboard = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_keyboard = text_keyboard;
+    // enable align and kerning
+    text_keyboard->align = 1;
+    text_keyboard->kerning = 1;
+    // scale canvas
+    text_keyboard->trans.X = 0;
+    text_keyboard->trans.Y = 3.5;
+    text_keyboard->scale.X = MENU_CANVASSCALE;
+    text_keyboard->scale.Y = MENU_CANVASSCALE;
+    text_keyboard->trans.Z = MENU_TEXTZ;
+    // init keyboard
+    for (int i = 0; i < 4; i++)
+    {
+        // iterate through columns
+        for (int j = 0; j < 10; j++)
+        {
+            Text_AddSubtext(text_keyboard, (-(9.0 / 2.0) * 60) + (j * 60), -80 + (i * 60), "");
+        }
+    }
+    export_data->key_cursor[0] = 0;
+    export_data->key_cursor[1] = 0;
+    export_data->caps_lock = 0;
+    Export_EnterNameUpdateKeyboard(export_gobj);
+
+    // create file details
+    Text *text_filedetails = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_filedetails = text_filedetails;
+    // enable align and kerning
+    text_filedetails->align = 0;
+    text_filedetails->kerning = 1;
+    // scale canvas
+    text_filedetails->trans.X = -8;
+    text_filedetails->trans.Y = -11.7;
+    text_filedetails->scale.X = MENU_CANVASSCALE * 0.7;
+    text_filedetails->scale.Y = MENU_CANVASSCALE * 0.7;
+    text_filedetails->trans.Z = MENU_TEXTZ;
+    Text_AddSubtext(text_filedetails, 0, 0, "Stage: Yoshi's Story\nHMN: Marth\nCPU: Fox\n\nSlot %s", slots_names[export_data->slot]); // add title
+
+    // create title text
+    Text *text_title = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_title = text_title;
+    // enable align and kerning
+    text_title->align = 0;
+    text_title->kerning = 1;
+    // scale canvas
+    text_title->trans.X = -23;
+    text_title->trans.Y = -18;
+    text_title->scale.X = MENU_CANVASSCALE * 2;
+    text_title->scale.Y = MENU_CANVASSCALE * 2;
+    text_title->trans.Z = MENU_TEXTZ;
+    Text_AddSubtext(text_title, 0, 0, "Enter File Name");
+
+    // create desc text
+    Text *text_desc = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_desc = text_desc;
+    // enable align and kerning
+    text_desc->align = 0;
+    text_desc->kerning = 1;
+    // scale canvas
+    text_desc->trans.X = -23;
+    text_desc->trans.Y = 12;
+    text_desc->scale.X = MENU_CANVASSCALE;
+    text_desc->scale.Y = MENU_CANVASSCALE;
+    text_desc->trans.Z = MENU_TEXTZ;
+    Text_AddSubtext(text_desc, 0, 0, "A: Select  B: Backspace  Y: Caps  Start: Confirm"); // add description
+    Text_AddSubtext(text_desc, 0, 40, "     X: Space  L: Cursor left  R: Cursor right");  // add description
+
+    // create filename
+    Text *text_filename = Text_CreateText(2, menu_data->canvas_menu);
+    export_data->text_filename = text_filename;
+    // enable align and kerning
+    text_filename->align = 0;
+    text_filename->kerning = 1;
+    text_filename->use_aspect = 1;
+    GXColor filename_color = {225, 225, 225, 255};
+    text_filename->color = filename_color;
+    // scale canvas
+    text_filename->trans.X = -7;
+    text_filename->trans.Y = -4.8;
+    text_filename->aspect.X = 560;
+    text_filename->aspect.Y = 100;
+    text_filename->scale.X = MENU_CANVASSCALE;
+    text_filename->scale.Y = MENU_CANVASSCALE;
+    text_filename->trans.Z = MENU_TEXTZ;
+    Text_AddSubtext(text_filename, 0, 0, export_data->filename_buffer); // add title
+
+    // init menu variables
+    export_data->menu_index = EXMENU_NAME;
+    export_data->filename_cursor = 0;
+
+    return;
+}
+int Export_EnterNameThink(GOBJ *export_gobj)
+{
+
+    ExportData *export_data = export_gobj->userdata;
+
+    // get pausing players inputs
+    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    int inputs = pad->rapidFire;
+    int input_down = pad->down;
+    u8 *cursor = export_data->key_cursor;
+    int update_keyboard = 0;
+    int update_filename = 0;
+    char *filename_buffer = export_data->filename_buffer;
+
+    // if left
+    if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
+    {
+        if (cursor[0] > 0)
+        {
+            cursor[0]--;
+        }
+        else
+        {
+            cursor[0] = (10 - 1);
+        }
+        update_keyboard = 1;
+    }
+    // if right
+    else if ((inputs & HSD_BUTTON_RIGHT) || (inputs & HSD_BUTTON_DPAD_RIGHT))
+    {
+        if (cursor[0] < (10 - 1))
+        {
+            cursor[0]++;
+        }
+        else
+        {
+            cursor[0] = 0;
+        }
+        update_keyboard = 1;
+    }
+    // if up
+    else if ((inputs & HSD_BUTTON_UP) || (inputs & HSD_BUTTON_DPAD_UP))
+    {
+        if (cursor[1] > 0)
+        {
+            cursor[1]--;
+        }
+        else
+        {
+            cursor[1] = (4 - 1);
+        }
+        update_keyboard = 1;
+    }
+    // if down
+    else if ((inputs & HSD_BUTTON_DOWN) || (inputs & HSD_BUTTON_DPAD_DOWN))
+    {
+        if (cursor[1] < 4 - 1)
+        {
+            cursor[1]++;
+        }
+        else
+        {
+            cursor[1] = 0;
+        }
+        update_keyboard = 1;
+    }
+    // if A
+    else if ((inputs & HSD_BUTTON_A))
+    {
+
+        // check if any remaining characters
+        if (export_data->filename_cursor < 32)
+        {
+
+            // get correct set of letters
+            char **keyboard_letters = keyboard_rows[export_data->caps_lock];
+
+            // add character to buffer
+            filename_buffer[export_data->filename_cursor] = keyboard_letters[cursor[1]][cursor[0]];
+
+            // add cursor and terminator
+            filename_buffer[export_data->filename_cursor + 1] = '_';
+            filename_buffer[export_data->filename_cursor + 2] = '\0';
+
+            // inc cursor
+            export_data->filename_cursor++;
+
+            // update filename
+            update_filename = 1;
+
+            // remove caps lock
+            export_data->caps_lock = 0;
+            update_keyboard = 1;
+
+            SFX_PlayCommon(1);
+        }
+        else
+        {
+            SFX_PlayCommon(3);
+        }
+    }
+    // if B
+    else if ((inputs & HSD_BUTTON_B))
+    {
+
+        // check if can delete
+        if (export_data->filename_cursor > 0)
+        {
+            // dec cursor
+            export_data->filename_cursor--;
+
+            // add cursor and terminator
+            filename_buffer[export_data->filename_cursor] = '_';
+            filename_buffer[export_data->filename_cursor + 1] = '\0';
+
+            // update filename
+            update_filename = 1;
+
+            SFX_PlayCommon(0);
+        }
+
+        // exit here
+        else if (input_down & HSD_BUTTON_B)
+        {
+            Export_EnterNameExit(export_gobj);
+            Export_SelCardInit(export_gobj);
+            SFX_PlayCommon(0);
+            return 0;
+        }
+
+        OSReport("backspace\n");
+    }
+    // if Y
+    if ((inputs & HSD_BUTTON_Y))
+    {
+        // toggle capslock
+        if (export_data->caps_lock == 0)
+            export_data->caps_lock = 1;
+        else
+            export_data->caps_lock = 0;
+
+        // update keyboard
+        update_keyboard = 1;
+
+        SFX_PlayCommon(1);
+    }
+    // if X
+    if ((inputs & HSD_BUTTON_X))
+    {
+
+        // check if any remaining characters
+        if (export_data->filename_cursor < 32)
+        {
+            // add character to buffer
+            filename_buffer[export_data->filename_cursor] = ' ';
+
+            // add cursor and terminator
+            filename_buffer[export_data->filename_cursor + 1] = '_';
+            filename_buffer[export_data->filename_cursor + 2] = '\0';
+
+            // inc cursor
+            export_data->filename_cursor++;
+
+            // update filename
+            update_filename = 1;
+
+            SFX_PlayCommon(1);
+        }
+        else
+        {
+            OSReport("max characters!\n");
+        }
+    }
+    // if START
+    if ((inputs & HSD_BUTTON_START))
+    {
+        // at least 1 character
+        if (export_data->filename_cursor > 0)
+        {
+            Export_ConfirmInit(export_gobj);
+
+            // play sfx
+            SFX_PlayCommon(1);
+        }
+        else
+        {
+            SFX_PlayCommon(3);
+        }
+
+        return 0;
+    }
+
+    // update keyboard
+    if (update_keyboard == 1)
+    {
+        Export_EnterNameUpdateKeyboard(export_gobj);
+        SFX_PlayCommon(2);
+    }
+
+    // update filename if changed
+    if (update_filename == 1)
+    {
+        Text_SetText(export_data->text_filename, 0, filename_buffer);
+    }
+
+    return 0;
+}
+void Export_EnterNameExit(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+
+    // hide menu jobjs
+    JOBJ_SetFlags(export_data->screenshot_jobj, JOBJ_HIDDEN);
+    JOBJ_SetFlags(export_data->textbox_jobj, JOBJ_HIDDEN);
+
+    Text_Destroy(export_data->text_title);
+    Text_Destroy(export_data->text_desc);
+    Text_Destroy(export_data->text_keyboard);
+    Text_Destroy(export_data->text_filename);
+    Text_Destroy(export_data->text_filedetails);
+}
+void Export_ConfirmInit(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+    MenuData *menu_data = event_vars->menu_gobj->userdata;
+
+    // create gobj
+    GOBJ *confirm_gobj = GObj_Create(0, 0, 0);
+    export_data->confirm_gobj = confirm_gobj;
+
+    // load menu joint
+    JOBJ *confirm_jobj = JOBJ_LoadJoint(stc_lab_data->export_popup);
+    GObj_AddObject(confirm_gobj, 3, confirm_jobj);                                   // add to gobj
+    GObj_AddGXLink(confirm_gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_POPUPMODEL); // add gx link
+
+    // create text
+    Text *confirm_text = Text_CreateText(2, menu_data->canvas_popup);
+    export_data->confirm_text = confirm_text;
+    // enable align and kerning
+    confirm_text->align = 1;
+    confirm_text->kerning = 1;
+    // scale canvas
+    confirm_text->trans.X = 0;
+    confirm_text->trans.Y = 0;
+    confirm_text->scale.X = MENU_CANVASSCALE;
+    confirm_text->scale.Y = MENU_CANVASSCALE;
+    confirm_text->trans.Z = MENU_TEXTZ;
+    Text_AddSubtext(confirm_text, 0, -40, "Save File to Slot %s?", slots_names[export_data->slot]);
+    int yes_subtext = Text_AddSubtext(confirm_text, -60, 20, "Yes");
+    GXColor yellow = {201, 178, 0, 255};
+    Text_SetColor(confirm_text, yes_subtext, &yellow);
+    Text_AddSubtext(confirm_text, 60, 20, "No");
+
+    export_data->menu_index = EXMENU_CONFIRM;
+    export_data->confirm_state = EXPOP_CONFIRM;
+    export_data->confirm_cursor = 0;
+
+    return 0;
+}
+int Export_ConfirmThink(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+
+    // get pausing players inputs
+    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    int inputs = pad->down;
+
+    switch (export_data->confirm_state)
+    {
+    case (EXPOP_CONFIRM):
+    {
+
+        int update_cursor = 0;
+
+        // if left
+        if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
+        {
+            if (export_data->confirm_cursor > 0)
+            {
+                export_data->confirm_cursor--;
+                update_cursor = 1;
+            }
+        }
+        // if right
+        else if ((inputs & HSD_BUTTON_RIGHT) || (inputs & HSD_BUTTON_DPAD_RIGHT))
+        {
+            if (export_data->confirm_cursor < 1)
+            {
+                export_data->confirm_cursor++;
+                update_cursor = 1;
+            }
+        }
+
+        // if b
+        else if ((inputs & HSD_BUTTON_B))
+        {
+            Export_ConfirmExit(export_gobj);
+
+            // play sfx
+            SFX_PlayCommon(0);
+
+            return 0;
+        }
+        // if a
+        else if ((inputs & HSD_BUTTON_A) || (inputs & HSD_BUTTON_START))
+        {
+
+            // begin save
+            if (export_data->confirm_cursor == 0)
+            {
+
+                MenuData *menu_data = event_vars->menu_gobj->userdata;
+
+                // free current text
+                Text_Destroy(export_data->confirm_text);
+
+                // create text
+                Text *confirm_text = Text_CreateText(2, menu_data->canvas_popup);
+                export_data->confirm_text = confirm_text;
+                // enable align and kerning
+                confirm_text->align = 1;
+                confirm_text->kerning = 1;
+                // scale canvas
+                confirm_text->trans.X = 0;
+                confirm_text->trans.Y = 0;
+                confirm_text->scale.X = MENU_CANVASSCALE;
+                confirm_text->scale.Y = MENU_CANVASSCALE;
+                confirm_text->trans.Z = MENU_TEXTZ;
+                Text_AddSubtext(confirm_text, 0, 0, "");
+
+                export_data->confirm_state = EXPOP_SAVE;
+
+                export_status = EXSTAT_REQSAVE;
+
+                // play sfx
+                SFX_PlayCommon(1);
+
+                return 0;
+            }
+            // go back to keyboard menu
+            else
+            {
+                Export_ConfirmExit(export_gobj);
+
+                // play sfx
+                SFX_PlayCommon(0);
+
+                return 0;
+            }
+        }
+
+        if (update_cursor == 1)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                static GXColor white = {255, 255, 255, 255};
+                static GXColor yellow = {201, 178, 0, 255};
+                GXColor *color;
+
+                // highlight cursor only
+                if (export_data->confirm_cursor == i)
+                    color = &yellow;
+                else
+                    color = &white;
+
+                Text_SetColor(export_data->confirm_text, i + 1, color);
+            }
+
+            SFX_PlayCommon(2);
+        }
+        break;
+    }
+    case (EXPOP_SAVE):
+    {
+        // wait for save to finish
+        if (Export_Process(export_gobj) == 1)
+        {
+            Export_ConfirmExit(export_gobj);
+            Export_Destroy(export_gobj);
+
+            // play sfx
+            SFX_PlayCommon(1);
+
+            return 0;
+        }
+        break;
+    }
+    }
+    return 0;
+}
+void Export_ConfirmExit(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+
+    GObj_Destroy(export_data->confirm_gobj);
+    Text_Destroy(export_data->confirm_text);
+
+    export_data->menu_index = EXMENU_NAME;
+}
+void Export_EnterNameUpdateKeyboard(GOBJ *export_gobj)
+{
+    ExportData *export_data = export_gobj->userdata;
+    Text *text_keyboard = export_data->text_keyboard;
+    u8 *cursor = export_data->key_cursor;
+
+    // get correct set of letters
+    char **keyboard_letters = keyboard_rows[export_data->caps_lock];
+
+    // iterate through rows
+    for (int i = 0; i < 4; i++)
+    {
+        // iterate through columns
+        for (int j = 0; j < 10; j++)
+        {
+
+            int this_subtext = (i * 10) + j;
+
+            // update letter text
+            char letter[2];
+            letter[0] = keyboard_letters[i][j];
+            letter[1] = '\0';
+            Text_SetText(text_keyboard, this_subtext, &letter);
+
+            // update letter color
+            static GXColor white = {255, 255, 255, 255};
+            static GXColor yellow = {201, 178, 0, 255};
+            GXColor *color;
+            // check for cursor
+            if ((cursor[0] == j) && (cursor[1] == i))
+                color = &yellow;
+            else
+                color = &white;
+            Text_SetColor(text_keyboard, this_subtext, color);
+        }
+    }
+
+    return;
+}
+int Export_Process(GOBJ *export_gobj)
+{
+
+    ExportData *export_data = export_gobj->userdata;
+    Text *text = export_data->confirm_text;
+
+    int finished = 0;
+
+    // if snapshot is processing, dont update
+    switch (export_status)
+    {
+    case (EXSTAT_REQSAVE):
+    {
+
+        // get curr date
+        OSCalendarTime td;
+        OSTicksToCalendarTime(OSGetTime(), &td);
+
+        // create filename string
+        char filename[32];
+        sprintf(filename, tm_filename, td.mon + 1, td.mday, td.year, td.hour, td.min, td.sec); // generate filename based on time
+
+        // check if file exists and delete it
+        s32 memSize, sectorSize;
+        if (CARDProbeEx(0, &memSize, &sectorSize) == CARD_RESULT_READY)
+        {
+            // mount card
+            stc_memcard_work->is_done = 0;
+            if (CARDMountAsync(0, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
+            {
+                // check card
+                Memcard_Wait();
+                stc_memcard_work->is_done = 0;
+                if (CARDCheckAsync(0, Memcard_RemovedCallback) == CARD_RESULT_READY)
+                {
+                    Memcard_Wait();
+                    // get free blocks
+                    s32 byteNotUsed, filesNotUsed;
+                    if (CARDFreeBlocks(0, &byteNotUsed, &filesNotUsed) == CARD_RESULT_READY)
+                    {
+                        // search for file with this name
+                        for (int i = 0; i < CARD_MAX_FILE; i++)
+                        {
+                            CARDStat card_stat;
+
+                            if (CARDGetStatus(0, i, &card_stat) == CARD_RESULT_READY)
+                            {
+                                // check company code
+                                if (strncmp(os_info->company, card_stat.company, sizeof(os_info->company)) == 0)
+                                {
+                                    // check game name
+                                    if (strncmp(os_info->gameName, card_stat.gameName, sizeof(os_info->gameName)) == 0)
+                                    {
+                                        // check file name
+                                        if (strncmp(&filename, card_stat.fileName, sizeof(filename)) == 0)
+                                        {
+                                            // delete
+                                            CARDDeleteAsync(0, &filename, Memcard_RemovedCallback);
+                                            stc_memcard_work->is_done = 0;
+                                            Memcard_Wait();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                CARDUnmount(0);
+            }
+        }
+
+        // setup save
+        memcpy(stc_memcard_info->file_name, &stc_save_name, sizeof(stc_save_name));
+        memset(stc_memcard_info->file_desc, '\0', 32);                                                   // fill with spaces
+        memcpy(stc_memcard_info->file_desc, export_data->filename_buffer, export_data->filename_cursor); // copy inputted name
+        memcard_save.data = save_buffer;
+        memcard_save.x4 = 3;
+        memcard_save.size = stc_compress_size;
+        memcard_save.xc = -1;
+        Memcard_CreateSnapshot(0, &filename, &memcard_save, stc_memcard_unk, stc_memcard_info->file_name, stc_lab_data->save_banner, stc_lab_data->save_icon, 0);
+
+        // change status
+        export_status = EXSTAT_SAVEWAIT;
+        OSReport("now saving...\n");
+
+        break;
+    }
+    case (EXSTAT_SAVEWAIT):
+    {
+
+        // wait to finish writing
+        if (Memcard_CheckStatus() != 11)
+        {
+            // done saving, output time
+            int save_post_tick = OSGetTick();
+            int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
+            OSReport("wrote save in %dms\n", save_time);
+
+            // change state
+            export_status = EXSTAT_DONE;
+        }
+        else
+        {
+            OSReport("status %d // progress %d/%d\n", *stc_memcard_write_status, *stc_memcard_block_curr, *stc_memcard_block_last);
+
+            if (*stc_memcard_write_status == 6)
+            {
+                Text_SetText(text, 0, "Writing Data...");
+            }
+            else
+            {
+                Text_SetText(text, 0, "Creating File");
+            }
+        }
+
+        break;
+    }
+    case (EXSTAT_DONE):
+    {
+        OSReport("finito!\n");
+        export_status = EXSTAT_NONE;
+        finished = 1;
+
+        Text_Destroy(text);
+
+        break;
+    }
+    }
+
+    return finished;
 }
 
 // Init Function

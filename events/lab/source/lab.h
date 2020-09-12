@@ -33,6 +33,30 @@
 #define REC_LEFTTEXTJOINT 2
 #define REC_RIGHTTEXTJOINT 3
 
+// export
+enum export_status
+{
+    EXSTAT_NONE,
+    EXSTAT_REQSAVE,
+    EXSTAT_SAVEWAIT,
+    EXSTAT_DONE,
+};
+enum export_menuindex
+{
+    EXMENU_SELCARD,
+    EXMENU_NAME,
+    EXMENU_CONFIRM,
+};
+enum export_popup
+{
+    EXPOP_CONFIRM,
+    EXPOP_SAVE,
+};
+#define EXP_MEMCARDAJOBJ 9
+#define EXP_MEMCARDBJOBJ 11
+#define EXP_TEXTBOXJOBJ 12
+#define EXP_SCREENSHOTJOBJ 18
+
 // input display
 typedef struct ButtonLookup
 {
@@ -115,6 +139,8 @@ typedef struct Arch_LabData
     void *save_icon;
     void *save_banner;
     JOBJDesc *controller;
+    JOBJDesc *export_menu;
+    JOBJDesc *export_popup;
 } Arch_LabData;
 typedef struct LCancelData
 {
@@ -224,6 +250,32 @@ typedef struct InputData
     Vec2 ltrig_origin;
     Vec2 rtrig_origin;
 } InputData;
+typedef struct ExportData
+{
+    u16 menu_index;
+    u16 menu_state;
+    JOBJ *memcard_jobj[2];
+    JOBJ *screenshot_jobj;
+    JOBJ *textbox_jobj;
+    Text *text_title;
+    Text *text_desc;
+    Text *text_misc;
+    int slot;
+    u8 is_inserted[2];
+    int free_blocks[2];
+    int free_files[2];
+    Text *text_keyboard;
+    Text *text_filename;
+    Text *text_filedetails;
+    u8 key_cursor[2];
+    u8 filename_cursor;
+    u8 caps_lock;
+    char *filename_buffer;
+    GOBJ *confirm_gobj;
+    Text *confirm_text;
+    u8 confirm_cursor;
+    u8 confirm_state;
+} ExportData;
 
 void Event_Init(GOBJ *gobj);
 void Event_Update();
@@ -256,6 +308,7 @@ void Record_CObjThink(GOBJ *gobj);
 void Record_GX(GOBJ *gobj, int pass);
 void Record_Think(GOBJ *rec_gobj);
 void Record_Update(int ply, RecInputData *inputs, int rec_mode);
+int Record_MenuThink(GOBJ *menu_gobj);
 int Record_OptimizedSave(Savestate *savestate);
 int Record_OptimizedLoad(Savestate *savestate);
 int Record_GetRandomSlot(RecInputData **input_data);
@@ -265,6 +318,13 @@ int Record_BoneToID(FighterData *fighter_data, JOBJ *bone);
 GOBJ *Record_IDToGOBJ(int id);
 FighterData *Record_IDToFtData(int id);
 JOBJ *Record_IDToBone(FighterData *fighter_data, int id);
+void Snap_CObjThink(GOBJ *gobj);
+void Record_StartExport(GOBJ *menu_gobj);
+void Export_Init(GOBJ *menu_gobj);
+int Export_Think(GOBJ *export_gobj);
+void Export_Destroy(GOBJ *export_gobj);
+void Export_SelCardInit(GOBJ *export_gobj);
+int Export_SelCardThink(GOBJ *export_gobj);
 void CustomTDI_Update(GOBJ *gobj);
 void CustomTDI_Destroy(GOBJ *gobj);
 void Lab_Exit(int value);

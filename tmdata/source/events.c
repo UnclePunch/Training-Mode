@@ -2437,7 +2437,7 @@ void Message_Destroy(GOBJ **msg_queue, int msg_num)
     // Destroy text
     Text *text = msg_data->text;
     if (text != 0)
-        Text_FreeText(text);
+        Text_Destroy(text);
 
     // Destroy GOBJ
     GObj_Destroy(msg_gobj);
@@ -2591,112 +2591,103 @@ void EventMenu_Update(GOBJ *gobj)
     //MenuCamData *camData = gobj->userdata;
     MenuData *menuData = gobj->userdata;
     EventInfo *eventInfo = menuData->eventInfo;
+    EventMenu *currMenu = menuData->currMenu;
 
-    // Check if being pressed
-    int isPress = 0;
-    for (int i = 0; i < 6; i++)
+    int update_menu = 1;
+
+    // if a custom menu is in use, run its function
+    if (menuData->custom_gobj_think != 0)
     {
-
-        // humans only
-        if (Fighter_GetSlotType(i) == 0)
-        {
-            GOBJ *fighter = Fighter_GetGObj(i);
-            FighterData *fighter_data = fighter->userdata;
-            int controller_index = Fighter_GetControllerPort(i);
-
-            HSD_Pad *pad = PadGet(controller_index, PADGET_MASTER);
-
-            if ((pad->down & HSD_BUTTON_START) != 0)
-            {
-                isPress = 1;
-                break;
-            }
-        }
+        update_menu = menuData->custom_gobj_think(menuData->custom_gobj);
     }
 
-    // change pause state
-    if (isPress != 0)
+    // if this menu has an upate function, run its function
+    else if ((menuData->isPaused == 1) && (currMenu->menu_think != 0))
     {
-
-        EventMenu *currMenu = menuData->currMenu;
-        // pause game
-        if (menuData->isPaused == 0)
-        {
-
-            // set state
-            menuData->isPaused = 1;
-
-            // Create menu
-            EventMenu_CreateModel(gobj, currMenu);
-            EventMenu_CreateText(gobj, currMenu);
-            EventMenu_UpdateText(gobj, currMenu);
-            if (currMenu->state == EMSTATE_OPENPOP)
-            {
-                EventOption *currOption = &currMenu->options[currMenu->cursor];
-                EventMenu_CreatePopupModel(gobj, currMenu);
-                EventMenu_CreatePopupText(gobj, currMenu);
-                EventMenu_UpdatePopupText(gobj, currOption);
-            }
-
-            // Freeze the game
-            Match_FreezeGame(1);
-            SFX_PlayCommon(5);
-            Match_HideHUD();
-            Match_AdjustSoundOnPause(1);
-        }
-        // unpause game
-        else
-        {
-
-            menuData->isPaused = 0;
-
-            // destroy menu
-            EventMenu_DestroyMenu(gobj);
-
-            // Unfreeze the game
-            Match_UnfreezeGame(1);
-            Match_ShowHUD();
-            Match_AdjustSoundOnPause(0);
-        }
+        update_menu = currMenu->menu_think(gobj);
     }
 
-    // Run Menu Logic
-    if (menuData->isPaused == 1)
+    if (update_menu == 1)
     {
-        // Get the current menu
-        EventMenu *currMenu = menuData->currMenu;
-
-        // custom gobj think
-        if (menuData->custom_gobj != 0)
+        // Check if being pressed
+        int isPress = 0;
+        for (int i = 0; i < 6; i++)
         {
 
-            menuData->custom_gobj_think(menuData->custom_gobj);
-
-            /*
-            // iterate through gobj proc's here
-            GOBJ *custom_gobj = menuData->custom_gobj;
-            GOBJProc **proc_arr = R13_PTR(-0x3E60);
-            u8 max_gproc = ACCESS_U8(0x804ce380 + 0x2);
-            for (int i = 0; i < max_gproc; i++)
+            // humans only
+            if (Fighter_GetSlotType(i) == 0)
             {
-                GOBJProc *this_proc = proc_arr[i];
-                while ((this_proc != 0) && (this_proc->cb != 0))
+                GOBJ *fighter = Fighter_GetGObj(i);
+                FighterData *fighter_data = fighter->userdata;
+                int controller_index = Fighter_GetControllerPort(i);
+
+                HSD_Pad *pad = PadGet(controller_index, PADGET_MASTER);
+
+                if ((pad->down & HSD_BUTTON_START) != 0)
                 {
-                    if (this_proc->parentGOBJ == custom_gobj)
-                    {
-                        this_proc->cb(custom_gobj);
-                    }
-                    this_proc = this_proc->next;
+                    isPress = 1;
+                    break;
                 }
             }
-            */
         }
 
-        else
+        // change pause state
+        if (isPress != 0)
         {
+
+            // pause game
+            if (menuData->isPaused == 0)
+            {
+
+                // set state
+                menuData->isPaused = 1;
+
+                // Create menu
+                EventMenu_CreateModel(gobj, currMenu);
+                EventMenu_CreateText(gobj, currMenu);
+                EventMenu_UpdateText(gobj, currMenu);
+                if (currMenu->state == EMSTATE_OPENPOP)
+                {
+                    EventOption *currOption = &currMenu->options[currMenu->cursor];
+                    EventMenu_CreatePopupModel(gobj, currMenu);
+                    EventMenu_CreatePopupText(gobj, currMenu);
+                    EventMenu_UpdatePopupText(gobj, currOption);
+                }
+
+                // Freeze the game
+                Match_FreezeGame(1);
+                SFX_PlayCommon(5);
+                Match_HideHUD();
+                Match_AdjustSoundOnPause(1);
+            }
+            // unpause game
+            else
+            {
+
+                menuData->isPaused = 0;
+
+                // destroy menu
+                EventMenu_DestroyMenu(gobj);
+
+                // Unfreeze the game
+                Match_UnfreezeGame(1);
+                Match_ShowHUD();
+                Match_AdjustSoundOnPause(0);
+            }
+        }
+
+        // run menu logic if the menu is shown
+        if ((menuData->isPaused == 1) && (stc_event_vars.hide_menu == 0))
+        {
+            // Get the current menu
+            EventMenu *currMenu = menuData->currMenu;
+
             // menu think
             if (currMenu->state == EMSTATE_FOCUS)
+            {
+                // check to run custom menu think function
                 EventMenu_MenuThink(gobj, currMenu);
+            }
 
             // popup think
             else if (currMenu->state == EMSTATE_OPENPOP)
@@ -2982,7 +2973,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         if ((currOption->option_kind == OPTKIND_FUNC) && (currOption->onOptionSelect != 0))
         {
 
-            // save pointer to this gobj
+            // execute function
             currOption->onOptionSelect(gobj);
 
             // update text
@@ -3352,18 +3343,18 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     if (menuData->text_name != 0)
     {
         // free text
-        Text_FreeText(menuData->text_name);
+        Text_Destroy(menuData->text_name);
         menuData->text_name = 0;
-        Text_FreeText(menuData->text_value);
+        Text_Destroy(menuData->text_value);
         menuData->text_value = 0;
-        Text_FreeText(menuData->text_title);
+        Text_Destroy(menuData->text_title);
         menuData->text_title = 0;
-        Text_FreeText(menuData->text_desc);
+        Text_Destroy(menuData->text_desc);
         menuData->text_desc = 0;
     }
     if (menuData->text_popup != 0)
     {
-        Text_FreeText(menuData->text_popup);
+        Text_Destroy(menuData->text_popup);
         menuData->text_popup = 0;
     }
 
@@ -3635,16 +3626,16 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
     MenuData *menuData = gobj->userdata; // userdata
 
     // remove
-    Text_FreeText(menuData->text_name);
+    Text_Destroy(menuData->text_name);
     menuData->text_name = 0;
     // remove
-    Text_FreeText(menuData->text_value);
+    Text_Destroy(menuData->text_value);
     menuData->text_value = 0;
     // remove
-    Text_FreeText(menuData->text_title);
+    Text_Destroy(menuData->text_title);
     menuData->text_title = 0;
     // remove
-    Text_FreeText(menuData->text_desc);
+    Text_Destroy(menuData->text_desc);
     menuData->text_desc = 0;
 
     // if popup box exists
@@ -3661,6 +3652,7 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
         // null pointers
         menuData->custom_gobj = 0;
         menuData->custom_gobj_destroy = 0;
+        menuData->custom_gobj_think = 0;
     }
 
     // set menu as visible
@@ -3847,7 +3839,7 @@ void EventMenu_DestroyPopup(GOBJ *gobj)
     MenuData *menuData = gobj->userdata; // userdata
 
     // remove text
-    Text_FreeText(menuData->text_popup);
+    Text_Destroy(menuData->text_popup);
     menuData->text_popup = 0;
 
     // destory gobj
