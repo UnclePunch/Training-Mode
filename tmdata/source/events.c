@@ -5,7 +5,7 @@ void Event_Init(GOBJ *gobj)
 {
     int *EventData = gobj->userdata;
     EventInfo *eventInfo = EventData[0];
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
     OSReport("this is %s\n", eventInfo->eventName);
 #endif
     return;
@@ -1349,6 +1349,23 @@ void EventUpdate()
 /// Hook Functions ///
 //////////////////////
 
+void TM_HeapStatus(GOBJ *gobj)
+{
+    // init variables
+    int *data = gobj->userdata;
+    DevText *text = data[0];
+
+    // clear text
+    //DevelopText_EraseAllText(text);
+    //DevelopMode_ResetCursorXY(text, 0, 0);
+
+    // get heap
+    int freemem = OSCheckHeap(3);
+
+    // output
+    //DevelopText_AddString(text, "free space: %.2f kb\n", (float)freemem / 1000.0);
+}
+
 void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt is loaded into memory on boot
 {
     // get even menu
@@ -1360,36 +1377,24 @@ void OnSceneChange()
 {
     // Hook exists at 801a4c94
 
-    // create text canvas
-    int canvas = Text_CreateCanvas(10, 0, 9, 13, 0, 14, 0, 19);
+    TM_CreateWatermark();
 
-    // create text
-    Text *text = Text_CreateText(10, canvas);
-    // enable align and kerning
-    text->align = 2;
-    text->kerning = 1;
-    // scale canvas
-    text->scale.X = 0.4;
-    text->scale.Y = 0.4;
-    text->trans.X = 615;
-    text->trans.Y = 446;
+#ifdef TM_DEBUG
+    // init dev text
+    GOBJ *gobj = GObj_Create(0, 0, 0);
+    int *data = calloc(32);
+    GObj_AddUserData(gobj, 4, HSD_Free, data);
+    GObj_AddProc(gobj, TM_HeapStatus, 0);
 
-    // print string
-    //static char *watermark = "TM 3.0 Alpha1";
-    int shadow = Text_AddSubtext(text, 2, 2, TM_Vers);
-    GXColor shadow_color = {0, 0, 0, 0};
-    Text_SetColor(text, shadow, &shadow_color);
-
-    int shadow1 = Text_AddSubtext(text, 2, -2, TM_Vers);
-    Text_SetColor(text, shadow1, &shadow_color);
-
-    int shadow2 = Text_AddSubtext(text, -2, 2, TM_Vers);
-    Text_SetColor(text, shadow2, &shadow_color);
-
-    int shadow3 = Text_AddSubtext(text, -2, -2, TM_Vers);
-    Text_SetColor(text, shadow3, &shadow_color);
-
-    Text_AddSubtext(text, 0, 0, TM_Vers);
+    DevText *text = DevelopText_CreateDataTable(13, 0, 0, 28, 8, HSD_MemAlloc(0x1000));
+    DevelopText_Activate(0, text);
+    text->cursorBlink = 0;
+    data[0] = text;
+    GXColor color = {21, 20, 59, 135};
+    DevelopText_StoreBGColor(text, &color);
+    DevelopText_StoreTextScale(text, 7.5, 10);
+    stc_event_vars.db_console_text = text;
+#endif
 
     return;
 };
@@ -1420,7 +1425,7 @@ int Savestate_Save(Savestate *savestate)
         FighterData *fighter_data;
     } BackupQueue;
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
     int save_pre_tick = OSGetTick();
 #endif
 
@@ -1606,7 +1611,7 @@ int Savestate_Save(Savestate *savestate)
         }
     }
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
     int save_post_tick = OSGetTick();
     int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
     OSReport("processed save in %dms\n", save_time);
@@ -1622,7 +1627,7 @@ int Savestate_Load(Savestate *savestate)
         FighterData *fighter_data;
     } BackupQueue;
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
     int load_pre_tick = OSGetTick();
 #endif
 
@@ -1878,7 +1883,7 @@ int Savestate_Load(Savestate *savestate)
 
                     // process dynamics
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
                     int dyn_pre_tick = OSGetTick();
 #endif
                     int dyn_proc_num = 45;
@@ -1889,7 +1894,7 @@ int Savestate_Load(Savestate *savestate)
                         Fighter_ProcDynamics(fighter);
                     }
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
                     int dyn_post_tick = OSGetTick();
                     int dyn_time = OSTicksToMilliseconds(dyn_post_tick - dyn_pre_tick);
                     OSReport("processed dyn %d times in %dms\n", dyn_proc_num, dyn_time);
@@ -1970,7 +1975,7 @@ int Savestate_Load(Savestate *savestate)
         SFX_PlayCommon(0);
     }
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
     int load_post_tick = OSGetTick();
     int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
     OSReport("processed load in %dms\n", load_time);
@@ -2066,7 +2071,7 @@ int BoneToID(FighterData *fighter_data, JOBJ *bone)
         }
     }
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
     // no bone found
     if (bone_id == -1)
     {
@@ -2122,6 +2127,40 @@ JOBJ *IDToBone(FighterData *fighter_data, int id)
 void Event_IncTimer(GOBJ *gobj)
 {
     stc_event_vars.game_timer++;
+    return;
+}
+void TM_CreateWatermark()
+{
+    // create text canvas
+    int canvas = Text_CreateCanvas(10, 0, 9, 13, 0, 14, 0, 19);
+
+    // create text
+    Text *text = Text_CreateText(10, canvas);
+    // enable align and kerning
+    text->align = 2;
+    text->kerning = 1;
+    // scale canvas
+    text->scale.X = 0.4;
+    text->scale.Y = 0.4;
+    text->trans.X = 615;
+    text->trans.Y = 446;
+
+    // print string
+    int shadow = Text_AddSubtext(text, 2, 2, TM_Vers);
+    GXColor shadow_color = {0, 0, 0, 0};
+    Text_SetColor(text, shadow, &shadow_color);
+
+    int shadow1 = Text_AddSubtext(text, 2, -2, TM_Vers);
+    Text_SetColor(text, shadow1, &shadow_color);
+
+    int shadow2 = Text_AddSubtext(text, -2, 2, TM_Vers);
+    Text_SetColor(text, shadow2, &shadow_color);
+
+    int shadow3 = Text_AddSubtext(text, -2, -2, TM_Vers);
+    Text_SetColor(text, shadow3, &shadow_color);
+
+    Text_AddSubtext(text, 0, 0, TM_Vers);
+
     return;
 }
 

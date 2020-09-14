@@ -4143,7 +4143,7 @@ GOBJ *Record_Init()
     snap_image.img_ptr = 0;
     GOBJ *snap_gobj = GObj_Create(18, 18, 0);
     GOBJ_InitCamera(snap_gobj, Snap_CObjThink, 4);
-    GX_AllocImageData(&snap_image, 640, 480, 4, 2006);
+    GX_AllocImageData(&snap_image, EXP_SCREENSHOT_WIDTH, EXP_SCREENSHOT_HEIGHT, 4, 2006);
     export_status = EXSTAT_NONE;
 
     /*
@@ -4755,7 +4755,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                                     // check file name
                                     if (strncmp(tm_filename, card_stat.fileName, sizeof(tm_filename)) == 0)
                                     {
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
                                         OSReport("found recording file %s with size %d\n", card_stat.fileName, card_stat.length);
 #endif
                                         file_found = 1;
@@ -4776,7 +4776,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
     if (file_found == 1)
     {
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
         int load_pre_tick = OSGetTick();
 #endif
 
@@ -4825,7 +4825,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
 
         HSD_Free(memcard_save.data);
 
-#if TM_DEBUG == 1
+#ifdef TM_DEBUG
         int load_post_tick = OSGetTick();
         int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
         OSReport("processed memcard load in %dms\n", load_time);
@@ -4864,9 +4864,32 @@ void Snap_CObjThink(GOBJ *gobj)
     case (1):
     {
         // take snap
+        blr();
         HSD_ImageDescCopyFromEFB(&snap_image, 0, 0, 0);
+        DCFlushRange(snap_image.img_ptr, EXP_SCREENSHOT_WIDTH * EXP_SCREENSHOT_HEIGHT * sizeof(RGB565));
         snap_status = 0;
         OSReport("got snap!\n");
+
+// attempt a resize
+#define RESIZE_WIDTH 320
+#define RESIZE_HEIGHT 240
+
+        RGB565 *orig_img = snap_image.img_ptr;
+        RGB565 *new_img = calloc(RESIZE_WIDTH * RESIZE_HEIGHT * sizeof(RGB565));
+
+        for (int y = 0; y < (RESIZE_HEIGHT); y++)
+        {
+            for (int x = 0; x < (RESIZE_WIDTH); x++)
+            {
+                new_img[(y * RESIZE_WIDTH) + x] = orig_img[(y * (EXP_SCREENSHOT_HEIGHT / RESIZE_HEIGHT) * EXP_SCREENSHOT_WIDTH) + (x * EXP_SCREENSHOT_WIDTH / RESIZE_WIDTH)];
+            }
+        }
+
+        snap_image.height = RESIZE_HEIGHT;
+        snap_image.width = RESIZE_WIDTH;
+        snap_image.img_ptr = new_img;
+
+        TMLOG("orig_img[0]: %x%x%x\n", orig_img[0].r, orig_img[0].g, orig_img[0].b);
 
         break;
     }
@@ -4918,7 +4941,6 @@ void Export_Init(GOBJ *menu_gobj)
     JOBJ_SetFlags(export_data->textbox_jobj, JOBJ_HIDDEN);
 
     // set pointer to image data
-    blr();
     export_data->screenshot_jobj->dobj->mobj->tobj->imagedesc = &snap_image;
 
     save_pre_tick = OSGetTick();
@@ -4941,16 +4963,10 @@ void Export_Init(GOBJ *menu_gobj)
 
     // compress savestate
     save_buffer = calloc(sizeof(RecordingSave));
-    int pre_tick = OSGetTick();
-    stc_compress_size = lz77_compress(stc_rec_save, sizeof(RecordingSave), save_buffer, 8);
-    int post_tick = OSGetTick();
-    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
-
-    OSReport("compressed %d bytes to %d bytes (%.2fx) in %dms\n", sizeof(RecordingSave), stc_compress_size, ((float)sizeof(RecordingSave) / (float)stc_compress_size), time_dif);
+    stc_compress_size = Export_Compress(save_buffer, stc_rec_save, sizeof(RecordingSave));
 
     // alloc filename buffer
     export_data->filename_buffer = calloc(32 + 2); // +2 for terminator and cursor
-    export_data->filename_buffer[0] = '_';
 
     // initialize memcard menu
     Export_SelCardInit(export_gobj);
@@ -5111,6 +5127,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
             // if it was just inserted, get info
             if (export_data->is_inserted[i] == 0)
             {
+
                 // mount card
                 stc_memcard_work->is_done = 0;
                 if (CARDMountAsync(i, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
@@ -5124,6 +5141,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
 
                         // if we get this far, a valid memcard is inserted
                         is_inserted = 1;
+                        SFX_PlayCommon(2);
 
                         // get free blocks
                         s32 byteNotUsed, filesNotUsed;
@@ -5187,6 +5205,9 @@ int Export_SelCardThink(GOBJ *export_gobj)
 
             return;
         }
+
+        else
+            SFX_PlayCommon(3);
     }
 
     // if press B,
@@ -5265,11 +5286,10 @@ void Export_EnterNameInit(GOBJ *export_gobj)
     text_keyboard->align = 1;
     text_keyboard->kerning = 1;
     // scale canvas
-    text_keyboard->trans.X = 0;
-    text_keyboard->trans.Y = 3.5;
-    text_keyboard->scale.X = MENU_CANVASSCALE;
-    text_keyboard->scale.Y = MENU_CANVASSCALE;
-    text_keyboard->trans.Z = MENU_TEXTZ;
+    text_keyboard->trans.X = EXP_KEYBOARD_X;
+    text_keyboard->trans.Y = EXP_KEYBOARD_Y;
+    text_keyboard->scale.X = MENU_CANVASSCALE * EXP_KEYBOARD_SIZE;
+    text_keyboard->scale.Y = MENU_CANVASSCALE * EXP_KEYBOARD_SIZE;
     // init keyboard
     for (int i = 0; i < 4; i++)
     {
@@ -5291,11 +5311,10 @@ void Export_EnterNameInit(GOBJ *export_gobj)
     text_filedetails->align = 0;
     text_filedetails->kerning = 1;
     // scale canvas
-    text_filedetails->trans.X = -8;
-    text_filedetails->trans.Y = -11.7;
-    text_filedetails->scale.X = MENU_CANVASSCALE * 0.7;
-    text_filedetails->scale.Y = MENU_CANVASSCALE * 0.7;
-    text_filedetails->trans.Z = MENU_TEXTZ;
+    text_filedetails->trans.X = EXP_FILEDETAILS_X;
+    text_filedetails->trans.Y = EXP_FILEDETAILS_Y;
+    text_filedetails->scale.X = MENU_CANVASSCALE * EXP_FILEDETAILS_SIZE;
+    text_filedetails->scale.Y = MENU_CANVASSCALE * EXP_FILEDETAILS_SIZE;
     Text_AddSubtext(text_filedetails, 0, 0, "Stage: Yoshi's Story\nHMN: Marth\nCPU: Fox\n\nSlot %s", slots_names[export_data->slot]); // add title
 
     // create title text
@@ -5323,7 +5342,6 @@ void Export_EnterNameInit(GOBJ *export_gobj)
     text_desc->trans.Y = 12;
     text_desc->scale.X = MENU_CANVASSCALE;
     text_desc->scale.Y = MENU_CANVASSCALE;
-    text_desc->trans.Z = MENU_TEXTZ;
     Text_AddSubtext(text_desc, 0, 0, "A: Select  B: Backspace  Y: Caps  Start: Confirm"); // add description
     Text_AddSubtext(text_desc, 0, 40, "     X: Space  L: Cursor left  R: Cursor right");  // add description
 
@@ -5337,13 +5355,15 @@ void Export_EnterNameInit(GOBJ *export_gobj)
     GXColor filename_color = {225, 225, 225, 255};
     text_filename->color = filename_color;
     // scale canvas
-    text_filename->trans.X = -7;
-    text_filename->trans.Y = -4.8;
-    text_filename->aspect.X = 560;
-    text_filename->aspect.Y = 100;
-    text_filename->scale.X = MENU_CANVASSCALE;
-    text_filename->scale.Y = MENU_CANVASSCALE;
-    text_filename->trans.Z = MENU_TEXTZ;
+    text_filename->trans.X = EXP_FILENAME_X;
+    text_filename->trans.Y = EXP_FILENAME_Y;
+    text_filename->aspect.X = EXP_FILENAME_ASPECTX;
+    text_filename->aspect.Y = EXP_FILENAME_ASPECTY;
+    text_filename->scale.X = MENU_CANVASSCALE * EXP_FILENAME_SIZE;
+    text_filename->scale.Y = MENU_CANVASSCALE * EXP_FILENAME_SIZE;
+    // init filename buffer
+    export_data->filename_buffer[0] = '_';
+    export_data->filename_buffer[1] = '\0';
     Text_AddSubtext(text_filename, 0, 0, export_data->filename_buffer); // add title
 
     // init menu variables
@@ -5365,6 +5385,11 @@ int Export_EnterNameThink(GOBJ *export_gobj)
     int update_keyboard = 0;
     int update_filename = 0;
     char *filename_buffer = export_data->filename_buffer;
+
+    // first ensure memcard is still inserted
+    s32 memSize, sectorSize;
+    if (CARDProbeEx(export_data->slot, &memSize, &sectorSize) != CARD_RESULT_READY)
+        goto EXIT;
 
     // if left
     if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
@@ -5476,13 +5501,12 @@ int Export_EnterNameThink(GOBJ *export_gobj)
         // exit here
         else if (input_down & HSD_BUTTON_B)
         {
+        EXIT:
             Export_EnterNameExit(export_gobj);
             Export_SelCardInit(export_gobj);
             SFX_PlayCommon(0);
             return 0;
         }
-
-        OSReport("backspace\n");
     }
     // if Y
     if ((inputs & HSD_BUTTON_Y))
@@ -5618,6 +5642,17 @@ int Export_ConfirmThink(GOBJ *export_gobj)
     // get pausing players inputs
     HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
     int inputs = pad->down;
+
+    // if unplugged exit
+    s32 memSize, sectorSize;
+    if (CARDProbeEx(export_data->slot, &memSize, &sectorSize) != CARD_RESULT_READY)
+    {
+        Export_ConfirmExit(export_gobj);
+        Export_EnterNameExit(export_gobj);
+
+        // play sfx
+        SFX_PlayCommon(0);
+    }
 
     switch (export_data->confirm_state)
     {
@@ -5920,6 +5955,18 @@ int Export_Process(GOBJ *export_gobj)
     }
 
     return finished;
+}
+int Export_Compress(u8 *dest, u8 *source, u32 size)
+{
+
+    int pre_tick = OSGetTick();
+    int compress_size = lz77_compress(source, size, dest, 8);
+    int post_tick = OSGetTick();
+    int time_dif = OSTicksToMilliseconds(post_tick - pre_tick);
+
+    OSReport("compressed %d bytes to %d bytes (%.2fx) in %dms\n", size, compress_size, ((float)size / (float)compress_size), time_dif);
+
+    return compress_size;
 }
 
 // Init Function

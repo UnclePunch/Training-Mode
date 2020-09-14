@@ -1,14 +1,17 @@
 #include "../../../MexTK/mex.h"
 
-#define TM_DEBUG 1
+#define TM_DEBUG
 #define EVENT_DATASIZE 128
 #define TM_DATA -(50 * 4) - 4
 #define MENU_MAXOPTION 9
 #define MENU_POPMAXOPTION 5
 
+#define TMLOG(...) DevelopText_AddString(event_vars->db_console_text, __VA_ARGS__)
+
 #ifndef TM_DEBUG
 #define OSReport (void)sizeof
 #define assert (void)sizeof
+#define TMLOG (void)sizeof
 #endif
 
 // Custom File Structs
@@ -633,6 +636,7 @@ typedef struct EventVars
     Savestate *savestate;                                                                    // points to the events main savestate
     evFunction evFunction;                                                                   // event specific functions
     ArchiveInfo *event_archive;                                                              // event archive header
+    DevText *db_console_text;
 } EventVars;
 
 // Function prototypes
@@ -690,7 +694,7 @@ static EventVars *event_vars;
 #define GXLINK_POPUPTEXT 12
 // cobj
 #define MENUCAM_COBJGXLINK (1 << GXLINK_MENUMODEL) | (1 << GXLINK_MENUTEXT) | (1 << GXLINK_POPUPMODEL) | (1 << GXLINK_POPUPTEXT)
-#define MENUCAM_GXPRI 8
+#define MENUCAM_GXPRI 9
 
 // menu model
 #define OPT_SCALE 1

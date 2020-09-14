@@ -57,6 +57,23 @@ enum export_popup
 #define EXP_TEXTBOXJOBJ 12
 #define EXP_SCREENSHOTJOBJ 18
 
+#define EXP_KEYBOARD_X 0
+#define EXP_KEYBOARD_Y 3.5
+#define EXP_KEYBOARD_SIZE 1
+
+#define EXP_FILEDETAILS_X -8
+#define EXP_FILEDETAILS_Y -11.7
+#define EXP_FILEDETAILS_SIZE 0.7
+
+#define EXP_FILENAME_X -7
+#define EXP_FILENAME_Y -4.8
+#define EXP_FILENAME_ASPECTX 560
+#define EXP_FILENAME_ASPECTY 100
+#define EXP_FILENAME_SIZE 1
+
+#define EXP_SCREENSHOT_WIDTH (640)
+#define EXP_SCREENSHOT_HEIGHT (480)
+
 // input display
 typedef struct ButtonLookup
 {
@@ -325,6 +342,7 @@ int Export_Think(GOBJ *export_gobj);
 void Export_Destroy(GOBJ *export_gobj);
 void Export_SelCardInit(GOBJ *export_gobj);
 int Export_SelCardThink(GOBJ *export_gobj);
+int Export_Compress(u8 *dest, u8 *source, u32 size);
 void CustomTDI_Update(GOBJ *gobj);
 void CustomTDI_Destroy(GOBJ *gobj);
 void Lab_Exit(int value);
