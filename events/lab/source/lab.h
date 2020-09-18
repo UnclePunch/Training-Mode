@@ -1,6 +1,10 @@
 #include "../../../../MexTK/mex.h"
 #include "../../../tmdata/source/events.h"
 
+#ifdef TM_DEBUG
+#define OSReport TMLOG
+#endif
+
 // Labbing event
 // Custom TDI definitions
 #define TDI_HITNUM 10
@@ -18,6 +22,8 @@
 #define TDITEXT_TEXTZ 0
 
 // recording
+#define REC_VERS 0
+
 #define GXPRI_RECJOINT 80
 #define REC_GXLINK 18
 #define GXPRI_RECTEXT GXPRI_RECJOINT + 1
@@ -73,6 +79,10 @@ enum export_popup
 
 #define EXP_SCREENSHOT_WIDTH (640)
 #define EXP_SCREENSHOT_HEIGHT (480)
+
+#define RESIZE_MULT (0.15)
+#define RESIZE_WIDTH (EXP_SCREENSHOT_WIDTH * RESIZE_MULT)
+#define RESIZE_HEIGHT (EXP_SCREENSHOT_HEIGHT * RESIZE_MULT)
 
 // input display
 typedef struct ButtonLookup
@@ -274,6 +284,7 @@ typedef struct ExportData
     JOBJ *memcard_jobj[2];
     JOBJ *screenshot_jobj;
     JOBJ *textbox_jobj;
+    RGB565 *scaled_image;
     Text *text_title;
     Text *text_desc;
     Text *text_misc;
@@ -292,7 +303,28 @@ typedef struct ExportData
     Text *confirm_text;
     u8 confirm_cursor;
     u8 confirm_state;
+    int hmn_id;
+    int cpu_id;
+    int stage_id;
 } ExportData;
+typedef struct ExportHeader
+{
+    struct // metadata
+    {
+        u16 version;
+        u16 image_width;
+        u16 image_height;
+        u16 image_fmt;
+        u16 hmn;
+        u16 cpu;
+        u16 stage;
+    } metadata;
+    struct // lookup
+    {
+        int ofst_screenshot;
+        int ofst_recording;
+    } lookup;
+} ExportHeader;
 
 void Event_Init(GOBJ *gobj);
 void Event_Update();

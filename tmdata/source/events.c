@@ -1099,6 +1099,7 @@ static EventVars stc_event_vars = {
     .Message_Display = Message_Display,
     .savestate = 0,
 };
+static int show_console = 1;
 static int *eventDataBackup;
 
 ///////////////////////
@@ -1349,21 +1350,56 @@ void EventUpdate()
 /// Hook Functions ///
 //////////////////////
 
-void TM_HeapStatus(GOBJ *gobj)
+void TM_ConsoleThink(GOBJ *gobj)
 {
     // init variables
     int *data = gobj->userdata;
     DevText *text = data[0];
 
+    // check to toggle console
+    for (int i = 0; i < 4; i++)
+    {
+        HSD_Pad *pad = PadGet(i, PADGET_MASTER);
+        if (pad->held & (HSD_TRIGGER_L | HSD_TRIGGER_R) && (pad->down & HSD_TRIGGER_Z))
+        {
+            // toggle visibility
+            text->show_text ^= 1;
+            text->show_background ^= 1;
+            show_console ^= 1;
+
+            break;
+        }
+    }
+
     // clear text
     //DevelopText_EraseAllText(text);
     //DevelopMode_ResetCursorXY(text, 0, 0);
+}
+void TM_CreateConsole()
+{
+    // init dev text
+    GOBJ *gobj = GObj_Create(0, 0, 0);
+    int *data = calloc(32);
+    GObj_AddUserData(gobj, 4, HSD_Free, data);
+    GObj_AddProc(gobj, TM_ConsoleThink, 0);
 
-    // get heap
-    int freemem = OSCheckHeap(3);
+    DevText *text = DevelopText_CreateDataTable(13, 0, 0, 28, 8, HSD_MemAlloc(0x1000));
+    DevelopText_Activate(0, text);
+    text->show_cursor = 0;
+    data[0] = text;
+    GXColor color = {21, 20, 59, 135};
+    DevelopText_StoreBGColor(text, &color);
+    DevelopText_StoreTextScale(text, 7.5, 10);
+    stc_event_vars.db_console_text = text;
 
-    // output
-    //DevelopText_AddString(text, "free space: %.2f kb\n", (float)freemem / 1000.0);
+    if (show_console != 1)
+    {
+        // toggle visibility
+        DevelopText_HideBG(text);
+        DevelopText_HideText(text);
+    }
+
+    return;
 }
 
 void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt is loaded into memory on boot
@@ -1380,20 +1416,7 @@ void OnSceneChange()
     TM_CreateWatermark();
 
 #ifdef TM_DEBUG
-    // init dev text
-    GOBJ *gobj = GObj_Create(0, 0, 0);
-    int *data = calloc(32);
-    GObj_AddUserData(gobj, 4, HSD_Free, data);
-    GObj_AddProc(gobj, TM_HeapStatus, 0);
-
-    DevText *text = DevelopText_CreateDataTable(13, 0, 0, 28, 8, HSD_MemAlloc(0x1000));
-    DevelopText_Activate(0, text);
-    text->cursorBlink = 0;
-    data[0] = text;
-    GXColor color = {21, 20, 59, 135};
-    DevelopText_StoreBGColor(text, &color);
-    DevelopText_StoreTextScale(text, 7.5, 10);
-    stc_event_vars.db_console_text = text;
+    TM_CreateConsole();
 #endif
 
     return;
