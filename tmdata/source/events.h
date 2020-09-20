@@ -63,6 +63,7 @@ typedef struct EventInfo
     char *eventDescription;
     char *eventTutorial;
     char *eventFile;
+    char *eventCSSFile;
     u8 isChooseCPU;
     u8 isSelectStage;
     u8 scoreType;
@@ -666,7 +667,7 @@ static MenuData *static_menuData;
 static EventVars stc_event_vars;
 static int *eventDataBackup;
 
-static EventVars **event_vars_ptr = R13 + (-0x4A0C); //
+static EventVars **event_vars_ptr = 0x803d7054; //R13 + (-0x4730)
 static EventVars *event_vars;
 
 // EventOption option_kind definitions

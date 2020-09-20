@@ -61,6 +61,7 @@ static EventInfo Lab = {
     .eventDescription = "Free practice with\ncomplete control.\n",
     .eventTutorial = "",
     .eventFile = "EvLab",
+    .eventCSSFile = "EvLabCSS.dat",
     .isChooseCPU = true,
     .isSelectStage = true,
     .scoreType = 0,
@@ -1292,8 +1293,6 @@ void EventLoad()
     stc_event_vars.event_info = eventInfo;
     stc_event_vars.event_gobj = gobj;
     stc_event_vars.menu_gobj = menu_gobj;
-    // store pointer to this structure
-    *event_vars_ptr = &stc_event_vars;
 
     // init savestate struct
     stc_savestate = calloc(sizeof(Savestate));
@@ -1404,8 +1403,12 @@ void TM_CreateConsole()
 
 void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt is loaded into memory on boot
 {
-    // get even menu
+    // init event menu assets
     stc_event_vars.menu_assets = File_GetSymbol(archive, "evMenu");
+
+    // store pointer to static variables
+    *event_vars_ptr = &stc_event_vars;
+
     return;
 }
 
@@ -3942,6 +3945,11 @@ char *GetPageName(int page)
 {
     EventPage *thisPage = EventPages[page];
     return (thisPage->name);
+}
+char *GetCSSFile(int page, int event)
+{
+    EventInfo *thisEvent = GetEvent(page, event);
+    return (thisEvent->eventCSSFile);
 }
 int GetPageEventNum(int page)
 {

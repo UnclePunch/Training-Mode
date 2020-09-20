@@ -2,7 +2,7 @@
 #include "../../../tmdata/source/events.h"
 
 #ifdef TM_DEBUG
-#define OSReport TMLOG
+//#define OSReport TMLOG
 #endif
 
 // Labbing event
@@ -159,6 +159,11 @@ static int button_bits[] = {
         255, 255, 255, 255  \
     }
 
+typedef struct Arch_ImportData
+{
+    JOBJDesc *import_button;
+    JOBJDesc *import_menu;
+} Arch_ImportData;
 typedef struct Arch_LabData
 {
     JOBJDesc *stick;
@@ -329,6 +334,8 @@ typedef struct ExportHeader
 void Event_Init(GOBJ *gobj);
 void Event_Update();
 void Event_Think(GOBJ *event);
+
+void Button_Think(GOBJ *button_gobj);
 
 void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value);
 void Lab_ChangeCPUPercent(GOBJ *menu_gobj, int value);

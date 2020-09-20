@@ -6078,6 +6078,7 @@ void Event_Init(GOBJ *gobj)
     GOBJ *cpu = Fighter_GetGObj(1);
     FighterData *cpu_data = cpu->userdata;
 
+    // theres got to be a better way to do this...
     event_vars = *event_vars_ptr;
 
     // get this events assets
