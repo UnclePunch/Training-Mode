@@ -1,0 +1,129 @@
+Free Practice
+
+Menu
+-General Settings
+    -Player Percent (int option)
+    -CPU  Percent (int option)
+    -Move Staling
+    -Frame Advance (uses L like ultimate)
+    -Model Display
+        -On
+        -Off
+    -Fighter Collision Display
+        -Off
+        -On
+    -Environment Collision Display
+        -Off
+        -On
+    -DI Display
+        -Off
+        -On
+    -Input Display
+    -Info Display
+        -Toggle (On/Off)
+        -Player
+        -Row 1 
+            -None
+            -Position
+            -State Name
+            -Velocity - Self
+            -Velocity - Knockback
+            -Velocity - Animation
+            -Engine LStick Values
+            -System LStick Values
+            -Engine RStick Values
+            -System RStick Values
+            -Engine Trigger Value
+            -System Trigger Value
+            -Ledgegrab Cooldown
+            -Intangibility Remaining
+            -Hitlag Remaining
+            -Hitstun Remaining
+            -Shield Health
+            -Shield Stun Remaining
+            -Grab Timer
+            -ECB Lock Timer
+            -ECB Bottom offset
+            -Jumps Used
+            -Walljumps Used
+            -Jab Counter
+            -Blastzone Left/Right
+            -Blastzone Up/Down
+        -Row 2
+        -Row 3
+        -Row 4
+        -Row 5
+        -Row 6
+        -Row 7
+        -Row 8
+-CPU Settings
+    -CPU Intangibility
+    -Infinite Shields
+        -Off
+        -On Until Hit
+        -On
+    -Default Behavior
+        -Stand
+        -Shield
+        -Crouch
+        -Jump
+    -Directional Influence
+        -Random
+        -Survival
+        -Combo
+        -Floorhug
+        -None
+    -Tech
+        -Random
+        -Neutral Tech
+        -Tech Away
+        -Tech Towards
+        -None
+    -Reset After Actionable
+        -Off
+        -On
+    -Counter Action (ground)
+        -None
+        -Shield
+        -Grab
+        -Up B
+        -Down B
+        -Spotdodge
+        -Roll Away
+        -Roll Towards
+        -Nair
+        -Fair
+        -Dair
+        -Bair
+        -Uair
+        -Jump
+    -Counter Action (air)
+        -Airdodge
+        -Jump Away
+        -Jump Towards
+        -Nair
+        -Fair
+        -Dair
+        -Bair
+        -Uair
+        -Up B
+        -Down B
+        -Fastfall
+        -Wiggle
+        -Wiggle Fastfall
+    -Counter After Hits (int option)
+    -Counter After Frames (int option)
+-Replay Settings
+    -Record Slot
+        -Random
+        -Slot 1
+        -Slot 2
+        -Slot 3
+    -Mode
+        -Playback
+        -Record
+    -Reset After Playback
+        -Off
+        -On
+-Help
+-Exit
