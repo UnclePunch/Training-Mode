@@ -642,7 +642,7 @@ typedef struct EventVars
 
 // Function prototypes
 EventInfo *GetEvent(int page, int event);
-void EventInit(int page, int eventID, MatchData *matchData);
+void EventInit(int page, int eventID, MatchInit *matchData);
 void EventLoad();
 GOBJ *EventMenu_Init(EventInfo *eventInfo, EventMenu *start_menu);
 void EventMenu_Think(GOBJ *eventMenu, int pass);

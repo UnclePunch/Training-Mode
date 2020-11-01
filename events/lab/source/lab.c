@@ -3992,7 +3992,7 @@ void Inputs_Think(GOBJ *gobj)
                 // Get buttons jobj and dobj from the lookup table
                 JOBJ *button_jobj;
                 JOBJ_GetChild(controller, &button_jobj, button_lookup[i].jobj, -1);
-                DOBJ *button_dobj = JOBJ_GetDObj(button_jobj, button_lookup[i].dobj);
+                DOBJ *button_dobj = JOBJ_GetDObjChild(button_jobj, button_lookup[i].dobj);
 
                 // check if button is pressed
                 if (held & button_bits[i])
@@ -5008,7 +5008,7 @@ void Export_Init(GOBJ *menu_gobj)
     RecordingSave *temp_rec_save = calloc(sizeof(RecordingSave));
 
     // copy match data to buffer
-    memcpy(&temp_rec_save->match_data, &stc_match->match_data, sizeof(MatchData));
+    memcpy(&temp_rec_save->match_data, &stc_match->match, sizeof(MatchInit));
     // copy savestate to buffer
     memcpy(&temp_rec_save->savestate, rec_state, sizeof(Savestate));
     // copy recordings

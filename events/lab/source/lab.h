@@ -271,7 +271,7 @@ typedef struct RecData
 } RecData;
 typedef struct RecordingSave
 {
-    MatchData match_data; // this will point to a struct containing match info
+    MatchInit match_data; // this will point to a struct containing match info
     Savestate savestate;
     RecInputData hmn_inputs[REC_SLOTS];
     RecInputData cpu_inputs[REC_SLOTS];

@@ -1107,7 +1107,7 @@ static int *eventDataBackup;
 /// Event Functions ///
 ///////////////////////
 
-void EventInit(int page, int eventID, MatchData *matchData)
+void EventInit(int page, int eventID, MatchInit *matchData)
 {
 
     // get event pointer
@@ -1173,7 +1173,7 @@ void EventInit(int page, int eventID, MatchData *matchData)
     // Determine the Player
     s32 playerKind;
     s32 playerCostume;
-    Preload *preload = 0x80432078;
+    Preload *preload = Preload_GetTable();
     // If fighter is -1, copy the player from event data
     if (eventMatchData->playerKind != -1)
     {
@@ -1904,7 +1904,7 @@ int Savestate_Load(Savestate *savestate)
                         int shieldColorParam = (shieldColor->r << 16) | (shieldColor->b << 8) | (shieldColor->g);
                         Effect_SpawnSync(shieldGFX, fighter, shieldBone, shieldColorParam);
 
-                        Fighter_UpdateShield(fighter, 1);
+                        Fighter_UpdateShieldGFX(fighter, 1);
                     }
 
                     // process dynamics
