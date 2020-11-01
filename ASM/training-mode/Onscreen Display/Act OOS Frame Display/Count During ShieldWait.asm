@@ -1,5 +1,6 @@
 #To be inserted at 80092a38
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set entity,31
 .set playerdata,4
@@ -17,11 +18,11 @@
 
 lwz	r4, 0x002C (r3)
 
-lhz	r5,0x23EE(playerdata)
+lhz	r5,TM_ShieldFrames(playerdata)
 
 cmpwi	r5,0xFF
 beq	skipInc
 addi	r5,r5,0x1
-sth	r5,0x23EE(playerdata)
+sth	r5,TM_ShieldFrames(playerdata)
 
 skipInc:

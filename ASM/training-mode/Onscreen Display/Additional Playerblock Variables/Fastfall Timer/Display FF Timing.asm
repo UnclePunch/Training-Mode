@@ -1,24 +1,13 @@
 #To be inserted at 8007d57c
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set entity,31
-.set playerdata,31
+.set REG_FighterData,31
 .set player,30
-.set text,29
-.set textprop,28
-.set hitbool,27
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+(0*0x2)
-.set TwoASAgo,PrevASStart+(1*0x2)
-.set ThreeASAgo,PrevASStart+(2*0x2)
-.set FourASAgo,PrevASStart+(3*0x2)
-.set FiveASAgo,PrevASStart+(4*0x2)
-.set SixASAgo,PrevASStart+(5*0x2)
-
-.set FFVar,0x240C
-
+.set REG_TextColor,29
+.set REG_Text,28
+		
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
 ## Is 0x80 long and is zero'd at the start              ##
@@ -28,7 +17,7 @@
 
 backupall
 
-mr	playerdata,r3
+mr	REG_FighterData,r3
 
 
 	#CHECK IF ENABLED
@@ -42,85 +31,53 @@ mr	playerdata,r3
 	beq	Moonwalk_Exit
 
 	CheckForFollower:
-	mr	r3,playerdata
+	mr	r3,REG_FighterData
 	branchl	r12,0x80005510
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
 	#Check If Falling Off Ledge and Respawn Platform
-	lhz	r3,OneASAgo(playerdata)
+	lhz	r3,TM_OneASAgo(REG_FighterData)
 #	cmpwi	r3,0xFD			#CliffWait
 #	beq	Moonwalk_Exit
 	cmpwi	r3,0xD			#RebirthWait
 	beq	Moonwalk_Exit
 
-		bl	CreateText
+	PrintMessage:
+	li	r3,7						#Message Kind
+	lbz	r4,0xC(REG_FighterData)		#Message Queue
+	li	r5,MSGCOLOR_WHITE
+	bl	Fastfall_String
+	mflr r6
+	lhz	r7,TM_CanFastfallFrameCount(REG_FighterData)
+	Message_Display
+	lwz	r3,0x2C(r3)
+	lwz	REG_Text,MsgData_Text(r3)
 
-		#Change Text Color
-		lhz	r3,FFVar(playerdata)
-		cmpwi	r3,0x1
-		bgt	RedText
+	#Check if frame 1
+	lhz	r3,TM_CanFastfallFrameCount(REG_FighterData)
+	cmpwi	r3,1
+	bne	Moonwalk_Exit
+	mr	r3,REG_Text
+	li	r4,1
+	bl	Colors
+	mflr	r5
+	branchl r12,Text_ChangeTextColor
 
-		GreenText:
-		load	r3,0x8dff6eff			#green
-		b	StoreTextColor
-
-		RedText:
-		load	r3,0xffa2baff
-
-		StoreTextColor:
-		stw	r3,0x30(text)
-
-		#Create Text
-		bl	TopText
-		mr 	r3,r29			#text pointer
-		mflr	r4
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-		branchl r12,0x803a6b98
-
-		#Create Text2
-		bl	BottomText
-		mr 	r3,r29			#text pointer
-		mflr	r4
-		lhz	r5,FFVar(playerdata)
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-		branchl r12,0x803a6b98
-
-		b Moonwalk_Exit
-
-
-	CreateText:
-	mflr	r0
-	stw	r0, 0x0004 (sp)
-	stwu	sp, -0x0008 (sp)
-	mr	r3,playerdata			#backup playerdata pointer
-	li	r4,60			#display for 60 frames
-	li	r5,0			#Area to Display (0-2)
-	li	r6,20			#Window ID (Unique to This Display)
-	branchl	r12,TextCreateFunction			#create text custom function
-
-	mr	text,r3			#backup text pointer
-	lwz	r0, 0x000C (sp)
-	addi	sp, sp, 8
-	mtlr r0
-	blr
-
+	b Moonwalk_Exit
 
 ###################
 ## TEXT CONTENTS ##
 ###################
 
-TopText:
+Fastfall_String:
 blrl
-.string "Fastfall"
+.string "Fastfall\nFrame %d"
 .align 2
 
-BottomText:
+Colors:
 blrl
-.string "Frame %d"
-.align 2
+.long 0x8dff6eff	#green
 
 ##############################
 

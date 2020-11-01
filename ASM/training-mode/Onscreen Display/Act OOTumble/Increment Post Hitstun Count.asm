@@ -1,12 +1,11 @@
 #To be inserted at 8006ab60
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set entity,31
 .set player,31
 .set Text,30
 .set TextProp,29
-
-.set PostHistunFrames,0x240E
 
 ###################################
 ## Increment Post-Hitstun Frames ##
@@ -19,13 +18,13 @@ beq	NoHitstun
 
 InHitstun:
 li	r3,0
-sth	r3,PostHistunFrames(r31)
+sth	r3,TM_PostHitstunFrameCount(r31)
 b	Hitstun_End
 
 NoHitstun:
-lhz	r3,PostHistunFrames(r31)
+lhz	r3,TM_PostHitstunFrameCount(r31)
 addi	r3,r3,1
-sth	r3,PostHistunFrames(r31)
+sth	r3,TM_PostHitstunFrameCount(r31)
 b	Hitstun_End
 
 Hitstun_End:

@@ -1,5 +1,6 @@
 #To be inserted at 80236b40
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set Text,30
 .set TextProp,28

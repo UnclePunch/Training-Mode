@@ -1,5 +1,6 @@
 #To be inserted at 8000551c
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set entity,31
 .set playerdata,31
@@ -7,15 +8,6 @@
 .set text,29
 .set FramesSince,28
 .set ASBeforeWait,27
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -48,7 +40,7 @@ backupall
 
 #Calculate Frames Since Wait and Get AS Before Wait
 	li	r5,0		#Loop Count
-	li	r4,PrevASStart
+	li	r4,TM_PrevASStart
 WaitSearchLoop:
 	mulli	r3,r5,0x2
 	add	r3,r3,r4

@@ -1,5 +1,6 @@
 #To be inserted at 80092b58
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 .set entity,31
 .set playerdata,31
 .set player,30

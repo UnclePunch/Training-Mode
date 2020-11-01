@@ -1,5 +1,6 @@
 #To be inserted at 80040fa4
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set entity,31
 .set playerdata,31
@@ -7,17 +8,6 @@
 .set text,29
 .set ComboCount,28
 .set hitbool,27
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+(0*0x2)
-.set TwoASAgo,PrevASStart+(1*0x2)
-.set ThreeASAgo,PrevASStart+(2*0x2)
-.set FourASAgo,PrevASStart+(3*0x2)
-.set FiveASAgo,PrevASStart+(4*0x2)
-.set SixASAgo,PrevASStart+(5*0x2)
-
-.set FFVar,0x240C
 
 .set MessageAreaLength,0x100
 .set PerPlayerMessageStructLength,0x28
@@ -96,7 +86,7 @@ backup
 		mflr	r3
 		lwz	r4,0x2094(playerdata)
 		lwz	r4,0x2C(r4)
-		stw	r3,0x2414(r4)
+		stw	r3,TM_AnimCallback(r4)
 
 		b Moonwalk_Exit
 
@@ -245,7 +235,7 @@ HitstunMonitor_EditOSD:
 
 HitstunMonitor_SelfDestruct:
 	li	r3,0
-	stw	r3,0x2414(playerdata)
+	stw	r3,TM_AnimCallback(playerdata)
 
 HitstunMonitor_ContinueCombo:
 HitstunMonitor_Exit:

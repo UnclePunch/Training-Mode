@@ -1,5 +1,6 @@
 #To be inserted at 8008d6f4
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set entity,31
 .set playerdata,31
@@ -7,15 +8,6 @@
 .set text,29
 .set textprop,28
 .set hitbool,27
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
 
 
 ##########################################################
@@ -29,7 +21,7 @@ backupall
 
 
 #Check For CliffWait
-lhz	r4, ThreeASAgo (r5)
+lhz	r4, TM_ThreeASAgo (r5)
 cmpwi	r4,0xFD
 bne	Moonwalk_Exit
 

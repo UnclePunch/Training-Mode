@@ -1,5 +1,6 @@
 #To be inserted at 80236e00
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 #CHECK FLAG IN RULES STRUCT
 load	r4,0x804a04f0

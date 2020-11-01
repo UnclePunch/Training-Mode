@@ -1,21 +1,15 @@
 #To be inserted at 80005518
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set entity,31
-.set playerdata,31
+.set REG_FighterData,31
 .set player,30
-.set text,29
-.set textprop,28
-.set hitbool,27
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
+.set REG_DBBool, 29
+.set REG_String, 28
+.set REG_DBRate,27
+.set REG_TextColor,26
+.set REG_Text,25
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -27,8 +21,8 @@
 backupall
 
 mr	player,r3
-lwz	playerdata,0x2C(player)
-mr	r20,r4				#Dashback Bool
+lwz	REG_FighterData,0x2C(player)
+mr	REG_DBBool,r4				#Dashback Bool
 
 	#CHECK IF ENABLED
 	li	r0,OSD.Dashback			#wavedash ID
@@ -41,122 +35,76 @@ mr	r20,r4				#Dashback Bool
 	beq	Moonwalk_Exit
 
 	CheckForFollower:
-	mr	r3,playerdata
+	mr	r3,REG_FighterData
 	branchl	r12,0x80005510
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
-	#Check If Player is a Follower Subchar
-	lbz	r3, 0x221F (playerdata)
-	#Check If Subchar
-	rlwinm.	r0, r3, 29, 31, 31
-	beq	CreateText
-	#Check If Follower
-	lbz	r3,0xC(playerdata)			#get slot
-	branchl	r12,0x80032330			#get external character ID
-	load	r4,0x803bcde0			#pdLoadCommonData table
-	mulli	r0, r3, 3			#struct length
-	add	r3,r4,r0			#get characters entry
-	lbz	r0, 0x2 (r3)			#get subchar functionality
-	cmpwi	r0,0x0			#if not a follower, exit
-	beq	Moonwalk_Exit
-
-	CreateText:
-	mr	r3,playerdata			#backup playerdata pointer
-	li	r4,60			#display for 60 frames
-	li	r5,0			#Area to Display (0-2)
-	li	r6,5			#Window ID (Unique to This Display)
-	branchl	r12,TextCreateFunction			#create text custom function
-
-
-
-	mr	text,r3			#backup text pointer
-
-
-	#Check If Failed Or Succeeded
-	cmpwi	r20,0x1
-	beq	SucceededDB
-
-		FailedDB:
-		load	r3,0xffa2baff
-		stw	r3,0x30(text)
-
-		bl	FailedText
-		mr 	r3,r29			#text pointer
-		mflr	r4
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-		branchl r12,0x803a6b98
-
-
-		#Percetange Text
-		#Update + Get DB Rate in r5
-		mr	r3,playerdata
-		bl	DecDBRate
-		mr	r5,r3
-
-		bl	FailedTextPercent
-		mflr	r4
-		mr	r3,text
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-		branchl r12,0x803a6b98
-		b	Moonwalk_Exit
-
-
-		SucceededDB:
-
-		#Change Color
-		load	r3,0x8dff6eff
-		stw	r3,0x30(text)
-		bl	SuccessText
-		mr 	r3,r29			#text pointer
-		mflr	r4
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-		branchl r12,0x803a6b98
-
-
-
-		#Initialize Bottom Text
-
-		#Update + Get DB Rate in r5
-		mr	r3,playerdata
-		bl	IncDBRate
-		mr	r5,r3
-
-		#Check If UCF DB or Vanilla DB
-			lwz	r3,0x2350(playerdata)		 #get turn flag
-			cmpwi	r3,0x0			#if 0, was a smash turn
-			bne	UCFDB
-
+	#Change color to Green if frame perfect act oos
+		cmpwi	REG_DBBool,0x0
+		beq	FailedDB
+	#Check If UCF DB or Vanilla DB
+		lwz	r3,0x2350(REG_FighterData)		 #get turn flag
+		cmpwi	r3,0x0			#if 0, was a smash turn
+		bne	UCFDB
 		VanillaDB:
-			#Get Text
-			bl	VanillaDBText
-			mflr	r4
-			load	r20,0xFFFFFFFF		#Color to store
-			b	InitalizeBottomText
-
+		mr	r3,REG_FighterData
+		bl	IncDBRate
+		mr	REG_DBRate,r3
+		bl	DBVanilla_String
+		mflr REG_String
+		li	REG_TextColor,MSGCOLOR_GREEN
+		b	PrintMessage	
 		UCFDB:
-			#Get Text
-			bl	UCFDBText
-			mflr	r4
-			load	r20,0xFFFF33FF		#Color to store
-			b	InitalizeBottomText
+		mr	r3,REG_FighterData
+		bl	IncDBRate
+		mr	REG_DBRate,r3
+		bl	DBUCF_String
+		mflr REG_String
+		li	REG_TextColor,MSGCOLOR_YELLOW
+		b	PrintMessage
+		FailedDB:
+		mr	r3,REG_FighterData
+		bl	DecDBRate
+		mr	REG_DBRate,r3
+		bl	DBFailed_String
+		mflr REG_String
+		li	REG_TextColor,MSGCOLOR_RED
+		b	PrintMessage
 
-		InitalizeBottomText:
+		PrintMessage:
+		li	r3,4			#Message Kind
+		lbz	r4,0xC(REG_FighterData)	#Message Queue
+		li	r5,MSGCOLOR_WHITE
+		mr	r6,REG_String
+		mr	r7,REG_DBRate
+		Message_Display
+		lwz	r3,0x2C(r3)
+		lwz	REG_Text,MsgData_Text(r3)
 
-		#Change Text Color
-		stw	r20,0x30(text)
+		# adjust top line color
+		bl	Colors
+		mflr	r3
+		cmpwi	REG_TextColor,MSGCOLOR_GREEN
+		beq	GreenText
+		cmpwi	REG_TextColor,MSGCOLOR_RED
+		beq	RedText	
+		YellowText:
+		addi r5,r3,0x4
+		b	ChangeColor
+		GreenText:
+		addi r5,r3,0x0
+		b	ChangeColor
+		RedText:
+		addi r5,r3,0x8
+		b	ChangeColor
 
-		#Init Function Call
-		mr 	r3,r29			#text pointer
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-		branchl r12,0x803a6b98
+		ChangeColor:
+		mr	r3,REG_Text
+		li	r4,0
+		branchl r12,Text_ChangeTextColor
 
 		b Moonwalk_Exit
-
 
 #########################
 ### DB Rate Functions ###
@@ -239,31 +187,26 @@ blr
 ## TEXT CONTENTS ##
 ###################
 
-SuccessText:
+DBVanilla_String:
 blrl
-.string "Successful DB"
+.string "Vanilla Dashback\nSuccession: %d%"
 .align 2
 
-FailedText:
+DBUCF_String:
 blrl
-.string "Failed DB"
+.string "UCF Dashback\nSuccession: %d%"
 .align 2
 
-VanillaDBText:
+DBFailed_String:
 blrl
-.string "Vanilla - %d%"
+.string "Failed Dashback\nSuccession: %d%"
 .align 2
 
-UCFDBText:
+Colors:
 blrl
-.string "UCF - %d%"
-.align 2
-
-FailedTextPercent:
-blrl
-.string "Failed - %d%"
-.align 2
-
+.long 0x8dff6eff	#green
+.long 0xfff000ff 	#yellow
+.byte 255, 162, 186, 255 	#red
 ##############################
 
 

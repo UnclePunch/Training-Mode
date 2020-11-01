@@ -1,11 +1,14 @@
 #To be inserted at 8008d770
 .include "../Globals.s"
+.include "../../m-ex/Header.s"
 
 .set entity,31
-.set playerdata,31
+.set REG_FighterData,31
 .set player,30
 .set text,29
 .set textprop,28
+.set	REG_TextColor,27
+.set	REG_String,26
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -15,7 +18,7 @@
 ##########################################################
 
 backupall
-	lwz	playerdata,0x2c(player)
+	lwz	REG_FighterData,0x2c(player)
 
 	#CHECK IF ENABLED
 	li	r0,OSD.LCancel			#wavedash ID
@@ -28,67 +31,59 @@ backupall
 	beq	Moonwalk_Exit
 
 	CheckForFollower:
-	mr	r3,playerdata
+	mr	r3,REG_FighterData
 	branchl	r12,0x80005510
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
-	mr	r3,playerdata			#backup playerdata pointer
-	li	r4,60			#display for 60 frames
-	li	r5,0			#Area to Display (0-2)
-	li	r6,1			#Window ID (Unique to This Display)
-	branchl	r12,TextCreateFunction			#create text custom function
-
-	mr	text,r3			#backup text pointer
-
-
-
-	#CHANGE TEXT COLOR
-	lbz	r5,0x67F(playerdata)			#get decimal to print
+	# Check if succeeded
+	lbz	r5,0x67F(REG_FighterData)			#get decimal to print
 	cmpwi	r5,0x7
 	blt	SuccessLCancel
-
-	#SET TEXT COLOR TO PINK
-	load	r3,0xffa2baff
-	stw	r3, 0x0030 (text)
-	mr	r3,playerdata
-	bl	DecLCRate
-	mr	r25,r3
-	b	InitializeText
+	FailedLCancel:
+	li	REG_TextColor,MSGCOLOR_RED
+	mr	r3,REG_FighterData
+	bl	DecLCRate 
+	b	DetermineString
 	SuccessLCancel:
-	#SET TEXT COLOR TO GREEN
-	load	r3,0x8dff6eff
-	stw	r3, 0x0030 (text)
-	mr	r3,playerdata
+	li	REG_TextColor,MSGCOLOR_GREEN
+	mr	r3,REG_FighterData
 	bl	IncLCRate
-	mr	r25,r3
-	b	InitializeText
+	b	DetermineString
 
-	#INITALIZE TEXT 1
-	InitializeText:
-	mr 	r3,r29			#text pointer
-	lbz	r5,0x67F(playerdata)			#get decimal to print
-	cmpwi	r5,60
-	ble	0xC
-	bl	TextASCII3
-	b	0x8
-	bl	TextASCII
-	mflr 	r4			#get ASCII to print
-	addi	r5,r5,0x1
-	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-	branchl r12,0x803a6b98
+	DetermineString:
+	# If under 40 frames, qualify as an attempt
+	lbz	r8,0x67F(REG_FighterData)			#get decimal to print
+	cmpwi	r8,40
+	bgt	DetermineString_NoPress
+	bl	LCancel_Press
+	mflr	REG_String
+	b	PrintMessage
+	
+	DetermineString_NoPress:
+	bl	LCancel_NoPress
+	mflr	REG_String
+	b	PrintMessage
 
+	PrintMessage:
+	mr	r7,r3		#LCancel Percent
+	li	r3,1			#Message Kind
+	lbz	r4,0xC(REG_FighterData)	#Message Queue
+	mr	r5,REG_TextColor
+	mr	r6,REG_String
+	lbz	r8,0x67F(REG_FighterData)			#get decimal to print
+	addi	r8,r8,1
+	Message_Display
 
-
-	#INITALIZE TEXT 2
-	mr 	r3,r29			#text pointer
-	bl	TextASCII2
-	mflr 	r4			#get ASCII to print
-	mr	r5,r25
-	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-	lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-	branchl r12,0x803a6b98
+	
+	# Make Top Line White
+	lwz	r3,0x2C(r3)
+	lwz	r3,MsgData_Text(r3)
+	li	r4,0
+	bl	Color_White
+	mflr r5
+	branchl	r12,Text_ChangeTextColor
+	
 
 b Moonwalk_Exit
 
@@ -169,22 +164,19 @@ lwz	r3,0xF4(sp)
 blr
 
 
-TextASCII:
+LCancel_Press:
 blrl
-
-#Last L/R/Z
-.string "Frame %d/7"
+.string "L-Cancel %d%%\nFrame %d/7"
 .align 2
 
-TextASCII2:
+LCancel_NoPress:
 blrl
-.string "L-Cancel %d%"
+.string "L-Cancel %d%%\nNo Press"
 .align 2
 
-TextASCII3:
+Color_White:
 blrl
-.string "No Press"
-.align 2
+.long 0xFFFFFFFF
 
 ##############################
 

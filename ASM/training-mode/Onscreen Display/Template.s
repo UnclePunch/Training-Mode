@@ -63,17 +63,6 @@ fsubs    \reg2,\reg2,f16
 .set textprop,28
 .set hitbool,27
 
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+(0*0x2)
-.set TwoASAgo,PrevASStart+(1*0x2)
-.set ThreeASAgo,PrevASStart+(2*0x2)
-.set FourASAgo,PrevASStart+(3*0x2)
-.set FiveASAgo,PrevASStart+(4*0x2)
-.set SixASAgo,PrevASStart+(5*0x2)
-
-.set FFVar,0x240C
-
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
 ## Is 0x80 long and is zero'd at the start              ##

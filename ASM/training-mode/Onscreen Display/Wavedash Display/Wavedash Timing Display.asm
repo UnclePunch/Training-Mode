@@ -1,15 +1,17 @@
 #To be inserted at 80099d7c
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
-.set playerdata,29
-.set player,27
+.set REG_FighterData,29
+.set REG_FighterGObj,27
 .set text,28
+.set REG_Text,30
 
 backup
 
 #Get Pointers
-	mr	player,r3
-	lwz playerdata,0x2C(player)
+	mr	REG_FighterGObj,r3
+	lwz REG_FighterData,0x2C(REG_FighterGObj)
 
 
 #CHECK IF OSD IS ENABLED
@@ -21,19 +23,84 @@ backup
 	and.	r0, r0, r4
 	beq	Injection_Exit
 
-#Check if player is a subcharacter
-	mr	r3,playerdata
+#Check if fighter is a subcharacter
+	mr	r3,REG_FighterData
 	branchl	r12,0x80005510
 	cmpwi	r3,0x1
 	beq	Injection_Exit
 
 #CHECK IF IT WAS A WAVEDASH (landed within 20 frames)
-	lhz	r3,FramesinCurrentAS(playerdata)
+	lhz	r3,TM_FramesinCurrentAS(REG_FighterData)
 	cmpwi r3,20
 	bgt	Injection_Exit
 
+	#Get wavedash angle
+	lfs	f1,TM_AirdodgeAngle(REG_FighterData)
+	bl	GetWavedashAngle
+	stfs f1,0x80(sp)
+
+	PrintMessage:
+	li	r3,0			#Message Kind
+	lbz	r4,0xC(REG_FighterData)	#Message Queue
+	li	r5,MSGCOLOR_WHITE
+	bl	Wavedash_String
+	mflr r6
+	lhz	r7,TM_FramesinCurrentAS(REG_FighterData)
+	addi r7,r7,1								#1-index number
+	Message_Display
+	lwz	r3,0x2C(r3)
+	lwz	REG_Text,MsgData_Text(r3)
+
+	# Adjust Timing color
+		lhz	r3,TM_FramesinCurrentAS(REG_FighterData)
+		cmpwi	r3,0
+		bne AdjustAngleColor
+		bl	Floats
+		mflr r4
+		addi r5,r4,0xC
+	#Change Color
+		mr 	r3,REG_Text			#text pointer
+		li	r4,0
+		branchl	r12,Text_ChangeTextColor
+
+	AdjustAngleColor:
+	# Adjust Angle color
+	#Get Angle and Float Pointer
+		bl	Floats
+		mflr r4
+		lfs f1,	0x80(sp)
+	#Check For Perfect Angle
+		lfs f2,0x0(r4)
+		fcmpo cr0,f1,f2
+		blt Injection_Exit
+		lfs f2,0x4(r4)
+		fcmpo cr0,f1,f2
+		blt PerfectAngle
+		lfs f2,0x8(r4)
+		fcmpo cr0,f1,f2
+		bgt Injection_Exit
+	OKAngle:
+		addi r5,r4,0x10
+		b ChangeAngleColor
+	PerfectAngle:
+		addi r5,r4,0xC
+		b ChangeAngleColor
+	ChangeAngleColor:
+	#Change Color
+		mr 	r3,REG_Text			#text pointer
+		li	r4,1
+		branchl	r12,Text_ChangeTextColor
+
+
+
+b Injection_Exit
+
+
+
+/*
+
 #Create OSD Popup
-	mr	r3,playerdata			#backup playerdata pointer
+	mr	r3,REG_FighterData			#backup REG_FighterData pointer
 	li	r4,60			#display for 60 frames
 	li	r5,0			#Area to Display (0-2)
 	li	r6,0			#Window ID (Unique to This Display)
@@ -49,7 +116,7 @@ backup
 	mr 	r3,text			#text pointer
 	bl	TextASCII
 	mflr 	r4			#get ASCII to print
-	lhz	r5,FramesinCurrentAS(playerdata)
+	lhz	r5,TM_FramesinCurrentAS(REG_FighterData)
 	addi r5,r5,1								#1-index number
 	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
 	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
@@ -57,7 +124,7 @@ backup
 	branchl r12,0x803a6b98
 
 #Check if frame perfect
-	lbz	r4,0x680(playerdata)
+	lbz	r4,0x680(REG_FighterData)
 	cmpwi	r4,0x0
 	bne DisplayWavedashAngle
 #Change Color
@@ -67,14 +134,15 @@ backup
 	stw	r5,0xF0(sp)
 	addi r5,sp,0xF0
 	branchl r12,0x803a74f0
+*/
+#########################
+## Get Wavedash Angle  ##
+#########################
 
-###########################
-## Print Wavedash Angle  ##
-###########################
+GetWavedashAngle:
+backup
 
-DisplayWavedashAngle:
 #Convert angle to degrees
-	lfs	f1,AirdodgeAngle(playerdata)
 	lfs	f2, -0x3D10 (rtoc)			#0.017453
 	fdivs f2,f1,f2
 #Multiply by 10 to preserve 1 decimal point
@@ -125,8 +193,11 @@ Quadrant2:
 	b	SaveAngle
 
 SaveAngle:
-	stfs f2,0x80(sp)			#place on stack for safe keeping
+	fmr	f1,f2
+	restore
+	blr
 
+/*
 #Display Wavedash Angle
 	mr 	r3,text			#text pointer
 	bl	TextASCII2
@@ -165,10 +236,15 @@ ChangeAngleColor:
 	mr 	r3,text			#text pointer
 	addi r5,sp,0xF0
 	branchl r12,0x803a74f0
+*/
 
-b Injection_Exit
 
 #########################
+
+Wavedash_String:
+blrl
+.string "Wavedash Frame: %d\nAngle: %2.1f"
+.align 2
 
 TextASCII:
 blrl
@@ -185,6 +261,8 @@ blrl
 .float 16.8		#Great Angle Min
 .float 23.7		#Great Angle Max
 .float 30.5		#Good Angle Max
+.long 0x8dff6eff	#Perfect Angle
+.long 0xfff000ff 	#Great Angle
 
 ##############################
 
@@ -213,7 +291,7 @@ blr
 ##############################
 
 Injection_Exit:
-mr	r3,player
+mr	r3,REG_FighterGObj
 restore
 
 lwz	r4, -0x514C (r13)

@@ -1,5 +1,6 @@
 #To be inserted at 80093388
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 .set entity,31
 .set playerdata,31
 .set player,30
@@ -16,6 +17,6 @@
 
 #init count
 li	r0,0
-sth	r0,0x23EE(r29)
+sth	r0,TM_ShieldFrames(r29)
 
 lwz	r0, 0x234C (r29)

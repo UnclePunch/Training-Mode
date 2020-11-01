@@ -1,5 +1,6 @@
 #To be inserted at 80082c40
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set entity,31
 .set playerdata,31
@@ -7,15 +8,6 @@
 .set text,29
 .set textprop,28
 .set hitbool,27
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
 
 
 ##########################################################
@@ -32,7 +24,7 @@ backupall
   lwz r6,0x2C(28)
 CliffWaitSearch:
   mulli r3,r5,0x2
-  addi  r3,r3,PrevASStart
+  addi  r3,r3,TM_PrevASStart
   lhzx r3,r3,r6
   cmpwi	r3,0xFD
   beq	DisplayGALINT

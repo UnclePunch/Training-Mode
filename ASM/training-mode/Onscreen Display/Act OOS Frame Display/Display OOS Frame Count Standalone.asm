@@ -1,5 +1,6 @@
 #To be inserted at 80005508
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set ActionStateChange,0x800693ac
 .set HSD_Randi,0x80380580
@@ -7,23 +8,9 @@
 .set Wait,0x8008a348
 .set Fall,0x800cc730
 
-.set entity,31
-.set playerdata,31
+.set REG_FighterData,31
 .set player,30
-.set text,29
-.set textprop,28
-.set TextCreateFunction,0x80005928
-
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
-
-
+.set REG_TextColor, 29
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -35,7 +22,7 @@
 backupall
 
 mr	player,r4
-lwz	playerdata,0x2C(player)
+lwz	REG_FighterData,0x2C(player)
 
 	#####################
 	## CHECK IF IASA'd ##
@@ -56,31 +43,59 @@ lwz	playerdata,0x2C(player)
 	bne 	Moonwalk_Exit
 
 	CheckForFollower:
-	mr	r3,playerdata
+	mr	r3,REG_FighterData
 	branchl	r12,0x80005510
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
 	CheckForGuardOff:
-	lwz	r3,0x10(playerdata)
+	lwz	r3,0x10(REG_FighterData)
 	cmpwi	r3,0xB4
 	beq	Moonwalk_Exit
 
 	ShieldWaitCheck:
 	#CHECK IF 3RD MOST RECENT AS WAS SHIELD STUN
-	lhz	r3,TwoASAgo(playerdata)
+	lhz	r3,TM_TwoASAgo(REG_FighterData)
 	cmpwi	r3,0xB5
 	beq	CreateText
 
 	GuardOffCheck:
 	#CHECK IF 4TH MOST RECENT AS WAS SHIELD STUN
-	lhz	r3,ThreeASAgo(playerdata)
+	lhz	r3,TM_ThreeASAgo(REG_FighterData)
 	cmpwi	r3,0xB5
 	beq 	CreateText
 	b	Moonwalk_Exit
 
 	CreateText:
-	mr	r3,playerdata			#backup playerdata pointer
+	#Change color to Green if frame perfect act oos
+		lhz	r3,TM_ShieldFrames(REG_FighterData)			#get shield stun frames left
+		cmpwi	r3,0x0
+		bgt	WhiteText
+		li	REG_TextColor,MSGCOLOR_GREEN
+		b	PrintMessage
+		WhiteText:
+		li	REG_TextColor,MSGCOLOR_WHITE
+		b	PrintMessage
+
+		PrintMessage:
+		li	r3,3			#Message Kind
+		lbz	r4,0xC(REG_FighterData)	#Message Queue
+		mr	r5,REG_TextColor
+		bl	OoS_String
+		mflr r6
+		lhz	r7,TM_ShieldFrames(REG_FighterData)			#get shield stun frames left
+		addi r7,r7,1
+		Message_Display
+
+		b	Moonwalk_Exit
+
+
+
+
+
+
+/*
+	mr	r3,REG_FighterData			#backup REG_FighterData pointer
 	li	r4,60			#display for 60 frames
 	li	r5,0			#Area to Display (0-2)
 	li	r6,3			#Window ID (Unique to This Display)
@@ -91,7 +106,7 @@ lwz	playerdata,0x2C(player)
 
 
 	#CHECK IF FRAME PERFECT
-	lhz	r3,0x23EE(playerdata)			#get shield stun frames left
+	lhz	r3,0x23EE(REG_FighterData)			#get shield stun frames left
 	cmpwi	r3,0x0
 	bgt	NotFramePerfect
 
@@ -115,7 +130,7 @@ lwz	playerdata,0x2C(player)
 		bl	DuringSSASCII2
 		mflr 	r4			#get ASCII to print
 
-		lhz	r5,0x23EE(playerdata)			#get shield stun frames left
+		lhz	r5,0x23EE(REG_FighterData)			#get shield stun frames left
 		addi	r5,r5,0x1
 
 
@@ -124,20 +139,15 @@ lwz	playerdata,0x2C(player)
 		branchl r12,0x803a6b98
 
 		b Moonwalk_Exit
-
+*/
 
 ###################
 ## TEXT CONTENTS ##
 ###################
 
-DuringSSASCII:
+OoS_String:
 blrl
-.string "Act OoS"
-.align 2
-
-DuringSSASCII2:
-blrl
-.string "Frame %d"
+.string "Act OoShield\nFrame %d"
 .align 2
 
 ##############################

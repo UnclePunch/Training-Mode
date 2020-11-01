@@ -1,5 +1,6 @@
 #To be inserted at 8008f71c
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set entity,31
 .set playerdata,31
@@ -41,7 +42,7 @@ LastItemMove:
 
 GetLastMoveVictimHitBy:
 #Get last Move Instance Victim was hit by
-  lhz r3,PreviousMoveInstanceHitBy(r6)
+  lhz r3,TM_PreviousMoveInstanceHitBy(r6)
 
 #If the move instance is 0, was most likely a stage element (corneria lasers)
   cmpwi r4,0
@@ -54,7 +55,8 @@ GetLastMoveVictimHitBy:
 #Reset SDI Counter
 ResetSDICount:
   li	r0, 0x0
-  stw	r0, SDIInputs (r6)
+  sth	r0, TM_SuccessfulSDIInputs (r6)
+  sth	r0, TM_TotalSDIInputs (r6)
 
 exit:
 cmpwi	r30, 0
