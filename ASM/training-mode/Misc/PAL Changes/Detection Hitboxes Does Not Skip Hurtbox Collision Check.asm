@@ -1,5 +1,6 @@
 #To be inserted at 800796e0
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .if PAL==1
 nop

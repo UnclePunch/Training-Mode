@@ -1,16 +1,18 @@
-#To be inserted at 8016e91c
+#To be inserted at 8001674c
 .include "../../Globals.s"
-.include "../../../m-ex/Header.s"
 
-#*************************************************
-.if debug==1
+.set  REG_Tick,20
+.set  REG_FileSize,21
+.set  REG_FileName,30
+
+backup
+
 #Get Prev Tick
-	lwz	r3,-0x49b4(r13)
+	lwz	r3,-8(rtoc)
 #Get Current Tick
 	mftbl	r4
 #Find Difference
 	sub	r3,r4,r3
-
 #Convert to ms
 #Get Clock Bus
 	load 	r4,0x800000f8
@@ -22,21 +24,28 @@
 	li	r5,1000
 	divw	r4,r4,r5
 #divided by ticks
-	divw	r4,r3,r4
+	divw	REG_Tick,r3,r4
+
+#Get file size
+  mr  r3,r30
+  branchl r12,0x800163d8
+  mr  REG_FileSize,r3
 
 #OSReport Difference
 	bl	OSReportString
 	mflr	r3
+  mr  r4,REG_FileName
+  li  r5,1000
+  divw  r5,REG_FileSize,r5
+  mr  r6,REG_Tick
 	branchl r12,0x803456a8
 	b	Exit
 
 OSReportString:
 blrl
-.string "Match loaded in: %dms
-"
+.string "%s (%dkb) loaded in %dms\n"
 .align 2
-.endif
 #*************************************************
-
 Exit:
-lwz	r0, 0x0024 (sp)
+restore
+lmw	r27, 0x001C (sp)

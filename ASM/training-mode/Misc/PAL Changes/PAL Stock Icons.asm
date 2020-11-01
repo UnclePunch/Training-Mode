@@ -1,5 +1,6 @@
 #To be inserted at 802f9a3c
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .if PAL==1
 #Get Flaots

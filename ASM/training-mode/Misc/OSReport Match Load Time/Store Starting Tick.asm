@@ -1,5 +1,6 @@
 #To be inserted at 8016e740
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 mr	r31, r3
 

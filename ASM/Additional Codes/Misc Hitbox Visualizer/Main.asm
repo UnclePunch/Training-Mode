@@ -19,6 +19,7 @@ backup
   cmpwi r3,Pichu.Int
   beq Pikachu
   */
+  b Exit
 ##########################
 Link:
 #Check if boomerang exists

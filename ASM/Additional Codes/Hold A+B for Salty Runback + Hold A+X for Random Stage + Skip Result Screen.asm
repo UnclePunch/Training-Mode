@@ -49,7 +49,7 @@ RandomStage:
   b exit
 
 LoadCSS:
-  li r27,0x0  #load CSS
+  li r27,0 # 4 is results
 
 exit:
 Original:

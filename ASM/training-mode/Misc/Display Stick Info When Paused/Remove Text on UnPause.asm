@@ -1,5 +1,6 @@
 #To be inserted at 801a1124
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set FFVar,0x240C
 

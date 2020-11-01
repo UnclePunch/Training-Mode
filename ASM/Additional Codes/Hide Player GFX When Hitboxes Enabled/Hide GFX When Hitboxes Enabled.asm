@@ -13,6 +13,7 @@
   lbz r8,0x21FC(r8)
   rlwinm. r8,r8,0,30,30
   beq Original
+  li  r3,0
   branch  r12,0x80061d40
 
 Original:
