@@ -1,5 +1,6 @@
 #To be inserted at 8024d84c
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set MainTextOffset,-0x4EB4
 .set LeftArrowTextOffset,-0x4EB0
@@ -8,9 +9,17 @@
 
 backup
 
-.set EventID,23
-.set PageID,24
+.set  REG_PageNum,22
+.set  EventID,23
+.set  PageID,24
 
+#Get number of pages
+  rtocbl	r12,TM_GetPageNum
+  mr  REG_PageNum,r3
+#Get Event ID
+  lbz	r3,0x0(r31)
+  lwz	r4,0x4(r31)
+  add	EventID,r3,r4
 #Check if first page
   lwz r3,MemcardData(r13)
   lbz PageID,CurrentEventPage(r3)
@@ -28,7 +37,7 @@ FirstPageVisibility:
 	stb r4,0x4D(r3)
 
 #Check if last page
-	cmpwi PageID,NumOfPages
+	cmpw PageID,REG_PageNum
 	bne ShowLastPage
 #Hide right arrow
 	li	r4,1
@@ -49,10 +58,13 @@ LastPageVisibility:
 	cmpw	r5,r6
 	bne	end
 #Get Events Tutorial
-	branchl r12,GetEventTutorialFileName
+	lwz r3,MemcardData(r13)
+	lbz r3,CurrentEventPage(r3)
+  mr  r4,EventID
+	rtocbl r12,TM_GetEventTut
 	mr	r20,r3
-	addi	r21,sp,0x80					#Destination
 #Copy File Name To Temp Space
+	addi	r21,sp,0x80
 	mr	r3,r21								#Destination
 	mr	r4,r20								#Movie FileName
 	branchl	r12,0x80325a50		#strcpy

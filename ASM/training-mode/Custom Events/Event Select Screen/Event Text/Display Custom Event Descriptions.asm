@@ -1,5 +1,6 @@
 #To be inserted at 8024d80c
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set HeaderLength,0xB
 
@@ -8,11 +9,12 @@
 #Get Event ID
   lbz	r3,0x0(r31)
   lwz	r4,0x4(r31)
-  add	r3,r3,r4
+  add	r4,r3,r4
+#Get page number
+  lwz r3,MemcardData(r13)
+  lbz r3,CurrentEventPage(r3)
 #Get Event Description ASCII
-  branchl r12,0x80005528
-  cmpwi r3,0
-  beq VanillaEvent
+  rtocbl r12,TM_GetEventDesc
 
 CustomEvent:
 .set text,24

@@ -1,5 +1,6 @@
 #To be inserted at 80264504
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 .set text,31
 .set textProperties,30
@@ -15,11 +16,11 @@
   bne Original
 
 #Check For Custom Event
-  lwz	r3, -0x77C0 (r13)
-  lbz	r3, 0x0535 (r3)         #get event ID
-  branchl r12,0x80005524      #get event name
-  cmpwi r3,0x0
-  beq VanillaEvent
+  lwz r3,MemcardData(r13)
+  lbz r3,CurrentEventPage(r3)
+  lwz	r4, -0x77C0 (r13)
+  lbz	r4, 0x0535 (r4)         #get event ID
+  rtocbl r12,TM_GetEventName
 
 #Save Text
   mr  EventName,r3

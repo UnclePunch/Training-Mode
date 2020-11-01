@@ -1,5 +1,6 @@
 #To be inserted at 8024e568
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set text,31
 .set textproperties,30
@@ -56,7 +57,7 @@ backup
 #Get Current Page
 	lwz r3,MemcardData(r13)
 	lbz r3,CurrentEventPage(r3)
-	branchl r12,GetCustomEventPageName
+	rtocbl r12,TM_GetPageName
 #Initialize Subtext
 	mr	r4,r3
 	lfs 	f1,PageX(textproperties) 		#X offset of text
@@ -86,13 +87,13 @@ backup
 ## Version Text ##
 ##################
 
+#Get version string
+	rtocbl r12,TM_GetTMVers
+	mr	r4,r3
 #Initialize Subtext
 	lfs 	f1,VersionX(textproperties) #X offset of text
 	lfs 	f2,VersionY(textproperties) #Y offset of text
 	mr 	r3,text       #struct pointer
-	bl 	VersionText
-	mflr 	r4		#pointer to ASCII
-	load r5,VersionString
 	branchl r12,0x803a6b98
 #Temp remember subtext ID
 	mr	r20,r3

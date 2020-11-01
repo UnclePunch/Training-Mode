@@ -1,5 +1,6 @@
 #To be inserted at 8024dbb4
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 #Update cursor position
 #Get Texture Data

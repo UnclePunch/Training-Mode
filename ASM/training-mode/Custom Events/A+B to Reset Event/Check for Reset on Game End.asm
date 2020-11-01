@@ -1,5 +1,6 @@
 #To be inserted at 801bba38
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 #Get all players inputs
   li  r3,4

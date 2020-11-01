@@ -1,53 +1,22 @@
 #To be inserted at 801bab28
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 stb	r0, 0x000A (r31)
 
-.set EventID,7
-.set PageID,8
-
-#Get Hovered Over Event ID in r23
-	lwz	r4, -0x77C0 (r13)
-	lbz	EventID, 0x0535 (r4)
-
-#Get Current Page
-  lbz PageID,CurrentEventPage(r4)
-
-#Get pointer page's string array
-	bl	SkipJumpTable
-
-##### Page List #######
-	EventJumpTable
-#######################
-
-SkipJumpTable:
-  mflr	r4		#Jump Table Start in r4
-  mulli	r5,PageID,0x4		#Each Pointer is 0x4 Long
-  add	r4,r4,r5		#Get Event's Pointer Address
-  lwz	r5,0x0(r4)		#Get bl Instruction
-  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-  add	r5,r4,r5		#Gets Address in r4
-
-#Loop Through Whitelisted Events
-  subi	r5,r5,0x1
-Loop:
-  lbzu	r6,0x1(r5)
-  extsb	r0,r6
-  cmpwi	r0,-1
-  beq	original
-  cmpw	r6,EventID
-  beq	SSS
-  b	Loop
+#Get Event ID
+	lwz	r3, -0x77C0 (r13)
+	lbz	r4, 0x0535 (r3)
+  lbz r3,CurrentEventPage(r3)
+#Check if this event has a SSS
+	rtocbl	r12,TM_GetIsSelectStage
+	cmpwi	r3,0
+	beq	original
 
 SSS:
 #Store SSS as Next Scene
   load	r3,SceneController
   li	r4,0x3
   stb	r4,0x5(r3)
-  b original
-
-#########################
-	EventLoadSSS
-#########################
 
 original:

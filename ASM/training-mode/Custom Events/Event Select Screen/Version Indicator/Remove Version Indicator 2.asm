@@ -1,5 +1,6 @@
 #To be inserted at 8024e3b0
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set MainTextOffset,-0x4EB4
 .set LeftArrowTextOffset,-0x4EB0

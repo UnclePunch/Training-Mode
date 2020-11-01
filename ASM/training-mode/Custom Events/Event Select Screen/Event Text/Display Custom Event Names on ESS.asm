@@ -1,5 +1,6 @@
 #To be inserted at 8024d470
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 #r24 = text struct
 #r27 = Event ID
@@ -41,9 +42,17 @@ backup
   li  r4,0x1618
   sth r4,0x0(r3)
 
+/*
 #Get ASCII
   mr r3,r27
   branchl r12,0x80005524
+*/
+
+#Get Event Name
+  lwz r3,MemcardData(r13)
+  lbz r3,CurrentEventPage(r3)
+  mr r4,r27
+  rtocbl r12,TM_GetEventName
 
 #Convert To Menu Text
   mr  r4,r3               #ASCII To Store

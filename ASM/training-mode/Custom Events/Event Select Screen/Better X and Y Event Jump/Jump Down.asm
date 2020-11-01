@@ -1,5 +1,6 @@
 #To be inserted at 8024d998
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set EventID,31
 .set PageID,30

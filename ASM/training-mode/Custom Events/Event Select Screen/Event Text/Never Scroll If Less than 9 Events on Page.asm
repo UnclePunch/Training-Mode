@@ -1,11 +1,14 @@
 #To be inserted at 8024e438
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 #Original Codeline
   addi	r30, r3, 0
 
 #First check if page has 9 events
-  branchl r12,GetNumOfEventsOnCurrentPage
+	lwz r3,MemcardData(r13)
+	lbz r3,CurrentEventPage(r3)
+  rtocbl r12,TM_GetPageEventNum
   cmpwi r3,9
   bge Original
 #Set no scroll

@@ -1,5 +1,6 @@
 #To be inserted at 8015cf74
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 #r3 = event
 #r4 = score

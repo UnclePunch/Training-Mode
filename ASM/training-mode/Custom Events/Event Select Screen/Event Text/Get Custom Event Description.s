@@ -1,12 +1,9 @@
-#To be inserted at 801beb8c
+#To be inserted at 80005528
 .include "../../../Globals.s"
 .include "../../../../m-ex/Header.s"
 
 .set EventID,31
 .set PageID,30
-
-.set KO,0x0
-.set Time,0x1
 
 backup
 
@@ -19,39 +16,10 @@ backup
   bl  SkipPageList
 
 ##### Page List #######
-  EventJumpTable
+	EventJumpTable
 #######################
-
-Minigames:
-.byte KO
-.byte KO
-.byte KO
-.byte Time
-.align 2
-
-GeneralTech:
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.align 2
-
-SpacieTech:
-.byte KO
-.byte KO
-.byte KO
-.byte KO
-.align 2
-##########################
+  EventDescriptionStrings
+#######################
 
 SkipPageList:
   mflr	r4		#Jump Table Start in r4
@@ -59,10 +27,11 @@ SkipPageList:
   add	r4,r4,r5		#Get Event's Pointer Address
   lwz	r5,0x0(r4)		#Get bl Instruction
   rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+#Get String
+  mr  r3,EventID
   add	r4,r4,r5		#Gets ASCII Address in r4
-#Get Byte
-  lbzx	r3,EventID,r4
+  branchl r12,SearchStringTable
 
-exit:
+Exit:
 restore
 blr

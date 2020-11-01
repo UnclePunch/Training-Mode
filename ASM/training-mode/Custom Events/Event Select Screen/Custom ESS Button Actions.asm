@@ -1,5 +1,6 @@
 #To be inserted at 8024d92c
 .include "../../Globals.s"
+.include "../../../m-ex/Header.s"
 
 backup
 
@@ -2988,7 +2989,11 @@ backup
 #region PlayMovie
 PlayMovie:
 		#Get Events Tutorial
-			branchl r12,GetEventTutorialFileName
+			lwz r3,MemcardData(r13)
+			lbz r3,CurrentEventPage(r3)
+			lwz	r4, -0x77C0 (r13)
+			lbz	r4, 0x0535 (r4)
+			rtocbl r12,TM_GetEventTut
 			mr	r20,r3					#Get Event's Tutorial File Name in r20
 
 			#Get Extension Pointer in r21
@@ -3278,7 +3283,9 @@ blrl
 #######################################
 
 SwitchPage:
-
+#Get number of pages
+	rtocbl	r12,TM_GetPageNum
+	mr	r6,r3
 #Change page
 	lwz r4,MemcardData(r13)
 	lbz r3,CurrentEventPage(r4)
@@ -3286,7 +3293,7 @@ SwitchPage:
 	stb r3,CurrentEventPage(r4)
 #Check if within page bounds
 SwitchPage_CheckHigh:
-	cmpwi r3,NumOfPages
+	cmpw r3,r6
 	ble SwitchPage_CheckLow
 #Stay on current page
 	subi r3,r3,1
@@ -3301,8 +3308,10 @@ SwitchPage_CheckLow:
 	b	exit
 
 SwitchPage_ChangePage:
-#Get Page Name ASCII
-	branchl r12,GetCustomEventPageName
+#Get Page Name string
+	lwz r3,MemcardData(r13)
+	lbz r3,CurrentEventPage(r3)
+	rtocbl r12,TM_GetPageName
 #Update Page Name
 	mr	r5,r3
 	lwz r3,-0x4EB4(r13)

@@ -1,10 +1,13 @@
 #To be inserted at 8024dec8
 .include "../../../Globals.s"
+.include "../../../../m-ex/Header.s"
 
 .set PageID,31
 
 #Get number of events on this page
-  branchl r12,GetNumOfEventsOnCurrentPage
+	lwz r3,MemcardData(r13)
+	lbz r3,CurrentEventPage(r3)
+  rtocbl r12,TM_GetPageEventNum
 
 #Get current event
   lbz	r4, 0 (r28)
