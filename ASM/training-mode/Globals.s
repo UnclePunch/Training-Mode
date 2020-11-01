@@ -1227,36 +1227,6 @@ InitSettings:
 .set EventOSD_LedgetechCounter,0x00000604
 .set EventOSD_EscapeSheik,0x00000400
 
-
-#Custom Playerblock Offsets
-.set PlayerBlockSize, 0x2500
-.set FramesinCurrentAS,0x23EC    #half
-.set ShieldFrames,0x23EE    #half
-.set MiscVar1,0x23EE        #half
-.set PrevASStart,0x23F0
-  .set CurrentAS,0x10
-  .set OneASAgo,PrevASStart+0x0
-  .set TwoASAgo,PrevASStart+0x2
-  .set ThreeASAgo,PrevASStart+0x4
-  .set FourASAgo,PrevASStart+0x6
-  .set FiveASAgo,PrevASStart+0x8
-  .set SixASAgo,PrevASStart+0xA
-.set FramesInPrevASStart,0x23FC
-  .set FramesinOneASAgo,FramesInPrevASStart+0x0
-  .set FramesinTwoASAgo,FramesInPrevASStart+0x2
-  .set FramesinThreeASAgo,FramesInPrevASStart+0x4
-  .set FramesinFourASAgo,FramesInPrevASStart+0x6
-  .set FramesinFiveASAgo,FramesInPrevASStart+0x8
-  .set FramesinSixASAgo,FramesInPrevASStart+0xA
-.set TangibleFrameCount,0x2408        #half
-.set CanFastfallFrameCount,0x240C     #half
-.set PostHitstunFrameCount,0x2410     #word
-.set PlayerWhoShieldedAttack,0x2414   #word
-.set PreviousMoveInstanceHitBy,0x2418 #half
-.set MiscVar2,0x241A                  #half
-.set AirdodgeY,0x241C                 #float
-.set MiscVar3,0x241C                  #word
-
 #####################
 ## Melee Variables ##
 #####################
@@ -1324,6 +1294,33 @@ InitSettings:
 .set TM_FrozenToggle,-0x4F8C
 .set TM_GameFrameCounter,-0x49a8
 
+#TM Function
+.set TM_tmFunction,-(50*4)         #offset of rtoc where function pointers are kept, probably temp solution
+.set TM_EventPages, TM_tmFunction + 0x0
+.set TM_GetEventName, TM_EventPages + 0x4
+.set TM_GetEventDesc, TM_GetEventName + 0x4
+.set TM_GetEventTut, TM_GetEventDesc + 0x4
+.set TM_GetPageName, TM_GetEventTut + 0x4
+.set TM_GetPageEventNum, TM_GetPageName + 0x4
+.set TM_GetTMVers, TM_GetPageEventNum + 0x4
+.set TM_GetTMCompile, TM_GetTMVers + 0x4
+.set TM_GetPageNum, TM_GetTMCompile + 0x4
+.set TM_GetIsChooseCPU, TM_GetPageNum + 0x4
+.set TM_GetIsSelectStage, TM_GetIsChooseCPU + 0x4
+.set TM_GetFighter, TM_GetIsSelectStage + 0x4
+.set TM_GetCPUFighter, TM_GetFighter + 0x4
+.set TM_GetStage, TM_GetCPUFighter + 0x4
+.set TM_GetCSSFile, TM_GetStage + 0x4
+.set TM_EventInit, TM_GetCSSFile + 0x4
+.set TM_OnSceneChange, TM_EventInit + 0x4 
+.set TM_OnBoot, TM_OnSceneChange + 0x4 
+.set TM_OnStartMelee, TM_OnBoot + 0x4  
+.set TM_OnFileLoad, TM_OnStartMelee + 0x4 
+.set TM_MessageDisplay, TM_OnFileLoad + 0x4
+
+#TmDt Data Pointers
+.set TM_Data,TM_tmFunction - 0x4
+
 #Scene Struct
 .set SceneController,0x80479D30
   .set Scene.CurrentMajor,0x0
@@ -1378,23 +1375,6 @@ InitSettings:
 .set Scene.FixedCamera,0x2A
 .set Scene.EventMode,0x2B
 .set Scene.SingleButton,0x2C
-
-#Playerdata offsets
-#Dedicated
-.set PrevASStart,0x23F0
-.set CurrentAS,0x10
-.set OneASAgo,PrevASStart+0x0
-.set TwoASAgo,PrevASStart+0x2
-.set ThreeASAgo,PrevASStart+0x4
-.set FourASAgo,PrevASStart+0x6
-.set FiveASAgo,PrevASStart+0x8
-.set SixASAgo,PrevASStart+0xA
-.set PreviousMoveInstanceHitBy,0x2418
-#Volatile
-.set AirdodgeAngle,0x241C
-.set SDIInputs,0x241C
-.set SuccessfulSDIInputs,0x241C
-.set TotalSDIInputs,0x241E
 
 ####################
 ## Function Names ##
@@ -2073,9 +2053,16 @@ InitSettings:
 .set ASID_ThrownCrazyhand, 0x153
 .set ASID_BarrelCannonWait, 0x154
 
+
 .macro branchl reg, address
 lis \reg, \address @h
 ori \reg,\reg,\address @l
+mtctr \reg
+bctrl
+.endm
+
+.macro rtocbl reg, offset
+lwz \reg,\offset(rtoc)
 mtctr \reg
 bctrl
 .endm
@@ -2125,3 +2112,19 @@ lwz r0, 0x104(r1)
 addi	r1,r1,0x100	# release the space
 mtlr r0
 .endm
+
+.set R13_EventVars, -0x4A0C
+.set EventVars_MessageDisplay, (8 * 4)
+
+#Message Display
+.macro Message_Display
+crset 6
+rtocbl r12,TM_MessageDisplay
+.endm
+
+.set MsgData_Text,0x0
+
+.set MSGCOLOR_WHITE, 0
+.set MSGCOLOR_GREEN, 1
+.set MSGCOLOR_RED, 2
+.set MSGCOLOR_YELLOW, 3
