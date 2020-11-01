@@ -1,0 +1,15 @@
+item_state_table
+onspawn
+ondestroy
+onpickup
+ondrop
+onthrow
+ongivedamage
+ontakedamage
+onenterair
+onreflect
+onunk1
+onunk2
+onhitshieldbounce
+onhitshielddeterminedestroy
+onunk3
