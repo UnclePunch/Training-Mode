@@ -12,6 +12,7 @@ GetIsSelectStage
 GetFighter
 GetCPUFighter
 GetStage
+GetEventFile
 GetCSSFile
 EventInit
 OnSceneChange
