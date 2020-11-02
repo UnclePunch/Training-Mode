@@ -107,7 +107,7 @@ static EventInfo LCancel = {
     .eventName = "L-Cancel Training\n",
     .eventDescription = "Practice L-Cancelling on\na stationary CPU.\n",
     .eventTutorial = "TvLC",
-    .eventFile = "EvLab",
+    .eventFile = 0,
     .isChooseCPU = true,
     .isSelectStage = true,
     .scoreType = 0,
@@ -321,8 +321,8 @@ static EventMatchData SDI_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .cpuKind = 2,         // 0xFF=
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -334,8 +334,8 @@ static EventInfo SDI = {
     .eventDescription = "Use Smash DI to escape\nFox's up-air attack!",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
+    .isChooseCPU = false,
+    .isSelectStage = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SDI_MatchData,
@@ -367,8 +367,8 @@ static EventMatchData Powershield_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .cpuKind = 20,        // 0xFF=
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -380,8 +380,8 @@ static EventInfo Powershield = {
     .eventDescription = "Powershield Falco's laser!\nPause to change to fire-rate.",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
+    .isChooseCPU = false,
+    .isSelectStage = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Powershield_MatchData,
@@ -412,7 +412,7 @@ static EventMatchData Ledgetech_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
+    .cpuKind = 20,        // 0xFF=
     .stage = -1,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
@@ -425,7 +425,7 @@ static EventInfo Ledgetech = {
     .eventDescription = "Practice ledge-teching\nFalco's down-smash",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
+    .isChooseCPU = false,
     .isSelectStage = true,
     .scoreType = 0,
     .callbackPriority = 3,
@@ -457,7 +457,7 @@ static EventMatchData AmsahTech_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
+    .cpuKind = 9,         // 0xFF=
     .stage = -1,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
@@ -470,7 +470,7 @@ static EventInfo AmsahTech = {
     .eventDescription = "Taunt to have Marth Up-B,\nthen ASDI down and tech!\n",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
+    .isChooseCPU = false,
     .isSelectStage = true,
     .scoreType = 0,
     .callbackPriority = 3,
@@ -547,8 +547,8 @@ static EventMatchData WaveshineSDI_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .cpuKind = 2,         // 0xFF=
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -560,8 +560,8 @@ static EventInfo WaveshineSDI = {
     .eventDescription = "Use Smash DI to get out\nof Fox's waveshine!",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
+    .isChooseCPU = false,
+    .isSelectStage = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &WaveshineSDI_MatchData,
@@ -592,8 +592,8 @@ static EventMatchData SlideOff_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .cpuKind = 9,         // 0xFF=
+    .stage = 3,           // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -605,8 +605,8 @@ static EventInfo SlideOff = {
     .eventDescription = "Use Slide-Off DI to slide off\nthe platform and counter attack!\n",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
+    .isChooseCPU = false,
+    .isSelectStage = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SlideOff_MatchData,
@@ -637,8 +637,8 @@ static EventMatchData GrabMash_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .cpuKind = 9,         // 0xFF=
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -650,8 +650,8 @@ static EventInfo GrabMash = {
     .eventDescription = "Mash buttons to escape the grab\nas quickly as possible!\n",
     .eventTutorial = "TvLC",
     .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
+    .isChooseCPU = false,
+    .isSelectStage = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &GrabMash_MatchData,
@@ -727,7 +727,7 @@ static EventMatchData ArmadaShine_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
+    .cpuKind = 2,         // 0xFF=
     .stage = -1,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
@@ -772,7 +772,7 @@ static EventMatchData SideBSweet_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
+    .cpuKind = 9,         // 0xFF=
     .stage = -1,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
