@@ -82,9 +82,6 @@ typedef struct itData itData;
 typedef struct itCommonAttr itCommonAttr;
 typedef struct itHit itHit;
 
-// Boneset
-typedef struct DynamicBoneset DynamicBoneset;
-
 // Fighter
 typedef struct FighterData FighterData;
 typedef struct FighterBone FighterBone;
@@ -108,6 +105,8 @@ typedef struct FtDOBJUnk FtDOBJUnk;
 typedef struct FtPartsLookup FtPartsLookup;
 typedef struct FtDOBJUnk2 FtDOBJUnk2;
 typedef struct FtDOBJUnk3 FtDOBJUnk3;
+typedef struct FtDynamics FtDynamics;
+typedef struct FtDynamicHit FtDynamicHit;
 
 // CSS
 typedef struct CSSBackup CSSBackup;

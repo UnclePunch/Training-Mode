@@ -697,6 +697,36 @@ struct Hurtbox
     int x48;                      // 0x48
 };
 
+struct FtDynamics
+{
+    int apply_phys_num;
+    int bones_num;
+    float x8;
+    float xC;
+    float x10;
+    int x14;
+    int x18;
+    int x1c;
+    int x20;
+    int x24;
+};
+
+struct FtDynamicHit
+{
+    int x0;         // 0x1670
+    Vec3 x4;        // 0x1674
+    JOBJ *bone;     // 0x1680
+    int x14;        // 0x1684
+    Vec3 pos;       // 0x1688
+    int bone_index; // 0x1694
+};
+
+struct FtAfterImageKey
+{
+    Vec3 pos;
+    Vec3 rot;
+} FtAfterImageKey;
+
 struct CPU
 {
     int held;       // 0x0
@@ -1750,7 +1780,7 @@ struct FighterData
     int unknown2E4;                                            // 0x2E4
     int unknown2E8;                                            // 0x2E8
     int unknown2EC;                                            // 0x2EC
-    DynamicBoneset dynamics_boneset[5];                        //0x2f0
+    FtDynamics dynamics_boneset[5];                            // 0x2f0
     int unknown3B8;                                            // 0x3B8
     int unknown3BC;                                            // 0x3BC
     int unknown3C0;                                            // 0x3C0
@@ -1761,7 +1791,7 @@ struct FighterData
     int unknown3D4;                                            // 0x3D4
     int unknown3D8;                                            // 0x3D8
     int unknown3DC;                                            // 0x3DC
-    int dynamic_boneset_num;                                   // 0x3E0
+    int dynamics_num;                                          // 0x3E0
     struct script                                              //  0x3E4
     {                                                          //
         float script_event_timer;                              // 0x3E4
@@ -1950,114 +1980,7 @@ struct FighterData
     int x1664;                                    // 0x1664
     int x1668;                                    // 0x1668
     int dynamics_hit_num;                         // 0x166c
-    int dynamics_hit_num_unk;                     // 0x1670
-    int x1674;                                    // 0x1674
-    int x1678;                                    // 0x1678
-    int x167c;                                    // 0x167c
-    JOBJ *dynamics_hit_joint;                     // 0x1680
-    int x1684;                                    // 0x1684
-    Vec3 dynamics_hit_pos;                        // 0x1688
-    int x1694;                                    // 0x1694
-    int x1698;                                    // 0x1698
-    int x169c;                                    // 0x169c
-    int x16a0;                                    // 0x16a0
-    int x16a4;                                    // 0x16a4
-    int x16a8;                                    // 0x16a8
-    int x16ac;                                    // 0x16ac
-    int x16b0;                                    // 0x16b0
-    int x16b4;                                    // 0x16b4
-    int x16b8;                                    // 0x16b8
-    int x16bc;                                    // 0x16bc
-    int x16c0;                                    // 0x16c0
-    int x16c4;                                    // 0x16c4
-    int x16c8;                                    // 0x16c8
-    int x16cc;                                    // 0x16cc
-    int x16d0;                                    // 0x16d0
-    int x16d4;                                    // 0x16d4
-    int x16d8;                                    // 0x16d8
-    int x16dc;                                    // 0x16dc
-    int x16e0;                                    // 0x16e0
-    int x16e4;                                    // 0x16e4
-    int x16e8;                                    // 0x16e8
-    int x16ec;                                    // 0x16ec
-    int x16f0;                                    // 0x16f0
-    int x16f4;                                    // 0x16f4
-    int x16f8;                                    // 0x16f8
-    int x16fc;                                    // 0x16fc
-    int x1700;                                    // 0x1700
-    int x1704;                                    // 0x1704
-    int x1708;                                    // 0x1708
-    int x170c;                                    // 0x170c
-    int x1710;                                    // 0x1710
-    int x1714;                                    // 0x1714
-    int x1718;                                    // 0x1718
-    int x171c;                                    // 0x171c
-    int x1720;                                    // 0x1720
-    int x1724;                                    // 0x1724
-    int x1728;                                    // 0x1728
-    int x172c;                                    // 0x172c
-    int x1730;                                    // 0x1730
-    int x1734;                                    // 0x1734
-    int x1738;                                    // 0x1738
-    int x173c;                                    // 0x173c
-    int x1740;                                    // 0x1740
-    int x1744;                                    // 0x1744
-    int x1748;                                    // 0x1748
-    int x174c;                                    // 0x174c
-    int x1750;                                    // 0x1750
-    int x1754;                                    // 0x1754
-    int x1758;                                    // 0x1758
-    int x175c;                                    // 0x175c
-    int x1760;                                    // 0x1760
-    int x1764;                                    // 0x1764
-    int x1768;                                    // 0x1768
-    int x176c;                                    // 0x176c
-    int x1770;                                    // 0x1770
-    int x1774;                                    // 0x1774
-    int x1778;                                    // 0x1778
-    int x177c;                                    // 0x177c
-    int x1780;                                    // 0x1780
-    int x1784;                                    // 0x1784
-    int x1788;                                    // 0x1788
-    int x178c;                                    // 0x178c
-    int x1790;                                    // 0x1790
-    int x1794;                                    // 0x1794
-    int x1798;                                    // 0x1798
-    int x179c;                                    // 0x179c
-    int x17a0;                                    // 0x17a0
-    int x17a4;                                    // 0x17a4
-    int x17a8;                                    // 0x17a8
-    int x17ac;                                    // 0x17ac
-    int x17b0;                                    // 0x17b0
-    int x17b4;                                    // 0x17b4
-    int x17b8;                                    // 0x17b8
-    int x17bc;                                    // 0x17bc
-    int x17c0;                                    // 0x17c0
-    int x17c4;                                    // 0x17c4
-    int x17c8;                                    // 0x17c8
-    int x17cc;                                    // 0x17cc
-    int x17d0;                                    // 0x17d0
-    int x17d4;                                    // 0x17d4
-    int x17d8;                                    // 0x17d8
-    int x17dc;                                    // 0x17dc
-    int x17e0;                                    // 0x17e0
-    int x17e4;                                    // 0x17e4
-    int x17e8;                                    // 0x17e8
-    int x17ec;                                    // 0x17ec
-    int x17f0;                                    // 0x17f0
-    int x17f4;                                    // 0x17f4
-    int x17f8;                                    // 0x17f8
-    int x17fc;                                    // 0x17fc
-    int x1800;                                    // 0x1800
-    int x1804;                                    // 0x1804
-    int x1808;                                    // 0x1808
-    int x180c;                                    // 0x180c
-    int x1810;                                    // 0x1810
-    int x1814;                                    // 0x1814
-    int x1818;                                    // 0x1818
-    int x181c;                                    // 0x181c
-    int x1820;                                    // 0x1820
-    int x1824;                                    // 0x1824
+    FtDynamicHit dynamics_hit[11];                // 0x1670
     int x1828;                                    // 0x1828
     struct dmg                                    // 0x182c
     {                                             //
@@ -2198,151 +2121,138 @@ struct FighterData
         Vec3 offset;                  // 0x1a1c
         float size_mult;              // 0x1a28
     } absorb_bubble;
-    struct reflect_hit       // 0x1a2c
-    {                        //
-        float hit_direction; // 0x1a2c
-        int max_dmg;         // 0x1a30
-        float dmg_mult;      // 0x1a34
-        int is_break;        // 0x1a38
-    } reflect_hit;           //
-    struct absorb_hit        // 0x1a40
-    {                        //
-        int x1a3c;           // 0x1a3c
-        float hit_direction; // 0x1a40
-        int dmg_taken;       // 0x1a44
-        int hits_taken;      // 0x1a48
-    } absorb_hit;            //
-    struct grab              // 0x1a4c
-    {                        //
-        float grab_timer;    // 0x1a4c
-        int x1a50;           // 0x1a50
-        int x1a54;           // 0x1a54
-        GOBJ *grab_attacker; // 0x1a58
-        GOBJ *grab_victim;   // 0x1a5c
-    } grab;                  //
-    int x1a60;               // 0x1a60
-    int x1a64;               // 0x1a64
-    int x1a68;               // 0x1a68
-    int x1a6c;               // 0x1a6c
-    int x1a70;               // 0x1a70
-    int x1a74;               // 0x1a74
-    int x1a78;               // 0x1a78
-    int x1a7c;               // 0x1a7c
-    int x1a80;               // 0x1a80
-    int x1a84;               // 0x1a84
-    CPU cpu;                 // 0x1a88
-    int x1fe0;               // 0x1fe0
-    int x1fe4;               // 0x1fe4
-    int x1fe8;               // 0x1fe8
-    int x1fec;               // 0x1fec
-    int x1ff0;               // 0x1ff0
-    int x1ff4;               // 0x1ff4
-    int x1ff8;               // 0x1ff8
-    int x1ffc;               // 0x1ffc
-    int x2000;               // 0x2000
-    int x2004;               // 0x2004
-    int x2008;               // 0x2008
-    int x200c;               // 0x200c
-    int x2010;               // 0x2010
-    int x2014;               // 0x2014
-    int x2018;               // 0x2018
-    int x201c;               // 0x201c
-    int x2020;               // 0x2020
-    int x2024;               // 0x2024
-    int x2028;               // 0x2028
-    int x202c;               // 0x202c
-    int x2030;               // 0x2030
-    int x2034;               // 0x2034
-    int x2038;               // 0x2038
-    int x203c;               // 0x203c
-    int x2040;               // 0x2040
-    int x2044;               // 0x2044
-    int x2048;               // 0x2048
-    int x204c;               // 0x204c
-    int x2050;               // 0x2050
-    int x2054;               // 0x2054
-    int x2058;               // 0x2058
-    int x205c;               // 0x205c
-    int x2060;               // 0x2060
-    int ledge_cooldown;      // 0x2064
-    int x2068;               // 0x2068
-    int x206c;               // 0x206c
-    int x2070;               // 0x2070
-    int x2074;               // 0x2074
-    int x2078;               // 0x2078
-    int x207c;               // 0x207c
-    int x2080;               // 0x2080
-    int x2084;               // 0x2084
-    u16 moveID;              // 0x2088
-    int x208c;               // 0x208c
-    int x2090;               // 0x2090
-    int x2094;               // 0x2094
-    int x2098;               // 0x2098
-    int x209c;               // 0x209c
-    JOBJ *accessory;         // 0x20a0
-    int x20a4;               // 0x20a4
-    int *shadow;             // 0x20a8
-    int x20ac;               // 0x20ac
-    int x20b0;               // 0x20b0
-    int x20b4;               // 0x20b4
-    int x20b8;               // 0x20b8
-    int x20bc;               // 0x20bc
-    int x20c0;               // 0x20c0
-    int x20c4;               // 0x20c4
-    int x20c8;               // 0x20c8
-    int x20cc;               // 0x20cc
-    int x20d0;               // 0x20d0
-    int x20d4;               // 0x20d4
-    int x20d8;               // 0x20d8
-    int x20dc;               // 0x20dc
-    int x20e0;               // 0x20e0
-    int x20e4;               // 0x20e4
-    int x20e8;               // 0x20e8
-    int x20ec;               // 0x20ec
-    int x20f0;               // 0x20f0
-    int x20f4;               // 0x20f4
-    int x20f8;               // 0x20f8
-    int x20fc;               // 0x20fc
-    int x2100;               // 0x2100
-    int x2104;               // 0x2104
-    int x2108;               // 0x2108
-    int x210c;               // 0x210c
-    int x2110;               // 0x2110
-    struct smash             // 0x2114
-    {
-        int state;          // 0x2114 0 = none, 1 = pre-charge, 2 = charging, 3 = release
-        int frame;          // 0x2118 number of frames fighter has charged for
-        float hold_frame;   // 0x211c frame that charge begins/ends
-        float dmg_mult;     // 0x2120 damage multiplier
-        float speed_mult;   // 0x2124 speed multiplier?
-        int x2128;          // 0x2128
-        int x212c;          // 0x212c
-        int is_sfx_played;  // 0x2130 bool for smash sfx?
-        u8 vibrate_frame;   // 0x2134
-        u8 x22135;          // 0x2135
-        float since_hitbox; // 0x2138
-    } smash;
-    int x213c; // 0x213c
-    int x2140; // 0x2140
-    int x2144; // 0x2144
-    int x2148; // 0x2148
-    int x214c; // 0x214c
-    int x2150; // 0x2150
-    int x2154; // 0x2154
-    int x2158; // 0x2158
-    int x215c; // 0x215c
-    int x2160; // 0x2160
-    int x2164; // 0x2164
-    int x2168; // 0x2168
-    int x216c; // 0x216c
-    int x2170; // 0x2170
-    int x2174; // 0x2174
-    int x2178; // 0x2178
-    int x217c; // 0x217c
-    int x2180; // 0x2180
-    int x2184; // 0x2184
-    int x2188; // 0x2188
-    int x218c; // 0x218c
+    struct reflect_hit                        // 0x1a2c
+    {                                         //
+        float hit_direction;                  // 0x1a2c
+        int max_dmg;                          // 0x1a30
+        float dmg_mult;                       // 0x1a34
+        int is_break;                         // 0x1a38
+    } reflect_hit;                            //
+    struct absorb_hit                         // 0x1a40
+    {                                         //
+        int x1a3c;                            // 0x1a3c
+        float hit_direction;                  // 0x1a40
+        int dmg_taken;                        // 0x1a44
+        int hits_taken;                       // 0x1a48
+    } absorb_hit;                             //
+    struct grab                               // 0x1a4c
+    {                                         //
+        float grab_timer;                     // 0x1a4c
+        int x1a50;                            // 0x1a50
+        int x1a54;                            // 0x1a54
+        GOBJ *grab_attacker;                  // 0x1a58
+        GOBJ *grab_victim;                    // 0x1a5c
+    } grab;                                   //
+    int x1a60;                                // 0x1a60
+    int x1a64;                                // 0x1a64
+    int x1a68;                                // 0x1a68
+    int x1a6c;                                // 0x1a6c
+    int x1a70;                                // 0x1a70
+    int x1a74;                                // 0x1a74
+    int x1a78;                                // 0x1a78
+    int x1a7c;                                // 0x1a7c
+    int x1a80;                                // 0x1a80
+    int x1a84;                                // 0x1a84
+    CPU cpu;                                  // 0x1a88
+    int x1fe0;                                // 0x1fe0
+    int x1fe4;                                // 0x1fe4
+    int x1fe8;                                // 0x1fe8
+    int x1fec;                                // 0x1fec
+    int x1ff0;                                // 0x1ff0
+    int x1ff4;                                // 0x1ff4
+    int x1ff8;                                // 0x1ff8
+    int x1ffc;                                // 0x1ffc
+    int x2000;                                // 0x2000
+    int x2004;                                // 0x2004
+    int x2008;                                // 0x2008
+    int x200c;                                // 0x200c
+    int x2010;                                // 0x2010
+    int x2014;                                // 0x2014
+    int x2018;                                // 0x2018
+    int x201c;                                // 0x201c
+    int x2020;                                // 0x2020
+    int x2024;                                // 0x2024
+    int x2028;                                // 0x2028
+    int x202c;                                // 0x202c
+    int x2030;                                // 0x2030
+    int x2034;                                // 0x2034
+    int x2038;                                // 0x2038
+    int x203c;                                // 0x203c
+    int x2040;                                // 0x2040
+    int x2044;                                // 0x2044
+    int x2048;                                // 0x2048
+    int x204c;                                // 0x204c
+    int x2050;                                // 0x2050
+    int x2054;                                // 0x2054
+    int x2058;                                // 0x2058
+    int x205c;                                // 0x205c
+    int x2060;                                // 0x2060
+    int ledge_cooldown;                       // 0x2064
+    int x2068;                                // 0x2068
+    int x206c;                                // 0x206c
+    int x2070;                                // 0x2070
+    int x2074;                                // 0x2074
+    int x2078;                                // 0x2078
+    int x207c;                                // 0x207c
+    int x2080;                                // 0x2080
+    int x2084;                                // 0x2084
+    u16 moveID;                               // 0x2088
+    int x208c;                                // 0x208c
+    int x2090;                                // 0x2090
+    int x2094;                                // 0x2094
+    int x2098;                                // 0x2098
+    int x209c;                                // 0x209c
+    JOBJ *accessory;                          // 0x20a0
+    int x20a4;                                // 0x20a4
+    int *shadow;                              // 0x20a8
+    int x20ac;                                // 0x20ac
+    struct afterimage                         //
+    {                                         //
+        struct FtAfterImageKey afterimage[3]; // 0x20b0
+        float afterimage_bottom;              // 0x20f8
+        float afterimage_top;                 // 0x20fc
+        u8 afterimage_state;                  // 0x2100
+        unsigned char afterimage_num : 7;     // 0x2101
+    } afterimage;                             //
+    int x2104;                                // 0x2104
+    int x2108;                                // 0x2108
+    int x210c;                                // 0x210c
+    int x2110;                                // 0x2110
+    struct smash                              // 0x2114
+    {                                         //
+        int state;                            // 0x2114 0 = none, 1 = pre-charge, 2 = charging, 3 = release
+        int frame;                            // 0x2118 number of frames fighter has charged for
+        float hold_frame;                     // 0x211c frame that charge begins/ends
+        float dmg_mult;                       // 0x2120 damage multiplier
+        float speed_mult;                     // 0x2124 speed multiplier?
+        int x2128;                            // 0x2128
+        int x212c;                            // 0x212c
+        int is_sfx_played;                    // 0x2130 bool for smash sfx?
+        u8 vibrate_frame;                     // 0x2134
+        u8 x22135;                            // 0x2135
+        float since_hitbox;                   // 0x2138
+    } smash;                                  //
+    int x213c;                                // 0x213c
+    int x2140;                                // 0x2140
+    int x2144;                                // 0x2144
+    int x2148;                                // 0x2148
+    int x214c;                                // 0x214c
+    int x2150;                                // 0x2150
+    int x2154;                                // 0x2154
+    int x2158;                                // 0x2158
+    int x215c;                                // 0x215c
+    int x2160;                                // 0x2160
+    int x2164;                                // 0x2164
+    int x2168;                                // 0x2168
+    int x216c;                                // 0x216c
+    int x2170;                                // 0x2170
+    int x2174;                                // 0x2174
+    int x2178;                                // 0x2178
+    int x217c;                                // 0x217c
+    int x2180;                                // 0x2180
+    int x2184;                                // 0x2184
+    int x2188;                                // 0x2188
+    int x218c;                                // 0x218c
     struct cb
     {
         void (*OnGrabFighter_Self)(GOBJ *fighter);   // 0x2190

@@ -484,6 +484,7 @@ void JOBJ_PlayAnim(JOBJ *joint, int unk, u16 flags, void *cb, int unk2, ...); //
 void JOBJ_Anim(JOBJ *joint);
 void JOBJ_AnimAll(JOBJ *joint);
 void JOBJ_AddAnimAll(JOBJ *joint, void *animjoint, void *matanimjoint, void *shapeanimjoint);
+void JOBJ_RemoveAnimAll(JOBJ *joint);
 void JOBJ_ReqAnim(JOBJ *joint, float frame);
 void JOBJ_ReqAnimByFlags(JOBJ *joint, int flags, float frame);
 void JOBJ_ReqAnimAll(JOBJ *joint, float unk);

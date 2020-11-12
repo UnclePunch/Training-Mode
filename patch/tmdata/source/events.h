@@ -1,6 +1,6 @@
 #include "../../../MexTK/mex.h"
 
-#define TM_DEBUG
+//#define TM_DEBUG
 #define EVENT_DATASIZE 128
 #define TM_DATA -(50 * 4) - 4
 #define MENU_MAXOPTION 9
