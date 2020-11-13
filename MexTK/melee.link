@@ -307,6 +307,7 @@
 80003100:memset
 80005358:blr
 801c53ec:SFX_Play
+8038cff4:SFX_PlayRaw
 80024030:SFX_PlayCommon
 8002411c:SFX_PlayCrowd
 80321ce8:SFX_StopCrowd

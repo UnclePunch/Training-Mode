@@ -2,17 +2,27 @@
 static char nullString[] = " ";
 
 // Main Menu
-static char **LcOptions_OffOn[] = {"Off", "On"};
+static char **LcOptions_Barrel[] = {"Off", "Stationary", "Move"};
 static EventOption LcOptions_Main[] = {
     {
-        .option_kind = OPTKIND_FUNC,                                                                                       // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                   // value of this option
-        .menu = 0,                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                             // pointer to a string
-        .desc = "D-Pad Left - Load State\nD-Pad Right - Save State\nD-Pad Down - Move CPU\nHold R in the menu for turbo.", // string describing what this option does
-        .option_values = 0,                                                                                                // pointer to an array of strings
-        .onOptionChange = Event_Exit,
+        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LcOptions_Barrel) / 4, // number of values for this option
+        .option_val = 0,                           // value of this option
+        .menu = 0,                                 // pointer to the menu that pressing A opens
+        .option_name = "Target",                   // pointer to a string
+        .desc = "Enable a target to attack.",      // string describing what this option does
+        .option_values = LcOptions_Barrel,         // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    {
+        .option_kind = OPTKIND_FUNC,                                                                                                                                                                             // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                                                                                          // number of values for this option
+        .option_val = 0,                                                                                                                                                                                         // value of this option
+        .menu = 0,                                                                                                                                                                                               // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                                                                                                   // pointer to a string
+        .desc = "L-canceling is performed by pressing L, R, or \nZ up to 7 frames before landing from an \naerial attack. This will cut the landing lag in \nhalf, allowing you to act faster after attacking.", // string describing what this option does
+        .option_values = 0,                                                                                                                                                                                      // pointer to an array of strings
+        .onOptionChange = 0,
     },
     {
         .option_kind = OPTKIND_FUNC,                  // the type of option this is; menu, string list, integers list, etc
@@ -43,8 +53,8 @@ void Event_Init(GOBJ *gobj)
     EventInfo *eventInfo = event_data->eventInfo;
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
-    GOBJ *cpu = Fighter_GetGObj(1);
-    FighterData *cpu_data = cpu->userdata;
+    //GOBJ *cpu = Fighter_GetGObj(1);
+    //FighterData *cpu_data = cpu->userdata;
 
     // theres got to be a better way to do this...
     event_vars = *event_vars_ptr;
@@ -56,7 +66,7 @@ void Event_Init(GOBJ *gobj)
     LCancel_Init(event_data);
 
     // set CPU AI to no_act 15
-    cpu_data->cpu.ai = 0;
+    //cpu_data->cpu.ai = 0;
 
     return;
 }
@@ -73,10 +83,11 @@ void Event_Think(GOBJ *event)
     // get fighter data
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
-    GOBJ *cpu = Fighter_GetGObj(1);
-    FighterData *cpu_data = cpu->userdata;
+    //GOBJ *cpu = Fighter_GetGObj(1);
+    //FighterData *cpu_data = cpu->userdata;
     HSD_Pad *pad = PadGet(hmn_data->player_controller_number, PADGET_ENGINE);
 
+    /*
     // give intangibility to cpu
     cpu_data->flags.no_reaction_always = 1;
     cpu_data->flags.nudge_disable = 1;
@@ -84,6 +95,7 @@ void Event_Think(GOBJ *event)
     Fighter_UpdateOverlay(cpu);
     cpu_data->dmg.percent = 0;
     Fighter_SetHUDDamage(cpu_data->ply, 0);
+
 
     // Move CPU
     if (pad->down == PAD_BUTTON_DPAD_DOWN)
@@ -182,6 +194,7 @@ void Event_Think(GOBJ *event)
             SFX_Play(221);
         }
     }
+    */
 
     LCancel_Think(event_data, hmn_data);
 
@@ -270,11 +283,94 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
             event_data->hud.lcl_success++;
         }
 
-        // Print timing
-        if (hmn_data->input.timer_trigger_any >= 60)
-            Text_SetText(event_data->hud.text_time, 0, "No Press");
+        // Play appropriate sfx
+        if (is_fail == 0)
+            SFX_PlayRaw(173, 160, 128, 20, 3);
         else
+            SFX_PlayCommon(3);
+
+        // Update timing hud
+        JOBJ *timingbar_jobj;
+        JOBJ_GetChild(hud_jobj, &timingbar_jobj, 5, -1); // get timing bar jobj
+        // reset all colors first
+        DOBJ *d = timingbar_jobj->dobj;
+        int count = 0;
+        while (d != 0)
+        {
+
+            // if a box dobj
+            if ((count >= 0) && (count < 30))
+            {
+
+                // if mobj exists (it will)
+                MOBJ *m = d->mobj;
+                if (m != 0)
+                {
+
+                    HSD_Material *mat = m->mat;
+
+                    // set alpha
+                    mat->alpha = 0.7;
+
+                    // set color
+                    static GXColor tmgbar_green = {128, 255, 128, 255};
+                    static GXColor tmgbar_red = {255, 128, 128, 255};
+
+                    // set green
+                    if (count < 7)
+                        mat->diffuse = tmgbar_green;
+                    // set red
+                    else if (count >= 7)
+                        mat->diffuse = tmgbar_red;
+                }
+            }
+
+            // inc
+            count++;
+            d = d->next;
+        }
+
+        // update text + frame box
+        if (hmn_data->input.timer_trigger_any >= 30)
+        {
+            // update text
+            Text_SetText(event_data->hud.text_time, 0, "No Press");
+        }
+        else
+        {
             Text_SetText(event_data->hud.text_time, 0, "%df/7f", hmn_data->input.timer_trigger_any + 1);
+
+            // set current timing bar
+            d = timingbar_jobj->dobj;
+            count = 0;
+            while (d != 0)
+            {
+
+                // if this frames' box
+                if (count == hmn_data->input.timer_trigger_any)
+                {
+
+                    // if mobj exists (it will)
+                    MOBJ *m = d->mobj;
+                    if (m != 0)
+                    {
+
+                        HSD_Material *mat = m->mat;
+
+                        // set color
+                        static GXColor tmgbar_white = {255, 255, 255, 255};
+                        mat->diffuse = tmgbar_white;
+                        mat->alpha = 1;
+                    }
+
+                    break;
+                }
+
+                // inc
+                count++;
+                d = d->next;
+            }
+        }
 
         // Print airborne frames
         Text_SetText(event_data->hud.text_air, 0, "%df", hmn_data->TM.state_prev_frames[0]);
@@ -282,12 +378,6 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         // Print succession
         float succession = ((float)event_data->hud.lcl_success / (float)event_data->hud.lcl_total) * 100.0;
         Text_SetText(event_data->hud.text_scs, 0, "%.1f%%", succession);
-
-        // Play appropriate sfx
-        if (is_fail == 0)
-            SFX_PlayCommon(1);
-        else
-            SFX_PlayCommon(3);
 
         // Play HUD anim
         JOBJ_RemoveAnimAll(hud_jobj);

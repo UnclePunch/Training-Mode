@@ -73,7 +73,7 @@ static EventInfo Lab = {
 // L-Cancel Training
 // Match Data
 static EventMatchData LCancel_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
+    .timer = MATCH_TIMER_HIDE,
     .matchType = MATCH_MATCHTYPE_TIME,
     .playMusic = false,
     .hideGo = true,
@@ -108,7 +108,7 @@ static EventInfo LCancel = {
     .eventDescription = "Practice L-Cancelling on\na stationary CPU.\n",
     .eventTutorial = "TvLC",
     .eventFile = "EvLcl",
-    .isChooseCPU = true,
+    .isChooseCPU = false,
     .isSelectStage = true,
     .scoreType = 0,
     .callbackPriority = 3,
@@ -3549,7 +3549,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     // free current allocation
     Text_DestroyAlloc(text->textAlloc);
     // convert description into menu text
-    u8 buffer[400];
+    u8 buffer[500];
     int menuTextSize = Text_StringToMenuText(&buffer, currOption->desc);
     // new alloc
     int allocSize = menuTextSize + sizeof(descHeader) + sizeof(descTerminator);

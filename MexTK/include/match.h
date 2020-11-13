@@ -8,7 +8,7 @@
 
 // Match Data definitions
 #define MATCH_TIMER_FROZEN 0
-#define MATCH_TIMER_UNK 1
+#define MATCH_TIMER_HIDE 1
 #define MATCH_TIMER_COUNTDOWN 2
 #define MATCH_TIMER_COUNTUP 3
 #define MATCH_MATCHTYPE_TIME 0

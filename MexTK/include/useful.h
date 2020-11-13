@@ -247,6 +247,7 @@ register const char *append;
 }
 
 void SFX_Play(int sfxID);
+void SFX_PlayRaw(int sfx, int volume, int pan, int unk, int unk2);
 void SFX_PlayCommon(int sfxID);
 void SFX_PlayCrowd(int sfxID);
 void SFX_StopCrowd();
