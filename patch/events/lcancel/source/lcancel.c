@@ -197,6 +197,7 @@ void Event_Think(GOBJ *event)
     */
 
     LCancel_Think(event_data, hmn_data);
+    Barrel_Think(event_data);
 
     return;
 }
@@ -277,7 +278,7 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
         // determine succession
         int is_fail = 1;
-        if (hmn_data->input.timer_trigger_any < 7)
+        if (hmn_data->input.timer_trigger_any_ignore_hitlag < 7)
         {
             is_fail = 0;
             event_data->hud.lcl_success++;
@@ -285,7 +286,7 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
         // Play appropriate sfx
         if (is_fail == 0)
-            SFX_PlayRaw(173, 160, 128, 20, 3);
+            SFX_PlayRaw(303, 255, 128, 20, 3);
         else
             SFX_PlayCommon(3);
 
@@ -331,45 +332,48 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         }
 
         // update text + frame box
-        if (hmn_data->input.timer_trigger_any >= 30)
+        int frame_box_id;
+        if (hmn_data->input.timer_trigger_any_ignore_hitlag >= 30)
         {
             // update text
             Text_SetText(event_data->hud.text_time, 0, "No Press");
+            frame_box_id = 29;
         }
         else
         {
-            Text_SetText(event_data->hud.text_time, 0, "%df/7f", hmn_data->input.timer_trigger_any + 1);
+            Text_SetText(event_data->hud.text_time, 0, "%df/7f", hmn_data->input.timer_trigger_any_ignore_hitlag + 1);
+            frame_box_id = hmn_data->input.timer_trigger_any_ignore_hitlag;
+        }
 
-            // set current timing bar
-            d = timingbar_jobj->dobj;
-            count = 0;
-            while (d != 0)
+        // set current timing bar
+        d = timingbar_jobj->dobj;
+        count = 0;
+        while (d != 0)
+        {
+
+            // if this frames' box
+            if (count == frame_box_id)
             {
 
-                // if this frames' box
-                if (count == hmn_data->input.timer_trigger_any)
+                // if mobj exists (it will)
+                MOBJ *m = d->mobj;
+                if (m != 0)
                 {
 
-                    // if mobj exists (it will)
-                    MOBJ *m = d->mobj;
-                    if (m != 0)
-                    {
+                    HSD_Material *mat = m->mat;
 
-                        HSD_Material *mat = m->mat;
-
-                        // set color
-                        static GXColor tmgbar_white = {255, 255, 255, 255};
-                        mat->diffuse = tmgbar_white;
-                        mat->alpha = 1;
-                    }
-
-                    break;
+                    // set color
+                    static GXColor tmgbar_white = {255, 255, 255, 255};
+                    mat->diffuse = tmgbar_white;
+                    mat->alpha = 1;
                 }
 
-                // inc
-                count++;
-                d = d->next;
+                break;
             }
+
+            // inc
+            count++;
+            d = d->next;
         }
 
         // Print airborne frames
@@ -390,6 +394,206 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
     return;
 }
+
+// Barrel Functions
+void Barrel_Think(LCancelData *event_data)
+{
+    GOBJ *barrel_gobj = event_data->barrel_gobj;
+
+    switch (LcOptions_Main[0].option_val)
+    {
+    case (0): // off
+    {
+        // if spawned, remove
+        if (barrel_gobj != 0)
+        {
+            Item_Destroy(barrel_gobj);
+            event_data->barrel_gobj = 0;
+        }
+
+        break;
+    }
+    case (1): // stationary
+    {
+
+        // if not spawned, spawn
+        if (barrel_gobj == 0)
+        {
+            // spawn barrel at center stage
+            barrel_gobj = Barrel_Spawn(0);
+            event_data->barrel_gobj = barrel_gobj;
+        }
+
+        ItemData *barrel_data = barrel_gobj->userdata;
+        barrel_data->can_hold = 0;
+
+        break;
+    }
+    case (2): // move
+    {
+        // if not spawned, spawn
+        if (barrel_gobj == 0)
+        {
+            // spawn barrel at center stage
+            barrel_gobj = Barrel_Spawn(1);
+            event_data->barrel_gobj = barrel_gobj;
+        }
+
+        ItemData *barrel_data = barrel_gobj->userdata;
+        barrel_data->can_hold = 0;
+        barrel_data->can_nudge = 0;
+
+        break;
+    }
+    }
+
+    return;
+}
+GOBJ *Barrel_Spawn(int pos_kind)
+{
+
+    LCancelData *event_data = event_vars->event_gobj->userdata;
+    Vec3 *barrel_lastpos = &event_data->barrel_lastpos;
+
+    // determine position to spawn
+    Vec3 pos;
+    pos.Z = 0;
+    switch (pos_kind)
+    {
+    case (0): // center stage
+    {
+        pos.X = 0;
+        pos.Y = 0;
+        break;
+    }
+    case (1): // random pos
+    BARREL_RANDPOS:
+    {
+
+        // get position
+        Vec3 coll_pos;
+        int line_index;
+        int line_kind;
+        Vec3 line_unk;
+        float fromX = -80 + (HSD_Randi(80 * 2)) + HSD_Randf();
+        float toX = fromX;
+        float fromY = HSD_Randi(40) + HSD_Randf();
+        float toY = fromY - 1000;
+        int isGround = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+        if (isGround == 0)
+            goto BARREL_RANDPOS;
+
+        // ensure it isnt too close to the previous
+        float distance = sqrtf(pow((pos.X - barrel_lastpos->X), 2) + pow((pos.Y - barrel_lastpos->Y), 2));
+        if (distance < 25)
+            goto BARREL_RANDPOS;
+
+        break;
+    }
+    }
+
+    // spawn item
+    SpawnItem spawnItem;
+    spawnItem.parent_gobj = 0;
+    spawnItem.parent_gobj2 = 0;
+    spawnItem.it_kind = ITEM_BARREL;
+    spawnItem.hold_kind = 0;
+    spawnItem.unk2 = 0;
+    spawnItem.pos = pos;
+    spawnItem.pos2 = pos;
+    spawnItem.vel.X = 0;
+    spawnItem.vel.Y = 0;
+    spawnItem.vel.Z = 0;
+    spawnItem.facing_direction = 1;
+    spawnItem.damage = 0;
+    spawnItem.unk5 = 0;
+    spawnItem.unk6 = 0;
+    spawnItem.unk7 = 0x80;
+    spawnItem.is_spin = 0;
+    GOBJ *barrel_gobj = Item_CreateItem2(&spawnItem);
+    Item_CollAir(barrel_gobj, Barrel_Null);
+
+    // replace collision callback
+    ItemData *barrel_data = barrel_gobj->userdata;
+    barrel_data->it_cb = item_callbacks;
+    barrel_data->camerabox->kind = 0;
+
+    // update last barrel pos
+    event_data->barrel_lastpos = pos;
+
+    return barrel_gobj;
+}
+void Barrel_Null()
+{
+    return;
+}
+void Barrel_Break(GOBJ *barrel_gobj)
+{
+
+    ItemData *barrel_data = barrel_gobj->userdata;
+    Effect_SpawnSync(1063, barrel_gobj, &barrel_data->pos);
+    SFX_Play(251);
+    ScreenRumble_Execute(2, &barrel_data->pos);
+    JOBJ *barrel_jobj = barrel_gobj->hsd_object;
+    JOBJ_SetFlagsAll(barrel_jobj, JOBJ_HIDDEN);
+    barrel_data->xd0c = 2;
+    barrel_data->selfVel.X = 0;
+    barrel_data->selfVel.Y = 0;
+    barrel_data->itemVar1 = 1;
+    barrel_data->itemVar2 = 40;
+    barrel_data->xdcf3 = 1;
+    ItemStateChange(barrel_gobj, 7, 2);
+
+    return;
+}
+int Barrel_OnHurt(GOBJ *barrel_gobj)
+{
+
+    // get event data
+    LCancelData *event_data = event_vars->event_gobj->userdata;
+
+    switch (LcOptions_Main[0].option_val)
+    {
+    case (0): // off
+    {
+
+        break;
+    }
+    case (1): // stationary
+    {
+        break;
+    }
+    case (2): // move
+    {
+        // Break this barrel
+        Barrel_Break(event_data->barrel_gobj);
+
+        // spawn new barrel at a random position
+        barrel_gobj = Barrel_Spawn(1);
+        event_data->barrel_gobj = barrel_gobj;
+        break;
+    }
+    }
+
+    return 0;
+}
+static void *item_callbacks[] = {
+    0x803f58e0,
+    0x80287458,
+    0x00000000,
+    0x80287e68,
+    0x80287ea8,
+    0x80287ec8,
+    0x80288818,
+    Barrel_OnHurt, // onhurt
+    0x802889f8,
+    0x802888b8,
+    0x00000000,
+    0x00000000,
+    0x80288958,
+    0x80288c68,
+    0x803f5988,
+};
 
 // Initial Menu
 static EventMenu *Event_Menu = &LabMenu_Main;

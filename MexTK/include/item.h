@@ -265,10 +265,10 @@
 struct itData
 {
     int x0;
-    int *itemAttributes;
-    int archive;
-    int animFlags;
-    int animDynamics;
+    float *param_ext;
+    void *archive;
+    void *animFlags;
+    void *animDynamics;
     int x14;
     int x18;
     int x1C;
@@ -291,10 +291,15 @@ struct itData
 
 struct itCommonAttr
 {
-    char flags1; //0x0, bit 0x80 = is heavy item (crate)
-    char flags2; //0x1
-    char flags3; //0x2
-    char flags4; //0x3
+    char flags1;                //0x0, bit 0x80 = is heavy item (crate)
+    unsigned char x1_1 : 1;     // 0x1 0x80
+    unsigned char x1_2 : 1;     // 0x1 0x40
+    unsigned char x1_3 : 1;     // 0x1 0x20
+    unsigned char x1_4 : 1;     // 0x1 0x10
+    unsigned char x1_5 : 1;     // 0x1 0x08
+    unsigned char cam_kind : 2; // 0x1 0x06, is stored to 0xdcd
+    unsigned char x1_8 : 1;     // 0x1 0x01    char flags3; //0x2
+    char flags4;                //0x3
     int x4;
     int x8;
     float spinVelocity;
@@ -501,7 +506,7 @@ struct ItemData
     int xac;                                 // 0xac
     int xb0;                                 // 0xb0
     int xb4;                                 // 0xb4
-    int xb8;                                 // 0xb8
+    void *it_cb;                             // 0xb8, global item callbacks
     ItemState *itemStates;                   // 0xbc
     int isRotate;                            // 0xc0
     itData *itData;                          // 0xc4
@@ -843,16 +848,19 @@ struct ItemData
     int xd08;                                // 0xd08
     int xd0c;                                // 0xd0c
     int xd10;                                // 0xd10
-    int xd14;                                // 0xd14
-    int xd18;                                // 0xd18
-    int xd1c;                                // 0xd1c
-    void *cb_Accessory;                      // 0xd20
-    int xd24;                                // 0xd24
-    int xd28;                                // 0xd28
-    int xd2c;                                // 0xd2c
-    int xd30;                                // 0xd30
-    void *grabbedFighter_OnItem;             // 0xd34
-    void *grabbedFighter_OnFighter;          // 0xd38
+    struct                                   // cb
+    {                                        //
+        void *anim;                          // 0xd14
+        void *phys;                          // 0xd18
+        void *coll;                          // 0xd1c
+        void *accessory;                     // 0xd20
+        void *xd24;                          // 0xd24
+        void *xd28;                          // 0xd28
+        void *xd2c;                          // 0xd2c
+        void *jumped;                        // 0xd30, runs when the item is "jumped on", 80269bac
+        void *grabFt_onIt;                   // 0xd34, when grabbing a fighter, run this function on self
+        void *grabFt_onFt;                   // 0xd38, when grabbing a fighter, run this function on fighter
+    } cb;                                    //
     float rotateSpeed;                       // 0xd3c
     int xd40;                                // 0xd40
     float lifetime;                          // 0xd44
@@ -899,9 +907,17 @@ struct ItemData
     int xdc0;                                // 0xdc0
     int xdc4;                                // 0xdc4
     u16 flags1 : 16;                         // 0xdc8
-    u16 flags2 : 7;                          // 0xdca
-    u16 rotateAxis : 3;                      // 0xdcb
-    u16 flags4 : 6;                          // 0xdcb
+    u16 xdca1 : 1;                           // 0xdca 0x80
+    u16 xdca2 : 1;                           // 0xdca 0x40
+    u16 xdca3 : 1;                           // 0xdca 0x20
+    u16 xdca4 : 1;                           // 0xdca 0x10
+    u16 xdca5 : 1;                           // 0xdca 0x08
+    u16 can_hold : 1;                        // 0xdca 0x04
+    u16 xdca7 : 1;                           // 0xdca 0x02
+    u16 rotateAxis : 3;                      // 0xdcb,
+    u16 flags4 : 2;                          // 0xdcb, 0x30
+    u16 can_nudge : 1;                       // 0xdcb, 0x08
+    u16 xdcb_7 : 3;                          // 0xdcb, 0x07
     unsigned char xdcc1 : 1;                 // 0xdcc, 0x80
     unsigned char xdcc2 : 1;                 // 0xdcc, 0x40
     unsigned char xdcc3 : 1;                 // 0xdcc, 0x20
@@ -910,8 +926,7 @@ struct ItemData
     unsigned char isCheckLeftBlastzone : 1;  // 0xdcc, 0x04
     unsigned char isCheckUpBlastzone : 1;    // 0xdcc, 0x02
     unsigned char isCheckDownBlastzone : 1;  // 0xdcc, 0x01
-    unsigned char xdcd1 : 1;                 // 0xdcd, 0x80
-    unsigned char update_cam : 1;            // 0xdcd, 0x40. indicates this item has a camera box
+    unsigned char cam_kind : 2;              // 0xdcd, 0xc0. indicates this item has a camera box
     unsigned char xdcd3 : 1;                 // 0xdcd, 0x20
     unsigned char xdcd4 : 1;                 // 0xdcd, 0x10
     unsigned char xdcd5 : 1;                 // 0xdcd, 0x08
@@ -996,5 +1011,6 @@ void Item_SetLifeTimer(GOBJ *item, float lifetime); // sets frames until item is
 int Item_DecLifeTimer(GOBJ *item);                  // returns isEnd bool
 JOBJ *Item_GetBoneJOBJ(GOBJ *item, int bone_index);
 int Item_CheckIfEnabled(); // returns bool regarding if items are enabled for this match
+void Barrel_EnterBreak(GOBJ *item);
 
 #endif

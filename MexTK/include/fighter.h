@@ -1879,7 +1879,7 @@ struct FighterData
         char timer_a;                                          // 0x67C
         char timer_b;                                          // 0x67D
         char timer_xy;                                         // 0x67E
-        char timer_z;                                          // 0x67F
+        char timer_trigger_any_ignore_hitlag;                  // 0x67F
         char timer_LR;                                         // 0x680
         char timer_padup;                                      // 0x681
         char timer_paddown;                                    // 0x682

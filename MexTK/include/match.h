@@ -175,7 +175,7 @@ struct CameraBox
 {
     void *alloc;            // 0x0
     CameraBox *next;        // 0x4
-    int x8;                 // 0x8
+    int kind;               // 0x8 2 = only focus if close to center
     int flags;              // 0xC
     Vec3 cam_pos;           // 0x10
     Vec3 bone_pos;          // 0x1c

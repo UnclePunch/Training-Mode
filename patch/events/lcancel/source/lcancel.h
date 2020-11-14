@@ -12,6 +12,8 @@ struct LCancelData
 {
     EventInfo *eventInfo;
     LCancelAssets *lcancel_assets;
+    GOBJ *barrel_gobj;
+    Vec3 barrel_lastpos;
     struct hud
     {
         GOBJ *gobj;
@@ -31,4 +33,9 @@ typedef struct LCancelAssets
 
 #define LCLTEXT_SCALE 4
 
+static void *item_callbacks[];
+void Barrel_Think(LCancelData *event_data);
+void Barrel_Toggle(GOBJ *menu_gobj, int value);
+GOBJ *Barrel_Spawn(int pos_kind);
+void Barrel_Null();
 void Event_Exit();

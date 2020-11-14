@@ -418,3 +418,4 @@
 80325a50:strcpy
 80325a0c:strncpy
 80325b24:strtoul
+802886c4:Barrel_EnterBreak
