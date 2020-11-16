@@ -4,7 +4,7 @@
 void Event_Init(GOBJ *gobj)
 {
     int *EventData = gobj->userdata;
-    EventInfo *eventInfo = EventData[0];
+    EventDesc *eventInfo = EventData[0];
 
     return;
 }
@@ -53,7 +53,7 @@ static EventMatchData Lab_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Lab = {
+static EventDesc Lab = {
     // Event Name
     .eventName = "Training Lab\n",
     .eventDescription = "Free practice with\ncomplete control.\n",
@@ -100,7 +100,7 @@ static EventMatchData LCancel_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo LCancel = {
+static EventDesc LCancel = {
     // Event Name
     .eventName = "L-Cancel Training\n",
     .eventDescription = "Practice L-Cancelling on\na stationary CPU.\n",
@@ -146,7 +146,7 @@ static EventMatchData Ledgedash_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Ledgedash = {
+static EventDesc Ledgedash = {
     .eventName = "Ledgedash Training\n",
     .eventDescription = "Practice Ledgedashes!\nUse D-Pad to change ledge.\n",
     .eventTutorial = "TvLedDa",
@@ -191,7 +191,7 @@ static EventMatchData Combo_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Combo = {
+static EventDesc Combo = {
 
     .eventName = "Combo Training\n",
     .eventDescription = "L+DPad adjusts percent | DPadDown moves CPU\nDPad right/left saves and loads positions.",
@@ -237,7 +237,7 @@ static EventMatchData AttackOnShield_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo AttackOnShield = {
+static EventDesc AttackOnShield = {
     .eventName = "Attack on Shield\n",
     .eventDescription = "Practice attacks on a shielding opponent\nPause to change their OoS option\n",
     .eventTutorial = "TvLC",
@@ -282,7 +282,7 @@ static EventMatchData Reversal_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Reversal = {
+static EventDesc Reversal = {
     .eventName = "Reversal Training\n",
     .eventDescription = "Practice OoS punishes! DPad left/right\nmoves characters close and further apart.",
     .eventTutorial = "TvLC",
@@ -327,7 +327,7 @@ static EventMatchData SDI_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo SDI = {
+static EventDesc SDI = {
     .eventName = "SDI Training\n",
     .eventDescription = "Use Smash DI to escape\nFox's up-air attack!",
     .eventTutorial = "TvLC",
@@ -373,7 +373,7 @@ static EventMatchData Powershield_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Powershield = {
+static EventDesc Powershield = {
     .eventName = "Powershield Training\n",
     .eventDescription = "Powershield Falco's laser!\nPause to change to fire-rate.",
     .eventTutorial = "TvLC",
@@ -418,7 +418,7 @@ static EventMatchData Ledgetech_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Ledgetech = {
+static EventDesc Ledgetech = {
     .eventName = "Ledge-Tech Training\n",
     .eventDescription = "Practice ledge-teching\nFalco's down-smash",
     .eventTutorial = "TvLC",
@@ -463,7 +463,7 @@ static EventMatchData AmsahTech_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo AmsahTech = {
+static EventDesc AmsahTech = {
     .eventName = "Amsah-Tech Training\n",
     .eventDescription = "Taunt to have Marth Up-B,\nthen ASDI down and tech!\n",
     .eventTutorial = "TvLC",
@@ -508,7 +508,7 @@ static EventMatchData ShieldDrop_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo ShieldDrop = {
+static EventDesc ShieldDrop = {
     .eventName = "Shield Drop Training\n",
     .eventDescription = "Counter with a shield-drop aerial!\nDPad left/right moves players apart.",
     .eventTutorial = "TvLC",
@@ -553,7 +553,7 @@ static EventMatchData WaveshineSDI_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo WaveshineSDI = {
+static EventDesc WaveshineSDI = {
     .eventName = "Waveshine SDI\n",
     .eventDescription = "Use Smash DI to get out\nof Fox's waveshine!",
     .eventTutorial = "TvLC",
@@ -598,7 +598,7 @@ static EventMatchData SlideOff_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo SlideOff = {
+static EventDesc SlideOff = {
     .eventName = "Slide-Off Training\n",
     .eventDescription = "Use Slide-Off DI to slide off\nthe platform and counter attack!\n",
     .eventTutorial = "TvLC",
@@ -643,7 +643,7 @@ static EventMatchData GrabMash_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo GrabMash = {
+static EventDesc GrabMash = {
     .eventName = "Grab Mash Training\n",
     .eventDescription = "Mash buttons to escape the grab\nas quickly as possible!\n",
     .eventTutorial = "TvLC",
@@ -688,7 +688,7 @@ static EventMatchData TechCounter_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo TechCounter = {
+static EventDesc TechCounter = {
     .eventName = "Ledgetech Marth Counter\n",
     .eventDescription = "Practice ledge-teching\nMarth's counter!\n",
     .eventTutorial = "TvLC",
@@ -733,7 +733,7 @@ static EventMatchData ArmadaShine_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo ArmadaShine = {
+static EventDesc ArmadaShine = {
     .eventName = "Armada-Shine Training\n",
     .eventDescription = "Finish the enemy Fox\nwith an Armada Shine!",
     .eventTutorial = "TvLC",
@@ -778,7 +778,7 @@ static EventMatchData SideBSweet_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo SideBSweet = {
+static EventDesc SideBSweet = {
     .eventName = "Side-B Sweetspot\n",
     .eventDescription = "Use a sweetspot Side-B to avoid Marth's\ndown-tilt and grab the ledge!",
     .eventTutorial = "TvLC",
@@ -823,7 +823,7 @@ static EventMatchData EscapeSheik_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo EscapeSheik = {
+static EventDesc EscapeSheik = {
     .eventName = "Escape Sheik Techchase\n",
     .eventDescription = "Practice escaping the tech chase with a\nframe perfect shine or jab SDI!\n",
     .eventTutorial = "TvLC",
@@ -868,7 +868,7 @@ static EventMatchData Eggs_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Eggs = {
+static EventDesc Eggs = {
     .eventName = "Eggs-ercise\n",
     .eventDescription = "Break the eggs! Only strong hits will\nbreak them. DPad down = free practice.",
     .eventTutorial = "TvLC",
@@ -913,7 +913,7 @@ static EventMatchData Multishine_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Multishine = {
+static EventDesc Multishine = {
     .eventName = "Shined Blind\n",
     .eventDescription = "How many shines can you\nperform in 10 seconds?",
     .eventTutorial = "TvLC",
@@ -958,7 +958,7 @@ static EventMatchData Reaction_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Reaction = {
+static EventDesc Reaction = {
     .eventName = "Reaction Test\n",
     .eventDescription = "Test your reaction time by pressing\nany button when you see/hear Fox shine!",
     .eventTutorial = "TvLC",
@@ -1003,7 +1003,7 @@ static EventMatchData Ledgestall_MatchData = {
     .onMatchEnd = 0,
 };
 // Event Struct
-static EventInfo Ledgestall = {
+static EventDesc Ledgestall = {
     .eventName = "Under Fire\n",
     .eventDescription = "Ledgestall to remain\ninvincible while the lava rises!\n",
     .eventTutorial = "TvLC",
@@ -1021,7 +1021,7 @@ static EventInfo Ledgestall = {
 ///////////////////////
 
 // Minigames
-static EventInfo *Minigames_Events[] = {
+static EventDesc *Minigames_Events[] = {
     &Eggs,
     &Multishine,
     &Reaction,
@@ -1034,7 +1034,7 @@ static EventPage Minigames_Page = {
 };
 
 // Page 2 Events
-static EventInfo *General_Events[] = {
+static EventDesc *General_Events[] = {
     &Lab,
     &LCancel,
     &Ledgedash,
@@ -1057,7 +1057,7 @@ static EventPage General_Page = {
 };
 
 // Page 3 Events
-static EventInfo *Spacie_Events[] = {
+static EventDesc *Spacie_Events[] = {
     &TechCounter,
     &ArmadaShine,
     &SideBSweet,
@@ -1084,7 +1084,7 @@ static EventPage **EventPages[] = {
 ////////////////////////
 
 static Savestate *stc_savestate;
-static EventInfo *static_eventInfo;
+static EventDesc *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars stc_event_vars = {
     .event_info = 0,
@@ -1115,7 +1115,7 @@ void EventInit(int page, int eventID, MatchInit *matchData)
     */
 
     // get event pointer
-    EventInfo *event = GetEvent(page, eventID);
+    EventDesc *event = GetEvent(page, eventID);
 
     //Init default match info
     matchData->timer_unk2 = 0;
@@ -1262,7 +1262,7 @@ void EventLoad()
     Memcard *memcard = R13_PTR(MEMCARD);
     int page = memcard->TM_EventPage;
     int eventID = memcard->EventBackup.event;
-    EventInfo *eventInfo = GetEvent(page, eventID);
+    EventDesc *eventInfo = GetEvent(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
     // append extension
@@ -1321,7 +1321,7 @@ void EventUpdate()
 {
 
     // get event info
-    EventInfo *event_info = stc_event_vars.event_info;
+    EventDesc *event_info = stc_event_vars.event_info;
     evFunction *evFunction = &stc_event_vars.evFunction;
     GOBJ *menu_gobj = stc_event_vars.menu_gobj;
 
@@ -2612,7 +2612,7 @@ float BezierBlend(float t)
 /// Event Menu Functions ///
 ////////////////////////////
 
-GOBJ *EventMenu_Init(EventInfo *eventInfo, EventMenu *start_menu)
+GOBJ *EventMenu_Init(EventDesc *eventInfo, EventMenu *start_menu)
 {
     // Ensure this event has a menu
     if (start_menu == 0)
@@ -2656,7 +2656,7 @@ void EventMenu_Update(GOBJ *gobj)
 
     //MenuCamData *camData = gobj->userdata;
     MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
+    EventDesc *eventInfo = menuData->eventInfo;
     EventMenu *currMenu = menuData->currMenu;
 
     int update_menu = 1;
@@ -2783,7 +2783,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 {
 
     MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
+    EventDesc *eventInfo = menuData->eventInfo;
 
     // get player who paused
     u8 *pauseData = (u8 *)0x8046b6a0;
@@ -3114,7 +3114,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 {
 
     MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
+    EventDesc *eventInfo = menuData->eventInfo;
 
     // get player who paused
     u8 *pauseData = (u8 *)0x8046b6a0;
@@ -3399,7 +3399,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     // Get event info
     MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
+    EventDesc *eventInfo = menuData->eventInfo;
     Text *text;
     int subtext;
     int canvasIndex = menuData->canvas_menu;
@@ -3513,7 +3513,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 
     // Get event info
     MenuData *menuData = gobj->userdata;
-    EventInfo *eventInfo = menuData->eventInfo;
+    EventDesc *eventInfo = menuData->eventInfo;
     s32 cursor = menu->cursor;
     s32 scroll = menu->scroll;
     s32 option_num = menu->option_num;
@@ -3921,25 +3921,25 @@ void EventMenu_DestroyPopup(GOBJ *gobj)
 /// Member-Access Functions ///
 ///////////////////////////////
 
-EventInfo *GetEvent(int page, int event)
+EventDesc *GetEvent(int page, int event)
 {
     EventPage *thisPage = EventPages[page];
-    EventInfo *thisEvent = thisPage->events[event];
+    EventDesc *thisEvent = thisPage->events[event];
     return (thisEvent);
 }
 char *GetEventName(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->eventName);
 }
 char *GetEventDesc(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->eventDescription);
 }
 char *GetEventTut(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->eventTutorial);
 }
 char *GetPageName(int page)
@@ -3949,12 +3949,12 @@ char *GetPageName(int page)
 }
 char *GetEventFile(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->eventFile);
 }
 char *GetCSSFile(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->eventCSSFile);
 }
 int GetPageEventNum(int page)
@@ -3977,26 +3977,26 @@ int GetPageNum()
 }
 u8 GetIsChooseCPU(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->isChooseCPU);
 }
 u8 GetIsSelectStage(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->isSelectStage);
 }
 s8 GetFighter(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->matchData->playerKind);
 }
 s8 GetCPUFighter(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->matchData->cpuKind);
 }
 s16 GetStage(int page, int event)
 {
-    EventInfo *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEvent(page, event);
     return (thisEvent->matchData->stage);
 }

@@ -68,7 +68,7 @@ typedef struct EventMatchData
     void *onCheckPause;
     void *onMatchEnd;
 } EventMatchData;
-typedef struct EventInfo
+typedef struct EventDesc
 {
     char *eventName;
     char *eventDescription;
@@ -81,12 +81,12 @@ typedef struct EventInfo
     u8 callbackPriority;
     EventMatchData *matchData;
     int defaultOSD;
-} EventInfo;
+} EventDesc;
 typedef struct EventPage
 {
     char *name;
     int eventNum;
-    EventInfo **events;
+    EventDesc **events;
 } EventPage;
 typedef struct EventOption
 {
@@ -114,7 +114,7 @@ struct EventMenu
 };
 typedef struct MenuData
 {
-    EventInfo *eventInfo;
+    EventDesc *eventInfo;
     EventMenu *currMenu;
     u16 canvas_menu;
     u16 canvas_popup;
@@ -636,7 +636,7 @@ typedef struct evFunction
 } evFunction;
 typedef struct EventVars
 {
-    EventInfo *event_info;                                                                   // event information
+    EventDesc *event_info;                                                                   // event information
     evMenu *menu_assets;                                                                     // menu assets
     GOBJ *event_gobj;                                                                        // event gobj
     GOBJ *menu_gobj;                                                                         // event menu gobj
@@ -652,10 +652,10 @@ typedef struct EventVars
 } EventVars;
 
 // Function prototypes
-EventInfo *GetEvent(int page, int event);
+EventDesc *GetEvent(int page, int event);
 void EventInit(int page, int eventID, MatchInit *matchData);
 void EventLoad();
-GOBJ *EventMenu_Init(EventInfo *eventInfo, EventMenu *start_menu);
+GOBJ *EventMenu_Init(EventDesc *eventInfo, EventMenu *start_menu);
 void EventMenu_Think(GOBJ *eventMenu, int pass);
 void EventMenu_COBJThink(GOBJ *gobj);
 void EventMenu_Draw(GOBJ *eventMenu);
@@ -673,7 +673,7 @@ JOBJ *IDToBone(FighterData *fighter_data, int id);
 void EventUpdate();
 void Event_IncTimer(GOBJ *gobj);
 void Test_Think(GOBJ *gobj);
-static EventInfo *static_eventInfo;
+static EventDesc *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars stc_event_vars;
 static int *eventDataBackup;
