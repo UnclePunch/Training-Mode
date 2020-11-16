@@ -65,7 +65,7 @@ static EventMenu LabMenu_Main = {
 void Event_Init(GOBJ *gobj)
 {
     LCancelData *event_data = gobj->userdata;
-    EventInfo *eventInfo = event_data->eventInfo;
+    EventDesc *event_desc = event_data->event_desc;
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
     //GOBJ *cpu = Fighter_GetGObj(1);

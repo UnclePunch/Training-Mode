@@ -114,7 +114,7 @@ struct EventMenu
 };
 typedef struct MenuData
 {
-    EventDesc *eventInfo;
+    EventDesc *event_desc;
     EventMenu *currMenu;
     u16 canvas_menu;
     u16 canvas_popup;
@@ -655,7 +655,7 @@ typedef struct EventVars
 EventDesc *GetEvent(int page, int event);
 void EventInit(int page, int eventID, MatchInit *matchData);
 void EventLoad();
-GOBJ *EventMenu_Init(EventDesc *eventInfo, EventMenu *start_menu);
+GOBJ *EventMenu_Init(EventDesc *event_desc, EventMenu *start_menu);
 void EventMenu_Think(GOBJ *eventMenu, int pass);
 void EventMenu_COBJThink(GOBJ *gobj);
 void EventMenu_Draw(GOBJ *eventMenu);

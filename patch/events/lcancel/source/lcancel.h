@@ -6,7 +6,7 @@ typedef struct LCancelAssets LCancelAssets;
 
 struct LCancelData
 {
-    EventInfo *eventInfo;
+    EventDesc *event_desc;
     LCancelAssets *lcancel_assets;
     GOBJ *barrel_gobj;
     Vec3 barrel_lastpos;

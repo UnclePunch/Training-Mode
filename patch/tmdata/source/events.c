@@ -4,7 +4,7 @@
 void Event_Init(GOBJ *gobj)
 {
     int *EventData = gobj->userdata;
-    EventDesc *eventInfo = EventData[0];
+    EventDesc *event_desc = EventData[0];
 
     return;
 }
@@ -1262,20 +1262,20 @@ void EventLoad()
     Memcard *memcard = R13_PTR(MEMCARD);
     int page = memcard->TM_EventPage;
     int eventID = memcard->EventBackup.event;
-    EventDesc *eventInfo = GetEvent(page, eventID);
+    EventDesc *event_desc = GetEvent(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
     // append extension
     static char *extension = "%s.dat";
     char *buffer[20];
-    sprintf(buffer, extension, eventInfo->eventFile);
+    sprintf(buffer, extension, event_desc->eventFile);
 
     // load this events file
     ArchiveInfo *archive = MEX_LoadRelArchive(buffer, evFunction, "evFunction");
     stc_event_vars.event_archive = archive;
 
     // Create this event's gobj
-    int pri = eventInfo->callbackPriority;
+    int pri = event_desc->callbackPriority;
     void *cb = evFunction->Event_Think;
     GOBJ *gobj = GObj_Create(0, 7, 0);
     int *userdata = calloc(EVENT_DATASIZE);
@@ -1283,7 +1283,7 @@ void EventLoad()
     GObj_AddProc(gobj, cb, pri);
 
     // store pointer to the event's data
-    userdata[0] = eventInfo;
+    userdata[0] = event_desc;
 
     // Create a gobj to track match time
     stc_event_vars.game_timer = 0;
@@ -1291,10 +1291,10 @@ void EventLoad()
     GObj_AddProc(timer_gobj, Event_IncTimer, 0);
 
     // init the pause menu
-    GOBJ *menu_gobj = EventMenu_Init(eventInfo, *evFunction->menu_start);
+    GOBJ *menu_gobj = EventMenu_Init(event_desc, *evFunction->menu_start);
 
     // Init static structure containing event variables
-    stc_event_vars.event_info = eventInfo;
+    stc_event_vars.event_info = event_desc;
     stc_event_vars.event_gobj = gobj;
     stc_event_vars.menu_gobj = menu_gobj;
 
@@ -2612,7 +2612,7 @@ float BezierBlend(float t)
 /// Event Menu Functions ///
 ////////////////////////////
 
-GOBJ *EventMenu_Init(EventDesc *eventInfo, EventMenu *start_menu)
+GOBJ *EventMenu_Init(EventDesc *event_desc, EventMenu *start_menu)
 {
     // Ensure this event has a menu
     if (start_menu == 0)
@@ -2633,7 +2633,7 @@ GOBJ *EventMenu_Init(EventDesc *eventInfo, EventMenu *start_menu)
     GObj_AddUserData(gobj, 4, HSD_Free, menuData);
 
     // store pointer to the gobj's data
-    menuData->eventInfo = eventInfo;
+    menuData->event_desc = event_desc;
 
     // Add gx_link
     GObj_AddGXLink(gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
@@ -2656,7 +2656,7 @@ void EventMenu_Update(GOBJ *gobj)
 
     //MenuCamData *camData = gobj->userdata;
     MenuData *menuData = gobj->userdata;
-    EventDesc *eventInfo = menuData->eventInfo;
+    EventDesc *event_desc = menuData->event_desc;
     EventMenu *currMenu = menuData->currMenu;
 
     int update_menu = 1;
@@ -2783,7 +2783,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 {
 
     MenuData *menuData = gobj->userdata;
-    EventDesc *eventInfo = menuData->eventInfo;
+    EventDesc *event_desc = menuData->event_desc;
 
     // get player who paused
     u8 *pauseData = (u8 *)0x8046b6a0;
@@ -3114,7 +3114,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 {
 
     MenuData *menuData = gobj->userdata;
-    EventDesc *eventInfo = menuData->eventInfo;
+    EventDesc *event_desc = menuData->event_desc;
 
     // get player who paused
     u8 *pauseData = (u8 *)0x8046b6a0;
@@ -3399,7 +3399,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     // Get event info
     MenuData *menuData = gobj->userdata;
-    EventDesc *eventInfo = menuData->eventInfo;
+    EventDesc *event_desc = menuData->event_desc;
     Text *text;
     int subtext;
     int canvasIndex = menuData->canvas_menu;
@@ -3513,7 +3513,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 
     // Get event info
     MenuData *menuData = gobj->userdata;
-    EventDesc *eventInfo = menuData->eventInfo;
+    EventDesc *event_desc = menuData->event_desc;
     s32 cursor = menu->cursor;
     s32 scroll = menu->scroll;
     s32 option_num = menu->option_num;
