@@ -3521,49 +3521,86 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         option_num = MENU_MAXOPTION;
     Text *text;
 
-    /* 
-    Update Title
-    */
+    // Update Title
 
     text = menuData->text_title;
-    //Text_SetText(text, 0, "Test Title");
     Text_SetText(text, 0, menu->name);
 
-    /* 
-    Update Description
-    */
-
-    text = menuData->text_desc;
+    // Update Description
+    Text_Destroy(menuData->text_desc); // i think its best to recreate it...
+    text = Text_CreateText(2, menuData->canvas_menu);
+    text->gobj->gx_cb = EventMenu_TextGX;
+    menuData->text_desc = text;
     EventOption *currOption = &menu->options[menu->cursor + menu->scroll];
-    // 0x07, 0xfe, 0x52, 0x01, 0x00 - offset
-    // 0xE, 0x01, 0xE0, 0x01, 0x00 - fit
-    static u8 descHeader[] = {0x16, 0xC, 0xFF, 0xFF, 0xFF};
-    static u8 descTerminator[] = {0x0};
+
+#define DESC_TXTSIZEX 5
+#define DESC_TXTSIZEY 5
+#define DESC_TXTASPECT 885
+#define DESC_LINEMAX 4
+#define DESC_CHARMAX 100
+#define DESC_YOFFSET 30
+
+    text->kerning = 1;
+    text->align = 0;
+    text->use_aspect = 1;
 
     // scale canvas
-    text->scale.X = MENU_CANVASSCALE;
-    text->scale.Y = MENU_CANVASSCALE;
+    text->scale.X = 0.01 * DESC_TXTSIZEX;
+    text->scale.Y = 0.01 * DESC_TXTSIZEY;
     text->trans.X = MENU_DESCXPOS;
     text->trans.Y = MENU_DESCYPOS;
     text->trans.Z = MENU_TEXTZ;
+    text->aspect.X = (DESC_TXTASPECT);
 
-    // free current allocation
-    Text_DestroyAlloc(text->textAlloc);
-    // convert description into menu text
-    u8 buffer[500];
-    int menuTextSize = Text_StringToMenuText(&buffer, currOption->desc);
-    // new alloc
-    int allocSize = menuTextSize + sizeof(descHeader) + sizeof(descTerminator);
-    u8 *textAlloc = Text_Alloc(allocSize);
-    // copy header to new alloc
-    memcpy(textAlloc, &descHeader, sizeof(descHeader));
-    memcpy(textAlloc + sizeof(descHeader), &buffer, menuTextSize);
-    memcpy(textAlloc + sizeof(descHeader) + menuTextSize, &descTerminator, sizeof(descTerminator));
-    // update pointer to alloc
-    text->textAlloc = textAlloc;
-    text->allocInfo->start = textAlloc;
-    text->allocInfo->curr = textAlloc + allocSize;
-    text->allocInfo->size = allocSize;
+    char *msg = currOption->desc;
+
+    // count newlines
+    int line_num = 1;
+    int line_length_arr[DESC_LINEMAX];
+    char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
+    msg_cursor_prev = msg;
+    msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
+    while (msg_cursor_curr != 0)                     // if occurrence found, increment values
+    {
+        // check if exceeds max lines
+        if (line_num >= DESC_LINEMAX)
+            assert("DESC_LINEMAX exceeded!");
+
+        // Save information about this line
+        line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
+        line_num++;                                                        // increment number of newlines found
+        msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
+        msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
+    }
+
+    // get last lines length
+    msg_cursor_curr = strchr(msg_cursor_prev, 0);
+    line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
+
+    // copy each line to an individual char array
+    char *msg_cursor = &msg;
+    for (int i = 0; i < line_num; i++)
+    {
+
+        // check if over char max
+        u8 line_length = line_length_arr[i];
+        if (line_length > DESC_CHARMAX)
+            assert("DESC_CHARMAX exceeded!");
+
+        // copy char array
+        char msg_line[DESC_CHARMAX + 1];
+        memcpy(msg_line, msg, line_length);
+
+        // add null terminator
+        msg_line[line_length] = '\0';
+
+        // increment msg
+        msg += (line_length + 1); // +1 to skip past newline
+
+        // print line
+        int y_delta = (i * DESC_YOFFSET);
+        Text_AddSubtext(text, 0, y_delta, msg_line);
+    }
 
     /* 
     Update Names

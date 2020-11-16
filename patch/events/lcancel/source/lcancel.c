@@ -29,13 +29,13 @@ static EventOption LcOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC,                                                                                                                                                                             // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                                                                                          // number of values for this option
-        .option_val = 0,                                                                                                                                                                                         // value of this option
-        .menu = 0,                                                                                                                                                                                               // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                                                                                                   // pointer to a string
-        .desc = "L-canceling is performed by pressing L, R, or \nZ up to 7 frames before landing from an \naerial attack. This will cut the landing lag in \nhalf, allowing you to act faster after attacking.", // string describing what this option does
-        .option_values = 0,                                                                                                                                                                                      // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                                               // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                                                                                                                            // number of values for this option
+        .option_val = 0,                                                                                                                                                                                                                           // value of this option
+        .menu = 0,                                                                                                                                                                                                                                 // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                                                                                                                                     // pointer to a string
+        .desc = "L-canceling is performed by pressing L, R, or Z up \nto 7 frames before landing from an aerial attack used with \nthe A button or C Stick. This will cut the landing lag \nin half, allowing you to act sooner after attacking.", // string describing what this option does
+        .option_values = 0,                                                                                                                                                                                                                        // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
