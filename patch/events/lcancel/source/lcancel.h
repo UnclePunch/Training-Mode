@@ -23,15 +23,20 @@ struct LCancelData
     } hud;
     struct
     {
-        GOBJ *gobj;       // tip gobj
-        Text *text;       // tip text object
-        int state;        // state this tip is in. 0 = in, 1 = wait, 2 = out
-        int lifetime;     // tips time spent onscreen
-        u8 shield_isdisp; // whether tip has been shown to the player
-        u8 shield_num;    // number of times condition has been met
-        u8 hitbox_active; // whether or not the last aerial used had a hitbox active
-        u8 hitbox_isdisp; // whether tip has been shown to the player
-        u8 hitbox_num;    // number of times condition has been met
+        GOBJ *gobj;         // tip gobj
+        Text *text;         // tip text object
+        int state;          // state this tip is in. 0 = in, 1 = wait, 2 = out
+        int lifetime;       // tips time spent onscreen
+        u8 shield_isdisp;   // whether tip has been shown to the player
+        u8 shield_num;      // number of times condition has been met
+        u8 hitbox_active;   // whether or not the last aerial used had a hitbox active
+        u8 hitbox_isdisp;   // whether tip has been shown to the player
+        u8 hitbox_num;      // number of times condition has been met
+        u8 fastfall_active; // whether or not the last aerial used had a hitbox active
+        u8 fastfall_isdisp; // whether tip has been shown to the player
+        u8 fastfall_num;    // number of times condition has been met
+        u8 late_isdisp;     // whether tip has been shown to the player
+        u8 late_num;        // number of times condition has been met
     } tip;
 };
 

@@ -172,7 +172,7 @@ typedef struct Arch_LabData
 } Arch_LabData;
 typedef struct LCancelData
 {
-    EventInfo *eventInfo;
+    EventDesc *eventInfo;
     u8 cpu_state;
     u8 cpu_hitshield;
     u8 cpu_hitnum;

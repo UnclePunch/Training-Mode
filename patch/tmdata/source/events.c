@@ -109,7 +109,7 @@ static EventDesc LCancel = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .scoreType = 0,
-    .callbackPriority = 3,
+    .callbackPriority = 15,
     .matchData = &LCancel_MatchData,
     .defaultOSD = 0xFFFFFFFF,
 };
@@ -1115,7 +1115,7 @@ void EventInit(int page, int eventID, MatchInit *matchData)
     */
 
     // get event pointer
-    EventDesc *event = GetEvent(page, eventID);
+    EventDesc *event = GetEventDesc(page, eventID);
 
     //Init default match info
     matchData->timer_unk2 = 0;
@@ -1262,7 +1262,7 @@ void EventLoad()
     Memcard *memcard = R13_PTR(MEMCARD);
     int page = memcard->TM_EventPage;
     int eventID = memcard->EventBackup.event;
-    EventDesc *event_desc = GetEvent(page, eventID);
+    EventDesc *event_desc = GetEventDesc(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
     // append extension
@@ -3921,7 +3921,7 @@ void EventMenu_DestroyPopup(GOBJ *gobj)
 /// Member-Access Functions ///
 ///////////////////////////////
 
-EventDesc *GetEvent(int page, int event)
+EventDesc *GetEventDesc(int page, int event)
 {
     EventPage *thisPage = EventPages[page];
     EventDesc *thisEvent = thisPage->events[event];
@@ -3929,17 +3929,17 @@ EventDesc *GetEvent(int page, int event)
 }
 char *GetEventName(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->eventName);
 }
-char *GetEventDesc(int page, int event)
+char *GetEventDescription(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->eventDescription);
 }
 char *GetEventTut(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->eventTutorial);
 }
 char *GetPageName(int page)
@@ -3949,12 +3949,12 @@ char *GetPageName(int page)
 }
 char *GetEventFile(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->eventFile);
 }
 char *GetCSSFile(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->eventCSSFile);
 }
 int GetPageEventNum(int page)
@@ -3977,26 +3977,26 @@ int GetPageNum()
 }
 u8 GetIsChooseCPU(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->isChooseCPU);
 }
 u8 GetIsSelectStage(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->isSelectStage);
 }
 s8 GetFighter(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->matchData->playerKind);
 }
 s8 GetCPUFighter(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->matchData->cpuKind);
 }
 s16 GetStage(int page, int event)
 {
-    EventDesc *thisEvent = GetEvent(page, event);
+    EventDesc *thisEvent = GetEventDesc(page, event);
     return (thisEvent->matchData->stage);
 }

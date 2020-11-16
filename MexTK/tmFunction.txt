@@ -1,6 +1,6 @@
 eventPages
 GetEventName
-GetEventDesc
+GetEventDescription
 GetEventTut
 GetPageName
 GetPageEventNum

@@ -311,6 +311,7 @@
 800031f4:memcpy
 80003100:memset
 80005358:blr
+8021b2d8:bp
 801c53ec:SFX_Play
 8038cff4:SFX_PlayRaw
 80024030:SFX_PlayCommon

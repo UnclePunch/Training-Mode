@@ -1,7 +1,7 @@
 #include "../../../MexTK/mex.h"
 
 #define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
-#define EVENT_DATASIZE 128
+#define EVENT_DATASIZE 512
 #define TM_DATA -(50 * 4) - 4
 #define MENU_MAXOPTION 9
 #define MENU_POPMAXOPTION 5
@@ -652,7 +652,7 @@ typedef struct EventVars
 } EventVars;
 
 // Function prototypes
-EventDesc *GetEvent(int page, int event);
+EventDesc *GetEventDesc(int page, int event);
 void EventInit(int page, int eventID, MatchInit *matchData);
 void EventLoad();
 GOBJ *EventMenu_Init(EventDesc *event_desc, EventMenu *start_menu);

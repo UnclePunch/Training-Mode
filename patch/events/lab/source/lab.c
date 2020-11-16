@@ -6072,7 +6072,7 @@ int Export_Compress(u8 *dest, u8 *source, u32 size)
 void Event_Init(GOBJ *gobj)
 {
     LCancelData *eventData = gobj->userdata;
-    EventInfo *eventInfo = eventData->eventInfo;
+    EventDesc *eventInfo = eventData->eventInfo;
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
     GOBJ *cpu = Fighter_GetGObj(1);

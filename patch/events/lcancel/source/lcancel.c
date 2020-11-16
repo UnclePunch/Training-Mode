@@ -85,11 +85,6 @@ void Event_Init(GOBJ *gobj)
 
     return;
 }
-// Update Function
-void Event_Update()
-{
-    return;
-}
 // Think Function
 void Event_Think(GOBJ *event)
 {
@@ -116,7 +111,7 @@ void Event_Think(GOBJ *event)
     if (pad->down == PAD_BUTTON_DPAD_DOWN)
     {
         // ensure player is grounded
-        int isGround = 0;
+        int is_ground = 0;
         if (hmn_data->phys.air_state == 0)
         {
 
@@ -125,12 +120,12 @@ void Event_Think(GOBJ *event)
             int line_index;
             int line_kind;
             Vec3 line_unk;
-            float fromX = (hmn_data->phys.pos.X) + (hmn_data->facing_direction * 16);
-            float toX = fromX;
-            float fromY = (hmn_data->phys.pos.Y + 5);
-            float toY = fromY - 10;
-            isGround = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
-            if (isGround == 1)
+            float from_x = (hmn_data->phys.pos.X) + (hmn_data->facing_direction * 16);
+            float to_x = from_x;
+            float from_y = (hmn_data->phys.pos.Y + 5);
+            float to_y = from_y - 10;
+            is_ground = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
+            if (is_ground == 1)
             {
 
                 // do this for every subfighter (thanks for complicated code ice climbers)
@@ -200,7 +195,7 @@ void Event_Think(GOBJ *event)
         }
 
         // play SFX
-        if (isGround == 0)
+        if (is_ground == 0)
         {
             SFX_PlayCommon(3);
         }
@@ -301,7 +296,7 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
     // if aerial landing
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
-    if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 1))
+    if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 0))
     {
 
         // increment total lcls
@@ -446,44 +441,44 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
     {
 
         // update tip conditions
-        // look for a freshly buffered shield action
-        if ((hmn_data->state_id == ASID_GUARDON) &&                                                                    // currently in guard
-            (hmn_data->TM.state_frame == 1) &&                                                                         // first frame of guard
-            (hmn_data->TM.state_prev[0] == ASID_WAIT) &&                                                               // was just in wait
-            (hmn_data->TM.state_prev_frames[0] == 1) &&                                                                // in wait for 1 frame
-            ((hmn_data->TM.state_prev[1] >= ASID_LANDINGAIRN) && (hmn_data->TM.state_prev[1] <= ASID_LANDINGAIRLW)) && // was in aerial landing a few frames ago
-            (event_data->is_fail == 0))                                                                                // succeeded the last aerial landing
+        // look for a freshly buffered guard off
+        if (((hmn_data->state_id == ASID_GUARDOFF) && (hmn_data->TM.state_frame == 0)) &&                            // currently in guardoff first frame
+            (hmn_data->TM.state_prev[0] == ASID_GUARD) &&                                                            // was just in wait
+            ((hmn_data->TM.state_prev[3] >= ASID_LANDINGAIRN) && (hmn_data->TM.state_prev[3] <= ASID_LANDINGAIRLW))) // was in aerial landing a few frames ago
         {
             // increment condition count
             event_data->tip.shield_num++;
 
             // if condition met X times, show tip
-            if (event_data->tip.shield_num == 3)
+            if (event_data->tip.shield_num >= 3)
             {
                 // display tip
-                char *shield_string = "Don't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
-                Tips_Create(event_data, 5 * 60, shield_string);
-
-                // set as shown
-                event_data->tip.shield_isdisp = 1;
+                char *shield_string = "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
+                if (Tips_Create(event_data, 5 * 60, shield_string))
+                {
+                    // set as shown
+                    //event_data->tip.shield_isdisp = 1;
+                    event_data->tip.shield_num = 0;
+                }
             }
         }
     }
 
     // hitbox tip
-    //if (event_data->tip.hitbox_isdisp == 0) // if not shown
+    if (event_data->tip.hitbox_isdisp == 0) // if not shown
     {
         // update hitbox active bool
         if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
         {
+
             // reset hitbox bool on first frame of aerial attack
-            if (hmn_data->TM.state_frame == 1)
+            if (hmn_data->TM.state_frame == 0)
                 event_data->tip.hitbox_active = 0;
 
             // check if hitbox active
             for (int i = 0; i < (sizeof(hmn_data->hitbox) / sizeof(ftHit)); i++)
             {
-                if (hmn_data->hitbox[i].active == 1)
+                if (hmn_data->hitbox[i].active != 0)
                 {
                     event_data->tip.hitbox_active = 1;
                     break;
@@ -492,7 +487,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
         }
 
         // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && // is in aerial landing
+        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
             (event_data->is_fail == 0) &&
             (event_data->tip.hitbox_active == 0)) // succeeded the last aerial landing
         {
@@ -500,14 +495,85 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             event_data->tip.hitbox_num++;
 
             // if condition met X times, show tip
-            //if (event_data->tip.hitbox_num == 3)
+            if (event_data->tip.hitbox_num >= 3)
             {
                 // display tip
-                char *hitbox_string = "Don't land too quickly! Make sure you \nland after the attack becomes active.";
-                Tips_Create(event_data, 5 * 60, hitbox_string);
+                char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the attack \nbecomes active.";
+                if (Tips_Create(event_data, 5 * 60, hitbox_string))
+                {
 
-                // set as shown
-                event_data->tip.hitbox_isdisp = 1;
+                    // set as shown
+                    //event_data->tip.hitbox_isdisp = 1;
+                    event_data->tip.hitbox_num = 0;
+                }
+            }
+        }
+    }
+
+    // fastfall tip
+    if (event_data->tip.fastfall_isdisp == 0) // if not shown
+    {
+        // update fastfell bool
+        if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
+        {
+
+            // reset hitbox bool on first frame of aerial attack
+            if (hmn_data->TM.state_frame == 0)
+                event_data->tip.fastfall_active = 0;
+
+            // check if fastfalling
+            if (hmn_data->flags.is_fastfall == 1)
+                event_data->tip.fastfall_active = 1;
+        }
+
+        // update tip conditions
+        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
+            ((hmn_data->input.timer_trigger_any > 7) && (hmn_data->input.timer_trigger_any <= 30)) &&                                   // was early for an l-cancel
+            (event_data->tip.fastfall_active == 0))                                                                                     // succeeded the last aerial landing
+        {
+            // increment condition count
+            event_data->tip.fastfall_num++;
+
+            // if condition met X times, show tip
+            if (event_data->tip.fastfall_num >= 3)
+            {
+                // display tip
+                char *fastfall_string = "Tip:\nDon't forget to fastfall!\nIt will let you act sooner \nand help with your \ntiming.";
+                if (Tips_Create(event_data, 5 * 60, fastfall_string))
+                {
+
+                    // set as shown
+                    //event_data->tip.hitbox_isdisp = 1;
+                    event_data->tip.fastfall_num = 0;
+                }
+            }
+        }
+    }
+
+    // late tip
+    if (event_data->tip.late_isdisp == 0) // if not shown
+    {
+
+        // update tip conditions
+        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && // is in aerial landing
+            (event_data->is_fail == 1) &&                                                            // failed the l-cancel
+            (hmn_data->input.down & (HSD_TRIGGER_L | HSD_TRIGGER_R | HSD_TRIGGER_Z)))                // was late for an l-cancel by pressing it just now
+        {
+            // increment condition count
+            event_data->tip.late_num++;
+
+            // if condition met X times, show tip
+            if (event_data->tip.late_num >= 3)
+            {
+                // display tip
+                char *late_string = "Tip:\nTry pressing the trigger a\nbit earlier, before the\nfighter lands.";
+                if (Tips_Create(event_data, 5 * 60, late_string))
+                {
+
+                    // set as shown
+                    //event_data->tip.hitbox_isdisp = 1;
+                    event_data->tip.late_num = 0;
+                }
             }
         }
     }
@@ -579,7 +645,11 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
 int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
 {
 
-#define TIP_TXTSIZE 1.1
+#define TIP_TXTSIZEX 0.9
+#define TIP_TXTSIZEY 1.1
+#define TIP_TXTASPECT 410
+#define TIP_LINEMAX 5
+#define TIP_CHARMAX 32
 
     va_list args;
 
@@ -600,7 +670,7 @@ int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
     event_data->tip.lifetime = lifetime;
     event_data->tip.state = 0;
     tip_text->kerning = 1;
-    tip_text->align = 1;
+    tip_text->align = 0;
     tip_text->use_aspect = 1;
 
     // adjust text scale
@@ -608,9 +678,9 @@ int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
     // background scale
     tip_jobj->scale = scale;
     // text scale
-    tip_text->scale.X = (scale.X * 0.01) * TIP_TXTSIZE;
-    tip_text->scale.Y = (scale.Y * 0.01) * TIP_TXTSIZE;
-    tip_text->aspect.X = (380);
+    tip_text->scale.X = (scale.X * 0.01) * TIP_TXTSIZEX;
+    tip_text->scale.Y = (scale.Y * 0.01) * TIP_TXTSIZEY;
+    tip_text->aspect.X = (TIP_TXTASPECT / TIP_TXTSIZEX);
 
     // apply exit anim
     JOBJ_RemoveAnimAll(tip_jobj);
@@ -618,7 +688,7 @@ int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
     JOBJ_ReqAnimAll(tip_jobj, 0);
 
     // build string
-    char buffer[(MSG_LINEMAX * MSG_CHARMAX) + 1];
+    char buffer[(TIP_LINEMAX * TIP_CHARMAX) + 1];
     va_start(args, fmt);
     vsprintf(buffer, fmt, args);
     va_end(args);
@@ -626,15 +696,15 @@ int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
 
     // count newlines
     int line_num = 1;
-    int line_length_arr[MSG_LINEMAX];
+    int line_length_arr[TIP_LINEMAX];
     char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
     msg_cursor_prev = msg;
     msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
     while (msg_cursor_curr != 0)                     // if occurrence found, increment values
     {
         // check if exceeds max lines
-        if (line_num >= MSG_LINEMAX)
-            assert("MSG_LINEMAX exceeded!");
+        if (line_num >= TIP_LINEMAX)
+            assert("TIP_LINEMAX exceeded!");
 
         // Save information about this line
         line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
@@ -654,11 +724,11 @@ int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
 
         // check if over char max
         u8 line_length = line_length_arr[i];
-        if (line_length > MSG_CHARMAX)
-            assert("MSG_CHARMAX exceeded!");
+        if (line_length > TIP_CHARMAX)
+            assert("TIP_CHARMAX exceeded!");
 
         // copy char array
-        char msg_line[MSG_CHARMAX + 1];
+        char msg_line[TIP_CHARMAX + 1];
         memcpy(msg_line, msg, line_length);
 
         // add null terminator
@@ -743,8 +813,17 @@ GOBJ *Barrel_Spawn(int pos_kind)
     {
     case (0): // center stage
     {
-        pos.X = 0;
-        pos.Y = 0;
+        // get position
+        int line_index;
+        int line_kind;
+        Vec3 line_angle;
+        float from_x = 0;
+        float to_x = from_x;
+        float from_y = 6;
+        float to_y = from_y - 1000;
+        int is_ground = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
+        if (is_ground == 0)
+            goto BARREL_RANDPOS;
         break;
     }
     case (1): // random pos
@@ -760,13 +839,13 @@ GOBJ *Barrel_Spawn(int pos_kind)
         int line_index;
         int line_kind;
         Vec3 line_angle;
-        float fromX = Stage_GetCameraLeft() + (HSD_Randi(Stage_GetCameraRight() - Stage_GetCameraLeft())) + HSD_Randf();
-        float toX = fromX;
-        float fromY = Stage_GetCameraBottom() + (HSD_Randi(Stage_GetCameraTop() - Stage_GetCameraBottom())) + HSD_Randf();
-        float toY = fromY - 1000;
-        int isGround = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+        float from_x = Stage_GetCameraLeft() + (HSD_Randi(Stage_GetCameraRight() - Stage_GetCameraLeft())) + HSD_Randf();
+        float to_x = from_x;
+        float from_y = Stage_GetCameraBottom() + (HSD_Randi(Stage_GetCameraTop() - Stage_GetCameraBottom())) + HSD_Randf();
+        float to_y = from_y - 1000;
+        int is_ground = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
         raycast_num++;
-        if (isGround == 0)
+        if (is_ground == 0)
             goto BARREL_RANDPOS;
 
         // ensure it isnt too close to the previous
@@ -776,16 +855,17 @@ GOBJ *Barrel_Spawn(int pos_kind)
 
         // ensure left and right have ground
         Vec3 near_pos;
-        float near_fromX;
-        near_fromX = pos.X + 8;
-        isGround = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, fromY, near_fromX, toY, 0);
+        float near_fromX = pos.X + 8;
+        float near_fromY = pos.Y + 4;
+        to_y = near_fromY - 4;
+        is_ground = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, near_fromY, near_fromX, to_y, 0);
         raycast_num++;
-        if (isGround == 0)
+        if (is_ground == 0)
             goto BARREL_RANDPOS;
         near_fromX = pos.X - 8;
-        isGround = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, fromY, near_fromX, toY, 0);
+        is_ground = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, near_fromY, near_fromX, to_y, 0);
         raycast_num++;
-        if (isGround == 0)
+        if (is_ground == 0)
             goto BARREL_RANDPOS;
 
         // output num and time

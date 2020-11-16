@@ -1862,7 +1862,7 @@ struct FighterData
         int held;                                              // 0x65C
         int held_prev;                                         // 0x660
         int unknown664;                                        // 0x664
-        int pressed;                                           // 0x668
+        int down;                                              // 0x668
         int unknown66C;                                        // 0x66C
         char timer_lstick_tilt_x;                              // 0x670
         char timer_lstick_tilt_y;                              // 0x671
