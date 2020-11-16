@@ -91,7 +91,8 @@ Overload_TableIndex:
   lwz r3,FunctionRelocTable_ReplaceWith(REG_ThisElement)
   add r3,r3,REG_Code
 #Update table
-  mulli r4,REG_Count,4
+  lwz r4,FunctionRelocTable_ReplaceThis(REG_ThisElement)
+  mulli r4,r4,4
   stwx  r3,r4,REG_OverloadTable
   b Overload_IncLoop
 
