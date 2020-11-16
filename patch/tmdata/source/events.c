@@ -5,9 +5,7 @@ void Event_Init(GOBJ *gobj)
 {
     int *EventData = gobj->userdata;
     EventInfo *eventInfo = EventData[0];
-#ifdef TM_DEBUG
-    OSReport("this is %s\n", eventInfo->eventName);
-#endif
+
     return;
 }
 
@@ -1110,6 +1108,12 @@ static int *eventDataBackup;
 void EventInit(int page, int eventID, MatchInit *matchData)
 {
 
+    /* 
+    This function runs when leaving the main menu/css and handles
+    setting up the match information, such as rules, players, stage.
+    All of this data comes from the EventDesc in events.c
+    */
+
     // get event pointer
     EventInfo *event = GetEvent(page, eventID);
 
@@ -1418,7 +1422,7 @@ void OnSceneChange()
 
     TM_CreateWatermark();
 
-#ifdef TM_DEBUG
+#if TM_DEBUG == 2
     TM_CreateConsole();
 #endif
 
@@ -1451,7 +1455,7 @@ int Savestate_Save(Savestate *savestate)
         FighterData *fighter_data;
     } BackupQueue;
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
     int save_pre_tick = OSGetTick();
 #endif
 
@@ -1637,7 +1641,7 @@ int Savestate_Save(Savestate *savestate)
         }
     }
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
     int save_post_tick = OSGetTick();
     int save_time = OSTicksToMilliseconds(save_post_tick - save_pre_tick);
     OSReport("processed save in %dms\n", save_time);
@@ -1653,7 +1657,7 @@ int Savestate_Load(Savestate *savestate)
         FighterData *fighter_data;
     } BackupQueue;
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
     int load_pre_tick = OSGetTick();
 #endif
 
@@ -1909,7 +1913,7 @@ int Savestate_Load(Savestate *savestate)
 
                     // process dynamics
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
                     int dyn_pre_tick = OSGetTick();
 #endif
                     int dyn_proc_num = 45;
@@ -1920,7 +1924,7 @@ int Savestate_Load(Savestate *savestate)
                         Fighter_ProcDynamics(fighter);
                     }
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
                     int dyn_post_tick = OSGetTick();
                     int dyn_time = OSTicksToMilliseconds(dyn_post_tick - dyn_pre_tick);
                     OSReport("processed dyn %d times in %dms\n", dyn_proc_num, dyn_time);
@@ -2001,7 +2005,7 @@ int Savestate_Load(Savestate *savestate)
         SFX_PlayCommon(0);
     }
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
     int load_post_tick = OSGetTick();
     int load_time = OSTicksToMilliseconds(load_post_tick - load_pre_tick);
     OSReport("processed load in %dms\n", load_time);
@@ -2097,7 +2101,7 @@ int BoneToID(FighterData *fighter_data, JOBJ *bone)
         }
     }
 
-#ifdef TM_DEBUG
+#if TM_DEBUG > 0
     // no bone found
     if (bone_id == -1)
     {
@@ -2236,7 +2240,7 @@ GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, 
     msg_data->lifetime = MSG_LIFETIME;
     msg_data->kind = msg_kind;
     msg_data->state = MSGSTATE_SHIFT;
-    msg_data->timer = MSGTIMER_SHIFT;
+    msg_data->anim_timer = MSGTIMER_SHIFT;
     msg_jobj->scale.X = MSGJOINT_SCALE;
     msg_jobj->scale.Y = MSGJOINT_SCALE;
     msg_jobj->scale.Z = MSGJOINT_SCALE;
@@ -2348,14 +2352,14 @@ void Message_Manager(GOBJ *mngr_gobj)
                 // check if the message moved this frame
                 if (this_msg_data->orig_index != j)
                 {
-                    this_msg_data->orig_index = j;         // moved so update this
-                    this_msg_data->state = MSGSTATE_SHIFT; // enter shift
-                    this_msg_data->timer = MSGTIMER_SHIFT; // shift timer
+                    this_msg_data->orig_index = j;              // moved so update this
+                    this_msg_data->state = MSGSTATE_SHIFT;      // enter shift
+                    this_msg_data->anim_timer = MSGTIMER_SHIFT; // shift timer
                 }
 
                 // decrement state timer if above 0
-                if (this_msg_data->timer > 0)
-                    this_msg_data->timer--;
+                if (this_msg_data->anim_timer > 0)
+                    this_msg_data->anim_timer--;
 
                 switch (this_msg_data->state)
                 {
@@ -2363,12 +2367,11 @@ void Message_Manager(GOBJ *mngr_gobj)
                 case (MSGSTATE_SHIFT):
                 {
 
-                    // decrement lifetime
-                    if (this_msg_data->lifetime > 0)
-                        this_msg_data->lifetime--;
+                    // increment alive time
+                    this_msg_data->alive_timer++;
 
                     // if lifetime is ended, enter delete state
-                    if (this_msg_data->lifetime <= 0)
+                    if (this_msg_data->alive_timer >= this_msg_data->lifetime)
                     {
                         // if using frame advance, instantly remove this message
                         if (Pause_CheckStatus(0) == 1)
@@ -2378,7 +2381,7 @@ void Message_Manager(GOBJ *mngr_gobj)
                         else
                         {
                             this_msg_data->state = MSGSTATE_DELETE;
-                            this_msg_data->timer = MSGTIMER_DELETE;
+                            this_msg_data->anim_timer = MSGTIMER_DELETE;
                         }
                     }
 
@@ -2389,7 +2392,7 @@ void Message_Manager(GOBJ *mngr_gobj)
                 {
 
                     // if timer is ended, remove the message
-                    if ((this_msg_data->timer <= 0))
+                    if ((this_msg_data->anim_timer <= 0))
                     {
                         Message_Destroy(msg_queue, j);
                     }
@@ -2437,7 +2440,7 @@ void Message_Manager(GOBJ *mngr_gobj)
                 {
 
                     // get time
-                    float t = (((float)MSGTIMER_SHIFT - this_msg_data->timer) / MSGTIMER_SHIFT);
+                    float t = (((float)MSGTIMER_SHIFT - this_msg_data->anim_timer) / MSGTIMER_SHIFT);
 
                     // get initial and final position for animation
                     float final_pos = base_pos.Y + ((float)j * pos_delta);
@@ -2451,7 +2454,6 @@ void Message_Manager(GOBJ *mngr_gobj)
                         this_msg_pos.Y = (BezierBlend(t) * (final_pos - initial_pos)) + initial_pos;
                     }
 
-                    int lifetime = this_msg_data->lifetime;
                     Vec3 scale = this_msg_jobj->scale;
 
                     // BG position
@@ -2464,16 +2466,15 @@ void Message_Manager(GOBJ *mngr_gobj)
                     // adjust bar
                     JOBJ *bar;
                     JOBJ_GetChild(this_msg_jobj, &bar, 4, -1);
-                    bar->trans.X = (float)lifetime / (float)MSG_LIFETIME;
+                    bar->trans.X = (float)(this_msg_data->lifetime - this_msg_data->alive_timer) / (float)this_msg_data->lifetime;
 
                     break;
                 }
                 case (MSGSTATE_DELETE):
                 {
                     // get time
-                    float t = ((this_msg_data->timer) / (float)MSGTIMER_DELETE);
+                    float t = ((this_msg_data->anim_timer) / (float)MSGTIMER_DELETE);
 
-                    int lifetime = this_msg_data->lifetime;
                     Vec3 *scale = &this_msg_jobj->scale;
                     Vec3 *pos = &this_msg_jobj->trans;
 
@@ -2558,7 +2559,7 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
                 if (i == 0)
                 {
                     msg_data->state = MSGSTATE_WAIT;
-                    msg_data->timer = 0;
+                    msg_data->anim_timer = 0;
                 }
             }
         }

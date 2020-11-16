@@ -492,6 +492,7 @@ void JOBJ_ReqAnimAllByFlags(JOBJ *joint, int flags, float frame);
 float JOBJ_GetJointAnimFrameTotal(JOBJ *joint);
 float JOBJ_GetJointAnimNextFrame(JOBJ *joint);
 void JOBJ_SetAllMOBJFlags(JOBJ *joint, int flags);
+int JOBJ_CheckAObjEnd(JOBJ *joint);
 void AOBJ_ReqAnim(int *aobj, float unk);
 void AOBJ_StopAnim(JOBJ *jobj, int flags, int flags2);
 void DOBJ_SetFlags(DOBJ *dobj, int flags);

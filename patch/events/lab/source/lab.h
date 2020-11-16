@@ -1,10 +1,6 @@
 #include "../../../../MexTK/mex.h"
 #include "../../../tmdata/source/events.h"
 
-#ifdef TM_DEBUG
-//#define OSReport TMLOG
-#endif
-
 // Labbing event
 // Custom TDI definitions
 #define TDI_HITNUM 10

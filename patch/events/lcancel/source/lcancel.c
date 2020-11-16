@@ -3,7 +3,9 @@ static char nullString[] = " ";
 
 // Main Menu
 static char **LcOptions_Barrel[] = {"Off", "Stationary", "Move"};
+static char **LcOptions_HUD[] = {"On", "Off"};
 static EventOption LcOptions_Main[] = {
+    // Target
     {
         .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integers list, etc
         .value_num = sizeof(LcOptions_Barrel) / 4, // number of values for this option
@@ -14,6 +16,18 @@ static EventOption LcOptions_Main[] = {
         .option_values = LcOptions_Barrel,         // pointer to an array of strings
         .onOptionChange = 0,
     },
+    // HUD
+    {
+        .option_kind = OPTKIND_STRING,           // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LcOptions_HUD) / 4,  // number of values for this option
+        .option_val = 0,                         // value of this option
+        .menu = 0,                               // pointer to the menu that pressing A opens
+        .option_name = "HUD",                    // pointer to a string
+        .desc = "Toggle visibility of the HUD.", // string describing what this option does
+        .option_values = LcOptions_HUD,          // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    // Help
     {
         .option_kind = OPTKIND_FUNC,                                                                                                                                                                             // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                                                                                                                                                                                          // number of values for this option
@@ -24,6 +38,7 @@ static EventOption LcOptions_Main[] = {
         .option_values = 0,                                                                                                                                                                                      // pointer to an array of strings
         .onOptionChange = 0,
     },
+    // Exit
     {
         .option_kind = OPTKIND_FUNC,                  // the type of option this is; menu, string list, integers list, etc
         .value_num = 0,                               // number of values for this option
@@ -220,15 +235,28 @@ void Event_Exit()
 // L-Cancel functions
 void LCancel_Init(LCancelData *event_data)
 {
+
+    // create hud cobj
+    GOBJ *hudcam_gobj = GObj_Create(19, 20, 0);
+    ArchiveInfo **ifall_archive = 0x804d6d5c;
+    COBJDesc ***dmgScnMdls = File_GetSymbol(*ifall_archive, 0x803f94d0);
+    COBJDesc *cam_desc = dmgScnMdls[1][0];
+    COBJ *hud_cobj = COBJ_LoadDesc(cam_desc);
+    // init camera
+    GObj_AddObject(hudcam_gobj, R13_U8(-0x3E55), hud_cobj);
+    GOBJ_InitCamera(hudcam_gobj, LCancel_HUDCamThink, 8);
+    hudcam_gobj->cobj_links = 1 << 18;
+
     GOBJ *hud_gobj = GObj_Create(0, 0, 0);
     event_data->hud.gobj = hud_gobj;
     // Load jobj
     JOBJ *hud_jobj = JOBJ_LoadJoint(event_data->lcancel_assets->hud);
     GObj_AddObject(hud_gobj, 3, hud_jobj);
-    GObj_AddGXLink(hud_gobj, GXLink_Common, 11, 80);
+    GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
     // create text canvas
-    int canvas = Text_CreateCanvas(2, hud_gobj, 14, 15, 0, 11, 81, 19);
+    int canvas = Text_CreateCanvas(2, hud_gobj, 14, 15, 0, 18, 81, 19);
+    event_data->hud.canvas = canvas;
 
     // init text
     Text **text_arr = &event_data->hud.text_time;
@@ -268,6 +296,9 @@ void LCancel_Init(LCancelData *event_data)
 void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 {
 
+    // run tip logic
+    Tips_Think(event_data, hmn_data);
+
     // if aerial landing
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
     if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 1))
@@ -283,6 +314,7 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
             is_fail = 0;
             event_data->hud.lcl_success++;
         }
+        event_data->is_fail = is_fail; // save l-cancel bool
 
         // Play appropriate sfx
         if (is_fail == 0)
@@ -394,6 +426,255 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
     return;
 }
+void LCancel_HUDCamThink(GOBJ *gobj)
+{
+
+    // if HUD enabled and not paused
+    if ((LcOptions_Main[1].option_val == 0) && (Pause_CheckStatus(1) != 2))
+    {
+        CObjThink_Common(gobj);
+    }
+
+    return;
+}
+
+// Tips Functions
+void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
+{
+    // shield tip
+    if (event_data->tip.shield_isdisp == 0) // if not shown
+    {
+
+        // update tip conditions
+        // look for a freshly buffered shield action
+        if ((hmn_data->state_id == ASID_GUARDON) &&                                                                    // currently in guard
+            (hmn_data->TM.state_frame == 1) &&                                                                         // first frame of guard
+            (hmn_data->TM.state_prev[0] == ASID_WAIT) &&                                                               // was just in wait
+            (hmn_data->TM.state_prev_frames[0] == 1) &&                                                                // in wait for 1 frame
+            ((hmn_data->TM.state_prev[1] >= ASID_LANDINGAIRN) && (hmn_data->TM.state_prev[1] <= ASID_LANDINGAIRLW)) && // was in aerial landing a few frames ago
+            (event_data->is_fail == 0))                                                                                // succeeded the last aerial landing
+        {
+            // increment condition count
+            event_data->tip.shield_num++;
+
+            // if condition met X times, show tip
+            if (event_data->tip.shield_num == 3)
+            {
+                // display tip
+                char *shield_string = "Don't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
+                Tips_Create(event_data, 5 * 60, shield_string);
+
+                // set as shown
+                event_data->tip.shield_isdisp = 1;
+            }
+        }
+    }
+
+    // hitbox tip
+    //if (event_data->tip.hitbox_isdisp == 0) // if not shown
+    {
+        // update hitbox active bool
+        if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
+        {
+            // reset hitbox bool on first frame of aerial attack
+            if (hmn_data->TM.state_frame == 1)
+                event_data->tip.hitbox_active = 0;
+
+            // check if hitbox active
+            for (int i = 0; i < (sizeof(hmn_data->hitbox) / sizeof(ftHit)); i++)
+            {
+                if (hmn_data->hitbox[i].active == 1)
+                {
+                    event_data->tip.hitbox_active = 1;
+                    break;
+                }
+            }
+        }
+
+        // update tip conditions
+        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && // is in aerial landing
+            (event_data->is_fail == 0) &&
+            (event_data->tip.hitbox_active == 0)) // succeeded the last aerial landing
+        {
+            // increment condition count
+            event_data->tip.hitbox_num++;
+
+            // if condition met X times, show tip
+            //if (event_data->tip.hitbox_num == 3)
+            {
+                // display tip
+                char *hitbox_string = "Don't land too quickly! Make sure you \nland after the attack becomes active.";
+                Tips_Create(event_data, 5 * 60, hitbox_string);
+
+                // set as shown
+                event_data->tip.hitbox_isdisp = 1;
+            }
+        }
+    }
+
+    // update tip
+    GOBJ *tip_gobj = event_data->tip.gobj;
+
+    if (tip_gobj != 0)
+    {
+
+        // update anim
+        JOBJ_AnimAll(tip_gobj->hsd_object);
+
+        // update text position
+        JOBJ *tip_jobj;
+        Vec3 tip_pos;
+        JOBJ_GetChild(tip_gobj->hsd_object, &tip_jobj, 6, -1);
+        JOBJ_GetWorldPosition(tip_jobj, 0, &tip_pos);
+        Text *tip_text = event_data->tip.text;
+        tip_text->trans.X = tip_pos.X + (0 * (tip_jobj->scale.X / 4.0));
+        tip_text->trans.Y = (tip_pos.Y * -1) + (0 * (tip_jobj->scale.Y / 4.0));
+
+        // state logic
+        switch (event_data->tip.state)
+        {
+        case (0): // in
+        {
+            // if anim is done, enter wait
+            if (JOBJ_CheckAObjEnd(tip_gobj->hsd_object) == 0)
+                event_data->tip.state = 1; // enter wait
+
+            break;
+        }
+        case (1): // wait
+        {
+            // sub timer
+            event_data->tip.lifetime--;
+            if (event_data->tip.lifetime <= 0)
+            {
+                // apply exit anim
+                JOBJ *tip_root = tip_gobj->hsd_object;
+                JOBJ_RemoveAnimAll(tip_root);
+                JOBJ_AddAnimAll(tip_root, event_data->lcancel_assets->tip_jointanim[1], 0, 0);
+                JOBJ_ReqAnimAll(tip_root, 0);
+
+                event_data->tip.state = 2; // enter wait
+            }
+
+            break;
+        }
+        case (2): // out
+        {
+            // if anim is done, destroy
+            if (JOBJ_CheckAObjEnd(tip_gobj->hsd_object) == 0)
+            {
+                // remove text
+                Text_Destroy(event_data->tip.text);
+                GObj_Destroy(event_data->tip.gobj);
+                event_data->tip.gobj = 0;
+            }
+        }
+
+        break;
+        }
+    }
+
+    return;
+}
+int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
+{
+
+#define TIP_TXTSIZE 1.1
+
+    va_list args;
+
+    // check if tip exists, return 0
+    if (event_data->tip.gobj != 0)
+        return 0;
+
+    // Create bg
+    GOBJ *tip_gobj = GObj_Create(0, 0, 0);
+    event_data->tip.gobj = tip_gobj;
+    GObj_AddGXLink(tip_gobj, GXLink_Common, 18, 80);
+    JOBJ *tip_jobj = JOBJ_LoadJoint(event_data->lcancel_assets->tip_jobj);
+    GObj_AddObject(tip_gobj, R13_U8(-0x3E55), tip_jobj);
+
+    // Create text object
+    Text *tip_text = Text_CreateText(2, event_data->hud.canvas);
+    event_data->tip.text = tip_text;
+    event_data->tip.lifetime = lifetime;
+    event_data->tip.state = 0;
+    tip_text->kerning = 1;
+    tip_text->align = 1;
+    tip_text->use_aspect = 1;
+
+    // adjust text scale
+    Vec3 scale = tip_jobj->scale;
+    // background scale
+    tip_jobj->scale = scale;
+    // text scale
+    tip_text->scale.X = (scale.X * 0.01) * TIP_TXTSIZE;
+    tip_text->scale.Y = (scale.Y * 0.01) * TIP_TXTSIZE;
+    tip_text->aspect.X = (380);
+
+    // apply exit anim
+    JOBJ_RemoveAnimAll(tip_jobj);
+    JOBJ_AddAnimAll(tip_jobj, event_data->lcancel_assets->tip_jointanim[0], 0, 0);
+    JOBJ_ReqAnimAll(tip_jobj, 0);
+
+    // build string
+    char buffer[(MSG_LINEMAX * MSG_CHARMAX) + 1];
+    va_start(args, fmt);
+    vsprintf(buffer, fmt, args);
+    va_end(args);
+    char *msg = &buffer;
+
+    // count newlines
+    int line_num = 1;
+    int line_length_arr[MSG_LINEMAX];
+    char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
+    msg_cursor_prev = msg;
+    msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
+    while (msg_cursor_curr != 0)                     // if occurrence found, increment values
+    {
+        // check if exceeds max lines
+        if (line_num >= MSG_LINEMAX)
+            assert("MSG_LINEMAX exceeded!");
+
+        // Save information about this line
+        line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
+        line_num++;                                                        // increment number of newlines found
+        msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
+        msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
+    }
+
+    // get last lines length
+    msg_cursor_curr = strchr(msg_cursor_prev, 0);
+    line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
+
+    // copy each line to an individual char array
+    char *msg_cursor = &msg;
+    for (int i = 0; i < line_num; i++)
+    {
+
+        // check if over char max
+        u8 line_length = line_length_arr[i];
+        if (line_length > MSG_CHARMAX)
+            assert("MSG_CHARMAX exceeded!");
+
+        // copy char array
+        char msg_line[MSG_CHARMAX + 1];
+        memcpy(msg_line, msg, line_length);
+
+        // add null terminator
+        msg_line[line_length] = '\0';
+
+        // increment msg
+        msg += (line_length + 1); // +1 to skip past newline
+
+        // print line
+        int y_base = (line_num - 1) * ((-1 * MSGTEXT_YOFFSET) / 2);
+        int y_delta = (i * MSGTEXT_YOFFSET);
+        Text_AddSubtext(tip_text, 0, y_base + y_delta, msg_line);
+    }
+
+    return 1; // tip created
+}
 
 // Barrel Functions
 void Barrel_Think(LCancelData *event_data)
@@ -467,19 +748,24 @@ GOBJ *Barrel_Spawn(int pos_kind)
         break;
     }
     case (1): // random pos
+    {
+        // setup time
+        int raycast_num = 0;
+        int raytime_start, raytime_end, raytime_time;
+        raytime_start = OSGetTick();
     BARREL_RANDPOS:
     {
 
         // get position
-        Vec3 coll_pos;
         int line_index;
         int line_kind;
-        Vec3 line_unk;
-        float fromX = -80 + (HSD_Randi(80 * 2)) + HSD_Randf();
+        Vec3 line_angle;
+        float fromX = Stage_GetCameraLeft() + (HSD_Randi(Stage_GetCameraRight() - Stage_GetCameraLeft())) + HSD_Randf();
         float toX = fromX;
-        float fromY = HSD_Randi(40) + HSD_Randf();
+        float fromY = Stage_GetCameraBottom() + (HSD_Randi(Stage_GetCameraTop() - Stage_GetCameraBottom())) + HSD_Randf();
         float toY = fromY - 1000;
-        int isGround = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+        int isGround = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+        raycast_num++;
         if (isGround == 0)
             goto BARREL_RANDPOS;
 
@@ -488,7 +774,27 @@ GOBJ *Barrel_Spawn(int pos_kind)
         if (distance < 25)
             goto BARREL_RANDPOS;
 
+        // ensure left and right have ground
+        Vec3 near_pos;
+        float near_fromX;
+        near_fromX = pos.X + 8;
+        isGround = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, fromY, near_fromX, toY, 0);
+        raycast_num++;
+        if (isGround == 0)
+            goto BARREL_RANDPOS;
+        near_fromX = pos.X - 8;
+        isGround = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, fromY, near_fromX, toY, 0);
+        raycast_num++;
+        if (isGround == 0)
+            goto BARREL_RANDPOS;
+
+        // output num and time
+        raytime_end = OSGetTick();
+        raytime_time = OSTicksToMilliseconds(raytime_end - raytime_start);
+        OSReport("lcl: %d ray in %dms\n", raycast_num, raytime_time);
+
         break;
+    }
     }
     }
 
@@ -577,10 +883,22 @@ int Barrel_OnHurt(GOBJ *barrel_gobj)
 
     return 0;
 }
+int Barrel_OnDestroy(GOBJ *barrel_gobj)
+{
+
+    // get event data
+    LCancelData *event_data = event_vars->event_gobj->userdata;
+
+    // if this barrel is still the current barrel
+    if (barrel_gobj == event_data->barrel_gobj)
+        event_data->barrel_gobj = 0;
+
+    return 0;
+}
 static void *item_callbacks[] = {
     0x803f58e0,
     0x80287458,
-    0x00000000,
+    Barrel_OnDestroy, // onDestroy
     0x80287e68,
     0x80287ea8,
     0x80287ec8,

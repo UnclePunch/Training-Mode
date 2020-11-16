@@ -224,6 +224,7 @@
 801c8858:JOBJ_SetAllMOBJFlags
 8036410c:AOBJ_ReqAnim
 8036414c:AOBJ_StopAnim
+8000b09c:JOBJ_CheckAObjEnd
 8035ddb8:DOBJ_SetFlags
 8035ddd0:DOBJ_ClearFlags
 8036a590:COBJ_LoadDesc
@@ -285,6 +286,10 @@
 80224b50:Stage_GetBlastzoneLeft
 80224b68:Stage_GetBlastzoneTop
 80224b80:Stage_GetBlastzoneBottom
+80224a68:Stage_GetCameraRight
+80224a54:Stage_GetCameraLeft
+80224a80:Stage_GetCameraTop
+80224a98:Stage_GetCameraBottom
 801c2d24:Stage_GetGeneralPoint
 80057638:Stage_EnableLineGroup
 80057bc0:Stage_DisableLineGroup

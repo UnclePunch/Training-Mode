@@ -1,6 +1,6 @@
 #include "../../../MexTK/mex.h"
 
-//#define TM_DEBUG
+#define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 128
 #define TM_DATA -(50 * 4) - 4
 #define MENU_MAXOPTION 9
@@ -8,10 +8,21 @@
 
 #define TMLOG(...) DevelopText_AddString(event_vars->db_console_text, __VA_ARGS__)
 
-#ifndef TM_DEBUG
+// disable all logs in release mode
+#if TM_DEBUG == 0
 #define OSReport (void)sizeof
 #define assert (void)sizeof
 #define TMLOG (void)sizeof
+#endif
+
+// use OSReport for all logs
+#if TM_DEBUG == 1
+#define OSReport OSReport
+#endif
+
+// use TMLog for all logs
+#if TM_DEBUG == 2
+#define OSReport TMLOG
 #endif
 
 // Custom File Structs
@@ -823,13 +834,14 @@ enum MsgArea
 };
 typedef struct MsgData
 {
-    Text *text;     // text pointer
-    int kind;       // the type of message this is
-    int state;      // unused atm
-    int prev_index; // used to animate the messages position during shifts
-    int orig_index; // used to tell if the message moved throughout the course of the frame
-    int timer;      // used to track animation frame
-    int lifetime;   // amount of frames this message is alive for
+    Text *text;      // text pointer
+    int kind;        // the type of message this is
+    int state;       // unused atm
+    int prev_index;  // used to animate the messages position during shifts
+    int orig_index;  // used to tell if the message moved throughout the course of the frame
+    int anim_timer;  // used to track animation frame
+    int lifetime;    // amount of frames after spawning to kill this message
+    int alive_timer; // amount of frames this message has been alive for
 } MsgData;
 typedef struct MsgMngrData
 {
