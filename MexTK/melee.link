@@ -378,6 +378,7 @@
 802f405c:Match_HideTimer
 80024e84:Match_AdjustSoundOnPause
 802f3424:Match_GetPlayerHUDPos
+80030a50:Match_GetCObj
 8001e218:Memcard_InitSnapshotList
 80253e90:Memcard_UpdateSnapshotList
 8001bb48:Memcard_CreateSnapshot

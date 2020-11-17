@@ -23,10 +23,6 @@ struct LCancelData
     } hud;
     struct
     {
-        GOBJ *gobj;         // tip gobj
-        Text *text;         // tip text object
-        int state;          // state this tip is in. 0 = in, 1 = wait, 2 = out
-        int lifetime;       // tips time spent onscreen
         u8 shield_isdisp;   // whether tip has been shown to the player
         u8 shield_num;      // number of times condition has been met
         u8 hitbox_active;   // whether or not the last aerial used had a hitbox active
@@ -44,21 +40,11 @@ typedef struct LCancelAssets
 {
     JOBJ *hud;
     void **hudmatanim; // pointer to array
-    JOBJ *tip_jobj;
-    void **tip_jointanim; // pointer to array
 };
 
-typedef struct TipData
-{
-    Text *text;
-    int lifetime;
-} TipData;
-
 #define LCLTEXT_SCALE 4
-#define LCLTEXT_JOINT 2
 
 static void *item_callbacks[];
-int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...);
 void LCancel_HUDCamThink(GOBJ *gobj);
 void Barrel_Think(LCancelData *event_data);
 void Barrel_Toggle(GOBJ *menu_gobj, int value);

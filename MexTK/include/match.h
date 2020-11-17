@@ -2849,4 +2849,5 @@ void ScreenRumble_Execute(int kind, Vec3 *pos);
 void Match_StoreGoCallback(GOBJ *gobj, void *cb);
 void Match_AdjustSoundOnPause(int is_pause);
 Vec3 *Match_GetPlayerHUDPos(int ply);
+COBJ *Match_GetCObj();
 #endif

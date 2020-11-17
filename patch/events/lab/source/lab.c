@@ -2389,7 +2389,6 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
                 // check if im on the right frame
                 if (cpu_frame >= action_input->frameLow)
                 {
-
                     // perform this action
                     s8 dir;
                     int held = action_input->input;

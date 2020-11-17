@@ -337,11 +337,11 @@ struct COBJ
     WOBJ *interest;      //0x28
     union
     {
-        f32 roll; //0x2C
-        Vec3 up;  //0x2C - 0x34
+        f32 roll; //0x28
+        Vec3 up;  //0x2C - 0x38
     } u;
-    f32 near; //0x38
-    f32 far;  //0x3C
+    f32 near; //0x3C
+    f32 far;  //0x40
     union
     {
         struct

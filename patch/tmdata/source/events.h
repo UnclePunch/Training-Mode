@@ -1,6 +1,6 @@
 #include "../../../MexTK/mex.h"
 
-#define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
+#define TM_DEBUG 1 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_DATA -(50 * 4) - 4
 #define MENU_MAXOPTION 9
@@ -36,6 +36,8 @@ typedef struct evMenu
     JOBJDesc *playback;
     JOBJDesc *message;
     COBJDesc *hud_cobjdesc;
+    JOBJ *tip_jobj;
+    void **tip_jointanim; // pointer to array
 } evMenu;
 
 // Structure Definitions
@@ -644,7 +646,8 @@ typedef struct EventVars
     u8 hide_menu;                                                                            // enable this to hide the base menu. used for custom menus.
     int (*Savestate_Save)(Savestate *savestate);                                             // function pointer to save state
     int (*Savestate_Load)(Savestate *savestate);                                             // function pointer to load state
-    GOBJ *(*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to load state
+    GOBJ *(*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to display message
+    int *(*Tip_Display)(int lifetime, char *fmt, ...);                                       // function pointer to display tip
     Savestate *savestate;                                                                    // points to the events main savestate
     evFunction evFunction;                                                                   // event specific functions
     ArchiveInfo *event_archive;                                                              // event archive header
@@ -888,3 +891,16 @@ static GXColor stc_msg_colors[] = {
 #define MSGTEXT_GXPRI MSG_GXPRI + 1
 #define MSG_COBJLGXLINKS (1 << MSG_GXLINK)
 #define MSG_COBJLGXPRI 8
+
+typedef struct TipMgr
+{
+    GOBJ *gobj;   // tip gobj
+    Text *text;   // tip text object
+    int state;    // state this tip is in. 0 = in, 1 = wait, 2 = out
+    int lifetime; // tips time spent onscreen
+} TipMgr;
+
+int Tip_Display(int lifetime, char *fmt, ...);
+void Tip_Think(GOBJ *gobj);
+
+#define TIP_TXTJOINT 2

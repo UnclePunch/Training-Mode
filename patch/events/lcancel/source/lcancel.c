@@ -249,6 +249,14 @@ void LCancel_Init(LCancelData *event_data)
     GObj_AddObject(hud_gobj, 3, hud_jobj);
     GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
+    // account for widescreen
+
+    float aspect = (hud_cobj->projection_param.perspective.aspect / 1.216667) - 1;
+    JOBJ *this_jobj;
+    JOBJ_GetChild(hud_jobj, &this_jobj, 1, -1);
+    this_jobj->trans.X += (this_jobj->trans.X * aspect);
+    JOBJ_SetMtxDirtySub(hud_jobj);
+
     // create text canvas
     int canvas = Text_CreateCanvas(2, hud_gobj, 14, 15, 0, 18, 81, 19);
     event_data->hud.canvas = canvas;
@@ -469,7 +477,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             {
                 // display tip
                 char *shield_string = "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
-                if (Tips_Create(event_data, 5 * 60, shield_string))
+                if (event_vars->Tip_Display(5 * 60, shield_string))
                 {
                     // set as shown
                     //event_data->tip.shield_isdisp = 1;
@@ -513,8 +521,8 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             if (event_data->tip.hitbox_num >= 3)
             {
                 // display tip
-                char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the attack \nbecomes active.";
-                if (Tips_Create(event_data, 5 * 60, hitbox_string))
+                char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the \nattack becomes active.";
+                if (event_vars->Tip_Display(5 * 60, hitbox_string))
                 {
 
                     // set as shown
@@ -543,7 +551,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
 
         // update tip conditions
         if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
-            ((hmn_data->input.timer_trigger_any > 7) && (hmn_data->input.timer_trigger_any <= 30)) &&                                   // was early for an l-cancel
+            ((hmn_data->input.timer_trigger_any >= 7) && (hmn_data->input.timer_trigger_any <= 15)) &&                                  // was early for an l-cancel
             (event_data->tip.fastfall_active == 0))                                                                                     // succeeded the last aerial landing
         {
             // increment condition count
@@ -554,7 +562,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             {
                 // display tip
                 char *fastfall_string = "Tip:\nDon't forget to fastfall!\nIt will let you act sooner \nand help with your \ntiming.";
-                if (Tips_Create(event_data, 5 * 60, fastfall_string))
+                if (event_vars->Tip_Display(5 * 60, fastfall_string))
                 {
 
                     // set as shown
@@ -582,7 +590,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             {
                 // display tip
                 char *late_string = "Tip:\nTry pressing the trigger a\nbit earlier, before the\nfighter lands.";
-                if (Tips_Create(event_data, 5 * 60, late_string))
+                if (event_vars->Tip_Display(5 * 60, late_string))
                 {
 
                     // set as shown
@@ -593,172 +601,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
         }
     }
 
-    // update tip
-    GOBJ *tip_gobj = event_data->tip.gobj;
-
-    if (tip_gobj != 0)
-    {
-
-        // update anim
-        JOBJ_AnimAll(tip_gobj->hsd_object);
-
-        // update text position
-        JOBJ *tip_jobj;
-        Vec3 tip_pos;
-        JOBJ_GetChild(tip_gobj->hsd_object, &tip_jobj, LCLTEXT_JOINT, -1);
-        JOBJ_GetWorldPosition(tip_jobj, 0, &tip_pos);
-        Text *tip_text = event_data->tip.text;
-        tip_text->trans.X = tip_pos.X + (0 * (tip_jobj->scale.X / 4.0));
-        tip_text->trans.Y = (tip_pos.Y * -1) + (0 * (tip_jobj->scale.Y / 4.0));
-
-        // state logic
-        switch (event_data->tip.state)
-        {
-        case (0): // in
-        {
-            // if anim is done, enter wait
-            if (JOBJ_CheckAObjEnd(tip_gobj->hsd_object) == 0)
-                event_data->tip.state = 1; // enter wait
-
-            break;
-        }
-        case (1): // wait
-        {
-            // sub timer
-            event_data->tip.lifetime--;
-            if (event_data->tip.lifetime <= 0)
-            {
-                // apply exit anim
-                JOBJ *tip_root = tip_gobj->hsd_object;
-                JOBJ_RemoveAnimAll(tip_root);
-                JOBJ_AddAnimAll(tip_root, event_data->lcancel_assets->tip_jointanim[1], 0, 0);
-                JOBJ_ReqAnimAll(tip_root, 0);
-
-                event_data->tip.state = 2; // enter wait
-            }
-
-            break;
-        }
-        case (2): // out
-        {
-            // if anim is done, destroy
-            if (JOBJ_CheckAObjEnd(tip_gobj->hsd_object) == 0)
-            {
-                // remove text
-                Text_Destroy(event_data->tip.text);
-                GObj_Destroy(event_data->tip.gobj);
-                event_data->tip.gobj = 0;
-            }
-        }
-
-        break;
-        }
-    }
-
     return;
-}
-int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
-{
-
-#define TIP_TXTSIZE 4.4
-#define TIP_TXTSIZEX TIP_TXTSIZE * 0.85
-#define TIP_TXTSIZEY TIP_TXTSIZE
-#define TIP_TXTASPECT 555 * TIP_TXTSIZE
-#define TIP_LINEMAX 5
-#define TIP_CHARMAX 32
-
-    va_list args;
-
-    // check if tip exists, return 0
-    if (event_data->tip.gobj != 0)
-        return 0;
-
-    // Create bg
-    GOBJ *tip_gobj = GObj_Create(0, 0, 0);
-    event_data->tip.gobj = tip_gobj;
-    GObj_AddGXLink(tip_gobj, GXLink_Common, 18, 80);
-    JOBJ *tip_jobj = JOBJ_LoadJoint(event_data->lcancel_assets->tip_jobj);
-    GObj_AddObject(tip_gobj, R13_U8(-0x3E55), tip_jobj);
-
-    // Create text object
-    Text *tip_text = Text_CreateText(2, event_data->hud.canvas);
-    event_data->tip.text = tip_text;
-    event_data->tip.lifetime = lifetime;
-    event_data->tip.state = 0;
-    tip_text->kerning = 1;
-    tip_text->align = 0;
-    tip_text->use_aspect = 1;
-
-    // adjust text scale
-    Vec3 scale = tip_jobj->scale;
-    // background scale
-    tip_jobj->scale = scale;
-    // text scale
-    tip_text->scale.X = (scale.X * 0.01) * TIP_TXTSIZEX;
-    tip_text->scale.Y = (scale.Y * 0.01) * TIP_TXTSIZEY;
-    tip_text->aspect.X = (TIP_TXTASPECT / TIP_TXTSIZEX);
-
-    // apply exit anim
-    JOBJ_RemoveAnimAll(tip_jobj);
-    JOBJ_AddAnimAll(tip_jobj, event_data->lcancel_assets->tip_jointanim[0], 0, 0);
-    JOBJ_ReqAnimAll(tip_jobj, 0);
-
-    // build string
-    char buffer[(TIP_LINEMAX * TIP_CHARMAX) + 1];
-    va_start(args, fmt);
-    vsprintf(buffer, fmt, args);
-    va_end(args);
-    char *msg = &buffer;
-
-    // count newlines
-    int line_num = 1;
-    int line_length_arr[TIP_LINEMAX];
-    char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
-    msg_cursor_prev = msg;
-    msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
-    while (msg_cursor_curr != 0)                     // if occurrence found, increment values
-    {
-        // check if exceeds max lines
-        if (line_num >= TIP_LINEMAX)
-            assert("TIP_LINEMAX exceeded!");
-
-        // Save information about this line
-        line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
-        line_num++;                                                        // increment number of newlines found
-        msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
-        msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
-    }
-
-    // get last lines length
-    msg_cursor_curr = strchr(msg_cursor_prev, 0);
-    line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
-
-    // copy each line to an individual char array
-    char *msg_cursor = &msg;
-    for (int i = 0; i < line_num; i++)
-    {
-
-        // check if over char max
-        u8 line_length = line_length_arr[i];
-        if (line_length > TIP_CHARMAX)
-            assert("TIP_CHARMAX exceeded!");
-
-        // copy char array
-        char msg_line[TIP_CHARMAX + 1];
-        memcpy(msg_line, msg, line_length);
-
-        // add null terminator
-        msg_line[line_length] = '\0';
-
-        // increment msg
-        msg += (line_length + 1); // +1 to skip past newline
-
-        // print line
-        int y_delta = (i * MSGTEXT_YOFFSET);
-        Text_AddSubtext(tip_text, 0, y_delta, msg_line);
-    }
-
-    return 1; // tip created
 }
 
 // Barrel Functions

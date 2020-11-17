@@ -59,7 +59,7 @@ static EventDesc Lab = {
     .eventDescription = "Free practice with\ncomplete control.\n",
     .eventTutorial = "",
     .eventFile = "EvLab",
-    .eventCSSFile = "EvLabCSS.dat",
+    .eventCSSFile = "TM/EvLabCSS.dat",
     .isChooseCPU = true,
     .isSelectStage = true,
     .scoreType = 0,
@@ -1096,10 +1096,12 @@ static EventVars stc_event_vars = {
     .Savestate_Save = Savestate_Save,
     .Savestate_Load = Savestate_Load,
     .Message_Display = Message_Display,
+    .Tip_Display = Tip_Display,
     .savestate = 0,
 };
 static int show_console = 1;
 static int *eventDataBackup;
+static TipMgr stc_tipmgr;
 
 ///////////////////////
 /// Event Functions ///
@@ -1439,6 +1441,7 @@ void OnStartMelee()
 {
 
     Message_Init();
+    Tip_Init();
 
     return;
 }
@@ -2598,7 +2601,8 @@ void Message_Add(GOBJ *msg_gobj, int queue_num)
 void Message_CObjThink(GOBJ *gobj)
 {
 
-    CObjThink_Common(gobj);
+    if (Pause_CheckStatus(1) != 2)
+        CObjThink_Common(gobj);
 
     return;
 }
@@ -2606,6 +2610,191 @@ void Message_CObjThink(GOBJ *gobj)
 float BezierBlend(float t)
 {
     return t * t * (3.0f - 2.0f * t);
+}
+
+// Tips Functions
+void Tip_Init()
+{
+    // init static struct
+    memset(&stc_tipmgr, 0, sizeof(TipMgr));
+
+    // create tipmgr gobj
+    GOBJ *tipmgr_gobj = GObj_Create(0, 7, 0);
+    GObj_AddProc(tipmgr_gobj, Tip_Think, 18);
+
+    return;
+}
+void Tip_Think(GOBJ *gobj)
+{
+
+    GOBJ *tip_gobj = stc_tipmgr.gobj;
+
+    stc_event_vars.menu_assets->tip_jobj;
+
+    // update tip
+    if (tip_gobj != 0)
+    {
+
+        // update anim
+        JOBJ_AnimAll(tip_gobj->hsd_object);
+
+        // update text position
+        JOBJ *tip_jobj;
+        Vec3 tip_pos;
+        JOBJ_GetChild(tip_gobj->hsd_object, &tip_jobj, TIP_TXTJOINT, -1);
+        JOBJ_GetWorldPosition(tip_jobj, 0, &tip_pos);
+        Text *tip_text = stc_tipmgr.text;
+        tip_text->trans.X = tip_pos.X + (0 * (tip_jobj->scale.X / 4.0));
+        tip_text->trans.Y = (tip_pos.Y * -1) + (0 * (tip_jobj->scale.Y / 4.0));
+
+        // state logic
+        switch (stc_tipmgr.state)
+        {
+        case (0): // in
+        {
+            // if anim is done, enter wait
+            if (JOBJ_CheckAObjEnd(tip_gobj->hsd_object) == 0)
+                stc_tipmgr.state = 1; // enter wait
+
+            break;
+        }
+        case (1): // wait
+        {
+            // sub timer
+            stc_tipmgr.lifetime--;
+            if (stc_tipmgr.lifetime <= 0)
+            {
+                // apply exit anim
+                JOBJ *tip_root = tip_gobj->hsd_object;
+                JOBJ_RemoveAnimAll(tip_root);
+                JOBJ_AddAnimAll(tip_root, stc_event_vars.menu_assets->tip_jointanim[1], 0, 0);
+                JOBJ_ReqAnimAll(tip_root, 0);
+
+                stc_tipmgr.state = 2; // enter wait
+            }
+
+            break;
+        }
+        case (2): // out
+        {
+            // if anim is done, destroy
+            if (JOBJ_CheckAObjEnd(tip_gobj->hsd_object) == 0)
+            {
+                // remove text
+                Text_Destroy(stc_tipmgr.text);
+                GObj_Destroy(stc_tipmgr.gobj);
+                stc_tipmgr.gobj = 0;
+            }
+            break;
+        }
+        }
+    }
+
+    return;
+}
+int Tip_Display(int lifetime, char *fmt, ...)
+{
+
+#define TIP_TXTSIZE 4.7
+#define TIP_TXTSIZEX TIP_TXTSIZE * 0.85
+#define TIP_TXTSIZEY TIP_TXTSIZE
+#define TIP_TXTASPECT 2430
+#define TIP_LINEMAX 5
+#define TIP_CHARMAX 48
+
+    va_list args;
+
+    // check if tip exists, return 0
+    if (stc_tipmgr.gobj != 0)
+        return 0;
+
+    // Create bg
+    GOBJ *tip_gobj = GObj_Create(0, 0, 0);
+    stc_tipmgr.gobj = tip_gobj;
+    GObj_AddGXLink(tip_gobj, GXLink_Common, MSG_GXLINK, 80);
+    JOBJ *tip_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->tip_jobj);
+    GObj_AddObject(tip_gobj, R13_U8(-0x3E55), tip_jobj);
+
+    // Create text object
+    MsgMngrData *msgmngr_data = stc_msgmgr->userdata; // using message canvas cause there are so many god damn text canvases
+    Text *tip_text = Text_CreateText(2, msgmngr_data->canvas);
+    stc_tipmgr.text = tip_text;
+    stc_tipmgr.lifetime = lifetime;
+    stc_tipmgr.state = 0;
+    tip_text->kerning = 1;
+    tip_text->align = 0;
+    tip_text->use_aspect = 1;
+
+    // adjust text scale
+    Vec3 scale = tip_jobj->scale;
+    // background scale
+    tip_jobj->scale = scale;
+    // text scale
+    tip_text->scale.X = (scale.X * 0.01) * TIP_TXTSIZEX;
+    tip_text->scale.Y = (scale.Y * 0.01) * TIP_TXTSIZEY;
+    tip_text->aspect.X = (TIP_TXTASPECT / TIP_TXTSIZEX);
+
+    // apply enter anim
+    JOBJ_RemoveAnimAll(tip_jobj);
+    JOBJ_AddAnimAll(tip_jobj, stc_event_vars.menu_assets->tip_jointanim[0], 0, 0);
+    JOBJ_ReqAnimAll(tip_jobj, 0);
+
+    // build string
+    char buffer[(TIP_LINEMAX * TIP_CHARMAX) + 1];
+    va_start(args, fmt);
+    vsprintf(buffer, fmt, args);
+    va_end(args);
+    char *msg = &buffer;
+
+    // count newlines
+    int line_num = 1;
+    int line_length_arr[TIP_LINEMAX];
+    char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
+    msg_cursor_prev = msg;
+    msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
+    while (msg_cursor_curr != 0)                     // if occurrence found, increment values
+    {
+        // check if exceeds max lines
+        if (line_num >= TIP_LINEMAX)
+            assert("TIP_LINEMAX exceeded!");
+
+        // Save information about this line
+        line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
+        line_num++;                                                        // increment number of newlines found
+        msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
+        msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
+    }
+
+    // get last lines length
+    msg_cursor_curr = strchr(msg_cursor_prev, 0);
+    line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
+
+    // copy each line to an individual char array
+    char *msg_cursor = &msg;
+    for (int i = 0; i < line_num; i++)
+    {
+
+        // check if over char max
+        u8 line_length = line_length_arr[i];
+        if (line_length > TIP_CHARMAX)
+            assert("TIP_CHARMAX exceeded!");
+
+        // copy char array
+        char msg_line[TIP_CHARMAX + 1];
+        memcpy(msg_line, msg, line_length);
+
+        // add null terminator
+        msg_line[line_length] = '\0';
+
+        // increment msg
+        msg += (line_length + 1); // +1 to skip past newline
+
+        // print line
+        int y_delta = (i * MSGTEXT_YOFFSET);
+        Text_AddSubtext(tip_text, 0, y_delta, msg_line);
+    }
+
+    return 1; // tip created
 }
 
 ////////////////////////////
