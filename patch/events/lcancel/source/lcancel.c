@@ -29,24 +29,24 @@ static EventOption LcOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                                               // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                                                                                                                            // number of values for this option
-        .option_val = 0,                                                                                                                                                                                                                           // value of this option
-        .menu = 0,                                                                                                                                                                                                                                 // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                                                                                                                                     // pointer to a string
-        .desc = "L-canceling is performed by pressing L, R, or Z up \nto 7 frames before landing from an aerial attack used with \nthe A button or C Stick. This will cut the landing lag \nin half, allowing you to act sooner after attacking.", // string describing what this option does
-        .option_values = 0,                                                                                                                                                                                                                        // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                       // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                                                                                                    // number of values for this option
+        .option_val = 0,                                                                                                                                                                                                   // value of this option
+        .menu = 0,                                                                                                                                                                                                         // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                                                                                                             // pointer to a string
+        .desc = "L-canceling is performed by pressing L, R, or Z up to \n7 frames before landing from a non-special aerial\nattack. This will cut the landing lag in half, allowing \nyou to act sooner after attacking.", // string describing what this option does
+        .option_values = 0,                                                                                                                                                                                                // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
     {
-        .option_kind = OPTKIND_FUNC,                  // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                               // number of values for this option
-        .option_val = 0,                              // value of this option
-        .menu = 0,                                    // pointer to the menu that pressing A opens
-        .option_name = "Exit",                        // pointer to a string
-        .desc = "Return to the Event Select Screen.", // string describing what this option does
-        .option_values = 0,                           // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                     // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                  // number of values for this option
+        .option_val = 0,                                 // value of this option
+        .menu = 0,                                       // pointer to the menu that pressing A opens
+        .option_name = "Exit",                           // pointer to a string
+        .desc = "Return to the Event Selection Screen.", // string describing what this option does
+        .option_values = 0,                              // pointer to an array of strings
         .onOptionChange = 0,
         .onOptionSelect = Event_Exit,
     },
@@ -276,7 +276,7 @@ void LCancel_Init(LCancelData *event_data)
         // text scale
         hud_text->scale.X = (scale->X * 0.01) * LCLTEXT_SCALE;
         hud_text->scale.Y = (scale->Y * 0.01) * LCLTEXT_SCALE;
-        hud_text->aspect.X = MSGTEXT_BASEWIDTH;
+        hud_text->aspect.X = 165;
 
         // text position
         hud_text->trans.X = text_pos.X + (scale->X / 4.0);
@@ -294,8 +294,9 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
     // run tip logic
     Tips_Think(event_data, hmn_data);
 
-    // if aerial landing
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
+
+    // if aerial landing
     if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 0))
     {
 
@@ -413,6 +414,20 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         // Play HUD anim
         JOBJ_RemoveAnimAll(hud_jobj);
         JOBJ_AddAnimAll(hud_jobj, 0, event_data->lcancel_assets->hudmatanim[is_fail], 0);
+        JOBJ_ReqAnimAll(hud_jobj, 0);
+    }
+
+    // if autocancel landing
+    if (((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame == 0)) &&                   // if first frame of landing
+        ((hmn_data->TM.state_prev[0] >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW))) // came from aerial attack
+    {
+
+        // state as autocancelled
+        Text_SetText(event_data->hud.text_time, 0, "Auto-canceled");
+
+        // Play HUD anim
+        JOBJ_RemoveAnimAll(hud_jobj);
+        JOBJ_AddAnimAll(hud_jobj, 0, event_data->lcancel_assets->hudmatanim[2], 0);
         JOBJ_ReqAnimAll(hud_jobj, 0);
     }
 
@@ -590,7 +605,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
         // update text position
         JOBJ *tip_jobj;
         Vec3 tip_pos;
-        JOBJ_GetChild(tip_gobj->hsd_object, &tip_jobj, 6, -1);
+        JOBJ_GetChild(tip_gobj->hsd_object, &tip_jobj, LCLTEXT_JOINT, -1);
         JOBJ_GetWorldPosition(tip_jobj, 0, &tip_pos);
         Text *tip_text = event_data->tip.text;
         tip_text->trans.X = tip_pos.X + (0 * (tip_jobj->scale.X / 4.0));
@@ -645,9 +660,10 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
 int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
 {
 
-#define TIP_TXTSIZEX 0.9
-#define TIP_TXTSIZEY 1.1
-#define TIP_TXTASPECT 410
+#define TIP_TXTSIZE 4.4
+#define TIP_TXTSIZEX TIP_TXTSIZE * 0.85
+#define TIP_TXTSIZEY TIP_TXTSIZE
+#define TIP_TXTASPECT 555 * TIP_TXTSIZE
 #define TIP_LINEMAX 5
 #define TIP_CHARMAX 32
 
@@ -738,9 +754,8 @@ int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...)
         msg += (line_length + 1); // +1 to skip past newline
 
         // print line
-        int y_base = (line_num - 1) * ((-1 * MSGTEXT_YOFFSET) / 2);
         int y_delta = (i * MSGTEXT_YOFFSET);
-        Text_AddSubtext(tip_text, 0, y_base + y_delta, msg_line);
+        Text_AddSubtext(tip_text, 0, y_delta, msg_line);
     }
 
     return 1; // tip created

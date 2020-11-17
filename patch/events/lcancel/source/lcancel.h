@@ -55,6 +55,7 @@ typedef struct TipData
 } TipData;
 
 #define LCLTEXT_SCALE 4
+#define LCLTEXT_JOINT 2
 
 static void *item_callbacks[];
 int Tips_Create(LCancelData *event_data, int lifetime, char *fmt, ...);
