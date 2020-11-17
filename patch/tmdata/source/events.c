@@ -1266,7 +1266,7 @@ void EventLoad()
     evFunction *evFunction = &stc_event_vars.evFunction;
 
     // append extension
-    static char *extension = "%s.dat";
+    static char *extension = "TM/%s.dat";
     char *buffer[20];
     sprintf(buffer, extension, event_desc->eventFile);
 
