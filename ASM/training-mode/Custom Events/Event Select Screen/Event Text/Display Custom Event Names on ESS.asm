@@ -34,15 +34,19 @@ CustomEvent:
   lfs	f0, -0x3878 (rtoc)
   stfs	f0, 0x0024 (text)
   stfs	f0, 0x0028 (text)
+  li r3,1
+  stb r3,0x48(text)
+  li r3,1
+  stb r3,0x49(text)
 
 backup
 
+/*
 #Copy Header to Text Allocation
   lwz r3,0x5C(text)       #Get Pointer to Next Available Menu Text Location
   li  r4,0x1618
   sth r4,0x0(r3)
 
-/*
 #Get ASCII
   mr r3,r27
   branchl r12,0x80005524
@@ -54,6 +58,32 @@ backup
   mr r4,r27
   rtocbl r12,TM_GetEventName
 
+# Add subtext
+  mr r4,r3
+  mr r3,text
+  lfs	f1, -0x3870 (rtoc)
+  lfs	f2, -0x3870 (rtoc)
+  branchl r12,0x803a6b98
+
+# Get event file
+  lwz r3,MemcardData(r13)
+  lbz r3,CurrentEventPage(r3)
+  mr r4,r27
+  rtocbl r12,TM_GetEventFile
+  cmpwi r3,0
+  bne HasFile
+NoFile:
+# Change color
+  mr r3,text
+  li r4,0
+  bl Color
+  mflr r5
+  branchl r12,0x803a74f0
+
+HasFile:
+
+
+/*
 #Convert To Menu Text
   mr  r4,r3               #ASCII To Store
   addi r3,sp,0x40
@@ -73,14 +103,16 @@ backup
   lwz r4,0x5C(text)
   add r4,r4,r20
   sth r3,0x2(r4)
+*/
 
 #Exit
   restore
   branch r12,0x8024d4c8
 
-TextHeader:
+Color:
 blrl
-.long 0x16180000
+.byte 180, 180, 180, 255
+
 
 VanillaEvent:
 Original:

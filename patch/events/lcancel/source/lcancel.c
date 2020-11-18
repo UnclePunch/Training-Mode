@@ -250,7 +250,6 @@ void LCancel_Init(LCancelData *event_data)
     GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
     // account for widescreen
-
     float aspect = (hud_cobj->projection_param.perspective.aspect / 1.216667) - 1;
     JOBJ *this_jobj;
     JOBJ_GetChild(hud_jobj, &this_jobj, 1, -1);
