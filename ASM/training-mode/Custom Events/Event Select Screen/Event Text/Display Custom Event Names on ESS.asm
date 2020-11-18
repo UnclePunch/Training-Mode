@@ -41,17 +41,6 @@ CustomEvent:
 
 backup
 
-/*
-#Copy Header to Text Allocation
-  lwz r3,0x5C(text)       #Get Pointer to Next Available Menu Text Location
-  li  r4,0x1618
-  sth r4,0x0(r3)
-
-#Get ASCII
-  mr r3,r27
-  branchl r12,0x80005524
-*/
-
 #Get Event Name
   lwz r3,MemcardData(r13)
   lbz r3,CurrentEventPage(r3)
@@ -81,29 +70,6 @@ NoFile:
   branchl r12,0x803a74f0
 
 HasFile:
-
-
-/*
-#Convert To Menu Text
-  mr  r4,r3               #ASCII To Store
-  addi r3,sp,0x40
-  branchl r12,0x803a67ec
-#Backup Length
-  mr r20,r3
-
-#Copy Text to Text Allocation
-  mr  r5,r20               #Length
-  lwz r3,0x5C(text)       #Get Pointer to Next Available Menu Text Location
-  addi r3,r3,0x2         #Skip Past Header
-  addi r4,sp,0x40
-  branchl r12,0x800031f4
-
-#Add Terminator
-  li  r3,0x1900
-  lwz r4,0x5C(text)
-  add r4,r4,r20
-  sth r3,0x2(r4)
-*/
 
 #Exit
   restore
