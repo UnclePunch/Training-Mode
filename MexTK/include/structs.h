@@ -108,6 +108,9 @@ typedef struct FtDOBJUnk3 FtDOBJUnk3;
 typedef struct FtDynamics FtDynamics;
 typedef struct FtDynamicHit FtDynamicHit;
 
+// Fighter States
+typedef struct FtCliffCatch FtCliffCatch;
+
 // CSS
 typedef struct CSSBackup CSSBackup;
 typedef struct MnSelectChrDataTable MnSelectChrDataTable;
@@ -136,6 +139,12 @@ typedef struct Rules1 Rules1;
 typedef struct CollData CollData;
 typedef struct ECBBones ECBBones;
 typedef struct DmgHazard DmgHazard;
+typedef struct CollLineInfo CollLineInfo;
+typedef struct CollLine CollLine;
+typedef struct CollVert CollVert;
+typedef struct CollDataStage CollDataStage;
+typedef struct CollGroupDesc CollGroupDesc;
+typedef struct CollGroup CollGroup;
 
 // HSD
 typedef struct HSD_Material HSD_Material;

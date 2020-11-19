@@ -50,8 +50,8 @@ struct CollData
     int flags1;                // 0x34
     int coll_test;             // 0x38, is the ID of the most recent collision test for this object
     int ignore_line;           // 0x3c, ignores this line ID during collision
-    int x40;                   // 0x40
-    int x44;                   // 0x44
+    int ledge_left;            // 0x40, ledge ID in contact with
+    int ledge_right;           // 0x44, ledge ID in contact with
     int ignore_group;          // 0x48  ignores this line group during collision
     int check_group;           // 0x4c  checks only this line group during collision
     int x50;                   // 0x50
@@ -128,13 +128,128 @@ struct CollData
     int ecb_lock;              // 0x19c
 };
 
-/*** Functions ***/
+struct CollGroupDesc // exists in stage file
+{
+    u16 floor_start;
+    u16 floor_num;
+    u16 ceil_start;
+    u16 ceil_num;
+    u16 rwall_start;
+    u16 rwall_num;
+    u16 lwall_start;
+    u16 lwall_num;
+    u16 dyn_start;
+    u16 dyn_num;
+    Vec2 area_min; // 0x10
+    Vec2 area_max; // 0x18
+    u16 vert_start;
+    u16 vert_num;
+};
 
+struct CollGroup // exists in heap
+{
+    CollGroup *next;
+    CollGroupDesc *desc;
+    int x8;               // flags
+    u16 ray_id;           // id of the last raycast
+    u16 xe;               // flags
+    Vec2 area_min;        // 0x10
+    Vec2 area_max;        // 0x18
+    JOBJ *jobj;           // 0x20
+    void *cb_floor;       // 0x24
+    void *map_data_floor; // 0x28
+    void *cb_ceil;        // 0x2C
+    void *map_data_ceil;  // 0x30
+    int x34;              // 0x34
+};
+
+struct CollLineInfo
+{
+    s16 vert_left;      // 0x0
+    s16 vert_right;     // 0x2
+    s16 line_prev;      // 0x4
+    s16 line_next;      // 0x6
+    u16 x8;             // 0x8
+    u16 xa;             // 0xA
+    u16 xc;             // 0xC
+    u16 flagsx8000 : 1; // 0xE, 0x8000
+    u16 flagsx4000 : 1; // 0xE, 0x8000
+    u16 flagsx2000 : 1; // 0xE, 0x8000
+    u16 flagsx1000 : 1; // 0xE, 0x8000
+    u16 flagsx0800 : 1; // 0xE, 0x8000
+    u16 flagsx0400 : 1; // 0xE, 0x8000
+    u16 is_ledge : 1;   // 0xE, 0x0200
+    u16 flagsx0100 : 1; // 0xE, 0x8000
+    u16 flagsx0080 : 1; // 0xE, 0x8000
+    u16 flagsx0040 : 1; // 0xE, 0x8000
+    u16 flagsx0020 : 1; // 0xE, 0x8000
+    u16 flagsx0010 : 1; // 0xE, 0x8000
+    u16 flagsx0008 : 1; // 0xE, 0x8000
+    u16 flagsx0004 : 1; // 0xE, 0x8000
+    u16 flagsx0002 : 1; // 0xE, 0x8000
+    u16 flagsx0001 : 1; // 0xE, 0x8000
+};
+
+struct CollLine
+{
+    CollLineInfo *info;
+    u8 x4;
+    u8 x5_1 : 1;
+    u8 x5_2 : 1;
+    u8 x5_3 : 1;
+    u8 x5_4 : 1;
+    u8 x5_5 : 1;
+    u8 x5_6 : 1;
+    u8 x5_7 : 1;
+    u8 is_enabled : 1;
+    u8 x6;
+    u8 x7 : 4;
+    u8 is_rwall : 1; // 0x8
+    u8 is_lwall : 1; // 0x4
+    u8 is_ceil : 1;  // 0x2
+    u8 is_floor : 1; // 0x1
+};
+
+struct CollVert
+{
+    Vec2 pos_orig;
+    Vec2 pos_curr;
+    Vec2 pos_prev;
+};
+
+struct CollDataStage
+{
+    void *verts;
+    int vert_num;
+    void *lines;
+    int line_num;
+    u16 floor_start;
+    u16 floor_num;
+    u16 ceil_start;
+    u16 ceil_num;
+    u16 rwall_start;
+    u16 rwall_num;
+    u16 lwall_start;
+    u16 lwall_num;
+    u16 dyn_start;
+    u16 dyn_num;
+    void *groups;
+    int group_num;
+};
+
+/*** Functions ***/
 void Coll_ECBCurrToPrev(CollData *collData);
 void Coll_InitECB(CollData *collData);
 int ECB_CollGround_PassLedge(CollData *ecb, ECBBones *bones); // returns is touching ground bool
 void ECB_CollAir(CollData *ecb, ECBBones *bones);
+void GrColl_GetLedgeLeft(int floor_index, Vec3 *pos);  // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeRight(int floor_index, Vec3 *pos); // this functon will crawl along the entire line sequence and find the end of the ledge
 
 static int *stc_colltest = R13 + (COLL_TEST);
+static CollGroup **stc_firstcollgroup = R13 + (-0x51DC);
+static CollGroup **stc_collgroup = R13 + (-0x51E0);
+static CollLine **stc_collline = R13 + (-0x51E4);
+static CollVert **stc_collvert = R13 + (-0x51E8);
+static CollDataStage **stc_colldata = R13 + (-0x51EC);
 
 #endif

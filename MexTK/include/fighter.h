@@ -1373,7 +1373,7 @@ struct ftCommonData
     float x490;             // 0x490
     float x494;             // 0x494
     float x498;             // 0x498
-    float x49c;             // 0x49c
+    int cliff_invuln_time;  // 0x49c
     float x4a0;             // 0x4a0
     float x4a4;             // 0x4a4
     float x4a8;             // 0x4a8
@@ -2599,6 +2599,14 @@ struct FtDOBJUnk // is in the fighter data
     void *x1c;
 };
 
+/** State Structs **/
+struct FtCliffCatch
+{
+    int ledge_index;
+    int x4;
+    int timer;
+};
+
 /** Static Variables **/
 
 static ftCommonData **stc_ftcommon = (R13 + -0x514C);
@@ -2619,12 +2627,15 @@ void Fighter_EnterSpecialFall(GOBJ *fighter, int can_fastfall, int can_not_noimp
 void Fighter_EnterLanding(GOBJ *fighter);
 void Fighter_EnterSpecialLanding(GOBJ *fighter, int unk, float state_length);
 void Fighter_EnterSleep(GOBJ *fighter, int ms);
+void Fighter_EnterCliffWait(GOBJ *fighter);
+void Fighter_MoveToCliff(GOBJ *fighter);
 GOBJ *Fighter_GetGObj(int ply);
 GOBJ *Fighter_GetSubcharGObj(int ply, int ms);
 Playerblock *Fighter_GetPlayerblock(int ply);
 void Fighter_SetSlotType(int ply, int slot);
 int Fighter_GetControllerPort(int ply);
 int *Fighter_GetStaleMoveTable(int ply);
+void Fighter_SetPosition(int ply, int ms, Vec3 *pos);
 void Fighter_ApplyIntang(GOBJ *fighter, int duration);
 int Fighter_GetSlotType(int index); // returns 0x0 for HMN, 0x1 for CPU, 0x2 for Demo, 0x3 for not present
 int Fighter_GetStocks(int ply);
@@ -2658,6 +2669,8 @@ void Fighter_Phys_UseAnimPosAndStick(FighterData *fighter);
 void Fighter_SetGrounded(FighterData *fighter);
 void Fighter_SetGrounded2(FighterData *fighter);
 void Fighter_SetAirborne(FighterData *fighter);
+void Fighter_LoseGroundJump(FighterData *fighter_data);
+void Fighter_EnableCollUpdate(FighterData *fighter_data);
 void Fighter_KillAllVelocity(GOBJ *fighter);
 void Fighter_AdvanceScript(GOBJ *fighter);
 void Fighter_GFXRemoveAll(GOBJ *fighter);

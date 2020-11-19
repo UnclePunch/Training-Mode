@@ -848,6 +848,7 @@ typedef struct MsgData
 } MsgData;
 typedef struct MsgMngrData
 {
+    COBJ *cobj;
     int state;
     int canvas;
     GOBJ *msg_queue[MSGQUEUE_NUM][MSGQUEUE_SIZE]; // array 7 is for miscellaneous messages, not related to a player

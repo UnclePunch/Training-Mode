@@ -2,6 +2,7 @@
 80380358:File_GetSymbol
 80041c8c:Coll_ECBCurrToPrev
 80041ee4:Coll_InitECB
+80048160:Coll_CheckLedge
 8004b21c:ECB_CollGround_PassLedge
 800475f4:ECB_CollAir
 801677f8:CSS_GetNametagRumble
@@ -38,6 +39,7 @@
 80082b1c:Fighter_EnterLanding
 800d5cb0:Fighter_EnterSpecialLanding
 800d4f24:Fighter_EnterSleep
+8009a804:Fighter_EnterCliffWait
 80034110:Fighter_GetGObj
 8003418c:Fighter_GetSubcharGObj
 80031724:Fighter_GetPlayerblock
@@ -52,6 +54,7 @@
 8006cc7c:Fighter_GiveDamage
 8006cf5c:Fighter_GiveHeal
 80034330:Fighter_SetHUDDamage
+80032828:Fighter_SetPosition
 8007db58:Fighter_RunOnHitCallbacks
 80033c60:Fighter_SetStocks
 8006f238:FrameTimerCheck
@@ -74,6 +77,8 @@
 80085154:Fighter_Phys_UseAnimPosAndStick
 8007d7fc:Fighter_SetGrounded2
 8007d5d4:Fighter_SetAirborne
+8007d5d4:Fighter_LoseGroundJump
+8007d5bc:Fighter_EnableCollUpdate
 8007e2fc:Fighter_KillAllVelocity
 8006eba4:Fighter_AdvanceScript
 8007db24:Fighter_GFXRemoveAll
@@ -101,6 +106,7 @@
 80075650:Fighter_IndexFtPartsDObjs
 8007487c:Fighter_InitFtPartsModel
 8007d6a4:Fighter_SetGrounded
+80081544:Fighter_MoveToCliff
 80380580:HSD_Randi
 80380528:HSD_Randf
 8037f1e4:HSD_MemAlloc
@@ -293,6 +299,8 @@
 801c2d24:Stage_GetGeneralPoint
 80057638:Stage_EnableLineGroup
 80057bc0:Stage_DisableLineGroup
+80054158:GrColl_GetLedgeLeft
+80053ff4:GrColl_GetLedgeRight
 803a611c:Text_CreateCanvas
 803a6754:Text_CreateText
 803a5cc4:Text_Destroy

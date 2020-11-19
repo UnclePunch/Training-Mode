@@ -117,7 +117,7 @@ static EventDesc LCancel = {
 // Ledgedash Training
 // Match Data
 static EventMatchData Ledgedash_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
+    .timer = MATCH_TIMER_HIDE,
     .matchType = MATCH_MATCHTYPE_TIME,
     .playMusic = true,
     .hideGo = true,
@@ -138,7 +138,7 @@ static EventMatchData Ledgedash_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = 2,         // 0xFF=
+    .cpuKind = -1,        // 0xFF=
     .stage = -1,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
@@ -150,11 +150,11 @@ static EventDesc Ledgedash = {
     .eventName = "Ledgedash Training\n",
     .eventDescription = "Practice Ledgedashes!\nUse D-Pad to change ledge.\n",
     .eventTutorial = "TvLedDa",
-    .eventFile = 0,
-    .isChooseCPU = true,
+    .eventFile = "EvLdsh",
+    .isChooseCPU = false,
     .isSelectStage = true,
     .scoreType = 0,
-    .callbackPriority = 3,
+    .callbackPriority = 15,
     .matchData = &Ledgedash_MatchData,
     .defaultOSD = 0xFFFFFFFF,
 };
@@ -1330,7 +1330,7 @@ void EventUpdate()
     // run savestate logic if enabled
     if (1 == 1)
     {
-        Update_Savestates();
+        //Update_Savestates();
     }
 
     // run menu logic if exists
@@ -2221,6 +2221,9 @@ void Message_Init()
     int canvas = Text_CreateCanvas(2, mgr_gobj, 14, 15, 0, MSG_GXLINK, MSGTEXT_GXPRI, 19);
     mgr_data->canvas = canvas;
 
+    // store cobj
+    mgr_data->cobj = cam_cobj;
+
     // store gobj pointer
     stc_msgmgr = mgr_gobj;
 
@@ -2708,6 +2711,8 @@ int Tip_Display(int lifetime, char *fmt, ...)
     if (stc_tipmgr.gobj != 0)
         return 0;
 
+    MsgMngrData *msgmngr_data = stc_msgmgr->userdata; // using message canvas cause there are so many god damn text canvases
+
     // Create bg
     GOBJ *tip_gobj = GObj_Create(0, 0, 0);
     stc_tipmgr.gobj = tip_gobj;
@@ -2715,8 +2720,12 @@ int Tip_Display(int lifetime, char *fmt, ...)
     JOBJ *tip_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->tip_jobj);
     GObj_AddObject(tip_gobj, R13_U8(-0x3E55), tip_jobj);
 
+    // account for widescreen
+    float aspect = (msgmngr_data->cobj->projection_param.perspective.aspect / 1.216667) - 1;
+    tip_jobj->trans.X += (tip_jobj->trans.X * aspect);
+    JOBJ_SetMtxDirtySub(tip_jobj);
+
     // Create text object
-    MsgMngrData *msgmngr_data = stc_msgmgr->userdata; // using message canvas cause there are so many god damn text canvases
     Text *tip_text = Text_CreateText(2, msgmngr_data->canvas);
     stc_tipmgr.text = tip_text;
     stc_tipmgr.lifetime = lifetime;
