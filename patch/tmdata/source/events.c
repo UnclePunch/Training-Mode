@@ -3632,10 +3632,12 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // enable align and kerning
     text->align = 0;
     text->kerning = 1;
+    text->use_aspect = 1;
     // scale canvas
     text->scale.X = MENU_CANVASSCALE;
     text->scale.Y = MENU_CANVASSCALE;
     text->trans.Z = MENU_TEXTZ;
+    text->aspect.X = MENU_TITLEASPECT;
 
     // output menu title
     float optionX = MENU_TITLEXPOS;
@@ -3661,10 +3663,12 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // enable align and kerning
     text->align = 0;
     text->kerning = 1;
+    text->use_aspect = 1;
     // scale canvas
     text->scale.X = MENU_CANVASSCALE;
     text->scale.Y = MENU_CANVASSCALE;
     text->trans.Z = MENU_TEXTZ;
+    text->aspect.X = MENU_NAMEASPECT;
 
     // Output all options
     s32 option_num = menu->option_num;
@@ -3689,10 +3693,12 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // enable align and kerning
     text->align = 1;
     text->kerning = 1;
+    text->use_aspect = 1;
     // scale canvas
     text->scale.X = MENU_CANVASSCALE;
     text->scale.Y = MENU_CANVASSCALE;
     text->trans.Z = MENU_TEXTZ;
+    text->aspect.X = MENU_VALASPECT;
 
     // Output all values
     for (int i = 0; i < option_num; i++)
@@ -3864,7 +3870,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         else if (currOption->option_kind == OPTKIND_INT)
         {
             // output option value
-            Text_SetText(text, i, "%d", optionVal);
+            Text_SetText(text, i, currOption->option_values, optionVal);
 
             // show box
             JOBJ_ClearFlags(menuData->row_joints[i][0], JOBJ_HIDDEN);

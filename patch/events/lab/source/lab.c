@@ -873,7 +873,7 @@ static EventOption LabOptions_General[] = {
         .menu = 0,                              // pointer to the menu that pressing A opens
         .option_name = "Player Percent",        // pointer to a string
         .desc = "Adjust the player's percent.", // string describing what this option does
-        .option_values = 0,                     // pointer to an array of strings
+        .option_values = "%d%%",                // pointer to an array of strings
         .onOptionChange = Lab_ChangePlayerPercent,
     },
     // model display
@@ -1122,7 +1122,7 @@ static EventOption LabOptions_CPU[] = {
         .menu = 0,                           // pointer to the menu that pressing A opens
         .option_name = "CPU Percent",        // pointer to a string
         .desc = "Adjust the CPU's percent.", // string describing what this option does
-        .option_values = 0,                  // pointer to an array of strings
+        .option_values = "%d%%",             // pointer to an array of strings
         .onOptionChange = Lab_ChangeCPUPercent,
     },
     {
@@ -1265,7 +1265,7 @@ static EventOption LabOptions_CPU[] = {
         .menu = 0,                                                                   // pointer to the menu that pressing A opens
         .option_name = "Counter After Frames",                                       // pointer to a string
         .desc = "Adjust the amount of actionable frames before \nthe CPU counters.", // string describing what this option does
-        .option_values = 0,                                                          // pointer to an array of strings
+        .option_values = "%d Frames",                                                // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1275,7 +1275,7 @@ static EventOption LabOptions_CPU[] = {
         .menu = 0,                                                            // pointer to the menu that pressing A opens
         .option_name = "Counter After Hits",                                  // pointer to a string
         .desc = "Adjust the amount of hits taken before the \nCPU counters.", // string describing what this option does
-        .option_values = 0,                                                   // pointer to an array of strings
+        .option_values = "%d Hits",                                           // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1285,7 +1285,7 @@ static EventOption LabOptions_CPU[] = {
         .menu = 0,                                                                            // pointer to the menu that pressing A opens
         .option_name = "Counter After Shield Hits",                                           // pointer to a string
         .desc = "Adjust the amount of hits the CPU's shield\nwill take before they counter.", // string describing what this option does
-        .option_values = 0,                                                                   // pointer to an array of strings
+        .option_values = "%d Hits",                                                           // pointer to an array of strings
         .onOptionChange = 0,
     },
 };

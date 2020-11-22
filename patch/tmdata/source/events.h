@@ -726,6 +726,7 @@ static EventVars *event_vars;
 #define MENU_TITLEXPOS -430
 #define MENU_TITLEYPOS -366
 #define MENU_TITLESCALE 2.3
+#define MENU_TITLEASPECT 870
 // menu description
 #define MENU_DESCXPOS -21.5
 #define MENU_DESCYPOS 12
@@ -733,10 +734,12 @@ static EventVars *event_vars;
 // menu option name
 #define MENU_OPTIONNAMEXPOS -430
 #define MENU_OPTIONNAMEYPOS -230
+#define MENU_NAMEASPECT 440
 // menu option value
 #define MENU_OPTIONVALXPOS 250
 #define MENU_OPTIONVALYPOS -230
 #define MENU_TEXTYOFFSET 50
+#define MENU_VALASPECT 280
 // menu highlight
 #define MENUHIGHLIGHT_SCALE 1 // OPT_SCALE
 #define MENUHIGHLIGHT_HEIGHT ROWBOX_HEIGHT
