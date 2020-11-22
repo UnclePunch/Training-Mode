@@ -123,7 +123,7 @@ void Ledgedash_HUDInit(LedgedashData *event_data)
     COBJ *hud_cobj = COBJ_LoadDesc(cam_desc);
     // init camera
     GObj_AddObject(hudcam_gobj, R13_U8(-0x3E55), hud_cobj);
-    GOBJ_InitCamera(hudcam_gobj, LedgedashHUDCamThink, 8);
+    GOBJ_InitCamera(hudcam_gobj, LedgedashHUDCamThink, 7);
     hudcam_gobj->cobj_links = 1 << 18;
 
     GOBJ *hud_gobj = GObj_Create(0, 0, 0);
@@ -349,9 +349,9 @@ void Ledgedash_FtInit(LedgedashData *event_data)
     float ledge_dir;
     int line_index = Ledge_Find(0, 0, &ledge_dir);
     if (line_index == -1)
-        assert("no ledge");
-
-    Fighter_PlaceOnLedge(event_data, hmn, line_index, ledge_dir);
+        event_vars->Tip_Display(500 * 60, "Error:\nIt appears there are no \nledges on this stage...");
+    else
+        Fighter_PlaceOnLedge(event_data, hmn, line_index, ledge_dir);
 
     return;
 }
@@ -457,8 +457,8 @@ int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir)
                             Vec3 ray_pos;
                             float from_x = ledge_pos.X + (3 * dir_mult);
                             float to_x = from_x;
-                            float from_y = ledge_pos.Y + 3;
-                            float to_y = from_y - 8;
+                            float from_y = ledge_pos.Y + 5;
+                            float to_y = from_y - 10;
                             int is_ground = Stage_RaycastGround(&ray_pos, &ray_index, &ray_kind, &ray_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
                             if (is_ground == 0)
                             {
