@@ -10,7 +10,9 @@ struct LCancelData
     LCancelAssets *lcancel_assets;
     GOBJ *barrel_gobj;
     Vec3 barrel_lastpos;
-    int is_fail; // status of the last l-cancel
+    u8 is_fail;        // status of the last l-cancel
+    u8 is_fastfall;    // bool used to detect fastfall frame
+    u8 fastfall_frame; // frame the player fastfell on
     struct
     {
         GOBJ *gobj;
@@ -42,7 +44,7 @@ typedef struct LCancelAssets
     void **hudmatanim; // pointer to array
 };
 
-#define LCLTEXT_SCALE 4
+#define LCLTEXT_SCALE 4.2
 
 static void *item_callbacks[];
 void LCancel_HUDCamThink(GOBJ *gobj);

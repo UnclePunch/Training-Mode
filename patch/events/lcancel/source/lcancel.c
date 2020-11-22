@@ -239,7 +239,7 @@ void LCancel_Init(LCancelData *event_data)
     COBJ *hud_cobj = COBJ_LoadDesc(cam_desc);
     // init camera
     GObj_AddObject(hudcam_gobj, R13_U8(-0x3E55), hud_cobj);
-    GOBJ_InitCamera(hudcam_gobj, LCancel_HUDCamThink, 8);
+    GOBJ_InitCamera(hudcam_gobj, LCancel_HUDCamThink, 7);
     hudcam_gobj->cobj_links = 1 << 18;
 
     GOBJ *hud_gobj = GObj_Create(0, 0, 0);
@@ -303,10 +303,28 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
 
+    // log fastfall frame
+    // if im in a fastfall-able state
+    int state = hmn_data->state_id;
+    //if ((state == ASID_JUMPF) || (state == ASID_JUMPB) || (state == ASID_JUMPAERIALF) || (state == ASID_JUMPAERIALB) || (state == ASID_FALL) || (state == ASID_FALLAERIAL) || ((state >= ASID_ATTACKAIRN) && (state <= ASID_ATTACKAIRLW))
+    {
+        if (hmn_data->phys.selfVel.Y < 0) // can i fastfall?
+        {
+            // did i fastfall yet?
+            if (hmn_data->flags.is_fastfall)
+                event_data->is_fastfall = 1; // set as fastfall this session
+            else
+                event_data->fastfall_frame++; // increment frames
+        }
+        else // cant fastfall, reset frames
+        {
+            event_data->fastfall_frame = 0;
+        }
+    }
+
     // if aerial landing
     if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 0))
     {
-
         // increment total lcls
         event_data->hud.lcl_total++;
 
@@ -412,7 +430,11 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         }
 
         // Print airborne frames
-        Text_SetText(event_data->hud.text_air, 0, "%df", hmn_data->TM.state_prev_frames[0]);
+        if (event_data->is_fastfall)
+            Text_SetText(event_data->hud.text_air, 0, "%df", event_data->fastfall_frame - 1);
+        else
+            Text_SetText(event_data->hud.text_air, 0, "-");
+        event_data->is_fastfall = 0; // reset fastfall bool
 
         // Print succession
         float succession = ((float)event_data->hud.lcl_success / (float)event_data->hud.lcl_total) * 100.0;
@@ -428,7 +450,6 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
     if (((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame == 0)) &&                   // if first frame of landing
         ((hmn_data->TM.state_prev[0] >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW))) // came from aerial attack
     {
-
         // state as autocancelled
         Text_SetText(event_data->hud.text_time, 0, "Auto-canceled");
 
