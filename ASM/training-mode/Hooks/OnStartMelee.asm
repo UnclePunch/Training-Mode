@@ -1,4 +1,4 @@
-#To be inserted at 8016e904
+#To be inserted at 8016e8c8
 .include "../Globals.s"
 .include "../../m-ex/Header.s"
 
@@ -6,4 +6,4 @@
   rtocbl  r12,TM_OnStartMelee
 
 #Original Line
-  lbz	r0, 0x0001 (r31)
+  lwz	r12, 0x0044 (r31)
