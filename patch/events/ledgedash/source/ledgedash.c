@@ -359,15 +359,32 @@ void Ledgedash_FighterThink(LedgedashData *event_data, GOBJ *hmn)
 {
     FighterData *hmn_data = hmn->userdata;
 
-    float ledge_dir;
-    int line_index = -1;
-    if (hmn_data->input.down & HSD_BUTTON_DPAD_LEFT)
-        line_index = Ledge_Find(-1, event_data->ledge_pos, &ledge_dir);
-    else if (hmn_data->input.down & HSD_BUTTON_DPAD_RIGHT)
-        line_index = Ledge_Find(1, event_data->ledge_pos, &ledge_dir);
+    if (hmn_data->input.down & (HSD_BUTTON_DPAD_LEFT | HSD_BUTTON_DPAD_RIGHT))
+    {
+        bp();
 
-    if (line_index != -1)
-        Fighter_PlaceOnLedge(event_data, hmn, line_index, ledge_dir);
+        // get current ledge position
+        CollVert *collvert = *stc_collvert;
+        CollLine *collline = *stc_collline;
+        CollVert *this_vert;
+        CollLine *this_line = &collline[event_data->ledge_line];
+        float ledge_pos;
+        if (event_data->ledge_dir == -1)
+            ledge_pos = collvert[this_line->info->vert_next].pos_curr.X;
+        else if (event_data->ledge_dir == 1)
+            ledge_pos = collvert[this_line->info->vert_prev].pos_curr.X;
+
+        // find ledge
+        float ledge_dir;
+        int line_index = -1;
+        if (hmn_data->input.down & HSD_BUTTON_DPAD_LEFT)
+            line_index = Ledge_Find(-1, ledge_pos, &ledge_dir);
+        else if (hmn_data->input.down & HSD_BUTTON_DPAD_RIGHT)
+            line_index = Ledge_Find(1, ledge_pos, &ledge_dir);
+
+        if (line_index != -1)
+            Fighter_PlaceOnLedge(event_data, hmn, line_index, ledge_dir);
+    }
 
     return;
 }
@@ -432,18 +449,16 @@ int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir)
                         // first pass, check left
                         if (j == 0)
                         {
-                            GrColl_GetLedgeLeft(line_index, &ledge_pos);
+                            GrColl_GetLedgeLeft2(line_index, &ledge_pos);
                         }
                         else if (j == 1)
                         {
-                            GrColl_GetLedgeRight(line_index, &ledge_pos);
+                            GrColl_GetLedgeRight2(line_index, &ledge_pos);
                         }
 
                         // is within the camera range
                         if ((ledge_pos.X > Stage_GetCameraLeft()) && (ledge_pos.X < Stage_GetCameraRight()) && (ledge_pos.Y > Stage_GetCameraBottom()) && (ledge_pos.Y < Stage_GetCameraTop()))
                         {
-
-                            bp();
 
                             // check for any obstructions
                             float dir_mult;
@@ -455,7 +470,7 @@ int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir)
                             int ray_kind;
                             Vec2 ray_angle;
                             Vec3 ray_pos;
-                            float from_x = ledge_pos.X + (3 * dir_mult);
+                            float from_x = ledge_pos.X + (2 * dir_mult);
                             float to_x = from_x;
                             float from_y = ledge_pos.Y + 5;
                             float to_y = from_y - 10;
@@ -527,6 +542,9 @@ int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir)
         this_group = this_group->next;
     }
 
+    if (line_closest != 0)
+        OSReport("next %d prev %d\n", line_closest->info->line_next, line_closest->info->line_prev);
+
     return index_closest;
 }
 void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, float ledge_dir)
@@ -535,11 +553,8 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
 
     // save ledge position
     Vec3 ledge_pos;
-    if (ledge_dir > 0)
-        GrColl_GetLedgeLeft(line_index, &ledge_pos);
-    else
-        GrColl_GetLedgeRight(line_index, &ledge_pos);
-    event_data->ledge_pos = ledge_pos.X;
+    event_data->ledge_line = line_index;
+    event_data->ledge_dir = ledge_dir;
 
     // place player on this ledge
     FtCliffCatch *ft_state = &hmn_data->state_var;

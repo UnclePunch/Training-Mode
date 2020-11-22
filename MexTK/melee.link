@@ -301,6 +301,8 @@
 80057bc0:Stage_DisableLineGroup
 80054158:GrColl_GetLedgeLeft
 80053ff4:GrColl_GetLedgeRight
+80053ecc:GrColl_GetLedgeLeft2
+80053da4:GrColl_GetLedgeRight2
 803a611c:Text_CreateCanvas
 803a6754:Text_CreateText
 803a5cc4:Text_Destroy

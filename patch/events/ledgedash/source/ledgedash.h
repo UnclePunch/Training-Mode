@@ -8,7 +8,8 @@ struct LedgedashData
 {
     EventDesc *event_desc;
     LedgedashAssets *assets;
-    float ledge_pos;
+    s16 ledge_line;
+    s16 ledge_dir;
     int is_fail; // status of the last l-cancel
     struct
     {

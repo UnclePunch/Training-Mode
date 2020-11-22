@@ -165,29 +165,30 @@ struct CollGroup // exists in heap
 
 struct CollLineInfo
 {
-    s16 vert_left;      // 0x0
-    s16 vert_right;     // 0x2
-    s16 line_prev;      // 0x4
-    s16 line_next;      // 0x6
-    u16 x8;             // 0x8
-    u16 xa;             // 0xA
-    u16 xc;             // 0xC
-    u16 flagsx8000 : 1; // 0xE, 0x8000
-    u16 flagsx4000 : 1; // 0xE, 0x8000
-    u16 flagsx2000 : 1; // 0xE, 0x8000
-    u16 flagsx1000 : 1; // 0xE, 0x8000
-    u16 flagsx0800 : 1; // 0xE, 0x8000
-    u16 flagsx0400 : 1; // 0xE, 0x8000
-    u16 is_ledge : 1;   // 0xE, 0x0200
-    u16 flagsx0100 : 1; // 0xE, 0x8000
-    u16 flagsx0080 : 1; // 0xE, 0x8000
-    u16 flagsx0040 : 1; // 0xE, 0x8000
-    u16 flagsx0020 : 1; // 0xE, 0x8000
-    u16 flagsx0010 : 1; // 0xE, 0x8000
-    u16 flagsx0008 : 1; // 0xE, 0x8000
-    u16 flagsx0004 : 1; // 0xE, 0x8000
-    u16 flagsx0002 : 1; // 0xE, 0x8000
-    u16 flagsx0001 : 1; // 0xE, 0x8000
+    s16 vert_prev;          // 0x0
+    s16 vert_next;          // 0x2
+    s16 line_prev;          // 0x4
+    s16 line_next;          // 0x6
+    s16 line_prev_altgroup; // 0x8
+    s16 line_next_altgroup; // 0xA
+    u8 xc;
+    u8 xd_1 : 1;     // 0xD, 0x8000
+    u8 xd_2 : 1;     // 0xD, 0x8000
+    u8 xd_3 : 1;     // 0xD, 0x8000
+    u8 disabled : 1; // 0xD, 0x8000
+    u8 is_left : 1;  // 0xD, 0x8000
+    u8 is_right : 1; // 0xD, 0x8000
+    u8 is_ceil : 1;  // 0xD, 0x0200
+    u8 is_floor : 1; // 0xD, 0x8000
+    u8 xe_1 : 1;     // 0xE, 0x8000
+    u8 xe_2 : 1;     // 0xE, 0x8000
+    u8 xe_3 : 1;     // 0xE, 0x8000
+    u8 xe_4 : 1;     // 0xE, 0x8000
+    u8 xe_5 : 1;     // 0xE, 0x8000
+    u8 is_drop : 1;  // 0xE, 0x8000
+    u8 is_ledge : 1; // 0xE, 0x0200
+    u8 is_unk : 1;   // 0xE, 0x8000
+    u8 material;
 };
 
 struct CollLine
@@ -242,8 +243,10 @@ void Coll_ECBCurrToPrev(CollData *collData);
 void Coll_InitECB(CollData *collData);
 int ECB_CollGround_PassLedge(CollData *ecb, ECBBones *bones); // returns is touching ground bool
 void ECB_CollAir(CollData *ecb, ECBBones *bones);
-void GrColl_GetLedgeLeft(int floor_index, Vec3 *pos);  // this functon will crawl along the entire line sequence and find the end of the ledge
-void GrColl_GetLedgeRight(int floor_index, Vec3 *pos); // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeLeft(int floor_index, Vec3 *pos);   // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeRight(int floor_index, Vec3 *pos);  // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeLeft2(int floor_index, Vec3 *pos);  // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeRight2(int floor_index, Vec3 *pos); // this functon will crawl along the entire line sequence and find the end of the ledge
 
 static int *stc_colltest = R13 + (COLL_TEST);
 static CollGroup **stc_firstcollgroup = R13 + (-0x51DC);
