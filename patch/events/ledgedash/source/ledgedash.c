@@ -1,6 +1,24 @@
 #include "ledgedash.h"
 static char nullString[] = " ";
 
+static GXColor tmgbar_black = {40, 40, 40, 255};
+static GXColor tmgbar_grey = {80, 80, 80, 255};
+static GXColor tmgbar_blue = {128, 128, 255, 255};
+static GXColor tmgbar_green = {128, 255, 128, 255};
+static GXColor tmgbar_yellow = {255, 255, 128, 255};
+static GXColor tmgbar_red = {255, 128, 128, 255};
+static GXColor tmgbar_indigo = {255, 128, 255, 255};
+static GXColor tmgbar_white = {255, 255, 255, 255};
+static GXColor *tmgbar_colors[] = {
+    &tmgbar_black,
+    &tmgbar_grey,
+    &tmgbar_green,
+    &tmgbar_yellow,
+    &tmgbar_indigo,
+    &tmgbar_white,
+    &tmgbar_red,
+};
+
 // Main Menu
 static char **LdshOptions_Barrel[] = {"Off", "Stationary", "Move"};
 static char **LdshOptions_HUD[] = {"On", "Off"};
@@ -145,8 +163,8 @@ void Ledgedash_HUDInit(LedgedashData *event_data)
     event_data->hud.canvas = canvas;
 
     // init text
-    Text **text_arr = &event_data->hud.text_time;
-    for (int i = 0; i < 3; i++)
+    Text **text_arr = &event_data->hud.text_angle;
+    for (int i = 0; i < 2; i++)
     {
 
         // Create text object
@@ -177,6 +195,37 @@ void Ledgedash_HUDInit(LedgedashData *event_data)
         Text_AddSubtext(hud_text, 0, 0, "-");
     }
 
+    // reset all bar colors
+    JOBJ *timingbar_jobj;
+    JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
+    DOBJ *d = timingbar_jobj->dobj;
+    int count = 0;
+    while (d != 0)
+    {
+        // if a box dobj
+        if ((count >= 0) && (count < 30))
+        {
+
+            // if mobj exists (it will)
+            MOBJ *m = d->mobj;
+            if (m != 0)
+            {
+
+                HSD_Material *mat = m->mat;
+
+                // set alpha
+                mat->alpha = 0.7;
+
+                // set color
+                mat->diffuse = tmgbar_black;
+            }
+        }
+
+        // inc
+        count++;
+        d = d->next;
+    }
+
     return 0;
 }
 void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
@@ -187,37 +236,87 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
 
-    // if aerial landing
-    if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 0))
+    // initialize timer
+    if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
     {
+        event_data->hud.timer = -1;
+        event_data->hud.is_release = 0;
+        event_data->hud.is_jump = 0;
+        event_data->hud.is_airdodge = 0;
+        event_data->hud.is_aerial = 0;
+        event_data->hud.is_land = 0;
+        event_data->hud.is_actionable = 0;
 
-        // increment total lcls
-        event_data->hud.lcl_total++;
-
-        // determine succession
-        int is_fail = 1;
-        if (hmn_data->input.timer_trigger_any_ignore_hitlag < 7)
+        // init action log
+        for (int i = 0; i < sizeof(event_data->hud.action_log) / sizeof(u8); i++)
         {
-            is_fail = 0;
-            event_data->hud.lcl_success++;
+            event_data->hud.action_log[i] = 0;
         }
-        event_data->is_fail = is_fail; // save l-cancel bool
+    }
 
-        // Play appropriate sfx
-        if (is_fail == 0)
-            SFX_PlayRaw(303, 255, 128, 20, 3);
-        else
-            SFX_PlayCommon(3);
+    // increment timer
+    event_data->hud.timer++;
+    int curr_frame = event_data->hud.timer;
 
-        // Update timing hud
+    // update action log
+    if (curr_frame < 30)
+    {
+        // look for cliffwait
+        if (hmn_data->state_id == ASID_CLIFFWAIT)
+        {
+            event_data->hud.is_release = 1;
+            event_data->hud.action_log[curr_frame] = LDACT_CLIFFWAIT;
+        }
+        // look for release
+        else if (hmn_data->state_id == ASID_FALL)
+        {
+            event_data->hud.is_release = 1;
+            event_data->hud.action_log[curr_frame] = LDACT_FALL;
+        }
+        // look for jump
+        else if ((hmn_data->state_id == ASID_JUMPAERIALF) || (hmn_data->state_id == ASID_JUMPAERIALB))
+        {
+            event_data->hud.is_jump = 1;
+            event_data->hud.action_log[curr_frame] = LDACT_JUMP;
+        }
+        // look for airdodge
+        else if (hmn_data->state_id == ASID_ESCAPEAIR)
+        {
+            event_data->hud.is_airdodge = 1;
+            event_data->hud.action_log[curr_frame] = LDACT_AIRDODGE;
+        }
+        // look for aerial
+        else if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW))
+        {
+            event_data->hud.is_aerial = 1;
+            event_data->hud.action_log[curr_frame] = LDACT_ATTACK;
+        }
+        // look for land
+        else if ((hmn_data->state_id == ASID_LANDING) || (hmn_data->state_id == ASID_LANDINGFALLSPECIAL))
+        {
+            event_data->hud.is_land = 1;
+            event_data->hud.action_log[curr_frame] = LDACT_LANDING;
+        }
+    }
+
+    // look for actionable
+    if ((event_data->hud.is_actionable == 0) &&
+        ((((hmn_data->state_id == ASID_WAIT) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
+         ((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
+         ((hmn_data->TM.state_prev[0] == ASID_LANDING) && (hmn_data->TM.state_prev_frames[0] >= hmn_data->attr.normal_landing_lag))))
+    {
+        event_data->hud.is_actionable = 1;
+        event_data->hud.actionable_frame = event_data->hud.timer;
+
+        SFX_PlayRaw(303, 255, 128, 20, 3);
+
+        // reset all bar colors
         JOBJ *timingbar_jobj;
-        JOBJ_GetChild(hud_jobj, &timingbar_jobj, 5, -1); // get timing bar jobj
-        // reset all colors first
+        JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
         DOBJ *d = timingbar_jobj->dobj;
         int count = 0;
         while (d != 0)
         {
-
             // if a box dobj
             if ((count >= 0) && (count < 30))
             {
@@ -233,15 +332,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
                     mat->alpha = 0.7;
 
                     // set color
-                    static GXColor tmgbar_green = {128, 255, 128, 255};
-                    static GXColor tmgbar_red = {255, 128, 128, 255};
-
-                    // set green
-                    if (count < 7)
-                        mat->diffuse = tmgbar_green;
-                    // set red
-                    else if (count >= 7)
-                        mat->diffuse = tmgbar_red;
+                    mat->diffuse = tmgbar_black;
                 }
             }
 
@@ -250,28 +341,13 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             d = d->next;
         }
 
-        // update text + frame box
-        int frame_box_id;
-        if (hmn_data->input.timer_trigger_any_ignore_hitlag >= 30)
-        {
-            // update text
-            Text_SetText(event_data->hud.text_time, 0, "No Press");
-            frame_box_id = 29;
-        }
-        else
-        {
-            Text_SetText(event_data->hud.text_time, 0, "%df/7f", hmn_data->input.timer_trigger_any_ignore_hitlag + 1);
-            frame_box_id = hmn_data->input.timer_trigger_any_ignore_hitlag;
-        }
-
-        // set current timing bar
+        // update bar colors
         d = timingbar_jobj->dobj;
         count = 0;
         while (d != 0)
         {
-
-            // if this frames' box
-            if (count == frame_box_id)
+            // if a box dobj
+            if ((count >= 0) && (count < 30))
             {
 
                 // if mobj exists (it will)
@@ -280,46 +356,24 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
                 {
 
                     HSD_Material *mat = m->mat;
+                    int this_frame = 30 - count;
+                    GXColor *bar_color;
 
-                    // set color
-                    static GXColor tmgbar_white = {255, 255, 255, 255};
-                    mat->diffuse = tmgbar_white;
-                    mat->alpha = 1;
+                    // check if GALINT frame
+                    bp();
+                    if ((this_frame >= curr_frame) && ((this_frame <= (curr_frame + hmn_data->hurtstatus.ledge_intang_left))))
+                        bar_color = &tmgbar_blue;
+                    else
+                        bar_color = tmgbar_colors[event_data->hud.action_log[this_frame]];
+
+                    mat->diffuse = *bar_color;
                 }
-
-                break;
             }
 
             // inc
             count++;
             d = d->next;
         }
-
-        // Print airborne frames
-        Text_SetText(event_data->hud.text_air, 0, "%df", hmn_data->TM.state_prev_frames[0]);
-
-        // Print succession
-        float succession = ((float)event_data->hud.lcl_success / (float)event_data->hud.lcl_total) * 100.0;
-        Text_SetText(event_data->hud.text_scs, 0, "%.1f%%", succession);
-
-        // Play HUD anim
-        JOBJ_RemoveAnimAll(hud_jobj);
-        JOBJ_AddAnimAll(hud_jobj, 0, event_data->assets->hudmatanim[is_fail], 0);
-        JOBJ_ReqAnimAll(hud_jobj, 0);
-    }
-
-    // if autocancel landing
-    if (((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame == 0)) &&                   // if first frame of landing
-        ((hmn_data->TM.state_prev[0] >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW))) // came from aerial attack
-    {
-
-        // state as autocancelled
-        Text_SetText(event_data->hud.text_time, 0, "Auto-canceled");
-
-        // Play HUD anim
-        JOBJ_RemoveAnimAll(hud_jobj);
-        JOBJ_AddAnimAll(hud_jobj, 0, event_data->assets->hudmatanim[2], 0);
-        JOBJ_ReqAnimAll(hud_jobj, 0);
     }
 
     // update HUD anim
@@ -361,7 +415,6 @@ void Ledgedash_FighterThink(LedgedashData *event_data, GOBJ *hmn)
 
     if (hmn_data->input.down & (HSD_BUTTON_DPAD_LEFT | HSD_BUTTON_DPAD_RIGHT))
     {
-        bp();
 
         // get current ledge position
         CollVert *collvert = *stc_collvert;
@@ -542,9 +595,6 @@ int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir)
         this_group = this_group->next;
     }
 
-    if (line_closest != 0)
-        OSReport("next %d prev %d\n", line_closest->info->line_next, line_closest->info->line_prev);
-
     return index_closest;
 }
 void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, float ledge_dir)
@@ -621,147 +671,6 @@ void Fighter_UpdateCamera(GOBJ *fighter)
 // Tips Functions
 void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
 {
-    // shield tip
-    if (event_data->tip.shield_isdisp == 0) // if not shown
-    {
-
-        // update tip conditions
-        // look for a freshly buffered guard off
-        if (((hmn_data->state_id == ASID_GUARDOFF) && (hmn_data->TM.state_frame == 0)) &&                            // currently in guardoff first frame
-            (hmn_data->TM.state_prev[0] == ASID_GUARD) &&                                                            // was just in wait
-            ((hmn_data->TM.state_prev[3] >= ASID_LANDINGAIRN) && (hmn_data->TM.state_prev[3] <= ASID_LANDINGAIRLW))) // was in aerial landing a few frames ago
-        {
-            // increment condition count
-            event_data->tip.shield_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.shield_num >= 3)
-            {
-                // display tip
-                char *shield_string = "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
-                if (event_vars->Tip_Display(5 * 60, shield_string))
-                {
-                    // set as shown
-                    //event_data->tip.shield_isdisp = 1;
-                    event_data->tip.shield_num = 0;
-                }
-            }
-        }
-    }
-
-    // hitbox tip
-    if (event_data->tip.hitbox_isdisp == 0) // if not shown
-    {
-        // update hitbox active bool
-        if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
-        {
-
-            // reset hitbox bool on first frame of aerial attack
-            if (hmn_data->TM.state_frame == 0)
-                event_data->tip.hitbox_active = 0;
-
-            // check if hitbox active
-            for (int i = 0; i < (sizeof(hmn_data->hitbox) / sizeof(ftHit)); i++)
-            {
-                if (hmn_data->hitbox[i].active != 0)
-                {
-                    event_data->tip.hitbox_active = 1;
-                    break;
-                }
-            }
-        }
-
-        // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
-            (event_data->is_fail == 0) &&
-            (event_data->tip.hitbox_active == 0)) // succeeded the last aerial landing
-        {
-            // increment condition count
-            event_data->tip.hitbox_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.hitbox_num >= 3)
-            {
-                // display tip
-                char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the \nattack becomes active.";
-                if (event_vars->Tip_Display(5 * 60, hitbox_string))
-                {
-
-                    // set as shown
-                    //event_data->tip.hitbox_isdisp = 1;
-                    event_data->tip.hitbox_num = 0;
-                }
-            }
-        }
-    }
-
-    // fastfall tip
-    if (event_data->tip.fastfall_isdisp == 0) // if not shown
-    {
-        // update fastfell bool
-        if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
-        {
-
-            // reset hitbox bool on first frame of aerial attack
-            if (hmn_data->TM.state_frame == 0)
-                event_data->tip.fastfall_active = 0;
-
-            // check if fastfalling
-            if (hmn_data->flags.is_fastfall == 1)
-                event_data->tip.fastfall_active = 1;
-        }
-
-        // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
-            ((hmn_data->input.timer_trigger_any >= 7) && (hmn_data->input.timer_trigger_any <= 15)) &&                                  // was early for an l-cancel
-            (event_data->tip.fastfall_active == 0))                                                                                     // succeeded the last aerial landing
-        {
-            // increment condition count
-            event_data->tip.fastfall_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.fastfall_num >= 3)
-            {
-                // display tip
-                char *fastfall_string = "Tip:\nDon't forget to fastfall!\nIt will let you act sooner \nand help with your \ntiming.";
-                if (event_vars->Tip_Display(5 * 60, fastfall_string))
-                {
-
-                    // set as shown
-                    //event_data->tip.hitbox_isdisp = 1;
-                    event_data->tip.fastfall_num = 0;
-                }
-            }
-        }
-    }
-
-    // late tip
-    if (event_data->tip.late_isdisp == 0) // if not shown
-    {
-
-        // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && // is in aerial landing
-            (event_data->is_fail == 1) &&                                                            // failed the l-cancel
-            (hmn_data->input.down & (HSD_TRIGGER_L | HSD_TRIGGER_R | HSD_TRIGGER_Z)))                // was late for an l-cancel by pressing it just now
-        {
-            // increment condition count
-            event_data->tip.late_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.late_num >= 3)
-            {
-                // display tip
-                char *late_string = "Tip:\nTry pressing the trigger a\nbit earlier, before the\nfighter lands.";
-                if (event_vars->Tip_Display(5 * 60, late_string))
-                {
-
-                    // set as shown
-                    //event_data->tip.hitbox_isdisp = 1;
-                    event_data->tip.late_num = 0;
-                }
-            }
-        }
-    }
 
     return;
 }

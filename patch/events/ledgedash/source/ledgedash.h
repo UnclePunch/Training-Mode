@@ -10,16 +10,26 @@ struct LedgedashData
     LedgedashAssets *assets;
     s16 ledge_line;
     s16 ledge_dir;
-    int is_fail; // status of the last l-cancel
     struct
     {
         GOBJ *gobj;
-        u16 lcl_success;
-        u16 lcl_total;
-        Text *text_time;
-        Text *text_air;
-        Text *text_scs;
+        Text *text_angle;
+        Text *text_galint;
         int canvas;
+        int timer;
+        u8 is_release : 1;
+        u8 is_jump : 1;
+        u8 is_airdodge : 1;
+        u8 is_aerial : 1;
+        u8 is_land : 1;
+        u8 is_actionable : 1;
+        u16 release_frame;
+        u16 jump_frame;
+        u16 airdodge_frame;
+        u16 aerial_frame;
+        u16 land_frame;
+        u16 actionable_frame;
+        u8 action_log[30];
     } hud;
     struct
     {
@@ -42,7 +52,19 @@ typedef struct LedgedashAssets
     void **hudmatanim; // pointer to array
 };
 
+typedef enum LDSH_ACTION
+{
+    LDACT_NONE,
+    LDACT_CLIFFWAIT,
+    LDACT_FALL,
+    LDACT_JUMP,
+    LDACT_AIRDODGE,
+    LDACT_ATTACK,
+    LDACT_LANDING,
+};
+
 #define LCLTEXT_SCALE 4
+#define LCLJOBJ_BAR 4
 
 void Event_Exit();
 void LedgedashHUDCamThink(GOBJ *gobj);
