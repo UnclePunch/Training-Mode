@@ -77,7 +77,7 @@ static EventMatchData LCancel_MatchData = {
     .playMusic = false,
     .hideGo = true,
     .hideReady = true,
-    .isCreateHUD = true,
+    .isCreateHUD = false,
     .isDisablePause = true,
     // byte 0x3
     .timerRunOnPause = false,   // 0x01
@@ -124,7 +124,7 @@ static EventMatchData Ledgedash_MatchData = {
     .playMusic = false,
     .hideGo = true,
     .hideReady = true,
-    .isCreateHUD = true,
+    .isCreateHUD = false,
     .isDisablePause = true,
     // byte 0x3
     .timerRunOnPause = false,   // 0x01

@@ -236,10 +236,13 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
 
-    // initialize timer
+    // increment timer
+    event_data->hud.timer++;
+
+    // check to initialize timer
     if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
     {
-        event_data->hud.timer = -1;
+        event_data->hud.timer = 0;
         event_data->hud.is_release = 0;
         event_data->hud.is_jump = 0;
         event_data->hud.is_airdodge = 0;
@@ -254,13 +257,13 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         }
     }
 
-    // increment timer
-    event_data->hud.timer++;
     int curr_frame = event_data->hud.timer;
 
     // update action log
-    if (curr_frame < 30)
+    if (curr_frame < (sizeof(event_data->hud.action_log) / sizeof(u8)))
     {
+        bp();
+
         // look for cliffwait
         if (hmn_data->state_id == ASID_CLIFFWAIT)
         {
@@ -305,12 +308,11 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
         if ((hmn_data->state_id == ASID_ESCAPEAIR) || (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))
         {
-            bp();
             // determine airdodge angle
             float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
 
             // save airdodge angle
-            event_data->hud.airdodge_angle = fabs(angle / M_1DEGREE);
+            event_data->hud.airdodge_angle = angle;
             event_data->hud.is_airdodge = 1;
         }
     }
@@ -329,6 +331,8 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         // reset all bar colors
         JOBJ *timingbar_jobj;
         JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
+
+        // update bar colors
         DOBJ *d = timingbar_jobj->dobj;
         int count = 0;
         while (d != 0)
@@ -343,36 +347,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
                 {
 
                     HSD_Material *mat = m->mat;
-
-                    // set alpha
-                    mat->alpha = 0.7;
-
-                    // set color
-                    mat->diffuse = tmgbar_black;
-                }
-            }
-
-            // inc
-            count++;
-            d = d->next;
-        }
-
-        // update bar colors
-        d = timingbar_jobj->dobj;
-        count = 0;
-        while (d != 0)
-        {
-            // if a box dobj
-            if ((count >= 0) && (count < 30))
-            {
-
-                // if mobj exists (it will)
-                MOBJ *m = d->mobj;
-                if (m != 0)
-                {
-
-                    HSD_Material *mat = m->mat;
-                    int this_frame = 30 - count;
+                    int this_frame = 29 - count;
                     GXColor *bar_color;
 
                     // check if GALINT frame
@@ -391,13 +366,24 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         }
 
         // output remaining airdodge angle
-        if (event_data->hud.is_actionable == 1)
-            Text_SetText(event_data->hud.text_angle, 0, "%.2f", event_data->hud.airdodge_angle);
+        if (event_data->hud.is_airdodge == 1)
+            Text_SetText(event_data->hud.text_angle, 0, "%.2f", fabs(event_data->hud.airdodge_angle / M_1DEGREE));
         else
             Text_SetText(event_data->hud.text_angle, 0, "-");
 
         // output remaining GALINT
-        Text_SetText(event_data->hud.text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
+        Text *text_galint = event_data->hud.text_galint;
+        if (hmn_data->hurtstatus.ledge_intang_left > 0)
+        {
+            static GXColor galint_green = {150, 255, 150, 255};
+            Text_SetColor(text_galint, 0, &galint_green);
+            Text_SetText(text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
+        }
+        else
+        {
+            Text_SetColor(text_galint, 0, &tmgbar_white);
+            Text_SetText(text_galint, 0, "-");
+        }
     }
 
     // update HUD anim
