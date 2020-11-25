@@ -17,6 +17,7 @@ struct LedgedashData
         Text *text_galint;
         int canvas;
         int timer;
+        float airdodge_angle;
         u8 is_release : 1;
         u8 is_jump : 1;
         u8 is_airdodge : 1;

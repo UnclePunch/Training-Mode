@@ -282,7 +282,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         // look for airdodge
         else if (hmn_data->state_id == ASID_ESCAPEAIR)
         {
-            event_data->hud.is_airdodge = 1;
+            //event_data->hud.is_airdodge = 1;
             event_data->hud.action_log[curr_frame] = LDACT_AIRDODGE;
         }
         // look for aerial
@@ -296,6 +296,22 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         {
             event_data->hud.is_land = 1;
             event_data->hud.action_log[curr_frame] = LDACT_LANDING;
+        }
+    }
+
+    // grab airdodge angle
+    if (event_data->hud.is_airdodge == 0)
+    {
+
+        if ((hmn_data->state_id == ASID_ESCAPEAIR) || (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))
+        {
+            bp();
+            // determine airdodge angle
+            float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
+
+            // save airdodge angle
+            event_data->hud.airdodge_angle = fabs(angle / M_1DEGREE);
+            event_data->hud.is_airdodge = 1;
         }
     }
 
@@ -360,7 +376,6 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
                     GXColor *bar_color;
 
                     // check if GALINT frame
-                    bp();
                     if ((this_frame >= curr_frame) && ((this_frame <= (curr_frame + hmn_data->hurtstatus.ledge_intang_left))))
                         bar_color = &tmgbar_blue;
                     else
@@ -374,6 +389,15 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             count++;
             d = d->next;
         }
+
+        // output remaining airdodge angle
+        if (event_data->hud.is_actionable == 1)
+            Text_SetText(event_data->hud.text_angle, 0, "%.2f", event_data->hud.airdodge_angle);
+        else
+            Text_SetText(event_data->hud.text_angle, 0, "-");
+
+        // output remaining GALINT
+        Text_SetText(event_data->hud.text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
     }
 
     // update HUD anim
