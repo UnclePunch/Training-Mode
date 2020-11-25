@@ -13,7 +13,7 @@ void Event_Init(GOBJ *gobj)
 // Mod Information //
 /////////////////////
 
-static char TM_Vers[] = {"TM 3.0 Alpha2\n"};
+static char TM_Vers[] = {"TM 3.0a2 Rishi\n"};
 static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
 static char nullString[] = " ";
 
@@ -62,6 +62,7 @@ static EventDesc Lab = {
     .eventCSSFile = "TM/EvLabCSS.dat",
     .isChooseCPU = true,
     .isSelectStage = true,
+    .use_savestates = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Lab_MatchData,
@@ -108,6 +109,7 @@ static EventDesc LCancel = {
     .eventFile = "EvLcl",
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = true,
     .scoreType = 0,
     .callbackPriority = 15,
     .matchData = &LCancel_MatchData,
@@ -119,18 +121,18 @@ static EventDesc LCancel = {
 static EventMatchData Ledgedash_MatchData = {
     .timer = MATCH_TIMER_HIDE,
     .matchType = MATCH_MATCHTYPE_TIME,
-    .playMusic = true,
+    .playMusic = false,
     .hideGo = true,
     .hideReady = true,
     .isCreateHUD = true,
-    .isDisablePause = false,
+    .isDisablePause = true,
     // byte 0x3
     .timerRunOnPause = false,   // 0x01
     .isHidePauseHUD = true,     // 0x02
     .isShowLRAStart = true,     // 0x04
     .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
+    .isShowZRetry = false,      // 0x10
+    .isCheckForZRetry = false,  // 0x20
     .isShowAnalogStick = true,  // 0x40
     .isShowScore = false,       // 0x80
 
@@ -153,6 +155,7 @@ static EventDesc Ledgedash = {
     .eventFile = "EvLdsh",
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 15,
     .matchData = &Ledgedash_MatchData,
@@ -199,6 +202,7 @@ static EventDesc Combo = {
     .eventFile = 0,
     .isChooseCPU = true,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Combo_MatchData,
@@ -244,6 +248,7 @@ static EventDesc AttackOnShield = {
     .eventFile = 0,
     .isChooseCPU = true,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &AttackOnShield_MatchData,
@@ -289,6 +294,7 @@ static EventDesc Reversal = {
     .eventFile = 0,
     .isChooseCPU = true,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Reversal_MatchData,
@@ -334,6 +340,7 @@ static EventDesc SDI = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SDI_MatchData,
@@ -380,6 +387,7 @@ static EventDesc Powershield = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Powershield_MatchData,
@@ -425,6 +433,7 @@ static EventDesc Ledgetech = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Ledgetech_MatchData,
@@ -470,6 +479,7 @@ static EventDesc AmsahTech = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &AmsahTech_MatchData,
@@ -515,6 +525,7 @@ static EventDesc ShieldDrop = {
     .eventFile = 0,
     .isChooseCPU = true,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &ShieldDrop_MatchData,
@@ -560,6 +571,7 @@ static EventDesc WaveshineSDI = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &WaveshineSDI_MatchData,
@@ -605,6 +617,7 @@ static EventDesc SlideOff = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SlideOff_MatchData,
@@ -650,6 +663,7 @@ static EventDesc GrabMash = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &GrabMash_MatchData,
@@ -695,6 +709,7 @@ static EventDesc TechCounter = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &TechCounter_MatchData,
@@ -740,6 +755,7 @@ static EventDesc ArmadaShine = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &ArmadaShine_MatchData,
@@ -785,6 +801,7 @@ static EventDesc SideBSweet = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SideBSweet_MatchData,
@@ -830,6 +847,7 @@ static EventDesc EscapeSheik = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &EscapeSheik_MatchData,
@@ -875,6 +893,7 @@ static EventDesc Eggs = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = true,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Eggs_MatchData,
@@ -920,6 +939,7 @@ static EventDesc Multishine = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Multishine_MatchData,
@@ -965,6 +985,7 @@ static EventDesc Reaction = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Reaction_MatchData,
@@ -1010,6 +1031,7 @@ static EventDesc Ledgestall = {
     .eventFile = 0,
     .isChooseCPU = false,
     .isSelectStage = false,
+    .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Ledgestall_MatchData,
@@ -1087,7 +1109,7 @@ static Savestate *stc_savestate;
 static EventDesc *static_eventInfo;
 static MenuData *static_menuData;
 static EventVars stc_event_vars = {
-    .event_info = 0,
+    .event_desc = 0,
     .menu_assets = 0,
     .event_gobj = 0,
     .menu_gobj = 0,
@@ -1296,7 +1318,7 @@ void EventLoad()
     GOBJ *menu_gobj = EventMenu_Init(event_desc, *evFunction->menu_start);
 
     // Init static structure containing event variables
-    stc_event_vars.event_info = event_desc;
+    stc_event_vars.event_desc = event_desc;
     stc_event_vars.event_gobj = gobj;
     stc_event_vars.menu_gobj = menu_gobj;
 
@@ -1323,14 +1345,14 @@ void EventUpdate()
 {
 
     // get event info
-    EventDesc *event_info = stc_event_vars.event_info;
+    EventDesc *event_desc = stc_event_vars.event_desc;
     evFunction *evFunction = &stc_event_vars.evFunction;
     GOBJ *menu_gobj = stc_event_vars.menu_gobj;
 
     // run savestate logic if enabled
-    if (1 == 1)
+    if (event_desc->use_savestates == true)
     {
-        //Update_Savestates();
+        Update_Savestates();
     }
 
     // run menu logic if exists

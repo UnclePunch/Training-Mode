@@ -77,8 +77,9 @@ typedef struct EventDesc
     char *eventTutorial;
     char *eventFile;
     char *eventCSSFile;
-    u8 isChooseCPU;
-    u8 isSelectStage;
+    u8 isChooseCPU : 1;
+    u8 isSelectStage : 1;
+    u8 use_savestates : 1; // enables dpad left and right savestates
     u8 scoreType;
     u8 callbackPriority;
     EventMatchData *matchData;
@@ -638,7 +639,7 @@ typedef struct evFunction
 } evFunction;
 typedef struct EventVars
 {
-    EventDesc *event_info;                                                                   // event information
+    EventDesc *event_desc;                                                                   // event information
     evMenu *menu_assets;                                                                     // menu assets
     GOBJ *event_gobj;                                                                        // event gobj
     GOBJ *menu_gobj;                                                                         // event menu gobj
