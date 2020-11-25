@@ -2188,7 +2188,7 @@ struct FighterData
     int x205c;                                // 0x205c
     int x2060;                                // 0x2060
     int ledge_cooldown;                       // 0x2064
-    int x2068;                                // 0x2068
+    int attack_kind;                          // 0x2068, non attacks have id 1
     int x206c;                                // 0x206c
     int x2070;                                // 0x2070
     int x2074;                                // 0x2074

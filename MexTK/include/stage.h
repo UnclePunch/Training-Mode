@@ -182,12 +182,12 @@ struct Stage
     float crowdReactStart; // 0x14, begins checking for crowd gasps below this position
     float fov_d;           // 0x18
     float fov_u;           // 0x1c
-    float fov_r;           // 0x20
+    float fov_r;           // 0x20, actually horizontal rotation?
     float fov_l;           // 0x24
     float x28;             // 0x28
     float x2c;             // 0x2c
     float x30;             // 0x30
-    float x34;             // 0x34
+    float x34;             // 0x34, camera distance min
     float x38;             // 0x38
     float x3c;             // 0x3c
     float x40;             // 0x40
@@ -378,5 +378,7 @@ void Stage_EnableLineGroup(int index);
 void Stage_DisableLineGroup(int index);
 int Stage_GetExternalID();
 int Stage_ExternalToInternal(int ext_id);
+
+Stage *stc_stage = 0x8049e6c8;
 
 #endif

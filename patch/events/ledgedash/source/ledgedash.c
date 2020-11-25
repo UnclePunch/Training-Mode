@@ -96,6 +96,15 @@ void Event_Init(GOBJ *gobj)
     // Init Fighter
     Ledgedash_FtInit(event_data);
 
+    Stage *stage = stc_stage;
+    float *unk_cam = 0x803bcca0;
+    stc_stage->fov_r = 0; // no camera rotation
+    stc_stage->x28 = 1;   // pan value?
+    stc_stage->x2c = 1;   // pan value?
+    stc_stage->x30 = 1;   // pan value?
+    stc_stage->x34 = 130; // zoom out
+    unk_cam[0x40 / 4] = 30;
+
     return;
 }
 // Think Function
@@ -289,7 +298,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             event_data->hud.action_log[curr_frame] = LDACT_AIRDODGE;
         }
         // look for aerial
-        else if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW))
+        else if (hmn_data->attack_kind != 1)
         {
             event_data->hud.is_aerial = 1;
             event_data->hud.action_log[curr_frame] = LDACT_ATTACK;
