@@ -64,7 +64,7 @@ typedef enum LDSH_ACTION
     LDACT_LANDING,
 };
 
-#define LCLTEXT_SCALE 4
+#define LCLTEXT_SCALE 4.5
 #define LCLJOBJ_BAR 4
 
 void Event_Exit();
