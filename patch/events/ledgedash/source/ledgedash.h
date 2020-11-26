@@ -3,6 +3,12 @@
 
 typedef struct LedgedashData LedgedashData;
 typedef struct LedgedashAssets LedgedashAssets;
+typedef struct LdshHitlogData LdshHitlogData;
+typedef struct LdshHitboxData LdshHitboxData;
+
+#define LDSH_HITBOXNUM 30 * 4
+#define LCLTEXT_SCALE 4.5
+#define LCLJOBJ_BAR 4
 
 struct LedgedashData
 {
@@ -10,6 +16,8 @@ struct LedgedashData
     LedgedashAssets *assets;
     s16 ledge_line;
     s16 ledge_dir;
+    s16 reset_timer;
+    GOBJ *hitlog_gobj;
     struct
     {
         GOBJ *gobj;
@@ -47,10 +55,24 @@ struct LedgedashData
     } tip;
 };
 
-typedef struct LedgedashAssets
+struct LedgedashAssets
 {
     JOBJ *hud;
     void **hudmatanim; // pointer to array
+};
+
+struct LdshHitboxData
+{
+    int kind;
+    float size;
+    Vec3 pos_curr;
+    Vec3 pos_prev;
+};
+
+struct LdshHitlogData
+{
+    int num;
+    LdshHitboxData hitlog[LDSH_HITBOXNUM];
 };
 
 typedef enum LDSH_ACTION
@@ -64,9 +86,8 @@ typedef enum LDSH_ACTION
     LDACT_LANDING,
 };
 
-#define LCLTEXT_SCALE 4.5
-#define LCLJOBJ_BAR 4
-
 void Event_Exit();
-void LedgedashHUDCamThink(GOBJ *gobj);
+void Ledgedash_HUDCamThink(GOBJ *gobj);
+GOBJ *Ledgedash_HitLogInit();
+void Ledgedash_HitLogGX(GOBJ *gobj, int pass);
 int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir);

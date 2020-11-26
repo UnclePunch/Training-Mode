@@ -90,12 +90,7 @@ void Event_Init(GOBJ *gobj)
     // get assets
     event_data->assets = File_GetSymbol(event_vars->event_archive, "ldshData");
 
-    // Init HUD
-    Ledgedash_HUDInit(event_data);
-
-    // Init Fighter
-    Ledgedash_FtInit(event_data);
-
+    // standardize camera
     Stage *stage = stc_stage;
     float *unk_cam = 0x803bcca0;
     stc_stage->fov_r = 0; // no camera rotation
@@ -104,6 +99,15 @@ void Event_Init(GOBJ *gobj)
     stc_stage->x30 = 1;   // pan value?
     stc_stage->x34 = 130; // zoom out
     unk_cam[0x40 / 4] = 30;
+
+    // Init hitlog
+    event_data->hitlog_gobj = Ledgedash_HitLogInit();
+
+    // Init HUD
+    Ledgedash_HUDInit(event_data);
+
+    // Init Fighter
+    Ledgedash_FtInit(event_data);
 
     return;
 }
@@ -117,8 +121,15 @@ void Event_Think(GOBJ *event)
     FighterData *hmn_data = hmn->userdata;
     HSD_Pad *pad = PadGet(hmn_data->player_controller_number, PADGET_ENGINE);
 
+    // no ledgefall
+    FtCliffCatch *ft_state = &hmn_data->state_var;
+    if (hmn_data->state_id == ASID_CLIFFWAIT)
+        ft_state->fall_timer = 2;
+
     Ledgedash_HUDThink(event_data, hmn_data);
-    Ledgedash_FighterThink(event_data, hmn);
+    Ledgedash_HitLogThink(event_data, hmn);
+    Ledgedash_ResetThink(event_data, hmn);
+    Ledgedash_ChangeLedgeThink(event_data, hmn);
 
     return;
 }
@@ -138,7 +149,7 @@ void Event_Exit()
     return;
 }
 
-// L-Cancel functions
+// Ledgedash functions
 void Ledgedash_HUDInit(LedgedashData *event_data)
 {
 
@@ -150,7 +161,7 @@ void Ledgedash_HUDInit(LedgedashData *event_data)
     COBJ *hud_cobj = COBJ_LoadDesc(cam_desc);
     // init camera
     GObj_AddObject(hudcam_gobj, R13_U8(-0x3E55), hud_cobj);
-    GOBJ_InitCamera(hudcam_gobj, LedgedashHUDCamThink, 7);
+    GOBJ_InitCamera(hudcam_gobj, Ledgedash_HUDCamThink, 7);
     hudcam_gobj->cobj_links = 1 << 18;
 
     GOBJ *hud_gobj = GObj_Create(0, 0, 0);
@@ -271,12 +282,9 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
     // update action log
     if (curr_frame < (sizeof(event_data->hud.action_log) / sizeof(u8)))
     {
-        bp();
-
         // look for cliffwait
         if (hmn_data->state_id == ASID_CLIFFWAIT)
         {
-            event_data->hud.is_release = 1;
             event_data->hud.action_log[curr_frame] = LDACT_CLIFFWAIT;
         }
         // look for release
@@ -327,15 +335,13 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
     }
 
     // look for actionable
-    if ((event_data->hud.is_actionable == 0) &&
+    if (((event_data->hud.is_actionable == 0) && (event_data->hud.is_release == 1)) &&
         ((((hmn_data->state_id == ASID_WAIT) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
          ((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
          ((hmn_data->TM.state_prev[0] == ASID_LANDING) && (hmn_data->TM.state_prev_frames[0] >= hmn_data->attr.normal_landing_lag))))
     {
         event_data->hud.is_actionable = 1;
         event_data->hud.actionable_frame = event_data->hud.timer;
-
-        SFX_PlayRaw(303, 255, 128, 20, 3);
 
         // reset all bar colors
         JOBJ *timingbar_jobj;
@@ -381,18 +387,33 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             Text_SetText(event_data->hud.text_angle, 0, "-");
 
         // output remaining GALINT
+        void *matanim;
         Text *text_galint = event_data->hud.text_galint;
         if (hmn_data->hurtstatus.ledge_intang_left > 0)
         {
-            static GXColor galint_green = {150, 255, 150, 255};
-            Text_SetColor(text_galint, 0, &galint_green);
+            SFX_PlayRaw(303, 255, 128, 20, 3);
+            matanim = event_data->assets->hudmatanim[0];
             Text_SetText(text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
+        }
+        else if (hmn_data->TM.vuln_frames < 25)
+        {
+            matanim = event_data->assets->hudmatanim[1];
+            Text_SetText(text_galint, 0, "-%df", hmn_data->TM.vuln_frames);
         }
         else
         {
-            Text_SetColor(text_galint, 0, &tmgbar_white);
+            matanim = event_data->assets->hudmatanim[1];
             Text_SetText(text_galint, 0, "-");
         }
+
+        // init hitbox num
+        LdshHitlogData *hitlog_data = event_data->hitlog_gobj->userdata;
+        hitlog_data->num = 0;
+
+        // apply HUD animation
+        JOBJ_RemoveAnimAll(hud_jobj);
+        JOBJ_AddAnimAll(hud_jobj, 0, matanim, 0);
+        JOBJ_ReqAnimAll(hud_jobj, 0);
     }
 
     // update HUD anim
@@ -400,13 +421,141 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
     return;
 }
-void LedgedashHUDCamThink(GOBJ *gobj)
+void Ledgedash_HUDCamThink(GOBJ *gobj)
 {
 
     // if HUD enabled and not paused
     if ((LdshOptions_Main[1].option_val == 0) && (Pause_CheckStatus(1) != 2))
     {
         CObjThink_Common(gobj);
+    }
+
+    return;
+}
+void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
+{
+
+    FighterData *hmn_data = hmn->userdata;
+
+    // check if enabled
+    if (1 == 1)
+    {
+
+        // check if reset timer is set
+        if (event_data->reset_timer > 0)
+        {
+            // decrement reset timer
+            event_data->reset_timer--;
+
+            // if reset timer is up, go back to ledge
+            if (event_data->reset_timer == 0)
+            {
+                Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
+            }
+        }
+        // check to set reset timner
+        else if (event_data->hud.is_actionable)
+        {
+            event_data->reset_timer = 30;
+        }
+        else
+        {
+            int state = hmn_data->state_id;
+
+            // reset actions
+            if ((hmn_data->flags.dead == 1) ||                                                 // if dead
+                ((hmn_data->state_id == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 7)) || // missed airdodge
+                ((((state >= ASID_CLIFFCLIMBSLOW) && (state <= ASID_CLIFFJUMPQUICK2)) ||       // reset if any other ledge action
+                  ((state >= ASID_ATTACKAIRN) && (state <= ASID_ATTACKAIRLW)) ||
+                  ((hmn_data->phys.air_state == 0) && ((state != ASID_LANDING) && (state != ASID_LANDINGFALLSPECIAL)))) && // reset if grounded non landing
+                 (hmn_data->TM.state_frame >= 7)))
+            {
+                Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
+                SFX_PlayCommon(3);
+            }
+        }
+    }
+
+    return;
+}
+
+// Hitlog functions
+GOBJ *Ledgedash_HitLogInit()
+{
+
+    GOBJ *hit_gobj = GObj_Create(0, 0, 0);
+    LdshHitlogData *hit_data = calloc(sizeof(LdshHitlogData));
+    GObj_AddUserData(hit_gobj, 4, HSD_Free, hit_data);
+    GObj_AddGXLink(hit_gobj, Ledgedash_HitLogGX, 5, 0);
+
+    // init array
+    hit_data->num = 0;
+
+    return hit_gobj;
+}
+void Ledgedash_HitLogThink(LedgedashData *event_data, GOBJ *hmn)
+{
+    FighterData *hmn_data = hmn->userdata;
+    LdshHitlogData *hitlog_data = event_data->hitlog_gobj->userdata;
+
+    // log hitboxes
+    if ((event_data->hud.is_actionable == 1) && (hmn_data->hurtstatus.ledge_intang_left > 0))
+    {
+
+        // iterate through fighter hitboxes
+        for (int i = 0; i < sizeof(hmn_data->hitbox) / sizeof(ftHit); i++)
+        {
+
+            ftHit *this_hit = &hmn_data->hitbox[i];
+
+            if ((this_hit->active != 0) &&           // if hitbox is active
+                (hitlog_data->num < LDSH_HITBOXNUM)) // if not over max
+            {
+
+                // log info
+                LdshHitboxData *this_ldsh_hit = &hitlog_data->hitlog[hitlog_data->num];
+                this_ldsh_hit->size = this_hit->size;
+                this_ldsh_hit->pos_curr = this_hit->pos;
+                this_ldsh_hit->pos_prev = this_hit->pos_prev;
+                this_ldsh_hit->kind = this_hit->attribute;
+
+                // increment hitboxes
+                hitlog_data->num++;
+            }
+        }
+
+        // iterate through items belonging to fighter
+    }
+
+    return;
+}
+void Ledgedash_HitLogGX(GOBJ *gobj, int pass)
+{
+
+    static GXColor hitlog_ambient = {128, 0, 0, 80};
+    static GXColor hit_diffuse = {255, 99, 99, 80};
+    static GXColor grab_diffuse = {196, 79, 00, 80};
+    static GXColor detect_diffuse = {255, 255, 255, 80};
+
+    LdshHitlogData *hitlog_data = gobj->userdata;
+
+    for (int i = 0; i < hitlog_data->num; i++)
+    {
+        LdshHitboxData *this_ldsh_hit = &hitlog_data->hitlog[i];
+
+        // determine color
+        bp();
+        GXColor *diffuse, *ambient;
+        if (this_ldsh_hit->kind == 0)
+            diffuse = &hit_diffuse;
+        else if (this_ldsh_hit->kind == 8)
+            diffuse = &grab_diffuse;
+        else if (this_ldsh_hit->kind == 11)
+            diffuse = &detect_diffuse;
+        else
+            diffuse = &hit_diffuse;
+
+        Develop_DrawSphere(this_ldsh_hit->size, &this_ldsh_hit->pos_curr, &this_ldsh_hit->pos_prev, diffuse, &hitlog_ambient);
     }
 
     return;
@@ -428,7 +577,7 @@ void Ledgedash_FtInit(LedgedashData *event_data)
 
     return;
 }
-void Ledgedash_FighterThink(LedgedashData *event_data, GOBJ *hmn)
+void Ledgedash_ChangeLedgeThink(LedgedashData *event_data, GOBJ *hmn)
 {
     FighterData *hmn_data = hmn->userdata;
 
@@ -620,6 +769,8 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
 {
     FighterData *hmn_data = hmn->userdata;
 
+    // ensure ledge is in the blastzone
+
     // save ledge position
     Vec3 ledge_pos;
     event_data->ledge_line = line_index;
@@ -630,7 +781,7 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     hmn_data->facing_direction = ledge_dir;
     ft_state->ledge_index = line_index; // store line index
     Fighter_EnterCliffWait(hmn);
-    ft_state->timer = 1; // spoof as on ledge for a frame already
+    ft_state->timer = 0; // spoof as on ledge for a frame already
     Fighter_LoseGroundJump(hmn_data);
     Fighter_EnableCollUpdate(hmn_data);
     Fighter_MoveToCliff(hmn);

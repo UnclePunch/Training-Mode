@@ -16,6 +16,7 @@
 80302b00:DevelopText_HideText
 80302ae0:DevelopText_HideBG
 80302b10:DevelopText_StoreTextScale
+80008fc8:Develop_DrawSphere
 8005fddc:Effect_SpawnSync
 800676f0:Effect_SpawnAsync
 8009f834:Effect_SpawnFtEffectLookup

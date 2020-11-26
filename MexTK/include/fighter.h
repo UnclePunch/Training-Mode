@@ -2603,7 +2603,7 @@ struct FtDOBJUnk // is in the fighter data
 struct FtCliffCatch
 {
     int ledge_index;
-    int x4;
+    float fall_timer;
     int timer;
 };
 

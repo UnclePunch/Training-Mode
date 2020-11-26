@@ -49,5 +49,6 @@ void DevelopText_StoreBGColor(DevText *text, u8 *RGBA);
 void DevelopText_HideText(DevText *text);
 void DevelopText_HideBG(DevText *text);
 void DevelopText_StoreTextScale(DevText *text, float x, float y);
+void Develop_DrawSphere(float size, Vec3 *pos1, Vec2 *pos2, GXColor *diffuse, GXColor *ambient);
 
 #endif
