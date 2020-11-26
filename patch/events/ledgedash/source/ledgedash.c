@@ -529,6 +529,40 @@ void Ledgedash_HitLogThink(LedgedashData *event_data, GOBJ *hmn)
         }
 
         // iterate through items belonging to fighter
+        GOBJList *gobj_list = *stc_gobj_list;
+        GOBJ *this_item = gobj_list->item;
+        while (this_item != 0)
+        {
+            ItemData *this_itemdata = this_item->userdata;
+
+            // ensure belongs to the fighter
+            if (this_itemdata->fighter == hmn)
+            {
+                // iterate through item hitboxes
+                for (int i = 0; i < sizeof(hmn_data->hitbox) / sizeof(ftHit); i++)
+                {
+
+                    itHit *this_hit = &this_itemdata->hitbox[i];
+
+                    if ((this_hit->active != 0) &&           // if hitbox is active
+                        (hitlog_data->num < LDSH_HITBOXNUM)) // if not over max
+                    {
+
+                        // log info
+                        LdshHitboxData *this_ldsh_hit = &hitlog_data->hitlog[hitlog_data->num];
+                        this_ldsh_hit->size = this_hit->size;
+                        this_ldsh_hit->pos_curr = this_hit->pos;
+                        this_ldsh_hit->pos_prev = this_hit->pos_prev;
+                        this_ldsh_hit->kind = this_hit->attribute;
+
+                        // increment hitboxes
+                        hitlog_data->num++;
+                    }
+                }
+            }
+
+            this_item = this_item->next;
+        }
     }
 
     return;
