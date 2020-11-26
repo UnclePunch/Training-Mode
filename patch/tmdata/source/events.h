@@ -46,7 +46,7 @@ typedef struct EventMatchData
 {
     unsigned int timer : 2;
     unsigned int matchType : 3;
-    unsigned int playMusic : 1;
+    unsigned int isDisableMusic : 1;
     unsigned int hideGo : 1;
     unsigned int hideReady : 1;
     unsigned int isCreateHUD : 1;
