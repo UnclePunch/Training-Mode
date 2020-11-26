@@ -45,7 +45,7 @@ struct MatchInit
     unsigned char unk4 : 1;
     unsigned char hideReady : 1;
     unsigned char hideGo : 1;
-    unsigned char playMusic : 1;
+    unsigned char isDisableMusic : 1;
     unsigned char unk3 : 1;
     unsigned char timer_unk : 1;
     unsigned char unk2 : 1;

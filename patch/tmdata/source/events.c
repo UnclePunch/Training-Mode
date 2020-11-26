@@ -1155,7 +1155,7 @@ void EventInit(int page, int eventID, MatchInit *matchData)
     EventMatchData *eventMatchData = event->matchData;
     matchData->timer = eventMatchData->timer;
     matchData->matchType = eventMatchData->matchType;
-    matchData->playMusic = eventMatchData->playMusic;
+    matchData->isDisableMusic = eventMatchData->isDisableMusic;
     matchData->hideGo = eventMatchData->hideGo;
     matchData->hideReady = eventMatchData->hideReady;
     matchData->isCreateHUD = eventMatchData->isCreateHUD;
