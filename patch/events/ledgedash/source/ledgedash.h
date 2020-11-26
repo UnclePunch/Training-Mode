@@ -88,7 +88,11 @@ typedef enum LDSH_ACTION
 };
 
 void Event_Exit();
+void Ledgedash_ToggleStartPosition(GOBJ *menu_gobj, int value);
+void Ledgedash_ToggleAutoReset(GOBJ *menu_gobj, int value);
 void Ledgedash_HUDCamThink(GOBJ *gobj);
 GOBJ *Ledgedash_HitLogInit();
 void Ledgedash_HitLogGX(GOBJ *gobj, int pass);
+void RebirthWait_Phys(GOBJ *fighter);
+int RebirthWait_IASA(GOBJ *fighter);
 int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir);

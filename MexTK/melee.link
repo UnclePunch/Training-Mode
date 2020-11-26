@@ -41,6 +41,9 @@
 800d5cb0:Fighter_EnterSpecialLanding
 800d4f24:Fighter_EnterSleep
 8009a804:Fighter_EnterCliffWait
+800d4ff4:Fighter_EnterRebirth
+800d5600:Fighter_EnterRebirthWait
+800d54a4:Fighter_UpdateRebirthPlatformPos
 80034110:Fighter_GetGObj
 8003418c:Fighter_GetSubcharGObj
 80031724:Fighter_GetPlayerblock

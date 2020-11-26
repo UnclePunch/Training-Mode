@@ -20,19 +20,31 @@ static GXColor *tmgbar_colors[] = {
 };
 
 // Main Menu
-static char **LdshOptions_Barrel[] = {"Off", "Stationary", "Move"};
+static char **LdshOptions_Start[] = {"Ledge", "Respawn Platform"};
+static char **LdshOptions_Reset[] = {"On", "Off"};
 static char **LdshOptions_HUD[] = {"On", "Off"};
 static EventOption LdshOptions_Main[] = {
-    // Target
+    // Position
     {
-        .option_kind = OPTKIND_STRING,               // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(LdshOptions_Barrel) / 4, // number of values for this option
-        .option_val = 0,                             // value of this option
-        .menu = 0,                                   // pointer to the menu that pressing A opens
-        .option_name = "Target",                     // pointer to a string
-        .desc = "Enable a target to attack.",        // string describing what this option does
-        .option_values = LdshOptions_Barrel,         // pointer to an array of strings
-        .onOptionChange = 0,
+        .option_kind = OPTKIND_STRING,                                             // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LdshOptions_Start) / 4,                                // number of values for this option
+        .option_val = 0,                                                           // value of this option
+        .menu = 0,                                                                 // pointer to the menu that pressing A opens
+        .option_name = "Starting Position",                                        // pointer to a string
+        .desc = "Choose where the fighter is placed \nafter resetting positions.", // string describing what this option does
+        .option_values = LdshOptions_Start,                                        // pointer to an array of strings
+        .onOptionChange = Ledgedash_ToggleStartPosition,
+    },
+    // Reset
+    {
+        .option_kind = OPTKIND_STRING,                                                                  // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LdshOptions_Reset) / 4,                                                     // number of values for this option
+        .option_val = 0,                                                                                // value of this option
+        .menu = 0,                                                                                      // pointer to the menu that pressing A opens
+        .option_name = "Auto-Reset",                                                                    // pointer to a string
+        .desc = "Toggle the automatic resetting of the \nfighter's position after ledgedash attempts.", // string describing what this option does
+        .option_values = LdshOptions_Reset,                                                             // pointer to an array of strings
+        .onOptionChange = Ledgedash_ToggleAutoReset,
     },
     // HUD
     {
@@ -47,13 +59,13 @@ static EventOption LdshOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                       // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                                                                                                                   // value of this option
-        .menu = 0,                                                                                                                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                                                                                                             // pointer to a string
-        .desc = "L-canceling is performed by pressing L, R, or Z up to \n7 frames before landing from a non-special aerial\nattack. This will cut the landing lag in half, allowing \nyou to act sooner after attacking.", // string describing what this option does
-        .option_values = 0,                                                                                                                                                                                                // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                                                                                  // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                                                                                                                                                               // number of values for this option
+        .option_val = 0,                                                                                                                                                                                                                                                              // value of this option
+        .menu = 0,                                                                                                                                                                                                                                                                    // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                                                                                                                                                                        // pointer to a string
+        .desc = "Ledgedashing is the act of wavedashing onto stage from ledge.\nThis is most commonly done by dropping off ledge, double jumping \nimmediately, and quickly airdodging onto stage. Each input \nis performed quickly after the last, making it difficult and risky.", // string describing what this option does
+        .option_values = 0,                                                                                                                                                                                                                                                           // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
@@ -265,19 +277,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         // check to initialize timer
         if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
         {
-            event_data->hud.timer = 0;
-            event_data->hud.is_release = 0;
-            event_data->hud.is_jump = 0;
-            event_data->hud.is_airdodge = 0;
-            event_data->hud.is_aerial = 0;
-            event_data->hud.is_land = 0;
-            event_data->hud.is_actionable = 0;
-
-            // init action log
-            for (int i = 0; i < sizeof(event_data->hud.action_log) / sizeof(u8); i++)
-            {
-                event_data->hud.action_log[i] = 0;
-            }
+            Ledgedash_InitVariables(event_data);
         }
 
         int curr_frame = event_data->hud.timer;
@@ -394,7 +394,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             Text *text_galint = event_data->hud.text_galint;
             if (hmn_data->hurtstatus.ledge_intang_left > 0)
             {
-                SFX_PlayRaw(303, 255, 128, 20, 3);
+                SFX_Play(303);
                 matanim = event_data->assets->hudmatanim[0];
                 Text_SetText(text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
             }
@@ -429,7 +429,7 @@ void Ledgedash_HUDCamThink(GOBJ *gobj)
 {
 
     // if HUD enabled and not paused
-    if ((LdshOptions_Main[1].option_val == 0) && (Pause_CheckStatus(1) != 2))
+    if ((LdshOptions_Main[2].option_val == 0) && (Pause_CheckStatus(1) != 2))
     {
         CObjThink_Common(gobj);
     }
@@ -442,7 +442,7 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
     FighterData *hmn_data = hmn->userdata;
 
     // check if enabled and ledge exists
-    if ((1 == 1) && (event_data->ledge_line != -1))
+    if ((LdshOptions_Main[1].option_val == 0) && (event_data->ledge_line != -1))
     {
 
         // check if reset timer is set
@@ -471,7 +471,7 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
                 ((hmn_data->state_id == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 7)) || // missed airdodge
                 ((((state >= ASID_CLIFFCLIMBSLOW) && (state <= ASID_CLIFFJUMPQUICK2)) ||       // reset if any other ledge action
                   ((state >= ASID_ATTACKAIRN) && (state <= ASID_ATTACKAIRLW)) ||
-                  ((hmn_data->phys.air_state == 0) && ((state != ASID_LANDING) && (state != ASID_LANDINGFALLSPECIAL)))) && // reset if grounded non landing
+                  ((hmn_data->phys.air_state == 0) && ((state != ASID_LANDING) && (state != ASID_LANDINGFALLSPECIAL) && (state != ASID_REBIRTHWAIT)))) && // reset if grounded non landing
                  (hmn_data->TM.state_frame >= 7)))
             {
                 Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
@@ -479,6 +479,49 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
             }
         }
     }
+
+    return;
+}
+void Ledgedash_InitVariables(LedgedashData *event_data)
+{
+    event_data->hud.timer = 0;
+    event_data->hud.is_release = 0;
+    event_data->hud.is_jump = 0;
+    event_data->hud.is_airdodge = 0;
+    event_data->hud.is_aerial = 0;
+    event_data->hud.is_land = 0;
+    event_data->hud.is_actionable = 0;
+
+    // init action log
+    for (int i = 0; i < sizeof(event_data->hud.action_log) / sizeof(u8); i++)
+    {
+        event_data->hud.action_log[i] = 0;
+    }
+}
+void Ledgedash_ToggleStartPosition(GOBJ *menu_gobj, int value)
+{
+
+    // get fighter data
+    GOBJ *hmn = Fighter_GetGObj(0);
+    LedgedashData *event_data = event_vars->event_gobj->userdata;
+
+    Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
+
+    return;
+}
+void Ledgedash_ToggleAutoReset(GOBJ *menu_gobj, int value)
+{
+
+    LedgedashData *event_data = event_vars->event_gobj->userdata;
+
+    bp();
+
+    // enable camera
+    if (value == 0)
+        event_data->cam->kind = 0;
+    // disable camera
+    else
+        event_data->cam->kind = 1;
 
     return;
 }
@@ -826,22 +869,6 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     event_data->ledge_line = line_index;
     event_data->ledge_dir = ledge_dir;
 
-    // place player on this ledge
-    FtCliffCatch *ft_state = &hmn_data->state_var;
-    hmn_data->facing_direction = ledge_dir;
-    ft_state->ledge_index = line_index; // store line index
-    Fighter_EnterCliffWait(hmn);
-    ft_state->timer = 0; // spoof as on ledge for a frame already
-    Fighter_LoseGroundJump(hmn_data);
-    Fighter_EnableCollUpdate(hmn_data);
-    Fighter_MoveToCliff(hmn);
-    Fighter_UpdatePosition(hmn);
-    Coll_CheckLedge(&hmn_data->collData);
-    hmn_data->phys.selfVel.X = 0;
-    hmn_data->phys.selfVel.Y = 0;
-    ftCommonData *ftcommon = *stc_ftcommon;
-    Fighter_ApplyIntang(hmn, ftcommon->cliff_invuln_time);
-
     // get ledge position
     Vec3 ledge_pos;
     if (ledge_dir > 0)
@@ -849,8 +876,60 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     else
         GrColl_GetLedgeRight2(line_index, &ledge_pos);
 
+    // remove velocity
+    hmn_data->phys.selfVel.X = 0;
+    hmn_data->phys.selfVel.Y = 0;
+
+    // check if using respawn platform
+    if (LdshMenu_Main.options[0].option_val == 0)
+    {
+
+        // Sleep first
+        Fighter_EnterSleep(hmn, 0);
+        Fighter_EnterRebirth(hmn);
+
+        // place player on this ledge
+        FtCliffCatch *ft_state = &hmn_data->state_var;
+        hmn_data->facing_direction = ledge_dir;
+        ft_state->ledge_index = line_index; // store line index
+        Fighter_EnterCliffWait(hmn);
+        ft_state->timer = 0; // spoof as on ledge for a frame already
+        Fighter_LoseGroundJump(hmn_data);
+        Fighter_EnableCollUpdate(hmn_data);
+        Fighter_MoveToCliff(hmn);
+        Fighter_UpdatePosition(hmn);
+        Coll_CheckLedge(&hmn_data->collData);
+        hmn_data->phys.selfVel.X = 0;
+        hmn_data->phys.selfVel.Y = 0;
+        ftCommonData *ftcommon = *stc_ftcommon;
+        Fighter_ApplyIntang(hmn, ftcommon->cliff_invuln_time);
+    }
+    else
+    {
+        // place player in a random position in respawn wait
+        Fighter_EnterSleep(hmn, 0);
+        Fighter_EnterRebirth(hmn);
+        hmn_data->facing_direction = ledge_dir;
+
+        // get random position
+        float xpos_min = 40;
+        float xpos_max = 65;
+        float ypos_min = -30;
+        float ypos_max = 30;
+        hmn_data->phys.pos.X = ((ledge_dir * -1) * (xpos_min + HSD_Randi(xpos_max - xpos_min) + HSD_Randf())) + (ledge_pos.X);
+        hmn_data->phys.pos.Y = ((ledge_dir * -1) * (ypos_min + HSD_Randi(ypos_max - ypos_min) + HSD_Randf())) + (ledge_pos.Y);
+
+        // enter rebirth
+        Fighter_EnterRebirthWait(hmn);
+        hmn_data->cb.Phys = RebirthWait_Phys;
+        hmn_data->cb.IASA = RebirthWait_IASA;
+
+        Fighter_UpdateRebirthPlatformPos(hmn);
+
+        Ledgedash_InitVariables(event_data);
+    }
+
     // update camera box
-    bp();
     CameraBox *cam = event_data->cam;
     cam->cam_pos.X = ledge_pos.X + (ledge_dir * 20);
     cam->cam_pos.Y = ledge_pos.Y + 15;
@@ -900,6 +979,41 @@ void Fighter_UpdateCamera(GOBJ *fighter)
     fighter_data->cameraBox->boundright_curr = fighter_data->cameraBox->boundright_proj;
 
     Match_CorrectCamera();
+}
+void RebirthWait_Phys(GOBJ *fighter)
+{
+
+    FighterData *fighter_data = fighter->userdata;
+
+    // infinite time
+    fighter_data->state_var.stateVar1 = 2;
+
+    return;
+}
+int RebirthWait_IASA(GOBJ *fighter)
+{
+
+    FighterData *fighter_data = fighter->userdata;
+
+    if (Fighter_IASACheck_JumpAerial(fighter))
+    {
+    }
+    else
+    {
+        ftCommonData *ftcommon = *stc_ftcommon;
+
+        // check for lstick movement
+        float stick_x = fabs(fighter_data->input.lstick_x);
+        float stick_y = fighter_data->input.lstick_y;
+        if ((stick_x > 0.2875) && (fighter_data->input.timer_lstick_tilt_x < 2) ||
+            (stick_y < (ftcommon->lstick_rebirthfall * -1)) && (fighter_data->input.timer_lstick_tilt_y < 4))
+        {
+            Fighter_EnterFall(fighter);
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 // Tips Functions
