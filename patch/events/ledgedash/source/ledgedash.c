@@ -256,164 +256,168 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
     JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
 
-    // increment timer
-    event_data->hud.timer++;
-
-    // check to initialize timer
-    if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
+    // only run logic if ledge exists
+    if (event_data->ledge_line != -1)
     {
-        event_data->hud.timer = 0;
-        event_data->hud.is_release = 0;
-        event_data->hud.is_jump = 0;
-        event_data->hud.is_airdodge = 0;
-        event_data->hud.is_aerial = 0;
-        event_data->hud.is_land = 0;
-        event_data->hud.is_actionable = 0;
+        // increment timer
+        event_data->hud.timer++;
 
-        // init action log
-        for (int i = 0; i < sizeof(event_data->hud.action_log) / sizeof(u8); i++)
+        // check to initialize timer
+        if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
         {
-            event_data->hud.action_log[i] = 0;
-        }
-    }
+            event_data->hud.timer = 0;
+            event_data->hud.is_release = 0;
+            event_data->hud.is_jump = 0;
+            event_data->hud.is_airdodge = 0;
+            event_data->hud.is_aerial = 0;
+            event_data->hud.is_land = 0;
+            event_data->hud.is_actionable = 0;
 
-    int curr_frame = event_data->hud.timer;
-
-    // update action log
-    if (curr_frame < (sizeof(event_data->hud.action_log) / sizeof(u8)))
-    {
-        // look for cliffwait
-        if (hmn_data->state_id == ASID_CLIFFWAIT)
-        {
-            event_data->hud.action_log[curr_frame] = LDACT_CLIFFWAIT;
-        }
-        // look for release
-        else if (hmn_data->state_id == ASID_FALL)
-        {
-            event_data->hud.is_release = 1;
-            event_data->hud.action_log[curr_frame] = LDACT_FALL;
-        }
-        // look for jump
-        else if ((hmn_data->state_id == ASID_JUMPAERIALF) || (hmn_data->state_id == ASID_JUMPAERIALB))
-        {
-            event_data->hud.is_jump = 1;
-            event_data->hud.action_log[curr_frame] = LDACT_JUMP;
-        }
-        // look for airdodge
-        else if (hmn_data->state_id == ASID_ESCAPEAIR)
-        {
-            //event_data->hud.is_airdodge = 1;
-            event_data->hud.action_log[curr_frame] = LDACT_AIRDODGE;
-        }
-        // look for aerial
-        else if (hmn_data->attack_kind != 1)
-        {
-            event_data->hud.is_aerial = 1;
-            event_data->hud.action_log[curr_frame] = LDACT_ATTACK;
-        }
-        // look for land
-        else if ((hmn_data->state_id == ASID_LANDING) || (hmn_data->state_id == ASID_LANDINGFALLSPECIAL))
-        {
-            event_data->hud.is_land = 1;
-            event_data->hud.action_log[curr_frame] = LDACT_LANDING;
-        }
-    }
-
-    // grab airdodge angle
-    if (event_data->hud.is_airdodge == 0)
-    {
-
-        if ((hmn_data->state_id == ASID_ESCAPEAIR) || (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))
-        {
-            // determine airdodge angle
-            float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
-
-            // save airdodge angle
-            event_data->hud.airdodge_angle = angle;
-            event_data->hud.is_airdodge = 1;
-        }
-    }
-
-    // look for actionable
-    if (((event_data->hud.is_actionable == 0) && (event_data->hud.is_release == 1)) &&
-        ((((hmn_data->state_id == ASID_WAIT) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
-         ((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
-         ((hmn_data->TM.state_prev[0] == ASID_LANDING) && (hmn_data->TM.state_prev_frames[0] >= hmn_data->attr.normal_landing_lag))))
-    {
-        event_data->hud.is_actionable = 1;
-        event_data->hud.actionable_frame = event_data->hud.timer;
-
-        // reset all bar colors
-        JOBJ *timingbar_jobj;
-        JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
-
-        // update bar colors
-        DOBJ *d = timingbar_jobj->dobj;
-        int count = 0;
-        while (d != 0)
-        {
-            // if a box dobj
-            if ((count >= 0) && (count < 30))
+            // init action log
+            for (int i = 0; i < sizeof(event_data->hud.action_log) / sizeof(u8); i++)
             {
+                event_data->hud.action_log[i] = 0;
+            }
+        }
 
-                // if mobj exists (it will)
-                MOBJ *m = d->mobj;
-                if (m != 0)
+        int curr_frame = event_data->hud.timer;
+
+        // update action log
+        if (curr_frame < (sizeof(event_data->hud.action_log) / sizeof(u8)))
+        {
+            // look for cliffwait
+            if (hmn_data->state_id == ASID_CLIFFWAIT)
+            {
+                event_data->hud.action_log[curr_frame] = LDACT_CLIFFWAIT;
+            }
+            // look for release
+            else if (hmn_data->state_id == ASID_FALL)
+            {
+                event_data->hud.is_release = 1;
+                event_data->hud.action_log[curr_frame] = LDACT_FALL;
+            }
+            // look for jump
+            else if ((hmn_data->state_id == ASID_JUMPAERIALF) || (hmn_data->state_id == ASID_JUMPAERIALB))
+            {
+                event_data->hud.is_jump = 1;
+                event_data->hud.action_log[curr_frame] = LDACT_JUMP;
+            }
+            // look for airdodge
+            else if (hmn_data->state_id == ASID_ESCAPEAIR)
+            {
+                //event_data->hud.is_airdodge = 1;
+                event_data->hud.action_log[curr_frame] = LDACT_AIRDODGE;
+            }
+            // look for aerial
+            else if (hmn_data->attack_kind != 1)
+            {
+                event_data->hud.is_aerial = 1;
+                event_data->hud.action_log[curr_frame] = LDACT_ATTACK;
+            }
+            // look for land
+            else if ((hmn_data->state_id == ASID_LANDING) || (hmn_data->state_id == ASID_LANDINGFALLSPECIAL))
+            {
+                event_data->hud.is_land = 1;
+                event_data->hud.action_log[curr_frame] = LDACT_LANDING;
+            }
+        }
+
+        // grab airdodge angle
+        if (event_data->hud.is_airdodge == 0)
+        {
+
+            if ((hmn_data->state_id == ASID_ESCAPEAIR) || (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))
+            {
+                // determine airdodge angle
+                float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
+
+                // save airdodge angle
+                event_data->hud.airdodge_angle = angle;
+                event_data->hud.is_airdodge = 1;
+            }
+        }
+
+        // look for actionable
+        if (((event_data->hud.is_actionable == 0) && (event_data->hud.is_release == 1)) &&
+            ((((hmn_data->state_id == ASID_WAIT) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
+             ((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
+             ((hmn_data->TM.state_prev[0] == ASID_LANDING) && (hmn_data->TM.state_prev_frames[0] >= hmn_data->attr.normal_landing_lag))))
+        {
+            event_data->hud.is_actionable = 1;
+            event_data->hud.actionable_frame = event_data->hud.timer;
+
+            // reset all bar colors
+            JOBJ *timingbar_jobj;
+            JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
+
+            // update bar colors
+            DOBJ *d = timingbar_jobj->dobj;
+            int count = 0;
+            while (d != 0)
+            {
+                // if a box dobj
+                if ((count >= 0) && (count < 30))
                 {
 
-                    HSD_Material *mat = m->mat;
-                    int this_frame = 29 - count;
-                    GXColor *bar_color;
+                    // if mobj exists (it will)
+                    MOBJ *m = d->mobj;
+                    if (m != 0)
+                    {
 
-                    // check if GALINT frame
-                    if ((this_frame >= curr_frame) && ((this_frame <= (curr_frame + hmn_data->hurtstatus.ledge_intang_left))))
-                        bar_color = &tmgbar_blue;
-                    else
-                        bar_color = tmgbar_colors[event_data->hud.action_log[this_frame]];
+                        HSD_Material *mat = m->mat;
+                        int this_frame = 29 - count;
+                        GXColor *bar_color;
 
-                    mat->diffuse = *bar_color;
+                        // check if GALINT frame
+                        if ((this_frame >= curr_frame) && ((this_frame <= (curr_frame + hmn_data->hurtstatus.ledge_intang_left))))
+                            bar_color = &tmgbar_blue;
+                        else
+                            bar_color = tmgbar_colors[event_data->hud.action_log[this_frame]];
+
+                        mat->diffuse = *bar_color;
+                    }
                 }
+
+                // inc
+                count++;
+                d = d->next;
             }
 
-            // inc
-            count++;
-            d = d->next;
-        }
+            // output remaining airdodge angle
+            if (event_data->hud.is_airdodge == 1)
+                Text_SetText(event_data->hud.text_angle, 0, "%.2f", fabs(event_data->hud.airdodge_angle / M_1DEGREE));
+            else
+                Text_SetText(event_data->hud.text_angle, 0, "-");
 
-        // output remaining airdodge angle
-        if (event_data->hud.is_airdodge == 1)
-            Text_SetText(event_data->hud.text_angle, 0, "%.2f", fabs(event_data->hud.airdodge_angle / M_1DEGREE));
-        else
-            Text_SetText(event_data->hud.text_angle, 0, "-");
+            // output remaining GALINT
+            void *matanim;
+            Text *text_galint = event_data->hud.text_galint;
+            if (hmn_data->hurtstatus.ledge_intang_left > 0)
+            {
+                SFX_PlayRaw(303, 255, 128, 20, 3);
+                matanim = event_data->assets->hudmatanim[0];
+                Text_SetText(text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
+            }
+            else if (hmn_data->TM.vuln_frames < 25)
+            {
+                matanim = event_data->assets->hudmatanim[1];
+                Text_SetText(text_galint, 0, "-%df", hmn_data->TM.vuln_frames);
+            }
+            else
+            {
+                matanim = event_data->assets->hudmatanim[1];
+                Text_SetText(text_galint, 0, "-");
+            }
 
-        // output remaining GALINT
-        void *matanim;
-        Text *text_galint = event_data->hud.text_galint;
-        if (hmn_data->hurtstatus.ledge_intang_left > 0)
-        {
-            SFX_PlayRaw(303, 255, 128, 20, 3);
-            matanim = event_data->assets->hudmatanim[0];
-            Text_SetText(text_galint, 0, "%df", hmn_data->hurtstatus.ledge_intang_left);
-        }
-        else if (hmn_data->TM.vuln_frames < 25)
-        {
-            matanim = event_data->assets->hudmatanim[1];
-            Text_SetText(text_galint, 0, "-%df", hmn_data->TM.vuln_frames);
-        }
-        else
-        {
-            matanim = event_data->assets->hudmatanim[1];
-            Text_SetText(text_galint, 0, "-");
-        }
+            // init hitbox num
+            LdshHitlogData *hitlog_data = event_data->hitlog_gobj->userdata;
+            hitlog_data->num = 0;
 
-        // init hitbox num
-        LdshHitlogData *hitlog_data = event_data->hitlog_gobj->userdata;
-        hitlog_data->num = 0;
-
-        // apply HUD animation
-        JOBJ_RemoveAnimAll(hud_jobj);
-        JOBJ_AddAnimAll(hud_jobj, 0, matanim, 0);
-        JOBJ_ReqAnimAll(hud_jobj, 0);
+            // apply HUD animation
+            JOBJ_RemoveAnimAll(hud_jobj);
+            JOBJ_AddAnimAll(hud_jobj, 0, matanim, 0);
+            JOBJ_ReqAnimAll(hud_jobj, 0);
+        }
     }
 
     // update HUD anim
@@ -437,8 +441,8 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
 
     FighterData *hmn_data = hmn->userdata;
 
-    // check if enabled
-    if (1 == 1)
+    // check if enabled and ledge exists
+    if ((1 == 1) && (event_data->ledge_line != -1))
     {
 
         // check if reset timer is set
@@ -532,10 +536,10 @@ void Ledgedash_HitLogThink(LedgedashData *event_data, GOBJ *hmn)
 void Ledgedash_HitLogGX(GOBJ *gobj, int pass)
 {
 
-    static GXColor hitlog_ambient = {128, 0, 0, 80};
-    static GXColor hit_diffuse = {255, 99, 99, 80};
-    static GXColor grab_diffuse = {196, 79, 00, 80};
-    static GXColor detect_diffuse = {255, 255, 255, 80};
+    static GXColor hitlog_ambient = {128, 0, 0, 50};
+    static GXColor hit_diffuse = {255, 99, 99, 50};
+    static GXColor grab_diffuse = {255, 0, 255, 50};
+    static GXColor detect_diffuse = {255, 255, 255, 50};
 
     LdshHitlogData *hitlog_data = gobj->userdata;
 
@@ -544,7 +548,6 @@ void Ledgedash_HitLogGX(GOBJ *gobj, int pass)
         LdshHitboxData *this_ldsh_hit = &hitlog_data->hitlog[i];
 
         // determine color
-        bp();
         GXColor *diffuse, *ambient;
         if (this_ldsh_hit->kind == 0)
             diffuse = &hit_diffuse;
@@ -567,13 +570,29 @@ void Ledgedash_FtInit(LedgedashData *event_data)
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
 
+    // create camera box
+    CameraBox *cam = CameraBox_Alloc();
+    cam->boundleft_proj = -10;
+    cam->boundright_proj = 10;
+    cam->boundtop_proj = 10;
+    cam->boundbottom_proj = -10;
+    cam->boundleft_curr = cam->boundleft_proj;
+    cam->boundright_curr = cam->boundright_proj;
+    cam->boundtop_curr = cam->boundtop_proj;
+    cam->boundbottom_curr = cam->boundbottom_proj;
+    event_data->cam = cam;
+
     // search for nearest ledge
     float ledge_dir;
     int line_index = Ledge_Find(0, 0, &ledge_dir);
-    if (line_index == -1)
-        event_vars->Tip_Display(500 * 60, "Error:\nIt appears there are no \nledges on this stage...");
-    else
+    if (line_index != -1)
         Fighter_PlaceOnLedge(event_data, hmn, line_index, ledge_dir);
+    else
+    {
+        event_data->cam->flags = 0;
+        event_data->ledge_line = -1;
+        event_vars->Tip_Display(500 * 60, "Error:\nIt appears there are no \nledges on this stage...");
+    }
 
     return;
 }
@@ -769,10 +788,7 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
 {
     FighterData *hmn_data = hmn->userdata;
 
-    // ensure ledge is in the blastzone
-
-    // save ledge position
-    Vec3 ledge_pos;
+    // save ledge info
     event_data->ledge_line = line_index;
     event_data->ledge_dir = ledge_dir;
 
@@ -787,11 +803,25 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     Fighter_MoveToCliff(hmn);
     Fighter_UpdatePosition(hmn);
     Coll_CheckLedge(&hmn_data->collData);
-    Fighter_UpdateCamera(hmn);
     hmn_data->phys.selfVel.X = 0;
     hmn_data->phys.selfVel.Y = 0;
     ftCommonData *ftcommon = *stc_ftcommon;
     Fighter_ApplyIntang(hmn, ftcommon->cliff_invuln_time);
+
+    // get ledge position
+    Vec3 ledge_pos;
+    if (ledge_dir > 0)
+        GrColl_GetLedgeLeft2(line_index, &ledge_pos);
+    else
+        GrColl_GetLedgeRight2(line_index, &ledge_pos);
+
+    // update camera box
+    bp();
+    CameraBox *cam = event_data->cam;
+    cam->cam_pos.X = ledge_pos.X + (ledge_dir * 20);
+    cam->cam_pos.Y = ledge_pos.Y + 15;
+
+    Fighter_UpdateCamera(hmn);
 
     return;
 }

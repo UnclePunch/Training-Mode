@@ -13,7 +13,7 @@ void Event_Init(GOBJ *gobj)
 // Mod Information //
 /////////////////////
 
-static char TM_Vers[] = {"TM 3.0a2 Dev\n"};
+static char TM_Vers[] = {"TM 3.0a2-dev\n"};
 static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
 static char nullString[] = " ";
 

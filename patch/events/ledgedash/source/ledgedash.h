@@ -18,6 +18,7 @@ struct LedgedashData
     s16 ledge_dir;
     s16 reset_timer;
     GOBJ *hitlog_gobj;
+    CameraBox *cam;
     struct
     {
         GOBJ *gobj;
