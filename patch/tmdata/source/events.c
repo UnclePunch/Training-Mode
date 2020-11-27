@@ -1105,9 +1105,6 @@ static EventPage **EventPages[] = {
 /// Static Variables ///
 ////////////////////////
 
-static Savestate *stc_savestate;
-static EventDesc *static_eventInfo;
-static MenuData *static_menuData;
 static EventVars stc_event_vars = {
     .event_desc = 0,
     .menu_assets = 0,
@@ -1119,8 +1116,12 @@ static EventVars stc_event_vars = {
     .Savestate_Load = Savestate_Load,
     .Message_Display = Message_Display,
     .Tip_Display = Tip_Display,
+    .Tip_Destroy = Tip_Destroy,
     .savestate = 0,
 };
+static Savestate *stc_savestate;
+static EventDesc *static_eventInfo;
+static MenuData *static_menuData;
 static int show_console = 1;
 static int *eventDataBackup;
 static TipMgr stc_tipmgr;
@@ -2826,6 +2827,19 @@ int Tip_Display(int lifetime, char *fmt, ...)
     }
 
     return 1; // tip created
+}
+void Tip_Destroy()
+{
+    // check if tip exists, destroy it
+    if (stc_tipmgr.gobj != 0)
+    {
+        // remove text
+        Text_Destroy(stc_tipmgr.text);
+        GObj_Destroy(stc_tipmgr.gobj);
+        stc_tipmgr.gobj = 0;
+    }
+
+    return;
 }
 
 ////////////////////////////

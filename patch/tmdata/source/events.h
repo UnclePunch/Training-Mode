@@ -648,10 +648,11 @@ typedef struct EventVars
     int (*Savestate_Save)(Savestate *savestate);                                             // function pointer to save state
     int (*Savestate_Load)(Savestate *savestate);                                             // function pointer to load state
     GOBJ *(*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to display message
-    int *(*Tip_Display)(int lifetime, char *fmt, ...);                                       // function pointer to display tip
-    Savestate *savestate;                                                                    // points to the events main savestate
-    evFunction evFunction;                                                                   // event specific functions
-    ArchiveInfo *event_archive;                                                              // event archive header
+    int *(*Tip_Display)(int lifetime, char *fmt, ...);
+    void (*Tip_Destroy)();      // function pointer to destroy tip
+    Savestate *savestate;       // points to the events main savestate
+    evFunction evFunction;      // event specific functions
+    ArchiveInfo *event_archive; // event archive header
     DevText *db_console_text;
 } EventVars;
 
@@ -906,6 +907,7 @@ typedef struct TipMgr
 } TipMgr;
 
 int Tip_Display(int lifetime, char *fmt, ...);
+void Tip_Destroy();
 void Tip_Think(GOBJ *gobj);
 
 #define TIP_TXTJOINT 2
