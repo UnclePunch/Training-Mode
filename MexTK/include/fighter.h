@@ -2616,7 +2616,7 @@ static GXColor **stc_shieldcolors = (R13 + -0x5194);
 void ActionStateChange(float startFrame, float animSpeed, float animBlend, GOBJ *fighter, int stateID, int flags1, int flags2);
 void Subaction_Update(GOBJ *fighter);
 void Fighter_UpdateBonePos(FighterData *fighter_data, int unk);
-int Animation_GetAddress(FighterData *fighter, int animID);
+void *Animation_GetAddress(FighterData *fighter, int animID);
 SubactionHeader *Fighter_GetSubactionHeader(FighterData *fighter, int animID);
 float Animation_GetLength(int animAddress);
 void Fighter_EnterLightThrow(GOBJ *fighter, int stateID);

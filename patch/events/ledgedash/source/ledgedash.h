@@ -27,8 +27,6 @@ struct LedgedashData
         int canvas;
         int timer;
         float airdodge_angle;
-        u8 is_input_release : 1;
-        u8 is_input_jump : 1;
         u8 is_release : 1;
         u8 is_jump : 1;
         u8 is_airdodge : 1;
@@ -42,12 +40,12 @@ struct LedgedashData
         u16 land_frame;
         u16 actionable_frame;
         u8 action_log[30];
-        u8 input_log[30];
     } hud;
     struct
     {
         s16 refresh_num; // number of times refreshed
-        u8 shield_num;   // number of times condition has been met
+        u8 is_input_release : 1;
+        u8 is_input_jump : 1;
     } tip;
 };
 
@@ -80,7 +78,6 @@ typedef enum LDSH_ACTION
     LDACT_AIRDODGE,
     LDACT_ATTACK,
     LDACT_LANDING,
-    LDACT_FALLJUMP,
 };
 
 void Event_Exit();

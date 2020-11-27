@@ -6,7 +6,6 @@ static GXColor tmgbar_grey = {80, 80, 80, 255};
 static GXColor tmgbar_blue = {128, 128, 255, 255};
 static GXColor tmgbar_green = {128, 255, 128, 255};
 static GXColor tmgbar_yellow = {255, 255, 128, 255};
-static GXColor tmgbar_greenyellow = {196, 255, 128, 255};
 static GXColor tmgbar_red = {255, 128, 128, 255};
 static GXColor tmgbar_indigo = {255, 128, 255, 255};
 static GXColor tmgbar_white = {255, 255, 255, 255};
@@ -18,7 +17,6 @@ static GXColor *tmgbar_colors[] = {
     &tmgbar_indigo,
     &tmgbar_white,
     &tmgbar_red,
-    &tmgbar_greenyellow,
 };
 
 // Main Menu
@@ -324,50 +322,6 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             }
         }
 
-        // update input log
-        if (curr_frame < (sizeof(event_data->hud.input_log) / sizeof(u8)))
-        {
-
-            ftCommonData *ftcommon = *stc_ftcommon;
-
-            if (event_data->hud.is_input_release == 0)
-            {
-                // look for Fall input
-                float stick_x = fabs(hmn_data->input.lstick_x);
-                float stick_y = hmn_data->input.lstick_y;
-                if ((stick_x >= 0.2875) && (hmn_data->input.timer_lstick_tilt_x < 2) ||
-                    (stick_y <= -0.2875) && (hmn_data->input.timer_lstick_tilt_y < 2))
-                {
-                    event_data->hud.is_input_release = 1;
-                    event_data->hud.input_log[curr_frame] = LDACT_FALL;
-                }
-            }
-
-            // look for jump
-            if (event_data->hud.is_input_jump == 0)
-            {
-                float stick_y = hmn_data->input.lstick_y;
-                if ((stick_y >= ftcommon->jumpaerial_lsticky) && (hmn_data->input.timer_lstick_tilt_y < ftcommon->jumpaerial_lsticktimer) ||
-                    (hmn_data->input.down & (PAD_BUTTON_X | PAD_BUTTON_Y)))
-                {
-                    event_data->hud.is_input_jump = 1;
-
-                    // if i fell on this frame too
-                    if (event_data->hud.input_log[curr_frame] == LDACT_FALL)
-                        event_data->hud.input_log[curr_frame] = LDACT_FALLJUMP;
-                    // just jumped
-                    else
-                        event_data->hud.input_log[curr_frame] = LDACT_JUMP;
-                }
-            }
-
-            // look for airdodge
-            if (hmn_data->input.down & (PAD_TRIGGER_R))
-            {
-                event_data->hud.input_log[curr_frame] = LDACT_AIRDODGE;
-            }
-        }
-
         // grab airdodge angle
         if (event_data->hud.is_airdodge == 0)
         {
@@ -391,6 +345,9 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         {
             event_data->hud.is_actionable = 1;
             event_data->hud.actionable_frame = event_data->hud.timer;
+
+            // destroy any tips
+            event_vars->Tip_Destroy();
 
             // update bar colors
             JOBJ *timingbar_jobj;
@@ -522,36 +479,6 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
                 // reset and play sfx
                 Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
                 SFX_PlayCommon(3);
-
-                // display inputs in bar
-                JOBJ *timingbar_jobj;
-                JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
-                DOBJ *d = timingbar_jobj->dobj;
-                int count = 0;
-                while (d != 0)
-                {
-                    // if a box dobj
-                    if ((count >= 0) && (count < 30))
-                    {
-
-                        // if mobj exists (it will)
-                        MOBJ *m = d->mobj;
-                        if (m != 0)
-                        {
-
-                            HSD_Material *mat = m->mat;
-                            int this_frame = 29 - count;
-                            GXColor *bar_color;
-
-                            bar_color = tmgbar_colors[event_data->hud.input_log[this_frame]];
-                            mat->diffuse = *bar_color;
-                        }
-                    }
-
-                    // inc
-                    count++;
-                    d = d->next;
-                }
             }
         }
     }
@@ -561,8 +488,8 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
 void Ledgedash_InitVariables(LedgedashData *event_data)
 {
     event_data->hud.timer = 0;
-    event_data->hud.is_input_release = 0;
-    event_data->hud.is_input_jump = 0;
+    event_data->tip.is_input_release = 0;
+    event_data->tip.is_input_jump = 0;
     event_data->hud.is_release = 0;
     event_data->hud.is_jump = 0;
     event_data->hud.is_airdodge = 0;
@@ -574,12 +501,6 @@ void Ledgedash_InitVariables(LedgedashData *event_data)
     for (int i = 0; i < sizeof(event_data->hud.action_log) / sizeof(u8); i++)
     {
         event_data->hud.action_log[i] = 0;
-    }
-
-    // init input log
-    for (int i = 0; i < sizeof(event_data->hud.input_log) / sizeof(u8); i++)
-    {
-        event_data->hud.input_log[i] = 0;
     }
 }
 
@@ -1099,10 +1020,63 @@ int RebirthWait_IASA(GOBJ *fighter)
 
     return 0;
 }
+int Fighter_CheckFall(FighterData *hmn_data)
+{
+
+    int is_fall = 0;
+
+    // look for Fall input
+    float stick_x = fabs(hmn_data->input.lstick_x);
+    float stick_y = hmn_data->input.lstick_y;
+    if ((stick_x >= 0.2875) && (hmn_data->input.timer_lstick_tilt_x < 2) ||
+        (stick_y <= -0.2875) && (hmn_data->input.timer_lstick_tilt_y < 2))
+    {
+        is_fall = 1;
+    }
+
+    return is_fall;
+}
 
 // Tips Functions
 void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
 {
+
+    // check for early fall input in cliffcatch
+    if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFCATCH) && (Fighter_CheckFall(hmn_data) == 1))
+    {
+        event_data->tip.is_input_release = 1;
+        event_vars->Tip_Destroy();
+
+        // determine how many frames early
+        float *anim_ptr = Animation_GetAddress(hmn_data, hmn_data->anim_id);
+        float frame_total = anim_ptr[0x8 / 4];
+        float frames_early = frame_total - hmn_data->stateFrame;
+        event_vars->Tip_Display(3 * 60, "Misinput:\nFell %d frames early.", (int)frames_early + 1);
+    }
+
+    // check for early fall input on cliffwait frame 0
+    bp();
+    if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
+    {
+        event_data->tip.is_input_release = 1;
+        event_vars->Tip_Destroy();
+        event_vars->Tip_Display(3 * 60, "Misinput:\nFell 1 frame early.");
+    }
+
+    // check for late fall input
+    if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFJUMPQUICK1) && (Fighter_CheckFall(hmn_data) == 1))
+    {
+        event_data->tip.is_input_release = 1;
+        event_vars->Tip_Destroy();
+
+        // jumped and fell on same frame
+        if (hmn_data->TM.state_frame == 0)
+            event_vars->Tip_Display(2 * 60, "Misinput:\nInputted jump and fall \non the same frame.");
+
+        // fell late
+        else
+            event_vars->Tip_Display(2 * 60, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
+    }
 
     return;
 }
