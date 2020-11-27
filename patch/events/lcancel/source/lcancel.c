@@ -124,7 +124,7 @@ void Event_Think(GOBJ *event)
             float to_x = from_x;
             float from_y = (hmn_data->phys.pos.Y + 5);
             float to_y = from_y - 10;
-            is_ground = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
+            is_ground = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
             if (is_ground == 1)
             {
 
@@ -699,7 +699,7 @@ GOBJ *Barrel_Spawn(int pos_kind)
         float to_x = from_x;
         float from_y = 6;
         float to_y = from_y - 1000;
-        int is_ground = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
+        int is_ground = GrColl_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
         if (is_ground == 0)
             goto BARREL_RANDPOS;
         break;
@@ -721,7 +721,7 @@ GOBJ *Barrel_Spawn(int pos_kind)
         float to_x = from_x;
         float from_y = Stage_GetCameraBottom() + (HSD_Randi(Stage_GetCameraTop() - Stage_GetCameraBottom())) + HSD_Randf();
         float to_y = from_y - 1000;
-        int is_ground = Stage_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
+        int is_ground = GrColl_RaycastGround(&pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
         raycast_num++;
         if (is_ground == 0)
             goto BARREL_RANDPOS;
@@ -736,12 +736,12 @@ GOBJ *Barrel_Spawn(int pos_kind)
         float near_fromX = pos.X + 8;
         float near_fromY = pos.Y + 4;
         to_y = near_fromY - 4;
-        is_ground = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, near_fromY, near_fromX, to_y, 0);
+        is_ground = GrColl_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, near_fromY, near_fromX, to_y, 0);
         raycast_num++;
         if (is_ground == 0)
             goto BARREL_RANDPOS;
         near_fromX = pos.X - 8;
-        is_ground = Stage_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, near_fromY, near_fromX, to_y, 0);
+        is_ground = GrColl_RaycastGround(&near_pos, &line_index, &line_kind, &line_angle, -1, -1, -1, 0, near_fromX, near_fromY, near_fromX, to_y, 0);
         raycast_num++;
         if (is_ground == 0)
             goto BARREL_RANDPOS;

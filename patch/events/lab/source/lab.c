@@ -6189,7 +6189,7 @@ void Event_Think(GOBJ *event)
             float toX = fromX;
             float fromY = (hmn_data->phys.pos.Y + 5);
             float toY = fromY - 10;
-            isGround = Stage_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+            isGround = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
             if (isGround == 1)
             {
 

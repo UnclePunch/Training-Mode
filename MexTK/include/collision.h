@@ -243,10 +243,12 @@ void Coll_ECBCurrToPrev(CollData *collData);
 void Coll_InitECB(CollData *collData);
 int ECB_CollGround_PassLedge(CollData *ecb, ECBBones *bones); // returns is touching ground bool
 void ECB_CollAir(CollData *ecb, ECBBones *bones);
-void GrColl_GetLedgeLeft(int floor_index, Vec3 *pos);   // this functon will crawl along the entire line sequence and find the end of the ledge
-void GrColl_GetLedgeRight(int floor_index, Vec3 *pos);  // this functon will crawl along the entire line sequence and find the end of the ledge
-void GrColl_GetLedgeLeft2(int floor_index, Vec3 *pos);  // this functon will crawl along the entire line sequence and find the end of the ledge
-void GrColl_GetLedgeRight2(int floor_index, Vec3 *pos); // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeLeft(int floor_index, Vec3 *pos);                                                                                                                                            // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeRight(int floor_index, Vec3 *pos);                                                                                                                                           // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeLeft2(int floor_index, Vec3 *pos);                                                                                                                                           // this functon will crawl along the entire line sequence and find the end of the ledge
+void GrColl_GetLedgeRight2(int floor_index, Vec3 *pos);                                                                                                                                          // this functon will crawl along the entire line sequence and find the end of the ledge
+int GrColl_RaycastGround(Vec3 *coll_pos, int *line_index, int *line_kind, Vec3 *unk1, Vec3 *unk2, Vec3 *unk3, Vec3 *unk4, void *cb, float fromX, float fromY, float toX, float toY, float unk5); // make unk5
+int GrColl_RaycastGroundUnk(int line_index, Vec3 *pos, void *r5, Vec3 *return_pos, void *r7, void *r8, float x, float y);                                                                        // returns bool for if position on line series exists
 
 static int *stc_colltest = R13 + (COLL_TEST);
 static CollGroup **stc_firstcollgroup = R13 + (-0x51DC);

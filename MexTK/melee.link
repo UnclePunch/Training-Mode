@@ -288,7 +288,7 @@
 801c96f8:Stage_SpawnEffectPos
 801c97dc:Stage_SpawnEffectJointPos
 801c9808:Stage_SpawnEffectJointPos2
-8004f008:Stage_RaycastGround
+8004f008:GrColl_RaycastGround
 8027b5b0:Zako_Create
 802e6aec:Stage_CreateMapItem
 801c9ee8:Stage_CheckForNearbyFighters

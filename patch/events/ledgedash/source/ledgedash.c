@@ -6,6 +6,7 @@ static GXColor tmgbar_grey = {80, 80, 80, 255};
 static GXColor tmgbar_blue = {128, 128, 255, 255};
 static GXColor tmgbar_green = {128, 255, 128, 255};
 static GXColor tmgbar_yellow = {255, 255, 128, 255};
+static GXColor tmgbar_greenyellow = {196, 255, 128, 255};
 static GXColor tmgbar_red = {255, 128, 128, 255};
 static GXColor tmgbar_indigo = {255, 128, 255, 255};
 static GXColor tmgbar_white = {255, 255, 255, 255};
@@ -17,6 +18,7 @@ static GXColor *tmgbar_colors[] = {
     &tmgbar_indigo,
     &tmgbar_white,
     &tmgbar_red,
+    &tmgbar_greenyellow,
 };
 
 // Main Menu
@@ -322,6 +324,50 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             }
         }
 
+        // update input log
+        if (curr_frame < (sizeof(event_data->hud.input_log) / sizeof(u8)))
+        {
+
+            ftCommonData *ftcommon = *stc_ftcommon;
+
+            if (event_data->hud.is_input_release == 0)
+            {
+                // look for Fall input
+                float stick_x = fabs(hmn_data->input.lstick_x);
+                float stick_y = hmn_data->input.lstick_y;
+                if ((stick_x >= 0.2875) && (hmn_data->input.timer_lstick_tilt_x < 2) ||
+                    (stick_y <= -0.2875) && (hmn_data->input.timer_lstick_tilt_y < 2))
+                {
+                    event_data->hud.is_input_release = 1;
+                    event_data->hud.input_log[curr_frame] = LDACT_FALL;
+                }
+            }
+
+            // look for jump
+            if (event_data->hud.is_input_jump == 0)
+            {
+                float stick_y = hmn_data->input.lstick_y;
+                if ((stick_y >= ftcommon->jumpaerial_lsticky) && (hmn_data->input.timer_lstick_tilt_y < ftcommon->jumpaerial_lsticktimer) ||
+                    (hmn_data->input.down & (PAD_BUTTON_X | PAD_BUTTON_Y)))
+                {
+                    event_data->hud.is_input_jump = 1;
+
+                    // if i fell on this frame too
+                    if (event_data->hud.input_log[curr_frame] == LDACT_FALL)
+                        event_data->hud.input_log[curr_frame] = LDACT_FALLJUMP;
+                    // just jumped
+                    else
+                        event_data->hud.input_log[curr_frame] = LDACT_JUMP;
+                }
+            }
+
+            // look for airdodge
+            if (hmn_data->input.down & (PAD_TRIGGER_R))
+            {
+                event_data->hud.input_log[curr_frame] = LDACT_AIRDODGE;
+            }
+        }
+
         // grab airdodge angle
         if (event_data->hud.is_airdodge == 0)
         {
@@ -346,11 +392,9 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             event_data->hud.is_actionable = 1;
             event_data->hud.actionable_frame = event_data->hud.timer;
 
-            // reset all bar colors
+            // update bar colors
             JOBJ *timingbar_jobj;
             JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
-
-            // update bar colors
             DOBJ *d = timingbar_jobj->dobj;
             int count = 0;
             while (d != 0)
@@ -440,6 +484,7 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
 {
 
     FighterData *hmn_data = hmn->userdata;
+    JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
 
     // check if enabled and ledge exists
     if ((LdshOptions_Main[1].option_val == 0) && (event_data->ledge_line != -1))
@@ -468,14 +513,45 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
 
             // reset actions
             if ((hmn_data->flags.dead == 1) ||                                                 // if dead
-                ((hmn_data->state_id == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 7)) || // missed airdodge
+                ((hmn_data->state_id == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 9)) || // missed airdodge
                 ((((state >= ASID_CLIFFCLIMBSLOW) && (state <= ASID_CLIFFJUMPQUICK2)) ||       // reset if any other ledge action
                   ((state >= ASID_ATTACKAIRN) && (state <= ASID_ATTACKAIRLW)) ||
                   ((hmn_data->phys.air_state == 0) && ((state != ASID_LANDING) && (state != ASID_LANDINGFALLSPECIAL) && (state != ASID_REBIRTHWAIT)))) && // reset if grounded non landing
                  (hmn_data->TM.state_frame >= 7)))
             {
+                // reset and play sfx
                 Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
                 SFX_PlayCommon(3);
+
+                // display inputs in bar
+                JOBJ *timingbar_jobj;
+                JOBJ_GetChild(hud_jobj, &timingbar_jobj, LCLJOBJ_BAR, -1); // get timing bar jobj
+                DOBJ *d = timingbar_jobj->dobj;
+                int count = 0;
+                while (d != 0)
+                {
+                    // if a box dobj
+                    if ((count >= 0) && (count < 30))
+                    {
+
+                        // if mobj exists (it will)
+                        MOBJ *m = d->mobj;
+                        if (m != 0)
+                        {
+
+                            HSD_Material *mat = m->mat;
+                            int this_frame = 29 - count;
+                            GXColor *bar_color;
+
+                            bar_color = tmgbar_colors[event_data->hud.input_log[this_frame]];
+                            mat->diffuse = *bar_color;
+                        }
+                    }
+
+                    // inc
+                    count++;
+                    d = d->next;
+                }
             }
         }
     }
@@ -485,6 +561,8 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
 void Ledgedash_InitVariables(LedgedashData *event_data)
 {
     event_data->hud.timer = 0;
+    event_data->hud.is_input_release = 0;
+    event_data->hud.is_input_jump = 0;
     event_data->hud.is_release = 0;
     event_data->hud.is_jump = 0;
     event_data->hud.is_airdodge = 0;
@@ -497,7 +575,15 @@ void Ledgedash_InitVariables(LedgedashData *event_data)
     {
         event_data->hud.action_log[i] = 0;
     }
+
+    // init input log
+    for (int i = 0; i < sizeof(event_data->hud.input_log) / sizeof(u8); i++)
+    {
+        event_data->hud.input_log[i] = 0;
+    }
 }
+
+// Menu Toggle functions
 void Ledgedash_ToggleStartPosition(GOBJ *menu_gobj, int value)
 {
 
@@ -513,8 +599,6 @@ void Ledgedash_ToggleAutoReset(GOBJ *menu_gobj, int value)
 {
 
     LedgedashData *event_data = event_vars->event_gobj->userdata;
-
-    bp();
 
     // enable camera
     if (value == 0)
@@ -791,7 +875,7 @@ int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir)
                             float to_x = from_x;
                             float from_y = ledge_pos.Y + 5;
                             float to_y = from_y - 10;
-                            int is_ground = Stage_RaycastGround(&ray_pos, &ray_index, &ray_kind, &ray_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
+                            int is_ground = GrColl_RaycastGround(&ray_pos, &ray_index, &ray_kind, &ray_angle, -1, -1, -1, 0, from_x, from_y, to_x, to_y, 0);
                             if (is_ground == 0)
                             {
                                 int is_closer = 0;
