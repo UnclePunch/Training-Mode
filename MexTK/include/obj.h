@@ -480,7 +480,7 @@ void JOBJ_SetFlagsAll(JOBJ *joint, int flags);
 void JOBJ_ClearFlags(JOBJ *joint, int flags);
 void JOBJ_ClearFlagsAll(JOBJ *joint, int flags);
 void JOBJ_BillBoard(JOBJ *joint, Mtx *m, Mtx *mx);
-void JOBJ_PlayAnim(JOBJ *joint, int unk, u16 flags, void *cb, int unk2, ...); // flags: 0x400 matanim, 0x20 jointanim
+void JOBJ_RunCallback(JOBJ *joint, int unk, u16 flags, void *cb, int unk2, ...); // flags: 0x400 matanim, 0x20 jointanim
 void JOBJ_Anim(JOBJ *joint);
 void JOBJ_AnimAll(JOBJ *joint);
 void JOBJ_AddAnimAll(JOBJ *joint, void *animjoint, void *matanimjoint, void *shapeanimjoint);
@@ -495,6 +495,7 @@ void JOBJ_SetAllMOBJFlags(JOBJ *joint, int flags);
 int JOBJ_CheckAObjEnd(JOBJ *joint);
 void AOBJ_ReqAnim(int *aobj, float unk);
 void AOBJ_StopAnim(JOBJ *jobj, int flags, int flags2);
+void AOBJ_SetRate(AOBJ *aobj, float rate);
 void DOBJ_SetFlags(DOBJ *dobj, int flags);
 void DOBJ_ClearFlags(DOBJ *dobj, int flags);
 COBJ *COBJ_LoadDesc(COBJDesc *cobj);

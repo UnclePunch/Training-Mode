@@ -6,6 +6,7 @@ typedef struct LedgedashAssets LedgedashAssets;
 typedef struct LdshHitlogData LdshHitlogData;
 typedef struct LdshHitboxData LdshHitboxData;
 
+#define LSDH_TIPDURATION 1.7 * 60
 #define LDSH_HITBOXNUM 30 * 4
 #define LCLTEXT_SCALE 4.5
 #define LCLJOBJ_BAR 4

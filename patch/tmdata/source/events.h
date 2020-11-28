@@ -907,7 +907,7 @@ typedef struct TipMgr
 } TipMgr;
 
 int Tip_Display(int lifetime, char *fmt, ...);
-void Tip_Destroy();
+void Tip_Destroy(); // 0 = immediately destroy, 1 = force exit
 void Tip_Think(GOBJ *gobj);
 
 #define TIP_TXTJOINT 2

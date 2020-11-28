@@ -1060,7 +1060,7 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
     {
         event_data->tip.is_input_release = 1;
         event_vars->Tip_Destroy();
-        event_vars->Tip_Display(3 * 60, "Misinput:\nFell 1 frame early.");
+        event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nFell 1 frame early.");
     }
 
     // check for late fall input
@@ -1071,11 +1071,11 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
 
         // jumped and fell on same frame
         if (hmn_data->TM.state_frame == 0)
-            event_vars->Tip_Display(2 * 60, "Misinput:\nInputted jump and fall \non the same frame.");
+            event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nInputted jump and fall \non the same frame.");
 
         // fell late
         else
-            event_vars->Tip_Display(2 * 60, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
+            event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
     }
 
     return;

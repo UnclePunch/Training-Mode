@@ -2730,9 +2730,21 @@ int Tip_Display(int lifetime, char *fmt, ...)
 
     va_list args;
 
-    // check if tip exists, return 0
+    // if tip exists
     if (stc_tipmgr.gobj != 0)
-        return 0;
+    {
+        // if tip is in the process of exiting
+        if (stc_tipmgr.state == 2)
+        {
+            // remove text
+            Text_Destroy(stc_tipmgr.text);
+            GObj_Destroy(stc_tipmgr.gobj);
+            stc_tipmgr.gobj = 0;
+        }
+        // if is active onscreen do nothing
+        else
+            return 0;
+    }
 
     MsgMngrData *msgmngr_data = stc_msgmgr->userdata; // using message canvas cause there are so many god damn text canvases
 
@@ -2830,13 +2842,17 @@ int Tip_Display(int lifetime, char *fmt, ...)
 }
 void Tip_Destroy()
 {
-    // check if tip exists, destroy it
-    if (stc_tipmgr.gobj != 0)
+    // check if tip exists and isnt in exit state, enter exit
+    if ((stc_tipmgr.gobj != 0) && (stc_tipmgr.state != 2))
     {
-        // remove text
-        Text_Destroy(stc_tipmgr.text);
-        GObj_Destroy(stc_tipmgr.gobj);
-        stc_tipmgr.gobj = 0;
+        // apply exit anim
+        JOBJ *tip_root = stc_tipmgr.gobj->hsd_object;
+        JOBJ_RemoveAnimAll(tip_root);
+        JOBJ_AddAnimAll(tip_root, stc_event_vars.menu_assets->tip_jointanim[1], 0, 0);
+        JOBJ_ReqAnimAll(tip_root, 0);
+        JOBJ_RunCallback(tip_root, 6, 0xfb7f, AOBJ_SetRate, 1, (float)2);
+
+        stc_tipmgr.state = 2; // enter wait
     }
 
     return;
