@@ -480,7 +480,7 @@ void JOBJ_SetFlagsAll(JOBJ *joint, int flags);
 void JOBJ_ClearFlags(JOBJ *joint, int flags);
 void JOBJ_ClearFlagsAll(JOBJ *joint, int flags);
 void JOBJ_BillBoard(JOBJ *joint, Mtx *m, Mtx *mx);
-void JOBJ_RunCallback(JOBJ *joint, int unk, u16 flags, void *cb, int unk2, ...); // flags: 0x400 matanim, 0x20 jointanim
+void JOBJ_RunAOBJCallback(JOBJ *joint, int unk, u16 flags, void *cb, int argkind, ...); // flags: 0x400 matanim, 0x20 jointanim, argkind specifies how to pop args off the va_list
 void JOBJ_Anim(JOBJ *joint);
 void JOBJ_AnimAll(JOBJ *joint);
 void JOBJ_AddAnimAll(JOBJ *joint, void *animjoint, void *matanimjoint, void *shapeanimjoint);

@@ -2850,7 +2850,7 @@ void Tip_Destroy()
         JOBJ_RemoveAnimAll(tip_root);
         JOBJ_AddAnimAll(tip_root, stc_event_vars.menu_assets->tip_jointanim[1], 0, 0);
         JOBJ_ReqAnimAll(tip_root, 0);
-        JOBJ_RunCallback(tip_root, 6, 0xfb7f, AOBJ_SetRate, 1, (float)2);
+        JOBJ_RunAOBJCallback(tip_root, 6, 0xfb7f, AOBJ_SetRate, 1, (float)2);
 
         stc_tipmgr.state = 2; // enter wait
     }

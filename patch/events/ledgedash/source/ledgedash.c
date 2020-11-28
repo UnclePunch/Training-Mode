@@ -278,6 +278,8 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
         {
             Ledgedash_InitVariables(event_data);
+
+            event_data->tip.refresh_num++;
         }
 
         int curr_frame = event_data->hud.timer;
@@ -490,6 +492,7 @@ void Ledgedash_InitVariables(LedgedashData *event_data)
     event_data->hud.timer = 0;
     event_data->tip.is_input_release = 0;
     event_data->tip.is_input_jump = 0;
+    event_data->tip.refresh_displayed = 0;
     event_data->hud.is_release = 0;
     event_data->hud.is_jump = 0;
     event_data->hud.is_airdodge = 0;
@@ -889,6 +892,9 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     if (LdshMenu_Main.options[0].option_val == 0)
     {
 
+        // init refresh num
+        event_data->tip.refresh_num = -1; // setting this to -1 because the per frame code will add 1 and make it 0
+
         // Sleep first
         Fighter_EnterSleep(hmn, 0);
         Fighter_EnterRebirth(hmn);
@@ -911,6 +917,10 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     }
     else
     {
+
+        // init refresh num
+        event_data->tip.refresh_num = 0; // setting this to -1 because the per frame code will add 1 and make it 0
+
         // place player in a random position in respawn wait
         Fighter_EnterSleep(hmn, 0);
         Fighter_EnterRebirth(hmn);
@@ -1055,7 +1065,6 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
     }
 
     // check for early fall input on cliffwait frame 0
-    bp();
     if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
     {
         event_data->tip.is_input_release = 1;
@@ -1076,6 +1085,24 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
         // fell late
         else
             event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
+    }
+
+    // check for ledgedash without refreshing
+    if ((event_data->tip.refresh_displayed == 0) && (event_data->hud.is_actionable == 1) && (event_data->tip.refresh_num == 0))
+    {
+
+        event_data->tip.refresh_displayed = 1;
+
+        // increment condition count
+        event_data->tip.refresh_cond_num++;
+
+        // after 3 conditions, display tip
+        if (event_data->tip.refresh_cond_num >= 3)
+        {
+            // if tip is displayed, reset cond num
+            if (event_vars->Tip_Display(5 * 60, "Warning:\nIt is a good practice to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
+                event_data->tip.refresh_cond_num = 0;
+        }
     }
 
     return;

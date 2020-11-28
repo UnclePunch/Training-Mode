@@ -44,7 +44,9 @@ struct LedgedashData
     } hud;
     struct
     {
-        s16 refresh_num; // number of times refreshed
+        s16 refresh_num;     // number of times refreshed
+        u8 refresh_cond_num; // number of times tip condition has been met
+        u8 refresh_displayed : 1;
         u8 is_input_release : 1;
         u8 is_input_jump : 1;
     } tip;
