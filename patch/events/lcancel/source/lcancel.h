@@ -47,6 +47,7 @@ typedef struct LCancelAssets
 #define LCLTEXT_SCALE 4.2
 
 static void *item_callbacks[];
+void Tips_Toggle(GOBJ *menu_gobj, int value);
 void LCancel_HUDCamThink(GOBJ *gobj);
 void Barrel_Think(LCancelData *event_data);
 void Barrel_Toggle(GOBJ *menu_gobj, int value);

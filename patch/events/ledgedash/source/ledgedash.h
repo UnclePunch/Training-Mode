@@ -84,6 +84,7 @@ typedef enum LDSH_ACTION
 };
 
 void Event_Exit();
+void Tips_Toggle(GOBJ *menu_gobj, int value);
 void Ledgedash_ToggleStartPosition(GOBJ *menu_gobj, int value);
 void Ledgedash_ToggleAutoReset(GOBJ *menu_gobj, int value);
 void Ledgedash_HUDCamThink(GOBJ *gobj);

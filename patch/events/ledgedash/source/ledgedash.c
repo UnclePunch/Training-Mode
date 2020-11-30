@@ -57,6 +57,17 @@ static EventOption LdshOptions_Main[] = {
         .option_values = LdshOptions_HUD,         // pointer to an array of strings
         .onOptionChange = 0,
     },
+    // Tips
+    {
+        .option_kind = OPTKIND_STRING,                  // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LdshOptions_HUD) / 4,       // number of values for this option
+        .option_val = 0,                                // value of this option
+        .menu = 0,                                      // pointer to the menu that pressing A opens
+        .option_name = "Tips",                          // pointer to a string
+        .desc = "Toggle the onscreen display of tips.", // string describing what this option does
+        .option_values = LdshOptions_HUD,               // pointer to an array of strings
+        .onOptionChange = Tips_Toggle,
+    },
     // Help
     {
         .option_kind = OPTKIND_FUNC,                                                                                                                                                                                                                                                  // the type of option this is; menu, string list, integers list, etc
@@ -1048,63 +1059,74 @@ int Fighter_CheckFall(FighterData *hmn_data)
 }
 
 // Tips Functions
+void Tips_Toggle(GOBJ *menu_gobj, int value)
+{
+    // destroy existing tips when disabling
+    if (value == 1)
+        event_vars->Tip_Destroy();
+
+    return;
+}
 void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
 {
 
-    // check for early fall input in cliffcatch
-    if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFCATCH) && (Fighter_CheckFall(hmn_data) == 1))
-    {
-        event_data->tip.is_input_release = 1;
-        event_vars->Tip_Destroy();
-
-        // determine how many frames early
-        float *anim_ptr = Animation_GetAddress(hmn_data, hmn_data->anim_id);
-        float frame_total = anim_ptr[0x8 / 4];
-        float frames_early = frame_total - hmn_data->stateFrame;
-        event_vars->Tip_Display(3 * 60, "Misinput:\nFell %d frames early.", (int)frames_early + 1);
-    }
-
-    // check for early fall input on cliffwait frame 0
-    if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
-    {
-        event_data->tip.is_input_release = 1;
-        event_vars->Tip_Destroy();
-        event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nFell 1 frame early.");
-    }
-
-    // check for late fall input
-    if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFJUMPQUICK1) && (Fighter_CheckFall(hmn_data) == 1))
-    {
-        event_data->tip.is_input_release = 1;
-        event_vars->Tip_Destroy();
-
-        // jumped and fell on same frame
-        if (hmn_data->TM.state_frame == 0)
-            event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nInputted jump and fall \non the same frame.");
-
-        // fell late
-        else
-            event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
-    }
-
-    // check for ledgedash without refreshing
-    if ((event_data->tip.refresh_displayed == 0) && (event_data->hud.is_actionable == 1) && (event_data->tip.refresh_num == 0))
+    if (LdshOptions_Main[3].option_val == 0)
     {
 
-        event_data->tip.refresh_displayed = 1;
-
-        // increment condition count
-        event_data->tip.refresh_cond_num++;
-
-        // after 3 conditions, display tip
-        if (event_data->tip.refresh_cond_num >= 3)
+        // check for early fall input in cliffcatch
+        if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFCATCH) && (Fighter_CheckFall(hmn_data) == 1))
         {
-            // if tip is displayed, reset cond num
-            if (event_vars->Tip_Display(5 * 60, "Warning:\nIt is higly recommended to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
-                event_data->tip.refresh_cond_num = 0;
+            event_data->tip.is_input_release = 1;
+            event_vars->Tip_Destroy();
+
+            // determine how many frames early
+            float *anim_ptr = Animation_GetAddress(hmn_data, hmn_data->anim_id);
+            float frame_total = anim_ptr[0x8 / 4];
+            float frames_early = frame_total - hmn_data->stateFrame;
+            event_vars->Tip_Display(3 * 60, "Misinput:\nFell %d frames early.", (int)frames_early + 1);
+        }
+
+        // check for early fall input on cliffwait frame 0
+        if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
+        {
+            event_data->tip.is_input_release = 1;
+            event_vars->Tip_Destroy();
+            event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nFell 1 frame early.");
+        }
+
+        // check for late fall input
+        if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFJUMPQUICK1) && (Fighter_CheckFall(hmn_data) == 1))
+        {
+            event_data->tip.is_input_release = 1;
+            event_vars->Tip_Destroy();
+
+            // jumped and fell on same frame
+            if (hmn_data->TM.state_frame == 0)
+                event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nInputted jump and fall \non the same frame.");
+
+            // fell late
+            else
+                event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
+        }
+
+        // check for ledgedash without refreshing
+        if ((event_data->tip.refresh_displayed == 0) && (event_data->hud.is_actionable == 1) && (event_data->tip.refresh_num == 0))
+        {
+
+            event_data->tip.refresh_displayed = 1;
+
+            // increment condition count
+            event_data->tip.refresh_cond_num++;
+
+            // after 3 conditions, display tip
+            if (event_data->tip.refresh_cond_num >= 3)
+            {
+                // if tip is displayed, reset cond num
+                if (event_vars->Tip_Display(5 * 60, "Warning:\nIt is higly recommended to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
+                    event_data->tip.refresh_cond_num = 0;
+            }
         }
     }
-
     return;
 }
 

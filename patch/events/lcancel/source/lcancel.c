@@ -27,6 +27,17 @@ static EventOption LcOptions_Main[] = {
         .option_values = LcOptions_HUD,          // pointer to an array of strings
         .onOptionChange = 0,
     },
+    // Tips
+    {
+        .option_kind = OPTKIND_STRING,                  // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LcOptions_HUD) / 4,         // number of values for this option
+        .option_val = 0,                                // value of this option
+        .menu = 0,                                      // pointer to the menu that pressing A opens
+        .option_name = "Tips",                          // pointer to a string
+        .desc = "Toggle the onscreen display of tips.", // string describing what this option does
+        .option_values = LcOptions_HUD,                 // pointer to an array of strings
+        .onOptionChange = Tips_Toggle,
+    },
     // Help
     {
         .option_kind = OPTKIND_FUNC,                                                                                                                                                                                       // the type of option this is; menu, string list, integers list, etc
@@ -477,150 +488,161 @@ void LCancel_HUDCamThink(GOBJ *gobj)
 }
 
 // Tips Functions
+void Tips_Toggle(GOBJ *menu_gobj, int value)
+{
+    // destroy existing tips when disabling
+    if (value == 1)
+        event_vars->Tip_Destroy();
+
+    return;
+}
 void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
 {
-    // shield tip
-    if (event_data->tip.shield_isdisp == 0) // if not shown
+
+    if (LcOptions_Main[2].option_val == 0)
     {
-
-        // update tip conditions
-        // look for a freshly buffered guard off
-        if (((hmn_data->state_id == ASID_GUARDOFF) && (hmn_data->TM.state_frame == 0)) &&                            // currently in guardoff first frame
-            (hmn_data->TM.state_prev[0] == ASID_GUARD) &&                                                            // was just in wait
-            ((hmn_data->TM.state_prev[3] >= ASID_LANDINGAIRN) && (hmn_data->TM.state_prev[3] <= ASID_LANDINGAIRLW))) // was in aerial landing a few frames ago
+        // shield tip
+        if (event_data->tip.shield_isdisp == 0) // if not shown
         {
-            // increment condition count
-            event_data->tip.shield_num++;
 
-            // if condition met X times, show tip
-            if (event_data->tip.shield_num >= 3)
+            // update tip conditions
+            // look for a freshly buffered guard off
+            if (((hmn_data->state_id == ASID_GUARDOFF) && (hmn_data->TM.state_frame == 0)) &&                            // currently in guardoff first frame
+                (hmn_data->TM.state_prev[0] == ASID_GUARD) &&                                                            // was just in wait
+                ((hmn_data->TM.state_prev[3] >= ASID_LANDINGAIRN) && (hmn_data->TM.state_prev[3] <= ASID_LANDINGAIRLW))) // was in aerial landing a few frames ago
             {
-                // display tip
-                char *shield_string = "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
-                if (event_vars->Tip_Display(5 * 60, shield_string))
+                // increment condition count
+                event_data->tip.shield_num++;
+
+                // if condition met X times, show tip
+                if (event_data->tip.shield_num >= 3)
                 {
-                    // set as shown
-                    //event_data->tip.shield_isdisp = 1;
-                    event_data->tip.shield_num = 0;
+                    // display tip
+                    char *shield_string = "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
+                    if (event_vars->Tip_Display(5 * 60, shield_string))
+                    {
+                        // set as shown
+                        //event_data->tip.shield_isdisp = 1;
+                        event_data->tip.shield_num = 0;
+                    }
+                }
+            }
+        }
+
+        // hitbox tip
+        if (event_data->tip.hitbox_isdisp == 0) // if not shown
+        {
+            // update hitbox active bool
+            if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
+            {
+
+                // reset hitbox bool on first frame of aerial attack
+                if (hmn_data->TM.state_frame == 0)
+                    event_data->tip.hitbox_active = 0;
+
+                // check if hitbox active
+                for (int i = 0; i < (sizeof(hmn_data->hitbox) / sizeof(ftHit)); i++)
+                {
+                    if (hmn_data->hitbox[i].active != 0)
+                    {
+                        event_data->tip.hitbox_active = 1;
+                        break;
+                    }
+                }
+            }
+
+            // update tip conditions
+            if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
+                (event_data->is_fail == 0) &&
+                (event_data->tip.hitbox_active == 0)) // succeeded the last aerial landing
+            {
+                // increment condition count
+                event_data->tip.hitbox_num++;
+
+                // if condition met X times, show tip
+                if (event_data->tip.hitbox_num >= 3)
+                {
+                    // display tip
+                    char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the \nattack becomes active.";
+                    if (event_vars->Tip_Display(5 * 60, hitbox_string))
+                    {
+
+                        // set as shown
+                        //event_data->tip.hitbox_isdisp = 1;
+                        event_data->tip.hitbox_num = 0;
+                    }
+                }
+            }
+        }
+
+        // fastfall tip
+        if (event_data->tip.fastfall_isdisp == 0) // if not shown
+        {
+            // update fastfell bool
+            if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
+            {
+
+                // reset hitbox bool on first frame of aerial attack
+                if (hmn_data->TM.state_frame == 0)
+                    event_data->tip.fastfall_active = 0;
+
+                // check if fastfalling
+                if (hmn_data->flags.is_fastfall == 1)
+                    event_data->tip.fastfall_active = 1;
+            }
+
+            // update tip conditions
+            if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
+                ((hmn_data->input.timer_trigger_any >= 7) && (hmn_data->input.timer_trigger_any <= 15)) &&                                  // was early for an l-cancel
+                (event_data->tip.fastfall_active == 0))                                                                                     // succeeded the last aerial landing
+            {
+                // increment condition count
+                event_data->tip.fastfall_num++;
+
+                // if condition met X times, show tip
+                if (event_data->tip.fastfall_num >= 3)
+                {
+                    // display tip
+                    char *fastfall_string = "Tip:\nDon't forget to fastfall!\nIt will let you act sooner \nand help with your \ntiming.";
+                    if (event_vars->Tip_Display(5 * 60, fastfall_string))
+                    {
+
+                        // set as shown
+                        //event_data->tip.hitbox_isdisp = 1;
+                        event_data->tip.fastfall_num = 0;
+                    }
+                }
+            }
+        }
+
+        // late tip
+        if (event_data->tip.late_isdisp == 0) // if not shown
+        {
+
+            // update tip conditions
+            if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && // is in aerial landing
+                (event_data->is_fail == 1) &&                                                            // failed the l-cancel
+                (hmn_data->input.down & (HSD_TRIGGER_L | HSD_TRIGGER_R | HSD_TRIGGER_Z)))                // was late for an l-cancel by pressing it just now
+            {
+                // increment condition count
+                event_data->tip.late_num++;
+
+                // if condition met X times, show tip
+                if (event_data->tip.late_num >= 3)
+                {
+                    // display tip
+                    char *late_string = "Tip:\nTry pressing the trigger a\nbit earlier, before the\nfighter lands.";
+                    if (event_vars->Tip_Display(5 * 60, late_string))
+                    {
+
+                        // set as shown
+                        //event_data->tip.hitbox_isdisp = 1;
+                        event_data->tip.late_num = 0;
+                    }
                 }
             }
         }
     }
-
-    // hitbox tip
-    if (event_data->tip.hitbox_isdisp == 0) // if not shown
-    {
-        // update hitbox active bool
-        if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
-        {
-
-            // reset hitbox bool on first frame of aerial attack
-            if (hmn_data->TM.state_frame == 0)
-                event_data->tip.hitbox_active = 0;
-
-            // check if hitbox active
-            for (int i = 0; i < (sizeof(hmn_data->hitbox) / sizeof(ftHit)); i++)
-            {
-                if (hmn_data->hitbox[i].active != 0)
-                {
-                    event_data->tip.hitbox_active = 1;
-                    break;
-                }
-            }
-        }
-
-        // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
-            (event_data->is_fail == 0) &&
-            (event_data->tip.hitbox_active == 0)) // succeeded the last aerial landing
-        {
-            // increment condition count
-            event_data->tip.hitbox_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.hitbox_num >= 3)
-            {
-                // display tip
-                char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the \nattack becomes active.";
-                if (event_vars->Tip_Display(5 * 60, hitbox_string))
-                {
-
-                    // set as shown
-                    //event_data->tip.hitbox_isdisp = 1;
-                    event_data->tip.hitbox_num = 0;
-                }
-            }
-        }
-    }
-
-    // fastfall tip
-    if (event_data->tip.fastfall_isdisp == 0) // if not shown
-    {
-        // update fastfell bool
-        if ((hmn_data->state_id >= ASID_ATTACKAIRN) && (hmn_data->state_id <= ASID_ATTACKAIRLW)) // check if currently in aerial attack)                                                      // check if in first frame of aerial attack
-        {
-
-            // reset hitbox bool on first frame of aerial attack
-            if (hmn_data->TM.state_frame == 0)
-                event_data->tip.fastfall_active = 0;
-
-            // check if fastfalling
-            if (hmn_data->flags.is_fastfall == 1)
-                event_data->tip.fastfall_active = 1;
-        }
-
-        // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
-            ((hmn_data->input.timer_trigger_any >= 7) && (hmn_data->input.timer_trigger_any <= 15)) &&                                  // was early for an l-cancel
-            (event_data->tip.fastfall_active == 0))                                                                                     // succeeded the last aerial landing
-        {
-            // increment condition count
-            event_data->tip.fastfall_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.fastfall_num >= 3)
-            {
-                // display tip
-                char *fastfall_string = "Tip:\nDon't forget to fastfall!\nIt will let you act sooner \nand help with your \ntiming.";
-                if (event_vars->Tip_Display(5 * 60, fastfall_string))
-                {
-
-                    // set as shown
-                    //event_data->tip.hitbox_isdisp = 1;
-                    event_data->tip.fastfall_num = 0;
-                }
-            }
-        }
-    }
-
-    // late tip
-    if (event_data->tip.late_isdisp == 0) // if not shown
-    {
-
-        // update tip conditions
-        if ((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW) && // is in aerial landing
-            (event_data->is_fail == 1) &&                                                            // failed the l-cancel
-            (hmn_data->input.down & (HSD_TRIGGER_L | HSD_TRIGGER_R | HSD_TRIGGER_Z)))                // was late for an l-cancel by pressing it just now
-        {
-            // increment condition count
-            event_data->tip.late_num++;
-
-            // if condition met X times, show tip
-            if (event_data->tip.late_num >= 3)
-            {
-                // display tip
-                char *late_string = "Tip:\nTry pressing the trigger a\nbit earlier, before the\nfighter lands.";
-                if (event_vars->Tip_Display(5 * 60, late_string))
-                {
-
-                    // set as shown
-                    //event_data->tip.hitbox_isdisp = 1;
-                    event_data->tip.late_num = 0;
-                }
-            }
-        }
-    }
-
     return;
 }
 
