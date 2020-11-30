@@ -513,7 +513,7 @@ struct PlayerData
 struct FighterBone
 {
     JOBJ *joint;
-    JOBJ *joint2;
+    JOBJ *joint2; // used for interpolation
     int flags;
     int flags2;
 };
@@ -662,22 +662,18 @@ struct ftHit
     Vec3 pos;                     // 0x4c
     Vec3 pos_prev;                // 0x58
     Vec3 pos_coll;                // 0x64   position of hurt collision
-    float coll_distance;          // 0x70   Distance From Collding Hurtbox (Used for phantom hit collision calculation)
+    float coll_distance;          // 0x70   Distance From Collding FtHurt (Used for phantom hit collision calculation)
     HitVictim victims[24];        // 0x74
     int x134;                     // 0x134, flags of some sort
 };
 
-struct Hurtbox
+struct FtHurt
 {
     int x0;                       // 0x0
-    int x4;                       // 0x4
-    int x8;                       // 0x8
-    int xc;                       // 0xc
-    int x10;                      // 0x10
-    int x14;                      // 0x14
-    int x18;                      // 0x18
-    int x1c;                      // 0x1c
-    int x20;                      // 0x20
+    Vec3 hurt1_offset;            // 0x4
+    Vec3 hurt2_offset;            // 0x10
+    float scale;                  // 0x1c
+    JOBJ *jobj;                   // 0x20
     unsigned char is_updated : 1; // 0x24, if enabled, wont update position
     unsigned char x24_2 : 1;      // 0x24 0x40
     unsigned char x24_3 : 1;      // 0x24 0x20
@@ -686,29 +682,54 @@ struct Hurtbox
     unsigned char x24_6 : 1;      // 0x24 0x04
     unsigned char x24_7 : 1;      // 0x24 0x02
     unsigned char x24_8 : 1;      // 0x24 0x01
-    int x28;                      // 0x28
-    int x2c;                      // 0x2c
-    int x30;                      // 0x30
-    int x34;                      // 0x34
-    int x38;                      // 0x38
-    int x3c;                      // 0x3c
-    int x40;                      // 0x40
-    int x44;                      // 0x44
-    int x48;                      // 0x48
+    Vec3 hurt1_pos;               // 0x28
+    Vec3 hurt2_pos;               // 0x34
+    int bone_index;               // 0x40
+    int hurt_kind;                // 0x44. 0 = low, 1 = mid, 2 = high
+    int is_grabbable;             // 0x48
 };
 
-struct FtDynamics
+struct FtDynamicBoneset
 {
-    int apply_phys_num;
-    int bones_num;
-    float x8;
-    float xC;
-    float x10;
-    int x14;
-    int x18;
-    int x1c;
-    int x20;
-    int x24;
+    int apply_phys_num; // if this is 256, dyanmics are not processed
+    void *unk_ptr;      // is stored @ 8000fdd4, comes from a nonstandard heap @ -0x52fc(r13)
+    int bone_num;       // number of bones in this boneset
+    float xc;           // stored @ 80011718, 0x8 of dynamicdesc
+    float x10;          // stored @ 80011720, 0xC of dynamicdesc
+    float x14;          // stored @ 80011728, 0x10 of dynamicdesc
+};
+
+struct FtDynamicRoot
+{
+    JOBJ *jobj;          // 0x0
+    Vec4 rot;            // 0x4 quaternion
+    Vec3 trans;          // 0x14
+    Vec3 scale;          // 0x20
+    Vec3 rot_global;     // 0x2C, copied from 0x50, 0x60, 0x70 of jobj
+    float x38;           // 0x38, initialized to 1 @ 8000ff30
+    float x3c;           // 0x3c, initialized to 0 @ 8000ff34
+    float x40;           // 0x40, initialized to 0 @ 8000ff38
+    float x44;           // 0x44, initialized to 0 @ 8000ff3c
+    float x48;           // x48, initialized to 0 @ 8000ff44
+    float x4c;           // x4c, THIS IS THE START OF A STRUCTURE, bunch of floats from the dynamicdesc. stored @ 80011744
+    float x50;           // 0x3c
+    float x54;           // 0x40
+    float x58;           // 0x44
+    float x5c;           // x048
+    float x60;           // 0x38
+    float x64;           // 0x3c
+    float x68;           // 0x40
+    float x6c;           // 0x44
+    float x70;           // x048
+    float x74;           // 0x38
+    float x78;           // 0x3c
+    float x7c;           // 0x40
+    float x80;           // 0x44
+    float x84;           // x048
+    float x88;           // 0x38
+    float x8c;           // 0x3c
+    FtDynamicRoot *next; // 0x90
+    float x94;           // 0x44
 };
 
 struct FtDynamicHit
@@ -1780,7 +1801,7 @@ struct FighterData
     int unknown2E4;                                            // 0x2E4
     int unknown2E8;                                            // 0x2E8
     int unknown2EC;                                            // 0x2EC
-    FtDynamics dynamics_boneset[5];                            // 0x2f0
+    FtDynamicBoneset dynamics_boneset[5];                      // 0x2f0
     int unknown3B8;                                            // 0x3B8
     int unknown3BC;                                            // 0x3BC
     int unknown3C0;                                            // 0x3C0
@@ -1956,7 +1977,7 @@ struct FighterData
     u8 teamID;                                    // 0x119c, friendly fire related
     u8 grabbersID;                                // 0x119D, slot ID of the person grabbing this fighter
     u8 hurtboxNum;                                // 0x119E, number of hurtboxesz
-    Hurtbox hurtbox[15];                          // 0x11A0
+    FtHurt hurtbox[15];                           // 0x11A0
     int x1614;                                    // 0x1614
     int x1618;                                    // 0x1618
     int x161c;                                    // 0x161c
@@ -2204,7 +2225,7 @@ struct FighterData
     int x209c;                                // 0x209c
     JOBJ *accessory;                          // 0x20a0
     int x20a4;                                // 0x20a4
-    int *shadow;                              // 0x20a8
+    void *shadow;                             // 0x20a8, ASSERTS @ 8037f7b8, describes multiple struct members
     int x20ac;                                // 0x20ac
     struct afterimage                         //
     {                                         //

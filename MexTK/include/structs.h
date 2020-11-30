@@ -91,7 +91,7 @@ typedef struct MoveLogic MoveLogic;
 typedef struct SubactionHeader SubactionHeader;
 typedef struct ftHit ftHit;
 typedef struct HitVictim HitVictim;
-typedef struct Hurtbox Hurtbox;
+typedef struct FtHurt FtHurt;
 typedef struct ReflectDesc ReflectDesc;
 typedef struct ShieldDesc ShieldDesc;
 typedef struct AbsorbDesc AbsorbDesc;
@@ -105,7 +105,8 @@ typedef struct FtDOBJUnk FtDOBJUnk;
 typedef struct FtPartsLookup FtPartsLookup;
 typedef struct FtDOBJUnk2 FtDOBJUnk2;
 typedef struct FtDOBJUnk3 FtDOBJUnk3;
-typedef struct FtDynamics FtDynamics;
+typedef struct FtDynamicBoneset FtDynamicBoneset;
+typedef struct FtDynamicRoot FtDynamicRoot;
 typedef struct FtDynamicHit FtDynamicHit;
 
 // Fighter States

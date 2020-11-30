@@ -1100,7 +1100,7 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
         if (event_data->tip.refresh_cond_num >= 3)
         {
             // if tip is displayed, reset cond num
-            if (event_vars->Tip_Display(5 * 60, "Warning:\nIt is a good practice to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
+            if (event_vars->Tip_Display(5 * 60, "Warning:\nIt is higly recommended to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
                 event_data->tip.refresh_cond_num = 0;
         }
     }

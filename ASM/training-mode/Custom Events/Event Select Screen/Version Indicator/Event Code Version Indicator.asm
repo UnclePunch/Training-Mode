@@ -112,6 +112,7 @@ backup
 	addi r5,sp,0xF0
 	branchl r12,Text_ChangeTextColor
 
+/*
 #################
 ## Z = Options ##
 #################
@@ -129,6 +130,7 @@ backup
 	lfs	f1,OptionsScale(textproperties)
 	lfs	f2,OptionsScale(textproperties)
 	branchl r12,Text_UpdateSubtextSize
+*/
 
 ###############################
 ## Left Page Arrow Indicator ##

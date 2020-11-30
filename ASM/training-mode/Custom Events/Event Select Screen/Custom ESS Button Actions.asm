@@ -9,8 +9,11 @@ backup
 	branchl	r12,Inputs_GetPlayerInstantInputs
 	rlwinm.	r0, r4, 0, 25, 25			#CHECK FOR L
 	bne	OpenFDD
+
+/*
 	rlwinm.	r0, r4, 0, 27, 27			#CHECK FOR Z
 	bne	OpenOptions
+
 
 #Check for Tutotial (R)
 #Check For Training Mode ISO Game ID First
@@ -22,6 +25,7 @@ backup
 #Check for R
 	rlwinm.	r0, r4, 0, 26, 26			#CHECK FOR R
 	bne	PlayMovie
+*/
 
 CheckToSwitchPage:
 	li	r3,4
@@ -69,6 +73,7 @@ OpenFDD:
 
 	b	exit
 
+/*
 OpenOptions:
 
 #Create Background + GObj
@@ -947,12 +952,7 @@ CreateSnapshot:
   load r6,0x803bacc8
   bl  SnapshotSaveName
   mflr r7
-	/*
-  load r8,0x80433380
-  lwz	r8,0x44(r8)
-  lwz	r9,0x4(r8)        #icon data
-  lwz	r8,0x0(r8)        #banner data
-	*/
+
 	bl	SnapshotBanner
 	mflr r8
 	bl	SnapshotIcon
@@ -3281,6 +3281,7 @@ blrl
 .align 2
 
 #######################################
+*/
 
 SwitchPage:
 #Get number of pages
