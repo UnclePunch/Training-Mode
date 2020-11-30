@@ -1801,17 +1801,7 @@ struct FighterData
     int unknown2E4;                                            // 0x2E4
     int unknown2E8;                                            // 0x2E8
     int unknown2EC;                                            // 0x2EC
-    FtDynamicBoneset dynamics_boneset[5];                      // 0x2f0
-    int unknown3B8;                                            // 0x3B8
-    int unknown3BC;                                            // 0x3BC
-    int unknown3C0;                                            // 0x3C0
-    int unknown3C4;                                            // 0x3C4
-    int unknown3C8;                                            // 0x3C8
-    int unknown3CC;                                            // 0x3CC
-    int unknown3D0;                                            // 0x3D0
-    int unknown3D4;                                            // 0x3D4
-    int unknown3D8;                                            // 0x3D8
-    int unknown3DC;                                            // 0x3DC
+    FtDynamicBoneset dynamics_boneset[10];                     // 0x2f0
     int dynamics_num;                                          // 0x3E0
     struct script                                              //  0x3E4
     {                                                          //
