@@ -88,7 +88,7 @@ backup
 ##################
 
 #Get version string
-	rtocbl r12,TM_GetTMVers
+	rtocbl r12,TM_GetTMVersLong
 	mr	r4,r3
 #Initialize Subtext
 	lfs 	f1,VersionX(textproperties) #X offset of text

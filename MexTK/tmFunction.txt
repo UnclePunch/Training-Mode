@@ -4,7 +4,8 @@ GetEventDescription
 GetEventTut
 GetPageName
 GetPageEventNum
-GetTMVers
+GetTMVersShort
+GetTMVersLong
 GetTMCompile
 GetPageNum
 GetIsChooseCPU

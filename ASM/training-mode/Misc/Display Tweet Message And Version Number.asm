@@ -49,7 +49,7 @@ load	r20,0x803456a8			#OSReport
   bctrl
 
 #OSReport Mod Version
-	rtocbl r12,TM_GetTMVers
+	rtocbl r12,TM_GetTMVersLong
 	mr	r4,r3
   bl	Version
   mflr	r3
@@ -94,11 +94,8 @@ blrl
 
 Version:
 blrl
-.long 0x56455253
-.long 0x494f4e3a
-.long 0x2049534f
-.long 0x2025730a
-.long 0x00000000
+.string "%s\n"
+.align 2
 
 ResetCombo:
 blrl

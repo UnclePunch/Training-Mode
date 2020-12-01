@@ -13,7 +13,8 @@ void Event_Init(GOBJ *gobj)
 // Mod Information //
 /////////////////////
 
-static char TM_Vers[] = {"TM 3.0a2-dev\n"};
+static char TM_VersShort[] = TM_VERSSHORT "\n";
+static char TM_VersLong[] = TM_VERSLONG "\n";
 static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
 static char nullString[] = " ";
 
@@ -59,7 +60,7 @@ static EventDesc Lab = {
     .eventDescription = "Free practice with\ncomplete control.\n",
     .eventTutorial = "",
     .eventFile = "EvLab",
-    .eventCSSFile = "TM/EvLabCSS.dat",
+    .eventCSSFile = 0, //"TM/EvLabCSS.dat",
     .isChooseCPU = true,
     .isSelectStage = true,
     .use_savestates = true,
@@ -1417,7 +1418,7 @@ void TM_CreateConsole()
     data[0] = text;
     GXColor color = {21, 20, 59, 135};
     DevelopText_StoreBGColor(text, &color);
-    DevelopText_StoreTextScale(text, 7.5, 10);
+    DevelopText_StoreTextScale(text, 10, 12);
     stc_event_vars.db_console_text = text;
 
     if (show_console != 1)
@@ -1437,6 +1438,7 @@ void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt i
 
     // store pointer to static variables
     *event_vars_ptr = &stc_event_vars;
+    event_vars = *event_vars_ptr;
 
     return;
 }
@@ -2202,20 +2204,20 @@ void TM_CreateWatermark()
     text->trans.Y = 446;
 
     // print string
-    int shadow = Text_AddSubtext(text, 2, 2, TM_Vers);
+    int shadow = Text_AddSubtext(text, 2, 2, TM_VersShort);
     GXColor shadow_color = {0, 0, 0, 0};
     Text_SetColor(text, shadow, &shadow_color);
 
-    int shadow1 = Text_AddSubtext(text, 2, -2, TM_Vers);
+    int shadow1 = Text_AddSubtext(text, 2, -2, TM_VersShort);
     Text_SetColor(text, shadow1, &shadow_color);
 
-    int shadow2 = Text_AddSubtext(text, -2, 2, TM_Vers);
+    int shadow2 = Text_AddSubtext(text, -2, 2, TM_VersShort);
     Text_SetColor(text, shadow2, &shadow_color);
 
-    int shadow3 = Text_AddSubtext(text, -2, -2, TM_Vers);
+    int shadow3 = Text_AddSubtext(text, -2, -2, TM_VersShort);
     Text_SetColor(text, shadow3, &shadow_color);
 
-    Text_AddSubtext(text, 0, 0, TM_Vers);
+    Text_AddSubtext(text, 0, 0, TM_VersShort);
 
     return;
 }
@@ -4255,9 +4257,13 @@ int GetPageEventNum(int page)
     EventPage *thisPage = EventPages[page];
     return (thisPage->eventNum);
 }
-char *GetTMVers()
+char *GetTMVersShort()
 {
-    return (TM_Vers);
+    return (TM_VersShort);
+}
+char *GetTMVersLong()
+{
+    return (TM_VersLong);
 }
 char *GetTMCompile()
 {
