@@ -720,6 +720,8 @@ void Ledgedash_ChangeLedgeThink(LedgedashData *event_data, GOBJ *hmn)
 
         if (line_index != -1)
             Fighter_PlaceOnLedge(event_data, hmn, line_index, ledge_dir);
+        else
+            Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
     }
 
     return;
