@@ -1831,6 +1831,8 @@ GOBJ *InfoDisplay_Init()
     int canvas_index = Text_CreateCanvas(2, idGOBJ, 14, 15, 0, GXLINK_INFDISPTEXT, GXPRI_INFDISPTEXT, 19);
     Text *text = Text_CreateText(2, canvas_index);
     text->kerning = 1;
+    text->use_aspect = 1;
+    text->aspect.X = 535;
 
     // Create subtexts for each row
     for (int i = 0; i < 8; i++)
@@ -6084,7 +6086,7 @@ void Event_Init(GOBJ *gobj)
     stc_lab_data = File_GetSymbol(event_vars->event_archive, "labData");
 
     // Init Info Display
-    InfoDisplay_Init(); // static pointer for update function
+    InfoDisplay_Init();
 
     // Init DIDraw
     DIDraw_Init();
