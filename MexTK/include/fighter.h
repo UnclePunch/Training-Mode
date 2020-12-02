@@ -1627,7 +1627,7 @@ struct FighterData
     char unknown;                                              // 0xD
     char unknownE;                                             // 0xE
     char unknownF;                                             // 0xF
-    int state_id;                                              // 0x10
+    int state;                                                 // 0x10
     int anim_id;                                               // 0x14
     int state_num;                                             // 0x18
     MoveLogic *common_states;                                  // 0x1C
@@ -1654,9 +1654,9 @@ struct FighterData
     int unknown70;                                             // 0x70
     struct phys                                                // 0x74
     {                                                          //
-        Vec3 animVel;                                          // 0x74
-        Vec3 selfVel;                                          // 0x80
-        Vec3 kbVel;                                            // 0x8C
+        Vec3 anim_vel;                                         // 0x74
+        Vec3 self_vel;                                         // 0x80
+        Vec3 kb_vel;                                           // 0x8C
         int x98;                                               // 0x98
         int x9c;                                               // 0x9C
         int xa0;                                               // 0xA0
@@ -1927,7 +1927,7 @@ struct FighterData
     int unknown6E4;                               // 0x6E4
     int unknown6E8;                               // 0x6E8
     int unknown6EC;                               // 0x6EC
-    CollData collData;                            // 0x6F0 -> 0x88C
+    CollData coll_data;                           // 0x6F0 -> 0x88C
     CameraBox *cameraBox;                         // 0x890
     float stateFrame;                             // 0x894
     int unknown898;                               // 0x898

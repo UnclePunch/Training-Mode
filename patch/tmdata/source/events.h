@@ -145,7 +145,7 @@ typedef struct MenuData
 typedef struct FtStateData
 {
     int is_exist;
-    int state_id;
+    int state;
     float facing_direction;
     float stateFrame;
     float stateSpeed;
@@ -153,9 +153,9 @@ typedef struct FtStateData
     Vec4 XRotN_rot; // XRotN
     struct
     {                                                          //
-        Vec3 animVel;                                          // 0x74
-        Vec3 selfVel;                                          // 0x80
-        Vec3 kbVel;                                            // 0x8C
+        Vec3 anim_vel;                                         // 0x74
+        Vec3 self_vel;                                         // 0x80
+        Vec3 kb_vel;                                           // 0x8C
         int x98;                                               // 0x98
         int x9c;                                               // 0x9C
         int xa0;                                               // 0xA0
@@ -226,7 +226,7 @@ typedef struct FtStateData
         char timer_unk5;            // 0x68A
         char timer_unk6;            // 0x68B
     } input;                        //
-    CollData collData;
+    CollData coll_data;
     CameraBox cameraBox;
     ftHit hitbox[4];
     ftHit throw_hitbox[2];

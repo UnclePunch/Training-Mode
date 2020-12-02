@@ -239,8 +239,8 @@ struct CollDataStage
 };
 
 /*** Functions ***/
-void Coll_ECBCurrToPrev(CollData *collData);
-void Coll_InitECB(CollData *collData);
+void Coll_ECBCurrToPrev(CollData *coll_data);
+void Coll_InitECB(CollData *coll_data);
 int ECB_CollGround_PassLedge(CollData *ecb, ECBBones *bones); // returns is touching ground bool
 void ECB_CollAir(CollData *ecb, ECBBones *bones);
 void GrColl_GetLedgeLeft(int floor_index, Vec3 *pos);                                                                                                                                            // this functon will crawl along the entire line sequence and find the end of the ledge

@@ -484,7 +484,7 @@ struct ItemData
     float spinUnk;                           // 0x34
     float scale;                             // 0x38
     int x3c;                                 // 0x3c
-    Vec3 selfVel;                            // 0x40
+    Vec3 self_vel;                           // 0x40
     Vec3 pos;                                // 0x4C
     Vec3 unkVel;                             // 0x58-0x64
     int x64;                                 // 0x64
@@ -682,7 +682,7 @@ struct ItemData
     int x36c;                                // 0x36c
     int x370;                                // 0x370
     int x374;                                // 0x374
-    CollData collData;                       // 0x378 -> 0x518
+    CollData coll_data;                      // 0x378 -> 0x518
     FighterData *fighter;                    // 0x518
     int x51c;                                // 0x51c
     CameraBox *camerabox;                    // 0x520

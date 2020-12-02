@@ -2003,17 +2003,17 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_SELFVEL):
                     {
-                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->phys.selfVel.X, fighter_data->phys.selfVel.Y);
+                        Text_SetText(text, i, "SelfVel: (%+.3f , %+.3f)", fighter_data->phys.self_vel.X, fighter_data->phys.self_vel.Y);
                         break;
                     }
                     case (INFDISPROW_KBVEL):
                     {
-                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->phys.kbVel.X, fighter_data->phys.kbVel.Y);
+                        Text_SetText(text, i, "KBVel: (%+.3f , %+.3f)", fighter_data->phys.kb_vel.X, fighter_data->phys.kb_vel.Y);
                         break;
                     }
                     case (INFDISPROW_TOTALVEL):
                     {
-                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->phys.selfVel.X + fighter_data->phys.kbVel.X, fighter_data->phys.selfVel.Y + fighter_data->phys.kbVel.Y);
+                        Text_SetText(text, i, "TotalVel: (%+.3f , %+.3f)", fighter_data->phys.self_vel.X + fighter_data->phys.kb_vel.X, fighter_data->phys.self_vel.Y + fighter_data->phys.kb_vel.Y);
                         break;
                     }
                     case (INFDISPROW_ENGLSTICK):
@@ -2089,7 +2089,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                         int stunLeft = 0;
 
                         // check if taking shield stun
-                        if (fighter_data->state_id == ASID_GUARDSETOFF)
+                        if (fighter_data->state == ASID_GUARDSETOFF)
                         {
                             // determine how many frames shield stun is
                             float frameTotal = JOBJ_GetJointAnimFrameTotal(fighter->hsd_object);
@@ -2120,12 +2120,12 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_ECBLOCK):
                     {
-                        Text_SetText(text, i, "ECB Lock: %d", fighter_data->collData.ecb_lock);
+                        Text_SetText(text, i, "ECB Lock: %d", fighter_data->coll_data.ecb_lock);
                         break;
                     }
                     case (INFDISPROW_ECBBOT):
                     {
-                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->collData.ecbCurr_bot.Y);
+                        Text_SetText(text, i, "ECB Bottom: %.3f", fighter_data->coll_data.ecbCurr_bot.Y);
                         break;
                     }
                     case (INFDISPROW_JUMPS):
@@ -2145,7 +2145,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_LINE):
                     {
-                        CollData *colldata = &fighter_data->collData;
+                        CollData *colldata = &fighter_data->coll_data;
                         int ground = -1;
                         int ceil = -1;
                         int left = -1;
@@ -2248,7 +2248,7 @@ int CPUAction_CheckMultipleState(GOBJ *cpu, int group_kind)
 
     FighterData *cpu_data = cpu->userdata;
     int isActionable = 0;
-    int cpu_state = cpu_data->state_id;
+    int cpu_state = cpu_data->state;
 
     // if 0, check the one that corresponds with ground state
     if (group_kind == 0)
@@ -2269,7 +2269,7 @@ int CPUAction_CheckMultipleState(GOBJ *cpu, int group_kind)
             }
         }
         // landing
-        if ((cpu_data->state_id == ASID_LANDING) && (cpu_data->stateFrame >= cpu_data->attr.normal_landing_lag))
+        if ((cpu_data->state == ASID_LANDING) && (cpu_data->stateFrame >= cpu_data->attr.normal_landing_lag))
             isActionable = 1;
     }
     // air
@@ -2330,7 +2330,7 @@ int CPU_IsThrown(GOBJ *cpu)
     FighterData *cpu_data = cpu->userdata;
 
     int is_thrown = 0;
-    int cpu_state = cpu_data->state_id;
+    int cpu_state = cpu_data->state;
 
     // check if thrown
     if (((cpu_state >= ASID_THROWNF) && (cpu_state <= ASID_THROWNLW)) || (cpu_state == ASID_CAPTURECAPTAIN) || (cpu_state == ASID_THROWNKOOPAF) || (cpu_state == ASID_THROWNKOOPAB) || (cpu_state == ASID_THROWNKOOPAAIRF) || ((cpu_state >= ASID_THROWNFF) && (cpu_state <= ASID_THROWNFLW)))
@@ -2343,7 +2343,7 @@ int CPU_IsGrabbed(GOBJ *cpu)
     FighterData *cpu_data = cpu->userdata;
 
     int is_grabbed = 0;
-    int cpu_state = cpu_data->state_id;
+    int cpu_state = cpu_data->state;
 
     // check if thrown
     if ((cpu_state == ASID_CAPTUREWAITHI) || (cpu_state == ASID_CAPTUREWAITLW) || (cpu_state == ASID_CAPTUREWAITKOOPA) || (cpu_state == ASID_CAPTUREWAITKOOPAAIR) || (cpu_state == ASID_CAPTUREWAITKIRBY) || (cpu_state == ASID_DAMAGEICE) || (cpu_state == ASID_CAPTUREMASTERHAND) || (cpu_state == ASID_YOSHIEGG) || (cpu_state == ASID_CAPTUREKIRBYYOSHI) || (cpu_state == ASID_KIRBYYOSHIEGG) || (cpu_state == ASID_CAPTURELEADEAD) || (cpu_state == ASID_CAPTURELIKELIKE) || (cpu_state == ASID_CAPTUREWAITCRAZYHAND) || ((cpu_state >= ASID_SHOULDEREDWAIT) && (cpu_state <= ASID_SHOULDEREDTURN)))
@@ -2359,7 +2359,7 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
     // get CPU action
     int action_done = 0;
     CPUAction *action_list = Lab_CPUActions[action_id];
-    int cpu_state = cpu_data->state_id;
+    int cpu_state = cpu_data->state;
     s16 cpu_frame = cpu_data->stateFrame;
     if (cpu_frame == -1)
         cpu_frame = 0;
@@ -2469,7 +2469,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     FighterData *hmn_data = hmn->userdata;
     FighterData *cpu_data = cpu->userdata;
     GOBJ **gobjlist = R13_PTR(GOBJLIST);
-    int cpu_state = cpu_data->state_id;
+    int cpu_state = cpu_data->state;
 
     // noact
     cpu_data->cpu.ai = 15;
@@ -2696,7 +2696,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
             // not being thrown, get knockback angle normally
             //kb_angle = Fighter_GetKnockbackAngle(cpu_data) * cpu_data->dmg.direction;
-            kb_angle = atan2(cpu_data->phys.kbVel.Y, cpu_data->phys.kbVel.X);
+            kb_angle = atan2(cpu_data->phys.kb_vel.Y, cpu_data->phys.kb_vel.X);
         }
 
         // perform TDI behavior
@@ -2866,7 +2866,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     {
 
         // if im in downwait, perform getup logic
-        if ((cpu_data->state_id == ASID_DOWNWAITD) || (cpu_data->state_id == ASID_DOWNWAITU))
+        if ((cpu_data->state == ASID_DOWNWAITD) || (cpu_data->state == ASID_DOWNWAITU))
         {
             // perform getup behavior
             int getup = LabOptions_CPU[OPTCPU_GETUP].option_val;
@@ -2915,7 +2915,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // if cpu is in any other down state, do nothing
-        else if ((cpu_data->state_id >= ASID_DOWNBOUNDU) && (cpu_data->state_id <= ASID_DOWNSPOTD))
+        else if ((cpu_data->state >= ASID_DOWNBOUNDU) && (cpu_data->state <= ASID_DOWNSPOTD))
         {
             break;
         }
@@ -3067,7 +3067,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             FighterData *fighter_data = fighter->userdata;
 
             // check if in guard off
-            if (fighter_data->state_id == ASID_GUARDSETOFF)
+            if (fighter_data->state == ASID_GUARDSETOFF)
             {
                 eventData->cpu_hitshield = 1;
                 break;
@@ -3256,7 +3256,7 @@ void DIDraw_Update()
                 }
 
                 // get kb vector
-                Vec3 kb = fighter_data->phys.kbVel;
+                Vec3 kb = fighter_data->phys.kb_vel;
                 float kb_angle = atan2(kb.Y, kb.X);
                 // init ASDI vector
                 Vec3 asdi_orig;
@@ -3332,7 +3332,7 @@ void DIDraw_Update()
                 Coll_InitECB(&ecb);
                 if (fighter_data->phys.air_state == 0) // copy ecb struct if grounded
                 {
-                    memcpy(&ecb.envFlags, &fighter_data->collData.envFlags, 0x28);
+                    memcpy(&ecb.envFlags, &fighter_data->coll_data.envFlags, 0x28);
                 }
 
                 // simulate each frame of knockback
@@ -3340,13 +3340,13 @@ void DIDraw_Update()
                 {
 
                     // update bone positions.  If loop count < noECBUpdate-remaining hitlag fraes, use current ECB bottom Y offset
-                    if (vertices_num < (fighter_data->collData.ecb_lock - fighter_data->dmg.hitlag_frames))
+                    if (vertices_num < (fighter_data->coll_data.ecb_lock - fighter_data->dmg.hitlag_frames))
                     {
 
-                        ecb_bones.topY = fighter_data->collData.ecbCurr_top.Y;
-                        ecb_bones.botY = fighter_data->collData.ecbCurr_bot.Y;
-                        ecb_bones.left = fighter_data->collData.ecbCurr_left;
-                        ecb_bones.right = fighter_data->collData.ecbCurr_right;
+                        ecb_bones.topY = fighter_data->coll_data.ecbCurr_top.Y;
+                        ecb_bones.botY = fighter_data->coll_data.ecbCurr_bot.Y;
+                        ecb_bones.left = fighter_data->coll_data.ecbCurr_left;
+                        ecb_bones.right = fighter_data->coll_data.ecbCurr_right;
 
                         // if grounded, ECB bottom is 0
                         if (air_state == 0)
@@ -3536,10 +3536,10 @@ void DIDraw_Update()
                 didraw->vertices[ply] = calloc(sizeof(Vec2) * (vertices_num + 2));
 
                 // save ASDI first
-                didraw->vertices[ply][0].X = fighter_data->collData.topN_Curr.X;
-                didraw->vertices[ply][0].Y = fighter_data->collData.topN_Curr.Y + fighter_data->collData.ecbCurr_left.Y;
-                didraw->vertices[ply][1].X = fighter_data->collData.topN_Curr.X + asdi_orig.X;
-                didraw->vertices[ply][1].Y = fighter_data->collData.topN_Curr.Y + fighter_data->collData.ecbCurr_left.Y + asdi_orig.Y;
+                didraw->vertices[ply][0].X = fighter_data->coll_data.topN_Curr.X;
+                didraw->vertices[ply][0].Y = fighter_data->coll_data.topN_Curr.Y + fighter_data->coll_data.ecbCurr_left.Y;
+                didraw->vertices[ply][1].X = fighter_data->coll_data.topN_Curr.X + asdi_orig.X;
+                didraw->vertices[ply][1].Y = fighter_data->coll_data.topN_Curr.Y + fighter_data->coll_data.ecbCurr_left.Y + asdi_orig.Y;
 
                 // save this info to the draw struct
                 for (int i = 0; i < vertices_num; i++)
@@ -6223,7 +6223,7 @@ void Event_Think(GOBJ *event)
 
                             // place CPU here
                             this_fighter_data->phys.pos = coll_pos;
-                            this_fighter_data->collData.ground_index = line_index;
+                            this_fighter_data->coll_data.ground_index = line_index;
 
                             // facing player
                             this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
@@ -6239,8 +6239,8 @@ void Event_Think(GOBJ *event)
                             Fighter_EnterWait(this_fighter);
 
                             // update ECB
-                            this_fighter_data->collData.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
-                            Coll_ECBCurrToPrev(&this_fighter_data->collData);
+                            this_fighter_data->coll_data.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
+                            Coll_ECBCurrToPrev(&this_fighter_data->coll_data);
                             this_fighter_data->cb.Coll(this_fighter);
 
                             // update camera box

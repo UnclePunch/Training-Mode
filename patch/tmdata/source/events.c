@@ -1572,7 +1572,7 @@ int Savestate_Save(Savestate *savestate)
 
                         // backup to ft_state
                         ft_data->is_exist = 1;
-                        ft_data->state_id = fighter_data->state_id;
+                        ft_data->state = fighter_data->state;
                         ft_data->facing_direction = fighter_data->facing_direction;
                         ft_data->stateFrame = fighter_data->stateFrame;
                         ft_data->stateSpeed = fighter_data->stateSpeed;
@@ -1580,7 +1580,7 @@ int Savestate_Save(Savestate *savestate)
                         memcpy(&ft_data->phys, &fighter_data->phys, sizeof(fighter_data->phys));                               // copy physics
                         memcpy(&ft_data->color, &fighter_data->color, sizeof(fighter_data->color));                            // copy color overlay
                         memcpy(&ft_data->input, &fighter_data->input, sizeof(fighter_data->input));                            // copy inputs
-                        memcpy(&ft_data->collData, &fighter_data->collData, sizeof(fighter_data->collData));                   // copy collision
+                        memcpy(&ft_data->coll_data, &fighter_data->coll_data, sizeof(fighter_data->coll_data));                // copy collision
                         memcpy(&ft_data->cameraBox, fighter_data->cameraBox, sizeof(CameraBox));                               // copy camerabox
                         memcpy(&ft_data->hitbox, &fighter_data->hitbox, sizeof(fighter_data->hitbox));                         // copy hitbox
                         memcpy(&ft_data->throw_hitbox, &fighter_data->throw_hitbox, sizeof(fighter_data->throw_hitbox));       // copy hitbox
@@ -1747,7 +1747,7 @@ int Savestate_Load(Savestate *savestate)
                     // sleep
                     Fighter_EnterSleep(fighter, 0);
 
-                    fighter_data->state_id = ft_data->state_id;
+                    fighter_data->state = ft_data->state;
                     fighter_data->facing_direction = ft_data->facing_direction;
                     fighter_data->stateFrame = ft_data->stateFrame;
                     fighter_data->stateSpeed = ft_data->stateSpeed;
@@ -1760,17 +1760,17 @@ int Savestate_Load(Savestate *savestate)
                     memcpy(&fighter_data->input, &ft_data->input, sizeof(fighter_data->input)); // copy inputs
 
                     // restore coll data
-                    CollData *thiscoll = &fighter_data->collData;
-                    CollData *savedcoll = &ft_data->collData;
-                    GOBJ *gobj = thiscoll->gobj;                                                         // 0x0
-                    JOBJ *joint_1 = thiscoll->joint_1;                                                   // 0x108
-                    JOBJ *joint_2 = thiscoll->joint_2;                                                   // 0x10c
-                    JOBJ *joint_3 = thiscoll->joint_3;                                                   // 0x110
-                    JOBJ *joint_4 = thiscoll->joint_4;                                                   // 0x114
-                    JOBJ *joint_5 = thiscoll->joint_5;                                                   // 0x118
-                    JOBJ *joint_6 = thiscoll->joint_6;                                                   // 0x11c
-                    JOBJ *joint_7 = thiscoll->joint_7;                                                   // 0x120
-                    memcpy(&fighter_data->collData, &ft_data->collData, sizeof(fighter_data->collData)); // copy collision
+                    CollData *thiscoll = &fighter_data->coll_data;
+                    CollData *savedcoll = &ft_data->coll_data;
+                    GOBJ *gobj = thiscoll->gobj;                                                            // 0x0
+                    JOBJ *joint_1 = thiscoll->joint_1;                                                      // 0x108
+                    JOBJ *joint_2 = thiscoll->joint_2;                                                      // 0x10c
+                    JOBJ *joint_3 = thiscoll->joint_3;                                                      // 0x110
+                    JOBJ *joint_4 = thiscoll->joint_4;                                                      // 0x114
+                    JOBJ *joint_5 = thiscoll->joint_5;                                                      // 0x118
+                    JOBJ *joint_6 = thiscoll->joint_6;                                                      // 0x11c
+                    JOBJ *joint_7 = thiscoll->joint_7;                                                      // 0x120
+                    memcpy(&fighter_data->coll_data, &ft_data->coll_data, sizeof(fighter_data->coll_data)); // copy collision
                     thiscoll->gobj = gobj;
                     thiscoll->joint_1 = joint_1;
                     thiscoll->joint_2 = joint_2;
@@ -1826,7 +1826,7 @@ int Savestate_Load(Savestate *savestate)
                     if (fighter_data->flags.is_thrown == 1)
                         anim_source = fighter_data->grab.grab_attacker;
                     Fighter_SetAllHurtboxesNotUpdated(fighter);
-                    ActionStateChange(ft_data->stateFrame, ft_data->stateSpeed, -1, fighter, ft_data->state_id, 0, anim_source);
+                    ActionStateChange(ft_data->stateFrame, ft_data->stateSpeed, -1, fighter, ft_data->state, 0, anim_source);
                     fighter_data->stateBlend = 0;
 
                     // restore XRotN rotation
@@ -1906,7 +1906,7 @@ int Savestate_Load(Savestate *savestate)
                     SFX_StopAllFighterSFX(fighter_data);
 
                     // update colltest frame
-                    fighter_data->collData.coll_test = *stc_colltest;
+                    fighter_data->coll_data.coll_test = *stc_colltest;
 
                     // restore camera box
                     CameraBox *thiscam = fighter_data->cameraBox;
@@ -1921,12 +1921,12 @@ int Savestate_Load(Savestate *savestate)
                     Fighter_UpdateIK(fighter);
 
                     // if shield is up, update shield
-                    if ((fighter_data->state_id >= ASID_GUARDON) && (fighter_data->state_id <= ASID_GUARDREFLECT))
+                    if ((fighter_data->state >= ASID_GUARDON) && (fighter_data->state <= ASID_GUARDREFLECT))
                     {
                         // get gfx ID
                         int shieldGFX;
                         static u16 ShieldGFXLookup[] = {1047, 1048, -1, 1049, -1}; // covers GUARDON -> GUARDREFLECT
-                        shieldGFX = ShieldGFXLookup[fighter_data->state_id - ASID_GUARDON];
+                        shieldGFX = ShieldGFXLookup[fighter_data->state - ASID_GUARDON];
 
                         // create GFX
                         int color_index = Fighter_GetShieldColorIndex(fighter_data->ply);
