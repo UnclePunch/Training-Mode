@@ -1832,7 +1832,7 @@ GOBJ *InfoDisplay_Init()
     Text *text = Text_CreateText(2, canvas_index);
     text->kerning = 1;
     text->use_aspect = 1;
-    text->aspect.X = 535;
+    text->aspect.X = 545;
 
     // Create subtexts for each row
     for (int i = 0; i < 8; i++)
@@ -6218,11 +6218,6 @@ void Event_Think(GOBJ *event)
                             // facing player
                             this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
 
-                            // update camera box
-                            Fighter_UpdateCameraBox(this_fighter);
-                            this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
-                            this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
-
                             // set grounded
                             this_fighter_data->phys.air_state = 0;
                             //Fighter_SetGrounded(this_fighter);
@@ -6237,6 +6232,11 @@ void Event_Think(GOBJ *event)
                             this_fighter_data->collData.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
                             Coll_ECBCurrToPrev(&this_fighter_data->collData);
                             this_fighter_data->cb.Coll(this_fighter);
+
+                            // update camera box
+                            Fighter_UpdateCameraBox(this_fighter);
+                            this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
+                            this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
 
                             // init CPU logic (for nana's popo position history...)
                             int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);

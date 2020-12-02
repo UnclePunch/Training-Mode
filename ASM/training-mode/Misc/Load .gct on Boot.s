@@ -60,6 +60,11 @@
 	addi	r4,REG_Codeset,HeaderSize
 	branchl	r12,GeckoCodehandler
 
+#Now flush the instruction cache
+  lis r3,0x8000
+  load r4,0x3b722c    #might be overkill but flush the entire dol file
+  branchl r12,0x80328f50
+
 #Return End of Heap
 	mr	r3,r25
 
