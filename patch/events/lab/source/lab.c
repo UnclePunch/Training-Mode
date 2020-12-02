@@ -2986,9 +2986,10 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
                 break;
             }
 
-            // if this isnt the frame to counter, do nothing
+            // if this isnt the frame to counter, keep holding shield
             if (eventData->cpu_sincehit < LabOptions_CPU[OPTCPU_CTRFRAMES].option_val)
             {
+                cpu_data->cpu.held = PAD_TRIGGER_R;
                 break;
             }
 
