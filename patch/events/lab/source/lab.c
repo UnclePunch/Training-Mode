@@ -1592,12 +1592,17 @@ void Lab_ChangeCPUPercent(GOBJ *menu_gobj, int value)
 }
 void Lab_ChangeCPUIntang(GOBJ *menu_gobj, int value)
 {
-    // remove blink GFX if toggling off
+
+    GOBJ *fighter = Fighter_GetGObj(1);
+    FighterData *fighter_data = fighter->userdata;
+
+    // remove colanim if toggling off
     if (value == 0)
-    {
-        GOBJ *fighter = Fighter_GetGObj(1);
-        Fighter_GFXRemoveAll(fighter);
-    }
+        Fighter_ColorRemove(fighter_data, INTANG_COLANIM);
+    // apply colanim
+    else
+        Fighter_ApplyOverlay(fighter_data, INTANG_COLANIM, 0);
+
     return;
 }
 void Lab_ChangeModelDisplay(GOBJ *menu_gobj, int value)
@@ -6164,10 +6169,14 @@ void Event_Think(GOBJ *event)
     {
         cpu_data->flags.no_reaction_always = 1;
         cpu_data->flags.nudge_disable = 1;
-        Fighter_ApplyOverlay(cpu_data, 9, 0);
-        Fighter_UpdateOverlay(cpu);
         cpu_data->dmg.percent = 0;
         Fighter_SetHUDDamage(cpu_data->ply, 0);
+
+        // if new state, apply colanim
+        if (cpu_data->TM.state_frame <= 1)
+        {
+            Fighter_ApplyOverlay(cpu_data, INTANG_COLANIM, 0);
+        }
     }
     else
     {

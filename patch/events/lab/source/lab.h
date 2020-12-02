@@ -528,6 +528,8 @@ enum cpu_mash
     CPUMASH_PERFECT,
 };
 
+#define INTANG_COLANIM 10
+
 // Grab Escape RNG Def
 #define CPUMASHRNG_MED 35
 #define CPUMASHRNG_HIGH 55
