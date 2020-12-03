@@ -1298,6 +1298,10 @@ void EventLoad()
     EventDesc *event_desc = GetEventDesc(page, eventID);
     evFunction *evFunction = &stc_event_vars.evFunction;
 
+    // clear evFunction
+    bp();
+    memset(evFunction, 0, sizeof(*evFunction));
+
     // append extension
     static char *extension = "TM/%s.dat";
     char *buffer[20];
