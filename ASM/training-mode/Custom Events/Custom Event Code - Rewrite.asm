@@ -2072,7 +2072,7 @@ LedgedashLoad_SkipRemoveRandall:
 
 		Ledgedash_Reset:
 		#Play Success or Failure Noise
-			lhz	r3,OneASAgo(r29)			#Check Prev AS
+			lhz	r3,TM_OneASAgo(r29)			#Check Prev AS
 			cmpwi	r3,ASID_LandingFallSpecial			#If Landing, Success
 			beq	Ledgedash_PlaySuccess
 			cmpwi	r3,ASID_Wait			#If Wait, Success (Frame Perfect Action)
@@ -2088,7 +2088,7 @@ LedgedashLoad_SkipRemoveRandall:
 
 		Ledgedash_AerialInterruptCheck:
 		#Check If Coming From an Aerial Attack
-		lhz	r3,OneASAgo(r29)			#Check Prev AS
+		lhz	r3,TM_OneASAgo(r29)			#Check Prev AS
 		cmpwi	r3,ASID_AttackAirN
 		blt	Ledgedash_PlayFailure
 		cmpwi	r3,ASID_AttackAirLw
@@ -4457,7 +4457,7 @@ b	exit
 			beq	AttackOnShieldNoOptionToggled
 		#Clear Last AS So CPU Doesnt Act Immediately
 			li	r3,0
-			sth	r3,OneASAgo(r29)
+			sth	r3,TM_OneASAgo(r29)
 		AttackOnShieldNoOptionToggled:
 
 		#Get Floats
@@ -4575,7 +4575,7 @@ b	exit
 		cmpwi	r3,0xB3
 		bne	AttackOnShieldCheckToReset
 		#Check If Was Just in ShieldStun
-		lhz	r3,OneASAgo(r29)
+		lhz	r3,TM_OneASAgo(r29)
 		cmpwi	r3,0xB5
 		bne	AttackOnShieldCheckToReset
 		#Input OoS Option
