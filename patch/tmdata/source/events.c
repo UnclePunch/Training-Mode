@@ -235,7 +235,7 @@ static EventMatchData AttackOnShield_MatchData = {
     .useKOCounter = false,
     .playerKind = -1,
     .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -248,7 +248,7 @@ static EventDesc AttackOnShield = {
     .eventTutorial = "TvLC",
     .eventFile = 0,
     .isChooseCPU = true,
-    .isSelectStage = true,
+    .isSelectStage = false,
     .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
