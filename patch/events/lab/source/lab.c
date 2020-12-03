@@ -4343,11 +4343,19 @@ void Record_GX(GOBJ *gobj, int pass)
             float curr_pos;
             curr_pos = (float)local_frame_seek / (float)end_frame;
             seek->trans.X = rec_data.seek_left + (curr_pos * range);
+            JOBJ_ClearFlagsAll(seek, JOBJ_HIDDEN);
             JOBJ_SetMtxDirtySub(seek);
 
             // update seek bar frames
             Text_SetText(text, 0, "%d", local_frame_seek);
             Text_SetText(text, 1, "%d", end_frame);
+
+            // if random playback, hide frame count and bar
+            if ((LabOptions_Record[OPTREC_CPUSLOT].option_val == 0) || (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0))
+            {
+                Text_SetText(text, 1, "?");          // hide count
+                JOBJ_SetFlagsAll(seek, JOBJ_HIDDEN); // hide bar
+            }
 
             // update color
             GXColor text_color;
