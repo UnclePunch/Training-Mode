@@ -195,11 +195,13 @@ void Ledgedash_HUDInit(LedgedashData *event_data)
     GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
     // account for widescreen
+    /*
     float aspect = (hud_cobj->projection_param.perspective.aspect / 1.216667) - 1;
     JOBJ *this_jobj;
     JOBJ_GetChild(hud_jobj, &this_jobj, 1, -1);
     this_jobj->trans.X += (this_jobj->trans.X * aspect);
     JOBJ_SetMtxDirtySub(hud_jobj);
+    */
 
     // create text canvas
     int canvas = Text_CreateCanvas(2, hud_gobj, 14, 15, 0, 18, 81, 19);
@@ -310,7 +312,8 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
                 event_data->hud.action_log[curr_frame] = LDACT_FALL;
             }
             // look for jump
-            else if ((hmn_data->state == ASID_JUMPAERIALF) || (hmn_data->state == ASID_JUMPAERIALB))
+            else if ((hmn_data->state == ASID_JUMPAERIALF) || (hmn_data->state == ASID_JUMPAERIALB) ||
+                     (((hmn_data->kind == 4) || (hmn_data->kind == 15)) && ((hmn_data->state >= 341) && (hmn_data->state <= 345)))) // check for kirby and jiggs jump
             {
                 event_data->hud.is_jump = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_JUMP;

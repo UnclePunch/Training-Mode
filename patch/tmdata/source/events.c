@@ -2769,9 +2769,11 @@ int Tip_Display(int lifetime, char *fmt, ...)
     GObj_AddObject(tip_gobj, R13_U8(-0x3E55), tip_jobj);
 
     // account for widescreen
+    /*
     float aspect = (msgmngr_data->cobj->projection_param.perspective.aspect / 1.216667) - 1;
     tip_jobj->trans.X += (tip_jobj->trans.X * aspect);
     JOBJ_SetMtxDirtySub(tip_jobj);
+    */
 
     // Create text object
     Text *tip_text = Text_CreateText(2, msgmngr_data->canvas);
