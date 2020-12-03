@@ -331,7 +331,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
                 event_data->hud.action_log[curr_frame] = LDACT_ATTACK;
             }
             // look for land
-            else if ((hmn_data->state == ASID_LANDING) || (hmn_data->state == ASID_LANDINGFALLSPECIAL))
+            else if (((hmn_data->state == ASID_LANDING) || (hmn_data->state == ASID_LANDINGFALLSPECIAL)) || ((hmn_data->state == ASID_WAIT) && (hmn_data->TM.state_frame == 0) && ((hmn_data->TM.state_prev != ASID_LANDING) || (hmn_data->TM.state_prev != ASID_LANDINGFALLSPECIAL)))) // this is first frame of a no impact land
             {
                 event_data->hud.is_land = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_LANDING;
@@ -355,7 +355,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
         // look for actionable
         if (((event_data->hud.is_actionable == 0) && (event_data->hud.is_release == 1)) &&
-            ((((hmn_data->state == ASID_WAIT) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
+            (((((hmn_data->state == ASID_WAIT) && ((hmn_data->TM.state_prev[0] != ASID_LANDING) || (hmn_data->TM.state_prev[0] != ASID_LANDINGFALLSPECIAL)) && (hmn_data->TM.state_frame > 0)) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
              ((hmn_data->state == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
              ((hmn_data->TM.state_prev[0] == ASID_LANDING) && (hmn_data->TM.state_prev_frames[0] >= hmn_data->attr.normal_landing_lag))))
         {
