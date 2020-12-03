@@ -695,7 +695,7 @@ static EventMatchData TechCounter_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
+    .cpuKind = 9,         // 0xFF=
     .stage = -1,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
@@ -709,7 +709,7 @@ static EventDesc TechCounter = {
     .eventTutorial = "TvLC",
     .eventFile = 0,
     .isChooseCPU = false,
-    .isSelectStage = false,
+    .isSelectStage = true,
     .use_savestates = false,
     .scoreType = 0,
     .callbackPriority = 3,
