@@ -122,7 +122,7 @@ static HSD_Pad *PadGet(int playerIndex, int padType)
 
     // get the correct pad
     if (padType == PADGET_MASTER)
-        pads = 0x804c1fac;
+        pads = 0x804c20bc;
     else if (padType == PADGET_ENGINE)
         pads = 0x804c21cc;
 
