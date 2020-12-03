@@ -926,7 +926,7 @@ static EventMatchData Multishine_MatchData = {
     .useKOCounter = false,
     .playerKind = -1,
     .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
@@ -971,8 +971,8 @@ static EventMatchData Reaction_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
+    .cpuKind = 2,         // 0xFF=
+    .stage = 32,          // 0xFFFF
     .timerSeconds = 0,    // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
