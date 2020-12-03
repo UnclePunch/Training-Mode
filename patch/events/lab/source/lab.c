@@ -3819,7 +3819,7 @@ void CustomTDI_Update(GOBJ *gobj)
     LCancelData *event_data = event_vars->event_gobj->userdata;
 
     // get pausing players inputs
-    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    HSD_Pad *pad = PadGet(menu_data->controller_index, PADGET_MASTER);
     int inputs = pad->down;
 
     // if press A, save stick
