@@ -209,7 +209,7 @@ static JOBJ **stc_css_menumodel = R13 + (-0x49E0);
 static CSSCursor **stc_css_cursors = 0x804a0bc0;
 static CSSPuck **stc_css_pucks = 0x804a0bd0;
 
-static u8 *stc_css_hmnport = R13 + (-0x4DB0);
+static u8 *stc_css_hmnport = R13 + (-0x49B0);
 static u8 *stc_css_cpuport = R13 + (-0x49AF);
 static u8 *stc_css_delay = R13 + (-0x49AE);
 static u8 *stc_css_maxply = R13 + (-0x49AB);

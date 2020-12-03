@@ -110,7 +110,7 @@ struct EventMenu
 {
     char *name;                         // name of this menu
     u8 option_num;                      // number of options this menu contains
-    u8 scroll;                          // how wide to make the menu
+    u8 scroll;                          //
     u8 state;                           // bool used to know if this menu is focused
     u8 cursor;                          // index of the option currently selected
     EventOption *options;               // pointer to all of this menu's options
@@ -124,6 +124,7 @@ typedef struct MenuData
     u16 canvas_menu;
     u16 canvas_popup;
     u8 isPaused;
+    u8 controller_index; // index of the controller who paused
     Text *text_name;
     Text *text_value;
     Text *text_popup;

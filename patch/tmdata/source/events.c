@@ -1200,6 +1200,10 @@ void EventInit(int page, int eventID, MatchInit *matchData)
         }
     }
 
+    // Determine player ports
+    u8 hmn_port = *stc_css_hmnport + 1;
+    u8 cpu_port = *stc_css_cpuport + 1;
+
     // Determine the Player
     s32 playerKind;
     s32 playerCostume;
@@ -1245,12 +1249,15 @@ void EventInit(int page, int eventID, MatchInit *matchData)
     matchData->playerData[0].kind = playerKind;
     matchData->playerData[0].costume = playerCostume;
     matchData->playerData[0].status = 0;
+    matchData->playerData[0].portNumberOverride = hmn_port;
+
     // Copy CPU if they exist for this event
     if (cpuKind != -1)
     {
         matchData->playerData[1].kind = cpuKind;
         matchData->playerData[1].costume = cpuCostume;
         matchData->playerData[1].status = 1;
+        matchData->playerData[1].portNumberOverride = cpu_port;
     }
 
     // Determine the correct HUD position for this amount of players
@@ -2944,6 +2951,7 @@ void EventMenu_Update(GOBJ *gobj)
                 if ((pad->down & HSD_BUTTON_START) != 0)
                 {
                     isPress = 1;
+                    menuData->controller_index = controller_index;
                     break;
                 }
             }
@@ -3038,8 +3046,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     EventDesc *event_desc = menuData->event_desc;
 
     // get player who paused
-    u8 *pauseData = (u8 *)0x8046b6a0;
-    u8 pauser = pauseData[1];
+    u8 pauser = menuData->controller_index;
     // get their  inputs
     HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
     int inputs_rapid = pad->rapidFire;
@@ -3369,9 +3376,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
     EventDesc *event_desc = menuData->event_desc;
 
     // get player who paused
-    u8 *pauseData = (u8 *)0x8046b6a0;
-    u8 pauser = pauseData[1];
-    // get their  inputs
+    u8 pauser = menuData->controller_index; // get their  inputs
     HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
     int inputs_rapid = pad->rapidFire;
     int inputs_held = pad->held;
