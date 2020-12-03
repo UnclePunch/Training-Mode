@@ -6198,111 +6198,115 @@ void Event_Think(GOBJ *event)
     // Move CPU
     if (pad->down == PAD_BUTTON_DPAD_DOWN)
     {
-        // ensure player is grounded
-        int isGround = 0;
-        if (hmn_data->phys.air_state == 0)
+        // ensure CPU is not dead
+        if (cpu_data->flags.dead == 0)
         {
-
-            // check for ground in front of player
-            Vec3 coll_pos;
-            int line_index;
-            int line_kind;
-            Vec3 line_unk;
-            float fromX = (hmn_data->phys.pos.X) + (hmn_data->facing_direction * 16);
-            float toX = fromX;
-            float fromY = (hmn_data->phys.pos.Y + 5);
-            float toY = fromY - 10;
-            isGround = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
-            if (isGround == 1)
+            // ensure player is grounded
+            int isGround = 0;
+            if (hmn_data->phys.air_state == 0)
             {
 
-                // do this for every subfighter (thanks for complicated code ice climbers)
-                int is_moved = 0;
-                for (int i = 0; i < 2; i++)
+                // check for ground in front of player
+                Vec3 coll_pos;
+                int line_index;
+                int line_kind;
+                Vec3 line_unk;
+                float fromX = (hmn_data->phys.pos.X) + (hmn_data->facing_direction * 16);
+                float toX = fromX;
+                float fromY = (hmn_data->phys.pos.Y + 5);
+                float toY = fromY - 10;
+                isGround = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+                if (isGround == 1)
                 {
-                    GOBJ *this_fighter = Fighter_GetSubcharGObj(cpu_data->ply, i);
 
-                    if (this_fighter != 0)
+                    // do this for every subfighter (thanks for complicated code ice climbers)
+                    int is_moved = 0;
+                    for (int i = 0; i < 2; i++)
                     {
+                        GOBJ *this_fighter = Fighter_GetSubcharGObj(cpu_data->ply, i);
 
-                        FighterData *this_fighter_data = this_fighter->userdata;
-
-                        if ((this_fighter_data->flags.sleep == 0) && (this_fighter_data->flags.dead == 0))
+                        if (this_fighter != 0)
                         {
 
-                            is_moved = 1;
+                            FighterData *this_fighter_data = this_fighter->userdata;
 
-                            // place CPU here
-                            this_fighter_data->phys.pos = coll_pos;
-                            this_fighter_data->coll_data.ground_index = line_index;
-
-                            // facing player
-                            this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
-
-                            // set grounded
-                            this_fighter_data->phys.air_state = 0;
-                            //Fighter_SetGrounded(this_fighter);
-
-                            // kill velocity
-                            Fighter_KillAllVelocity(this_fighter);
-
-                            // enter wait
-                            Fighter_EnterWait(this_fighter);
-
-                            // update ECB
-                            this_fighter_data->coll_data.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
-                            Coll_ECBCurrToPrev(&this_fighter_data->coll_data);
-                            this_fighter_data->cb.Coll(this_fighter);
-
-                            // update camera box
-                            Fighter_UpdateCameraBox(this_fighter);
-                            this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
-                            this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
-
-                            // init CPU logic (for nana's popo position history...)
-                            int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
-                            int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
-                            Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
-
-                            // place subfighter in the Z axis
-                            if (this_fighter_data->flags.ms == 1)
+                            if ((this_fighter_data->flags.sleep == 0) && (this_fighter_data->flags.dead == 0))
                             {
-                                ftCommonData *ft_common = *stc_ftcommon;
-                                this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+
+                                is_moved = 1;
+
+                                // place CPU here
+                                this_fighter_data->phys.pos = coll_pos;
+                                this_fighter_data->coll_data.ground_index = line_index;
+
+                                // facing player
+                                this_fighter_data->facing_direction = hmn_data->facing_direction * -1;
+
+                                // set grounded
+                                this_fighter_data->phys.air_state = 0;
+                                //Fighter_SetGrounded(this_fighter);
+
+                                // kill velocity
+                                Fighter_KillAllVelocity(this_fighter);
+
+                                // enter wait
+                                Fighter_EnterWait(this_fighter);
+
+                                // update ECB
+                                this_fighter_data->coll_data.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
+                                Coll_ECBCurrToPrev(&this_fighter_data->coll_data);
+                                this_fighter_data->cb.Coll(this_fighter);
+
+                                // update camera box
+                                Fighter_UpdateCameraBox(this_fighter);
+                                this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
+                                this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
+
+                                // init CPU logic (for nana's popo position history...)
+                                int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
+                                int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
+                                Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
+
+                                // place subfighter in the Z axis
+                                if (this_fighter_data->flags.ms == 1)
+                                {
+                                    ftCommonData *ft_common = *stc_ftcommon;
+                                    this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+                                }
                             }
                         }
                     }
-                }
 
-                if (is_moved == 1)
-                {
+                    if (is_moved == 1)
+                    {
 
-                    // reset CPU think variables
-                    eventData->cpu_state = CPUSTATE_START;
-                    eventData->cpu_hitshield = 0;
-                    eventData->cpu_hitnum = 0;
-                    eventData->cpu_sincehit = 0;
-                    eventData->cpu_hitshield = 0;
-                    eventData->cpu_lasthit = -1;
-                    eventData->cpu_lastshieldstun = -1;
-                    eventData->cpu_hitkind = -1;
-                    eventData->cpu_hitshieldnum = 0;
-                    eventData->cpu_isactionable = 0;
+                        // reset CPU think variables
+                        eventData->cpu_state = CPUSTATE_START;
+                        eventData->cpu_hitshield = 0;
+                        eventData->cpu_hitnum = 0;
+                        eventData->cpu_sincehit = 0;
+                        eventData->cpu_hitshield = 0;
+                        eventData->cpu_lasthit = -1;
+                        eventData->cpu_lastshieldstun = -1;
+                        eventData->cpu_hitkind = -1;
+                        eventData->cpu_hitshieldnum = 0;
+                        eventData->cpu_isactionable = 0;
 
-                    // savestate
-                    event_vars->Savestate_Save(event_vars->savestate);
+                        // savestate
+                        event_vars->Savestate_Save(event_vars->savestate);
+                    }
                 }
             }
-        }
 
-        // play SFX
-        if (isGround == 0)
-        {
-            SFX_PlayCommon(3);
-        }
-        else
-        {
-            SFX_Play(221);
+            // play SFX
+            if (isGround == 0)
+            {
+                SFX_PlayCommon(3);
+            }
+            else
+            {
+                SFX_Play(221);
+            }
         }
     }
 
