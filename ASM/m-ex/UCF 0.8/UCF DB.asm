@@ -76,10 +76,10 @@ LOAD_CURRENT_FRAME_INPUT:
 	extsb r3,r3
 
 CALCULATE_DIFFERENCE:
-	sub	r3,r3,REG_PrevInput
+	sub	r3,REG_PrevInput,r3
 	mullw r3, r3, r3  # Take square to get positive value for comparison
 THRESHOLD_TEST:
-	cmpwi r3, 0x15F9   # compare square of input difference between current frame and 2 frames ago to square of 75
+	cmpwi r3, 3600   # compare square of input difference between current frame and 2 frames ago to square of 60 (formerly 75 because different units)
 	ble- Injection_Exit
 
 CHANGE_TO_SMASH_TURN:
