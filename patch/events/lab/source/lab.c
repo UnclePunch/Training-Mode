@@ -4828,6 +4828,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
             }
 
             CARDUnmount(0);
+            stc_memcard_work->is_done = 0;
         }
     }
 
@@ -5252,6 +5253,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
                         is_inserted = 0;
 
                     CARDUnmount(i);
+                    stc_memcard_work->is_done = 0;
                 }
                 else
                     is_inserted = 0;
@@ -5999,6 +6001,7 @@ int Export_Process(GOBJ *export_gobj)
                     }
                 }
                 CARDUnmount(slot);
+                stc_memcard_work->is_done = 0;
             }
         }
 
