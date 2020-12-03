@@ -5389,7 +5389,7 @@ b	exit
 
 		AmsahTechIsTaunting:
   #Check for Frame 1 of Taunt
-    lhz r3,0x23EC(P1Data)
+    lhz r3,TM_FramesinCurrentAS(P1Data)
     cmpwi r3,0x1
     bne AmsahTechCheckUpBTimer
   #Check If UpB Timer is Set
