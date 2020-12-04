@@ -441,3 +441,4 @@
 80325a0c:strncpy
 80325b24:strtoul
 802886c4:Barrel_EnterBreak
+8018f674:Pad_GetRapidHeld
