@@ -159,6 +159,7 @@ typedef struct Arch_ImportData
 {
     JOBJDesc *import_button;
     JOBJDesc *import_menu;
+    COBJDesc *import_cam;
 } Arch_ImportData;
 typedef struct Arch_LabData
 {
@@ -580,3 +581,45 @@ enum cpu_mash
 
 // DI Draw Constants
 #define DI_MaxColl 50
+
+// CSS Import
+#define IMPORT_FILESPERPAGE 9
+typedef enum ImportMenuStates
+{
+    SELCARD,
+    SELFILE,
+};
+typedef struct FileInfo
+{
+    char **file_name;      // pointer to file name array
+    char **file_name_user; // pointer to file name array
+    int file_size;         // number of files on card
+} FileInfo;
+typedef struct ImportData
+{
+    GOBJ *menu_gobj;
+    u16 canvas;
+    u8 menu_state;
+    u8 cursor;
+    u8 memcard_inserted[2];     // memcard inserted bools
+    u16 memcard_free_files[2];  // free files on this card
+    u16 memcard_free_blocks[2]; // free blocks on this card
+    u16 memcard_slot;           // selected slot
+    JOBJ *memcard_jobj[2];
+    JOBJ *screenshot_jobj;
+    JOBJ *scroll_jobj;
+    Text *title_text;
+    Text *desc_text;
+    Text *option_text;
+    Text *filename_text;
+    Text *fileinfo_text;
+    int file_num;                        // number of files on card
+    FileInfo *file_info;                 // pointer to file info array
+    void *file_data[IMPORT_FILESPERPAGE] // pointer to each files data
+} ImportData;
+void Button_Create();
+void Button_Think(GOBJ *button_gobj);
+GOBJ *Menu_Create();
+void Menu_Think(GOBJ *menu_gobj);
+#define MENUCAM_GXLINK 5
+#define SIS_ID 0

@@ -420,6 +420,7 @@
 803582f0:CARDDeleteAsync
 80000000:CARDCreateAsync
 80358724:CARDSetStatusAsync
+80357e88:CARDRead
 8033cd1c:GXPixModeSync
 8033f270:GXInvalidateTexAll
 8034480c:DCFlushRange
@@ -442,3 +443,4 @@
 80325b24:strtoul
 802886c4:Barrel_EnterBreak
 8018f674:Pad_GetRapidHeld
+8022ba1c:MainMenu_CamRotateThink

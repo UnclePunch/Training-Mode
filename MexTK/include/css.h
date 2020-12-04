@@ -230,6 +230,7 @@ static HSD_Pad *stc_css_pad = 0x804c20bc;
 static u8 *stc_css_unkarr = 0x804d50c8;
 
 /*** Functions ***/
+void MainMenu_CamRotateThink(GOBJ *gobj);
 int CSS_GetNametagRumble(int player, u8 tag);
 void CSS_InitPlayerData(PlayerData *player);
 void CSS_CameraRotateThink(GOBJ *gobj);

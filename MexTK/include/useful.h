@@ -40,6 +40,7 @@
 #define CARD_ICON_MAX 8
 #define CARD_COMMENT_SIZE 64
 #define CARD_WORKAREA_SIZE (5 * 8 * 1024)
+#define CARD_READ_SIZE 512
 #define CARD_RESULT_UNLOCKED 1
 #define CARD_RESULT_READY 0
 #define CARD_RESULT_BUSY -1
@@ -207,6 +208,8 @@ s32 CARDFreeBlocks(s32 chan, s32 *byteNotUsed, s32 *filesNotUsed);
 s32 CARDDeleteAsync(s32 chan, char *fileName, void *callback);
 s32 CARDCreateAsync(s32 chan, char *fileName, u32 size, CARDFileInfo *fileInfo, void *callback);
 s32 CARDSetStatusAsync(s32 chan, s32 fileNo, CARDStat *stat, void *callback);
+s32 CARDRead(CARDFileInfo *fileInfo, void *buf, s32 length, s32 offset);
+
 void GXPixModeSync();
 void GXInvalidateTexAll();
 void DCFlushRange(void *startAddr, u32 nBytes);

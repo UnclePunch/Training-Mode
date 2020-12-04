@@ -1428,7 +1428,7 @@ static _HSD_ImageDesc resized_image = {
 static u8 snap_status;
 static u8 export_status;
 static Arch_LabData *stc_lab_data;
-static char *tm_filename = "TMREC_%d%d%d_%02d%02d%02d";
+static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static DevText *stc_devtext;
 
