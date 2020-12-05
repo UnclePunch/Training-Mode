@@ -60,7 +60,7 @@ static EventDesc Lab = {
     .eventDescription = "Free practice with\ncomplete control.\n",
     .eventTutorial = "",
     .eventFile = "EvLab",
-    .eventCSSFile = 0, //"TM/EvLabCSS.dat",
+    .eventCSSFile = "TM/EvLabCSS.dat",
     .isChooseCPU = true,
     .isSelectStage = true,
     .use_savestates = true,
@@ -1299,7 +1299,6 @@ void EventLoad()
     evFunction *evFunction = &stc_event_vars.evFunction;
 
     // clear evFunction
-    bp();
     memset(evFunction, 0, sizeof(*evFunction));
 
     // append extension
