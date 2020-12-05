@@ -343,6 +343,7 @@
 801a45e8:Pause_CheckStatus
 8001c550:Memcard_InitWorkArea
 8001d164:Memcard_LoadAssets
+803b31cc:Memcard_Deobfuscate
 8023754c:Nametag_GetText
 80026f2c:Audio_ResetCache
 8002702c:Audio_QueueFileLoad
@@ -377,6 +378,7 @@
 8003254c:Fighter_SetSlotType
 8003345c:Fighter_GetControllerPort
 80032330:Fighter_GetExternalID
+80033198:Fighter_GetCostumeID
 8008d7f0:Fighter_GetKnockbackAngle
 800761c8:Fighter_UpdateCameraBox
 8007af28:Fighter_SetAllHurtboxesNotUpdated
@@ -421,6 +423,8 @@
 80000000:CARDCreateAsync
 80358724:CARDSetStatusAsync
 80357e88:CARDRead
+80357534:CARDOpen
+803576ac:CARDClose
 8033cd1c:GXPixModeSync
 8033f270:GXInvalidateTexAll
 8034480c:DCFlushRange

@@ -18,7 +18,7 @@
 #define TDITEXT_TEXTZ 0
 
 // recording
-#define REC_VERS 0
+#define REC_VERS 1
 
 #define GXPRI_RECJOINT 80
 #define REC_GXLINK 18
@@ -160,6 +160,7 @@ typedef struct Arch_ImportData
     JOBJDesc *import_button;
     JOBJDesc *import_menu;
     COBJDesc *import_cam;
+    JOBJDesc *import_popup;
 } Arch_ImportData;
 typedef struct Arch_LabData
 {
@@ -309,22 +310,43 @@ typedef struct ExportData
     int cpu_id;
     int stage_id;
 } ExportData;
+typedef struct ExportMenuSettings
+{
+    u8 hmn_mode;
+    u8 hmn_slot;
+    u8 cpu_mode;
+    u8 cpu_slot;
+    u8 loop_inputs;
+    u8 auto_restore;
+} ExportMenuSettings;
 typedef struct ExportHeader
 {
-    struct // metadata
+    struct rec_metadata // metadata
     {
         u16 version;
         u16 image_width;
         u16 image_height;
         u16 image_fmt;
-        u16 hmn;
-        u16 cpu;
-        u16 stage;
+        u8 hmn;
+        u8 hmn_costume;
+        u8 cpu;
+        u8 cpu_costume;
+        u16 stage_external; // instance of the stage
+        u16 stage_internal; //  unique stage
+        u8 month;
+        u8 day;
+        u16 year;
+        u8 hour;
+        u8 minute;
+        u8 second;
+        char filename[32];
     } metadata;
     struct // lookup
     {
         int ofst_screenshot;
         int ofst_recording;
+        int ofst_menusettings;
+        // to-do, add menu data offset
     } lookup;
 } ExportHeader;
 
@@ -354,7 +376,7 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value);
 void Record_ChangeCPUMode(GOBJ *menu_gobj, int value);
 void Record_ChangeSlot(GOBJ *menu_gobj, int value);
 void Record_MemcardSave(GOBJ *menu_gobj);
-void Record_MemcardLoad(GOBJ *menu_gobj);
+void Record_MemcardLoad(int slot, int file_no);
 void Record_InitState(GOBJ *menu_gobj);
 void Record_RestoreState(GOBJ *menu_gobj);
 void Record_CObjThink(GOBJ *gobj);
@@ -582,8 +604,51 @@ enum cpu_mash
 // DI Draw Constants
 #define DI_MaxColl 50
 
+static char *stage_names[] = {
+    "",
+    "",
+    "Princess Peach's Castle",
+    "Rainbow Cruise",
+    "Kongo Jungle",
+    "Jungle Japes",
+    "Great Bay",
+    "Hyrule Temple",
+    "Brinstar",
+    "Brinstar Depths",
+    "Yoshi's Story",
+    "Yoshi's Island",
+    "Fountain of Dreams",
+    "Green Greens",
+    "Corneria",
+    "Venom",
+    "Pokemon Stadium",
+    "Poke Floats",
+    "Mute City",
+    "Big Blue",
+    "Onett",
+    "Fourside",
+    "Icicle Mountain",
+    "",
+    "Mushroom Kingdom",
+    "Mushroom Kingdom II",
+    "",
+    "Flat Zone",
+    "Dream Land",
+    "Yoshi's Island (64)",
+    "Kongo Jungle (64)",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Battlefield",
+    "Final Destination",
+};
+
 // CSS Import
-#define IMPORT_FILESPERPAGE 9
+s8 *onload_fileno = R13 + (-0x4670);
+s8 *onload_slot = R13 + (-0x466F);
+#define IMPORT_FILESPERPAGE 10
 typedef enum ImportMenuStates
 {
     SELCARD,
@@ -591,9 +656,10 @@ typedef enum ImportMenuStates
 };
 typedef struct FileInfo
 {
-    char **file_name;      // pointer to file name array
-    char **file_name_user; // pointer to file name array
-    int file_size;         // number of files on card
+    char **file_name;        // pointer to file name array
+    int file_size;           // number of files on card
+    int file_no;             // index of this file on the card
+    ExportHeader rec_header; // recording header
 } FileInfo;
 typedef struct ImportData
 {
@@ -608,17 +674,32 @@ typedef struct ImportData
     JOBJ *memcard_jobj[2];
     JOBJ *screenshot_jobj;
     JOBJ *scroll_jobj;
+    JOBJ *scroll_top;
+    JOBJ *scroll_bot;
     Text *title_text;
     Text *desc_text;
     Text *option_text;
     Text *filename_text;
     Text *fileinfo_text;
-    int file_num;                        // number of files on card
-    FileInfo *file_info;                 // pointer to file info array
-    void *file_data[IMPORT_FILESPERPAGE] // pointer to each files data
+    int file_num;                         // number of files on card
+    FileInfo *file_info;                  // pointer to file info array
+    RGB565 *image;                        // pointer to file info array
+    void *file_data[IMPORT_FILESPERPAGE]; // pointer to each files data
+    u8 page;                              // file page
+    u8 files_on_page;                     // number of files on the current page
+    struct
+    {
+        GOBJ *gobj; // confirm gobj
+        u16 canvas;
+        u8 cursor;
+        Text *text;
+    } confirm;
 } ImportData;
 void Button_Create();
 void Button_Think(GOBJ *button_gobj);
+void Menu_Confirm_Init(GOBJ *menu_gobj);
+void Menu_Confirm_Think(GOBJ *menu_gobj);
+void Menu_Confirm_Exit(GOBJ *menu_gobj);
 GOBJ *Menu_Create();
 void Menu_Think(GOBJ *menu_gobj);
 #define MENUCAM_GXLINK 5

@@ -21,3 +21,4 @@ OnBoot
 OnStartMelee
 OnFileLoad
 Message_Display
+GetEventDesc

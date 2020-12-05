@@ -2707,6 +2707,7 @@ void Fighter_CreateShieldGFX(GOBJ *fighter);
 void Fighter_UpdateShieldGFX(GOBJ *fighter, float size);
 int Fighter_GetShieldColorIndex(int ply);
 int Fighter_GetExternalID(int ply);
+int Fighter_GetCostumeID(int ply);
 float Fighter_GetBaseScale(FighterData *fighter);
 void Fighter_SetScale(GOBJ *fighter, float scale);
 void Fighter_InitDynamics(FighterData *fighter_data);

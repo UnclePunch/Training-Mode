@@ -1393,16 +1393,6 @@ static EventOption LabOptions_Record[] = {
         .option_values = 0,                                                                      // pointer to an array of strings
         .onOptionSelect = Export_Init,
     },
-    {
-        .option_kind = OPTKIND_FUNC, // the type of option this is; menu, string list, integer list, etc
-        .value_num = 0,              // number of values for this option
-        .option_val = 0,             // value of this option
-        .menu = 0,                   // pointer to the menu that pressing A opens
-        .option_name = "Debug Load", // pointer to a string
-        .desc = "",                  // string describing what this option does
-        .option_values = 0,          // pointer to an array of strings
-        .onOptionSelect = Record_MemcardLoad,
-    },
 };
 static EventMenu LabMenu_Record = {
     .name = "Recording",                                           // the name of this menu
@@ -1428,7 +1418,7 @@ static _HSD_ImageDesc resized_image = {
 static u8 snap_status;
 static u8 export_status;
 static Arch_LabData *stc_lab_data;
-static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d";
+static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d_%02X%02X%02X";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static DevText *stc_devtext;
 
@@ -1440,46 +1430,6 @@ static MemcardSave memcard_save;
 static int chunk_num;
 static int save_pre_tick;
 static char *slots_names[] = {"A", "B"};
-static char *stage_names[] = {
-    "",
-    "",
-    "Princess Peach's Castle",
-    "Rainbow Cruise",
-    "Kongo Jungle",
-    "Jungle Japes",
-    "Great Bay",
-    "Hyrule Temple",
-    "Brinstar",
-    "Brinstar Depths",
-    "Yoshi's Story",
-    "Yoshi's Island",
-    "Fountain of Dreams",
-    "Green Greens",
-    "Corneria",
-    "Venom",
-    "Pokemon Stadium",
-    "Poke Floats",
-    "Mute City",
-    "Big Blue",
-    "Onett",
-    "Fourside",
-    "Icicle Mountain",
-    "",
-    "Mushroom Kingdom",
-    "Mushroom Kingdom II",
-    "",
-    "Flat Zone",
-    "Dream Land",
-    "Yoshi's Island (64)",
-    "Kongo Jungle (64)",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "Battlefield",
-    "Final Destination",
-};
 
 // lz77 functions credited to https://github.com/andyherbert/lz1
 int x_to_the_n(int x, int n)
@@ -4780,12 +4730,11 @@ void Memcard_Wait()
 
     return;
 }
-void Record_MemcardLoad(GOBJ *menu_gobj)
+void Record_MemcardLoad(int slot, int file_no)
 {
     // search card for this save file
     u8 file_found = 0;
-    int slot = 0;
-    char *filename[32];
+    char filename[32];
     int file_size;
     s32 memSize, sectorSize;
     if (CARDProbeEx(slot, &memSize, &sectorSize) == CARD_RESULT_READY)
@@ -4800,34 +4749,37 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
             if (CARDCheckAsync(slot, Memcard_RemovedCallback) == CARD_RESULT_READY)
             {
                 Memcard_Wait();
-                // get free blocks
-                s32 byteNotUsed, filesNotUsed;
-                if (CARDFreeBlocks(slot, &byteNotUsed, &filesNotUsed) == CARD_RESULT_READY)
+
+                // search for nth file with name TM_DEBUG
+                int tmrec_num = 0;
+                for (int i = 0; i < CARD_MAX_FILE; i++)
                 {
 
-                    // search for file with name TM_DEBUG
-                    for (int i = 0; i < CARD_MAX_FILE; i++)
+                    CARDStat card_stat;
+
+                    if (CARDGetStatus(slot, i, &card_stat) == CARD_RESULT_READY)
                     {
-
-                        CARDStat card_stat;
-
-                        if (CARDGetStatus(slot, i, &card_stat) == CARD_RESULT_READY)
+                        // check company code
+                        if (strncmp(os_info->company, card_stat.company, sizeof(os_info->company)) == 0)
                         {
-                            // check company code
-                            if (strncmp(os_info->company, card_stat.company, sizeof(os_info->company)) == 0)
+                            // check game name
+                            if (strncmp(os_info->gameName, card_stat.gameName, sizeof(os_info->gameName)) == 0)
                             {
-                                // check game name
-                                if (strncmp(os_info->gameName, card_stat.gameName, sizeof(os_info->gameName)) == 0)
+                                // check file name
+                                if (strncmp("TMREC", card_stat.fileName, 5) == 0)
                                 {
-                                    // check file name
-                                    if (strncmp("TMREC", card_stat.fileName, 5) == 0)
+
+                                    // if the desired file
+                                    if (tmrec_num == file_no)
                                     {
-                                        OSReport("found recording file %s with size %d\n", card_stat.fileName, card_stat.length);
                                         file_found = 1;
+                                        memcpy(&filename, card_stat.fileName, sizeof(filename)); // copy filename to load after this
                                         file_size = card_stat.length;
-                                        memcpy(filename, card_stat.fileName, sizeof(card_stat.fileName));
                                         break;
                                     }
+
+                                    // increment tmrec num
+                                    tmrec_num++;
                                 }
                             }
                         }
@@ -4835,7 +4787,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
                 }
             }
 
-            CARDUnmount(0);
+            CARDUnmount(slot);
             stc_memcard_work->is_done = 0;
         }
     }
@@ -4852,7 +4804,7 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
         memcard_save.x4 = 3;
         memcard_save.size = file_size;
         memcard_save.xc = -1;
-        Memcard_LoadSnapshot(slot, filename, &memcard_save, &stc_memcard_info->file_name, stc_lab_data->save_banner, stc_lab_data->save_icon, 0);
+        Memcard_LoadSnapshot(slot, filename, &memcard_save, &stc_memcard_info->file_name, 0, 0, 0);
 
         // wait to load
         int memcard_status = Memcard_CheckStatus();
@@ -4865,12 +4817,16 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
         if (memcard_status == 0)
         {
 
+            // init savestate
+            Record_OnSuccessfulSave();
+
             // begin unpacking
             u8 *transfer_buf = memcard_save.data;
             ExportHeader *header = transfer_buf;
             u8 *compressed_recording = transfer_buf + header->lookup.ofst_recording;
             RGB565 *img = transfer_buf + header->lookup.ofst_screenshot;
-            OSReport("rec: ft %d vs ft %d on stage %d\n", header->metadata.hmn, header->metadata.cpu, header->metadata.stage);
+            ExportMenuSettings *menu_settings = transfer_buf + header->lookup.ofst_menusettings;
+            OSReport("rec: ft %d vs ft %d on stage %d\n", header->metadata.hmn, header->metadata.cpu, header->metadata.stage_internal);
 
             // decompress
             RecordingSave *loaded_recsave = calloc(sizeof(RecordingSave) * 1.06);
@@ -4878,9 +4834,6 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
 
             // copy buffer to savestate
             memcpy(rec_state, &loaded_recsave->savestate, sizeof(Savestate));
-
-            // init savestate
-            Record_OnSuccessfulSave();
 
             // copy recordings
             for (int i = 0; i < REC_SLOTS; i++)
@@ -4891,10 +4844,19 @@ void Record_MemcardLoad(GOBJ *menu_gobj)
 
             HSD_Free(loaded_recsave);
 
+            // copy recording settings
+            LabOptions_Record[OPTREC_HMNMODE].option_val = menu_settings->hmn_mode;
+            LabOptions_Record[OPTREC_HMNSLOT].option_val = menu_settings->hmn_slot;
+            LabOptions_Record[OPTREC_CPUMODE].option_val = menu_settings->cpu_mode;
+            LabOptions_Record[OPTREC_CPUSLOT].option_val = menu_settings->cpu_slot;
+            LabOptions_Record[OPTREC_LOOP].option_val = menu_settings->loop_inputs;
+            LabOptions_Record[OPTREC_AUTOLOAD].option_val = menu_settings->auto_restore;
+
+            // save to personal savestate
+            event_vars->Savestate_Save(event_vars->savestate);
+
             // load state
             event_vars->Savestate_Load(rec_state);
-
-            //event_vars->Savestate_Save(event_vars->savestate);
         }
 
         HSD_Free(memcard_save.data);
@@ -5049,25 +5011,51 @@ void Export_Init(GOBJ *menu_gobj)
     resized_image.img_ptr = new_img;                                            // store pointer to resized image
     export_data->screenshot_jobj->dobj->mobj->tobj->imagedesc = &resized_image; // replace pointer to imagedesc
 
+    // get curr date
+    OSCalendarTime td;
+    OSTicksToCalendarTime(OSGetTime(), &td);
+
     // alloc a buffer to transfer to memcard
-    stc_transfer_buf_size = sizeof(ExportHeader) + img_size + compress_size;
+    stc_transfer_buf_size = sizeof(ExportHeader) + img_size + sizeof(ExportMenuSettings) + compress_size;
     stc_transfer_buf = calloc(stc_transfer_buf_size);
-    // copy data to buffer
-    memcpy(stc_transfer_buf + sizeof(ExportHeader), new_img, img_size);                          // image
-    memcpy(stc_transfer_buf + sizeof(ExportHeader) + img_size, recording_buffer, compress_size); // compressed recording
+
     // init header
     ExportHeader *header = stc_transfer_buf;
     header->metadata.version = REC_VERS;
     header->metadata.image_width = RESIZE_WIDTH;
     header->metadata.image_height = RESIZE_HEIGHT;
     header->metadata.image_fmt = 4;
-    blr();
     header->metadata.hmn = Fighter_GetExternalID(0);
+    header->metadata.hmn_costume = Fighter_GetCostumeID(0);
     header->metadata.cpu = Fighter_GetExternalID(1);
-    header->metadata.stage = Stage_ExternalToInternal((Stage_GetExternalID()));
+    header->metadata.cpu_costume = Fighter_GetCostumeID(1);
+    header->metadata.stage_external = Stage_GetExternalID();
+    header->metadata.stage_internal = Stage_ExternalToInternal(header->metadata.stage_external);
+    header->metadata.month = td.mon + 1;
+    header->metadata.day = td.mday;
+    header->metadata.year = td.year;
+    header->metadata.hour = td.hour;
+    header->metadata.minute = td.min;
+    header->metadata.second = td.sec;
     header->lookup.ofst_screenshot = sizeof(ExportHeader);
     header->lookup.ofst_recording = sizeof(ExportHeader) + img_size;
+    header->lookup.ofst_menusettings = sizeof(ExportHeader) + img_size + compress_size;
     OSReport("prepared buffer of %d kb\n", (stc_transfer_buf_size / 1000));
+
+    // copy data to buffer
+    // image
+    memcpy(stc_transfer_buf + header->lookup.ofst_screenshot, new_img, img_size);
+    // menu settings
+    ExportMenuSettings *menu_settings = stc_transfer_buf + header->lookup.ofst_menusettings;
+    menu_settings->hmn_mode = LabOptions_Record[OPTREC_HMNMODE].option_val;
+    menu_settings->hmn_slot = LabOptions_Record[OPTREC_HMNSLOT].option_val;
+    menu_settings->cpu_mode = LabOptions_Record[OPTREC_CPUMODE].option_val;
+    menu_settings->cpu_slot = LabOptions_Record[OPTREC_CPUSLOT].option_val;
+    menu_settings->loop_inputs = LabOptions_Record[OPTREC_LOOP].option_val;
+    menu_settings->auto_restore = LabOptions_Record[OPTREC_AUTOLOAD].option_val;
+    // recording data
+    memcpy(stc_transfer_buf + header->lookup.ofst_recording, recording_buffer, compress_size); // compressed recording
+
     // free compresed data buffer
     HSD_Free(recording_buffer);
 
@@ -5413,7 +5401,7 @@ void Export_EnterNameInit(GOBJ *export_gobj)
 
     // create file details
     ExportHeader *header = stc_transfer_buf;
-    char *stage_name = stage_names[header->metadata.stage];
+    char *stage_name = stage_names[header->metadata.stage_internal];
     char *hmn_name = Fighter_GetName(header->metadata.hmn);
     char *cpu_name = Fighter_GetName(header->metadata.cpu);
     Text *text_filedetails = Text_CreateText(2, menu_data->canvas_menu);
@@ -5955,13 +5943,13 @@ int Export_Process(GOBJ *export_gobj)
 
         save_pre_tick = OSGetTick();
 
-        // get curr date
-        OSCalendarTime td;
-        OSTicksToCalendarTime(OSGetTime(), &td);
-
         // create filename string
+        ExportHeader *header = stc_transfer_buf;
         char filename[32];
-        sprintf(filename, tm_filename, td.mon + 1, td.mday, td.year, td.hour, td.min, td.sec); // generate filename based on time
+        sprintf(filename, tm_filename, header->metadata.month, header->metadata.day, header->metadata.year, header->metadata.hour, header->metadata.minute, header->metadata.second, header->metadata.hmn, header->metadata.cpu, header->metadata.stage_internal); // generate filename based on date, time, fighters, and stage
+
+        // save file name to metadata
+        memcpy(&header->metadata.filename, export_data->filename_buffer, export_data->filename_cursor);
 
         // check if file exists and delete it
         s32 memSize, sectorSize;
@@ -6128,6 +6116,12 @@ void Event_Init(GOBJ *gobj)
 
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
+
+    // check to immediately load recording
+    if (*onload_fileno != -1)
+    {
+        Record_MemcardLoad(*onload_slot, *onload_fileno);
+    }
 
     return;
 }

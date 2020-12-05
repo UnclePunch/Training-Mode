@@ -202,6 +202,8 @@ void memset(void *dest, int fill, int size);
 s32 CARDGetStatus(s32 chan, s32 fileNo, CARDStat *stat);
 s32 CARDMountAsync(s32 chan, void *workArea, void *detachCallback, void *attachCallback);
 s32 CARDUnmount(s32 chan);
+s32 CARDOpen(s32 chan, char *fileName, CARDFileInfo *fileInfo);
+s32 CARDClose(CARDFileInfo *fileInfo);
 s32 CARDProbeEx(s32 chan, s32 *memSize, s32 *sectorSize);
 s32 CARDCheckAsync(s32 chan, void *callback);
 s32 CARDFreeBlocks(s32 chan, s32 *byteNotUsed, s32 *filesNotUsed);
