@@ -13,8 +13,8 @@
 // disable all logs in release mode
 #if TM_DEBUG == 0
 #define OSReport (void)sizeof
-#define assert (void)sizeof
 #define TMLOG (void)sizeof
+//#define assert (void)sizeof
 #endif
 
 // use OSReport for all logs

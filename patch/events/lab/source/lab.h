@@ -651,8 +651,16 @@ s8 *onload_slot = R13 + (-0x466F);
 #define IMPORT_FILESPERPAGE 10
 typedef enum ImportMenuStates
 {
-    SELCARD,
-    SELFILE,
+    IMP_SELCARD,
+    IMP_SELFILE,
+    IMP_CONFIRM,
+};
+typedef enum ImportConfirmKind
+{
+    CFRM_LOAD,
+    CFRM_OLD,
+    CFRM_NEW,
+    CFRM_ERR,
 };
 typedef struct FileInfo
 {
@@ -691,13 +699,14 @@ typedef struct ImportData
     {
         GOBJ *gobj; // confirm gobj
         u16 canvas;
+        u8 kind; // which kind of confirm dialog this is
         u8 cursor;
         Text *text;
     } confirm;
 } ImportData;
 void Button_Create();
 void Button_Think(GOBJ *button_gobj);
-void Menu_Confirm_Init(GOBJ *menu_gobj);
+void Menu_Confirm_Init(GOBJ *menu_gobj, int kind);
 void Menu_Confirm_Think(GOBJ *menu_gobj);
 void Menu_Confirm_Exit(GOBJ *menu_gobj);
 GOBJ *Menu_Create();

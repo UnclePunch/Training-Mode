@@ -9,6 +9,8 @@ static _HSD_ImageDesc image_desc = {
     .height = RESIZE_HEIGHT,
     .width = RESIZE_WIDTH,
 };
+static GXColor text_white = {255, 255, 255, 255};
+static GXColor text_gold = {255, 211, 0, 255};
 
 // OnLoad
 void OnCSSLoad(ArchiveInfo *archive)
@@ -86,8 +88,7 @@ void Button_Think(GOBJ *button_gobj)
 #define BUTTON_HEIGHT 2.2
 
     // init
-    CSSCursor *css_cursors = *stc_css_cursors;
-    CSSCursor *this_cursor = &css_cursors[*stc_css_hmnport]; // get the main player's hand cursor data
+    CSSCursor *this_cursor = stc_css_cursors[0]; // get the main player's hand cursor data
     Vec2 cursor_pos = this_cursor->pos;
     cursor_pos.X += 5;
     cursor_pos.Y -= 1;
@@ -173,12 +174,12 @@ void Menu_Destroy(GOBJ *menu_gobj)
     // run specific menu state code
     switch (import_data.menu_state)
     {
-    case (SELCARD):
+    case (IMP_SELCARD):
     {
         Menu_SelCard_Exit(menu_gobj);
         break;
     }
-    case (SELFILE):
+    case (IMP_SELFILE):
     {
         Menu_SelFile_Exit(menu_gobj);
         break;
@@ -197,22 +198,30 @@ void Menu_Destroy(GOBJ *menu_gobj)
 
     // enable CSS inputs
     *stc_css_exitkind = 0;
+    *stc_css_delay = 0;
 
     return;
 }
 void Menu_Think(GOBJ *menu_gobj)
 {
 
+    *stc_css_delay = 2;
+
     switch (import_data.menu_state)
     {
-    case (SELCARD):
+    case (IMP_SELCARD):
     {
         Menu_SelCard_Think(menu_gobj);
         break;
     }
-    case (SELFILE):
+    case (IMP_SELFILE):
     {
         Menu_SelFile_Think(menu_gobj);
+        break;
+    }
+    case (IMP_CONFIRM):
+    {
+        Menu_Confirm_Think(menu_gobj);
         break;
     }
     }
@@ -227,7 +236,7 @@ void Menu_SelCard_Init(GOBJ *menu_gobj)
     JOBJ *menu_jobj = menu_gobj->hsd_object;
 
     // init state and cursor
-    import_data.menu_state = SELCARD;
+    import_data.menu_state = IMP_SELCARD;
     import_data.cursor = 0;
 
     // init memcard inserted state
@@ -242,12 +251,12 @@ void Menu_SelCard_Init(GOBJ *menu_gobj)
     Text *memcard_text = Text_CreateText(SIS_ID, import_data.canvas);
     memcard_text->kerning = 1;
     memcard_text->align = 1;
-    memcard_text->trans.Z = menu_jobj->trans.Z;
-    memcard_text->scale.X = (menu_jobj->scale.X * 0.01) * 6;
-    memcard_text->scale.Y = (menu_jobj->scale.Y * 0.01) * 6;
+    memcard_text->trans.Z = menu_jobj->trans.Z + 2;
+    memcard_text->scale.X = (menu_jobj->scale.X * 0.01) * 5;
+    memcard_text->scale.Y = (menu_jobj->scale.Y * 0.01) * 5;
     import_data.option_text = memcard_text;
-    Text_AddSubtext(memcard_text, -130, 110, "Slot A");
-    Text_AddSubtext(memcard_text, 130, 110, "Slot B");
+    Text_AddSubtext(memcard_text, -159, 45, "Slot A");
+    Text_AddSubtext(memcard_text, 159, 45, "Slot B");
 
     // edit title
     Text_SetText(import_data.title_text, 0, "Select Memory Card");
@@ -336,8 +345,6 @@ void Menu_SelCard_Think(GOBJ *menu_gobj)
     }
 
     // highlight cursor
-    static GXColor text_white = {255, 255, 255, 255};
-    static GXColor text_gold = {255, 211, 0, 255};
     for (int i = 0; i < 2; i++)
     {
         Text_SetColor(import_data.option_text, i, &text_white);
@@ -396,7 +403,7 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     JOBJ *menu_jobj = menu_gobj->hsd_object;
 
     // init state and cursor
-    import_data.menu_state = SELFILE;
+    import_data.menu_state = IMP_SELFILE;
     import_data.cursor = 0;
     import_data.page = 0;
 
@@ -418,7 +425,7 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     import_data.filename_text = filename_text;
     for (int i = 0; i < IMPORT_FILESPERPAGE; i++)
     {
-        Text_AddSubtext(filename_text, 0, i * 40, "-");
+        Text_AddSubtext(filename_text, 0, i * 40, "");
     }
 
 #define FILEINFO_X 235
@@ -440,11 +447,11 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     fileinfo_text->scale.X = (menu_jobj->scale.X * 0.01) * 4.5;
     fileinfo_text->scale.Y = (menu_jobj->scale.Y * 0.01) * 4.5;
     import_data.fileinfo_text = fileinfo_text;
-    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_STAGEY, "-");
-    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_HMNY, "-");
-    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_CPUY, "-");
-    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_DATEY, "-");
-    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_TIMEY, "-");
+    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_STAGEY, "Stage: ");
+    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_HMNY, "HMN: ");
+    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_CPUY, "CPU: ");
+    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_DATEY, "Date: ");
+    Text_AddSubtext(fileinfo_text, FILEINFO_X, FILEINFO_TIMEY, "Time: ");
 
     // edit title
     Text_SetText(import_data.title_text, 0, "Select Recording");
@@ -512,28 +519,45 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     }
 
     // init scroll bar according to import_data.file_num
-    // get scroll bar size (-16.2 / page_num)
-    int page_total = import_data.file_num / IMPORT_FILESPERPAGE;
-    import_data.scroll_bot->trans.Y = (-16.2 / (page_total + 1));
+    int page_total = import_data.file_num / (IMPORT_FILESPERPAGE + 1);
+    if (page_total == 0)
+        JOBJ_SetFlagsAll(import_data.scroll_jobj, JOBJ_HIDDEN);
+    else
+        import_data.scroll_bot->trans.Y = (-16.2 / (page_total + 1));
 
     // load in first page recordsings
-    Menu_SelFile_LoadPage(menu_gobj, 0);
+    int page_result = Menu_SelFile_LoadPage(menu_gobj, 0);
+    if (page_result == -1)
+    {
+        // create dialog
+        Menu_Confirm_Init(menu_gobj, CFRM_ERR);
+        SFX_PlayCommon(3);
+    }
 
     return;
 }
 void Menu_SelFile_Think(GOBJ *menu_gobj)
 {
 
-    // do not run if confirm popup is shown
-    if (import_data.confirm.gobj == 0)
-    {
-        // init
-        int down = Pad_GetRapidHeld(*stc_css_hmnport);
+    // init
+    int down = Pad_GetRapidHeld(*stc_css_hmnport);
 
-        // first ensure memcard is still inserted
-        s32 memSize, sectorSize;
-        if (CARDProbeEx(import_data.memcard_slot, &memSize, &sectorSize) != CARD_RESULT_READY)
+    // first ensure memcard is still inserted
+    s32 memSize, sectorSize;
+    if (CARDProbeEx(import_data.memcard_slot, &memSize, &sectorSize) != CARD_RESULT_READY)
+        goto EXIT;
+
+    // if no files exist
+    if (import_data.file_num == 0)
+    {
+        // check for exit
+        if (down & (HSD_BUTTON_B | HSD_BUTTON_A))
             goto EXIT;
+    }
+
+    // navigation think
+    else
+    {
 
         // cursor movement
         if (down & (HSD_BUTTON_UP | HSD_BUTTON_DPAD_UP)) // check for cursor up
@@ -542,18 +566,44 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
             if (import_data.cursor == 0)
             {
                 // try to load prev page
-                if (Menu_SelFile_LoadPage(menu_gobj, import_data.page - 1))
+                int page_result = Menu_SelFile_LoadPage(menu_gobj, import_data.page - 1);
+                if (page_result == 1) // page loaded, update cursor
                 {
                     SFX_PlayCommon(2);
                     import_data.cursor = (IMPORT_FILESPERPAGE - 1);
                     import_data.page--;
-                };
+                }
+                else if (page_result == -1)
+                {
+                    // create dialog
+                    Menu_Confirm_Init(menu_gobj, CFRM_ERR);
+                    SFX_PlayCommon(3);
+                    goto EXIT_FUNC; // gotos are weird but i couldnt think of another way
+                }
             }
             // if cursor can be advanced
             else if (import_data.cursor > 0)
             {
                 import_data.cursor--;
                 SFX_PlayCommon(2);
+            }
+        }
+        else if (down & (HSD_BUTTON_LEFT | HSD_BUTTON_DPAD_LEFT)) // check for cursor down
+        {
+            // try to load prev page
+            int page_result = Menu_SelFile_LoadPage(menu_gobj, import_data.page - 1);
+            if (page_result == 1) // page loaded, update cursor
+            {
+                SFX_PlayCommon(2);
+                import_data.cursor = 0;
+                import_data.page--;
+            }
+            else if (page_result == -1)
+            {
+                // create dialog
+                Menu_Confirm_Init(menu_gobj, CFRM_ERR);
+                SFX_PlayCommon(3);
+                goto EXIT_FUNC; // gotos are weird but i couldnt think of another way
             }
         }
         else if (down & (HSD_BUTTON_DOWN | HSD_BUTTON_DPAD_DOWN)) // check for cursor down
@@ -563,12 +613,20 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
             if (import_data.cursor == (IMPORT_FILESPERPAGE - 1))
             {
                 // try to load next page
-                if (Menu_SelFile_LoadPage(menu_gobj, import_data.page + 1))
+                int page_result = Menu_SelFile_LoadPage(menu_gobj, import_data.page + 1);
+                if (page_result == 1) // page loaded, update cursor
                 {
                     SFX_PlayCommon(2);
                     import_data.cursor = 0;
                     import_data.page++;
-                };
+                }
+                else if (page_result == -1)
+                {
+                    // create dialog
+                    Menu_Confirm_Init(menu_gobj, CFRM_ERR);
+                    SFX_PlayCommon(3);
+                    goto EXIT_FUNC; // gotos are weird but i couldnt think of another way
+                }
             }
 
             // if cursor can be advanced
@@ -581,28 +639,24 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
         else if (down & (HSD_BUTTON_RIGHT | HSD_BUTTON_DPAD_RIGHT)) // check for cursor right
         {
             // try to load next page
-            if (Menu_SelFile_LoadPage(menu_gobj, import_data.page + 1))
+            int page_result = Menu_SelFile_LoadPage(menu_gobj, import_data.page + 1);
+            if (page_result == 1) // page loaded, update cursor
             {
                 SFX_PlayCommon(2);
                 import_data.cursor = 0;
                 import_data.page++;
-            };
-        }
-        else if (down & (HSD_BUTTON_LEFT | HSD_BUTTON_DPAD_LEFT)) // check for cursor down
-        {
-            // try to load prev page
-            if (Menu_SelFile_LoadPage(menu_gobj, import_data.page - 1))
+            }
+            else if (page_result == -1)
             {
-                SFX_PlayCommon(2);
-                import_data.cursor = 0;
-                import_data.page--;
-            };
+                // create dialog
+                Menu_Confirm_Init(menu_gobj, CFRM_ERR);
+                SFX_PlayCommon(3);
+                goto EXIT_FUNC; // gotos are weird but i couldnt think of another way
+            }
         }
 
         // highlight cursor
         int cursor = import_data.cursor;
-        static GXColor text_white = {255, 255, 255, 255};
-        static GXColor text_gold = {255, 211, 0, 255};
         for (int i = 0; i < IMPORT_FILESPERPAGE; i++)
         {
             Text_SetColor(import_data.filename_text, i, &text_white);
@@ -652,16 +706,24 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
         // check for select
         else if (down & HSD_BUTTON_A)
         {
-            if (import_data.file_info[this_file_index].rec_header.metadata.version == REC_VERS)
-            {
-                Menu_Confirm_Init(menu_gobj);
-                SFX_PlayCommon(1);
-            }
-            else
-                SFX_PlayCommon(2);
+            int kind;                                                                      // init confirm kind
+            int vers = import_data.file_info[this_file_index].rec_header.metadata.version; // get version number
+
+            // check if version is compatible with this release
+            if (vers == REC_VERS)
+                kind = CFRM_LOAD;
+            else if (vers > REC_VERS)
+                kind = CFRM_NEW;
+            else if (vers < REC_VERS)
+                kind = CFRM_OLD;
+
+            // open confirm dialog
+            Menu_Confirm_Init(menu_gobj, kind);
+            SFX_PlayCommon(1);
         }
     }
 
+EXIT_FUNC:
     return;
 }
 void Menu_SelFile_Exit(GOBJ *menu_gobj)
@@ -737,6 +799,7 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
 
             // mount card
             s32 memSize, sectorSize;
+            bp();
             if (CARDProbeEx(slot, &memSize, &sectorSize) == CARD_RESULT_READY)
             {
                 // mount card
@@ -778,11 +841,22 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
                                         Memcard_Deobfuscate(buffer, CARD_READ_SIZE);
                                         ExportHeader *header = buffer + 0x90; // get to header (need to find a less hardcoded way of doing this)
 
-                                        // save header
-                                        memcpy(&import_data.file_info[this_file_index].rec_header, header, sizeof(ExportHeader));
+                                        // ensure header contains filename (REC_VERS 1+)
+                                        if (header->metadata.version < 1)
+                                        {
+                                            result = -1;
+                                            CARDClose(&card_file_info);
+                                            break;
+                                        }
 
-                                        // print user file name
-                                        Text_SetText(import_data.filename_text, i, header->metadata.filename);
+                                        else
+                                        {
+                                            // save header
+                                            memcpy(&import_data.file_info[this_file_index].rec_header, header, sizeof(ExportHeader));
+
+                                            // print user file name
+                                            Text_SetText(import_data.filename_text, i, header->metadata.filename);
+                                        }
                                     }
 
                                     CARDClose(&card_file_info);
@@ -826,14 +900,97 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
 
     return result;
 }
-// Confirm Dialog
-void Menu_Confirm_Init(GOBJ *menu_gobj)
+void Menu_SelFile_DeleteUnsupported(GOBJ *menu_gobj)
 {
+
+    void *buffer = calloc(CARD_READ_SIZE);
+    int slot = import_data.memcard_slot;
+
+    // mount card
+    s32 memSize, sectorSize;
+    bp();
+    if (CARDProbeEx(slot, &memSize, &sectorSize) == CARD_RESULT_READY)
+    {
+        // mount card
+        stc_memcard_work->is_done = 0;
+        if (CARDMountAsync(slot, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
+        {
+            Memcard_Wait();
+
+            // check card
+            stc_memcard_work->is_done = 0;
+            if (CARDCheckAsync(slot, Memcard_RemovedCallback) == CARD_RESULT_READY)
+            {
+                Memcard_Wait();
+
+                // loop through all detected TMREC files
+                for (int i = 0; i < import_data.file_num; i++)
+                {
+
+                    // get file info
+                    char *file_name = import_data.file_info[i].file_name;
+                    int file_size = import_data.file_info[i].file_size;
+                    CARDFileInfo card_file_info;
+
+                    /*
+                    so at this point, i have filenames for every TMREC file
+                    present on the memcard. all i have to do is:
+                    - cardopen each file
+                    - cardread the header
+                    - deobfuscate
+                    - check version
+                    - delete file using filename if its a bad file
+                    */
+
+                    // open card (get file info)
+                    if (CARDOpen(slot, file_name, &card_file_info) == CARD_RESULT_READY)
+                    {
+                        // read header
+                        if (CARDRead(&card_file_info, buffer, CARD_READ_SIZE, 0x1E00) == CARD_RESULT_READY)
+                        {
+                            // deobfuscate stupid melee bullshit
+                            Memcard_Deobfuscate(buffer, CARD_READ_SIZE);
+                            ExportHeader *header = buffer + 0x90; // get to header (need to find a less hardcoded way of doing this)
+
+                            // check if unsupported version
+                            if (header->metadata.version < 1)
+                            {
+                                // delete this file
+                                stc_memcard_work->is_done = 0;
+                                if (CARDDeleteAsync(slot, file_name, Memcard_RemovedCallback) == CARD_RESULT_READY)
+                                {
+                                    Memcard_Wait();
+                                }
+                            }
+                        }
+
+                        CARDClose(&card_file_info);
+                    }
+                }
+            }
+            // unmount
+            CARDUnmount(slot);
+            stc_memcard_work->is_done = 0;
+        }
+    }
+
+    // free temp read buffer
+    HSD_Free(buffer);
+
+    return;
+}
+// Confirm Dialog
+void Menu_Confirm_Init(GOBJ *menu_gobj, int kind)
+{
+
+    // init cursor
+    import_data.confirm.cursor = 0;
+    import_data.menu_state = IMP_CONFIRM;
+    import_data.confirm.kind = kind;
 
     // Create GOBJ
     GOBJ *confirm_gobj = GObj_Create(4, 5, 0);
     GObj_AddGXLink(confirm_gobj, GXLink_Common, MENUCAM_GXLINK, 130);
-    GObj_AddProc(confirm_gobj, Menu_Confirm_Think, 0);
     JOBJ *confirm_jobj = JOBJ_LoadJoint(stc_import_assets->import_popup);
     GObj_AddObject(confirm_gobj, R13_U8(-0x3E55), confirm_jobj);
     import_data.confirm.gobj = confirm_gobj;
@@ -842,16 +999,46 @@ void Menu_Confirm_Init(GOBJ *menu_gobj)
     Text *text = Text_CreateText(SIS_ID, import_data.confirm.canvas);
     text->kerning = 1;
     text->align = 1;
+    text->use_aspect = 1;
+    text->aspect.X = 380;
     text->trans.Z = confirm_jobj->trans.Z;
     text->scale.X = (confirm_jobj->scale.X * 0.01) * 6;
     text->scale.Y = (confirm_jobj->scale.Y * 0.01) * 6;
     import_data.confirm.text = text;
-    Text_AddSubtext(text, -0, -40, "Load this recording?");
-    Text_AddSubtext(text, -65, 40, "Yes");
-    Text_AddSubtext(text, 65, 40, "No");
 
-    // init cursor
-    import_data.confirm.cursor = 0;
+    // decide text based on kind
+    switch (kind)
+    {
+    case (CFRM_LOAD):
+    {
+        Text_AddSubtext(text, 0, -50, "Load this recording?");
+        Text_AddSubtext(text, -65, 20, "Yes");
+        Text_AddSubtext(text, 65, 20, "No");
+        break;
+    }
+    case (CFRM_OLD):
+    {
+        Text_AddSubtext(text, 0, -50, "Cannot load outdated recording.");
+        Text_AddSubtext(text, 0, 20, "OK");
+        Text_SetColor(import_data.confirm.text, 1, &text_gold);
+        break;
+    }
+    case (CFRM_NEW):
+    {
+        Text_AddSubtext(text, 0, -50, "Cannot load newer recording.");
+        Text_AddSubtext(text, 0, 20, "OK");
+        Text_SetColor(import_data.confirm.text, 1, &text_gold);
+        break;
+    }
+    case (CFRM_ERR):
+    {
+        Text_AddSubtext(text, 0, -70, "Corrupted recording(s) detected.");
+        Text_AddSubtext(text, 0, -35, "Would you like to delete them?");
+        Text_AddSubtext(text, -65, 40, "No");
+        Text_AddSubtext(text, 65, 40, "Yes");
+        break;
+    }
+    }
 
     return;
 }
@@ -866,94 +1053,199 @@ void Menu_Confirm_Think(GOBJ *menu_gobj)
     if (CARDProbeEx(import_data.memcard_slot, &memSize, &sectorSize) != CARD_RESULT_READY)
         goto EXIT;
 
-    // cursor movement
-    if (down & (HSD_BUTTON_RIGHT | HSD_BUTTON_DPAD_RIGHT)) // check for cursor right
+    switch (import_data.confirm.kind)
     {
-        if (import_data.confirm.cursor < 1)
+    case (CFRM_LOAD):
+    {
+        // cursor movement
+        if (down & (HSD_BUTTON_RIGHT | HSD_BUTTON_DPAD_RIGHT)) // check for cursor right
         {
-            import_data.confirm.cursor++;
-            SFX_PlayCommon(2);
+            if (import_data.confirm.cursor < 1)
+            {
+                import_data.confirm.cursor++;
+                SFX_PlayCommon(2);
+            }
         }
-    }
-    else if (down & (HSD_BUTTON_LEFT | HSD_BUTTON_DPAD_LEFT)) // check for cursor down
-    {
-        if (import_data.confirm.cursor > 0)
+        else if (down & (HSD_BUTTON_LEFT | HSD_BUTTON_DPAD_LEFT)) // check for cursor down
         {
-            import_data.confirm.cursor--;
-            SFX_PlayCommon(2);
+            if (import_data.confirm.cursor > 0)
+            {
+                import_data.confirm.cursor--;
+                SFX_PlayCommon(2);
+            }
         }
-    }
 
-    // highlight cursor
-    int cursor = import_data.confirm.cursor;
-    static GXColor text_white = {255, 255, 255, 255};
-    static GXColor text_gold = {255, 211, 0, 255};
-    for (int i = 0; i < 2; i++)
-    {
-        Text_SetColor(import_data.confirm.text, i + 1, &text_white);
-    }
-    Text_SetColor(import_data.confirm.text, cursor + 1, &text_gold);
+        // highlight cursor
+        int cursor = import_data.confirm.cursor;
+        for (int i = 0; i < 2; i++)
+        {
+            Text_SetColor(import_data.confirm.text, i + 1, &text_white);
+        }
+        Text_SetColor(import_data.confirm.text, cursor + 1, &text_gold);
 
-    // check for exit
-    if (down & HSD_BUTTON_B)
-    {
-    EXIT:
-        Menu_Confirm_Exit(menu_gobj);
-        SFX_PlayCommon(0);
-    }
+        // check for exit
+        if (down & HSD_BUTTON_B)
+        {
+        EXIT:
+            Menu_Confirm_Exit(menu_gobj);
+            SFX_PlayCommon(0);
+            import_data.menu_state = IMP_SELFILE;
+        }
 
-    // check for select
-    else if (down & HSD_BUTTON_A)
+        // check for select
+        else if (down & HSD_BUTTON_A)
+        {
+            // check which option is selected
+            if (cursor == 0)
+            {
+
+                // get variables and junk
+                VSMinorData *css_minorscene = *stc_css_minorscene;
+                int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + import_data.cursor;
+                ExportHeader *header = &import_data.file_info[this_file_index].rec_header;
+                Preload *preload = Preload_GetTable();
+
+                // get match data
+                u8 hmn_kind = header->metadata.hmn;
+                u8 hmn_costume = header->metadata.hmn_costume;
+                u8 cpu_kind = header->metadata.cpu;
+                u8 cpu_costume = header->metadata.cpu_costume;
+                u16 stage_kind = header->metadata.stage_external;
+
+                // determine which player index for hmn and cpu
+                u8 hmn_index, cpu_index;
+                if (*stc_css_hmnport > 0)
+                {
+                    cpu_index = 0;
+                    hmn_index = 1;
+                }
+                else
+                {
+                    hmn_index = 0;
+                    cpu_index = 1;
+                }
+
+                // set fighters
+                css_minorscene->vs_data.match_init.playerData[hmn_index].kind = hmn_kind;
+                css_minorscene->vs_data.match_init.playerData[hmn_index].costume = hmn_costume; // header->metadata.hmn_costume;
+                preload->fighters[hmn_index].kind = hmn_kind;
+                preload->fighters[hmn_index].costume = hmn_costume;
+                css_minorscene->vs_data.match_init.playerData[cpu_index].kind = cpu_kind;
+                css_minorscene->vs_data.match_init.playerData[cpu_index].costume = cpu_costume; // header->metadata.cpu_costume;
+                preload->fighters[cpu_index].kind = cpu_kind;
+                preload->fighters[cpu_index].costume = cpu_costume;
+
+                // set stage
+                css_minorscene->vs_data.match_init.stage = stage_kind;
+                preload->stage = stage_kind;
+
+                // load files
+                Preload_Update();
+
+                // advance scene
+                *stc_css_exitkind = 1;
+
+                // HUGE HACK ALERT
+                EventDesc *(*GetEventDesc)(int page, int event) = RTOC_PTR(TM_DATA + (24 * 4));
+                EventDesc *event_desc = GetEventDesc(1, 0);
+                event_desc->isSelectStage = 0;
+                event_desc->matchData->stage = stage_kind;
+                *onload_fileno = this_file_index;
+                *onload_slot = import_data.memcard_slot;
+
+                SFX_PlayCommon(1);
+            }
+            else
+                goto EXIT;
+        }
+
+        break;
+    }
+    case (CFRM_OLD):
     {
-        // check which option is selected
-        if (cursor == 0)
+        // check for select
+        if (down & (HSD_BUTTON_A | HSD_BUTTON_B))
+        {
+            Menu_Confirm_Exit(menu_gobj);
+            SFX_PlayCommon(0);
+            import_data.menu_state = IMP_SELFILE;
+        }
+        break;
+    }
+    case (CFRM_NEW):
+    {
+        // check for select
+        if (down & (HSD_BUTTON_A | HSD_BUTTON_B))
+        {
+            Menu_Confirm_Exit(menu_gobj);
+            SFX_PlayCommon(0);
+            import_data.menu_state = IMP_SELFILE;
+        }
+        break;
+    }
+    case (CFRM_ERR):
+    {
+
+        // cursor movement
+        if (down & (HSD_BUTTON_RIGHT | HSD_BUTTON_DPAD_RIGHT)) // check for cursor right
+        {
+            if (import_data.confirm.cursor < 1)
+            {
+                import_data.confirm.cursor++;
+                SFX_PlayCommon(2);
+            }
+        }
+        else if (down & (HSD_BUTTON_LEFT | HSD_BUTTON_DPAD_LEFT)) // check for cursor down
+        {
+            if (import_data.confirm.cursor > 0)
+            {
+                import_data.confirm.cursor--;
+                SFX_PlayCommon(2);
+            }
+        }
+
+        // highlight cursor
+        int cursor = import_data.confirm.cursor;
+        for (int i = 0; i < 2; i++)
+        {
+            Text_SetColor(import_data.confirm.text, i + 2, &text_white);
+        }
+        Text_SetColor(import_data.confirm.text, cursor + 2, &text_gold);
+
+        // check for back
+        if (down & HSD_BUTTON_B)
+        {
+        NO_DELETE_CORRUPT:
+            Menu_Confirm_Exit(menu_gobj); // close dialog
+            Menu_SelFile_Exit(menu_gobj); // close select file
+            Menu_SelCard_Init(menu_gobj); // open select card
+            SFX_PlayCommon(0);
+            //import_data.menu_state = IMP_SELCARD;
+        }
+
+        // check for confirm
+        else if (down & HSD_BUTTON_A)
         {
 
-            // get variables and junk
-            VSMinorData *css_minorscene = *stc_css_minorscene;
-            int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + import_data.cursor;
-            ExportHeader *header = &import_data.file_info[this_file_index].rec_header;
-            Preload *preload = Preload_GetTable();
+            if (cursor == 1)
+            {
+                SFX_PlayCommon(1);
 
-            // get match data
-            u8 hmn_kind = header->metadata.hmn;
-            u8 hmn_costume = header->metadata.hmn_costume;
-            u8 cpu_kind = header->metadata.cpu;
-            u8 cpu_costume = header->metadata.cpu_costume;
-            u16 stage_kind = header->metadata.stage_external;
+                // delete bad recordings
+                Menu_SelFile_DeleteUnsupported(menu_gobj);
 
-            // set fighters
-            css_minorscene->vs_data.match_init.playerData[0].kind = hmn_kind;
-            css_minorscene->vs_data.match_init.playerData[0].costume = hmn_costume; // header->metadata.hmn_costume;
-            preload->fighters[0].kind = hmn_kind;
-            preload->fighters[0].costume = hmn_costume;
-            css_minorscene->vs_data.match_init.playerData[1].kind = cpu_kind;
-            css_minorscene->vs_data.match_init.playerData[1].costume = cpu_costume; // header->metadata.cpu_costume;
-            preload->fighters[1].kind = cpu_kind;
-            preload->fighters[1].costume = cpu_costume;
+                // close dialog
+                Menu_Confirm_Exit(menu_gobj);
 
-            // set stage
-            css_minorscene->vs_data.match_init.stage = stage_kind;
-            preload->stage = stage_kind;
-
-            // load files
-            Preload_Update();
-
-            // advance scene
-            *stc_css_exitkind = 1;
-
-            // HUGE HACK ALERT
-            EventDesc *(*GetEventDesc)(int page, int event) = RTOC_PTR(TM_DATA + (24 * 4));
-            EventDesc *event_desc = GetEventDesc(1, 0);
-            event_desc->isSelectStage = 0;
-            event_desc->matchData->stage = stage_kind;
-            *onload_fileno = this_file_index;
-            *onload_slot = import_data.memcard_slot;
-
-            SFX_PlayCommon(1);
+                // reload selfile
+                Menu_SelFile_Exit(menu_gobj); // close select file
+                Menu_SelFile_Init(menu_gobj); // open select file
+            }
+            else
+                goto NO_DELETE_CORRUPT;
         }
-        else
-            goto EXIT;
+        break;
+    }
     }
 
     return;

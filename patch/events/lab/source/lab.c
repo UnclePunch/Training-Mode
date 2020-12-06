@@ -1421,6 +1421,8 @@ static Arch_LabData *stc_lab_data;
 static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d_%02X%02X%02X";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static DevText *stc_devtext;
+static u8 stc_hmn_controller; // making this static so importing recording doesnt overwrite
+static u8 stc_cpu_controller; // making this static so importing recording doesnt overwrite
 
 // Static Export Variables
 static RecordingSave *stc_rec_save;
@@ -4817,8 +4819,14 @@ void Record_MemcardLoad(int slot, int file_no)
         if (memcard_status == 0)
         {
 
-            // init savestate
-            Record_OnSuccessfulSave();
+            // enable other options
+            for (int i = 1; i < sizeof(LabOptions_Record) / sizeof(EventOption); i++)
+            {
+                LabOptions_Record[i].disable = 0;
+            }
+
+            // take screenshot
+            snap_status = 1;
 
             // begin unpacking
             u8 *transfer_buf = memcard_save.data;
@@ -4834,6 +4842,9 @@ void Record_MemcardLoad(int slot, int file_no)
 
             // copy buffer to savestate
             memcpy(rec_state, &loaded_recsave->savestate, sizeof(Savestate));
+
+            // load state
+            event_vars->Savestate_Load(rec_state);
 
             // copy recordings
             for (int i = 0; i < REC_SLOTS; i++)
@@ -4852,11 +4863,19 @@ void Record_MemcardLoad(int slot, int file_no)
             LabOptions_Record[OPTREC_LOOP].option_val = menu_settings->loop_inputs;
             LabOptions_Record[OPTREC_AUTOLOAD].option_val = menu_settings->auto_restore;
 
+            // enter recording menu
+            MenuData *menu_data = event_vars->menu_gobj->userdata;
+            EventMenu *curr_menu = menu_data->currMenu;
+            curr_menu->state = EMSTATE_OPENSUB;
+            // update curr_menu
+            EventMenu *next_menu = curr_menu->options[2].menu;
+            next_menu->prev = curr_menu;
+            next_menu->state = EMSTATE_FOCUS;
+            curr_menu = next_menu;
+            menu_data->currMenu = curr_menu;
+
             // save to personal savestate
             event_vars->Savestate_Save(event_vars->savestate);
-
-            // load state
-            event_vars->Savestate_Load(rec_state);
         }
 
         HSD_Free(memcard_save.data);
@@ -5206,7 +5225,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
     int req_blocks = (divide_roundup(stc_transfer_buf_size, 8192) + 1);
 
     // get pausing players inputs
-    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    HSD_Pad *pad = PadGet(stc_hmn_controller, PADGET_MASTER);
     int inputs = pad->down;
 
     // update memcard info
@@ -5478,7 +5497,7 @@ int Export_EnterNameThink(GOBJ *export_gobj)
     ExportData *export_data = export_gobj->userdata;
 
     // get pausing players inputs
-    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    HSD_Pad *pad = PadGet(stc_hmn_controller, PADGET_MASTER);
     int inputs = pad->rapidFire;
     int input_down = pad->down;
     u8 *cursor = export_data->key_cursor;
@@ -5740,7 +5759,7 @@ int Export_ConfirmThink(GOBJ *export_gobj)
     ExportData *export_data = export_gobj->userdata;
 
     // get pausing players inputs
-    HSD_Pad *pad = PadGet(stc_match->pauser, PADGET_MASTER);
+    HSD_Pad *pad = PadGet(stc_hmn_controller, PADGET_MASTER);
     int inputs = pad->down;
 
     // if unplugged exit
@@ -5815,7 +5834,7 @@ int Export_ConfirmThink(GOBJ *export_gobj)
                 confirm_text->scale.X = MENU_CANVASSCALE;
                 confirm_text->scale.Y = MENU_CANVASSCALE;
                 confirm_text->trans.Z = MENU_TEXTZ;
-                Text_AddSubtext(confirm_text, 0, 0, "");
+                Text_AddSubtext(confirm_text, 0, -20, "");
 
                 export_data->confirm_state = EXPOP_SAVE;
 
@@ -6108,11 +6127,11 @@ void Event_Init(GOBJ *gobj)
     hsd_update->checkAdvance = Update_CheckAdvance;
 
     // determine cpu controller
-    eventData->hmn_controller = Fighter_GetControllerPort(hmn_data->ply);
+    stc_hmn_controller = Fighter_GetControllerPort(hmn_data->ply);
     u8 cpu_controller = 1;
-    if (eventData->hmn_controller == 1)
+    if (stc_hmn_controller != 0)
         cpu_controller = 0;
-    eventData->cpu_controller = cpu_controller;
+    stc_cpu_controller = cpu_controller;
 
     // set CPU AI to no_act 15
     cpu_data->cpu.ai = 0;
@@ -6310,11 +6329,11 @@ void Event_Think(GOBJ *event)
     case RECMODE_OFF:
     {
         // human is human
-        hmn_data->player_controller_number = eventData->hmn_controller;
+        hmn_data->player_controller_number = stc_hmn_controller;
 
         // cpu is cpu
         Fighter_SetSlotType(cpu_data->ply, 1);
-        cpu_data->player_controller_number = eventData->cpu_controller;
+        cpu_data->player_controller_number = stc_cpu_controller;
 
         break;
     }
@@ -6322,11 +6341,11 @@ void Event_Think(GOBJ *event)
     {
 
         // human is human
-        hmn_data->player_controller_number = eventData->hmn_controller;
+        hmn_data->player_controller_number = stc_hmn_controller;
 
         // cpu is hmn
         Fighter_SetSlotType(cpu_data->ply, 0);
-        cpu_data->player_controller_number = eventData->cpu_controller;
+        cpu_data->player_controller_number = stc_cpu_controller;
 
         break;
     }
@@ -6334,11 +6353,11 @@ void Event_Think(GOBJ *event)
     case RECMODE_REC:
     {
         // human is human
-        hmn_data->player_controller_number = eventData->cpu_controller;
+        hmn_data->player_controller_number = stc_cpu_controller;
 
         // cpu is hmn
         Fighter_SetSlotType(cpu_data->ply, 0);
-        cpu_data->player_controller_number = eventData->hmn_controller;
+        cpu_data->player_controller_number = stc_hmn_controller;
 
         break;
     }
