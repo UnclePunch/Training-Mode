@@ -1236,7 +1236,7 @@ void EventInit(int page, int eventID, MatchInit *matchData)
             cpuKind = 19;
             preload->fighters[1].kind = cpuKind;
         }
-        }
+    }
     // If isChooseCPU is false, copy the CPU from event data
     else
     {
@@ -1518,7 +1518,8 @@ int Savestate_Save(Savestate *savestate)
             (fighter_data->cb.OnDeath3 != 0) ||
             (fighter_data->heldItem != 0) ||
             (fighter_data->x1978 != 0) ||
-            (fighter_data->accessory != 0))
+            (fighter_data->accessory != 0) ||
+            ((fighter_data->kind == 8) && ((fighter_data->state >= 342) && (fighter_data->state <= 344)))) // hardcode ness' usmash because it doesnt destroy the yoyo via onhit callback...
         {
             // cannot save
             canSave = 0;
