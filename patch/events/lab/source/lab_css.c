@@ -421,7 +421,7 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     filename_text->kerning = 1;
     filename_text->align = 0;
     filename_text->use_aspect = 1;
-    filename_text->aspect.X = 440;
+    filename_text->aspect.X = 525;
     filename_text->trans.X = -27.8;
     filename_text->trans.Y = -13.6;
     filename_text->trans.Z = menu_jobj->trans.Z;

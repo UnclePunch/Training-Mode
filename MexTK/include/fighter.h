@@ -436,20 +436,19 @@ struct Playerblock
     int state;           // 0x00 = not present, 0x02 = HMN, 0x03 = CPU
     int ft_kind;         // external ID
     int type;            // (0x00 is HMN, 0x01 is CPU, 0x02 is Demo, 0x03 n/a)
-    u8 isTransformed[2]; // 1 indicates the fighter that is active
-    int flags;
-    Vec3 tagPos;
-    Vec3 spawnPos;
-    Vec3 respawnPos;
+    u8 isTransformed[2]; // 0xC, 1 indicates the fighter that is active
+    Vec3 tagPos;         // 0x10
+    Vec3 spawnPos;       // 0x1C
+    Vec3 respawnPos;     // 0x28
     int x34;
     int x38;
-    int x3c;
-    float initialFacing;
-    u8 costume;
-    u8 x45;
-    u8 tint;
-    u8 team;
-    u8 controller;
+    int x3C;
+    float initialFacing; // 0x40
+    u8 costume;          // 0x44
+    u8 x45;              // 0x45
+    u8 tint;             // 0x46
+    u8 team;             // 0x47
+    u8 controller;       // 0x48
     u8 cpuLv;
     u8 cpuKind;
     u8 handicap;

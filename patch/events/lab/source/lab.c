@@ -4843,6 +4843,12 @@ void Record_MemcardLoad(int slot, int file_no)
             // copy buffer to savestate
             memcpy(rec_state, &loaded_recsave->savestate, sizeof(Savestate));
 
+            bp();
+
+            // restore controller indices
+            rec_state->ft_state[0].player_block.controller = stc_hmn_controller;
+            rec_state->ft_state[1].player_block.controller = stc_cpu_controller;
+
             // load state
             event_vars->Savestate_Load(rec_state);
 

@@ -3062,7 +3062,6 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     u8 pauser = menuData->controller_index;
     // get their  inputs
     HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
-    bp();
     int inputs_rapid = Pad_GetRapidHeld(pauser); //pad->rapidFire;
     int inputs_held = pad->held;
     int inputs = inputs_rapid;
