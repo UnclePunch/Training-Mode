@@ -2153,10 +2153,11 @@ struct FighterData
         int x1a54;                            // 0x1a54
         GOBJ *grab_attacker;                  // 0x1a58
         GOBJ *grab_victim;                    // 0x1a5c
+        int x1a60;                            // 0x1a60
+        int x1a64;                            // 0x1a64
+        u16 x1a68;                            // 0x1a68
+        u16 vuln;                             // 0x1a6a
     } grab;                                   //
-    int x1a60;                                // 0x1a60
-    int x1a64;                                // 0x1a64
-    int x1a68;                                // 0x1a68
     int x1a6c;                                // 0x1a6c
     int x1a70;                                // 0x1a70
     int x1a74;                                // 0x1a74

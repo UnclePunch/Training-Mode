@@ -5229,7 +5229,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
     int inputs = pad->down;
 
     // update memcard info
-    for (int i = 0; i < 2; i++)
+    for (int i = 1; i >= 0; i--)
     {
         // probe slot
         u8 is_inserted;
@@ -5240,6 +5240,10 @@ int Export_SelCardThink(GOBJ *export_gobj)
             // if it was just inserted, get info
             if (export_data->is_inserted[i] == 0)
             {
+
+                // move cursor to this
+                export_data->slot = i;
+                SFX_PlayCommon(2);
 
                 // mount card
                 stc_memcard_work->is_done = 0;
@@ -6193,6 +6197,7 @@ void Event_Think(GOBJ *event)
     {
         cpu_data->flags.no_reaction_always = 1;
         cpu_data->flags.nudge_disable = 1;
+        cpu_data->grab.vuln = 0x1FF;
         cpu_data->dmg.percent = 0;
         Fighter_SetHUDDamage(cpu_data->ply, 0);
 

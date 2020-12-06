@@ -240,8 +240,8 @@ void Menu_SelCard_Init(GOBJ *menu_gobj)
     import_data.cursor = 0;
 
     // init memcard inserted state
-    import_data.memcard_inserted[0] == 0;
-    import_data.memcard_inserted[1] == 0;
+    import_data.memcard_inserted[0] = 0;
+    import_data.memcard_inserted[1] = 0;
 
     // show memcards
     JOBJ_ClearFlagsAll(import_data.memcard_jobj[0], JOBJ_HIDDEN);
@@ -273,17 +273,22 @@ void Menu_SelCard_Think(GOBJ *menu_gobj)
     int down = Pad_GetRapidHeld(*stc_css_hmnport);
 
     // update memcard info
-    for (int i = 0; i < 2; i++)
+    for (int i = 1; i >= 0; i--)
     {
         // probe slot
         u8 is_inserted;
 
         s32 memSize, sectorSize;
+        bp();
         if (CARDProbeEx(i, &memSize, &sectorSize) == CARD_RESULT_READY)
         {
             // if it was just inserted, get info
             if (import_data.memcard_inserted[i] == 0)
             {
+
+                // move cursor to this
+                import_data.cursor = i;
+                SFX_PlayCommon(2);
 
                 // mount card
                 stc_memcard_work->is_done = 0;
@@ -457,7 +462,7 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     Text_SetText(import_data.title_text, 0, "Select Recording");
 
     // edit description
-    Text_SetText(import_data.desc_text, 0, "Choose a recording to load.");
+    Text_SetText(import_data.desc_text, 0, "A = Select          B = Return          X = Delete");
 
     // search card for save files
     import_data.file_num = 0;
@@ -703,6 +708,12 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
             SFX_PlayCommon(0);
         }
 
+        else if (down & HSD_BUTTON_X)
+        {
+            Menu_Confirm_Init(menu_gobj, CFRM_DEL);
+            SFX_PlayCommon(1);
+        }
+
         // check for select
         else if (down & HSD_BUTTON_A)
         {
@@ -799,7 +810,6 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
 
             // mount card
             s32 memSize, sectorSize;
-            bp();
             if (CARDProbeEx(slot, &memSize, &sectorSize) == CARD_RESULT_READY)
             {
                 // mount card
@@ -908,7 +918,6 @@ void Menu_SelFile_DeleteUnsupported(GOBJ *menu_gobj)
 
     // mount card
     s32 memSize, sectorSize;
-    bp();
     if (CARDProbeEx(slot, &memSize, &sectorSize) == CARD_RESULT_READY)
     {
         // mount card
@@ -979,6 +988,56 @@ void Menu_SelFile_DeleteUnsupported(GOBJ *menu_gobj)
 
     return;
 }
+int Menu_SelFile_DeleteFile(GOBJ *menu_gobj, int file_index)
+{
+
+    int result = 0;
+    int slot = import_data.memcard_slot;
+
+    // mount card
+    s32 memSize, sectorSize;
+    if (CARDProbeEx(slot, &memSize, &sectorSize) == CARD_RESULT_READY)
+    {
+        // mount card
+        stc_memcard_work->is_done = 0;
+        if (CARDMountAsync(slot, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
+        {
+            Memcard_Wait();
+
+            // check card
+            stc_memcard_work->is_done = 0;
+            if (CARDCheckAsync(slot, Memcard_RemovedCallback) == CARD_RESULT_READY)
+            {
+                Memcard_Wait();
+
+                // get file info
+                char *file_name = import_data.file_info[file_index].file_name;
+                int file_size = import_data.file_info[file_index].file_size;
+                CARDFileInfo card_file_info;
+
+                // open card (get file info)
+                if (CARDOpen(slot, file_name, &card_file_info) == CARD_RESULT_READY)
+                {
+
+                    // delete this file
+                    stc_memcard_work->is_done = 0;
+                    if (CARDDeleteAsync(slot, file_name, Memcard_RemovedCallback) == CARD_RESULT_READY)
+                    {
+                        Memcard_Wait();
+                        result = 1;
+                    }
+
+                    CARDClose(&card_file_info);
+                }
+            }
+            // unmount
+            CARDUnmount(slot);
+            stc_memcard_work->is_done = 0;
+        }
+    }
+
+    return result;
+}
 // Confirm Dialog
 void Menu_Confirm_Init(GOBJ *menu_gobj, int kind)
 {
@@ -1028,6 +1087,13 @@ void Menu_Confirm_Init(GOBJ *menu_gobj, int kind)
         Text_AddSubtext(text, 0, -50, "Cannot load newer recording.");
         Text_AddSubtext(text, 0, 20, "OK");
         Text_SetColor(import_data.confirm.text, 1, &text_gold);
+        break;
+    }
+    case (CFRM_DEL):
+    {
+        Text_AddSubtext(text, 0, -50, "Delete this recording?");
+        Text_AddSubtext(text, -65, 20, "Yes");
+        Text_AddSubtext(text, 65, 20, "No");
         break;
     }
     case (CFRM_ERR):
@@ -1180,6 +1246,68 @@ void Menu_Confirm_Think(GOBJ *menu_gobj)
             Menu_Confirm_Exit(menu_gobj);
             SFX_PlayCommon(0);
             import_data.menu_state = IMP_SELFILE;
+        }
+        break;
+    }
+    case (CFRM_DEL):
+    {
+
+        // cursor movement
+        if (down & (HSD_BUTTON_RIGHT | HSD_BUTTON_DPAD_RIGHT)) // check for cursor right
+        {
+            if (import_data.confirm.cursor < 1)
+            {
+                import_data.confirm.cursor++;
+                SFX_PlayCommon(2);
+            }
+        }
+        else if (down & (HSD_BUTTON_LEFT | HSD_BUTTON_DPAD_LEFT)) // check for cursor down
+        {
+            if (import_data.confirm.cursor > 0)
+            {
+                import_data.confirm.cursor--;
+                SFX_PlayCommon(2);
+            }
+        }
+
+        // highlight cursor
+        int cursor = import_data.confirm.cursor;
+        for (int i = 0; i < 2; i++)
+        {
+            Text_SetColor(import_data.confirm.text, i + 1, &text_white);
+        }
+        Text_SetColor(import_data.confirm.text, cursor + 1, &text_gold);
+
+        // check for back
+        if (down & HSD_BUTTON_B)
+        {
+        RETURN_TO_FILESEL:
+            Menu_Confirm_Exit(menu_gobj);
+            SFX_PlayCommon(0);
+            import_data.menu_state = IMP_SELFILE;
+        }
+
+        // check for confirm
+        else if (down & HSD_BUTTON_A)
+        {
+
+            if (cursor == 0)
+            {
+                SFX_PlayCommon(1);
+
+                // delete selected recording
+                int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + import_data.cursor;
+                Menu_SelFile_DeleteFile(menu_gobj, this_file_index);
+
+                // close dialog
+                Menu_Confirm_Exit(menu_gobj);
+
+                // reload selfile
+                Menu_SelFile_Exit(menu_gobj); // close select file
+                Menu_SelFile_Init(menu_gobj); // open select file
+            }
+            else
+                goto RETURN_TO_FILESEL;
         }
         break;
     }

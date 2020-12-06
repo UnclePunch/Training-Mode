@@ -660,6 +660,7 @@ typedef enum ImportConfirmKind
     CFRM_LOAD,
     CFRM_OLD,
     CFRM_NEW,
+    CFRM_DEL,
     CFRM_ERR,
 };
 typedef struct FileInfo
