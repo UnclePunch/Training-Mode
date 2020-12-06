@@ -1229,7 +1229,14 @@ void EventInit(int page, int eventID, MatchInit *matchData)
     {
         cpuKind = preload->fighters[1].kind;
         cpuCostume = preload->fighters[1].costume;
-    }
+
+        // change zelda to sheik
+        if (cpuKind == 18)
+        {
+            cpuKind = 19;
+            preload->fighters[1].kind = cpuKind;
+        }
+        }
     // If isChooseCPU is false, copy the CPU from event data
     else
     {
