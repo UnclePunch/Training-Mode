@@ -42,6 +42,9 @@ void OnCSSLoad(ArchiveInfo *archive)
         import_data.file_info[i].file_name = calloc(CARD_FILENAME_MAX);
     }
 
+    // alloc file header array
+    import_data.header = calloc(IMPORT_FILESPERPAGE * sizeof(ExportHeader));
+
     // alloc image (needs to be 32 byte aligned)
     import_data.image = calloc(GXGetTexBufferSize(RESIZE_WIDTH, RESIZE_HEIGHT, 4, 0, 0)); // allocate 128 entries
 
@@ -279,7 +282,6 @@ void Menu_SelCard_Think(GOBJ *menu_gobj)
         u8 is_inserted;
 
         s32 memSize, sectorSize;
-        bp();
         if (CARDProbeEx(i, &memSize, &sectorSize) == CARD_RESULT_READY)
         {
             // if it was just inserted, get info
@@ -681,7 +683,7 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
 
         // update file info text from header data
         int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + cursor;
-        ExportHeader *header = &import_data.file_info[this_file_index].rec_header;
+        ExportHeader *header = &import_data.header[cursor];
 
         // update file info text
         Text_SetText(import_data.fileinfo_text, 0, "Stage: %s", stage_names[header->metadata.stage_internal]);
@@ -708,6 +710,7 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
             SFX_PlayCommon(0);
         }
 
+        // check to delete
         else if (down & HSD_BUTTON_X)
         {
             Menu_Confirm_Init(menu_gobj, CFRM_DEL);
@@ -717,8 +720,8 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
         // check for select
         else if (down & HSD_BUTTON_A)
         {
-            int kind;                                                                      // init confirm kind
-            int vers = import_data.file_info[this_file_index].rec_header.metadata.version; // get version number
+            int kind;                                               // init confirm kind
+            int vers = import_data.header[cursor].metadata.version; // get version number
 
             // check if version is compatible with this release
             if (vers == REC_VERS)
@@ -862,7 +865,7 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
                                         else
                                         {
                                             // save header
-                                            memcpy(&import_data.file_info[this_file_index].rec_header, header, sizeof(ExportHeader));
+                                            memcpy(&import_data.header[i], header, sizeof(ExportHeader));
 
                                             // print user file name
                                             Text_SetText(import_data.filename_text, i, header->metadata.filename);
@@ -1168,7 +1171,8 @@ void Menu_Confirm_Think(GOBJ *menu_gobj)
                 // get variables and junk
                 VSMinorData *css_minorscene = *stc_css_minorscene;
                 int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + import_data.cursor;
-                ExportHeader *header = &import_data.file_info[this_file_index].rec_header;
+                bp();
+                ExportHeader *header = &import_data.header[import_data.cursor];
                 Preload *preload = Preload_GetTable();
 
                 // get match data

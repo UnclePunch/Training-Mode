@@ -665,10 +665,9 @@ typedef enum ImportConfirmKind
 };
 typedef struct FileInfo
 {
-    char **file_name;        // pointer to file name array
-    int file_size;           // number of files on card
-    int file_no;             // index of this file on the card
-    ExportHeader rec_header; // recording header
+    char **file_name; // pointer to file name array
+    int file_size;    // number of files on card
+    int file_no;      // index of this file on the card
 } FileInfo;
 typedef struct ImportData
 {
@@ -692,6 +691,7 @@ typedef struct ImportData
     Text *fileinfo_text;
     int file_num;                         // number of files on card
     FileInfo *file_info;                  // pointer to file info array
+    ExportHeader *header;                 // pointer to header array for the files on the current page
     RGB565 *image;                        // pointer to file info array
     void *file_data[IMPORT_FILESPERPAGE]; // pointer to each files data
     u8 page;                              // file page
