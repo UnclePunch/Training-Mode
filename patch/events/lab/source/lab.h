@@ -19,6 +19,12 @@
 
 // recording
 #define REC_VERS 1
+/*
+Recording Version History:
+v0 = 3.0 Alpha 1-3.
+v1 = 3.0 Alpha 4. First version with importing UI. Added filename and match settings to metadata, menu settings and adjusted the playerblock and grab struct for the fighters.
+v2 = not released
+*/
 
 #define GXPRI_RECJOINT 80
 #define REC_GXLINK 18
@@ -689,13 +695,11 @@ typedef struct ImportData
     Text *option_text;
     Text *filename_text;
     Text *fileinfo_text;
-    int file_num;                         // number of files on card
-    FileInfo *file_info;                  // pointer to file info array
-    ExportHeader *header;                 // pointer to header array for the files on the current page
-    RGB565 *image;                        // pointer to file info array
-    void *file_data[IMPORT_FILESPERPAGE]; // pointer to each files data
-    u8 page;                              // file page
-    u8 files_on_page;                     // number of files on the current page
+    int file_num;         // number of files on card
+    FileInfo *file_info;  // pointer to file info array
+    ExportHeader *header; // pointer to header array for the files on the current page
+    u8 page;              // file page
+    u8 files_on_page;     // number of files on the current page
     struct
     {
         GOBJ *gobj; // confirm gobj
@@ -704,6 +708,16 @@ typedef struct ImportData
         u8 cursor;
         Text *text;
     } confirm;
+    struct
+    {
+        _HSD_ImageDesc *orig_image;           // pointer to jobj's original image desc
+        RGB565 *image;                        // pointer to 32 byte aligned image allocation (one being displayed)
+        int loaded_num;                       // number of completed snaps loaded
+        u8 load_inprogress;                   // bool for if a file is being loaded
+        u8 file_loading;                      // page local index of the file being loaded
+        void *file_data[IMPORT_FILESPERPAGE]; // pointer to each files data
+        u8 is_loaded[IMPORT_FILESPERPAGE];    // bools for which snap has been loaded
+    } snap;
 } ImportData;
 void Button_Create();
 void Button_Think(GOBJ *button_gobj);

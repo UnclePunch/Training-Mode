@@ -46,7 +46,7 @@ void OnCSSLoad(ArchiveInfo *archive)
     import_data.header = calloc(IMPORT_FILESPERPAGE * sizeof(ExportHeader));
 
     // alloc image (needs to be 32 byte aligned)
-    import_data.image = calloc(GXGetTexBufferSize(RESIZE_WIDTH, RESIZE_HEIGHT, 4, 0, 0)); // allocate 128 entries
+    import_data.snap.image = calloc(GXGetTexBufferSize(RESIZE_WIDTH, RESIZE_HEIGHT, 4, 0, 0)); // allocate 128 entries
 
     // HUGE HACK ALERT
     EventDesc *(*GetEventDesc)(int page, int event) = RTOC_PTR(TM_DATA + (24 * 4));
@@ -163,6 +163,9 @@ GOBJ *Menu_Create()
     desc_text->scale.Y = (menu_jobj->scale.Y * 0.01) * 5;
     Text_AddSubtext(desc_text, 0, 0, "-");
     import_data.desc_text = desc_text;
+
+    // save original snapshot imagedesc pointer
+    import_data.snap.orig_image = import_data.screenshot_jobj->dobj->mobj->tobj->imagedesc;
 
     // disable inputs for CSS
     *stc_css_exitkind = 5;
@@ -532,6 +535,9 @@ void Menu_SelFile_Init(GOBJ *menu_gobj)
     else
         import_data.scroll_bot->trans.Y = (-16.2 / (page_total + 1));
 
+    // display orig texture
+    import_data.screenshot_jobj->dobj->mobj->tobj->imagedesc = import_data.snap.orig_image;
+
     // load in first page recordsings
     int page_result = Menu_SelFile_LoadPage(menu_gobj, 0);
     if (page_result == -1)
@@ -672,7 +678,7 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
 
         // update file info text
         /*
-    u8 *transfer_buf = import_data.file_data[cursor];
+    u8 *transfer_buf = import_data.snap.file_data[cursor];
     ExportHeader *header = transfer_buf;
     u8 *compressed_recording = transfer_buf + header->lookup.ofst_recording;
     Text_SetText(import_data.fileinfo_text, 0, "Stage: %s", stage_names[header->metadata.stage_internal]);
@@ -692,22 +698,36 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
         Text_SetText(import_data.fileinfo_text, 3, "Date: %d/%d/%d", header->metadata.month, header->metadata.day, header->metadata.year);
         Text_SetText(import_data.fileinfo_text, 4, "Time: %d:%02d:%02d", header->metadata.hour, header->metadata.minute, header->metadata.second);
 
+        // async load snapshots
+        Menu_SelFile_LoadAsyncThink(menu_gobj);
+
         // update file image
-        /*
-    RGB565 *img = transfer_buf + header->lookup.ofst_screenshot;
-    int img_size = GXGetTexBufferSize(header->metadata.image_width, header->metadata.image_height, 4, 0, 0);
-    memcpy(import_data.image, img, img_size);                               // copu image to 32 byte aligned buffer
-    image_desc.img_ptr = import_data.image;                                 // store pointer to resized image
-    import_data.screenshot_jobj->dobj->mobj->tobj->imagedesc = &image_desc; // replace pointer to imagedesc
-    */
+        // if this file is loaded
+        if (import_data.snap.is_loaded[cursor] == 1)
+        {
+            // copy screenshot data to buffer
+            void *file_data = import_data.snap.file_data[cursor];
+            RGB565 *img = file_data + header->lookup.ofst_screenshot;
+            int img_size = GXGetTexBufferSize(header->metadata.image_width, header->metadata.image_height, 4, 0, 0);
+            memcpy(import_data.snap.image, img, img_size); // copu image to 32 byte aligned buffer
+
+            // display this texture
+            image_desc.img_ptr = import_data.snap.image;                            // store pointer to resized image
+            import_data.screenshot_jobj->dobj->mobj->tobj->imagedesc = &image_desc; // replace pointer to imagedesc
+        }
+        else
+        {
+            // display orig texture
+            import_data.screenshot_jobj->dobj->mobj->tobj->imagedesc = import_data.snap.orig_image;
+        }
 
         // check for exit
         if (down & HSD_BUTTON_B)
         {
         EXIT:
+            SFX_PlayCommon(0);
             Menu_SelFile_Exit(menu_gobj);
             Menu_SelCard_Init(menu_gobj);
-            SFX_PlayCommon(0);
         }
 
         // check to delete
@@ -736,7 +756,6 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
             SFX_PlayCommon(1);
         }
     }
-
 EXIT_FUNC:
     return;
 }
@@ -751,14 +770,30 @@ void Menu_SelFile_Exit(GOBJ *menu_gobj)
     Text_Destroy(import_data.fileinfo_text);
     import_data.fileinfo_text = 0;
 
+    // cancel card read if in progress
+    int memcard_status = Memcard_CheckStatus();
+    if (memcard_status == 11)
+    {
+        // cancel read
+        stc_memcard_work->card_file_info.length = -1;
+
+        // wait for callback to fire
+        // i do this because the callback will always set some
+        // variable in the workarea regardless of its cancelled
+        while (memcard_status == 11)
+        {
+            memcard_status = Memcard_CheckStatus();
+        }
+    }
+
     // free prev buffers
     for (int i = 0; i < IMPORT_FILESPERPAGE; i++)
     {
         // if exists
-        if (import_data.file_data[i] != 0)
+        if (import_data.snap.file_data[i] != 0)
         {
-            HSD_Free(import_data.file_data[i]);
-            import_data.file_data[i] = 0;
+            HSD_Free(import_data.snap.file_data[i]);
+            import_data.snap.file_data[i] = 0;
         }
     }
 
@@ -785,9 +820,29 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
         if (files_on_page > 0)
         {
 
+            // cancel card read if in progress
+            int memcard_status = Memcard_CheckStatus();
+            if (memcard_status == 11)
+            {
+                // cancel read
+                stc_memcard_work->card_file_info.length = -1;
+
+                // wait for callback to fire
+                while (memcard_status == 11)
+                {
+                    memcard_status = Memcard_CheckStatus();
+                }
+            }
+
             void *buffer = calloc(CARD_READ_SIZE);
             import_data.files_on_page = files_on_page; // update amount of files on page
-            result = 1;                                // set page as toggled
+            import_data.snap.loaded_num = 0;
+            import_data.snap.load_inprogress = 0;
+            for (int i = 0; i < IMPORT_FILESPERPAGE; i++)
+            {
+                import_data.snap.is_loaded[i] = 0; // init files as unloaded
+            }
+            result = 1; // set page as toggled
             int slot = import_data.memcard_slot;
 
             // update scroll bar position
@@ -798,10 +853,10 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
             for (int i = 0; i < IMPORT_FILESPERPAGE; i++)
             {
                 // if exists
-                if (import_data.file_data[i] != 0)
+                if (import_data.snap.file_data[i] != 0)
                 {
-                    HSD_Free(import_data.file_data[i]);
-                    import_data.file_data[i] = 0;
+                    HSD_Free(import_data.snap.file_data[i]);
+                    import_data.snap.file_data[i] = 0;
                 }
             }
 
@@ -878,14 +933,14 @@ int Menu_SelFile_LoadPage(GOBJ *menu_gobj, int page)
 
                             /*
                 // setup load
-                MemcardSave memcard_save;
+                MemcardSave stc_memcard_save;
                 void *buffer = HSD_MemAlloc(file_size); // alloc buffer for this save
-                import_data.file_data[i] = buffer;      // save buffer pointer
-                memcard_save.data = buffer;             // store pointer to buffer for memcard load operation
-                memcard_save.x4 = 3;
-                memcard_save.size = file_size;
-                memcard_save.xc = -1;
-                Memcard_LoadSnapshot(import_data.memcard_slot, file_name, &memcard_save, &stc_memcard_info->file_name, 0, 0, 0);
+                import_data.snap.file_data[i] = buffer;      // save buffer pointer
+                stc_memcard_save.data = buffer;             // store pointer to buffer for memcard load operation
+                stc_memcard_save.x4 = 3;
+                stc_memcard_save.size = file_size;
+                stc_memcard_save.xc = -1;
+                Memcard_LoadSnapshot(import_data.memcard_slot, file_name, &stc_memcard_save, &stc_memcard_info->file_name, 0, 0, 0);
 
                 // wait to load
                 int memcard_status = Memcard_CheckStatus();
@@ -1041,6 +1096,94 @@ int Menu_SelFile_DeleteFile(GOBJ *menu_gobj, int file_index)
 
     return result;
 }
+void Menu_SelFile_LoadAsyncThink(GOBJ *menu_gobj)
+{
+
+    // is there a load in progress?
+    if (import_data.snap.load_inprogress == 1)
+    {
+        // is it done?
+        if (Memcard_CheckStatus() != 11)
+        {
+            // increment number of loaded files
+            import_data.snap.loaded_num++;
+
+            // no more load in progress
+            import_data.snap.load_inprogress = 0;
+
+            // set as loaded
+            import_data.snap.is_loaded[import_data.snap.file_loading] = 1;
+        }
+    }
+
+    // check if any pending files to load
+    if ((import_data.snap.load_inprogress == 0) && // checking inprogress again in case the code above set it to 0 this tick
+        (import_data.snap.loaded_num < import_data.files_on_page))
+    {
+
+        // find nearest unloaded file
+        int file_to_load;
+        int cursor = import_data.cursor;
+
+        // check if cursor is loaded
+        if (import_data.snap.is_loaded[cursor] == 0)
+            file_to_load = cursor;
+        // find nearest unloaded file
+        else
+        {
+            // search for unloaded snap nearest to the cursor
+            int search_up = cursor;
+            int search_down = cursor;
+            for (int i = 0; i < (IMPORT_FILESPERPAGE - 1); i++)
+            {
+                search_up--;
+                search_down++;
+
+                // if still on page
+                if (search_up >= 0)
+                {
+                    if (import_data.snap.is_loaded[search_up] == 0)
+                    {
+                        // load this next
+                        file_to_load = search_up;
+                        break;
+                    }
+                }
+
+                // if still on page
+                if (search_down < IMPORT_FILESPERPAGE)
+                {
+                    if (import_data.snap.is_loaded[search_down] == 0)
+                    {
+                        // load this next
+                        file_to_load = search_down;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // get filename and size for this file
+        int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + file_to_load; // page file index -> TMREC file index
+        int file_size = import_data.file_info[this_file_index].file_size;
+        char *file_name = import_data.file_info[this_file_index].file_name;
+
+        // load next
+        static MemcardSave stc_memcard_save;
+        void *buffer = HSD_MemAlloc(file_size);            // alloc buffer for this save
+        import_data.snap.file_data[file_to_load] = buffer; // save buffer pointer
+        stc_memcard_save.data = buffer;                    // store pointer to buffer for memcard load operation
+        stc_memcard_save.x4 = 3;
+        stc_memcard_save.size = file_size;
+        stc_memcard_save.xc = -1;
+        Memcard_LoadSnapshot(import_data.memcard_slot, file_name, &stc_memcard_save, &stc_memcard_info->file_name, 0, 0, 0);
+
+        import_data.snap.load_inprogress = 1;
+        import_data.snap.file_loading = file_to_load;
+    }
+
+    return;
+}
 // Confirm Dialog
 void Menu_Confirm_Init(GOBJ *menu_gobj, int kind)
 {
@@ -1103,8 +1246,8 @@ void Menu_Confirm_Init(GOBJ *menu_gobj, int kind)
     {
         Text_AddSubtext(text, 0, -70, "Corrupted recording(s) detected.");
         Text_AddSubtext(text, 0, -35, "Would you like to delete them?");
-        Text_AddSubtext(text, -65, 40, "No");
-        Text_AddSubtext(text, 65, 40, "Yes");
+        Text_AddSubtext(text, -65, 40, "Yes");
+        Text_AddSubtext(text, 65, 40, "No");
         break;
     }
     }
@@ -1171,7 +1314,6 @@ void Menu_Confirm_Think(GOBJ *menu_gobj)
                 // get variables and junk
                 VSMinorData *css_minorscene = *stc_css_minorscene;
                 int this_file_index = (import_data.page * IMPORT_FILESPERPAGE) + import_data.cursor;
-                bp();
                 ExportHeader *header = &import_data.header[import_data.cursor];
                 Preload *preload = Preload_GetTable();
 
@@ -1359,7 +1501,7 @@ void Menu_Confirm_Think(GOBJ *menu_gobj)
         else if (down & HSD_BUTTON_A)
         {
 
-            if (cursor == 1)
+            if (cursor == 0)
             {
                 SFX_PlayCommon(1);
 

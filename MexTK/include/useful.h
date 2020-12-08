@@ -11,8 +11,9 @@
 // OS Macros
 #define OSRoundUp32B(x) (((u32)(x) + 32 - 1) & ~(32 - 1))
 #define OSRoundDown32B(x) (((u32)(x)) & ~(32 - 1))
-#define OSTicksToMilliseconds(ticks) \
-    ((ticks) / (os_info->bus_clock / 1000))
+#define OSRoundUp512B(x) (((u32)(x) + 512 - 1) & ~(512 - 1)) // using this for card reads
+#define OSRoundDown512B(x) (((u32)(x)) & ~(512 - 1))         // using this for card reads
+#define OSTicksToMilliseconds(ticks) ((ticks) / (os_info->bus_clock / 1000))
 #define BitCheck(num, bit) !!((num) & (1 << (bit))) // returns 0 or 1
 #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #define assert(msg) __assert(__FILENAME__, __LINE__, msg)

@@ -515,7 +515,14 @@ typedef struct FtStateData
         int x1a64;           // 0x1a64
         u16 x1a68;           // 0x1a68
         u16 vuln;            // 0x1a6a
-    } grab;
+        int x1a6c;           // 0x1a6c
+        int x1a70;           // 0x1a70
+        int x1a74;           // 0x1a74
+        int x1a78;           // 0x1a78
+        int x1a7c;           // 0x1a7c
+        int x1a80;           // 0x1a80
+        int x1a84;           // 0x1a84
+    } grab;                  //
     struct                   // 0x1968
     {                        //
         char jumps_used;     // 0x1968
