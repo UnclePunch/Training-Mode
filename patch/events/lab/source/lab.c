@@ -2479,6 +2479,14 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     // noact
     cpu_data->cpu.ai = 15;
 
+    // if first throw frame, advance hitnum
+    int is_thrown = CPU_IsThrown(cpu);
+    if ((is_thrown == 1) && (eventData->cpu_isthrown == 0))
+    {
+        eventData->cpu_hitnum++;
+    }
+    eventData->cpu_isthrown = is_thrown;
+
     // ALWAYS CHECK FOR X AND OVERRIDE STATE
 
     // check if damaged
@@ -2495,7 +2503,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         eventData->cpu_state = CPUSTATE_GRABBED;
     }
     // check if being thrown
-    if (CPU_IsThrown(cpu) == 1)
+    if (is_thrown == 1)
     {
         eventData->cpu_state = CPUSTATE_TDI;
     }
@@ -2527,8 +2535,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         goto CPUSTATE_ENTERSTART;
 
     // run CPU state logic
-    static char **CPUStates[] = {"CPUSTATE_START", "CPUSTATE_SDI", "CPUSTATE_TDI", "CPUSTATE_TECH", "CPUSTATE_GETUP", "CPUSTATE_COUNTER", "CPUSTATE_RECOVER"};
-    //OSReport(CPUStates[eventData->cpu_state]);
     switch (eventData->cpu_state)
     {
     // Initial State, hasn't been hit yet
@@ -2648,15 +2654,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     CPULOGIC_SDI:
     {
 
-        // update move instance
-        if (eventData->cpu_lasthit != cpu_data->dmg.instancehitby)
-        {
-            eventData->cpu_sincehit = 0;
-            eventData->cpu_hitnum++;
-            eventData->cpu_lasthit = cpu_data->dmg.instancehitby;
-            //OSReport("hit count %d/%d", eventData->cpu_hitnum, LabOptions_CPU[OPTCPU_CTRHITS].option_val);
-        }
-
         // if no more hitlag, enter tech state
         if (cpu_data->flags.hitlag == 0)
         {
@@ -2671,6 +2668,15 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             goto CPULOGIC_TDI;
         }
 
+        // update move instance
+        if (eventData->cpu_lasthit != cpu_data->dmg.instancehitby)
+        {
+            eventData->cpu_sincehit = 0;
+            eventData->cpu_hitnum++;
+            eventData->cpu_lasthit = cpu_data->dmg.instancehitby;
+            //OSReport("hit count %d/%d", eventData->cpu_hitnum, LabOptions_CPU[OPTCPU_CTRHITS].option_val);
+        }
+
         // perform SDI behavior
 
         break;
@@ -2679,8 +2685,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     case (CPUSTATE_TDI):
     CPULOGIC_TDI:
     {
-
-        int is_thrown = CPU_IsThrown(cpu);
 
         // if no more hitlag and not being thrown, enter tech state. this might never be hit, just being safe
         if ((cpu_data->flags.hitlag == 0) && (is_thrown == 0))
@@ -2774,21 +2778,23 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             int cpu_hitnum = eventData->cpu_hitnum;
 
             // ensure we have a DI input for this hitnum
-            if (eventData->tdi_val_num >= cpu_hitnum)
+            if (cpu_hitnum <= eventData->tdi_val_num)
             {
 
+                // get the stick values for this hit num
                 cpu_hitnum--;
 
-                // get the stick values for this hit num
                 s8 lstickX = eventData->tdi_vals[cpu_hitnum][0][0];
                 s8 lstickY = eventData->tdi_vals[cpu_hitnum][0][1];
                 s8 cstickX = eventData->tdi_vals[cpu_hitnum][1][0];
                 s8 cstickY = eventData->tdi_vals[cpu_hitnum][1][1];
 
-                cpu_data->cpu.lstickX = ((float)lstickX / 80) / (0.0078125);
-                cpu_data->cpu.lstickY = ((float)lstickY / 80) / (0.0078125);
-                cpu_data->cpu.cstickX = ((float)cstickX / 80) / (0.0078125);
-                cpu_data->cpu.cstickY = ((float)cstickY / 80) / (0.0078125);
+                cpu_data->cpu.lstickX = ((float)lstickX / 80) * 127.0;
+                cpu_data->cpu.lstickY = ((float)lstickY / 80) * 127.0;
+                cpu_data->cpu.cstickX = ((float)cstickX / 80) * 127.0;
+                cpu_data->cpu.cstickY = ((float)cstickY / 80) * 127.0;
+
+                // increment
             }
 
             break;
@@ -3062,6 +3068,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         break;
     }
     }
+
+    // update isthrown
+    eventData->cpu_isthrown = is_thrown;
 
     // update cpu_hitshield
     if (eventData->cpu_hitshield == 0)
