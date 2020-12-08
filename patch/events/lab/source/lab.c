@@ -1472,8 +1472,10 @@ static Arch_LabData *stc_lab_data;
 static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d_%02X%02X%02X";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static DevText *stc_devtext;
-static u8 stc_hmn_controller; // making this static so importing recording doesnt overwrite
-static u8 stc_cpu_controller; // making this static so importing recording doesnt overwrite
+static u8 stc_hmn_controller;             // making this static so importing recording doesnt overwrite
+static u8 stc_cpu_controller;             // making this static so importing recording doesnt overwrite
+static u8 stc_tdi_val_num;                // number of custom tdi values set
+static s8 stc_tdi_vals[TDI_HITNUM][2][2]; // contains the custom tdi values
 
 // Static Export Variables
 static RecordingSave *stc_rec_save;
@@ -2778,16 +2780,16 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             int cpu_hitnum = eventData->cpu_hitnum;
 
             // ensure we have a DI input for this hitnum
-            if (cpu_hitnum <= eventData->tdi_val_num)
+            if (cpu_hitnum <= stc_tdi_val_num)
             {
 
                 // get the stick values for this hit num
                 cpu_hitnum--;
 
-                s8 lstickX = eventData->tdi_vals[cpu_hitnum][0][0];
-                s8 lstickY = eventData->tdi_vals[cpu_hitnum][0][1];
-                s8 cstickX = eventData->tdi_vals[cpu_hitnum][1][0];
-                s8 cstickY = eventData->tdi_vals[cpu_hitnum][1][1];
+                s8 lstickX = stc_tdi_vals[cpu_hitnum][0][0];
+                s8 lstickY = stc_tdi_vals[cpu_hitnum][0][1];
+                s8 cstickX = stc_tdi_vals[cpu_hitnum][1][0];
+                s8 cstickY = stc_tdi_vals[cpu_hitnum][1][1];
 
                 cpu_data->cpu.lstickX = ((float)lstickX / 80) * 127.0;
                 cpu_data->cpu.lstickY = ((float)lstickY / 80) * 127.0;
@@ -3839,13 +3841,13 @@ void CustomTDI_Update(GOBJ *gobj)
     // if press A, save stick
     if ((inputs & HSD_BUTTON_A) != 0)
     {
-        if (event_data->tdi_val_num < TDI_HITNUM)
+        if (stc_tdi_val_num < TDI_HITNUM)
         {
-            event_data->tdi_vals[event_data->tdi_val_num][0][0] = (pad->fstickX * 80);
-            event_data->tdi_vals[event_data->tdi_val_num][0][1] = (pad->fstickY * 80);
-            event_data->tdi_vals[event_data->tdi_val_num][1][0] = (pad->fsubstickX * 80);
-            event_data->tdi_vals[event_data->tdi_val_num][1][1] = (pad->fsubstickY * 80);
-            event_data->tdi_val_num++;
+            stc_tdi_vals[stc_tdi_val_num][0][0] = (pad->fstickX * 80);
+            stc_tdi_vals[stc_tdi_val_num][0][1] = (pad->fstickY * 80);
+            stc_tdi_vals[stc_tdi_val_num][1][0] = (pad->fsubstickX * 80);
+            stc_tdi_vals[stc_tdi_val_num][1][1] = (pad->fsubstickY * 80);
+            stc_tdi_val_num++;
             SFX_PlayCommon(1);
         }
     }
@@ -3853,9 +3855,9 @@ void CustomTDI_Update(GOBJ *gobj)
     // if press X, go back a hit
     if ((inputs & HSD_BUTTON_X) != 0)
     {
-        if (event_data->tdi_val_num > 0)
+        if (stc_tdi_val_num > 0)
         {
-            event_data->tdi_val_num--;
+            stc_tdi_val_num--;
             SFX_PlayCommon(0);
         }
     }
@@ -3878,7 +3880,7 @@ void CustomTDI_Update(GOBJ *gobj)
 
     // Update curr stick coordinates
     Text *text_curr = tdi_data->text_curr;
-    Text_SetText(text_curr, 0, "Hit: %d", event_data->tdi_val_num + 1);
+    Text_SetText(text_curr, 0, "Hit: %d", stc_tdi_val_num + 1);
     Text_SetText(text_curr, 1, "X: %+.4f", pad->fstickX);
     Text_SetText(text_curr, 2, "Y: %+.4f", pad->fstickY);
     Text_SetText(text_curr, 3, "X: %+.4f", pad->fsubstickX);
@@ -3890,21 +3892,21 @@ void CustomTDI_Update(GOBJ *gobj)
         JOBJ *lstick_prev = tdi_data->stick_prev[i][0];
         JOBJ *cstick_prev = tdi_data->stick_prev[i][1];
         int this_hit = i;
-        if (event_data->tdi_val_num > TDI_DISPNUM)
-            this_hit = (event_data->tdi_val_num - TDI_DISPNUM + i);
+        if (stc_tdi_val_num > TDI_DISPNUM)
+            this_hit = (stc_tdi_val_num - TDI_DISPNUM + i);
 
         // show stick
-        if (i < event_data->tdi_val_num)
+        if (i < stc_tdi_val_num)
         {
             // remove hidden flag
             JOBJ_ClearFlags(lstick_prev, JOBJ_HIDDEN);
             JOBJ_ClearFlags(cstick_prev, JOBJ_HIDDEN);
 
             // update rotation
-            lstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][0][0]) * 1 / 80) * 0.75;
-            lstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][0][1]) * 1 / 80) * 0.75 * -1;
-            cstick_prev->rot.Y = ((float)(event_data->tdi_vals[this_hit][1][0]) * 1 / 80) * 0.75;
-            cstick_prev->rot.X = ((float)(event_data->tdi_vals[this_hit][1][1]) * 1 / 80) * 0.75 * -1;
+            lstick_prev->rot.Y = ((float)(stc_tdi_vals[this_hit][0][0]) * 1 / 80) * 0.75;
+            lstick_prev->rot.X = ((float)(stc_tdi_vals[this_hit][0][1]) * 1 / 80) * 0.75 * -1;
+            cstick_prev->rot.Y = ((float)(stc_tdi_vals[this_hit][1][0]) * 1 / 80) * 0.75;
+            cstick_prev->rot.X = ((float)(stc_tdi_vals[this_hit][1][1]) * 1 / 80) * 0.75 * -1;
 
             // update text
             Text_SetText(text_curr, i + 5, "Hit %d", this_hit + 1);
@@ -3933,7 +3935,7 @@ void CustomTDI_Destroy(GOBJ *gobj)
     LCancelData *event_data = event_vars->event_gobj->userdata;
 
     // set TDI to custom
-    if (event_data->tdi_val_num > 0)
+    if (stc_tdi_val_num > 0)
         LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_CUSTOM;
     else
         LabOptions_CPU[OPTCPU_TDI].option_val = CPUTDI_RANDOM;

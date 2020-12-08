@@ -192,9 +192,7 @@ typedef struct LCancelData
     u8 cpu_isactionable;    // flag that indicates if a cpu has become actionable
     u8 cpu_groundstate;     // indicates if the player was touching ground upon being actionable
     s32 timer;
-    u8 cpu_isthrown;               // bool for if the cpu is being thrown
-    u8 tdi_val_num;                // number of custom tdi values set
-    s8 tdi_vals[TDI_HITNUM][2][2]; // contains the custom tdi values
+    u8 cpu_isthrown; // bool for if the cpu is being thrown
     GOBJ *rec_gobj;
     u8 hmn_controller;
     u8 cpu_controller;
