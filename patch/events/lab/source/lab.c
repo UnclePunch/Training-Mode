@@ -697,6 +697,51 @@ static CPUAction Lab_CPUActionDTilt[] = {
     },
     -1,
 };
+static CPUAction Lab_CPUActionUSmash[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        127,                   // c stick Y value
+        0,                     // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction Lab_CPUActionDSmash[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        0,                     // c stick X value
+        -127,                  // c stick Y value
+        0,                     // button to input
+        1,                     // is the last input
+        0,                     // specify stick direction
+    },
+    -1,
+};
+static CPUAction Lab_CPUActionFSmash[] = {
+    {
+        ASID_ACTIONABLEGROUND, // state to perform this action. -1 for last
+        0,                     // first possible frame to perform this action
+        0,                     // last possible frame to perfrom this action
+        0,                     // left stick X value
+        0,                     // left stick Y value
+        127,                   // c stick X value
+        0,                     // c stick Y value
+        0,                     // button to input
+        1,                     // is the last input
+        1,                     // specify stick direction
+    },
+    -1,
+};
 
 static CPUAction *Lab_CPUActions[] = {
     // none 0
@@ -744,6 +789,9 @@ static CPUAction *Lab_CPUActions[] = {
     &Lab_CPUActionFTilt,
     &Lab_CPUActionUTilt,
     &Lab_CPUActionDTilt,
+    &Lab_CPUActionUSmash,
+    &Lab_CPUActionDSmash,
+    &Lab_CPUActionFSmash,
 };
 enum CPU_ACTIONS
 {
@@ -771,8 +819,11 @@ enum CPU_ACTIONS
     CPUACT_FTILT,
     CPUACT_UTILT,
     CPUACT_DTILT,
+    CPUACT_USMASH,
+    CPUACT_DSMASH,
+    CPUACT_FSMASH,
 };
-static u8 GrAcLookup[] = {CPUACT_NONE, CPUACT_SPOTDODGE, CPUACT_SHIELD, CPUACT_GRAB, CPUACT_UPB, CPUACT_DOWNB, CPUACT_ROLLAWAY, CPUACT_ROLLTOWARDS, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_JAB, CPUACT_FTILT, CPUACT_UTILT, CPUACT_DTILT, CPUACT_SHORTHOP, CPUACT_FULLHOP};
+static u8 GrAcLookup[] = {CPUACT_NONE, CPUACT_SPOTDODGE, CPUACT_SHIELD, CPUACT_GRAB, CPUACT_UPB, CPUACT_DOWNB, CPUACT_USMASH, CPUACT_DSMASH, CPUACT_FSMASH, CPUACT_ROLLAWAY, CPUACT_ROLLTOWARDS, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_JAB, CPUACT_FTILT, CPUACT_UTILT, CPUACT_DTILT, CPUACT_SHORTHOP, CPUACT_FULLHOP};
 static u8 AirAcLookup[] = {CPUACT_NONE, CPUACT_AIRDODGE, CPUACT_JUMPAWAY, CPUACT_JUMPTOWARDS, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_BAIR};
 static u8 ShieldAcLookup[] = {CPUACT_NONE, CPUACT_GRAB, CPUACT_SHORTHOP, CPUACT_FULLHOP, CPUACT_SPOTDODGE, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR};
 
@@ -1109,7 +1160,7 @@ static char **LabValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "C
 static char **LabValues_SDI[] = {"Random", "None"};
 static char **LabValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
 static char **LabValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
-static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jab", "Forward Tilt", "Up Tilt", "Down Tilt", "Short Hop", "Full Hop"};
+static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Up Smash", "Down Smash", "Forward Smash", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jab", "Forward Tilt", "Up Tilt", "Down Tilt", "Short Hop", "Full Hop"};
 static char **LabValues_CounterAir[] = {"None", "Airdodge", "Jump Away", "Jump Towards", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Tumble Fastfall", "Wiggle Fastfall"};
 static char **LabValues_CounterShield[] = {"None", "Grab", "Short Hop", "Full Hop", "Spotdodge", "Up B", "Down B", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air"};
 static char **LabValues_GrabEscape[] = {"None", "Medium", "High", "Perfect"};
@@ -2367,12 +2418,14 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
                     {
                         dir = Fighter_GetOpponentDir(cpu_data, hmn_data);
                         lstickX *= dir;
+                        cstickX *= dir;
                         break;
                     }
                     case (STCKDIR_AWAY):
                     {
                         dir = Fighter_GetOpponentDir(cpu_data, hmn_data) * -1;
                         lstickX *= dir;
+                        cstickX *= dir;
                         break;
                     }
                     case (STCKDIR_FRONT):
