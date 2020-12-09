@@ -2701,7 +2701,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
             // if being thrown, get knockback info from attacker
             FighterData *attacker_data = cpu_data->grab.grab_attacker->userdata;
-            kb_angle = ((float)attacker_data->throw_hitbox[0].angle * M_1DEGREE) * (attacker_data->facing_direction * -1);
+            kb_angle = ((float)attacker_data->throw_hitbox[0].angle * M_1DEGREE) * (attacker_data->facing_direction);
         }
         else
         {
