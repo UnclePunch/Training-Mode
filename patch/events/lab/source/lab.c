@@ -1157,7 +1157,8 @@ static EventMenu LabMenu_InfoDisplay = {
 static char **LabValues_Shield[] = {"Off", "On Until Hit", "On"};
 static char **LabValues_CPUBehave[] = {"Stand", "Shield", "Crouch", "Jump"};
 static char **LabValues_TDI[] = {"Random", "Inwards", "Outwards", "Floorhug", "Custom", "None"};
-static char **LabValues_SDI[] = {"Random", "None"};
+static char **LabValues_SDIFreq[] = {"None", "Low", "Medium", "High"};
+static char **LabValues_SDIDir[] = {"Random", "Away", "Towards"};
 static char **LabValues_Tech[] = {"Random", "Neutral", "Away", "Towards", "None"};
 static char **LabValues_Getup[] = {"Random", "Stand", "Away", "Towards", "Attack"};
 static char **LabValues_CounterGround[] = {"None", "Spotdodge", "Shield", "Grab", "Up B", "Down B", "Up Smash", "Down Smash", "Forward Smash", "Roll Away", "Roll Towards", "Neutral Air", "Forward Air", "Down Air", "Back Air", "Up Air", "Jab", "Forward Tilt", "Up Tilt", "Down Tilt", "Short Hop", "Full Hop"};
@@ -1206,14 +1207,26 @@ static EventOption LabOptions_CPU[] = {
         .option_values = LabOptions_OffOn,                  // pointer to an array of strings
         .onOptionChange = Lab_ChangeCPUIntang,
     },
+    // SDI Freq
     {
-        .option_kind = OPTKIND_STRING,                                           // the type of option this is; menu, string list, integer list, etc
-        .value_num = sizeof(LabValues_SDI) / 4,                                  // number of values for this option
-        .option_val = 0,                                                         // value of this option
-        .menu = 0,                                                               // pointer to the menu that pressing A opens
-        .option_name = "Smash DI",                                               // pointer to a string
-        .desc = "Adjust how the CPU will alter their position\nduring hitstop.", // string describing what this option does
-        .option_values = LabValues_SDI,                                          // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                 // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_SDIFreq) / 4,                                    // number of values for this option
+        .option_val = 2,                                                               // value of this option
+        .menu = 0,                                                                     // pointer to the menu that pressing A opens
+        .option_name = "Smash DI Frequency",                                           // pointer to a string
+        .desc = "Adjust how often the CPU will alter their position\nduring hitstop.", // string describing what this option does
+        .option_values = LabValues_SDIFreq,                                            // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    // SDI Direction
+    {
+        .option_kind = OPTKIND_STRING,                                                               // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabValues_SDIDir) / 4,                                                   // number of values for this option
+        .option_val = 0,                                                                             // value of this option
+        .menu = 0,                                                                                   // pointer to the menu that pressing A opens
+        .option_name = "Smash DI Direction",                                                         // pointer to a string
+        .desc = "Adjust the direction in which the CPU will alter \ntheir position during hitstop.", // string describing what this option does
+        .option_values = LabValues_SDIDir,                                                           // pointer to an array of strings
         .onOptionChange = 0,
     },
     {
@@ -1476,6 +1489,7 @@ static u8 stc_hmn_controller;             // making this static so importing rec
 static u8 stc_cpu_controller;             // making this static so importing recording doesnt overwrite
 static u8 stc_tdi_val_num;                // number of custom tdi values set
 static s8 stc_tdi_vals[TDI_HITNUM][2][2]; // contains the custom tdi values
+static u8 stc_sdifreqs[] = {6, 4, 2};
 
 // Static Export Variables
 static RecordingSave *stc_rec_save;
@@ -2677,9 +2691,91 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             eventData->cpu_hitnum++;
             eventData->cpu_lasthit = cpu_data->dmg.instancehitby;
             //OSReport("hit count %d/%d", eventData->cpu_hitnum, LabOptions_CPU[OPTCPU_CTRHITS].option_val);
+
+            // decide random SDI direction for grounded cpu
+            if ((LabOptions_CPU[OPTCPU_SDIFREQ].option_val != SDIFREQ_NONE) && (LabOptions_CPU[OPTCPU_SDIDIR].option_val == SDIDIR_RANDOM))
+            {
+                eventData->cpu_sdidir = HSD_Randi(2);
+            }
+        }
+
+        // to-do: shield SDI
+        bp();
+        if ((cpu_data->state >= ASID_GUARDON) && (cpu_data->state <= ASID_GUARDREFLECT))
+        {
+            ;
         }
 
         // perform SDI behavior
+        else if (LabOptions_CPU[OPTCPU_SDIFREQ].option_val != SDIFREQ_NONE)
+        {
+
+            int chance = stc_sdifreqs[LabOptions_CPU[OPTCPU_SDIFREQ].option_val - 1];
+
+            // chance to SDI
+            if (HSD_Randi(chance) == 0)
+            {
+
+                float angle, magnitude;
+
+                switch (LabOptions_CPU[OPTCPU_SDIDIR].option_val)
+                {
+                case SDIDIR_RANDOM:
+                {
+                    // when grounded, only left right
+                    if (cpu_data->phys.air_state == 0)
+                    {
+
+                        magnitude = 1;
+
+                        // decide left or right
+                        if (eventData->cpu_sdidir == 0)
+                            angle = 0; // right
+                        else
+                            angle = M_PI; // left
+                    }
+                    // when airborne, any direction
+                    else
+                    {
+                        // random input
+                        angle = HSD_Randi(360) * M_1DEGREE;
+                        magnitude = 0.49 + (HSD_Randf() * 0.51);
+                    }
+
+                    break;
+                }
+                case SDIDIR_AWAY:
+                {
+                    // get angle from center bubble to hit collision
+                    angle = atan2(hmn_data->unk_hitbox.pos.Y - cpu_data->unk_hitbox.pos.Y, hmn_data->unk_hitbox.pos.X - cpu_data->unk_hitbox.pos.X);
+
+                    // flip
+                    angle += M_PI;
+                    while (angle > (M_PI * 2))
+                    {
+                        angle -= (M_PI * 2);
+                    }
+
+                    magnitude = 1;
+
+                    break;
+                }
+                case SDIDIR_TOWARD:
+                {
+                    // get angle from center bubble to hit collision
+                    angle = atan2(hmn_data->unk_hitbox.pos.Y - cpu_data->unk_hitbox.pos.Y, hmn_data->unk_hitbox.pos.X - cpu_data->unk_hitbox.pos.X);
+
+                    magnitude = 1;
+
+                    break;
+                }
+                }
+
+                // store
+                cpu_data->cpu.lstickX = cos(angle) * 127 * magnitude;
+                cpu_data->cpu.lstickY = sin(angle) * 127 * magnitude;
+            }
+        }
 
         break;
     }
@@ -2693,6 +2789,12 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
             eventData->cpu_state = CPUSTATE_TECH;
             goto CPULOGIC_TECH;
+        }
+
+        // if in shield, no need to TDI
+        if ((cpu_data->state >= ASID_GUARDON) && (cpu_data->state <= ASID_GUARDREFLECT))
+        {
+            break;
         }
 
         // get knockback value
@@ -2819,6 +2921,14 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             break;
         }
         }
+
+        // this is kinda meh, maybe i can come up with something better later
+        // spoof last input as current input as to not trigger SDI
+        // also spoof input as held for more than the SDI window
+        cpu_data->input.lstick_x = ((float)cpu_data->cpu.lstickX * 0.0078125);
+        cpu_data->input.timer_lstick_tilt_x = 5;
+        cpu_data->input.lstick_y = ((float)cpu_data->cpu.lstickY * 0.0078125);
+        cpu_data->input.timer_lstick_tilt_y = 5;
 
         break;
     }

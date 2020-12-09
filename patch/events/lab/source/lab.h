@@ -184,6 +184,7 @@ typedef struct LCancelData
     u8 cpu_state;
     u8 cpu_hitshield;
     u8 cpu_hitnum;
+    u8 cpu_sdidir;
     u8 cpu_sincehit;
     s16 cpu_lasthit;
     s16 cpu_lastshieldstun; // last move instance of the opponent in shield stun. used to tell how many times the shield was hit
@@ -463,7 +464,8 @@ enum cpu_option
     OPTCPU_BEHAVE,
     OPTCPU_SHIELD,
     OPTCPU_INTANG,
-    OPTCPU_SDI,
+    OPTCPU_SDIFREQ,
+    OPTCPU_SDIDIR,
     OPTCPU_TDI,
     OPTCPU_CUSTOMTDI,
     OPTCPU_TECH,
@@ -476,6 +478,23 @@ enum cpu_option
     OPTCPU_CTRFRAMES,
     OPTCPU_CTRHITS,
     OPTCPU_SHIELDHITS,
+};
+
+// SDI Freq
+enum sdi_freq
+{
+    SDIFREQ_NONE,
+    SDIFREQ_LOW,
+    SDIFREQ_MED,
+    SDIFREQ_HIGH,
+};
+
+// SDI Freq
+enum sdi_dir
+{
+    SDIDIR_RANDOM,
+    SDIDIR_AWAY,
+    SDIDIR_TOWARD,
 };
 
 // Recording Options

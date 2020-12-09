@@ -750,10 +750,10 @@ struct FtAfterImageKey
 struct CPU
 {
     int held;       // 0x0
-    u8 lstickX;     // 0x4
-    u8 lstickY;     // 0x5
-    u8 cstickX;     // 0x6
-    u8 cstickY;     // 0x7
+    s8 lstickX;     // 0x4
+    s8 lstickY;     // 0x5
+    s8 cstickX;     // 0x6
+    s8 cstickY;     // 0x7
     int x8;         // 0x8
     int ai;         // 0xc
     int level;      // 0x10
