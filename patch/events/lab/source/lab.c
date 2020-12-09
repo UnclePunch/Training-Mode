@@ -2724,16 +2724,22 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
 
         case (CPUTDI_IN):
         {
-            // survival tdi = kb_angle + (XOriginDirection * -1 * pi/2)
+
+            /*
+            NOTE: im using 94 degrees here because some moves like marth
+            uthrow use this angle, and drawing the line at 90 would make 
+            inward DI cause the opponent to DI in the direction marth is facing
+            and looks confusing
+            */
 
             float orig_dir;
-            if ((kb_angle > -M_PI / 2) && (kb_angle <= M_PI / 2))
+            if ((kb_angle > (-94 * M_1DEGREE)) && (kb_angle <= (94 * M_1DEGREE)))
                 orig_dir = -1;
             else
                 orig_dir = 1;
 
             // get optimal tdi
-            float tdi_angle = kb_angle + (orig_dir * -1 * M_PI / 2);
+            float tdi_angle = kb_angle + (orig_dir * -(M_PI / 2));
 
             // convert to analog input
             cpu_data->cpu.lstickX = cos(tdi_angle) * 127;
@@ -2746,10 +2752,15 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         TDI_OUT:
         {
 
-            // combo tdi = kb_angle + (XOriginDirection * pi/2)
+            /*
+            NOTE: im using 94 degrees here because some moves like marth
+            uthrow use a 93 degree angle, and drawing the line at 90 would make 
+            inward DI cause the opponent to DI in the direction marth is facing
+            and looks confusing
+            */
 
             float orig_dir;
-            if ((kb_angle > -M_PI / 2) && (kb_angle <= M_PI / 2))
+            if ((kb_angle > (-94 * M_1DEGREE)) && (kb_angle <= (94 * M_1DEGREE)))
                 orig_dir = -1;
             else
                 orig_dir = 1;
