@@ -4501,8 +4501,8 @@ void Record_Think(GOBJ *rec_gobj)
     // ensure the state exists
     if (rec_state->is_exist == 1)
     {
-        // get local frame
-        int input_num = hmn_inputs->num; // get longest recording
+        // get longest recording
+        int input_num = hmn_inputs->num;
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
 
