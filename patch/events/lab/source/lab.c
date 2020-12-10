@@ -1440,7 +1440,7 @@ static EventOption LabOptions_Record[] = {
     {
         .option_kind = OPTKIND_STRING,                                              // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(LabOptions_OffOn) / 4,                                  // number of values for this option
-        .option_val = 0,                                                            // value of this option
+        .option_val = 1,                                                            // value of this option
         .menu = 0,                                                                  // pointer to the menu that pressing A opens
         .option_name = "Auto Restore",                                              // pointer to a string
         .desc = "Automatically restore saved positions \nafter the playback ends.", // string describing what this option does
@@ -3273,7 +3273,9 @@ int Update_CheckPause()
 }
 int Update_CheckAdvance()
 {
+
     static int timer = 0;
+    int trigger_thresh = 255; // 140;  // removing this functionality
 
     HSD_Update *update = HSD_UPDATE;
     int isAdvance = 0;
@@ -3284,7 +3286,8 @@ int Update_CheckAdvance()
     HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
 
     // check if holding L
-    if ((pad->held & HSD_TRIGGER_L) != 0)
+    bp();
+    if ((pad->held & HSD_TRIGGER_L) || (pad->triggerLeft >= trigger_thresh))
     {
         timer++;
 
@@ -4538,8 +4541,8 @@ void Record_Think(GOBJ *rec_gobj)
         if ((input_num != 0) && (local_frame >= input_num))
         {
 
-            // but not during a recording
-            if ((LabOptions_Record[OPTREC_HMNMODE].option_val != 1) && (LabOptions_Record[OPTREC_CPUMODE].option_val != 2))
+            // but not during a recording/control
+            if ((LabOptions_Record[OPTREC_HMNMODE].option_val != 1) && (LabOptions_Record[OPTREC_CPUMODE].option_val != 1) && (LabOptions_Record[OPTREC_CPUMODE].option_val != 2))
             {
 
                 // init flag

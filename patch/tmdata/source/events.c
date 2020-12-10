@@ -3244,7 +3244,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
     }
 
     // check for A
-    else if ((inputs_rapid & HSD_BUTTON_A) != 0)
+    else if (inputs_rapid & HSD_BUTTON_A)
     {
         // check to advance a menu
         if ((currOption->option_kind == OPTKIND_MENU))
@@ -3322,7 +3322,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
         }
     }
     // check to go back a menu
-    else if ((inputs_rapid & HSD_BUTTON_B) != 0)
+    else if (inputs_rapid & HSD_BUTTON_B)
     {
         // check if a prev menu exists
         EventMenu *prevMenu = currMenu->prev;
