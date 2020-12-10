@@ -5,7 +5,11 @@
 backup
 
 # Check if event scene
-  #bne Exit
+  load r3,SceneController
+  lbz r3,Scene.CurrentMajor(r3)
+  cmpwi r3,Scene.EventMode
+  bne Exit
+
 
 # Init pointer as 0
   li  r3,0
