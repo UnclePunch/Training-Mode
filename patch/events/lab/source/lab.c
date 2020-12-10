@@ -1440,7 +1440,7 @@ static EventOption LabOptions_Record[] = {
     {
         .option_kind = OPTKIND_STRING,                                              // the type of option this is; menu, string list, integer list, etc
         .value_num = sizeof(LabOptions_OffOn) / 4,                                  // number of values for this option
-        .option_val = 1,                                                            // value of this option
+        .option_val = 0,                                                            // value of this option
         .menu = 0,                                                                  // pointer to the menu that pressing A opens
         .option_name = "Auto Restore",                                              // pointer to a string
         .desc = "Automatically restore saved positions \nafter the playback ends.", // string describing what this option does
