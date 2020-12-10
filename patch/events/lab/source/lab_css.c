@@ -711,6 +711,9 @@ void Menu_SelFile_Think(GOBJ *menu_gobj)
             int img_size = GXGetTexBufferSize(header->metadata.image_width, header->metadata.image_height, 4, 0, 0);
             memcpy(import_data.snap.image, img, img_size); // copu image to 32 byte aligned buffer
 
+            // invalidate cache
+            DCFlushRange(import_data.snap.image, img_size);
+
             // display this texture
             image_desc.img_ptr = import_data.snap.image;                            // store pointer to resized image
             import_data.screenshot_jobj->dobj->mobj->tobj->imagedesc = &image_desc; // replace pointer to imagedesc

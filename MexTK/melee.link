@@ -390,7 +390,6 @@
 80033548:Fighter_GetCPULevel
 80160980:Fighter_GetName
 800122c8:HSD_ImageDescCopyFromEFB
-800121fc:GX_AllocImageData
 802f40b8:Match_ShowTimer
 802f405c:Match_HideTimer
 80024e84:Match_AdjustSoundOnPause
@@ -425,14 +424,15 @@
 80357e88:CARDRead
 80357534:CARDOpen
 803576ac:CARDClose
-8033cd1c:GXPixModeSync
-8033f270:GXInvalidateTexAll
 8034480c:DCFlushRange
 80328f50:TRK_FlushCache
 803238c8:memcmp
 8033e78c:GXGetTexBufferSize
 8033cc38:GXSetDrawDone
 8033ccd0:GXWaitDrawDone
+800121fc:GX_AllocImageData
+8033cd1c:GXPixModeSync
+8033f270:GXInvalidateTexAll
 803230a4:blr2
 80375404:HSD_GetHeapID
 8037540c:HSD_SetHeapID
