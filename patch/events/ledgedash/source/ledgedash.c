@@ -904,7 +904,7 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     hmn_data->phys.self_vel.X = 0;
     hmn_data->phys.self_vel.Y = 0;
 
-    // check if using respawn platform
+    // check if starting on ledge
     if (LdshMenu_Main.options[0].option_val == 0)
     {
 
@@ -923,9 +923,9 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
         ft_state->timer = 0; // spoof as on ledge for a frame already
         Fighter_LoseGroundJump(hmn_data);
         Fighter_EnableCollUpdate(hmn_data);
+        Coll_CheckLedge(&hmn_data->coll_data);
         Fighter_MoveToCliff(hmn);
         Fighter_UpdatePosition(hmn);
-        Coll_CheckLedge(&hmn_data->coll_data);
         hmn_data->phys.self_vel.X = 0;
         hmn_data->phys.self_vel.Y = 0;
         ftCommonData *ftcommon = *stc_ftcommon;
