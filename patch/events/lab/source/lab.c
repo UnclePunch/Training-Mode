@@ -1482,7 +1482,7 @@ static _HSD_ImageDesc resized_image = {
 static u8 snap_status;
 static u8 export_status;
 static Arch_LabData *stc_lab_data;
-static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d_%02X%02X%02X";
+static char *tm_filename = "TMREC_%02d%02d%04d_%02d%02d%02d";
 static char stc_save_name[32] = "Training Mode Input Recording   ";
 static DevText *stc_devtext;
 static u8 stc_hmn_controller;             // making this static so importing recording doesnt overwrite
@@ -6160,7 +6160,7 @@ int Export_Process(GOBJ *export_gobj)
         // create filename string
         ExportHeader *header = stc_transfer_buf;
         char filename[32];
-        sprintf(filename, tm_filename, header->metadata.month, header->metadata.day, header->metadata.year, header->metadata.hour, header->metadata.minute, header->metadata.second, header->metadata.hmn, header->metadata.cpu, header->metadata.stage_internal); // generate filename based on date, time, fighters, and stage
+        sprintf(filename, tm_filename, header->metadata.month, header->metadata.day, header->metadata.year, header->metadata.hour, header->metadata.minute, header->metadata.second); // generate filename based on date, time, fighters, and stage
 
         // save file name to metadata
         memcpy(&header->metadata.filename, export_data->filename_buffer, export_data->filename_cursor);
