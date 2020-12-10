@@ -3354,10 +3354,10 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             SFX_PlayCommon(0);
         }
 
+        /*
         // no previous menu, unpause
         else
         {
-
             SFX_PlayCommon(0);
 
             menuData->isPaused = 0;
@@ -3370,6 +3370,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
             Match_ShowHUD();
             Match_AdjustSoundOnPause(0);
         }
+        */
     }
 
     // if anything changed, update text

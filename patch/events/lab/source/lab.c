@@ -2700,7 +2700,6 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // to-do: shield SDI
-        bp();
         if ((cpu_data->state >= ASID_GUARDON) && (cpu_data->state <= ASID_GUARDREFLECT))
         {
             ;
