@@ -5117,6 +5117,58 @@ void Snap_CObjThink(GOBJ *gobj)
 
     return;
 }
+void Savestates_Update()
+{
+
+    /*
+    So i have code to do this in events.c that runs based a variable in
+    the EventDesc, but i need to execute code directly after loading state
+    so im just gonna do this here...
+    */
+
+    // not when pause menu is showing
+    if (Pause_CheckStatus(1) != 2)
+    {
+        // loop through all humans
+        for (int i = 0; i < 6; i++)
+        {
+            // check if fighter exists
+            GOBJ *fighter = Fighter_GetGObj(i);
+            if (fighter != 0)
+            {
+                // get fighter data
+                FighterData *fighter_data = fighter->userdata;
+                HSD_Pad *pad = PadGet(fighter_data->ply, PADGET_MASTER);
+
+                // check for savestate
+                int blacklist = (HSD_BUTTON_DPAD_DOWN | HSD_BUTTON_DPAD_UP | HSD_TRIGGER_Z | HSD_TRIGGER_R | HSD_BUTTON_A | HSD_BUTTON_B | HSD_BUTTON_X | HSD_BUTTON_Y | HSD_BUTTON_START);
+                if (((pad->down & HSD_BUTTON_DPAD_RIGHT) != 0) && ((pad->held & (blacklist)) == 0))
+                {
+                    // save state
+                    event_vars->Savestate_Save(event_vars->savestate);
+                }
+                else if (((pad->down & HSD_BUTTON_DPAD_LEFT) != 0) && ((pad->held & (blacklist)) == 0))
+                {
+                    // load state
+                    event_vars->Savestate_Load(event_vars->savestate);
+
+                    // re-roll random slot
+                    bp();
+                    if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
+                    {
+                        rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);
+                    }
+                    if (LabOptions_Record[OPTREC_CPUSLOT].option_val == 0)
+                    {
+                        rec_data.cpu_rndm_slot = Record_GetRandomSlot(&rec_data.cpu_inputs);
+                    }
+                }
+            }
+        }
+    }
+
+    return;
+}
 
 // Export functions
 static char *keyboard_rows[2][4] = {
@@ -6350,6 +6402,9 @@ void Event_Update()
 
     // update advanced cam
     Update_Camera();
+
+    // Check for savestates
+    Savestates_Update();
 }
 // Think Function
 void Event_Think(GOBJ *event)
