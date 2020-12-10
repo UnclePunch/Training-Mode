@@ -4396,38 +4396,8 @@ void Record_GX(GOBJ *gobj, int pass)
         Text *text = rec_data.text;
 
         // get curr frame (the current position in the recording)
-        int curr_frame = (event_vars->game_timer - 1) - rec_state->frame;
-
-        // get what frame the longest recording ends on (savestate frame + recording start frame + recording time)
-        int hmn_end_frame = 0;
-        int cpu_end_frame = 0;
-        if (hmn_inputs->start_frame != -1) // ensure a recording exists
-        {
-            hmn_end_frame = (hmn_inputs->start_frame + hmn_inputs->num);
-        }
-        if (cpu_inputs->start_frame != -1) // ensure a recording exists
-        {
-            cpu_end_frame = (cpu_inputs->start_frame + cpu_inputs->num);
-        }
-
-        // find the larger recording
-        RecInputData *input_data = hmn_inputs;
-        if (cpu_end_frame > hmn_end_frame)
-            input_data = cpu_inputs;
-
-        // get the frame the recording starts on. i actually hate this code and need to change how this works
-        int rec_start;
-        if (input_data->start_frame == -1) // case 1: recording didnt start, use current frame
-        {
-            rec_start = curr_frame - 1;
-        }
-        else // case 2: recording has started, use the frame saved
-        {
-            rec_start = input_data->start_frame - rec_state->frame;
-        }
-
-        // get end frame
-        int end_frame = rec_start + input_data->num;
+        int curr_frame = Record_GetCurrFrame();
+        int end_frame = Record_GetEndFrame();
 
         // hide seek bar during recording
         if ((LabOptions_Record[OPTREC_CPUMODE].option_val == 2) || (LabOptions_Record[OPTREC_HMNMODE].option_val == 1))
@@ -4511,14 +4481,14 @@ void Record_GX(GOBJ *gobj, int pass)
 }
 void Record_Think(GOBJ *rec_gobj)
 {
-    // get hmn slot
+    // get current hmn recording slot
     int hmn_slot = LabOptions_Record[OPTREC_HMNSLOT].option_val;
     if (hmn_slot == 0) // use random slot
         hmn_slot = rec_data.hmn_rndm_slot;
     else
         hmn_slot--;
 
-    // get cpu slot
+    // get current cpu recording slot
     int cpu_slot = LabOptions_Record[OPTREC_CPUSLOT].option_val;
     if (cpu_slot == 0) // use random slot
         cpu_slot = rec_data.cpu_rndm_slot;
@@ -4532,13 +4502,16 @@ void Record_Think(GOBJ *rec_gobj)
     if (rec_state->is_exist == 1)
     {
         // get local frame
-        int local_frame = (event_vars->game_timer - 1) - rec_state->frame;
         int input_num = hmn_inputs->num; // get longest recording
         if (cpu_inputs->num > hmn_inputs->num)
             input_num = cpu_inputs->num;
 
+        // get curr frame (the current position in the recording)
+        int curr_frame = Record_GetCurrFrame();
+        int end_frame = Record_GetEndFrame();
+
         // if at the end of the recording
-        if ((input_num != 0) && (local_frame >= input_num))
+        if ((input_num != 0) && (curr_frame >= end_frame))
         {
 
             // but not during a recording/control
@@ -4874,6 +4847,56 @@ int Record_GetRandomSlot(RecInputData **input_data)
 
     // get random slot in use
     return arr[(HSD_Randi(slot_num))];
+}
+int Record_GetCurrFrame()
+{
+    return (event_vars->game_timer - 1) - rec_state->frame;
+}
+int Record_GetEndFrame()
+{
+
+    // get hmn slot
+    int hmn_slot = LabOptions_Record[OPTREC_HMNSLOT].option_val;
+    if (hmn_slot == 0) // use random slot
+        hmn_slot = rec_data.hmn_rndm_slot;
+    else
+        hmn_slot--;
+
+    // get cpu slot
+    int cpu_slot = LabOptions_Record[OPTREC_CPUSLOT].option_val;
+    if (cpu_slot == 0) // use random slot
+        cpu_slot = rec_data.cpu_rndm_slot;
+    else
+        cpu_slot--;
+
+    int curr_frame = Record_GetCurrFrame();
+    RecInputData *hmn_inputs = rec_data.hmn_inputs[hmn_slot];
+    RecInputData *cpu_inputs = rec_data.cpu_inputs[cpu_slot];
+
+    // get what frame the longest recording ends on (savestate frame + recording start frame + recording time)
+    int hmn_end_frame = 0;
+    int cpu_end_frame = 0;
+    if (hmn_inputs->start_frame != -1) // ensure a recording exists
+        hmn_end_frame = (hmn_inputs->start_frame + hmn_inputs->num);
+    if (cpu_inputs->start_frame != -1) // ensure a recording exists
+        cpu_end_frame = (cpu_inputs->start_frame + cpu_inputs->num);
+
+    // find the larger recording
+    RecInputData *input_data = hmn_inputs;
+    if (cpu_end_frame > hmn_end_frame)
+        input_data = cpu_inputs;
+
+    // get the frame the recording starts on. i actually hate this code and need to change how this works
+    int rec_start;
+    if (input_data->start_frame == -1) // case 1: recording didnt start, use current frame
+        rec_start = curr_frame - 1;
+    else // case 2: recording has started, use the frame saved
+        rec_start = input_data->start_frame - rec_state->frame;
+
+    // get end frame
+    int end_frame = rec_start + input_data->num;
+
+    return end_frame;
 }
 void Record_OnSuccessfulSave()
 {
