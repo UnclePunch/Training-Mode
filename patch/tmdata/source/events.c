@@ -64,6 +64,7 @@ static EventDesc Lab = {
     .isChooseCPU = true,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Lab_MatchData,
@@ -111,6 +112,7 @@ static EventDesc LCancel = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 15,
     .matchData = &LCancel_MatchData,
@@ -157,6 +159,7 @@ static EventDesc Ledgedash = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 15,
     .matchData = &Ledgedash_MatchData,
@@ -204,6 +207,7 @@ static EventDesc Combo = {
     .isChooseCPU = true,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Combo_MatchData,
@@ -250,6 +254,7 @@ static EventDesc AttackOnShield = {
     .isChooseCPU = true,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &AttackOnShield_MatchData,
@@ -296,6 +301,7 @@ static EventDesc Reversal = {
     .isChooseCPU = true,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Reversal_MatchData,
@@ -342,6 +348,7 @@ static EventDesc SDI = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SDI_MatchData,
@@ -389,6 +396,7 @@ static EventDesc Powershield = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Powershield_MatchData,
@@ -435,6 +443,7 @@ static EventDesc Ledgetech = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Ledgetech_MatchData,
@@ -481,6 +490,7 @@ static EventDesc AmsahTech = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &AmsahTech_MatchData,
@@ -527,6 +537,7 @@ static EventDesc ShieldDrop = {
     .isChooseCPU = true,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &ShieldDrop_MatchData,
@@ -573,6 +584,7 @@ static EventDesc WaveshineSDI = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &WaveshineSDI_MatchData,
@@ -619,6 +631,7 @@ static EventDesc SlideOff = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SlideOff_MatchData,
@@ -665,6 +678,7 @@ static EventDesc GrabMash = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &GrabMash_MatchData,
@@ -711,6 +725,7 @@ static EventDesc TechCounter = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &TechCounter_MatchData,
@@ -757,6 +772,7 @@ static EventDesc ArmadaShine = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &ArmadaShine_MatchData,
@@ -803,6 +819,7 @@ static EventDesc SideBSweet = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &SideBSweet_MatchData,
@@ -849,6 +866,7 @@ static EventDesc EscapeSheik = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &EscapeSheik_MatchData,
@@ -895,6 +913,7 @@ static EventDesc Eggs = {
     .isChooseCPU = false,
     .isSelectStage = true,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Eggs_MatchData,
@@ -941,6 +960,7 @@ static EventDesc Multishine = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Multishine_MatchData,
@@ -987,6 +1007,7 @@ static EventDesc Reaction = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Reaction_MatchData,
@@ -1033,6 +1054,7 @@ static EventDesc Ledgestall = {
     .isChooseCPU = false,
     .isSelectStage = false,
     .use_savestates = false,
+    .disable_hazards = true,
     .scoreType = 0,
     .callbackPriority = 3,
     .matchData = &Ledgestall_MatchData,
@@ -1346,6 +1368,11 @@ void EventLoad()
     eventDataBackup = calloc(EVENT_DATASIZE);
     stc_savestate->is_exist = 0;
     stc_event_vars.savestate = stc_savestate;
+
+    // disable hazards if enabled
+    bp();
+    if (event_desc->disable_hazards == 1)
+        Hazards_Disable();
 
     // Run this event's init function
     if (evFunction->Event_Init != 0)
@@ -2238,6 +2265,64 @@ void TM_CreateWatermark()
     Text_AddSubtext(text, 0, 0, TM_VersShort);
 
     return;
+}
+void Hazards_Disable()
+{
+    // get stage id
+    int stage_internal = Stage_ExternalToInternal(Stage_GetExternalID());
+    int is_fixwind = 0;
+
+    switch (stage_internal)
+    {
+    case (GR_STORY):
+    {
+        // remove shyguy map gobj proc
+        GOBJ *shyguy_gobj = Stage_GetMapGObj(3);
+        GObj_RemoveProc(shyguy_gobj);
+
+        // remove randall
+        GOBJ *randall_gobj = Stage_GetMapGObj(2);
+        Stage_DestroyMapGObj(randall_gobj);
+
+        is_fixwind = 1;
+
+        break;
+    }
+    case (GR_PSTAD):
+    {
+        // remove map gobj proc
+        GOBJ *map_gobj = Stage_GetMapGObj(2);
+        GObj_RemoveProc(map_gobj);
+
+        is_fixwind = 1;
+
+        break;
+    }
+    case (GR_OLDPU):
+    {
+        // remove map gobj proc
+        GOBJ *map_gobj = Stage_GetMapGObj(7);
+        GObj_RemoveProc(map_gobj);
+
+        // remove map gobj proc
+        map_gobj = Stage_GetMapGObj(6);
+        GObj_RemoveProc(map_gobj);
+
+        // set wind hazard num to 0
+        *ftchkdevice_windnum = 0;
+
+        break;
+    }
+    }
+
+    // Certain stages have an essential ragdoll function
+    // in their map_gobj think function. If the think function is removed,
+    // the ragdoll function must be re-scheduled to function properly.
+    if (is_fixwind == 1)
+    {
+        GOBJ *wind_gobj = GObj_Create(3, 5, 0);
+        GObj_AddProc(wind_gobj, Dynamics_DecayWind, 4);
+    }
 }
 
 // Message Functions

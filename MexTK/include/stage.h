@@ -10,6 +10,48 @@
 #define map_isBG 0x40000000
 #define map_isUnk 0x80000000
 
+enum GrInternal
+{
+    GR_DUMMY,
+    GR_TEST,
+    GR_CASTLE,
+    GR_RCRUISE,
+    GR_KONGO,
+    GR_GARDEN,
+    GR_GREATBAY,
+    GR_SHRINE,
+    GR_ZEBES,
+    GR_KRAID,
+    GR_STORY,
+    GR_YOSTER,
+    GR_IZUMI,
+    GR_GREENS,
+    GR_CORNERIA,
+    GR_VENOM,
+    GR_PSTAD,
+    GR_PURA,
+    GR_MUTECITY,
+    GR_BIGBLUE,
+    GR_ONETT,
+    GR_FOURSIDE,
+    GR_ICEMT,
+    GR_ICETOP,
+    GR_MK1,
+    GR_MK2,
+    GR_AKANEIA,
+    GR_FLATZONE,
+    GR_OLDPU,
+    GR_OLDSTORY,
+    GR_OLDKONGO,
+    GR_ADVKRAID,
+    GR_ADVSHRINE,
+    GR_ADVZR,
+    GR_ADVBR,
+    GR_ADVTE,
+    GR_BATTLE,
+    GR_FD,
+};
+
 /*** Structs ***/
 
 struct map_gobjDesc
@@ -379,5 +421,7 @@ int Stage_GetExternalID();
 int Stage_ExternalToInternal(int ext_id);
 
 Stage *stc_stage = 0x8049e6c8;
-
+int *ftchkdevice_windnum = R13 + (-0x5128);
+int *ftchkdevice_grabnum = R13 + (-0x512C);
+int *ftchkdevice_dmgnum = R13 + (-0x5130);
 #endif

@@ -508,6 +508,7 @@ void GObj_AddGXLink(GOBJ *gobj, void *cb, int gx_link, int gx_pri);
 void GObj_DestroyGXLink(GOBJ *gobj);
 void GObj_GXReorder(GOBJ *gobj, int unk);
 void GObj_AddProc(GOBJ *gobj, void *callback, int priority);
+void GObj_RemoveProc(GOBJ *gobj);
 void GObj_AddObject(GOBJ *gobj, u8 unk, void *object);
 void GObj_FreeObject(GOBJ *gobj);
 void GObj_AddUserData(GOBJ *gobj, int userDataKind, void *destructor, void *userData);

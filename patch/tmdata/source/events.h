@@ -1,7 +1,7 @@
 #include "../../../MexTK/mex.h"
 
-#define TM_VERSSHORT "TM v3.0-a4"
-#define TM_VERSLONG "Training Mode v3.0 Alpha 4"
+#define TM_VERSSHORT "TM v3.0-a6"
+#define TM_VERSLONG "Training Mode v3.0 Alpha 6"
 #define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_DATA -(50 * 4) - 4
@@ -81,7 +81,8 @@ typedef struct EventDesc
     char *eventCSSFile;
     u8 isChooseCPU : 1;
     u8 isSelectStage : 1;
-    u8 use_savestates : 1; // enables dpad left and right savestates
+    u8 use_savestates : 1;  // enables dpad left and right savestates
+    u8 disable_hazards : 1; // removes stage hazards
     u8 scoreType;
     u8 callbackPriority;
     EventMatchData *matchData;
