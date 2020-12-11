@@ -1370,7 +1370,6 @@ void EventLoad()
     stc_event_vars.savestate = stc_savestate;
 
     // disable hazards if enabled
-    bp();
     if (event_desc->disable_hazards == 1)
         Hazards_Disable();
 
@@ -2074,6 +2073,48 @@ int Savestate_Load(Savestate *savestate)
 
         // restore event data
         memcpy(stc_event_vars.event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
+
+        // remove all particles
+        bp();
+        for (int i = 0; i < PTCL_LINKMAX; i++)
+        {
+            Particle2 **ptcls = &stc_ptcl[i];
+            Particle2 *ptcl = *ptcls;
+            while (ptcl != 0)
+            {
+
+                Particle2 *ptcl_next = ptcl->next;
+
+                // begin destroying this particle
+
+                // subtract some value, 8039c9f0
+                if (ptcl->x88 != 0)
+                {
+                    int *arr = ptcl->x88;
+                    arr[0x50 / 4]--;
+                }
+                // remove from generator? 8039ca14
+                if (ptcl->gen != 0)
+                    psRemoveParticleAppSRT(ptcl);
+
+                // delete parent jobj, 8039ca48
+                psDeletePntJObjwithParticle(ptcl);
+
+                // update most recent ptcl pointer
+                *ptcls = ptcl->next;
+
+                // free alloc, 8039ca54
+                HSD_ObjFree(0x804d0f60, ptcl);
+
+                // decrement ptcl total
+                u16 ptclnum = *stc_ptclnum;
+                ptclnum--;
+                *stc_ptclnum = ptclnum;
+
+                // get next
+                ptcl = ptcl_next;
+            }
+        }
 
         SFX_PlayCommon(0);
     }

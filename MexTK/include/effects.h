@@ -5,6 +5,8 @@
 #include "datatypes.h"
 #include "obj.h"
 
+#define PTCL_LINKMAX 16
+
 /*** Structs ***/
 
 struct Effect
@@ -124,7 +126,7 @@ struct GeneratorAppSRT // allocated at 803a42b0
 
 struct Particle2 // created at 80398c90. dont feel like labelling this, offsets are @ 80398de4
 {
-    struct _particle *next; // 0x0
+    struct Particle2 *next; // 0x0
     u32 kind;               // 0x4
     u8 bank;                // 0x8
     u8 texGroup;            // 0x9
@@ -154,6 +156,20 @@ struct Particle2 // created at 80398c90. dont feel like labelling this, offsets 
     u8 aCmpMode;            // 0x56
     u8 aCmpParam1;          // 0x57
     u8 aCmpParam2;          // 0x58
+    void *x5c;
+    void *x60;
+    void *x64;
+    void *x68;
+    void *x6c;
+    void *x70;
+    void *x74;
+    void *x78;
+    void *x7c;
+    void *x80;
+    void *x84;
+    void *x88;
+    void *gen;
+    void *x90;
     // theres more but i got bored, rest are here courtesy of psilupan: https://pastebin.com/raw/yQdjypW0
 };
 
@@ -168,5 +184,11 @@ void Effect_DestroyAll(GOBJ *fighter);
 void Particle_DestroyAll(JOBJ *jobj);
 void Effect_PauseAll(GOBJ *fighter);
 void Effect_ResumeAll(GOBJ *fighter);
+int psRemoveParticleAppSRT(Particle2 *ptcl);
+void psDeletePntJObjwithParticle(Particle2 *ptcl);
+
+u16 *stc_ptclnum = R13 + (-0x3DBE);
+Particle2 **stc_ptcl = 0x804d0908;
+ptclGen **stc_ptclgen = R13 + (-0x3DA4);
 
 #endif

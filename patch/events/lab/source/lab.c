@@ -3286,7 +3286,6 @@ int Update_CheckAdvance()
     HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
 
     // check if holding L
-    bp();
     if ((pad->held & HSD_TRIGGER_L) || (pad->triggerLeft >= trigger_thresh))
     {
         timer++;
@@ -5176,7 +5175,6 @@ void Savestates_Update()
                     event_vars->Savestate_Load(event_vars->savestate);
 
                     // re-roll random slot
-                    bp();
                     if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
                     {
                         rec_data.hmn_rndm_slot = Record_GetRandomSlot(&rec_data.hmn_inputs);

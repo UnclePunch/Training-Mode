@@ -24,6 +24,8 @@
 802787b4:Effect_SpawnItEffect
 8005b880:Effect_DestroyAll
 8039d5dc:Particle_DestroyAll
+803a4344:psRemoveParticleAppSRT
+8039d048:psDeletePntJObjwithParticle
 8005ba40:Effect_PauseAll
 8005bac4:Effect_ResumeAll
 800693ac:ActionStateChange
