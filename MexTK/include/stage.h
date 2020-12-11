@@ -129,7 +129,10 @@ struct map_gobjData
     int xb8;             // 0xb8
     int xbc;             // 0xbc
     int xc0;             // 0xc0
-    int xc4;             // 0xc4
+    u8 xc4;              // 0xc4
+    u8 xc5;              // 0xc5
+    u8 xc6;              // 0xc6
+    u8 xc7;              // 0xc7
     int xc8;             // 0xc8
     int xcc;             // 0xcc
     int xd0;             // 0xd0
@@ -212,6 +215,13 @@ struct map_gobjData
         int x1fc;    // 0x1fc
         int x200;    // 0x200
     } map_struct;
+};
+
+struct StageOnGO
+{
+    StageOnGO *next;
+    GOBJ *map_gobj;
+    void *cb;
 };
 
 struct Stage
@@ -323,7 +333,7 @@ struct Stage
     int x698;                  // 0x698
     int x69c;                  // 0x69c
     int x6a0;                  // 0x6a0
-    int x6a4;                  // 0x6a4
+    StageOnGO *on_go;          // 0x6a4
     int *itemData;             // 0x6a8
     int *coll_data;            // 0x6ac
     int *grGroundParam;        // 0x6b0

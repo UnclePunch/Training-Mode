@@ -2313,6 +2313,20 @@ void Hazards_Disable()
 
         break;
     }
+    case (GR_FD):
+    {
+        // set bg skip flag
+        GOBJ *map_gobj = Stage_GetMapGObj(3);
+        map_gobjData *map_data = map_gobj->userdata;
+        map_data->xc4 |= 0x40;
+
+        // remove on-go function that changes this flag
+        StageOnGO *on_go = stc_stage->on_go;
+        stc_stage->on_go = on_go->next;
+        HSD_Free(on_go);
+
+        break;
+    }
     }
 
     // Certain stages have an essential ragdoll function

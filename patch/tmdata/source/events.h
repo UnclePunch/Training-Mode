@@ -1,7 +1,7 @@
 #include "../../../MexTK/mex.h"
 
-#define TM_VERSSHORT "TM v3.0-a6"
-#define TM_VERSLONG "Training Mode v3.0 Alpha 6"
+#define TM_VERSSHORT "TM v3.0-a7"
+#define TM_VERSLONG "Training Mode v3.0 Alpha 7"
 #define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_DATA -(50 * 4) - 4
