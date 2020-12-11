@@ -247,6 +247,7 @@
 8039084c:GObj_DestroyGXLink
 8039063c:GObj_GXReorder
 8038fd54:GObj_AddProc
+8038fed4:GObj_RemoveProc
 80390a70:GObj_AddObject
 80390b0c:GObj_FreeObject
 80390b68:GObj_AddUserData

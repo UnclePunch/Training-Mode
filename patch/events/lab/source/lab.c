@@ -5507,10 +5507,6 @@ int Export_SelCardThink(GOBJ *export_gobj)
             if (export_data->is_inserted[i] == 0)
             {
 
-                // move cursor to this
-                export_data->slot = i;
-                SFX_PlayCommon(2);
-
                 // mount card
                 stc_memcard_work->is_done = 0;
                 if (CARDMountAsync(i, stc_memcard_work->work_area, 0, Memcard_RemovedCallback) == CARD_RESULT_READY)
@@ -5525,6 +5521,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
                         // if we get this far, a valid memcard is inserted
                         is_inserted = 1;
                         SFX_PlayCommon(2);
+                        //export_data->slot = i;  // move cursor to this
 
                         // get free blocks
                         s32 byteNotUsed, filesNotUsed;

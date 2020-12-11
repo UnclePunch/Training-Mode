@@ -285,15 +285,12 @@ void Menu_SelCard_Think(GOBJ *menu_gobj)
         u8 is_inserted;
 
         s32 memSize, sectorSize;
+        bp();
         if (CARDProbeEx(i, &memSize, &sectorSize) == CARD_RESULT_READY)
         {
             // if it was just inserted, get info
             if (import_data.memcard_inserted[i] == 0)
             {
-
-                // move cursor to this
-                import_data.cursor = i;
-                SFX_PlayCommon(2);
 
                 // mount card
                 stc_memcard_work->is_done = 0;
@@ -309,6 +306,7 @@ void Menu_SelCard_Think(GOBJ *menu_gobj)
                         // if we get this far, a valid memcard is inserted
                         is_inserted = 1;
                         SFX_PlayCommon(2);
+                        //import_data.cursor = i; // move cursor to this
 
                         // get free blocks
                         s32 byteNotUsed, filesNotUsed;
