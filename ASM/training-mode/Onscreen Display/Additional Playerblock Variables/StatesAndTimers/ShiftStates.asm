@@ -2,6 +2,9 @@
 .include "../../../Globals.s"
 .include "../../../../m-ex/Header.s"
 
+
+# Store Previous AS + Reset AS Frame Count Timer
+
 ###################
 ## Shift AS ID's ##
 ###################

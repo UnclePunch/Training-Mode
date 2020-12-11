@@ -446,6 +446,7 @@ static EventMenu LabMenu_Record;
 enum gen_option
 {
     OPTGEN_FRAME,
+    OPTGEN_FRAMEBTN,
     OPTGEN_HMNPCNT,
     OPTGEN_MODEL,
     OPTGEN_HIT,

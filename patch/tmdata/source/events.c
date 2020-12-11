@@ -3100,7 +3100,6 @@ void EventMenu_Update(GOBJ *gobj)
 
                 HSD_Pad *pad = PadGet(controller_index, PADGET_MASTER);
 
-                bp();
                 // in develop mode, use X+DPad up
                 if (*stc_dblevel >= 3)
                 {

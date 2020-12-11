@@ -2,6 +2,8 @@
 .include "../../../Globals.s"
 .include "../../../../m-ex/Header.s"
 
+# Inc Frame Count + Frames Tangible + Hitstun
+
 #Don't Run During Hitlag
 lbz	r0, 0x2219 (r31)
 rlwinm.	r0, r0, 30, 31, 31

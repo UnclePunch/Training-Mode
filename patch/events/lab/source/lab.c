@@ -904,16 +904,28 @@ static EventMenu LabMenu_Main = {
 };
 // General
 static char **LabOptions_CamMode[] = {"Normal", "Zoom", "Fixed", "Advanced"};
+static char **LabOptions_FrameAdvButton[] = {"L", "Z", "X", "Y"};
 static EventOption LabOptions_General[] = {
     // frame advance
     {
-        .option_kind = OPTKIND_STRING,                                                                     // the type of option this is; menu, string list, integer list, etc
-        .value_num = 2,                                                                                    // number of values for this option
-        .option_val = 0,                                                                                   // value of this option
-        .menu = 0,                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "Frame Advance",                                                                    // pointer to a string
-        .desc = "Enable frame advance. Press L to advance one\nframe. Hold L to advance at normal speed.", // string describing what this option does
-        .option_values = LabOptions_OffOn,                                                                 // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                                                 // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabOptions_OffOn) / 4,                                                     // number of values for this option
+        .option_val = 0,                                                                               // value of this option
+        .menu = 0,                                                                                     // pointer to the menu that pressing A opens
+        .option_name = "Frame Advance",                                                                // pointer to a string
+        .desc = "Enable frame advance. Press to advance one\nframe. Hold to advance at normal speed.", // string describing what this option does
+        .option_values = LabOptions_OffOn,                                                             // pointer to an array of strings
+        .onOptionChange = 0,
+    },
+    // frame advance button
+    {
+        .option_kind = OPTKIND_STRING,                        // the type of option this is; menu, string list, integer list, etc
+        .value_num = sizeof(LabOptions_FrameAdvButton) / 4,   // number of values for this option
+        .option_val = 0,                                      // value of this option
+        .menu = 0,                                            // pointer to the menu that pressing A opens
+        .option_name = "Frame Advance Button",                // pointer to a string
+        .desc = "Choose which button will advance the frame", // string describing what this option does
+        .option_values = LabOptions_FrameAdvButton,           // pointer to an array of strings
         .onOptionChange = 0,
     },
     // p1 percent
@@ -3275,7 +3287,6 @@ int Update_CheckAdvance()
 {
 
     static int timer = 0;
-    int trigger_thresh = 255; // 140;  // removing this functionality
 
     HSD_Update *update = HSD_UPDATE;
     int isAdvance = 0;
@@ -3285,8 +3296,13 @@ int Update_CheckAdvance()
     // get their pad
     HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
 
+    // get their advance input
+    bp();
+    static int stc_advance_btns[] = {HSD_TRIGGER_L, HSD_TRIGGER_Z, HSD_BUTTON_X, HSD_BUTTON_Y};
+    int advance_btn = stc_advance_btns[LabOptions_General[OPTGEN_FRAMEBTN].option_val];
+
     // check if holding L
-    if ((pad->held & HSD_TRIGGER_L) || (pad->triggerLeft >= trigger_thresh))
+    if ((pad->held & advance_btn))
     {
         timer++;
 
@@ -3295,11 +3311,16 @@ int Update_CheckAdvance()
         {
             isAdvance = 1;
 
-            // remove L input
-            pad->down &= ~HSD_TRIGGER_L;
-            pad->held &= ~HSD_TRIGGER_L;
-            pad->triggerLeft = 0;
-            pad->ftriggerLeft = 0;
+            // remove button input
+            pad->down &= ~advance_btn;
+            pad->held &= ~advance_btn;
+
+            // if using L, remove analog press too
+            if (LabOptions_CPU[OPTGEN_FRAMEBTN].option_val == 0)
+            {
+                pad->triggerLeft = 0;
+                pad->ftriggerLeft = 0;
+            }
         }
     }
 
