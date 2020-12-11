@@ -69,6 +69,7 @@ typedef struct DevText DevText;
 typedef struct Effect Effect;
 typedef struct Particle Particle;
 typedef struct Particle2 Particle2;
+typedef struct ptclGen ptclGen;
 typedef struct GeneratorAppSRT GeneratorAppSRT;
 
 // Color

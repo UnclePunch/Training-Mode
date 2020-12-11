@@ -51,4 +51,6 @@ void DevelopText_HideBG(DevText *text);
 void DevelopText_StoreTextScale(DevText *text, float x, float y);
 void Develop_DrawSphere(float size, Vec3 *pos1, Vec2 *pos2, GXColor *diffuse, GXColor *ambient);
 
+int *stc_dblevel = R13 + (-0x6C98);
+
 #endif

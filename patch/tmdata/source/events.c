@@ -2075,7 +2075,6 @@ int Savestate_Load(Savestate *savestate)
         memcpy(stc_event_vars.event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
 
         // remove all particles
-        bp();
         for (int i = 0; i < PTCL_LINKMAX; i++)
         {
             Particle2 **ptcls = &stc_ptcl[i];
@@ -3101,11 +3100,25 @@ void EventMenu_Update(GOBJ *gobj)
 
                 HSD_Pad *pad = PadGet(controller_index, PADGET_MASTER);
 
-                if ((pad->down & HSD_BUTTON_START) != 0)
+                bp();
+                // in develop mode, use X+DPad up
+                if (*stc_dblevel >= 3)
                 {
-                    isPress = 1;
-                    menuData->controller_index = controller_index;
-                    break;
+                    if ((pad->held & HSD_BUTTON_X) && (pad->down & HSD_BUTTON_DPAD_UP))
+                    {
+                        isPress = 1;
+                        menuData->controller_index = controller_index;
+                        break;
+                    }
+                }
+                else
+                {
+                    if ((pad->down & HSD_BUTTON_START) != 0)
+                    {
+                        isPress = 1;
+                        menuData->controller_index = controller_index;
+                        break;
+                    }
                 }
             }
         }
@@ -3156,7 +3169,7 @@ void EventMenu_Update(GOBJ *gobj)
         }
 
         // run menu logic if the menu is shown
-        if ((menuData->isPaused == 1) && (stc_event_vars.hide_menu == 0))
+        else if ((menuData->isPaused == 1) && (stc_event_vars.hide_menu == 0))
         {
             // Get the current menu
             EventMenu *currMenu = menuData->currMenu;
