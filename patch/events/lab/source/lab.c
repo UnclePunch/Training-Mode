@@ -3261,8 +3261,19 @@ int Update_CheckPause()
     HSD_Update *update = HSD_UPDATE;
     int isChange = 0;
 
-    // check if enabled
-    if (LabOptions_General[OPTGEN_FRAME].option_val == 1)
+    // get their pad
+    int controller = Fighter_GetControllerPort(0);
+    HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
+
+    // if event menu not showing, develop mode + pause input, toggle frame advance
+    if ((Pause_CheckStatus(1) != 2) && (*stc_dblevel >= 3) && (pad->down & HSD_BUTTON_START))
+    {
+        LabOptions_General[OPTGEN_FRAME].option_val ^= 1;
+        isChange = 1;
+    }
+
+    // menu paused
+    else if (LabOptions_General[OPTGEN_FRAME].option_val == 1)
     {
         // check if unpaused
         if (update->pause_develop != 1)
@@ -3271,6 +3282,8 @@ int Update_CheckPause()
             isChange = 1;
         }
     }
+
+    // menu unpaused
     else
     {
         // check if paused
@@ -3297,7 +3310,6 @@ int Update_CheckAdvance()
     HSD_Pad *pad = PadGet(controller, PADGET_MASTER);
 
     // get their advance input
-    bp();
     static int stc_advance_btns[] = {HSD_TRIGGER_L, HSD_TRIGGER_Z, HSD_BUTTON_X, HSD_BUTTON_Y};
     int advance_btn = stc_advance_btns[LabOptions_General[OPTGEN_FRAMEBTN].option_val];
 
