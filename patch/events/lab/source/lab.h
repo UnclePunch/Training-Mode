@@ -363,6 +363,7 @@ void Event_Think(GOBJ *event);
 void Button_Think(GOBJ *button_gobj);
 
 void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value);
+void Lab_ChangeFrameAdvance(GOBJ *menu_gobj, int value);
 void Lab_ChangeCPUPercent(GOBJ *menu_gobj, int value);
 void Lab_ChangeCPUIntang(GOBJ *menu_gobj, int value);
 void Lab_ChangeModelDisplay(GOBJ *menu_gobj, int value);

@@ -138,15 +138,20 @@ struct GOBJList
     GOBJ *x8;
     GOBJ *xc;
     GOBJ *x10;
-    GOBJ *camera;
+    GOBJ *cobj;
     GOBJ *x18;
     GOBJ *x1c;
     GOBJ *fighter;
     GOBJ *item;
     GOBJ *x28;
     GOBJ *effect_model; // 0x2c
-    GOBJ *effect_unk;   // 0x30
+    GOBJ *effect_unk;   // 0x30, used for blastzone effect
     GOBJ *x34;
+    GOBJ *x38;
+    GOBJ *x3c;
+    GOBJ *x40;
+    GOBJ *x44;
+    GOBJ *match_cam; // 0x48, used for the match camera and shake gobjs
 };
 
 struct GXList
@@ -463,8 +468,8 @@ struct JOBJAnimSet
 };
 
 /*** Static Variables ***/
-static GOBJList **stc_gobj_list = (R13 + (-0x3E74));
-u8 *obj_kind = (R13 + -(0x3E55));
+GOBJList **stc_gobj_list = R13 + (-0x3E74);
+u8 *obj_kind = R13 + -(0x3E55);
 
 /*** Functions ***/
 int JOBJ_GetWorldPosition(JOBJ *source, Vec3 *add, Vec3 *dest);

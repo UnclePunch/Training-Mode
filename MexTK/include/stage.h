@@ -343,7 +343,7 @@ struct Stage
     int *yakumono_param;       // 0x6c0
     int *map_plit;             // 0x6c4
     int *x6c8;                 // 0x6c8
-    int *quake_model_set;      // 0x6cc
+    void *quake_model_set;     // 0x6cc
     int *x6d0;                 // 0x6d0
     int *targetsRemaining;     // 0x6d4
     int x6d8;                  // 0x6d8

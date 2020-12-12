@@ -2379,7 +2379,7 @@ struct FighterData
         unsigned char x221e_6 : 1;               // 0x4 - 0x221e
         unsigned char x221e_7 : 1;               // 0x2 - 0x221e
         unsigned char x221e_8 : 1;               // 0x1 - 0x221e
-        unsigned char mag_glass : 1;             // 0x80 - 0x221f
+        unsigned char is_offscreen : 1;          // 0x80 - 0x221f
         unsigned char dead : 1;                  // 0x40 - 0x221f
         unsigned char x221f_3 : 1;               // 0x20 - 0x221f
         unsigned char sleep : 1;                 // 0x10
@@ -2727,5 +2727,6 @@ void Fighter_InitPObj2();
 void Fighter_IndexFtPartsDObjs(GOBJ *fighter, JOBJ *copy_model, FtParts *ftparts); // inits the dobj array in ftpartsmodel
 void Fighter_InitFtPartsModel(FtPartsDesc *ftpartsdesc, FtDOBJUnk *unk, int index, FtParts *ftparts, FtParts *ftparts2);
 int Fighter_CheckUnlocked(int ext_id);
+void Fighter_UpdateOnscreenBool(GOBJ *fighter);
 
 #endif

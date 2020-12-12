@@ -450,6 +450,17 @@ struct MatchCamera
     int x3fc;         // 0x3fc
 };
 
+struct MatchOffscreen
+{
+    void *x0;
+    void *x4;
+    void *x8;
+    unsigned char is_offscreen : 1;     // 0xC, 0x80
+    unsigned char ignore_offscreen : 1; // 0xC, 0x40
+    unsigned char x3f : 6;              // 0xC, 0x3f
+    void *x10;
+};
+
 struct Match // static match struct @ 8046b6a0
 {
     u8 state;         // 0x0
@@ -2813,10 +2824,12 @@ struct Match // static match struct @ 8046b6a0
 static Match *stc_match = 0x8046b6a0;
 static MatchCamera *stc_matchcam = 0x80452c68;
 static MatchHUD *stc_matchhud = 0x804a10c8;
+MatchOffscreen *stc_match_offscreen = 0x804a1df0;
 
 /*** Functions ***/
 
-CameraBox *CameraBox_Alloc();
+CameraBox *
+CameraBox_Alloc();
 void KOCount_Init(int updateCallback);
 void KOCount_Update(int KOs);
 void Stage_CameraLimitInitialization();

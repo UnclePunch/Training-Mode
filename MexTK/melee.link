@@ -26,6 +26,7 @@
 8039d5dc:Particle_DestroyAll
 803a4344:psRemoveParticleAppSRT
 8039d048:psDeletePntJObjwithParticle
+8039d3ac:psKillGenerator
 8005ba40:Effect_PauseAll
 8005bac4:Effect_ResumeAll
 800693ac:ActionStateChange
@@ -113,6 +114,7 @@
 8007487c:Fighter_InitFtPartsModel
 8007d6a4:Fighter_SetGrounded
 80081544:Fighter_MoveToCliff
+80086a8c:Fighter_UpdateOnscreenBool
 80380580:HSD_Randi
 80380528:HSD_Randf
 8037f1e4:HSD_MemAlloc

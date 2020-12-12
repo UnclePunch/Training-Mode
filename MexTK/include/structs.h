@@ -57,6 +57,7 @@ typedef struct Match Match;
 typedef struct MatchHUD MatchHUD;
 typedef struct MatchCamera MatchCamera;
 typedef struct CameraBox CameraBox;
+typedef struct MatchOffscreen MatchOffscreen;
 
 // Text
 typedef struct Text Text;

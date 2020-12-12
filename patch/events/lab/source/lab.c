@@ -915,7 +915,7 @@ static EventOption LabOptions_General[] = {
         .option_name = "Frame Advance",                                                                // pointer to a string
         .desc = "Enable frame advance. Press to advance one\nframe. Hold to advance at normal speed.", // string describing what this option does
         .option_values = LabOptions_OffOn,                                                             // pointer to an array of strings
-        .onOptionChange = 0,
+        .onOptionChange = Lab_ChangeFrameAdvance,
     },
     // frame advance button
     {
@@ -927,6 +927,7 @@ static EventOption LabOptions_General[] = {
         .desc = "Choose which button will advance the frame", // string describing what this option does
         .option_values = LabOptions_FrameAdvButton,           // pointer to an array of strings
         .onOptionChange = 0,
+        .disable = 1,
     },
     // p1 percent
     {
@@ -1027,7 +1028,6 @@ static EventOption LabOptions_General[] = {
         .option_values = LabOptions_OffOn,                                                      // pointer to an array of strings
         .onOptionChange = 0,
     },
-
 };
 static EventMenu LabMenu_General = {
     .name = "General",                                              // the name of this menu
@@ -1608,6 +1608,18 @@ void Lab_ChangePlayerPercent(GOBJ *menu_gobj, int value)
 
     fighter_data->dmg.percent = value;
     Fighter_SetHUDDamage(0, value);
+
+    return;
+}
+void Lab_ChangeFrameAdvance(GOBJ *menu_gobj, int value)
+{
+
+    // remove colanim if toggling off
+    if (value == 0)
+        LabOptions_General[OPTGEN_FRAMEBTN].disable = 1;
+    // apply colanim
+    else
+        LabOptions_General[OPTGEN_FRAMEBTN].disable = 0;
 
     return;
 }
@@ -3269,6 +3281,7 @@ int Update_CheckPause()
     if ((Pause_CheckStatus(1) != 2) && (*stc_dblevel >= 3) && (pad->down & HSD_BUTTON_START))
     {
         LabOptions_General[OPTGEN_FRAME].option_val ^= 1;
+        Lab_ChangeFrameAdvance(0, LabOptions_General[OPTGEN_FRAME].option_val);
         isChange = 1;
     }
 
