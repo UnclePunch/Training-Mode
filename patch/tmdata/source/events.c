@@ -166,6 +166,53 @@ static EventDesc Ledgedash = {
     .defaultOSD = 0xFFFFFFFF,
 };
 
+// Wavedash Training
+// Match Data
+static EventMatchData Wavedash_MatchData = {
+    .timer = MATCH_TIMER_HIDE,
+    .matchType = MATCH_MATCHTYPE_TIME,
+    .isDisableMusic = false,
+    .hideGo = true,
+    .hideReady = true,
+    .isCreateHUD = false,
+    .isDisablePause = true,
+    // byte 0x3
+    .timerRunOnPause = false,   // 0x01
+    .isHidePauseHUD = true,     // 0x02
+    .isShowLRAStart = true,     // 0x04
+    .isCheckForLRAStart = true, // 0x08
+    .isShowZRetry = false,      // 0x10
+    .isCheckForZRetry = false,  // 0x20
+    .isShowAnalogStick = true,  // 0x40
+    .isShowScore = false,       // 0x80
+
+    .isRunStockLogic = false, // 0x20
+    .isDisableHit = false,    // 0x20
+    .useKOCounter = false,
+    .playerKind = -1,
+    .cpuKind = -1,        // 0xFF=
+    .stage = -1,          // 0xFFFF
+    .timerSeconds = 0,    // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
+    .onCheckPause = 0,
+    .onMatchEnd = 0,
+};
+// Event Struct
+static EventDesc Wavedash = {
+    .eventName = "Wavedash Training\n",
+    .eventDescription = "Practice timing your wavedash,\na very important movement technique.\n",
+    .eventTutorial = "TvWvDsh",
+    .eventFile = "EvWdsh",
+    .isChooseCPU = false,
+    .isSelectStage = true,
+    .use_savestates = false,
+    .disable_hazards = true,
+    .scoreType = 0,
+    .callbackPriority = 15,
+    .matchData = &Wavedash_MatchData,
+    .defaultOSD = 0xFFFFFFFF,
+};
+
 // Combo Training
 // Match Data
 static EventMatchData Combo_MatchData = {
@@ -1083,6 +1130,7 @@ static EventDesc *General_Events[] = {
     &Lab,
     &LCancel,
     &Ledgedash,
+    &Wavedash,
     &Combo,
     &AttackOnShield,
     &Reversal,
