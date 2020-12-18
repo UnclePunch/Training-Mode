@@ -597,31 +597,31 @@ static CPUAction Lab_CPUActionAirdodge[] = {
 };
 static CPUAction Lab_CPUActionFFTumble[] = {
     {
-        ASID_ACTIONABLE, // state to perform this action. -1 for last
-        0,               // first possible frame to perform this action
-        0,               // last possible frame to perfrom this action
-        0,               // left stick X value
-        -127,            // left stick Y value
-        0,               // c stick X value
-        0,               // c stick Y value
-        0,               // button to input
-        1,               // is the last input
-        0,               // specify stick direction
+        ASID_DAMAGEAIR, // state to perform this action. -1 for last
+        0,              // first possible frame to perform this action
+        0,              // last possible frame to perfrom this action
+        0,              // left stick X value
+        -127,           // left stick Y value
+        0,              // c stick X value
+        0,              // c stick Y value
+        0,              // button to input
+        1,              // is the last input
+        0,              // specify stick direction
     },
     -1,
 };
 static CPUAction Lab_CPUActionFFWiggle[] = {
     {
-        ASID_DAMAGEFALL, // state to perform this action. -1 for last
-        0,               // first possible frame to perform this action
-        0,               // last possible frame to perfrom this action
-        127,             // left stick X value
-        0,               // left stick Y value
-        0,               // c stick X value
-        0,               // c stick Y value
-        0,               // button to input
-        0,               // is the last input
-        0,               // specify stick direction
+        ASID_DAMAGEAIR, // state to perform this action. -1 for last
+        0,              // first possible frame to perform this action
+        0,              // last possible frame to perfrom this action
+        127,            // left stick X value
+        0,              // left stick Y value
+        0,              // c stick X value
+        0,              // c stick Y value
+        0,              // button to input
+        0,              // is the last input
+        0,              // specify stick direction
     },
     {
         ASID_ACTIONABLEAIR, // state to perform this action. -1 for last
@@ -824,7 +824,7 @@ enum CPU_ACTIONS
     CPUACT_FSMASH,
 };
 static u8 GrAcLookup[] = {CPUACT_NONE, CPUACT_SPOTDODGE, CPUACT_SHIELD, CPUACT_GRAB, CPUACT_UPB, CPUACT_DOWNB, CPUACT_USMASH, CPUACT_DSMASH, CPUACT_FSMASH, CPUACT_ROLLAWAY, CPUACT_ROLLTOWARDS, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_JAB, CPUACT_FTILT, CPUACT_UTILT, CPUACT_DTILT, CPUACT_SHORTHOP, CPUACT_FULLHOP};
-static u8 AirAcLookup[] = {CPUACT_NONE, CPUACT_AIRDODGE, CPUACT_JUMPAWAY, CPUACT_JUMPTOWARDS, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_BAIR};
+static u8 AirAcLookup[] = {CPUACT_NONE, CPUACT_AIRDODGE, CPUACT_JUMPAWAY, CPUACT_JUMPTOWARDS, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR, CPUACT_FFTUMBLE, CPUACT_FFWIGGLE};
 static u8 ShieldAcLookup[] = {CPUACT_NONE, CPUACT_GRAB, CPUACT_SHORTHOP, CPUACT_FULLHOP, CPUACT_SPOTDODGE, CPUACT_UPB, CPUACT_DOWNB, CPUACT_NAIR, CPUACT_FAIR, CPUACT_DAIR, CPUACT_BAIR, CPUACT_UAIR};
 
 // Main Menu
