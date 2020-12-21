@@ -904,6 +904,9 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
     hmn_data->phys.self_vel.X = 0;
     hmn_data->phys.self_vel.Y = 0;
 
+    // restore tether
+    hmn_data->flags.used_tether = 0;
+
     // check if starting on ledge
     if (LdshMenu_Main.options[0].option_val == 0)
     {

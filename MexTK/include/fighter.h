@@ -429,6 +429,32 @@ enum FtCommonBone
 #define ASID_JUMPS 1004
 #define ASID_FALLS 1005
 
+enum Ft_AttackKind
+{
+    ATKKIND_0,
+    ATKKIND_NONE,
+    ATKKIND_JAB1,
+    ATKKIND_JAB2,
+    ATKKIND_JAB3,
+    ATKKIND_JAB4,
+    ATKKIND_DASH,
+    ATKKIND_FTILT,
+    ATKKIND_UTILT,
+    ATKKIND_DTILT,
+    ATKKIND_FSMASH,
+    ATKKIND_USMASH,
+    ATKKIND_DSMASH,
+    ATKKIND_NAIR,
+    ATKKIND_FAIR,
+    ATKKIND_BAIR,
+    ATKKIND_UAIR,
+    ATKKIND_DAIR,
+    ATKKIND_SPECIALN,
+    ATKKIND_SPECIALS,
+    ATKKIND_SPECIALHI,
+    ATKKIND_SPECIALLW,
+};
+
 /*** Structs ***/
 
 struct Playerblock
@@ -1125,7 +1151,7 @@ struct ftCommonData
     float x60;                    // 0x60
     float x64;                    // 0x64
     float x68;                    // 0x68
-    float x6c;                    // 0x6c
+    float friction_mult;          // 0x6c
     float jumpaerial_lsticky;     // 0x70
     float jumpaerial_lsticktimer; // 0x74
     float x78;                    // 0x78
@@ -1304,8 +1330,8 @@ struct ftCommonData
     float x32c;                   // 0x32c
     float x330;                   // 0x330
     float x334;                   // 0x334
-    float x338;                   // 0x338
-    float x33c;                   // 0x33c
+    float escapeair_vel;          // 0x338
+    float escapeair_veldecaymult; // 0x33c
     float x340;                   // 0x340
     float x344;                   // 0x344
     float x348;                   // 0x348
@@ -2416,7 +2442,14 @@ struct FighterData
         unsigned char x2226_7 : 1;            // 0x2 - 0x2226
         unsigned char x2226_8 : 1;            // 0x1 - 0x2226
         char flags_2227;                      // 0x2227
-        char flags_2228;                      // 0x2228
+        char x2228_1 : 1;                     // 0x80 - 0x2228
+        char x2228_2 : 1;                     // 0x40 - 0x2228
+        char x2228_3 : 1;                     // 0x20 - 0x2228
+        char x2228_4 : 1;                     // 0x10 - 0x2228
+        char x2228_5 : 1;                     // 0x08 - 0x2228
+        char x2228_6 : 1;                     // 0x04 - 0x2228
+        char used_tether : 1;                 // 0x02 - 0x2228
+        char x2228_8 : 1;                     // 0x01 - 0x2228
         unsigned char x2229_1 : 1;            // 0x80 - 0x2229
         unsigned char x2229_2 : 1;            // 0x40 - 0x2229
         unsigned char x2229_3 : 1;            // 0x20 - 0x2229
