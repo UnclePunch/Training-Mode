@@ -2,18 +2,18 @@
 static char nullString[] = " ";
 
 // Main Menu
-static char **WdOptions_Barrel[] = {"Off", "Stationary", "Move"};
+static char **WdOptions_Target[] = {"Off", "On"};
 static char **WdOptions_HUD[] = {"On", "Off"};
 static EventOption WdOptions_Main[] = {
     // Target
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(WdOptions_Barrel) / 4, // number of values for this option
-        .option_val = 0,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Target",                   // pointer to a string
-        .desc = "Enable a target to attack.",      // string describing what this option does
-        .option_values = WdOptions_Barrel,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                       // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(WdOptions_Target) / 4,           // number of values for this option
+        .option_val = 0,                                     // value of this option
+        .menu = 0,                                           // pointer to the menu that pressing A opens
+        .option_name = "Target",                             // pointer to a string
+        .desc = "Enable a highlighted area to wavedash to.", // string describing what this option does
+        .option_values = WdOptions_Target,                   // pointer to an array of strings
         .onOptionChange = 0,
     },
     // HUD
@@ -40,13 +40,13 @@ static EventOption WdOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                       // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                                                                                                    // number of values for this option
-        .option_val = 0,                                                                                                                                                                                                   // value of this option
-        .menu = 0,                                                                                                                                                                                                         // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                                                                                                             // pointer to a string
-        .desc = "L-canceling is performed by pressing L, R, or Z up to \n7 frames before landing from a non-special aerial\nattack. This will cut the landing lag in half, allowing \nyou to act sooner after attacking.", // string describing what this option does
-        .option_values = 0,                                                                                                                                                                                                // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                                   // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                // number of values for this option
+        .option_val = 0,                                                                                                               // value of this option
+        .menu = 0,                                                                                                                     // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                         // pointer to a string
+        .desc = "A wavedash is performed by air dodging diagonally into \nthe ground, causing the fighter to slide a short distance.", // string describing what this option does
+        .option_values = 0,                                                                                                            // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
@@ -63,7 +63,7 @@ static EventOption WdOptions_Main[] = {
     },
 };
 static EventMenu WdMenu_Main = {
-    .name = "L-Cancel Training",                                // the name of this menu
+    .name = "Wavedash Training",                                // the name of this menu
     .option_num = sizeof(WdOptions_Main) / sizeof(EventOption), // number of options this menu contains
     .scroll = 0,                                                // runtime variable used for how far down in the menu to start
     .state = 0,                                                 // bool used to know if this menu is focused, used at runtime
@@ -90,6 +90,9 @@ void Event_Init(GOBJ *gobj)
 
     // create HUD
     Wavedash_Init(event_data);
+
+    // init target
+    Target_Init(event_data, hmn_data);
 
     return;
 }
@@ -166,14 +169,43 @@ void Wavedash_Init(WavedashData *event_data)
 
     // init timer
     event_data->timer = -1;
-
+    event_data->since_wavedash = 255;
     return 0;
 }
 void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
 {
 
-    // run tip logic
-    //Tips_Think(event_data, hmn_data);
+    // check to enter is_wavedashing
+    if (event_data->is_wavedashing == 0)
+    {
+        // increment time since wavedash
+        if (event_data->since_wavedash < 255)
+            event_data->since_wavedash++;
+
+        // check to enter wavedash state
+        if ((hmn_data->state == ASID_LANDINGFALLSPECIAL) && hmn_data->TM.state_prev[2] == ASID_KNEEBEND)
+        {
+            event_data->is_wavedashing = 1;
+            event_data->since_wavedash = 0;
+        }
+
+        // check to null timer
+        if ((hmn_data->phys.self_vel.X == 0) ||
+            ((hmn_data->state != ASID_LANDINGFALLSPECIAL) && // momentum in special landing
+             (hmn_data->state != ASID_WAIT) &&               // momentum in wait
+             (hmn_data->state != ASID_KNEEBEND) &&
+             ((hmn_data->state < ASID_GUARDON) || (hmn_data->state > ASID_GUARDREFLECT)) &&           // momentum in shield
+             ((hmn_data->attack_kind < ATKKIND_JAB1) || (hmn_data->attack_kind > ATKKIND_JAB4)) &&    // momentum in jabs
+             ((hmn_data->attack_kind < ATKKIND_FTILT) || (hmn_data->attack_kind > ATKKIND_DSMASH)) && // momentum in tilts and smashes
+             ((hmn_data->state < ASID_SQUAT) && (hmn_data->state > ASID_SQUATRV))))
+            event_data->since_wavedash = 255;
+    }
+    // check to exit is_wavedashing
+    if (event_data->is_wavedashing == 1)
+    {
+        if ((hmn_data->state != ASID_LANDINGFALLSPECIAL))
+            event_data->is_wavedashing = 0;
+    }
 
     JOBJ *hud_jobj = event_data->hud_gobj->hsd_object;
 
@@ -235,9 +267,11 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 is_finished = 1;
 
                 // check for perfect
-                bp();
-                if (event_data->airdodge_frame == ((int)hmn_data->attr.jump_startup_time + 1))
-                    SFX_Play(303);
+                //if (WdOptions_Main[0].option_val == 0)
+                {
+                    if (event_data->airdodge_frame == ((int)hmn_data->attr.jump_startup_time + 1))
+                        SFX_Play(303);
+                }
             }
 
             // look for failed WD
@@ -370,6 +404,13 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
             }
         }
     }
+
+    // update target
+    Target_Manager(event_data, hmn_data);
+
+    // run tip logic
+    //Tips_Think(event_data, hmn_data);
+
     // update HUD anim
     //JOBJ_AnimAll(hud_jobj);
 
@@ -387,5 +428,351 @@ void Wavedash_HUDCamThink(GOBJ *gobj)
     return;
 }
 
+// Target functions
+void Target_Init(WavedashData *event_data, FighterData *hmn_data)
+{
+
+    ftCommonData *ftcommon = *stc_ftcommon;
+    float mag;
+
+    // determine best wavedash distance (not taking into account friction doubling)
+    mag = ftcommon->escapeair_vel * cos(atan2(-0.2875, 0.9500));
+    float wd_maxdstn = Target_GetWdashDistance(hmn_data, mag);
+    OSReport("%s wd_maxdstn: %.2f\n", Fighter_GetName(Fighter_GetExternalID(hmn_data->ply)), wd_maxdstn);
+    event_data->wd_maxdstn = wd_maxdstn;
+
+    // determine scale based on wd distance
+    float dist = event_data->wd_maxdstn;
+    if (dist < TRGTSCL_DISTMIN)
+        dist = TRGTSCL_DISTMIN;
+    else if (dist > TRGTSCL_DISTMAX)
+        dist = TRGTSCL_DISTMAX;
+    event_data->target.scale = (((dist - TRGTSCL_DISTMIN) / (TRGTSCL_DISTMAX - TRGTSCL_DISTMIN)) * (TRGTSCL_SCALEMAX - TRGTSCL_SCALEMIN)) + TRGTSCL_SCALEMIN;
+
+    // get width of the target
+    JOBJ *target = JOBJ_LoadJoint(event_data->assets->target_jobj); // create dummy
+    float scale = event_data->target.scale;                         // scale
+    target->scale.X *= scale;
+    target->scale.Z *= scale;
+
+    // get children
+    JOBJ *left_jobj, *right_jobj;
+    JOBJ_GetChild(target, &left_jobj, TRGTJOBJ_LBOUND, -1);
+    JOBJ_GetChild(target, &right_jobj, TRGTJOBJ_RBOUND, -1);
+    // get offsets
+    JOBJ_GetWorldPosition(left_jobj, 0, &event_data->target.left_offset);
+    JOBJ_GetWorldPosition(right_jobj, 0, &event_data->target.right_offset);
+
+    // free jobj
+    JOBJ_RemoveAll(target);
+
+    return;
+}
+void Target_Manager(WavedashData *event_data, FighterData *hmn_data)
+{
+    GOBJ *target_gobj = event_data->target.gobj;
+
+    switch (WdOptions_Main[0].option_val)
+    {
+    case (0): // off
+    {
+        // if spawned, remove
+        if (target_gobj != 0)
+        {
+            Target_ChangeState(target_gobj, TRGSTATE_DESPAWN);
+            event_data->target.gobj = 0;
+        }
+
+        break;
+    }
+    case (1): // on
+    {
+        // if not spawned, spawn
+        if (target_gobj == 0)
+        {
+            if (hmn_data->phys.air_state == 0)
+            {
+                // spawn target
+                target_gobj = Target_Spawn(event_data, hmn_data);
+                event_data->target.gobj = target_gobj;
+            }
+        }
+
+        // update target logic
+        if (target_gobj != 0)
+        {
+
+            TargetData *target_data = target_gobj->userdata;
+
+            // update fighter backed up position
+
+            // restore position if not a wavedash
+
+            // check current target state
+            if (target_data->state == TRGSTATE_DESPAWN)
+            {
+                // create new one
+                target_gobj = Target_Spawn(event_data, hmn_data);
+                event_data->target.gobj = target_gobj;
+            }
+        }
+
+        break;
+    }
+    }
+
+    return;
+}
+GOBJ *Target_Spawn(WavedashData *event_data, FighterData *hmn_data)
+{
+
+    Vec3 ray_angle;
+    Vec3 ray_pos;
+    int ray_index;
+    float max = (event_data->wd_maxdstn * 0.7);
+    float min = (event_data->wd_maxdstn * 0.55);
+
+    // ensure min exists
+    int min_exists = 0;
+    min_exists += Target_CheckArea(event_data, hmn_data->coll_data.ground_index, &hmn_data->phys.pos, max, 0, 0, 0);
+    min_exists += Target_CheckArea(event_data, hmn_data->coll_data.ground_index, &hmn_data->phys.pos, max * -1, 0, 0, 0);
+    if (min_exists != 0)
+    {
+
+        // begin looking for valid ground at a random distance
+        int is_ground = 0;
+        while (is_ground != 1)
+        {
+
+            // select random direction
+            float direction;
+            int temp = HSD_Randi(2);
+            if (temp == 0)
+                direction = -1;
+            else
+                direction = 1;
+
+            // random distance
+            float distance = (HSD_Randf() * (max - min)) + min;
+
+            // check if valid
+            is_ground = Target_CheckArea(event_data, hmn_data->coll_data.ground_index, &hmn_data->phys.pos, distance * direction, &ray_index, &ray_pos, &ray_angle);
+        }
+
+        // create target gobj
+        GOBJ *target_gobj = GObj_Create(10, 11, 0);
+
+        // target data
+        TargetData *target_data = calloc(sizeof(TargetData));
+        GObj_AddUserData(target_gobj, 4, HSD_Free, target_data);
+
+        // add proc
+        GObj_AddProc(target_gobj, Target_Think, 16);
+
+        // create jobj
+        JOBJ *target_jobj = JOBJ_LoadJoint(event_data->assets->target_jobj);
+        GObj_AddObject(target_gobj, 3, target_jobj);
+        GObj_AddGXLink(target_gobj, GXLink_Common, 5, 0);
+
+        // scale target
+        float scale = event_data->target.scale;
+        target_jobj->scale.X *= scale;
+        target_jobj->scale.Z *= scale;
+
+        // move target
+        target_jobj->trans.X = ray_pos.X;
+        target_jobj->trans.Y = ray_pos.Y;
+        target_jobj->trans.Z = ray_pos.Z;
+
+        // adjust rotation based on line slope
+        JOBJ *aura_jobj;
+        JOBJ_GetChild(target_jobj, &aura_jobj, TRGTJOBJ_AURA, -1);
+        aura_jobj->rot.Z = -1 * atan2(ray_angle.X, ray_angle.Y);
+
+        // create camera box
+        CameraBox *cam = CameraBox_Alloc();
+        cam->boundleft_proj = -10;
+        cam->boundright_proj = 10;
+        cam->boundtop_proj = 10;
+        cam->boundbottom_proj = -10;
+
+        // update camerabox position
+        cam->cam_pos.X = target_jobj->trans.X;
+        cam->cam_pos.Y = target_jobj->trans.Y + 15;
+        cam->cam_pos.Z = target_jobj->trans.Z;
+
+        // init target data
+        Target_ChangeState(target_gobj, TRGSTATE_SPAWN); // enter spawn state
+        target_data->cam = cam;                          // save camera
+        target_data->line_index = ray_index;             // save line index
+        target_data->pos = ray_pos;                      // save position
+        target_data->left = event_data->target.left_offset.X;
+        target_data->right = event_data->target.right_offset.X;
+
+        return target_gobj;
+    }
+    else
+    {
+        return 0;
+    }
+}
+void Target_Think(GOBJ *target_gobj)
+{
+    JOBJ *target_jobj = target_gobj->hsd_object;
+    TargetData *target_data = target_gobj->userdata;
+    WavedashData *event_data = event_vars->event_gobj->userdata;
+
+    // update anim
+    JOBJ_AnimAll(target_jobj);
+
+    // ensure line still exists
+    if (GrColl_CheckIfLineEnabled(target_data->line_index) == 0)
+    {
+        // enter exit state
+        Target_ChangeState(target_gobj, TRGSTATE_DESPAWN);
+    }
+
+    // update target position (look into how fighters are rooted on ground)
+    Vec3 pos_diff;
+    GrColl_GetPosDifference(target_data->line_index, &target_data->pos, &pos_diff);
+    VECAdd(&target_data->pos, &pos_diff, &target_data->pos);
+
+    // update target orientation
+    Vec3 slope;
+    GrColl_GetLineSlope(target_data->line_index, &slope);
+    JOBJ *aura_jobj;
+    JOBJ_GetChild(target_jobj, &aura_jobj, TRGTJOBJ_AURA, -1);
+    aura_jobj->rot.Z = -1 * atan2(slope.X, slope.Y);
+
+    // update camerabox position
+    CameraBox *cam = target_data->cam;
+    cam->cam_pos.X = target_data->pos.X;
+    cam->cam_pos.Y = target_data->pos.Y + 15;
+    cam->cam_pos.Z = target_data->pos.Z;
+
+    // update position
+    target_jobj->trans = target_data->pos;
+    JOBJ_SetMtxDirtySub(target_jobj);
+
+    // state based logic
+    switch (target_data->state)
+    {
+    case (TRGSTATE_SPAWN):
+    {
+        // check if ended
+        if (JOBJ_CheckAObjEnd(target_jobj) == 0)
+            Target_ChangeState(target_gobj, TRGSTATE_WAIT);
+
+        break;
+    }
+    case (TRGSTATE_WAIT):
+    {
+        // get position
+        Vec3 pos;
+        JOBJ_GetWorldPosition(target_jobj, 0, &pos);
+
+        // check for collision
+        FighterData *hmn_data = Fighter_GetGObj(0)->userdata;
+
+        Vec3 *ft_pos = &hmn_data->phys.pos;
+        if ((hmn_data->phys.air_state == 0) &&
+            ((event_data->since_wavedash > 0) && (event_data->since_wavedash < 255) && (fabs(hmn_data->phys.self_vel.X) < 0.5)) && // check if a wavedash
+            (ft_pos->X > (pos.X + target_data->left)) &&
+            (ft_pos->X < (pos.X + target_data->right)) &&
+            (ft_pos->Y > (pos.Y + -1)) &&
+            (ft_pos->Y < (pos.Y + 1)))
+        {
+
+            // sfx
+            SFX_Play(173);
+
+            Target_ChangeState(target_gobj, TRGSTATE_DESPAWN);
+        }
+
+        break;
+    }
+    case (TRGSTATE_DESPAWN):
+    {
+        // check if ended
+        if (JOBJ_CheckAObjEnd(target_jobj) == 0)
+        {
+            // destroy camera
+            CameraBox_Destroy(target_data->cam);
+
+            // destroy this target
+            GObj_Destroy(target_gobj);
+        }
+
+        break;
+    }
+    }
+
+    return;
+}
+void Target_ChangeState(GOBJ *target_gobj, int state)
+{
+    WavedashData *event_data = event_vars->event_gobj->userdata;
+    TargetData *target_data = target_gobj->userdata;
+    JOBJ *target_jobj = target_gobj->hsd_object;
+
+    // update state
+    target_data->state = state;
+
+    // add anim
+    JOBJ_AddAnimAll(target_jobj, event_data->assets->target_jointanim[state], event_data->assets->target_matanim[state], 0);
+    JOBJ_ReqAnimAll(target_jobj, 0); // req anim
+
+    return;
+}
+float Target_GetWdashDistance(FighterData *hmn_data, float mag)
+{
+
+    float distance = 0;
+    ftCommonData *ftcommon = *stc_ftcommon;
+
+    // now simulate
+    mag *= ftcommon->escapeair_veldecaymult; // first frame multiply by 0.9 ( in airdodge still)
+    distance += mag;
+
+    // subsequent, apply friction until at 0
+    while (mag > 0)
+    {
+
+        // get friction
+        float friction = hmn_data->attr.ground_friction;
+        if (mag > hmn_data->attr.walk_maximum_velocity) // double friction if speed > walk max speed
+            friction *= ftcommon->friction_mult;
+
+        // apply it
+        mag -= friction;
+
+        // ensure not under 0
+        if (mag < 0)
+            mag = 0;
+
+        distance += mag;
+    }
+
+    return distance;
+}
+int Target_CheckArea(WavedashData *event_data, int line, Vec3 *pos, float x_offset, int *ret_line, Vec3 *ret_pos, Vec3 *ret_slope)
+{
+
+    int status = 0;
+
+    // init
+    int is_ground = 0;
+    // check left
+    is_ground += GrColl_CrawlGround(line, pos, ret_line, ret_pos, 0, ret_slope, x_offset + event_data->target.left_offset.X, 0);
+    // check right
+    is_ground += GrColl_CrawlGround(line, pos, ret_line, ret_pos, 0, ret_slope, x_offset + event_data->target.right_offset.X, 0);
+    // check center
+    is_ground += GrColl_CrawlGround(line, pos, ret_line, ret_pos, 0, ret_slope, x_offset + event_data->target.center_offset.X, 0);
+
+    if (is_ground == 3)
+        status = 1;
+
+    return status;
+}
 // Initial Menu
 static EventMenu *Event_Menu = &WdMenu_Main;

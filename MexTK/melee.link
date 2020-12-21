@@ -152,6 +152,7 @@
 80272cc0:Item_GetBoneJOBJ
 80266f3c:Item_CheckIfEnabled
 80029020:CameraBox_Alloc
+800290d4:CameraBox_Destroy
 802fa5bc:KOCount_Init
 802fa2d0:KOCount_Update
 801c39c0:Stage_CameraLimitInitialization
@@ -295,6 +296,10 @@
 801c97dc:Stage_SpawnEffectJointPos
 801c9808:Stage_SpawnEffectJointPos2
 8004f008:GrColl_RaycastGround
+80056c54:GrColl_CrawlGround
+800567c0:GrColl_GetPosDifference
+80054dfc:GrColl_GetLineSlope
+80054ed8:GrColl_CheckIfLineEnabled
 8027b5b0:Zako_Create
 802e6aec:Stage_CreateMapItem
 801c9ee8:Stage_CheckForNearbyFighters

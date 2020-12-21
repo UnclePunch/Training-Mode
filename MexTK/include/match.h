@@ -2828,8 +2828,8 @@ MatchOffscreen *stc_match_offscreen = 0x804a1df0;
 
 /*** Functions ***/
 
-CameraBox *
-CameraBox_Alloc();
+CameraBox *CameraBox_Alloc();
+void CameraBox_Destroy(CameraBox *cam);
 void KOCount_Init(int updateCallback);
 void KOCount_Update(int KOs);
 void Stage_CameraLimitInitialization();

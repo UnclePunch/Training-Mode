@@ -200,7 +200,7 @@ static EventMatchData Wavedash_MatchData = {
 // Event Struct
 static EventDesc Wavedash = {
     .eventName = "Wavedash Training\n",
-    .eventDescription = "Practice timing your wavedash,\na very important movement technique.\n",
+    .eventDescription = "Practice timing your wavedash,\na fundamental movement technique.\n",
     .eventTutorial = "TvWvDsh",
     .eventFile = "EvWdsh",
     .isChooseCPU = false,

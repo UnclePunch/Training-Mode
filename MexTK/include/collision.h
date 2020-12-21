@@ -194,21 +194,21 @@ struct CollLineInfo
 struct CollLine
 {
     CollLineInfo *info;
-    u8 x4;
-    u8 x5_1 : 1;
-    u8 x5_2 : 1;
-    u8 x5_3 : 1;
-    u8 x5_4 : 1;
-    u8 x5_5 : 1;
-    u8 x5_6 : 1;
-    u8 x5_7 : 1;
-    u8 is_enabled : 1;
-    u8 x6;
-    u8 x7 : 4;
-    u8 is_rwall : 1; // 0x8
-    u8 is_lwall : 1; // 0x4
-    u8 is_ceil : 1;  // 0x2
-    u8 is_floor : 1; // 0x1
+    u8 x4;             // 0x4
+    u8 x5_1 : 1;       // 0x5
+    u8 x5_2 : 1;       // 0x5
+    u8 x5_3 : 1;       // 0x5
+    u8 x5_4 : 1;       // 0x5
+    u8 x5_5 : 1;       // 0x5
+    u8 x5_6 : 1;       // 0x5
+    u8 x5_7 : 1;       // 0x5
+    u8 is_enabled : 1; // 0x5
+    u8 x6;             // 0x6
+    u8 x7 : 4;         // 0x7
+    u8 is_rwall : 1;   // 0x7, 0x8
+    u8 is_lwall : 1;   // 0x7, 0x4
+    u8 is_ceil : 1;    // 0x7, 0x2
+    u8 is_floor : 1;   // 0x7, 0x1
 };
 
 struct CollVert
@@ -248,7 +248,11 @@ void GrColl_GetLedgeRight(int floor_index, Vec3 *pos);                          
 void GrColl_GetLedgeLeft2(int floor_index, Vec3 *pos);                                                                                                                                           // this functon will crawl along the entire line sequence and find the end of the ledge
 void GrColl_GetLedgeRight2(int floor_index, Vec3 *pos);                                                                                                                                          // this functon will crawl along the entire line sequence and find the end of the ledge
 int GrColl_RaycastGround(Vec3 *coll_pos, int *line_index, int *line_kind, Vec3 *unk1, Vec3 *unk2, Vec3 *unk3, Vec3 *unk4, void *cb, float fromX, float fromY, float toX, float toY, float unk5); // make unk5
-int GrColl_RaycastGroundUnk(int line_index, Vec3 *pos, void *r5, Vec3 *return_pos, void *r7, void *r8, float x, float y);                                                                        // returns bool for if position on line series exists
+int GrColl_CrawlGround(int line_index, Vec3 *pos, int *return_line, Vec3 *return_pos, int *return_flags, Vec3 *return_slope, float x_offset, float y_offset);                                    // returns bool for if position on line series exists
+int GrColl_GetPosDifference(int line_index, Vec3 *pos, Vec3 *return_pos);
+int GrColl_GetLineInfo(int line_index, Vec3 *r4, void *r5, int *flags, Vec3 *return_slope);
+void GrColl_GetLineSlope(int line_index, Vec3 *return_slope);
+int GrColl_CheckIfLineEnabled(int line_index);
 
 static int *stc_colltest = R13 + (COLL_TEST);
 static CollGroup **stc_firstcollgroup = R13 + (-0x51DC);
