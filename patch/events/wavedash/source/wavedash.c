@@ -7,13 +7,13 @@ static char **WdOptions_HUD[] = {"On", "Off"};
 static EventOption WdOptions_Main[] = {
     // Target
     {
-        .option_kind = OPTKIND_STRING,                       // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(WdOptions_Target) / 4,           // number of values for this option
-        .option_val = 0,                                     // value of this option
-        .menu = 0,                                           // pointer to the menu that pressing A opens
-        .option_name = "Target",                             // pointer to a string
-        .desc = "Enable a highlighted area to wavedash to.", // string describing what this option does
-        .option_values = WdOptions_Target,                   // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                 // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(WdOptions_Target) / 4,                     // number of values for this option
+        .option_val = 0,                                               // value of this option
+        .menu = 0,                                                     // pointer to the menu that pressing A opens
+        .option_name = "Target",                                       // pointer to a string
+        .desc = "Highlight an area of the stage to wavedash towards.", // string describing what this option does
+        .option_values = WdOptions_Target,                             // pointer to an array of strings
         .onOptionChange = 0,
     },
     // HUD
@@ -40,13 +40,13 @@ static EventOption WdOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC,                                                                                                   // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                // number of values for this option
-        .option_val = 0,                                                                                                               // value of this option
-        .menu = 0,                                                                                                                     // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                         // pointer to a string
-        .desc = "A wavedash is performed by air dodging diagonally into \nthe ground, causing the fighter to slide a short distance.", // string describing what this option does
-        .option_values = 0,                                                                                                            // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC, // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,              // number of values for this option
+        .option_val = 0,             // value of this option
+        .menu = 0,                   // pointer to the menu that pressing A opens
+        .option_name = "Help",       // pointer to a string
+        .desc = "",                  // string describing what this option does
+        .option_values = 0,          // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
@@ -139,35 +139,48 @@ void Wavedash_Init(WavedashData *event_data)
     hudcam_gobj->cobj_links = 1 << 18;
 
     GOBJ *hud_gobj = GObj_Create(0, 0, 0);
-    event_data->hud_gobj = hud_gobj;
+    event_data->hud.gobj = hud_gobj;
     // Load jobj
     JOBJ *hud_jobj = JOBJ_LoadJoint(event_data->assets->hud);
     GObj_AddObject(hud_gobj, 3, hud_jobj);
     GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
-    /*
-    // save bar frame colors
-    JOBJ *timingbar_jobj;
-    JOBJ_GetChild(hud_jobj, &timingbar_jobj, WDJOBJ_BAR, -1); // get timing bar jobj
-    DOBJ *d = timingbar_jobj->dobj;
-    int count = 0;
-    while (d != 0)
+    // create text canvas
+    int canvas = Text_CreateCanvas(2, hud_gobj, 14, 15, 0, 18, 81, 19);
+    event_data->hud.canvas = canvas;
+
+    // init text
+    Text **text_arr = &event_data->hud.text_timing;
+    for (int i = 0; i < 3; i++)
     {
-        // if a box dobj
-        if ((count >= 3) && (count <= 17))
-        {
 
-            // if mobj exists (it will)
-            MOBJ *m = d->mobj;
-            if (m != 0)
-                event_data->orig_colors[(count - 3)] = m->mat->diffuse; // save gxcolor
-        }
+        // Create text object
+        Text *hud_text = Text_CreateText(2, canvas);
+        text_arr[i] = hud_text;
+        hud_text->kerning = 1;
+        hud_text->align = 1;
+        hud_text->use_aspect = 1;
 
-        // inc
-        count++;
-        d = d->next;
+        // Get position
+        Vec3 text_pos;
+        JOBJ *text_jobj;
+        JOBJ_GetChild(hud_jobj, &text_jobj, WDJOBJ_TEXT + i, -1);
+        JOBJ_GetWorldPosition(text_jobj, 0, &text_pos);
+
+        // adjust scale
+        Vec3 *scale = &hud_jobj->scale;
+        // text scale
+        hud_text->scale.X = (scale->X * 0.01) * TEXT_SCALE;
+        hud_text->scale.Y = (scale->Y * 0.01) * TEXT_SCALE;
+        hud_text->aspect.X = 165;
+
+        // text position
+        hud_text->trans.X = text_pos.X + (scale->X / 4.0);
+        hud_text->trans.Y = (text_pos.Y * -1) + (scale->Y / 4.0);
+
+        // dummy text
+        Text_AddSubtext(hud_text, 0, 0, "-");
     }
-    */
 
     // init timer
     event_data->timer = -1;
@@ -192,15 +205,10 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
         }
 
         // check to null timer
-        bp();
-        if ((hmn_data->phys.self_vel.X == 0) ||
-            ((hmn_data->state != ASID_LANDINGFALLSPECIAL) && // momentum in special landing
-             (hmn_data->state != ASID_WAIT) &&               // momentum in wait
-             (hmn_data->state != ASID_KNEEBEND) &&
-             ((hmn_data->state < ASID_GUARDON) || (hmn_data->state > ASID_GUARDREFLECT)) &&           // momentum in shield
-             ((hmn_data->attack_kind < ATKKIND_JAB1) || (hmn_data->attack_kind > ATKKIND_JAB4)) &&    // momentum in jabs
-             ((hmn_data->attack_kind < ATKKIND_FTILT) || (hmn_data->attack_kind > ATKKIND_DSMASH)) && // momentum in tilts and smashes
-             ((hmn_data->state < ASID_SQUAT) && (hmn_data->state > ASID_SQUATRV))))
+        if (((hmn_data->state >= ASID_WALKSLOW) && (hmn_data->state <= ASID_KNEEBEND)) ||                    // no ground movement or jumping
+            (hmn_data->phys.air_state == 1) ||                                                               // airborne
+            ((hmn_data->attack_kind >= ATKKIND_SPECIALN) && (hmn_data->attack_kind <= ATKKIND_SPECIALLW)) || // any special move
+            ((hmn_data->state >= ASID_ESCAPEF) && (hmn_data->state >= ASID_ESCAPEB)))                        // rolls
             event_data->since_wavedash = 255;
     }
     // check to exit is_wavedashing
@@ -210,9 +218,9 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
             event_data->is_wavedashing = 0;
     }
 
-    OSReport("is_wavedashing: %d since_wavedash: %d", event_data->is_wavedashing, event_data->since_wavedash);
+    //OSReport("is_wavedashing: %d since_wavedash: %d", event_data->is_wavedashing, event_data->since_wavedash);
 
-    JOBJ *hud_jobj = event_data->hud_gobj->hsd_object;
+    JOBJ *hud_jobj = event_data->hud.gobj->hsd_object;
 
     // start sequence on jump squat
     if ((hmn_data->state == ASID_KNEEBEND) && (hmn_data->TM.state_frame == 0))
@@ -251,13 +259,14 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
             // save airdodge angle
             if ((event_data->is_airdodge == 0) &&
                 (((hmn_data->state == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame == 0)) || // if entered airdodge
-                 ((hmn_data->state == ASID_LANDINGFALLSPECIAL) && (hmn_data->TM.state_frame == 0) && (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))))
+                 ((hmn_data->state == ASID_LANDINGFALLSPECIAL) && (hmn_data->TM.state_frame == 0) && (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR) && (hmn_data->TM.state_prev_frames[0] == 0))))
             {
-                // determine airdodge angle
-                float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
-
                 // save airdodge angle
+                bp();
+                float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
                 event_data->wd_angle = angle;
+
+                event_data->is_early_airdodge = 0;
                 event_data->is_airdodge = 1;
                 event_data->airdodge_frame = event_data->timer; // save airdodge frame
             }
@@ -270,8 +279,10 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR) &&                                  // came from airdodge
                 (hmn_data->TM.state_prev[2] == ASID_KNEEBEND))                                     // came from jump
             {
+
                 is_finished = 1;
                 mat_anim = event_data->assets->hudmatanim[0];
+                event_data->wd_succeeded++;
 
                 // check for perfect
                 //if (WdOptions_Main[0].option_val == 0)
@@ -383,6 +394,22 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 else
                     JOBJ_SetFlags(arrow_jobj, JOBJ_HIDDEN);
                 JOBJ_SetMtxDirtySub(arrow_jobj);
+
+                // updating timing text
+                if (input_frame < ((WDFRAMES - 1) / 2)) // is early
+                    Text_SetText(event_data->hud.text_timing, 0, "%df Early", ((WDFRAMES - 1) / 2) - input_frame);
+                else if (input_frame == ((WDFRAMES - 1) / 2))
+                    Text_SetText(event_data->hud.text_timing, 0, "Perfect");
+                else if (input_frame > ((WDFRAMES - 1) / 2))
+                    Text_SetText(event_data->hud.text_timing, 0, "%df Late", input_frame - ((WDFRAMES - 1) / 2));
+
+                // update airdodge angle
+                Text_SetText(event_data->hud.text_angle, 0, "%.2f", fabs(event_data->wd_angle / M_1DEGREE));
+
+                // update succession
+                event_data->wd_attempted++;
+                bp();
+                Text_SetText(event_data->hud.text_succession, 0, "%.2f%", ((float)event_data->wd_succeeded / (float)event_data->wd_attempted) * 100.0);
 
                 // apply HUD animation
                 JOBJ_RemoveAnimAll(hud_jobj);
@@ -516,8 +543,8 @@ GOBJ *Target_Spawn(WavedashData *event_data, FighterData *hmn_data)
     Vec3 ray_angle;
     Vec3 ray_pos;
     int ray_index;
-    float max = (event_data->wd_maxdstn * 0.7);
-    float min = (event_data->wd_maxdstn * 0.55);
+    float max = (event_data->wd_maxdstn * TRGT_RANGEMAX);
+    float min = (event_data->wd_maxdstn * TRGT_RANGEMIN);
 
     // ensure min exists
     int min_exists = 0;

@@ -1,9 +1,14 @@
 #include "../../../../MexTK/mex.h"
 #include "../../../tmdata/source/events.h"
 
+#define TEXT_SCALE 4
+#define WDJOBJ_TEXT 6
 #define WDJOBJ_ARROW 3
 #define WDARROW_OFFSET 0.36
 #define WDFRAMES 15
+
+#define TRGT_RANGEMAX 0.8
+#define TRGT_RANGEMIN 0.55
 
 #define TRGTJOBJ_AURA 3
 #define TRGTJOBJ_LBOUND 4
@@ -22,7 +27,14 @@ struct WavedashData
 {
     EventDesc *event_desc;
     WavedashAssets *assets;
-    GOBJ *hud_gobj;
+    struct
+    {
+        GOBJ *gobj;
+        int canvas;
+        Text *text_timing;
+        Text *text_angle;
+        Text *text_succession;
+    } hud;
     struct
     {
         GOBJ *gobj;
@@ -39,6 +51,8 @@ struct WavedashData
     u8 is_wavedashing;
     u8 since_wavedash;
     float wd_angle;
+    int wd_attempted;
+    int wd_succeeded;
     struct
     {
         u16 line_index;
