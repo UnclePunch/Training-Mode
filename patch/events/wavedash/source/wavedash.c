@@ -145,6 +145,7 @@ void Wavedash_Init(WavedashData *event_data)
     GObj_AddObject(hud_gobj, 3, hud_jobj);
     GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
+    /*
     // save bar frame colors
     JOBJ *timingbar_jobj;
     JOBJ_GetChild(hud_jobj, &timingbar_jobj, WDJOBJ_BAR, -1); // get timing bar jobj
@@ -166,6 +167,7 @@ void Wavedash_Init(WavedashData *event_data)
         count++;
         d = d->next;
     }
+    */
 
     // init timer
     event_data->timer = -1;
@@ -190,6 +192,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
         }
 
         // check to null timer
+        bp();
         if ((hmn_data->phys.self_vel.X == 0) ||
             ((hmn_data->state != ASID_LANDINGFALLSPECIAL) && // momentum in special landing
              (hmn_data->state != ASID_WAIT) &&               // momentum in wait
@@ -206,6 +209,8 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
         if ((hmn_data->state != ASID_LANDINGFALLSPECIAL))
             event_data->is_wavedashing = 0;
     }
+
+    OSReport("is_wavedashing: %d since_wavedash: %d", event_data->is_wavedashing, event_data->since_wavedash);
 
     JOBJ *hud_jobj = event_data->hud_gobj->hsd_object;
 
@@ -258,6 +263,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
             }
 
             int is_finished = 0;
+            void *mat_anim = 0;
 
             // look for successful WD
             if ((hmn_data->state == ASID_LANDINGFALLSPECIAL) && (hmn_data->TM.state_frame == 0) && // is in special landing
@@ -265,6 +271,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 (hmn_data->TM.state_prev[2] == ASID_KNEEBEND))                                     // came from jump
             {
                 is_finished = 1;
+                mat_anim = event_data->assets->hudmatanim[0];
 
                 // check for perfect
                 //if (WdOptions_Main[0].option_val == 0)
@@ -279,6 +286,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                      ((hmn_data->state == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 10) && (hmn_data->TM.state_prev[1] == ASID_KNEEBEND)))
             {
                 is_finished = 1;
+                mat_anim = event_data->assets->hudmatanim[1];
                 SFX_PlayCommon(3);
 
                 // restore position
@@ -360,47 +368,26 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 event_data->is_early_airdodge = 0;
 
                 // update bar frame colors
-                JOBJ *timingbar_jobj;
-                JOBJ_GetChild(hud_jobj, &timingbar_jobj, WDJOBJ_BAR, -1); // get timing bar jobj
-                DOBJ *d = timingbar_jobj->dobj;
-                int count = 0;
-                static GXColor framecol_white = {255, 255, 255, 255};
+                JOBJ *arrow_jobj;
+                JOBJ_GetChild(hud_jobj, &arrow_jobj, WDJOBJ_ARROW, -1); // get timing bar jobj
                 // get in terms of bar timeframe
                 int jump_frame = ((WDFRAMES - 1) / 2) - (int)hmn_data->attr.jump_startup_time;
                 int input_frame = jump_frame + event_data->airdodge_frame - 1;
-                // iterate through dobjs
-                while (d != 0)
+
+                // update arrow position
+                if (input_frame < WDFRAMES)
                 {
-                    // if a box dobj
-                    if ((count >= 3) && (count <= 17))
-                    {
-
-                        // if mobj exists (it will)
-                        MOBJ *m = d->mobj;
-                        if (m != 0)
-                        {
-
-                            // dobj index to frame index
-                            int frame_index = count - 3;
-
-                            // check to highlight this frame
-                            if (input_frame == frame_index)
-                                m->mat->diffuse = framecol_white; //
-                            // restore orig color
-                            else
-                                m->mat->diffuse = event_data->orig_colors[frame_index]; // set to orig color
-                        }
-                    }
-
-                    // inc
-                    count++;
-                    d = d->next;
+                    arrow_jobj->trans.X = (-WDARROW_OFFSET * ((WDFRAMES - 1) / 2)) + (input_frame * 0.36);
+                    JOBJ_ClearFlags(arrow_jobj, JOBJ_HIDDEN);
                 }
+                else
+                    JOBJ_SetFlags(arrow_jobj, JOBJ_HIDDEN);
+                JOBJ_SetMtxDirtySub(arrow_jobj);
 
                 // apply HUD animation
-                //JOBJ_RemoveAnimAll(hud_jobj);
-                //JOBJ_AddAnimAll(hud_jobj, 0, matanim, 0);
-                //JOBJ_ReqAnimAll(hud_jobj, 0);
+                JOBJ_RemoveAnimAll(hud_jobj);
+                JOBJ_AddAnimAll(hud_jobj, 0, mat_anim, 0);
+                JOBJ_ReqAnimAll(hud_jobj, 0);
             }
         }
     }
@@ -412,7 +399,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
     //Tips_Think(event_data, hmn_data);
 
     // update HUD anim
-    //JOBJ_AnimAll(hud_jobj);
+    JOBJ_AnimAll(hud_jobj);
 
     return;
 }

@@ -1,7 +1,8 @@
 #include "../../../../MexTK/mex.h"
 #include "../../../tmdata/source/events.h"
 
-#define WDJOBJ_BAR 1
+#define WDJOBJ_ARROW 3
+#define WDARROW_OFFSET 0.36
 #define WDFRAMES 15
 
 #define TRGTJOBJ_AURA 3
