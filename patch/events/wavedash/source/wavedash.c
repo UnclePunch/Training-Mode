@@ -40,13 +40,13 @@ static EventOption WdOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC, // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,              // number of values for this option
-        .option_val = 0,             // value of this option
-        .menu = 0,                   // pointer to the menu that pressing A opens
-        .option_name = "Help",       // pointer to a string
-        .desc = "",                  // string describing what this option does
-        .option_values = 0,          // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                                   // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                // number of values for this option
+        .option_val = 0,                                                                                                               // value of this option
+        .menu = 0,                                                                                                                     // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                         // pointer to a string
+        .desc = "A wavedash is performed by air dodging diagonally into \nthe ground, causing the fighter to slide a short distance.", // string describing what this option does
+        .option_values = 0,                                                                                                            // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
@@ -262,7 +262,6 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                  ((hmn_data->state == ASID_LANDINGFALLSPECIAL) && (hmn_data->TM.state_frame == 0) && (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR) && (hmn_data->TM.state_prev_frames[0] == 0))))
             {
                 // save airdodge angle
-                bp();
                 float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
                 event_data->wd_angle = angle;
 
@@ -386,14 +385,21 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 int input_frame = jump_frame + event_data->airdodge_frame - 1;
 
                 // update arrow position
+                bp();
                 if (input_frame < WDFRAMES)
                 {
-                    arrow_jobj->trans.X = (-WDARROW_OFFSET * ((WDFRAMES - 1) / 2)) + (input_frame * 0.36);
+                    event_data->hud.arrow_prevpos = arrow_jobj->trans.X;
+                    event_data->hud.arrow_nextpos = (-WDARROW_OFFSET * ((WDFRAMES - 1) / 2)) + (input_frame * 0.36);
                     JOBJ_ClearFlags(arrow_jobj, JOBJ_HIDDEN);
+                    event_data->hud.arrow_timer = WDARROW_ANIMFRAMES;
                 }
+                // hide arrow for this wd attempt
                 else
+                {
+                    event_data->hud.arrow_timer = 0;
+                    arrow_jobj->trans.X = 0;
                     JOBJ_SetFlags(arrow_jobj, JOBJ_HIDDEN);
-                JOBJ_SetMtxDirtySub(arrow_jobj);
+                }
 
                 // updating timing text
                 if (input_frame < ((WDFRAMES - 1) / 2)) // is early
@@ -408,8 +414,10 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
 
                 // update succession
                 event_data->wd_attempted++;
-                bp();
                 Text_SetText(event_data->hud.text_succession, 0, "%.2f%", ((float)event_data->wd_succeeded / (float)event_data->wd_attempted) * 100.0);
+
+                // hide tip so bar is unobscured
+                //event_vars->Tip_Destroy();
 
                 // apply HUD animation
                 JOBJ_RemoveAnimAll(hud_jobj);
@@ -423,10 +431,29 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
     Target_Manager(event_data, hmn_data);
 
     // run tip logic
-    //Tips_Think(event_data, hmn_data);
+    Tips_Think(event_data, hmn_data);
 
     // update HUD anim
     JOBJ_AnimAll(hud_jobj);
+
+    // update arrow animation
+    if (event_data->hud.arrow_timer > 0)
+    {
+        bp();
+
+        // decrement timer
+        event_data->hud.arrow_timer--;
+
+        // get this frames position
+        float time = 1 - ((float)event_data->hud.arrow_timer / (float)WDARROW_ANIMFRAMES);
+        float xpos = Bezier(time, event_data->hud.arrow_prevpos, event_data->hud.arrow_nextpos);
+
+        // update position
+        JOBJ *arrow_jobj;
+        JOBJ_GetChild(hud_jobj, &arrow_jobj, WDJOBJ_ARROW, -1); // get timing bar jobj
+        arrow_jobj->trans.X = xpos;
+        JOBJ_SetMtxDirtySub(arrow_jobj);
+    }
 
     return;
 }
@@ -440,6 +467,11 @@ void Wavedash_HUDCamThink(GOBJ *gobj)
     }
 
     return;
+}
+float Bezier(float time, float start, float end)
+{
+    float bez = time * time * (3.0f - 2.0f * time);
+    return bez * (end - start) + start;
 }
 
 // Target functions
@@ -788,5 +820,36 @@ int Target_CheckArea(WavedashData *event_data, int line, Vec3 *pos, float x_offs
 
     return status;
 }
+
+// Tips
+Tips_Think(WavedashData *event_data, FighterData *hmn_data)
+{
+
+    // only if enabled
+    if (WdOptions_Main[2].option_val == 0)
+    {
+
+        // shield after wavedash
+        // look successful wavedash
+        if (event_data->since_wavedash <= 10)
+        {
+            // look for frame 1 of guard off
+            if ((hmn_data->state == ASID_GUARDOFF) && (hmn_data->TM.state_frame == 0) &&                  // just let go of shield
+                ((hmn_data->TM.state_prev[0] == ASID_GUARD) && (hmn_data->TM.state_prev_frames[0] == 1))) // only guarded for 1 frame
+            {
+                event_data->tip.shield_num++;
+
+                if (event_data->tip.shield_num >= 3)
+                {
+                    event_vars->Tip_Display(5 * 60, "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after wavedashing.");
+                    event_data->tip.shield_num = 0;
+                }
+            }
+        }
+    }
+
+    return;
+}
+
 // Initial Menu
 static EventMenu *Event_Menu = &WdMenu_Main;

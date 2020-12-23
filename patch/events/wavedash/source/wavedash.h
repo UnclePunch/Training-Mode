@@ -5,6 +5,7 @@
 #define WDJOBJ_TEXT 6
 #define WDJOBJ_ARROW 3
 #define WDARROW_OFFSET 0.36
+#define WDARROW_ANIMFRAMES 4
 #define WDFRAMES 15
 
 #define TRGT_RANGEMAX 0.8
@@ -34,6 +35,10 @@ struct WavedashData
         Text *text_timing;
         Text *text_angle;
         Text *text_succession;
+        float arrow_currpos;
+        float arrow_prevpos;
+        float arrow_nextpos;
+        int arrow_timer;
     } hud;
     struct
     {
@@ -43,6 +48,10 @@ struct WavedashData
         Vec3 center_offset;
         Vec3 right_offset;
     } target;
+    struct
+    {
+        u8 shield_num;
+    } tip;
     float wd_maxdstn;
     int timer;
     u8 airdodge_frame;
@@ -86,6 +95,7 @@ struct TargetData
     CameraBox *cam;
 };
 
+float Bezier(float time, float start, float end);
 float Target_GetWdashDistance(FighterData *hmn_data, float mag);
 GOBJ *Target_Spawn(WavedashData *event_data, FighterData *fighter_data);
 int Target_CheckArea(WavedashData *event_data, int line, Vec3 *pos, float x_offset, int *ret_line, Vec3 *ret_pos, Vec3 *ret_slope);
