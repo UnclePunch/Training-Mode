@@ -850,14 +850,14 @@ struct ItemData
     int xd10;                                // 0xd10
     struct                                   // cb
     {                                        //
-        void *anim;                          // 0xd14
-        void *phys;                          // 0xd18
-        void *coll;                          // 0xd1c
-        void *accessory;                     // 0xd20
+        void (*anim)(GOBJ *item);            // 0xd14
+        void (*phys)(GOBJ *item);            // 0xd18
+        void (*coll)(GOBJ *item);            // 0xd1c
+        void (*accessory)(GOBJ *item);       // 0xd20
         void *xd24;                          // 0xd24
         void *xd28;                          // 0xd28
         void *xd2c;                          // 0xd2c
-        void *jumped;                        // 0xd30, runs when the item is "jumped on", 80269bac
+        void *jumped_on;                     // 0xd30, runs when the item is "jumped on", 80269bac
         void *grabFt_onIt;                   // 0xd34, when grabbing a fighter, run this function on self
         void *grabFt_onFt;                   // 0xd38, when grabbing a fighter, run this function on fighter
     } cb;                                    //

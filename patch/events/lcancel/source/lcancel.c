@@ -7,13 +7,13 @@ static char **LcOptions_HUD[] = {"On", "Off"};
 static EventOption LcOptions_Main[] = {
     // Target
     {
-        .option_kind = OPTKIND_STRING,             // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(LcOptions_Barrel) / 4, // number of values for this option
-        .option_val = 0,                           // value of this option
-        .menu = 0,                                 // pointer to the menu that pressing A opens
-        .option_name = "Target",                   // pointer to a string
-        .desc = "Enable a target to attack.",      // string describing what this option does
-        .option_values = LcOptions_Barrel,         // pointer to an array of strings
+        .option_kind = OPTKIND_STRING,                                            // the type of option this is; menu, string list, integers list, etc
+        .value_num = sizeof(LcOptions_Barrel) / 4,                                // number of values for this option
+        .option_val = 0,                                                          // value of this option
+        .menu = 0,                                                                // pointer to the menu that pressing A opens
+        .option_name = "Target",                                                  // pointer to a string
+        .desc = "Enable a target to attack. Use DPad down to\nmanually move it.", // string describing what this option does
+        .option_values = LcOptions_Barrel,                                        // pointer to an array of strings
         .onOptionChange = 0,
     },
     // HUD
@@ -555,7 +555,6 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             }
 
             // update tip conditions
-            bp();
             if ((hmn_data->state >= ASID_LANDINGAIRN) && (hmn_data->state <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) &&  // is in aerial landing
                 ((hmn_data->input.timer_trigger_any_ignore_hitlag >= 7) && (hmn_data->input.timer_trigger_any_ignore_hitlag <= 15)) && // was early for an l-cancel
                 (event_data->tip.fastfall_active == 0))                                                                                // succeeded the last aerial landing
@@ -642,7 +641,52 @@ void Barrel_Think(LCancelData *event_data)
         ItemData *barrel_data = barrel_gobj->userdata;
         barrel_data->can_hold = 0;
 
-        break;
+        // check to move barrel
+        // get fighter data
+        GOBJ *hmn = Fighter_GetGObj(0);
+        FighterData *hmn_data = hmn->userdata;
+        if (hmn_data->input.down & PAD_BUTTON_DPAD_DOWN)
+        {
+            // ensure player is grounded
+            int isGround = 0;
+            if (hmn_data->phys.air_state == 0)
+            {
+
+                // check for ground in front of player
+                Vec3 coll_pos;
+                int line_index;
+                int line_kind;
+                Vec3 line_unk;
+                float fromX = (hmn_data->phys.pos.X) + (hmn_data->facing_direction * 16);
+                float toX = fromX;
+                float fromY = (hmn_data->phys.pos.Y + 5);
+                float toY = fromY - 10;
+                isGround = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+                if (isGround == 1)
+                {
+
+                    // update last pos
+                    event_data->barrel_lastpos = coll_pos;
+
+                    // place barrel here
+                    barrel_data->pos = coll_pos;
+                    barrel_data->coll_data.ground_index = line_index;
+
+                    // update ECB
+                    barrel_data->coll_data.topN_Curr = barrel_data->pos; // move current ECB location to new position
+                    Coll_ECBCurrToPrev(&barrel_data->coll_data);
+                    barrel_data->cb.coll(barrel_gobj);
+
+                    SFX_Play(221);
+                }
+                else
+                {
+                    // play SFX
+                    SFX_PlayCommon(3);
+                }
+            }
+            break;
+        }
     }
     case (2): // move
     {
