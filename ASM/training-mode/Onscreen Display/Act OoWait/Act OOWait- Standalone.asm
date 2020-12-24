@@ -8,6 +8,7 @@
 .set text,29
 .set FramesSince,28
 .set ASBeforeWait,27
+.set REG_Color,26
 
 ##########################################################
 ## 804a1f5c -> 804a1fd4 = Static Stock Icon Text Struct ##
@@ -58,7 +59,7 @@ WaitSearchExit:
 	add	r3,r3,r4
 	lhzx	ASBeforeWait,r3,playerdata
 #Get Frames In Wait
-	li	r4,0x23FC		#Frame Count Start
+	li	r4,TM_FramesInPrevASStart		#Frame Count Start
 	li	FramesSince,0		#Init Frame Count
 FrameCountLoop:
 	cmpwi	r5,0
@@ -70,10 +71,8 @@ FrameCountLoop:
 	subi	r5,r5,1
 	b	FrameCountLoop
 FrameCountLoopFinish:
-	lhz	r3,0x23FC(playerdata)			#Frames spent in Wait
+	lhz	r3,TM_FramesInPrevASStart(playerdata)			#Frames spent in Wait
 	add	FramesSince,r3,FramesSince			#Get Total Frames Since
-
-
 
 
 #Check If Under 13 Frames
@@ -107,8 +106,6 @@ FrameCountLoopFinish:
 ComingFromWhitelist:
 
 		SpawnText:
-		bl	CreateText
-
 		#Change Text Color
 		cmpwi	FramesSince,0x1
 		bne	RedText
@@ -118,56 +115,25 @@ ComingFromWhitelist:
 		RedText:
 		load	r3,0xffa2baff
 		StoreTextColor:
-		stw	r3,0x30(text)
+		stw r3,0x80(sp)
 
 		#Create Text
-
-
-		/*
-		cmpwi	r20,0x0
-		bne	GetTechText
-		GetGetupText:
-		bl	GetupText
-		b	ResumeTopText
-		*/
-
-
-		GetTechText:
+		li	r3,5					#Message Kind
+		lbz	r4,0xC(playerdata)	#Message Queue
+		li	r5,MSGCOLOR_WHITE
 		bl	TechText
-		ResumeTopText:
-		mr 	r3,r29			#text pointer
-		mflr	r4
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-		branchl r12,0x803a6b98
-
-		#Create Text2
-		bl	BottomText
-		mr 	r3,r29			#text pointer
-		mflr	r4
-		mr	r5,FramesSince
-		lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-		lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-		branchl r12,0x803a6b98
+		mflr  r6
+		mr	r7,FramesSince
+		Message_Display
+		
+		ChangeColor:
+		lwz	r3,0x2C(r3)
+		lwz	r3,MsgData_Text(r3)
+		li	r4,1
+		addi r5,sp,0x80
+		branchl r12,Text_ChangeTextColor
 
 		b Moonwalk_Exit
-
-
-	CreateText:
-  mflr	r0
-	stw	r0, 0x0004 (sp)
-	stwu	sp, -0x0008 (sp)
-	mr	r3,playerdata			#backup playerdata pointer
-	li	r4,60			#display for 60 frames
-	li	r5,0			#Area to Display (0-2)
-	li	r6,18			#Window ID (Unique to This Display)
-	branchl	r12,TextCreateFunction			#create text custom function
-
-	mr	text,r3			#backup text pointer
-  lwz	r0, 0x000C (sp)
-	addi	sp, sp, 8
-	mtlr r0
-	blr
 
 
 ###################
@@ -176,17 +142,7 @@ ComingFromWhitelist:
 
 TechText:
 blrl
-.string "Act OoWait"
-.align 2
-
-GetupText:
-blrl
-.string "Act OoGetup"
-.align 2
-
-BottomText:
-blrl
-.string "Frame: %d"
+.string "Act OoWait\nFrame: %d"
 .align 2
 
 ##############################
