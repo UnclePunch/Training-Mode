@@ -38,6 +38,11 @@ backupall
 	cmpwi	r3,0x1
 	beq	Moonwalk_Exit
 
+#Ensure I'm Actually Coming from Landing (Wait interrupt is used for certain IASA)
+	lhz	r3,TM_OneASAgo(playerdata)
+	cmpwi	r3,ASID_Landing
+	bne	Moonwalk_Exit
+
 #Make Sure Player Didn't Buffer Crouch, Shield, or Walk
 	lwz	r3,0x10(playerdata)
 	cmpwi	r3,0xF
@@ -49,6 +54,8 @@ backupall
 	cmpwi	r3,0x27
 	beq	Moonwalk_Exit
 	cmpwi	r3,0xB2
+	beq	Moonwalk_Exit
+	cmpwi r3,ASID_SquatWait
 	beq	Moonwalk_Exit
 
 #Ensure player came from aerial attack landing or special move
@@ -84,7 +91,7 @@ LandingSearchExit:
 	add	r3,r3,r4
 	lhzx	ASBeforeLanding,r3,playerdata
 #Get Frames In Wait
-	li	r4,0x23FC		#Frame Count Start
+	li	r4,TM_FramesInPrevASStart		#Frame Count Start
 	li	FramesSince,0		#Init Frame Count
 FrameCountLoop:
 	cmpwi	r5,0
@@ -96,7 +103,7 @@ FrameCountLoop:
 	subi	r5,r5,1
 	b	FrameCountLoop
 FrameCountLoopFinish:
-	lhz	r3,0x23FC(playerdata)			#Frames spent in Wait
+	lhz	r3,TM_FramesInPrevASStart(playerdata)			#Frames spent in Wait
 	add	FramesSince,r3,FramesSince			#Get Total Frames Since
 #Minus in-actionable frames
 	lfs	f1, 0x01F4 (playerdata)
@@ -104,9 +111,6 @@ FrameCountLoopFinish:
 	stfd f1,0xB0(sp)
 	lwz r3,0xB4(sp)
 	sub	FramesSince,FramesSince,r3
-
-SpawnText:
-	bl	CreateText
 
 #Change Text Color
 	cmpwi	FramesSince,0x0
@@ -117,57 +121,36 @@ GreenText:
 RedText:
 	load	r3,0xffa2baff
 	StoreTextColor:
-	stw	r3,0x30(text)
+	stw	r3,0x80(sp)
 
-GetTechText:
-	bl	TechText
-ResumeTopText:
-	mr 	r3,r29			#text pointer
-	mflr	r4
-	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-	lfs	f2, -0x37B4 (rtoc)			#default text X/Y
-	branchl r12,0x803a6b98
 
-#Create Text2
-	bl	BottomText
-	mr 	r3,r29			#text pointer
-	mflr	r4
-	addi	r5,FramesSince,1
-	lfs	f1, -0x37B4 (rtoc)			#default text X/Y
-	lfs	f2, -0x37B0 (rtoc)			#shift down on Y axis
-	branchl r12,0x803a6b98
+		#Create Text
+		li	r3,5					#Message Kind
+		lbz	r4,0xC(playerdata)	#Message Queue
+		li	r5,MSGCOLOR_WHITE
+		bl	Text
+		mflr  r6
+		addi	r7,FramesSince,1
+		Message_Display
+		
+		ChangeColor:
+		lwz	r3,0x2C(r3)
+		lwz	r3,MsgData_Text(r3)
+		li	r4,1
+		addi r5,sp,0x80
+		branchl r12,Text_ChangeTextColor
+
+
 
 	b Moonwalk_Exit
-
-	CreateText:
-  mflr	r0
-	stw	r0, 0x0004 (sp)
-	stwu	sp, -0x0008 (sp)
-	mr	r3,playerdata			#backup playerdata pointer
-	li	r4,60			#display for 60 frames
-	li	r5,0			#Area to Display (0-2)
-	li	r6,18			#Window ID (Unique to This Display)
-	branchl	r12,TextCreateFunction			#create text custom function
-
-	mr	text,r3			#backup text pointer
-  lwz	r0, 0x000C (sp)
-	addi	sp, sp, 8
-	mtlr r0
-	blr
-
 
 ###################
 ## TEXT CONTENTS ##
 ###################
 
-TechText:
+Text:
 blrl
-.string "Act OoAutoCancel"
-.align 2
-
-BottomText:
-blrl
-.string "Frame: %d"
+.string "Act OoAutoCancel\nFrame: %d"
 .align 2
 
 ##############################
