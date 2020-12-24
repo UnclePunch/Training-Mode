@@ -1,7 +1,7 @@
 #include "../../../../MexTK/mex.h"
 #include "../../../tmdata/source/events.h"
 
-#define TEXT_SCALE 4
+#define TEXT_SCALE 4.2
 #define WDJOBJ_TEXT 6
 #define WDJOBJ_ARROW 3
 #define WDARROW_OFFSET 0.36
@@ -35,7 +35,6 @@ struct WavedashData
         Text *text_timing;
         Text *text_angle;
         Text *text_succession;
-        float arrow_currpos;
         float arrow_prevpos;
         float arrow_nextpos;
         int arrow_timer;

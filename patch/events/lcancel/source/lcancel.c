@@ -260,12 +260,14 @@ void LCancel_Init(LCancelData *event_data)
     GObj_AddObject(hud_gobj, 3, hud_jobj);
     GObj_AddGXLink(hud_gobj, GXLink_Common, 18, 80);
 
+    /*
     // account for widescreen
     float aspect = (hud_cobj->projection_param.perspective.aspect / 1.216667) - 1;
     JOBJ *this_jobj;
     JOBJ_GetChild(hud_jobj, &this_jobj, 1, -1);
     this_jobj->trans.X += (this_jobj->trans.X * aspect);
     JOBJ_SetMtxDirtySub(hud_jobj);
+    */
 
     // create text canvas
     int canvas = Text_CreateCanvas(2, hud_gobj, 14, 15, 0, 18, 81, 19);
@@ -303,6 +305,14 @@ void LCancel_Init(LCancelData *event_data)
         // dummy text
         Text_AddSubtext(hud_text, 0, 0, "-");
     }
+
+    // save initial arrow position
+    JOBJ *arrow_jobj;
+    JOBJ_GetChild(hud_jobj, &arrow_jobj, LCLARROW_JOBJ, -1);
+    event_data->hud.arrow_base_x = arrow_jobj->trans.X;
+    event_data->hud.arrow_timer = 0;
+    arrow_jobj->trans.X = 0;
+    JOBJ_SetFlags(arrow_jobj, JOBJ_HIDDEN);
 
     return 0;
 }
@@ -354,48 +364,7 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         else
             SFX_PlayCommon(3);
 
-        // Update timing hud
-        JOBJ *timingbar_jobj;
-        JOBJ_GetChild(hud_jobj, &timingbar_jobj, 5, -1); // get timing bar jobj
-        // reset all colors first
-        DOBJ *d = timingbar_jobj->dobj;
-        int count = 0;
-        while (d != 0)
-        {
-
-            // if a box dobj
-            if ((count >= 0) && (count < 30))
-            {
-
-                // if mobj exists (it will)
-                MOBJ *m = d->mobj;
-                if (m != 0)
-                {
-
-                    HSD_Material *mat = m->mat;
-
-                    // set alpha
-                    mat->alpha = 0.7;
-
-                    // set color
-                    static GXColor tmgbar_green = {128, 255, 128, 255};
-                    static GXColor tmgbar_red = {255, 128, 128, 255};
-
-                    // set green
-                    if (count < 7)
-                        mat->diffuse = tmgbar_green;
-                    // set red
-                    else if (count >= 7)
-                        mat->diffuse = tmgbar_red;
-                }
-            }
-
-            // inc
-            count++;
-            d = d->next;
-        }
-
-        // update text + frame box
+        // update timing text
         int frame_box_id;
         if (hmn_data->input.timer_trigger_any_ignore_hitlag >= 30)
         {
@@ -409,36 +378,13 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
             frame_box_id = hmn_data->input.timer_trigger_any_ignore_hitlag;
         }
 
-        // set current timing bar
-        d = timingbar_jobj->dobj;
-        count = 0;
-        while (d != 0)
-        {
-
-            // if this frames' box
-            if (count == frame_box_id)
-            {
-
-                // if mobj exists (it will)
-                MOBJ *m = d->mobj;
-                if (m != 0)
-                {
-
-                    HSD_Material *mat = m->mat;
-
-                    // set color
-                    static GXColor tmgbar_white = {255, 255, 255, 255};
-                    mat->diffuse = tmgbar_white;
-                    mat->alpha = 1;
-                }
-
-                break;
-            }
-
-            // inc
-            count++;
-            d = d->next;
-        }
+        // update arrow
+        JOBJ *arrow_jobj;
+        JOBJ_GetChild(hud_jobj, &arrow_jobj, LCLARROW_JOBJ, -1);
+        event_data->hud.arrow_prevpos = arrow_jobj->trans.X;
+        event_data->hud.arrow_nextpos = event_data->hud.arrow_base_x - (frame_box_id * LCLARROW_OFFSET);
+        JOBJ_ClearFlags(arrow_jobj, JOBJ_HIDDEN);
+        event_data->hud.arrow_timer = LCLARROW_ANIMFRAMES;
 
         // Print airborne frames
         if (event_data->is_fastfall)
@@ -468,6 +414,23 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         JOBJ_RemoveAnimAll(hud_jobj);
         JOBJ_AddAnimAll(hud_jobj, 0, event_data->lcancel_assets->hudmatanim[2], 0);
         JOBJ_ReqAnimAll(hud_jobj, 0);
+    }
+
+    // update arrow animation
+    if (event_data->hud.arrow_timer > 0)
+    {
+        // decrement timer
+        event_data->hud.arrow_timer--;
+
+        // get this frames position
+        float time = 1 - ((float)event_data->hud.arrow_timer / (float)LCLARROW_ANIMFRAMES);
+        float xpos = Bezier(time, event_data->hud.arrow_prevpos, event_data->hud.arrow_nextpos);
+
+        // update position
+        JOBJ *arrow_jobj;
+        JOBJ_GetChild(hud_jobj, &arrow_jobj, LCLARROW_JOBJ, -1); // get timing bar jobj
+        arrow_jobj->trans.X = xpos;
+        JOBJ_SetMtxDirtySub(arrow_jobj);
     }
 
     // update HUD anim
@@ -592,9 +555,10 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
             }
 
             // update tip conditions
-            if ((hmn_data->state >= ASID_LANDINGAIRN) && (hmn_data->state <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) && // is in aerial landing
-                ((hmn_data->input.timer_trigger_any >= 7) && (hmn_data->input.timer_trigger_any <= 15)) &&                            // was early for an l-cancel
-                (event_data->tip.fastfall_active == 0))                                                                               // succeeded the last aerial landing
+            bp();
+            if ((hmn_data->state >= ASID_LANDINGAIRN) && (hmn_data->state <= ASID_LANDINGAIRLW) && (hmn_data->TM.state_frame == 0) &&  // is in aerial landing
+                ((hmn_data->input.timer_trigger_any_ignore_hitlag >= 7) && (hmn_data->input.timer_trigger_any_ignore_hitlag <= 15)) && // was early for an l-cancel
+                (event_data->tip.fastfall_active == 0))                                                                                // succeeded the last aerial landing
             {
                 // increment condition count
                 event_data->tip.fastfall_num++;
@@ -892,6 +856,13 @@ static void *item_callbacks[] = {
     0x80288c68,
     0x803f5988,
 };
+
+// Misc
+float Bezier(float time, float start, float end)
+{
+    float bez = time * time * (3.0f - 2.0f * time);
+    return bez * (end - start) + start;
+}
 
 // Initial Menu
 static EventMenu *Event_Menu = &LabMenu_Main;

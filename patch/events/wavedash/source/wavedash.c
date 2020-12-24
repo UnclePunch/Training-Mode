@@ -40,13 +40,13 @@ static EventOption WdOptions_Main[] = {
     },
     // Help
     {
-        .option_kind = OPTKIND_FUNC,                                                                                                   // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                // number of values for this option
-        .option_val = 0,                                                                                                               // value of this option
-        .menu = 0,                                                                                                                     // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                         // pointer to a string
-        .desc = "A wavedash is performed by air dodging diagonally into \nthe ground, causing the fighter to slide a short distance.", // string describing what this option does
-        .option_values = 0,                                                                                                            // pointer to an array of strings
+        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                                                               // the type of option this is; menu, string list, integers list, etc
+        .value_num = 0,                                                                                                                                                                                                                                            // number of values for this option
+        .option_val = 0,                                                                                                                                                                                                                                           // value of this option
+        .menu = 0,                                                                                                                                                                                                                                                 // pointer to the menu that pressing A opens
+        .option_name = "Help",                                                                                                                                                                                                                                     // pointer to a string
+        .desc = "A wavedash is performed by air-dodging diagonally down\nas soon you leave the ground from a jump, causing the fighter\nto slide a short distance. This technique will allow you to quickly\nadjust your position and even attack while sliding.", // string describing what this option does
+        .option_values = 0,                                                                                                                                                                                                                                        // pointer to an array of strings
         .onOptionChange = 0,
     },
     // Exit
@@ -243,7 +243,11 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
 
         // if grounded and not in kneebend, stop sequence
         if ((hmn_data->state != ASID_KNEEBEND) && (hmn_data->state != ASID_LANDINGFALLSPECIAL) && (hmn_data->phys.air_state == 0))
+        {
             event_data->timer = -1;
+            event_data->is_airdodge = 0;
+            event_data->is_early_airdodge = 0;
+        }
 
         // run sequence logic
         else

@@ -22,6 +22,10 @@ struct LCancelData
         Text *text_air;
         Text *text_scs;
         int canvas;
+        float arrow_base_x; // starting X position of arrow
+        float arrow_prevpos;
+        float arrow_nextpos;
+        int arrow_timer;
     } hud;
     struct
     {
@@ -45,8 +49,12 @@ typedef struct LCancelAssets
 };
 
 #define LCLTEXT_SCALE 4.2
+#define LCLARROW_ANIMFRAMES 4
+#define LCLARROW_JOBJ 7
+#define LCLARROW_OFFSET 0.365
 
 static void *item_callbacks[];
+float Bezier(float time, float start, float end);
 void Tips_Toggle(GOBJ *menu_gobj, int value);
 void LCancel_HUDCamThink(GOBJ *gobj);
 void Barrel_Think(LCancelData *event_data);
