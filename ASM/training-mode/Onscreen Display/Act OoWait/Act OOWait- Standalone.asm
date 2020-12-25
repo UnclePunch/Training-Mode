@@ -102,6 +102,11 @@ FrameCountLoopFinish:
 	bgt	NotTeching
 	b	ComingFromWhitelist
 	NotTeching:
+#Wavedash
+	cmpwi	ASBeforeWait,ASID_LandingFallSpecial
+	bne	NotWavedash 
+	b	ComingFromWhitelist
+NotWavedash:
 	b	Moonwalk_Exit
 ComingFromWhitelist:
 
