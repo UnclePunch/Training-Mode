@@ -111,6 +111,7 @@ GeneralTech:
 bl	TrainingLab
 bl	LCancel
 bl	Ledgedash
+bl	0x0	# wavedash
 bl	ComboTraining
 bl	AttackOnShield
 bl	Reversal

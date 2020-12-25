@@ -103,6 +103,9 @@ void Event_Think(GOBJ *event)
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
 
+    // infinite shields
+    hmn_data->shield.health = 60;
+
     Wavedash_Think(event_data, hmn_data);
 
     return;
