@@ -1011,6 +1011,7 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
         }
     }
 
+    /*
     // remove all generators with linkNo 2 (blastzone)
     ptclGen *gen = *stc_ptclgen;
     while (gen != 0)
@@ -1033,7 +1034,7 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
         // get next
         gen = gen_next;
     }
-
+*/
     // remove all camera shake gobjs (p_link 18, entity_class 3)
     GOBJList *gobj_list = *stc_gobj_list;
     GOBJ *gobj = gobj_list->match_cam;

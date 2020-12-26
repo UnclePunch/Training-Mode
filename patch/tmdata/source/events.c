@@ -2163,28 +2163,30 @@ int Savestate_Load(Savestate *savestate)
             }
         }
 
-        // remove all generators with linkNo 2 (blastzone)
-        ptclGen *gen = *stc_ptclgen;
-        while (gen != 0)
+        /*
+    // remove all generators with linkNo 2 (blastzone)
+    ptclGen *gen = *stc_ptclgen;
+    while (gen != 0)
+    {
+        // get next
+        ptclGen *gen_next = gen->next;
+
+        // if linkNo 2, destroy it
+        if (gen->link_no == 2)
         {
-            // get next
-            ptclGen *gen_next = gen->next;
+            // set a flag for some reason
+            gen->type |= 0x80;
 
-            // if linkNo 2, destroy it
-            if (gen->link_no == 2)
-            {
-                // set a flag for some reason
-                gen->type |= 0x80;
-
-                // kill gen
-                gen = psKillGenerator(gen, *stc_ptclgencurr);
-            }
-
-            // save last
-            *stc_ptclgencurr = gen;
-            // get next
-            gen = gen_next;
+            // kill gen
+            gen = psKillGenerator(gen, *stc_ptclgencurr);
         }
+
+        // save last
+        *stc_ptclgencurr = gen;
+        // get next
+        gen = gen_next;
+    }
+*/
 
         // remove all camera shake gobjs (p_link 18, entity_class 3)
         GOBJList *gobj_list = *stc_gobj_list;
