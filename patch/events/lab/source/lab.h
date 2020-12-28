@@ -617,11 +617,15 @@ enum cpu_mash
 #define CPUGETUP_ATTACK 4
 
 // Stick Direction Definitions
-#define STCKDIR_NONE 0
-#define STCKDIR_TOWARD 1
-#define STCKDIR_AWAY 2
-#define STCKDIR_FRONT 3
-#define STCKDIR_BACK 4
+enum STICKDIR
+{
+    STCKDIR_NONE,
+    STCKDIR_TOWARD,
+    STCKDIR_AWAY,
+    STCKDIR_FRONT,
+    STCKDIR_BACK,
+    STICKDIR_RDM,
+};
 
 // Hit kind defintions
 #define HITKIND_DAMAGE 0
