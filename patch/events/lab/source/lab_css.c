@@ -285,7 +285,6 @@ void Menu_SelCard_Think(GOBJ *menu_gobj)
         u8 is_inserted;
 
         s32 memSize, sectorSize;
-        bp();
         if (CARDProbeEx(i, &memSize, &sectorSize) == CARD_RESULT_READY)
         {
             // if it was just inserted, get info

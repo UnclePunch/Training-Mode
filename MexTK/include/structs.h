@@ -102,6 +102,8 @@ typedef struct CPU CPU;
 typedef struct ftData ftData;
 typedef struct ftCommonData ftCommonData;
 typedef struct ftChkDevice ftChkDevice;
+typedef struct FtSymbolLookup FtSymbolLookup;
+typedef struct FtSymbols FtSymbols;
 typedef struct FtParts FtParts;
 typedef struct FtPartsDesc FtPartsDesc;
 typedef struct FtDOBJUnk FtDOBJUnk;
@@ -111,6 +113,10 @@ typedef struct FtDOBJUnk3 FtDOBJUnk3;
 typedef struct FtDynamicBoneset FtDynamicBoneset;
 typedef struct FtDynamicRoot FtDynamicRoot;
 typedef struct FtDynamicHit FtDynamicHit;
+typedef struct DynamicsDesc DynamicsDesc;
+typedef struct DynamicsHitDesc DynamicsHitDesc;
+typedef struct DynamicsBehave DynamicsBehave;
+typedef struct ftDynamics ftDynamics;
 
 // Fighter States
 typedef struct FtCliffCatch FtCliffCatch;

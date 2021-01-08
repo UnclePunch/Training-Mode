@@ -543,28 +543,59 @@ struct FighterBone
     int flags2;
 };
 
+struct DynamicsDesc
+{
+    int root_bone; // bone index;
+    void *params;  // dynamics params;
+    int num;       // number of children bones to make dynamic
+    float xc;
+    float x10;
+    float x14;
+};
+
+struct DynamicsHitDesc
+{
+    int bone; // bone index
+    int x4;   // unk
+    Vec3 x8;  // unk
+};
+
+struct DynamicsBehave
+{
+    int num; // number of dynamic bones to animate in the boneset
+};
+
+struct ftDynamics
+{
+    int dynamics_num;                   // number of dynamic bonesets for this fighter
+    DynamicsDesc *dynamics_desc;        // boneset data array (one for each boneset)
+    int dynamics_hit_num;               // (no collide bubbles), max is 11
+    DynamicsHitDesc *dynamics_hit_desc; // dynamic hit data array (one for each dynamic hit)
+    DynamicsBehave **dynamics_behave;   // pointer to an array of dynamics behavior pointers.
+};
+
 struct ftData
 {
     char footBoneL;
     char footBoneR;
-    int *charAttributes;
-    u8 *modelLookup;
-    int animFlags;
-    int animDynamics;
+    int *charAttributes; // 0x4
+    u8 *modelLookup;     // 0x8
+    int animFlags;       // 0xC
+    int animDynamics;    // 0x10
     int x14;
     int x18;
     int x1C;
     int x20;
     int x24;
     int x28;
-    int dynamics;
+    ftDynamics *dynamics; // 0x2C
     int hurtbox;
     int *center_bubble;
     int x38;
     int x3C;
     int x40;
     int coll;
-    int *items;
+    void *items;
     int *x4C;
     int x50;
     int x54;
@@ -1929,197 +1960,191 @@ struct FighterData
         char timer_unk5;                                       // 0x68A
         char timer_unk6;                                       // 0x68B
     } input;                                                   //
-    Vec3 animOffset;
-    int x698;
-    int x69C;
-    int x6A0;
-    int x6A4;
-    float unk_y_offset_from_double_jump_position; // 0x6A8
-    float unk6AC;                                 // 0x6AC
-    int unknown6B0;                               // 0x6B0
-    int unknown6B4;                               // 0x6B4
-    int unknown6B8;                               // 0x6B8
-    float input_stickangle;                       // 0x6BC
-    int unknown6C0;                               // 0x6C0
-    int unknown6C4;                               // 0x6C4
-    int unknown6C8;                               // 0x6C8
-    int unknown6CC;                               // 0x6CC
-    int unknown6D0;                               // 0x6D0
-    int unknown6D4;                               // 0x6D4
-    int unknown6D8;                               // 0x6D8
-    int unknown6DC;                               // 0x6DC
-    int unknown6E0;                               // 0x6E0
-    int unknown6E4;                               // 0x6E4
-    int unknown6E8;                               // 0x6E8
-    int unknown6EC;                               // 0x6EC
-    CollData coll_data;                           // 0x6F0 -> 0x88C
-    CameraBox *cameraBox;                         // 0x890
-    float stateFrame;                             // 0x894
-    int unknown898;                               // 0x898
-    float stateSpeed;                             // 0x89C
-    int x8a0;                                     // 0x8a0
-    float stateBlend;                             // 0x8a4
-    int x8a8;                                     // 0x8a8
-    JOBJ *animSkeleton;                           // 0x8ac
-    int x8b0;                                     // 0x8b0
-    int x8b4;                                     // 0x8b4
-    int x8b8;                                     // 0x8b8
-    int x8bc;                                     // 0x8bc
-    int x8c0;                                     // 0x8c0
-    int x8c4;                                     // 0x8c4
-    int x8c8;                                     // 0x8c8
-    int x8cc;                                     // 0x8cc
-    int x8d0;                                     // 0x8d0
-    int x8d4;                                     // 0x8d4
-    int x8d8;                                     // 0x8d8
-    int x8dc;                                     // 0x8dc
-    int x8e0;                                     // 0x8e0
-    int x8e4;                                     // 0x8e4
-    int x8e8;                                     // 0x8e8
-    int x8ec;                                     // 0x8ec
-    int x8f0;                                     // 0x8f0
-    int x8f4;                                     // 0x8f4
-    int x8f8;                                     // 0x8f8
-    int x8fc;                                     // 0x8fc
-    int x900;                                     // 0x900
-    int x904;                                     // 0x904
-    int x908;                                     // 0x908
-    int x90c;                                     // 0x90c
-    int x910;                                     // 0x910
-    ftHit hitbox[4];                              // 0x914
-    ftHit throw_hitbox[2];                        // 0xdf4
-    ftHit unk_hitbox;                             // 0x1064
-    u8 teamID;                                    // 0x119c, friendly fire related
-    u8 grabbersID;                                // 0x119D, slot ID of the person grabbing this fighter
-    u8 hurtboxNum;                                // 0x119E, number of hurtboxesz
-    FtHurt hurtbox[15];                           // 0x11A0
-    int x1614;                                    // 0x1614
-    int x1618;                                    // 0x1618
-    int x161c;                                    // 0x161c
-    int x1620;                                    // 0x1620
-    int x1624;                                    // 0x1624
-    int x1628;                                    // 0x1628
-    int x162c;                                    // 0x162c
-    int x1630;                                    // 0x1630
-    int x1634;                                    // 0x1634
-    int x1638;                                    // 0x1638
-    int x163c;                                    // 0x163c
-    int x1640;                                    // 0x1640
-    int x1644;                                    // 0x1644
-    int x1648;                                    // 0x1648
-    int x164c;                                    // 0x164c
-    int x1650;                                    // 0x1650
-    int x1654;                                    // 0x1654
-    int x1658;                                    // 0x1658
-    int x165c;                                    // 0x165c
-    int x1660;                                    // 0x1660
-    int x1664;                                    // 0x1664
-    int x1668;                                    // 0x1668
-    int dynamics_hit_num;                         // 0x166c
-    FtDynamicHit dynamics_hit[11];                // 0x1670
-    int x1828;                                    // 0x1828
-    struct dmg                                    // 0x182c
-    {                                             //
-        int behavior;                             // 0x182c
-        float percent;                            // 0x1830
-        int x1834;                                // 0x1834
-        float percent_temp;                       // 0x1838
-        float applied;                            // 0x183c
-        int x1840;                                // 0x1840
-        float direction;                          // 0x1844
-        int kb_angle;                             // 0x1848
-        int damaged_hurtbox;                      // 0x184c
-        float force_applied;                      // 0x1850
-        Vec3 collpos;                             // 0x1854
-        int dealt;                                // 0x1860
-        int x1864;                                // 0x1864
-        GOBJ *source;                             // 0x1868
-        int x186c;                                // 0x186c
-        int x1870;                                // 0x1870
-        int x1874;                                // 0x1874
-        int x1878;                                // 0x1878
-        int x187c;                                // 0x187c
-        int x1880;                                // 0x1880
-        int x1884;                                // 0x1884
-        int x1888;                                // 0x1888
-        int x188c;                                // 0x188c
-        int x1890;                                // 0x1890
-        int x1894;                                // 0x1894
-        int x1898;                                // 0x1898
-        int x189c;                                // 0x189c
-        int x18a0;                                // 0x18a0
-        float kb_mag;                             // 0x18a4  kb magnitude
-        int x18a8;                                // 0x18a8
-        int time_since_hit;                       // 0x18ac   in frames
-        int x18b0;                                // 0x18b0
-        float armor;                              // 0x18b4
-        int x18b8;                                // 0x18b8
-        int x18bc;                                // 0x18bc
-        int x18c0;                                // 0x18c0
-        int source_ply;                           // 0x18c4   damage source ply number
-        int x18c8;                                // 0x18c8
-        int x18cc;                                // 0x18cc
-        int x18d0;                                // 0x18d0
-        int x18d4;                                // 0x18d4
-        int x18d8;                                // 0x18d8
-        int x18dc;                                // 0x18dc
-        int x18e0;                                // 0x18e0
-        int x18e4;                                // 0x18e4
-        int x18e8;                                // 0x18e8
-        u16 instancehitby;                        // 0x18ec. Last Move Instance This Player Was Hit by
-        int x18f0;                                // 0x18f0
-        int x18f4;                                // 0x18f4
-        u8 x18f8;                                 // 0x18f8
-        u8 x18f9;                                 // 0x18f8
-        u16 model_shift_frames;                   // 0x18f8
-        u8 x18fc;                                 // 0x18fc
-        u8 x18fd;                                 // 0x18fd
-        int x1900;                                // 0x1900
-        int x1904;                                // 0x1904
-        int x1908;                                // 0x1908
-        int x190c;                                // 0x190c
-        int x1910;                                // 0x1910
-        int x1914;                                // 0x1914
-        int x1918;                                // 0x1918
-        int x191c;                                // 0x191c
-        int x1920;                                // 0x1920
-        int x1924;                                // 0x1924
-        int x1928;                                // 0x1928
-        int x192c;                                // 0x192c
-        int x1930;                                // 0x1930
-        int x1934;                                // 0x1934
-        int x1938;                                // 0x1938
-        int x193c;                                // 0x193c
-        int x1940;                                // 0x1940
-        int x1944;                                // 0x1944
-        int x1948;                                // 0x1948
-        int x194c;                                // 0x194c
-        int x1950;                                // 0x1950
-        int x1954;                                // 0x1954
-        int x1958;                                // 0x1958
-        float hitlag_frames;                      // 0x195c
-    } dmg;                                        //
-    int x1960;                                    // 0x1960
-    float x1964;                                  // 0x1964
-    struct jump                                   // 0x1968
-    {                                             //
-        char jumps_used;                          // 0x1968
-        char walljumps_used;                      // 0x1969
-    } jump;                                       //
-    int x196c;                                    // 0x196c
-    int x1970;                                    // 0x1970
-    GOBJ *heldItem;                               // 0x1974
-    GOBJ *x1978;                                  // 0x1978
-    int x197c;                                    // 0x197c
-    GOBJ *headItem;                               // 0x1980
-    GOBJ *heldItemSpecial;                        // 0x1984
-    struct hurtstatus                             // 0x1988
-    {                                             //
-        int script;                               // 0x1988
-        int game;                                 // 0x198c
-        int ledge_intang_left;                    // 0x1990
-        int respawn_intang_left;                  // 0x1994
-    } hurtstatus;                                 //
+    Vec3 transN_pos;                                           // x68c
+    Vec3 transN_pos_prev;                                      // 0x698
+    Vec3 transN_offset;                                        // 0x6A4
+    Vec3 transN_offset_prev;                                   // 0x6B0
+    float input_stickangle;                                    // 0x6BC
+    int unknown6C0;                                            // 0x6C0
+    int unknown6C4;                                            // 0x6C4
+    int unknown6C8;                                            // 0x6C8
+    int unknown6CC;                                            // 0x6CC
+    int unknown6D0;                                            // 0x6D0
+    int unknown6D4;                                            // 0x6D4
+    int unknown6D8;                                            // 0x6D8
+    int unknown6DC;                                            // 0x6DC
+    int unknown6E0;                                            // 0x6E0
+    int unknown6E4;                                            // 0x6E4
+    int unknown6E8;                                            // 0x6E8
+    int unknown6EC;                                            // 0x6EC
+    CollData coll_data;                                        // 0x6F0 -> 0x88C
+    CameraBox *cameraBox;                                      // 0x890
+    float stateFrame;                                          // 0x894
+    int unknown898;                                            // 0x898
+    float stateSpeed;                                          // 0x89C
+    int x8a0;                                                  // 0x8a0
+    float stateBlend;                                          // 0x8a4
+    int x8a8;                                                  // 0x8a8
+    JOBJ *animSkeleton;                                        // 0x8ac
+    int x8b0;                                                  // 0x8b0
+    int x8b4;                                                  // 0x8b4
+    int x8b8;                                                  // 0x8b8
+    int x8bc;                                                  // 0x8bc
+    int x8c0;                                                  // 0x8c0
+    int x8c4;                                                  // 0x8c4
+    int x8c8;                                                  // 0x8c8
+    int x8cc;                                                  // 0x8cc
+    int x8d0;                                                  // 0x8d0
+    int x8d4;                                                  // 0x8d4
+    int x8d8;                                                  // 0x8d8
+    int x8dc;                                                  // 0x8dc
+    int x8e0;                                                  // 0x8e0
+    int x8e4;                                                  // 0x8e4
+    int x8e8;                                                  // 0x8e8
+    int x8ec;                                                  // 0x8ec
+    int x8f0;                                                  // 0x8f0
+    int x8f4;                                                  // 0x8f4
+    int x8f8;                                                  // 0x8f8
+    int x8fc;                                                  // 0x8fc
+    int x900;                                                  // 0x900
+    int x904;                                                  // 0x904
+    int x908;                                                  // 0x908
+    int x90c;                                                  // 0x90c
+    int x910;                                                  // 0x910
+    ftHit hitbox[4];                                           // 0x914
+    ftHit throw_hitbox[2];                                     // 0xdf4
+    ftHit unk_hitbox;                                          // 0x1064
+    u8 teamID;                                                 // 0x119c, friendly fire related
+    u8 grabbersID;                                             // 0x119D, slot ID of the person grabbing this fighter
+    u8 hurtboxNum;                                             // 0x119E, number of hurtboxesz
+    FtHurt hurtbox[15];                                        // 0x11A0
+    int x1614;                                                 // 0x1614
+    int x1618;                                                 // 0x1618
+    int x161c;                                                 // 0x161c
+    int x1620;                                                 // 0x1620
+    int x1624;                                                 // 0x1624
+    int x1628;                                                 // 0x1628
+    int x162c;                                                 // 0x162c
+    int x1630;                                                 // 0x1630
+    int x1634;                                                 // 0x1634
+    int x1638;                                                 // 0x1638
+    int x163c;                                                 // 0x163c
+    int x1640;                                                 // 0x1640
+    int x1644;                                                 // 0x1644
+    int x1648;                                                 // 0x1648
+    int x164c;                                                 // 0x164c
+    int x1650;                                                 // 0x1650
+    int x1654;                                                 // 0x1654
+    int x1658;                                                 // 0x1658
+    int x165c;                                                 // 0x165c
+    int x1660;                                                 // 0x1660
+    int x1664;                                                 // 0x1664
+    int x1668;                                                 // 0x1668
+    int dynamics_hit_num;                                      // 0x166c
+    FtDynamicHit dynamics_hit[11];                             // 0x1670
+    int x1828;                                                 // 0x1828
+    struct dmg                                                 // 0x182c
+    {                                                          //
+        int behavior;                                          // 0x182c
+        float percent;                                         // 0x1830
+        int x1834;                                             // 0x1834
+        float percent_temp;                                    // 0x1838
+        float applied;                                         // 0x183c
+        int x1840;                                             // 0x1840
+        float direction;                                       // 0x1844
+        int kb_angle;                                          // 0x1848
+        int damaged_hurtbox;                                   // 0x184c
+        float force_applied;                                   // 0x1850
+        Vec3 collpos;                                          // 0x1854
+        int dealt;                                             // 0x1860
+        int x1864;                                             // 0x1864
+        GOBJ *source;                                          // 0x1868
+        int x186c;                                             // 0x186c
+        int x1870;                                             // 0x1870
+        int x1874;                                             // 0x1874
+        int x1878;                                             // 0x1878
+        int x187c;                                             // 0x187c
+        int x1880;                                             // 0x1880
+        int x1884;                                             // 0x1884
+        int x1888;                                             // 0x1888
+        int x188c;                                             // 0x188c
+        int x1890;                                             // 0x1890
+        int x1894;                                             // 0x1894
+        int x1898;                                             // 0x1898
+        int x189c;                                             // 0x189c
+        int x18a0;                                             // 0x18a0
+        float kb_mag;                                          // 0x18a4  kb magnitude
+        int x18a8;                                             // 0x18a8
+        int time_since_hit;                                    // 0x18ac   in frames
+        int x18b0;                                             // 0x18b0
+        float armor;                                           // 0x18b4
+        int x18b8;                                             // 0x18b8
+        int x18bc;                                             // 0x18bc
+        int x18c0;                                             // 0x18c0
+        int source_ply;                                        // 0x18c4   damage source ply number
+        int x18c8;                                             // 0x18c8
+        int x18cc;                                             // 0x18cc
+        int x18d0;                                             // 0x18d0
+        int x18d4;                                             // 0x18d4
+        int x18d8;                                             // 0x18d8
+        int x18dc;                                             // 0x18dc
+        int x18e0;                                             // 0x18e0
+        int x18e4;                                             // 0x18e4
+        int x18e8;                                             // 0x18e8
+        u16 instancehitby;                                     // 0x18ec. Last Move Instance This Player Was Hit by
+        int x18f0;                                             // 0x18f0
+        int x18f4;                                             // 0x18f4
+        u8 x18f8;                                              // 0x18f8
+        u8 x18f9;                                              // 0x18f8
+        u16 model_shift_frames;                                // 0x18f8
+        u8 x18fc;                                              // 0x18fc
+        u8 x18fd;                                              // 0x18fd
+        int x1900;                                             // 0x1900
+        int x1904;                                             // 0x1904
+        int x1908;                                             // 0x1908
+        int x190c;                                             // 0x190c
+        int x1910;                                             // 0x1910
+        int x1914;                                             // 0x1914
+        int x1918;                                             // 0x1918
+        int x191c;                                             // 0x191c
+        int x1920;                                             // 0x1920
+        int x1924;                                             // 0x1924
+        int x1928;                                             // 0x1928
+        int x192c;                                             // 0x192c
+        int x1930;                                             // 0x1930
+        int x1934;                                             // 0x1934
+        int x1938;                                             // 0x1938
+        int x193c;                                             // 0x193c
+        int x1940;                                             // 0x1940
+        int x1944;                                             // 0x1944
+        int x1948;                                             // 0x1948
+        int x194c;                                             // 0x194c
+        int x1950;                                             // 0x1950
+        int x1954;                                             // 0x1954
+        int x1958;                                             // 0x1958
+        float hitlag_frames;                                   // 0x195c
+    } dmg;                                                     //
+    int x1960;                                                 // 0x1960
+    float x1964;                                               // 0x1964
+    struct jump                                                // 0x1968
+    {                                                          //
+        char jumps_used;                                       // 0x1968
+        char walljumps_used;                                   // 0x1969
+    } jump;                                                    //
+    int x196c;                                                 // 0x196c
+    int x1970;                                                 // 0x1970
+    GOBJ *heldItem;                                            // 0x1974
+    GOBJ *x1978;                                               // 0x1978
+    int x197c;                                                 // 0x197c
+    GOBJ *headItem;                                            // 0x1980
+    GOBJ *heldItemSpecial;                                     // 0x1984
+    struct hurtstatus                                          // 0x1988
+    {                                                          //
+        int script;                                            // 0x1988
+        int game;                                              // 0x198c
+        int ledge_intang_left;                                 // 0x1990
+        int respawn_intang_left;                               // 0x1994
+    } hurtstatus;                                              //
     struct shield
     {
         float health;          // 0x1998
@@ -2416,7 +2441,7 @@ struct FighterData
         char flags_2220;                      // 0x2220
         char flags_2221;                      // 0x2221
         unsigned char x2222_1 : 1;            // 0x80 - 0x2222
-        unsigned char x2222_2 : 1;            // 0x40 - 0x2222
+        unsigned char is_multijump : 1;       // 0x40 - 0x2222
         unsigned char x2222_3 : 1;            // 0x20 - 0x2222
         unsigned char ceilko_nokb : 1;        // 0x10 - 0x2222, allow death off top without any Y KB
         unsigned char x2222_5 : 1;            // 0x08 - 0x2222
@@ -2432,8 +2457,14 @@ struct FighterData
         unsigned char x2224_6 : 1;            // 0x4 - 0x2224
         unsigned char x2224_7 : 1;            // 0x2 - 0x2224
         unsigned char x2224_8 : 1;            // 0x1 - 0x2224
-        char flags_2225;                      // 0x2225
-        unsigned char x2226_1 : 1;            // 0x80 - 0x2226
+        unsigned char x2225_1 : 1;            // 0x80 - 0x2225
+        unsigned char x2225_2 : 1;            // 0x40 - 0x2225
+        unsigned char has_model_addition : 1; // 0x20 - 0x2225  bool for if fighter has a model addition, like kirby copy ability and puff hat
+        unsigned char x2225_4 : 1;            // 0x10 - 0x2225
+        unsigned char x2225_5 : 1;            // 0x8 - 0x2225
+        unsigned char x2225_6 : 1;            // 0x4 - 0x2225
+        unsigned char x2225_7 : 1;            // 0x2 - 0x2225
+        unsigned char x2225_8 : 1;            // 0x1 - 0x2225        unsigned char x2226_1 : 1;            // 0x80 - 0x2226
         unsigned char x2226_2 : 1;            // 0x40 - 0x2226
         unsigned char is_thrown : 1;          // 0x20 - 0x2226, might actually be for skipping grab collision
         unsigned char x2226_4 : 1;            // 0x10 - 0x2226

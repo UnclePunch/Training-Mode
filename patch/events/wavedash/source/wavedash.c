@@ -392,7 +392,6 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 int input_frame = jump_frame + event_data->airdodge_frame - 1;
 
                 // update arrow position
-                bp();
                 if (input_frame < WDFRAMES)
                 {
                     event_data->hud.arrow_prevpos = arrow_jobj->trans.X;
@@ -446,8 +445,6 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
     // update arrow animation
     if (event_data->hud.arrow_timer > 0)
     {
-        bp();
-
         // decrement timer
         event_data->hud.arrow_timer--;
 
