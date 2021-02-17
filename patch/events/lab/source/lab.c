@@ -2131,8 +2131,8 @@ void InfoDisplay_Think(GOBJ *gobj)
                         {
                             // determine how many frames shield stun is
                             float animFrameTotal = animStruct[2];
-                            float animFrameCurr = fighter_data->stateFrame;
-                            float animSpeed = fighter_data->stateSpeed;
+                            float animFrameCurr = fighter_data->state.frame;
+                            float animSpeed = fighter_data->state.rate;
                             frameTotal = (animFrameTotal / animSpeed);
                             frameCurr = (animFrameCurr / animSpeed);
                         }
@@ -2157,7 +2157,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_ENGLSTICK):
                     {
-                        Text_SetText(text, i, "LStick:      (%+.4f , %+.4f)", fighter_data->input.lstick_x, fighter_data->input.lstick_y);
+                        Text_SetText(text, i, "LStick:      (%+.4f , %+.4f)", fighter_data->input.lstick.X, fighter_data->input.lstick.Y);
                         break;
                     }
                     case (INFDISPROW_SYSLSTICK):
@@ -2168,7 +2168,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                     }
                     case (INFDISPROW_ENGCSTICK):
                     {
-                        Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input.cstick_x, fighter_data->input.cstick_y);
+                        Text_SetText(text, i, "CStick:     (%+.4f , %+.4f)", fighter_data->input.cstick.X, fighter_data->input.cstick.Y);
                         break;
                     }
                     case (INFDISPROW_SYSCSTICK):
@@ -2212,7 +2212,7 @@ void InfoDisplay_Think(GOBJ *gobj)
                         // get hitstun
                         float hitstun = 0;
                         if (fighter_data->flags.hitstun == 1)
-                            hitstun = AS_FLOAT(fighter_data->state_var.stateVar1);
+                            hitstun = AS_FLOAT(fighter_data->state_var.state_var1);
 
                         Text_SetText(text, i, "Hitstun: %.0f", hitstun);
                         break;
@@ -2228,12 +2228,12 @@ void InfoDisplay_Think(GOBJ *gobj)
                         int stunLeft = 0;
 
                         // check if taking shield stun
-                        if (fighter_data->state == ASID_GUARDSETOFF)
+                        if (fighter_data->state_id == ASID_GUARDSETOFF)
                         {
                             // determine how many frames shield stun is
                             float frameTotal = JOBJ_GetJointAnimFrameTotal(fighter->hsd_object);
-                            float frameCurr = fighter_data->stateFrame;
-                            float animSpeed = fighter_data->stateSpeed;
+                            float frameCurr = fighter_data->state.frame;
+                            float animSpeed = fighter_data->state.rate;
                             stunTotal = (frameTotal / animSpeed);
                             stunLeft = stunTotal - (frameCurr / animSpeed);
                             // 0 index
@@ -2247,9 +2247,9 @@ void InfoDisplay_Think(GOBJ *gobj)
                     case (INFDISPROW_GRIP):
                     {
                         float grip = 0;
-                        if (fighter_data->grab.grab_victim != 0)
+                        if (fighter_data->grab.victim != 0)
                         {
-                            GOBJ *victim = fighter_data->grab.grab_victim;
+                            GOBJ *victim = fighter_data->grab.victim;
                             FighterData *victim_data = victim->userdata;
                             grip = victim_data->grab.grab_timer;
                         }
@@ -2387,7 +2387,7 @@ int CPUAction_CheckMultipleState(GOBJ *cpu, int group_kind)
 
     FighterData *cpu_data = cpu->userdata;
     int isActionable = 0;
-    int cpu_state = cpu_data->state;
+    int cpu_state = cpu_data->state_id;
 
     // if 0, check the one that corresponds with ground state
     if (group_kind == 0)
@@ -2408,7 +2408,7 @@ int CPUAction_CheckMultipleState(GOBJ *cpu, int group_kind)
             }
         }
         // landing
-        if ((cpu_data->state == ASID_LANDING) && (cpu_data->stateFrame >= cpu_data->attr.normal_landing_lag))
+        if ((cpu_data->state_id == ASID_LANDING) && (cpu_data->state.frame >= cpu_data->attr.normal_landing_lag))
             isActionable = 1;
     }
     // air
@@ -2469,7 +2469,7 @@ int CPU_IsThrown(GOBJ *cpu)
     FighterData *cpu_data = cpu->userdata;
 
     int is_thrown = 0;
-    int cpu_state = cpu_data->state;
+    int cpu_state = cpu_data->state_id;
 
     // check if thrown
     if (((cpu_state >= ASID_THROWNF) && (cpu_state <= ASID_THROWNLW)) || (cpu_state == ASID_CAPTURECAPTAIN) || (cpu_state == ASID_THROWNKOOPAF) || (cpu_state == ASID_THROWNKOOPAB) || (cpu_state == ASID_THROWNKOOPAAIRF) || ((cpu_state >= ASID_THROWNFF) && (cpu_state <= ASID_THROWNFLW)))
@@ -2482,7 +2482,7 @@ int CPU_IsGrabbed(GOBJ *cpu)
     FighterData *cpu_data = cpu->userdata;
 
     int is_grabbed = 0;
-    int cpu_state = cpu_data->state;
+    int cpu_state = cpu_data->state_id;
 
     // check if thrown
     if ((cpu_state == ASID_CAPTUREWAITHI) || (cpu_state == ASID_CAPTUREWAITLW) || (cpu_state == ASID_CAPTUREWAITKOOPA) || (cpu_state == ASID_CAPTUREWAITKOOPAAIR) || (cpu_state == ASID_CAPTUREWAITKIRBY) || (cpu_state == ASID_DAMAGEICE) || (cpu_state == ASID_CAPTUREMASTERHAND) || (cpu_state == ASID_YOSHIEGG) || (cpu_state == ASID_CAPTUREKIRBYYOSHI) || (cpu_state == ASID_KIRBYYOSHIEGG) || (cpu_state == ASID_CAPTURELEADEAD) || (cpu_state == ASID_CAPTURELIKELIKE) || (cpu_state == ASID_CAPTUREWAITCRAZYHAND) || ((cpu_state >= ASID_SHOULDEREDWAIT) && (cpu_state <= ASID_SHOULDEREDTURN)))
@@ -2498,8 +2498,8 @@ int LCancel_CPUPerformAction(GOBJ *cpu, int action_id, GOBJ *hmn)
     // get CPU action
     int action_done = 0;
     CPUAction *action_list = Lab_CPUActions[action_id];
-    int cpu_state = cpu_data->state;
-    s16 cpu_frame = cpu_data->stateFrame;
+    int cpu_state = cpu_data->state_id;
+    s16 cpu_frame = cpu_data->state.frame;
     if (cpu_frame == -1)
         cpu_frame = 0;
 
@@ -2621,7 +2621,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     FighterData *hmn_data = hmn->userdata;
     FighterData *cpu_data = cpu->userdata;
     GOBJ **gobjlist = R13_PTR(GOBJLIST);
-    int cpu_state = cpu_data->state;
+    int cpu_state = cpu_data->state_id;
 
     // noact
     cpu_data->cpu.ai = 15;
@@ -2660,9 +2660,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         Fighter_ZeroCPUInputs(cpu_data);
 
         // check if new shield hit
-        if (eventData->cpu_lastshieldstun != cpu_data->moveID)
+        if (eventData->cpu_lastshieldstun != cpu_data->atk_instance)
         {
-            eventData->cpu_lastshieldstun = cpu_data->moveID;
+            eventData->cpu_lastshieldstun = cpu_data->atk_instance;
             eventData->cpu_hitshieldnum++;
         }
 
@@ -2756,8 +2756,8 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             {
                 // remove last frame inputs
                 cpu_data->input.held = 0;
-                cpu_data->input.lstick_x = 0;
-                cpu_data->input.lstick_y = 0;
+                cpu_data->input.lstick.X = 0;
+                cpu_data->input.lstick.Y = 0;
 
                 // input
                 cpu_data->cpu.held = PAD_BUTTON_A;
@@ -2771,8 +2771,8 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             {
                 // remove last frame inputs
                 cpu_data->input.held = 0;
-                cpu_data->input.lstick_x = 0;
-                cpu_data->input.lstick_y = 0;
+                cpu_data->input.lstick.X = 0;
+                cpu_data->input.lstick.Y = 0;
 
                 // input
                 cpu_data->cpu.held = PAD_BUTTON_A;
@@ -2784,8 +2784,8 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         {
             // remove last frame inputs
             cpu_data->input.held = 0;
-            cpu_data->input.lstick_x = 0;
-            cpu_data->input.lstick_y = 0;
+            cpu_data->input.lstick.X = 0;
+            cpu_data->input.lstick.Y = 0;
 
             // input
             cpu_data->cpu.held = PAD_BUTTON_A;
@@ -2816,11 +2816,11 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // update move instance
-        if (eventData->cpu_lasthit != cpu_data->dmg.instancehitby)
+        if (eventData->cpu_lasthit != cpu_data->dmg.atk_instance_hurtby)
         {
             eventData->cpu_sincehit = 0;
             eventData->cpu_hitnum++;
-            eventData->cpu_lasthit = cpu_data->dmg.instancehitby;
+            eventData->cpu_lasthit = cpu_data->dmg.atk_instance_hurtby;
             //OSReport("hit count %d/%d", eventData->cpu_hitnum, LabOptions_CPU[OPTCPU_CTRHITS].option_val);
 
             // decide random SDI direction for grounded cpu
@@ -2831,7 +2831,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // to-do: shield SDI
-        if ((cpu_data->state >= ASID_GUARDON) && (cpu_data->state <= ASID_GUARDREFLECT))
+        if ((cpu_data->state_id >= ASID_GUARDON) && (cpu_data->state_id <= ASID_GUARDREFLECT))
         {
             ;
         }
@@ -2922,7 +2922,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // if in shield, no need to TDI
-        if ((cpu_data->state >= ASID_GUARDON) && (cpu_data->state <= ASID_GUARDREFLECT))
+        if ((cpu_data->state_id >= ASID_GUARDON) && (cpu_data->state_id <= ASID_GUARDREFLECT))
         {
             break;
         }
@@ -2932,7 +2932,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         if (is_thrown == 1)
         {
             // if being thrown, get knockback info from attacker
-            FighterData *attacker_data = cpu_data->grab.grab_attacker->userdata;
+            FighterData *attacker_data = cpu_data->grab.attacker->userdata;
             kb_angle = ((float)attacker_data->throw_hitbox[0].angle * M_1DEGREE) * (attacker_data->facing_direction);
         }
         else
@@ -3055,9 +3055,9 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         // this is kinda meh, maybe i can come up with something better later
         // spoof last input as current input as to not trigger SDI
         // also spoof input as held for more than the SDI window
-        cpu_data->input.lstick_x = ((float)cpu_data->cpu.lstickX * 0.0078125);
+        cpu_data->input.lstick.X = ((float)cpu_data->cpu.lstickX * 0.0078125);
         cpu_data->input.timer_lstick_tilt_x = 5;
-        cpu_data->input.lstick_y = ((float)cpu_data->cpu.lstickY * 0.0078125);
+        cpu_data->input.lstick.Y = ((float)cpu_data->cpu.lstickY * 0.0078125);
         cpu_data->input.timer_lstick_tilt_y = 5;
 
         break;
@@ -3071,7 +3071,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         if (cpu_data->flags.hitstun == 0)
         {
             // also reset stick timer (messes with airdodge wiggle)
-            cpu_data->input.lstick_x = 0;
+            cpu_data->input.lstick.X = 0;
             cpu_data->input.timer_lstick_tilt_x = 254;
             eventData->cpu_state = CPUSTATE_COUNTER;
             goto CPULOGIC_COUNTER;
@@ -3118,7 +3118,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
 
         // input tech
         cpu_data->input.timer_LR = sincePress;
-        cpu_data->input.sinceRapidLR = since2Press;
+        cpu_data->input.since_rapid_lr = since2Press;
         cpu_data->cpu.lstickX = stickX;
         cpu_data->input.timer_lstick_smash_x = sinceXSmash;
 
@@ -3130,7 +3130,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
     {
 
         // if im in downwait, perform getup logic
-        if ((cpu_data->state == ASID_DOWNWAITD) || (cpu_data->state == ASID_DOWNWAITU))
+        if ((cpu_data->state_id == ASID_DOWNWAITD) || (cpu_data->state_id == ASID_DOWNWAITU))
         {
             // perform getup behavior
             int getup = LabOptions_CPU[OPTCPU_GETUP].option_val;
@@ -3179,7 +3179,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
         }
 
         // if cpu is in any other down state, do nothing
-        else if ((cpu_data->state >= ASID_DOWNBOUNDU) && (cpu_data->state <= ASID_DOWNSPOTD))
+        else if ((cpu_data->state_id >= ASID_DOWNBOUNDU) && (cpu_data->state_id <= ASID_DOWNSPOTD))
         {
             break;
         }
@@ -3334,7 +3334,7 @@ void LCancel_CPUThink(GOBJ *event, GOBJ *hmn, GOBJ *cpu)
             FighterData *fighter_data = fighter->userdata;
 
             // check if in guard off
-            if (fighter_data->state == ASID_GUARDSETOFF)
+            if (fighter_data->state_id == ASID_GUARDSETOFF)
             {
                 eventData->cpu_hitshield = 1;
                 break;
@@ -3485,7 +3485,7 @@ void DIDraw_Init()
 }
 void DIDraw_Update()
 {
-    static ECBBones ecb_bones_def = {
+    static ECBSize ecb_bones_def = {
         .topY = 9,
         .botY = 2.5,
         .left = {-3.3, 5.7},
@@ -3540,10 +3540,10 @@ void DIDraw_Update()
                 // for CPUs
                 else
                 {
-                    lstickX = fighter_data->input.lstick_x;
-                    lstickY = fighter_data->input.lstick_y;
-                    cstickX = fighter_data->input.cstick_x;
-                    cstickY = fighter_data->input.cstick_y;
+                    lstickX = fighter_data->input.lstick.X;
+                    lstickY = fighter_data->input.lstick.Y;
+                    cstickX = fighter_data->input.cstick.X;
+                    cstickY = fighter_data->input.cstick.Y;
                 }
 
                 // get kb vector
@@ -3612,12 +3612,12 @@ void DIDraw_Update()
                 Vec3 pos = fighter_data->phys.pos;
                 ftCommonData *ftCommon = R13_PTR(-0x514C);
                 float decay = ftCommon->kb_frameDecay;
-                int hitstun_frames = AS_FLOAT(fighter_data->state_var.stateVar1);
+                int hitstun_frames = AS_FLOAT(fighter_data->state_var.state_var1);
                 int vertices_num = 0;    // used to track how many vertices will be needed
                 int override_frames = 0; // used as an alternate countdown
                 DIDrawCalculate *DICollData = calloc(sizeof(DIDrawCalculate) * hitstun_frames);
                 CollData ecb;
-                ECBBones ecb_bones;
+                ECBSize ecb_bones;
 
                 // init ecb struct
                 Coll_InitECB(&ecb);
@@ -3648,7 +3648,7 @@ void DIDraw_Update()
                     else
                     {
                         // use default ecb size
-                        memcpy(&ecb_bones, &ecb_bones_def, sizeof(ECBBones));
+                        memcpy(&ecb_bones, &ecb_bones_def, sizeof(ECBSize));
                     }
                     // update ecb topN position
                     ecb.topN_Curr = pos;
@@ -3963,7 +3963,7 @@ void Update_Camera()
             // ensure stick exceeds deadzone
             if ((stickX != 0) || (stickY != 0))
             {
-                COBJ *cobj = COBJ_GetMatchCamera();
+                COBJ *cobj = Match_GetCObj();
 
                 // adjust pan
                 if ((held & HSD_BUTTON_A) != 0)

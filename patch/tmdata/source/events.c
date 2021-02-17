@@ -1587,13 +1587,13 @@ int Savestate_Save(Savestate *savestate)
 
         FighterData *fighter_data = fighter->userdata;
 
-        if ((fighter_data->cb.OnDeath != 0) ||
-            (fighter_data->cb.OnDeath2 != 0) ||
+        if ((fighter_data->cb.OnDeath_Persist != 0) ||
+            (fighter_data->cb.OnDeath_State != 0) ||
             (fighter_data->cb.OnDeath3 != 0) ||
-            (fighter_data->heldItem != 0) ||
+            (fighter_data->item_held != 0) ||
             (fighter_data->x1978 != 0) ||
             (fighter_data->accessory != 0) ||
-            ((fighter_data->kind == 8) && ((fighter_data->state >= 342) && (fighter_data->state <= 344)))) // hardcode ness' usmash because it doesnt destroy the yoyo via onhit callback...
+            ((fighter_data->kind == 8) && ((fighter_data->state_id >= 342) && (fighter_data->state_id <= 344)))) // hardcode ness' usmash because it doesnt destroy the yoyo via onhit callback...
         {
             // cannot save
             canSave = 0;
@@ -1664,11 +1664,11 @@ int Savestate_Save(Savestate *savestate)
 
                         // backup to ft_state
                         ft_data->is_exist = 1;
-                        ft_data->state = fighter_data->state;
+                        ft_data->state = fighter_data->state_id;
                         ft_data->facing_direction = fighter_data->facing_direction;
-                        ft_data->stateFrame = fighter_data->stateFrame;
-                        ft_data->stateSpeed = fighter_data->stateSpeed;
-                        ft_data->stateBlend = fighter_data->stateBlend;
+                        ft_data->frame = fighter_data->state.frame;
+                        ft_data->rate = fighter_data->state.rate;
+                        ft_data->blend = fighter_data->state.blend;
                         memcpy(&ft_data->phys, &fighter_data->phys, sizeof(fighter_data->phys));                               // copy physics
                         memcpy(&ft_data->color, &fighter_data->color, sizeof(fighter_data->color));                            // copy color overlay
                         memcpy(&ft_data->input, &fighter_data->input, sizeof(fighter_data->input));                            // copy inputs
@@ -1697,8 +1697,8 @@ int Savestate_Save(Savestate *savestate)
 
                         // copy grab
                         memcpy(&ft_data->grab, &fighter_data->grab, sizeof(fighter_data->grab));
-                        ft_data->grab.grab_attacker = GOBJToID(ft_data->grab.grab_attacker);
-                        ft_data->grab.grab_victim = GOBJToID(ft_data->grab.grab_victim);
+                        ft_data->grab.attacker = GOBJToID(ft_data->grab.attacker);
+                        ft_data->grab.victim = GOBJToID(ft_data->grab.victim);
 
                         // copy callbacks
                         memcpy(&ft_data->cb, &fighter_data->cb, sizeof(fighter_data->cb)); // copy hitbox
@@ -1839,11 +1839,11 @@ int Savestate_Load(Savestate *savestate)
                     // sleep
                     Fighter_EnterSleep(fighter, 0);
 
-                    fighter_data->state = ft_data->state;
+                    fighter_data->state_id = ft_data->state;
                     fighter_data->facing_direction = ft_data->facing_direction;
-                    fighter_data->stateFrame = ft_data->stateFrame;
-                    fighter_data->stateSpeed = ft_data->stateSpeed;
-                    fighter_data->stateBlend = ft_data->stateBlend;
+                    fighter_data->state.frame = ft_data->frame;
+                    fighter_data->state.rate = ft_data->rate;
+                    fighter_data->state.blend = ft_data->blend;
 
                     // restore phys struct
                     memcpy(&fighter_data->phys, &ft_data->phys, sizeof(fighter_data->phys)); // copy physics
@@ -1879,8 +1879,8 @@ int Savestate_Load(Savestate *savestate)
 
                     // copy grab
                     memcpy(&fighter_data->grab, &ft_data->grab, sizeof(fighter_data->grab));
-                    fighter_data->grab.grab_attacker = IDToGOBJ(fighter_data->grab.grab_attacker);
-                    fighter_data->grab.grab_victim = IDToGOBJ(fighter_data->grab.grab_victim);
+                    fighter_data->grab.attacker = IDToGOBJ(fighter_data->grab.attacker);
+                    fighter_data->grab.victim = IDToGOBJ(fighter_data->grab.victim);
 
                     // convert pointers
                     for (int k = 0; k < (sizeof(fighter_data->hitbox) / sizeof(ftHit)); k++)
@@ -1916,10 +1916,10 @@ int Savestate_Load(Savestate *savestate)
                     // enter backed up state
                     GOBJ *anim_source = 0;
                     if (fighter_data->flags.is_thrown == 1)
-                        anim_source = fighter_data->grab.grab_attacker;
+                        anim_source = fighter_data->grab.attacker;
                     Fighter_SetAllHurtboxesNotUpdated(fighter);
-                    ActionStateChange(ft_data->stateFrame, ft_data->stateSpeed, -1, fighter, ft_data->state, 0, anim_source);
-                    fighter_data->stateBlend = 0;
+                    ActionStateChange(ft_data->frame, ft_data->rate, -1, fighter, ft_data->state, 0, anim_source);
+                    fighter_data->state.blend = 0;
 
                     // restore XRotN rotation
                     s8 XRotN_id = Fighter_BoneLookup(fighter_data, XRotN);
@@ -2013,12 +2013,12 @@ int Savestate_Load(Savestate *savestate)
                     Fighter_UpdateIK(fighter);
 
                     // if shield is up, update shield
-                    if ((fighter_data->state >= ASID_GUARDON) && (fighter_data->state <= ASID_GUARDREFLECT))
+                    if ((fighter_data->state_id >= ASID_GUARDON) && (fighter_data->state_id <= ASID_GUARDREFLECT))
                     {
                         // get gfx ID
                         int shieldGFX;
                         static u16 ShieldGFXLookup[] = {1047, 1048, -1, 1049, -1}; // covers GUARDON -> GUARDREFLECT
-                        shieldGFX = ShieldGFXLookup[fighter_data->state - ASID_GUARDON];
+                        shieldGFX = ShieldGFXLookup[fighter_data->state_id - ASID_GUARDON];
 
                         // create GFX
                         int color_index = Fighter_GetShieldColorIndex(fighter_data->ply);
@@ -2061,7 +2061,7 @@ int Savestate_Load(Savestate *savestate)
 
                         // check to delete
                         ItemData *item_data = item->userdata;
-                        if (fighter == item_data->fighter)
+                        if (fighter == item_data->fighter_gobj)
                         {
                             // destroy it
                             Item_Destroy(item);
@@ -2448,7 +2448,7 @@ void Hazards_Disable()
     {
         // set bg skip flag
         GOBJ *map_gobj = Stage_GetMapGObj(3);
-        map_gobjData *map_data = map_gobj->userdata;
+        MapData *map_data = map_gobj->userdata;
         map_data->xc4 |= 0x40;
 
         // remove on-go function that changes this flag
@@ -3102,7 +3102,7 @@ void Tip_Destroy()
         JOBJ_RemoveAnimAll(tip_root);
         JOBJ_AddAnimAll(tip_root, stc_event_vars.menu_assets->tip_jointanim[1], 0, 0);
         JOBJ_ReqAnimAll(tip_root, 0);
-        JOBJ_RunAOBJCallback(tip_root, 6, 0xfb7f, AOBJ_SetRate, 1, (float)2);
+        JOBJ_RunAObjCallback(tip_root, 6, 0xfb7f, AOBJ_SetRate, 1, (float)2);
 
         stc_tipmgr.state = 2; // enter wait
     }

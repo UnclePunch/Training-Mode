@@ -1,3 +1,0 @@
-minor_think
-minor_load
-minor_unload

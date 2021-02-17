@@ -146,7 +146,7 @@ void Event_Think(GOBJ *event)
 
     // no ledgefall
     FtCliffCatch *ft_state = &hmn_data->state_var;
-    if (hmn_data->state == ASID_CLIFFWAIT)
+    if (hmn_data->state_id == ASID_CLIFFWAIT)
         ft_state->fall_timer = 2;
 
     Ledgedash_HUDThink(event_data, hmn_data);
@@ -288,7 +288,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         event_data->hud.timer++;
 
         // check to initialize timer
-        if ((hmn_data->state == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
+        if ((hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1))
         {
             Ledgedash_InitVariables(event_data);
 
@@ -301,37 +301,37 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         if (curr_frame < (sizeof(event_data->hud.action_log) / sizeof(u8)))
         {
             // look for cliffwait
-            if (hmn_data->state == ASID_CLIFFWAIT)
+            if (hmn_data->state_id == ASID_CLIFFWAIT)
             {
                 event_data->hud.action_log[curr_frame] = LDACT_CLIFFWAIT;
             }
             // look for release
-            else if (hmn_data->state == ASID_FALL)
+            else if (hmn_data->state_id == ASID_FALL)
             {
                 event_data->hud.is_release = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_FALL;
             }
             // look for jump
-            else if ((hmn_data->state == ASID_JUMPAERIALF) || (hmn_data->state == ASID_JUMPAERIALB) ||
-                     (((hmn_data->kind == 4) || (hmn_data->kind == 15)) && ((hmn_data->state >= 341) && (hmn_data->state <= 345)))) // check for kirby and jiggs jump
+            else if ((hmn_data->state_id == ASID_JUMPAERIALF) || (hmn_data->state_id == ASID_JUMPAERIALB) ||
+                     (((hmn_data->kind == 4) || (hmn_data->kind == 15)) && ((hmn_data->state_id >= 341) && (hmn_data->state_id <= 345)))) // check for kirby and jiggs jump
             {
                 event_data->hud.is_jump = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_JUMP;
             }
             // look for airdodge
-            else if (hmn_data->state == ASID_ESCAPEAIR)
+            else if (hmn_data->state_id == ASID_ESCAPEAIR)
             {
                 //event_data->hud.is_airdodge = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_AIRDODGE;
             }
             // look for aerial
-            else if (hmn_data->attack_kind != 1)
+            else if (hmn_data->atk_kind != 1)
             {
                 event_data->hud.is_aerial = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_ATTACK;
             }
             // look for land
-            else if (((hmn_data->state == ASID_LANDING) || (hmn_data->state == ASID_LANDINGFALLSPECIAL)) || ((hmn_data->state == ASID_WAIT) && (hmn_data->TM.state_frame == 0) && ((hmn_data->TM.state_prev != ASID_LANDING) || (hmn_data->TM.state_prev != ASID_LANDINGFALLSPECIAL)))) // this is first frame of a no impact land
+            else if (((hmn_data->state_id == ASID_LANDING) || (hmn_data->state_id == ASID_LANDINGFALLSPECIAL)) || ((hmn_data->state_id == ASID_WAIT) && (hmn_data->TM.state_frame == 0) && ((hmn_data->TM.state_prev != ASID_LANDING) || (hmn_data->TM.state_prev != ASID_LANDINGFALLSPECIAL)))) // this is first frame of a no impact land
             {
                 event_data->hud.is_land = 1;
                 event_data->hud.action_log[curr_frame] = LDACT_LANDING;
@@ -342,10 +342,10 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
         if (event_data->hud.is_airdodge == 0)
         {
 
-            if ((hmn_data->state == ASID_ESCAPEAIR) || (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))
+            if ((hmn_data->state_id == ASID_ESCAPEAIR) || (hmn_data->TM.state_prev[0] == ASID_ESCAPEAIR))
             {
                 // determine airdodge angle
-                float angle = atan2(hmn_data->input.lstick_y, hmn_data->input.lstick_x) - -(M_PI / 2);
+                float angle = atan2(hmn_data->input.lstick.Y, hmn_data->input.lstick.X) - -(M_PI / 2);
 
                 // save airdodge angle
                 event_data->hud.airdodge_angle = angle;
@@ -355,8 +355,8 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
 
         // look for actionable
         if (((event_data->hud.is_actionable == 0) && (event_data->hud.is_release == 1)) &&
-            (((((hmn_data->state == ASID_WAIT) && ((hmn_data->TM.state_prev[0] != ASID_LANDING) || (hmn_data->TM.state_prev[0] != ASID_LANDINGFALLSPECIAL)) && (hmn_data->TM.state_frame > 0)) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
-             ((hmn_data->state == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
+            (((((hmn_data->state_id == ASID_WAIT) && ((hmn_data->TM.state_prev[0] != ASID_LANDING) || (hmn_data->TM.state_prev[0] != ASID_LANDINGFALLSPECIAL)) && (hmn_data->TM.state_frame > 0)) || (hmn_data->TM.state_prev[0] == ASID_WAIT)) && (hmn_data->TM.state_frame <= 1)) || // prev frame too cause you can attack on the same frame
+             ((hmn_data->state_id == ASID_LANDING) && (hmn_data->TM.state_frame >= hmn_data->attr.normal_landing_lag)) ||
              ((hmn_data->TM.state_prev[0] == ASID_LANDING) && (hmn_data->TM.state_prev_frames[0] >= hmn_data->attr.normal_landing_lag))))
         {
             event_data->hud.is_actionable = 1;
@@ -482,12 +482,12 @@ void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
         }
         else
         {
-            int state = hmn_data->state;
+            int state = hmn_data->state_id;
 
             // reset actions
-            if ((hmn_data->flags.dead == 1) ||                                              // if dead
-                ((hmn_data->state == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 9)) || // missed airdodge
-                ((((state >= ASID_CLIFFCLIMBSLOW) && (state <= ASID_CLIFFJUMPQUICK2)) ||    // reset if any other ledge action
+            if ((hmn_data->flags.dead == 1) ||                                                 // if dead
+                ((hmn_data->state_id == ASID_ESCAPEAIR) && (hmn_data->TM.state_frame >= 9)) || // missed airdodge
+                ((((state >= ASID_CLIFFCLIMBSLOW) && (state <= ASID_CLIFFJUMPQUICK2)) ||       // reset if any other ledge action
                   ((state >= ASID_ATTACKAIRN) && (state <= ASID_ATTACKAIRLW)) ||
                   ((hmn_data->phys.air_state == 0) && ((state != ASID_LANDING) && (state != ASID_LANDINGFALLSPECIAL) && (state != ASID_REBIRTHWAIT)))) && // reset if grounded non landing
                  (hmn_data->TM.state_frame >= 7)))
@@ -601,7 +601,7 @@ void Ledgedash_HitLogThink(LedgedashData *event_data, GOBJ *hmn)
             ItemData *this_itemdata = this_item->userdata;
 
             // ensure belongs to the fighter
-            if (this_itemdata->fighter == hmn)
+            if (this_itemdata->fighter_gobj == hmn)
             {
                 // iterate through item hitboxes
                 for (int i = 0; i < sizeof(hmn_data->hitbox) / sizeof(ftHit); i++)
@@ -924,7 +924,7 @@ void Fighter_PlaceOnLedge(LedgedashData *event_data, GOBJ *hmn, int line_index, 
         ft_state->ledge_index = line_index; // store line index
         Fighter_EnterCliffWait(hmn);
         ft_state->timer = 0; // spoof as on ledge for a frame already
-        Fighter_LoseGroundJump(hmn_data);
+        Fighter_SetAirborne(hmn_data);
         Fighter_EnableCollUpdate(hmn_data);
         Coll_CheckLedge(&hmn_data->coll_data);
         Fighter_MoveToCliff(hmn);
@@ -1107,7 +1107,7 @@ void RebirthWait_Phys(GOBJ *fighter)
     FighterData *fighter_data = fighter->userdata;
 
     // infinite time
-    fighter_data->state_var.stateVar1 = 2;
+    fighter_data->state_var.state_var1 = 2;
 
     return;
 }
@@ -1124,8 +1124,8 @@ int RebirthWait_IASA(GOBJ *fighter)
         ftCommonData *ftcommon = *stc_ftcommon;
 
         // check for lstick movement
-        float stick_x = fabs(fighter_data->input.lstick_x);
-        float stick_y = fighter_data->input.lstick_y;
+        float stick_x = fabs(fighter_data->input.lstick.X);
+        float stick_y = fighter_data->input.lstick.Y;
         if ((stick_x > 0.2875) && (fighter_data->input.timer_lstick_tilt_x < 2) ||
             (stick_y < (ftcommon->lstick_rebirthfall * -1)) && (fighter_data->input.timer_lstick_tilt_y < 4))
         {
@@ -1142,8 +1142,8 @@ int Fighter_CheckFall(FighterData *hmn_data)
     int is_fall = 0;
 
     // look for Fall input
-    float stick_x = fabs(hmn_data->input.lstick_x);
-    float stick_y = hmn_data->input.lstick_y;
+    float stick_x = fabs(hmn_data->input.lstick.X);
+    float stick_y = hmn_data->input.lstick.Y;
     if ((stick_x >= 0.2875) && (hmn_data->input.timer_lstick_tilt_x < 2) ||
         (stick_y <= -0.2875) && (hmn_data->input.timer_lstick_tilt_y < 2))
     {
@@ -1169,7 +1169,7 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
     {
 
         // check for early fall input in cliffcatch
-        if ((event_data->tip.is_input_release == 0) && (hmn_data->state == ASID_CLIFFCATCH) && (Fighter_CheckFall(hmn_data) == 1))
+        if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFCATCH) && (Fighter_CheckFall(hmn_data) == 1))
         {
             event_data->tip.is_input_release = 1;
             event_vars->Tip_Destroy();
@@ -1177,12 +1177,12 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
             // determine how many frames early
             float *anim_ptr = Animation_GetAddress(hmn_data, hmn_data->anim_id);
             float frame_total = anim_ptr[0x8 / 4];
-            float frames_early = frame_total - hmn_data->stateFrame;
+            float frames_early = frame_total - hmn_data->state.frame;
             event_vars->Tip_Display(3 * 60, "Misinput:\nFell %d frames early.", (int)frames_early + 1);
         }
 
         // check for early fall input on cliffwait frame 0
-        if ((event_data->tip.is_input_release == 0) && (hmn_data->state == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
+        if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
         {
             event_data->tip.is_input_release = 1;
             event_vars->Tip_Destroy();
@@ -1190,7 +1190,7 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
         }
 
         // check for late fall input
-        if ((event_data->tip.is_input_release == 0) && (hmn_data->state == ASID_CLIFFJUMPQUICK1) && (Fighter_CheckFall(hmn_data) == 1))
+        if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFJUMPQUICK1) && (Fighter_CheckFall(hmn_data) == 1))
         {
             event_data->tip.is_input_release = 1;
             event_vars->Tip_Destroy();

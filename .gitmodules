@@ -1,0 +1,3 @@
+[submodule "m-ex"]
+	path = m-ex
+	url = https://github.com/akaneia/m-ex

@@ -1,4 +1,4 @@
-#include "../../../MexTK/mex.h"
+#include "../../../m-ex/MexTK/mex.h"
 
 #define TM_VERSSHORT "TM v3.0-a8"
 #define TM_VERSLONG "Training Mode v3.0 Alpha 8"
@@ -149,9 +149,9 @@ typedef struct FtStateData
     int is_exist;
     int state;
     float facing_direction;
-    float stateFrame;
-    float stateSpeed;
-    float stateBlend;
+    float frame;
+    float rate;
+    float blend;
     Vec4 XRotN_rot; // XRotN
     struct
     {                                                          //
@@ -219,7 +219,7 @@ typedef struct FtStateData
         char timer_padup;           // 0x681
         char timer_paddown;         // 0x682
         char timer_item_release;    // 0x683
-        char sinceRapidLR;          // 0x684
+        char since_rapid_lr;        // 0x684
         char timer_unk2;            // 0x685
         char timer_unk3;            // 0x686
         char timer_unk4;            // 0x687
@@ -510,8 +510,8 @@ typedef struct FtStateData
         float grab_timer;    // 0x1a4c
         int x1a50;           // 0x1a50
         int x1a54;           // 0x1a54
-        GOBJ *grab_attacker; // 0x1a58
-        GOBJ *grab_victim;   // 0x1a5c
+        GOBJ *attacker;      // 0x1a58
+        GOBJ *victim;        // 0x1a5c
         int x1a60;           // 0x1a60
         int x1a64;           // 0x1a64
         u16 x1a68;           // 0x1a68

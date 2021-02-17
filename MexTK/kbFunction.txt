@@ -1,7 +1,0 @@
-onkirbyswallow
-onkirbyloseability
-kirbyspecialn
-kirbyspecialairn
-onkirbyhurt
-initcopyitems
-move_logic
