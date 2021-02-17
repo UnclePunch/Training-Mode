@@ -28,7 +28,7 @@ backup
   mflr  r3
   branchl r12,0x8033796c
   cmpwi r3,-1
-  beq Exit
+  beq NoFile
 #Get size of TmDt.dat
   bl  FileName
   mflr  r3
@@ -148,6 +148,29 @@ SymbolName:
 blrl
 .string "tmFunction"
 .align 2
+############################################
+NoFile:
+#OSReport
+  bl  ErrorString
+  mflr  r3
+  branchl r12,0x803456a8
+  b 0x0
+#Assert
+  bl  Assert_Name
+  mflr  r3
+  li  r4,0
+  load  r5,0x804d3940
+  branchl r12,0x80388220
+#############################################
+Assert_Name:
+blrl
+.string "tm"
+.align 2
+ErrorString:
+blrl
+.string "error: TM/TmDt.dat not found!\n"
+.align 2
+###############################################
 
 Exit:
   mr  r3,REG_HeapLo
