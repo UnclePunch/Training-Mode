@@ -206,8 +206,8 @@ void Menu_Init()
         text->align = 0;
         text->kerning = 1;
         text->use_aspect = 1;
-        text->scale.X = (menu_scale->X * 0.01) * 7;
-        text->scale.Y = (menu_scale->Y * 0.01) * 7;
+        text->scale.X = (menu_scale->X * 0.01) * 5;
+        text->scale.Y = (menu_scale->Y * 0.01) * 5;
         text->trans.X = text_pos.X + (0 * (menu_scale->X / 4.0));
         text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
         Text_AddSubtext(text, 0, 0, "Description goes here...");
