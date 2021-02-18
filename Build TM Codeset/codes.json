@@ -2,12 +2,11 @@
   "settings": {
     "areIncludesRelativeFromFile": true
   },
-    "outputFiles":
-    [
-      {
-        "file": "..\\Additional ISO Files\\codes.gct"
-      }
-    ],
+  "outputFiles": [
+    {
+      "file": "..\\Additional ISO Files\\codes.gct"
+    }
+  ],
   "codes": [
     {
       "name": "Training Mode Codset",
@@ -18,6 +17,11 @@
         "Complete TM Codeset"
       ],
       "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "..\\m-ex\\asm\\m-ex",
+          "isRecursive": true
+        },
         {
           "type": "injectFolder",
           "sourceFolder": "..\\ASM",

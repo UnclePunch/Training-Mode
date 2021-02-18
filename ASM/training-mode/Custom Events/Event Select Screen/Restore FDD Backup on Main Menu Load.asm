@@ -1,4 +1,4 @@
-#To be inserted at 8022e630
+#To be inserted at 8022e66c
 .include "../../Globals.s"
 .include "../../../m-ex/Header.s"
 
@@ -25,4 +25,4 @@ RestoreBackup:
 
 Exit:
 #Original Line
-  li	r3, 3
+  lwz	r3, -0x4AE4 (r13)

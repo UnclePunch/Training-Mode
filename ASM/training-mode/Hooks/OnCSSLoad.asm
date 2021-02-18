@@ -28,7 +28,7 @@ backup
   addi  r4,sp,0x80
   bl  SymbolName
   mflr  r5
-  branchl r12,0x803d7080
+  branchl r12,0x803d709c
 
 # Execute the function
   lwz  r12,0x80(sp)
