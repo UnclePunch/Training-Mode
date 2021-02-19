@@ -117,22 +117,10 @@ void Menu_Init()
 
     // create background
     JOBJ_LoadSet(0, menu_assets->bg, 0, 0, 3, 1, 1, GObj_Anim);
-    /*
-    GOBJ *bg_gobj = GObj_Create(2, 3, 128);
-    JOBJ *bg_jobj = JOBJ_LoadJoint(menu_assets->bg->jobj);
-    GObj_AddObject(bg_gobj, 3, bg_jobj);
-    GObj_AddGXLink(bg_gobj, GXLink_Common, 1, 128);
-    GObj_AddProc(bg_gobj, GObj_Anim, 5);
-    JOBJ_AddAnimAll(bg_jobj, menu_assets->bg->jointanim[0], 0, menu_assets->bg->shapeanim[0]);
-    JOBJ_ReqAnimAll(bg_jobj, 0);
-    JOBJ_AnimAll(bg_jobj);
-    */
 
     // create menu
-    GOBJ *menu_gobj = GObj_Create(2, 3, 128);
-    JOBJ *menu_jobj = JOBJ_LoadJoint(menu_assets->menu_jobj);
-    GObj_AddObject(menu_gobj, 3, menu_jobj);
-    GObj_AddGXLink(menu_gobj, GXLink_Common, 1, 128);
+    GOBJ *menu_gobj = JOBJ_LoadSet(0, menu_assets->menu, 0, 0, 3, 1, 1, GObj_Anim);
+    JOBJ *menu_jobj = menu_gobj->hsd_object;
     GObj_AddProc(menu_gobj, Menu_Think, 5);
     EventSelectData *menu_data = calloc(sizeof(EventSelectData));
     GObj_AddUserData(menu_gobj, 4, HSD_Free, menu_data);
@@ -140,7 +128,7 @@ void Menu_Init()
     // Create page text
     Vec3 *menu_scale = &menu_jobj->scale;
     {
-        Text **text_arr = &menu_data->page_curr;
+        Text **text_arr = &menu_data->text.page_curr;
         Vec3 *scale = &menu_jobj->scale;
         for (int i = 0; i < 3; i++)
         {
@@ -164,9 +152,9 @@ void Menu_Init()
             text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
             Text_AddSubtext(text, 0, 0, "General");
         }
-        menu_data->page_curr->align = 1;
-        menu_data->page_prev->align = 0;
-        menu_data->page_next->align = 2;
+        menu_data->text.page_curr->align = 1;
+        menu_data->text.page_prev->align = 0;
+        menu_data->text.page_next->align = 2;
     }
 
     // Create event name text
@@ -186,7 +174,7 @@ void Menu_Init()
 
         // create test text
         Text *text = Text_CreateText(0, canvas_id);
-        menu_data->event_desc = text;
+        menu_data->text.event_desc = text;
         // enable align and kerning
         text->align = 0;
         text->kerning = 1;
@@ -212,7 +200,7 @@ void Menu_Init()
 
         // create test text
         Text *text = Text_CreateText(0, canvas_id);
-        menu_data->event_desc = text;
+        menu_data->text.event_desc = text;
         // enable align and kerning
         text->align = 0;
         text->kerning = 1;

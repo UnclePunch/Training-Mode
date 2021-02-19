@@ -2,7 +2,7 @@
 
 typedef struct MnSlEvData
 {
-    JOBJDesc *menu_jobj;
+    JOBJSet *menu;
     COBJDesc *menu_cobj;
     JOBJSet *bg;
     void *fog;
