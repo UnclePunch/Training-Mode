@@ -5,6 +5,7 @@
 static u8 leave_kind;
 static ESSMinorData *stc_minor_data;
 static ArchiveInfo *stc_menu_archive;
+static HSD_Fog *stc_fog;
 
 void Minor_Load(ESSMinorData *minor_data)
 {
@@ -100,29 +101,39 @@ void Menu_Init()
     GOBJ *cam_gobj = GObj_Create(2, 3, 128);
     COBJ *cam_cobj = COBJ_LoadDesc(menu_assets->menu_cobj);
     GObj_AddObject(cam_gobj, 1, cam_cobj);
-    GOBJ_InitCamera(cam_gobj, CObjThink_Common, 0);
+    GOBJ_InitCamera(cam_gobj, Menu_CObjThink, 0);
     GObj_AddProc(cam_gobj, MainMenu_CamRotateThink, 5);
     cam_gobj->cobj_links = (1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);
 
     // create text canvas
     int canvas_id = Text_CreateCanvas(0, cam_gobj, 7, 8, 128, 1, 128, 0);
 
+    // create fog
+    GOBJ *fog_gobj = GObj_Create(14, 2, 0);
+    HSD_Fog *fog = Fog_LoadDesc(menu_assets->fog);
+    stc_fog = fog;
+    GObj_AddObject(fog_gobj, 4, fog);
+    GObj_AddGXLink(fog_gobj, GXLink_Fog, 0, 128);
+
     // create background
+    JOBJ_LoadSet(0, menu_assets->bg, 0, 0, 3, 1, 1, GObj_Anim);
+    /*
     GOBJ *bg_gobj = GObj_Create(2, 3, 128);
-    JOBJ *bg_jobj = JOBJ_LoadJoint(menu_assets->bg_jobj);
+    JOBJ *bg_jobj = JOBJ_LoadJoint(menu_assets->bg->jobj);
     GObj_AddObject(bg_gobj, 3, bg_jobj);
     GObj_AddGXLink(bg_gobj, GXLink_Common, 1, 128);
     GObj_AddProc(bg_gobj, GObj_Anim, 5);
-    JOBJ_AddAnimAll(bg_jobj, menu_assets->bg_anim, 0, 0);
+    JOBJ_AddAnimAll(bg_jobj, menu_assets->bg->jointanim[0], 0, menu_assets->bg->shapeanim[0]);
     JOBJ_ReqAnimAll(bg_jobj, 0);
     JOBJ_AnimAll(bg_jobj);
+    */
 
     // create menu
     GOBJ *menu_gobj = GObj_Create(2, 3, 128);
     JOBJ *menu_jobj = JOBJ_LoadJoint(menu_assets->menu_jobj);
     GObj_AddObject(menu_gobj, 3, menu_jobj);
     GObj_AddGXLink(menu_gobj, GXLink_Common, 1, 128);
-    GObj_AddProc(bg_gobj, Menu_Think, 5);
+    GObj_AddProc(menu_gobj, Menu_Think, 5);
     EventSelectData *menu_data = calloc(sizeof(EventSelectData));
     GObj_AddUserData(menu_gobj, 4, HSD_Free, menu_data);
 
@@ -218,6 +229,24 @@ void Menu_Init()
 void Menu_Think(GOBJ *menu_gobj)
 {
     EventSelectData *menu_data = menu_gobj->userdata;
+
+    return;
+}
+void Menu_CObjThink(GOBJ *gobj)
+{
+
+    bp();
+
+    COBJ *cobj = gobj->hsd_object;
+
+    if (CObj_SetCurrent(cobj))
+    {
+        HSD_Fog *fog = stc_fog;
+        CObj_SetEraseColor(fog->color.r, fog->color.g, fog->color.b, fog->color.a);
+        CObj_EraseScreen(cobj, 1, 0, 1);
+        CObj_RenderGXLinks(gobj, 7);
+        CObj_EndCurrent();
+    }
 
     return;
 }
