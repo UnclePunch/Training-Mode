@@ -1,4 +1,5 @@
 #include "../../../m-ex/MexTK/mex.h"
+#include "../../../patch/tm.h"
 #include "mnEvMn.h"
 #include "mjEv.h"
 
@@ -154,7 +155,9 @@ void Menu_Init()
             text->scale.Y = (menu_scale->Y * 0.01) * text_size[i];
             text->trans.X = text_pos.X + (0 * (menu_scale->X / 4.0));
             text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
-            Text_AddSubtext(text, 0, 0, "General");
+            bp();
+            char *page_name = tm_function->GetPageName(i);
+            Text_AddSubtext(text, 0, 0, page_name);
         }
         menu_data->text.page_curr->align = 1;
         menu_data->text.page_prev->align = 0;
@@ -226,8 +229,6 @@ void Menu_Think(GOBJ *menu_gobj)
 }
 void Menu_CObjThink(GOBJ *gobj)
 {
-
-    bp();
 
     COBJ *cobj = gobj->hsd_object;
 

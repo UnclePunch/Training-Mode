@@ -1,5 +1,5 @@
 #include "../../../../m-ex/MexTK/mex.h"
-#include "../../../tmdata/source/events.h"
+#include "../../../tm.h"
 
 // Labbing event
 // Custom TDI definitions
