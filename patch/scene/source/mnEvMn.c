@@ -104,6 +104,9 @@ void Menu_Init()
     GOBJ_InitCamera(cam_gobj, Menu_CObjThink, 0);
     GObj_AddProc(cam_gobj, MainMenu_CamRotateThink, 5);
     cam_gobj->cobj_links = (1 << 0) + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);
+    // store cobj to static pointer, needed for MainMenu_CamRotateThink, maybe i should rewrite it?
+    void **stc_cam_cobj = (R13 + (-0x4ADC));
+    *stc_cam_cobj = menu_assets->menu_cobj;
 
     // create text canvas
     int canvas_id = Text_CreateCanvas(0, cam_gobj, 7, 8, 128, 1, 128, 0);
@@ -130,6 +133,7 @@ void Menu_Init()
     {
         Text **text_arr = &menu_data->text.page_curr;
         Vec3 *scale = &menu_jobj->scale;
+        static float text_size[3] = {7, 5, 5};
         for (int i = 0; i < 3; i++)
         {
 
@@ -146,8 +150,8 @@ void Menu_Init()
             text->align = 1;
             text->kerning = 1;
             text->use_aspect = 1;
-            text->scale.X = (menu_scale->X * 0.01) * 7;
-            text->scale.Y = (menu_scale->Y * 0.01) * 7;
+            text->scale.X = (menu_scale->X * 0.01) * text_size[i];
+            text->scale.Y = (menu_scale->Y * 0.01) * text_size[i];
             text->trans.X = text_pos.X + (0 * (menu_scale->X / 4.0));
             text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
             Text_AddSubtext(text, 0, 0, "General");
@@ -167,8 +171,8 @@ void Menu_Init()
 
         // get base text world pos and scale
         Vec3 text_pos, text_scale;
-        text_scale.X = (menu_scale->X * 0.01) * 7;
-        text_scale.Y = (menu_scale->Y * 0.01) * 7;
+        text_scale.X = (menu_scale->X * 0.01) * 6;
+        text_scale.Y = (menu_scale->Y * 0.01) * 6;
         text_pos.X = text_jobj_pos.X + (0 * (menu_scale->X / 4.0));
         text_pos.Y = (text_jobj_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
 
@@ -186,7 +190,7 @@ void Menu_Init()
 
         for (int i = 0; i < 9; i++)
         {
-            Text_AddSubtext(text, 0, (33 * i), "Wavedash Training");
+            Text_AddSubtext(text, 0, (40 * i), "Wavedash Training");
         }
     }
 
