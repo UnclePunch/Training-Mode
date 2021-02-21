@@ -128,6 +128,16 @@ void Menu_Init()
     GObj_AddProc(menu_gobj, Menu_Think, 5);
     EventSelectData *menu_data = calloc(sizeof(EventSelectData));
     GObj_AddUserData(menu_gobj, 4, HSD_Free, menu_data);
+    menu_data->canvas_id = canvas_id; // save canvas id
+
+    // save scroll bar jobj
+    JOBJ_GetChild(menu_jobj, &menu_data->scroll_jobj, 2, -1);
+    JOBJ_GetChild(menu_jobj, &menu_data->scroll_top, 2 + 2, -1);
+    JOBJ_GetChild(menu_jobj, &menu_data->scroll_bot, 2 + 3, -1);
+
+    // create cursor
+    GOBJ *cursor_gobj = JOBJ_LoadSet(0, menu_assets->cursor, 0, 0, 3, 1, 1, GObj_Anim);
+    menu_data->cursor.jobj = cursor_gobj->hsd_object;
 
     // Create page text
     Vec3 *menu_scale = &menu_jobj->scale;
@@ -135,6 +145,7 @@ void Menu_Init()
         Text **text_arr = &menu_data->text.page_curr;
         Vec3 *scale = &menu_jobj->scale;
         static float text_size[3] = {7, 5, 5};
+        static float text_aspectx[3] = {250, 220, 220};
         for (int i = 0; i < 3; i++)
         {
 
@@ -151,17 +162,18 @@ void Menu_Init()
             text->align = 1;
             text->kerning = 1;
             text->use_aspect = 1;
+            text->aspect.X = text_aspectx[i];
             text->scale.X = (menu_scale->X * 0.01) * text_size[i];
             text->scale.Y = (menu_scale->Y * 0.01) * text_size[i];
             text->trans.X = text_pos.X + (0 * (menu_scale->X / 4.0));
             text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
-            bp();
-            char *page_name = tm_function->GetPageName(i);
-            Text_AddSubtext(text, 0, 0, page_name);
+            Text_AddSubtext(text, 0, 0, "");
         }
         menu_data->text.page_curr->align = 1;
         menu_data->text.page_prev->align = 0;
         menu_data->text.page_next->align = 2;
+
+        menu_data->page = MNSLEV_STARTPAGE;
     }
 
     // Create event name text
@@ -181,7 +193,7 @@ void Menu_Init()
 
         // create test text
         Text *text = Text_CreateText(0, canvas_id);
-        menu_data->text.event_desc = text;
+        menu_data->text.event_name = text;
         // enable align and kerning
         text->align = 0;
         text->kerning = 1;
@@ -191,9 +203,10 @@ void Menu_Init()
         text->trans.X = text_pos.X;
         text->trans.Y = text_pos.Y;
 
-        for (int i = 0; i < 9; i++)
+        int event_num = tm_function->GetPageEventNum(1);
+        for (int i = 0; i < MNSLEV_MAXEVENT; i++)
         {
-            Text_AddSubtext(text, 0, (40 * i), "Wavedash Training");
+            Text_AddSubtext(text, 0, (40 * i), "");
         }
     }
 
@@ -216,14 +229,279 @@ void Menu_Init()
         text->scale.Y = (menu_scale->Y * 0.01) * 5;
         text->trans.X = text_pos.X + (0 * (menu_scale->X / 4.0));
         text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
-        Text_AddSubtext(text, 0, 0, "Description goes here...");
+        text->aspect.X = 585;
+        Text_AddSubtext(text, 0, 0, "");
     }
+
+    Menu_Update(menu_gobj);
 
     return;
 }
 void Menu_Think(GOBJ *menu_gobj)
 {
     EventSelectData *menu_data = menu_gobj->userdata;
+
+    // Inputs Think
+    {
+        int inputs = Pad_GetRapidHeld(4);
+        int input_kind = INPTKIND_NONE;
+
+        if (inputs & (HSD_BUTTON_UP | HSD_BUTTON_DPAD_UP))
+        {
+
+            // check to move cursor up
+            if (menu_data->cursor.pos > 0)
+            {
+                menu_data->cursor.pos--;
+                input_kind = INPTKIND_MOVE;
+            }
+            // check to scroll up
+            else if (menu_data->cursor.scroll > 0)
+            {
+                menu_data->cursor.scroll--;
+                input_kind = INPTKIND_MOVE;
+            }
+        }
+        else if (inputs & (HSD_BUTTON_DOWN | HSD_BUTTON_DPAD_DOWN))
+        {
+
+            // get number of events onscreen
+            int event_num = tm_function->GetPageEventNum(menu_data->page);
+            if (event_num > MNSLEV_MAXEVENT)
+                event_num = MNSLEV_MAXEVENT;
+
+            // determine max scroll
+            int scroll_max = tm_function->GetPageEventNum(menu_data->page) - MNSLEV_MAXEVENT;
+            if (scroll_max < 0)
+                scroll_max = 0;
+
+            // check to move cursor down
+            if (menu_data->cursor.pos < (event_num - 1))
+            {
+                menu_data->cursor.pos++;
+                input_kind = INPTKIND_MOVE;
+            }
+            // check to scroll up
+            else if (menu_data->cursor.scroll < scroll_max)
+            {
+                menu_data->cursor.scroll++;
+                input_kind = INPTKIND_MOVE;
+            }
+        }
+        else if (inputs & HSD_TRIGGER_L)
+        {
+            // check to move to prev page
+            if (menu_data->page > 0)
+            {
+                menu_data->page--;
+                input_kind = INPTKIND_CHANGE;
+            }
+        }
+        else if (inputs & HSD_TRIGGER_R)
+        {
+
+            int page_num = tm_function->GetPageNum();
+
+            // check to move to next page
+            if (menu_data->page < (page_num - 1))
+            {
+                menu_data->page++;
+                input_kind = INPTKIND_CHANGE;
+            }
+        }
+
+        // act on inputs
+        switch (input_kind)
+        {
+        case (INPTKIND_MOVE):
+        {
+            // redraw menu
+            Menu_Update(menu_gobj);
+
+            // play sfx
+            SFX_PlayCommon(2);
+
+            break;
+        }
+
+        case (INPTKIND_CHANGE):
+        {
+
+            // reset cursors
+            menu_data->cursor.pos = 0;
+            menu_data->cursor.scroll = 0;
+
+            // redraw menu
+            Menu_Update(menu_gobj);
+
+            // play sfx
+            SFX_PlayCommon(2);
+        }
+        }
+    }
+
+    return;
+}
+void Menu_Update(GOBJ *gobj)
+{
+    EventSelectData *menu_data = gobj->userdata;
+
+    // update cursor
+    {
+        JOBJ *cursor_jobj = menu_data->cursor.jobj;
+        cursor_jobj->trans.Y = menu_data->cursor.pos * -1.8;
+        JOBJ_SetMtxDirtySub(cursor_jobj);
+    }
+
+    // update scroll bar
+    {
+
+        // determine max scroll
+        int scroll_max = tm_function->GetPageEventNum(menu_data->page) - MNSLEV_MAXEVENT;
+        if (scroll_max < 0)
+            scroll_max = 0;
+
+        // get events on this page
+        int event_num = tm_function->GetPageEventNum(menu_data->page);
+
+        // hide if less than X events on this page
+        if (event_num <= MNSLEV_MAXEVENT)
+            JOBJ_SetFlagsAll(menu_data->scroll_jobj, JOBJ_HIDDEN);
+
+        // update and display scroll bar
+        else
+        {
+            JOBJ_ClearFlagsAll(menu_data->scroll_jobj, JOBJ_HIDDEN);
+            menu_data->scroll_top->trans.Y = ((float)menu_data->cursor.scroll / (float)(scroll_max)) * (-11);
+            JOBJ_SetMtxDirtySub(menu_data->scroll_jobj);
+        }
+    }
+
+    // Update page text
+    {
+        // current page
+        Text_SetText(menu_data->text.page_curr, 0, tm_function->GetPageName(menu_data->page));
+
+        // previous page
+        if (menu_data->page > 0)
+        {
+            Text_SetText(menu_data->text.page_prev, 0, tm_function->GetPageName(menu_data->page - 1));
+        }
+        else
+            Text_SetText(menu_data->text.page_prev, 0, "");
+
+        // next page
+        bp();
+        if (menu_data->page < (tm_function->GetPageNum() - 1))
+        {
+            Text_SetText(menu_data->text.page_next, 0, tm_function->GetPageName(menu_data->page + 1));
+        }
+        else
+            Text_SetText(menu_data->text.page_next, 0, "");
+    }
+
+    // Update event name text
+    {
+
+        // first clear all event names
+        for (int i = 0; i < MNSLEV_MAXEVENT; i++)
+        {
+            Text_SetText(menu_data->text.event_name, i, "");
+        }
+
+        // get number of events onscreen
+        int event_num = tm_function->GetPageEventNum(menu_data->page);
+        if (event_num > MNSLEV_MAXEVENT)
+            event_num = MNSLEV_MAXEVENT;
+
+        // update event text
+        for (int i = 0; i < event_num; i++)
+        {
+            Text_SetText(menu_data->text.event_name, i, tm_function->GetEventName(menu_data->page, i + menu_data->cursor.scroll));
+        }
+    }
+
+    // Update event description text
+    {
+
+        // free old if exists
+        if (menu_data->text.event_desc)
+        {
+            Text_Destroy(menu_data->text.event_desc);
+            menu_data->text.event_desc = 0;
+        }
+
+        // get text position
+        Vec3 text_pos;
+        JOBJ *text_jobj;
+        JOBJ *menu_jobj = gobj->hsd_object;
+        Vec3 *menu_scale = &menu_jobj->scale;
+        JOBJ_GetChild(menu_jobj, &text_jobj, 12, -1);
+        JOBJ_GetWorldPosition(text_jobj, 0, &text_pos);
+
+        // create test text
+        Text *text = Text_CreateText(0, menu_data->canvas_id);
+        menu_data->text.event_desc = text;
+        // enable align and kerning
+        text->align = 0;
+        text->kerning = 1;
+        text->use_aspect = 1;
+        text->scale.X = (menu_scale->X * 0.01) * 5;
+        text->scale.Y = (menu_scale->Y * 0.01) * 5;
+        text->trans.X = text_pos.X + (0 * (menu_scale->X / 4.0));
+        text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
+        text->aspect.X = 585;
+
+        char *msg = tm_function->GetEventDescription(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
+
+        // count newlines
+        int line_num = 1;
+        int line_length_arr[MNSLEV_DESCLINEMAX];
+        char *msg_cursor_prev, *msg_cursor_curr; // declare char pointers
+        msg_cursor_prev = msg;
+        msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
+        while (msg_cursor_curr != 0)                     // if occurrence found, increment values
+        {
+            // check if exceeds max lines
+            if (line_num >= MNSLEV_DESCLINEMAX)
+                assert("MNSLEV_DESCLINEMAX exceeded!");
+
+            // Save information about this line
+            line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
+            line_num++;                                                        // increment number of newlines found
+            msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
+            msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
+        }
+
+        // get last lines length
+        msg_cursor_curr = strchr(msg_cursor_prev, 0);
+        line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
+
+        // copy each line to an individual char array
+        char *msg_cursor = &msg;
+        for (int i = 0; i < line_num; i++)
+        {
+
+            // check if over char max
+            u8 line_length = line_length_arr[i];
+            if (line_length > MNSLEV_DESCCHARMAX)
+                assert("DESC_CHARMAX exceeded!");
+
+            // copy char array
+            char msg_line[MNSLEV_DESCCHARMAX + 1];
+            memcpy(msg_line, msg, line_length);
+
+            // add null terminator
+            msg_line[line_length] = '\0';
+
+            // increment msg
+            msg += (line_length + 1); // +1 to skip past newline
+
+            // print line
+            int y_delta = (i * MNSLEV_DESCLINEOFFSET);
+            Text_AddSubtext(text, 0, y_delta, msg_line);
+        }
+    }
 
     return;
 }

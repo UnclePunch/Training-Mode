@@ -2,7 +2,7 @@
 
 #define TM_VERSSHORT "TM v3.0-a8"
 #define TM_VERSLONG "Training Mode v3.0 Alpha 8"
-#define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
+#define TM_DEBUG 1 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_DATA -(50 * 4)
 #define MENU_MAXOPTION 9
@@ -660,7 +660,6 @@ typedef struct tmFunction
     char *(*GetEventTut)(int page, int event);
     char *(*GetPageName)(int page);
     int (*GetPageEventNum)(int page);
-    void (*Event_Init)(GOBJ *event);
     char *(*GetTMVersShort)();
     char *(*GetTMVersLong)();
     char *(*GetTMCompile)();

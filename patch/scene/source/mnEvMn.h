@@ -1,15 +1,36 @@
 #include "../../../m-ex/MexTK/mex.h"
 
+enum InputKind
+{
+    INPTKIND_NONE,
+    INPTKIND_MOVE,
+    INPTKIND_CHANGE,
+    INPTKIND_ENTER,
+    INPTKIND_EXIT,
+};
+
+#define MNSLEV_MAXEVENT 9
+#define MNSLEV_STARTPAGE 1
+#define MNSLEV_DESCCHARMAX 50
+#define MNSLEV_DESCLINEMAX 6
+#define MNSLEV_DESCLINEOFFSET 30
+
 typedef struct MnSlEvData
 {
     JOBJSet *menu;
     COBJDesc *menu_cobj;
     JOBJSet *bg;
     void *fog;
+    JOBJDesc *cursor;
 } MnSlEvData;
 
 typedef struct EventSelectData
 {
+    int canvas_id;
+    int page;
+    JOBJ *scroll_jobj;
+    JOBJ *scroll_top;
+    JOBJ *scroll_bot;
     struct
     {
         JOBJ *jobj;

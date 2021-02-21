@@ -1121,7 +1121,7 @@ static EventDesc *Minigames_Events[] = {
 };
 static EventPage Minigames_Page = {
     .name = "Minigames",
-    .eventNum = (sizeof(Minigames_Events) / 4) - 1,
+    .eventNum = (sizeof(Minigames_Events) / 4),
     .events = Minigames_Events,
 };
 
@@ -1145,7 +1145,7 @@ static EventDesc *General_Events[] = {
 };
 static EventPage General_Page = {
     .name = "General Tech",
-    (sizeof(General_Events) / 4) - 1,
+    (sizeof(General_Events) / 4),
     General_Events,
 };
 
@@ -1158,7 +1158,7 @@ static EventDesc *Spacie_Events[] = {
 };
 static EventPage Spacie_Page = {
     .name = "Spacie Tech",
-    (sizeof(Spacie_Events) / 4) - 1,
+    (sizeof(Spacie_Events) / 4),
     Spacie_Events,
 };
 
@@ -4533,7 +4533,7 @@ char *GetTMCompile()
 }
 int GetPageNum()
 {
-    int pageNum = (sizeof(EventPages) / 4) - 1;
+    int pageNum = (sizeof(EventPages) / 4);
     return (pageNum);
 }
 u8 GetIsChooseCPU(int page, int event)
