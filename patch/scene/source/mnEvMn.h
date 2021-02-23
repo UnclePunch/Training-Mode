@@ -14,6 +14,7 @@ enum InputKind
 #define MNSLEV_DESCCHARMAX 50
 #define MNSLEV_DESCLINEMAX 6
 #define MNSLEV_DESCLINEOFFSET 30
+#define MNSLEV_IMGFMT 6
 
 typedef struct MnSlEvData
 {
@@ -22,6 +23,7 @@ typedef struct MnSlEvData
     JOBJSet *bg;
     void *fog;
     JOBJDesc *cursor;
+    COBJDesc *movie_cobj;
 } MnSlEvData;
 
 typedef struct EventSelectData
@@ -49,3 +51,4 @@ typedef struct EventSelectData
 
 void Menu_Think(GOBJ *menu_gobj);
 void Menu_CObjThink(GOBJ *gobj);
+void MTH_Think(GOBJ *gobj);
