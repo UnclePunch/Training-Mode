@@ -7,8 +7,9 @@ static u8 leave_kind;
 static ESSMinorData *stc_minor_data;
 static ArchiveInfo *stc_menu_archive;
 static HSD_Fog *stc_fog;
-static COBJDesc *stc_cobj_desc;
+static COBJ *movie_cobj;
 static _HSD_ImageDesc *movie_imagedesc;
+static void *orig_img_data;
 
 void Minor_Load(ESSMinorData *minor_data)
 {
@@ -99,7 +100,6 @@ void Menu_Init()
     // load menu asset file
     stc_menu_archive = File_Load("TM/MnSlEv.dat");
     MnSlEvData *menu_assets = File_GetSymbol(stc_menu_archive, "MnEvSlData");
-    stc_cobj_desc = menu_assets->movie_cobj;
 
     // create camera
     GOBJ *cam_gobj = GObj_Create(2, 3, 128);
@@ -126,13 +126,17 @@ void Menu_Init()
     JOBJ_LoadSet(0, menu_assets->bg, 0, 0, 3, 1, 1, GObj_Anim);
 
     // create menu
-    GOBJ *menu_gobj = JOBJ_LoadSet(0, menu_assets->menu, 0, 0, 3, 1, 1, 0); // GObj_Anim
+    GOBJ *menu_gobj = JOBJ_LoadSet(0, menu_assets->menu, 0, 0, 3, 1, 1, 0);
     JOBJ *menu_jobj = menu_gobj->hsd_object;
     GObj_AddProc(menu_gobj, Menu_Think, 5);
     EventSelectData *menu_data = calloc(sizeof(EventSelectData));
     GObj_AddUserData(menu_gobj, 4, HSD_Free, menu_data);
     menu_data->canvas_id = canvas_id; // save canvas id
     movie_imagedesc = menu_jobj->child->dobj->next->next->next->next->next->next->next->next->mobj->tobj->imagedesc;
+    orig_img_data = movie_imagedesc->img_ptr;
+
+    // alloc movie camera
+    movie_cobj = COBJ_LoadDescSetScissor(menu_assets->movie_cobj);
 
     // save scroll bar jobj
     JOBJ_GetChild(menu_jobj, &menu_data->scroll_jobj, 2, -1);
@@ -238,40 +242,7 @@ void Menu_Init()
     }
 
     Menu_Update(menu_gobj);
-
-    // mth test code
-
-    // load mth file
-    static char *mth_file = "TM/temp.mth";
-    if (DVDConvertPathToEntrynum(mth_file))
-    {
-        static MTHPlayParam play_param = {1048576, (60 / 30)};
-        MTHHeader *mth_header = 0x804333e0;
-        MTH_Init(mth_file, &play_param, 0, 0, 0);
-        play_param.rate = (60 / mth_header->framerate); // update framerate based on loaded mth
-
-        // init imagedesc
-        movie_imagedesc->format = MNSLEV_IMGFMT;
-        movie_imagedesc->width = mth_header->xSize;
-        movie_imagedesc->height = mth_header->ySize;
-        // allocate image data ptr
-        int tex_size = GXGetTexBufferSize(mth_header->xSize,
-                                          mth_header->ySize,
-                                          MNSLEV_IMGFMT,
-                                          0,
-                                          0);
-        void *movie_imgdata = HSD_MemAlloc(tex_size);
-        memset(movie_imgdata, 0, tex_size);
-        DCFlushRange(movie_imgdata, tex_size);
-        movie_imagedesc->img_ptr = movie_imgdata;
-
-        // create gobj to decode frames
-        GOBJ *mth_gobj = GObj_Create(6, 7, 0x80);
-        GObj_AddRenderObject(mth_gobj, mth_header->xSize, mth_header->ySize);
-        GObj_AddProc(mth_gobj, MTH_Think, 0);
-    }
-
-    // create gobj to advance frames
+    Menu_PlayEventMovie(menu_gobj);
 
     return;
 }
@@ -359,6 +330,9 @@ void Menu_Think(GOBJ *menu_gobj)
             // play sfx
             SFX_PlayCommon(2);
 
+            // play mth
+            Menu_PlayEventMovie(menu_gobj);
+
             break;
         }
 
@@ -374,6 +348,9 @@ void Menu_Think(GOBJ *menu_gobj)
 
             // play sfx
             SFX_PlayCommon(2);
+
+            // load mth
+            Menu_PlayEventMovie(menu_gobj);
         }
         }
     }
@@ -558,11 +535,115 @@ void Menu_CObjThink(GOBJ *gobj)
 
     return;
 }
+void Menu_PlayEventMovie(GOBJ *gobj)
+{
+    EventSelectData *menu_data = gobj->userdata;
 
+    // get this events file name
+    char *file = tm_function->GetEventFile(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
+
+    // append .mth
+    static char *extension = "TM/%s.mth";
+    char *buffer[20];
+    sprintf(buffer, extension, file);
+
+    // play this file
+    MTH_Play(gobj, buffer);
+
+    return;
+}
+void Menu_Animate(GOBJ *gobj)
+{
+    MTHPlayback *mth_header = 0x804333e0;
+
+    // animate menu if no movie is playing
+    if (mth_header->power == 0)
+    {
+        GObj_Anim(gobj);
+    }
+}
+
+// MTH functions
+void MTH_Play(GOBJ *gobj, char *filename)
+{
+
+    EventSelectData *menu_data = gobj->userdata;
+
+    // destroy old mth gobj
+    if (menu_data->mth_gobj)
+    {
+        GObj_Destroy(menu_data->mth_gobj);
+        menu_data->mth_gobj = 0;
+
+        HSD_Free(movie_imagedesc->img_ptr);
+        movie_imagedesc->img_ptr = 0;
+
+        MTH_Terminate();
+    }
+
+    if (DVDConvertPathToEntrynum(filename) != -1)
+    {
+        static MTHPlayParam play_param = {1048576, (60 / 30)};
+        MTHPlayback *mth_header = 0x804333e0;
+        bp();
+        MTH_Init(filename, &play_param, 0, 0, 0);
+        play_param.rate = (60 / mth_header->header.framerate); // update framerate based on loaded mth
+
+        /*
+        // create cobj
+        void (*AllocDummyCObj)(GOBJ * gobj, int width, int height, int r6, int r7) = 0x801a9dd0;
+        GOBJ *cam_gobj = GObj_Create(13, 14, 0);
+        //AllocDummyCObj(cam_gobj, 640, 480, 8, 0);
+        COBJ *cobj = COBJ_LoadDescSetScissor(stc_cobj_desc);
+        GObj_AddObject(cam_gobj, 1, cobj);
+        GOBJ_InitCamera(cam_gobj, 0x803a54ec, 8);
+        cam_gobj->cobj_links = (1 << 11);
+
+        // create decode gobj
+        GOBJ *decode_gobj = GObj_Create(14, 15, 0);
+        GObj_AddObject(decode_gobj, 0, 0);
+        GObj_AddGXLink(decode_gobj, MTH_Render, 11, 0);
+        GObj_AddRenderObject(decode_gobj, 640, 480);
+
+        // create think gobj
+        GOBJ *movie_gobj = GObj_Create(6, 7, 0x80);
+        GObj_AddProc(movie_gobj, MTH_Advance, 0);
+        */
+
+        // init imagedesc
+        movie_imagedesc->format = MNSLEV_IMGFMT;
+        movie_imagedesc->width = mth_header->header.xSize;
+        movie_imagedesc->height = mth_header->header.ySize;
+        // allocate image data ptr
+        int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
+                                          mth_header->header.ySize,
+                                          MNSLEV_IMGFMT,
+                                          0,
+                                          0);
+        void *movie_imgdata = HSD_MemAlloc(tex_size);
+        memset(movie_imgdata, 0, tex_size);
+        DCFlushRange(movie_imgdata, tex_size);
+        movie_imagedesc->img_ptr = movie_imgdata;
+
+        // create gobj to decode frames
+        GOBJ *mth_gobj = GObj_Create(6, 7, 0x80);
+        GObj_AddRenderObject(mth_gobj, mth_header->header.xSize, mth_header->header.ySize);
+        GObj_AddProc(mth_gobj, MTH_Think, 0);
+        menu_data->mth_gobj = mth_gobj;
+
+        // enable mth loop
+        mth_header->loop = 1;
+    }
+    else
+    {
+        // restore matanim imageptr
+        movie_imagedesc->img_ptr = orig_img_data;
+    }
+}
 void MTH_Think(GOBJ *gobj)
 {
 
-    MTHHeader *mth_header = 0x804333e0;
+    MTHPlayback *mth_header = 0x804333e0;
 
     // advance MTH logic, load next frame and decode
     MTH_Advance();
@@ -570,16 +651,16 @@ void MTH_Think(GOBJ *gobj)
     // Render Frame
     {
         // create a dummy cobj
-        COBJ *cobj = COBJ_LoadDesc(stc_cobj_desc);
+        //COBJ *cobj = COBJ_LoadDescSetScissor(stc_cobj_desc);
 
         // set to MTH resolution
-        CObj_SetOrtho(cobj, 0, mth_header->ySize, 0, mth_header->xSize);
-        CObj_SetViewport(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
-        CObj_SetScissor(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
+        //CObj_SetOrtho(cobj, 0, mth_header->ySize, 0, mth_header->xSize);
+        //CObj_SetViewport(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
+        //CObj_SetScissor(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
 
         // render THP frame
         HSD_StartRender(3);
-        if (CObj_SetCurrent(cobj))
+        if (CObj_SetCurrent(movie_cobj))
         {
             // render to framebuffer
             MTH_Render(gobj, 2);
@@ -587,20 +668,19 @@ void MTH_Think(GOBJ *gobj)
         }
 
         // dump EFB to texture
-        bp();
         HSD_ImageDescCopyFromEFB(movie_imagedesc, 0, 0, 1);
 
         // flush cache on image data
-        int tex_size = GXGetTexBufferSize(mth_header->xSize,
-                                          mth_header->ySize,
+        int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
+                                          mth_header->header.ySize,
                                           MNSLEV_IMGFMT,
                                           0,
                                           0);
         DCFlushRange(movie_imagedesc->img_ptr, tex_size);
 
-        // free cobj
-        CObj_Release(cobj);
+        // free cobj, i used to do this but idk how to totally
+        // free the cobj, this was causing a memleak
+        //CObj_Release(movie_cobj);
     }
-
     return;
 }
