@@ -9,6 +9,15 @@ enum InputKind
     INPTKIND_EXIT,
 };
 
+enum MTHStatus
+{
+    MTHSTATUS_NONE,
+    MTHSTATUS_LOADHEADER,
+    MTHSTATUS_LOADFRAMES,
+    MTHSTATUS_LOADFINALIZE,
+    MTHSTATUS_PLAY,
+};
+
 #define MNSLEV_MAXEVENT 9
 #define MNSLEV_STARTPAGE 1
 #define MNSLEV_DESCCHARMAX 50
@@ -50,7 +59,16 @@ typedef struct EventSelectData
     } text;
 } EventSelectData;
 
+typedef struct MTHData
+{
+    int status;
+    int frame_num; // number of frames loaded initially
+    char *next_frame_ptr;
+    int next_frame_size;
+} MTHData;
+
 void Menu_Think(GOBJ *menu_gobj);
 void Menu_CObjThink(GOBJ *gobj);
 void MTH_Think(GOBJ *gobj);
 void Menu_Animate(GOBJ *gobj);
+void MTH_HeaderLoadCb();
