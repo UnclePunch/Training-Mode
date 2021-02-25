@@ -5,7 +5,7 @@
     "outputFiles":
     [
       {
-        "file": "../../Additional ISO Files//codes.gct"
+        "file": "../../Additional ISO Files/codes.gct"
       }
     ],
   "codes": [
@@ -26,19 +26,25 @@
         {
           "type": "replaceCodeBlock",
           "address": "8042ABD8",
-          "sourceFile": "../../ASM/Misc/Edit Hyphen Texture.s",
+          "sourceFile": "../../ASM/training-mode/Misc/Edit Hyphen Texture.s",
           "annotation": "Edit Hyphen Texture"
         },
         {
           "type": "replaceCodeBlock",
+          "address": "8042a760",
+          "sourceFile": "../../ASM/training-mode/Misc/Edit Carrot Texture.s",
+          "annotation": "Edit Carrot Texture"
+        },
+        {
+          "type": "replaceCodeBlock",
           "address": "8040a58c",
-          "sourceFile": "../../ASM/Misc/Store Version Number.s",
+          "sourceFile": "../../ASM/training-mode/Misc/Store Version Number.s",
           "annotation": "Version Number"
         },
         {
           "type": "replaceCodeBlock",
           "address": "803ea6c8",
-          "sourceFile": "../../ASM/Misc/Overwrite Compile Date.s",
+          "sourceFile": "../../ASM/training-mode/Misc/Overwrite Compile Date.s",
           "annotation": "Overwrite Compile Date"
         },
         {
