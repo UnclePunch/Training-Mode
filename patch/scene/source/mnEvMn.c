@@ -669,7 +669,7 @@ void MTH_Start(GOBJ *gobj, char *filename)
     {
         MTHPlayback *mth_header = 0x804333e0;
 
-#define TEST
+        //#define TEST
 
 #ifdef TEST
         // begin mth load
@@ -764,6 +764,8 @@ void MTH_HeaderLoadCb()
     mth_header->x140 = buffer;
     mth_header->jpeg_lookup = buffer;
 
+    //void (*MTH_InitFrameBuffers)(MTHHeader * header, void *buffer) = 0x8001ecf4;
+
     // init frame buffers
     {
 
@@ -771,9 +773,9 @@ void MTH_HeaderLoadCb()
         if ((mth_header->x6c) || (mth_header->x11c))
         {
 
-            // set first frame as next frame
-            char *next_frame_ptr = mth_header->jpeg_lookup;
-            mth_data.next_frame_ptr = next_frame_ptr + OSRoundUp32B(mth_header->jpeg_cache_num * 4);
+            // set first frame pointer (after jpeg lookup)
+            char *jpeg_lookup = mth_header->jpeg_lookup;
+            mth_data.next_frame_ptr = jpeg_lookup + OSRoundUp32B(mth_header->jpeg_cache_num * 4);
 
             // init frame count
             mth_data.frame_num = 0;
@@ -808,7 +810,8 @@ void MTH_LoadFrame()
         mth_header->next_jpeg_offset += mth_data.next_frame_size;
         JPEGHeader *last_jpeg_header = mth_header->jpeg_lookup[mth_data.frame_num - 1];
         mth_data.next_frame_size = last_jpeg_header->nextSize; // next size is at 0x0 of the previous jpeg data
-        mth_data.next_frame_ptr += mth_data.next_frame_size;
+        bp();
+        mth_data.next_frame_ptr += mth_header->bufSize;
     }
 
     // check to continue loading
@@ -816,13 +819,12 @@ void MTH_LoadFrame()
     {
 
         // store pointer to this frame
-        void *this_frame = mth_data.next_frame_ptr; // get pointer to this frame
-        mth_header->jpeg_lookup[mth_data.frame_num] = this_frame;
+        mth_header->jpeg_lookup[mth_data.frame_num] = mth_data.next_frame_ptr;
 
         // load this frame
         File_Read(mth_header->entrynum,
                   mth_header->next_jpeg_offset,
-                  this_frame,
+                  mth_data.next_frame_ptr,
                   OSRoundUp32B(mth_data.next_frame_size),
                   0x21,
                   1,
@@ -834,7 +836,6 @@ void MTH_LoadFrame()
     // finished loading, clear buffer caches
     else
     {
-        bp();
 
         // next jpeg size 8001eed4
         JPEGHeader *last_jpeg_header = mth_header->jpeg_lookup[mth_data.frame_num - 1];
