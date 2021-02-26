@@ -6,7 +6,7 @@
 .set playerdata,31
 
 #Spoof current (soon to be previous) screen
-  li	r3,Scene.EventMode
+  li	r3,Scene.TM
   load	r4,SceneController
   stb	r3,Scene.CurrentMajor(r4)
 

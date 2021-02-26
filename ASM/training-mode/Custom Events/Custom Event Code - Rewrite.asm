@@ -550,7 +550,7 @@ EggsThinkExit:
       #First check if this is an event
         load r4,SceneController
         lbz r4,Scene.CurrentMajor(r4)
-        cmpwi r4,Scene.EventMode
+        cmpwi r4,Scene.TM
         bne Eggs_OnCollisionOriginalFunction
       #Now check if its eggs-ercise
         lwz	r4, -0x77C0 (r13)

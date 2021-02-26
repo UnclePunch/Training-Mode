@@ -13,7 +13,7 @@ backup
 #Only in Event Mode
   load r3,SceneController
   lbz r3,Scene.CurrentMajor(r3)
-  cmpwi r3,Scene.EventMode
+  cmpwi r3,Scene.TM
   bne Exit
 
 load staticTextData,0x804a1f58

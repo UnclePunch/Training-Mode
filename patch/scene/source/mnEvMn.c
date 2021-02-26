@@ -6,12 +6,13 @@
 static u8 leave_kind;
 static ESSMinorData *stc_minor_data;
 static ArchiveInfo *stc_menu_archive;
-static HSD_Fog *stc_fog;                               // fog pointer, used for cobj erase color
-static COBJ *movie_cobj;                               // "dummy" live cobj pointer used for rendering mth frame
-static _HSD_ImageDesc *movie_imagedesc;                // menu movie preview image desc pointer
-static void *orig_img_data;                            // original tv static img_data
-static MTHPlayParam play_param = {1048576, (60 / 30)}; //
-static MTHData mth_data;                               // status of the current mth operation
+static HSD_Fog *stc_fog;                                           // fog pointer, used for cobj erase color
+static COBJ *movie_cobj;                                           // "dummy" live cobj pointer used for rendering mth frame
+static _HSD_ImageDesc movie_imagedesc = {.format = MNSLEV_IMGFMT}; // movie imagedesc
+static _HSD_ImageDesc *orig_imagedesc;                             // original static imagedesc
+static TOBJ *orig_tobj;                                            // original tobj
+static MTHPlayParam play_param = {1048576, (60 / 30)};             //
+static MTHData mth_data;                                           // status of the current mth operation
 
 void Minor_Load(ESSMinorData *minor_data)
 {
@@ -127,14 +128,14 @@ void Menu_Init()
     JOBJ_LoadSet(0, menu_assets->bg, 0, 0, 3, 1, 1, GObj_Anim);
 
     // create menu
-    GOBJ *menu_gobj = JOBJ_LoadSet(0, menu_assets->menu, 0, 0, 3, 1, 1, 0);
+    GOBJ *menu_gobj = JOBJ_LoadSet(0, menu_assets->menu, 0, 0, 3, 1, 1, Menu_Animate);
     JOBJ *menu_jobj = menu_gobj->hsd_object;
     GObj_AddProc(menu_gobj, Menu_Think, 5);
     EventSelectData *menu_data = calloc(sizeof(EventSelectData));
     GObj_AddUserData(menu_gobj, 4, HSD_Free, menu_data);
     menu_data->canvas_id = canvas_id; // save canvas id
-    movie_imagedesc = menu_jobj->child->dobj->next->next->next->next->next->next->next->next->mobj->tobj->imagedesc;
-    orig_img_data = movie_imagedesc->img_ptr;
+    orig_tobj = menu_jobj->child->dobj->next->next->next->next->next->next->next->next->mobj->tobj;
+    orig_imagedesc = orig_tobj->imagedesc;
 
     // alloc movie camera
     movie_cobj = COBJ_LoadDescSetScissor(menu_assets->movie_cobj);
@@ -187,6 +188,9 @@ void Menu_Init()
     }
 
     // Create event name text
+    // *im now recreating this every update because there was some
+    // memory leak issue i couldnt figure out while re-using it...
+    /* 
     {
         // get text position
         Vec3 text_jobj_pos;
@@ -216,9 +220,10 @@ void Menu_Init()
         int event_num = tm_function->GetPageEventNum(1);
         for (int i = 0; i < MNSLEV_MAXEVENT; i++)
         {
-            Text_AddSubtext(text, 0, (40 * i), "");
+            Text_AddSubtext(text, 0, (40 * i), "----------------------------");
         }
     }
+ */
 
     // Create event description text
     {
@@ -359,22 +364,203 @@ void Menu_Think(GOBJ *menu_gobj)
 
     // MTH think
     {
+        MTHPlayback *mth_header = 0x804333e0;
 
         // mth state logic
         switch (mth_data.status)
         {
         case (MTHSTATUS_NONE):
+        {
+
+            break;
+        }
+        case (MTHSTATUS_TERMINATE):
+        {
+
+            /*
+            todo: wait even more, frame is still loading after terminate runs
+            */
+
+            // wait for frame and header load to finish
+            if ((mth_data.is_loading_header == 0) && (mth_header->is_loading_frame == 0))
+            {
+                OSReport("terminate\n");
+
+                // free jpeg buffers
+                MTH_Terminate();
+
+                // destroy decode gobj and decode buffer
+                if (menu_data->mth_gobj)
+                {
+                    GObj_Destroy(menu_data->mth_gobj);
+                    menu_data->mth_gobj = 0;
+                }
+                if (movie_imagedesc.img_ptr)
+                {
+                    HSD_Free(movie_imagedesc.img_ptr);
+                    movie_imagedesc.img_ptr = 0;
+                }
+
+                // disable mth power
+                mth_header->power = 0;
+
+                // begin loading next mth header
+                mth_data.status = MTHSTATUS_LOADHEADER;
+            }
+            else
+                OSReport("waiting to terminate\n");
+
+            break;
+        }
         case (MTHSTATUS_LOADHEADER):
+        {
+
+            // append .mth
+            static char *extension = "TM/%s.mth";
+            char *buffer[20];
+            sprintf(buffer, extension, mth_data.filename);
+
+            // if this new file exists, begin loading it
+            if (DVDConvertPathToEntrynum(buffer) != -1)
+            {
+
+                OSReport("load header\n");
+
+                // init variables
+                mth_data.is_loading_header = 1; // raise header load flag
+                mth_header->play_param = &play_param;
+
+                // unknown cache stuff @ 8001eb30
+                void (*MTH_CacheUnk)() = 0x80335c58;
+                MTH_CacheUnk();
+
+                // begin file load
+                int entrynum = DVDConvertPathToEntrynum(buffer);
+                mth_header->entrynum = entrynum;
+                File_Read(entrynum, 0, &mth_header->header, sizeof(MTHHeader), 0x21, 1, MTH_HeaderLoadCb, 0);
+
+                // set status to loading header
+                mth_data.status = MTHSTATUS_LOADHEADERWAIT;
+
+                /*
+                // begin mth load
+                MTH_Init(filename, &play_param, 0, 0, 0);
+                play_param.rate = (60 / mth_header->header.framerate); // update framerate based on loaded mth
+                mth_data.status = MTHSTATUS_PLAY;
+                mth_header->loop = 1;
+
+                // init imagedesc
+                orig_imagedesc->format = MNSLEV_IMGFMT;
+                orig_imagedesc->width = mth_header->header.xSize;
+                orig_imagedesc->height = mth_header->header.ySize;
+                // allocate image data ptr
+                int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
+                                                  mth_header->header.ySize,
+                                                  MNSLEV_IMGFMT,
+                                                  0,
+                                                  0);
+                void *movie_imgdata = HSD_MemAlloc(tex_size);
+                memset(movie_imgdata, 0, tex_size);
+                DCFlushRange(movie_imgdata, tex_size);
+                orig_imagedesc->img_ptr = movie_imgdata;
+
+                // create gobj to decode frames
+                GOBJ *mth_gobj = GObj_Create(6, 7, 0x80);
+                GObj_AddRenderObject(mth_gobj, mth_header->header.xSize, mth_header->header.ySize);
+                GObj_AddProc(mth_gobj, MTH_Think, 0);
+                menu_data->mth_gobj = mth_gobj;
+
+                // set status to playback
+                mth_data.status = MTHSTATUS_PLAY;
+                */
+            }
+            else
+                mth_data.status = MTHSTATUS_NONE; // set status to nothing playing
+
+            break;
+        }
+        case (MTHSTATUS_LOADHEADERWAIT):
+        {
+
+            // begin loading frames after header loads
+            if (mth_data.is_loading_header == 0)
+                mth_data.status = MTHSTATUS_LOADFRAMES;
+
+            break;
+        }
         case (MTHSTATUS_LOADFRAMES):
         {
-            // play static animation on menu
-            movie_imagedesc->img_ptr = orig_img_data;
+
+            OSReport("load frames\n");
+
+            // finish initializing mth playback
+
+            // copy some info from header @ 8001eb5c
+            play_param.rate = (60 / mth_header->header.framerate); // update framerate based on loaded mth
+            mth_header->numFrames = mth_header->header.numFrames;
+            mth_header->xSize = mth_header->header.xSize;
+            mth_header->ySize = mth_header->header.ySize;
+            mth_header->bufSize = mth_header->header.bufSize;
+            mth_header->x11c = 1;
+            mth_header->x6c = 1;
+            mth_header->is_loading_frame = 0;
+            mth_header->x70 = 1;
+            mth_header->x130 = 0;
+            mth_header->x134 = 0;
+            mth_header->power = 1; // enable power variable
+
+            // allocate frame buffers @ 8001f480
+            int (*x8001ebf0)() = 0x8001ebf0;
+            int unk_size = x8001ebf0(mth_header);
+            void *buffer = HSD_MemAlloc(unk_size);
+            memset(buffer, 0, unk_size);
+            mth_header->x140 = buffer;
+            mth_header->jpeg_lookup = buffer;
+
+            // set loop flag, x8001ebf0 sets this to 0
+            mth_header->loop = 1; // enable mth loop
+
+            // init frame buffers
+            {
+
+                // begin loading first X frames
+                if ((mth_header->x6c) || (mth_header->x11c))
+                {
+
+                    // set first frame pointer (after jpeg lookup)
+                    char *jpeg_lookup = mth_header->jpeg_lookup;
+                    mth_data.next_frame_ptr = jpeg_lookup + OSRoundUp32B(mth_header->jpeg_cache_num * 4);
+
+                    // init frame count
+                    mth_data.frame_num = 0;
+                    mth_data.next_frame_size = mth_header->header.firstFrameSize;
+                    mth_header->next_jpeg_offset = mth_header->header.firstFrame;
+
+                    // load frame
+                    MTH_LoadFrame();
+
+                    mth_data.status = MTHSTATUS_LOADFRAMESWAIT;
+                }
+                else
+                {
+                    OSReport("how did i get here??? will stall now\n");
+                    __asm__("b 0x0");
+                }
+            }
+
+            break;
+        }
+        case (MTHSTATUS_LOADFRAMESWAIT):
+        {
+
+            // callback will advance out of this state
 
             break;
         }
         case (MTHSTATUS_LOADFINALIZE):
         {
-            MTHPlayback *mth_header = 0x804333e0;
+
+            OSReport("finalizing\n");
 
             // init alarm
             mth_header->x144 = 0;
@@ -405,20 +591,23 @@ void Menu_Think(GOBJ *menu_gobj)
             GObj_AddProc(movie_gobj, MTH_Advance, 0);
             */
 
-            // init imagedesc
-            movie_imagedesc->format = MNSLEV_IMGFMT;
-            movie_imagedesc->width = mth_header->header.xSize;
-            movie_imagedesc->height = mth_header->header.ySize;
+            // init movie imagedesc
+            movie_imagedesc.format = MNSLEV_IMGFMT;
+            movie_imagedesc.width = mth_header->header.xSize;
+            movie_imagedesc.height = mth_header->header.ySize;
             // allocate image data ptr
             int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
                                               mth_header->header.ySize,
                                               MNSLEV_IMGFMT,
                                               0,
                                               0);
-            void *movie_imgdata = HSD_MemAlloc(tex_size);
-            memset(movie_imgdata, 0, tex_size);
-            DCFlushRange(movie_imgdata, tex_size);
-            movie_imagedesc->img_ptr = movie_imgdata;
+            void *img_buffer = HSD_MemAlloc(tex_size);
+            memset(img_buffer, 0, tex_size);
+            DCFlushRange(img_buffer, tex_size);
+            movie_imagedesc.img_ptr = img_buffer; // display decoded frame on menu
+
+            // set imagedesc pointer
+            orig_tobj->imagedesc = &movie_imagedesc;
 
             // create gobj to decode frames
             GOBJ *mth_gobj = GObj_Create(6, 7, 0x80);
@@ -501,10 +690,41 @@ void Menu_Update(GOBJ *gobj)
     // Update event name text
     {
 
-        // first clear all event names
-        for (int i = 0; i < MNSLEV_MAXEVENT; i++)
+        // destroy old alloc
+        if (menu_data->text.event_name)
         {
-            Text_SetText(menu_data->text.event_name, i, "");
+            Text_Destroy(menu_data->text.event_name);
+            menu_data->text.event_name = 0;
+        }
+
+        // Create event name text
+        {
+            // get text position
+            Vec3 text_jobj_pos;
+            JOBJ *text_jobj;
+            JOBJ *menu_jobj = gobj->hsd_object;
+            Vec3 *menu_scale = &menu_jobj->scale;
+            JOBJ_GetChild(menu_jobj, &text_jobj, 11, -1);
+            JOBJ_GetWorldPosition(text_jobj, 0, &text_jobj_pos);
+
+            // get base text world pos and scale
+            Vec3 text_pos, text_scale;
+            text_scale.X = (menu_scale->X * 0.01) * 6;
+            text_scale.Y = (menu_scale->Y * 0.01) * 6;
+            text_pos.X = text_jobj_pos.X + (0 * (menu_scale->X / 4.0));
+            text_pos.Y = (text_jobj_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
+
+            // create text
+            Text *text = Text_CreateText(0, menu_data->canvas_id);
+            menu_data->text.event_name = text;
+            // enable align and kerning
+            text->align = 0;
+            text->kerning = 1;
+            text->use_aspect = 1;
+            text->scale.X = text_scale.X;
+            text->scale.Y = text_scale.Y;
+            text->trans.X = text_pos.X;
+            text->trans.Y = text_pos.Y;
         }
 
         // get number of events onscreen
@@ -515,7 +735,7 @@ void Menu_Update(GOBJ *gobj)
         // update event text
         for (int i = 0; i < event_num; i++)
         {
-            Text_SetText(menu_data->text.event_name, i, tm_function->GetEventName(menu_data->page, i + menu_data->cursor.scroll));
+            Text_AddSubtext(menu_data->text.event_name, 0, i * 40, tm_function->GetEventName(menu_data->page, i + menu_data->cursor.scroll));
         }
     }
 
@@ -600,6 +820,20 @@ void Menu_Update(GOBJ *gobj)
             Text_AddSubtext(text, 0, y_delta, msg_line);
         }
     }
+    /* 
+    // output text stuff
+    bp();
+    TextAllocInfo *text_alloc = *stc_textheap_first;
+    int alloc_num = 0;
+    while (text_alloc != 0)
+    {
+        OSReport("text_alloc %x:\nnum %d\nprev %x\nnext %x\nsize 0x%x\n\n", text_alloc, alloc_num, text_alloc->prev, text_alloc->next, text_alloc->size);
+
+        text_alloc = text_alloc->next;
+
+        alloc_num++;
+    } 
+    */
 
     return;
 }
@@ -626,173 +860,57 @@ void Menu_PlayEventMovie(GOBJ *gobj)
     // get this events file name
     char *file = tm_function->GetEventFile(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
 
-    // append .mth
-    static char *extension = "TM/%s.mth";
-    char *buffer[20];
-    sprintf(buffer, extension, file);
-
     // play this file
-    MTH_Start(gobj, buffer);
+    MTH_Start(gobj, file);
 
     return;
 }
 void Menu_Animate(GOBJ *gobj)
 {
-    MTHPlayback *mth_header = 0x804333e0;
 
     // animate menu if no movie is playing
-    if (mth_header->power == 0)
+    if (mth_data.status != MTHSTATUS_PLAY)
     {
         GObj_Anim(gobj);
     }
 }
 
-// MTH functions
+////////////////////
+// MTH functions //
+///////////////////
+
+/*------------------------------------------------------------------
+|  Function MTH_Start
+|
+|  Purpose:  Initializes the load of an .mth file.
+|            Begins to terminate 
+|
+*-------------------------------------------------------------------*/
 void MTH_Start(GOBJ *gobj, char *filename)
 {
 
     EventSelectData *menu_data = gobj->userdata;
-
-    // destroy old mth gobj
-    if (menu_data->mth_gobj)
-    {
-        GObj_Destroy(menu_data->mth_gobj);
-        menu_data->mth_gobj = 0;
-
-        HSD_Free(movie_imagedesc->img_ptr);
-        movie_imagedesc->img_ptr = 0;
-
-        MTH_Terminate();
-    }
-
-    if (DVDConvertPathToEntrynum(filename) != -1)
-    {
-        MTHPlayback *mth_header = 0x804333e0;
-
-        //#define TEST
-
-#ifdef TEST
-        // begin mth load
-        MTH_Init(filename, &play_param, 0, 0, 0);
-        play_param.rate = (60 / mth_header->header.framerate); // update framerate based on loaded mth
-        mth_data.status = MTHSTATUS_PLAY;
-        mth_header->loop = 1;
-
-        // init imagedesc
-        movie_imagedesc->format = MNSLEV_IMGFMT;
-        movie_imagedesc->width = mth_header->header.xSize;
-        movie_imagedesc->height = mth_header->header.ySize;
-        // allocate image data ptr
-        int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
-                                          mth_header->header.ySize,
-                                          MNSLEV_IMGFMT,
-                                          0,
-                                          0);
-        void *movie_imgdata = HSD_MemAlloc(tex_size);
-        memset(movie_imgdata, 0, tex_size);
-        DCFlushRange(movie_imgdata, tex_size);
-        movie_imagedesc->img_ptr = movie_imgdata;
-
-        // create gobj to decode frames
-        GOBJ *mth_gobj = GObj_Create(6, 7, 0x80);
-        GObj_AddRenderObject(mth_gobj, mth_header->header.xSize, mth_header->header.ySize);
-        GObj_AddProc(mth_gobj, MTH_Think, 0);
-        menu_data->mth_gobj = mth_gobj;
-
-        // set status to playback
-        mth_data.status = MTHSTATUS_PLAY;
-#endif
-
-#ifndef TEST
-        MTH_Load(filename);
-#endif
-    }
-    else
-    {
-        // set status to nothing playing
-        mth_data.status = MTHSTATUS_NONE;
-    }
-}
-void MTH_Load(char *filename)
-{
-
     MTHPlayback *mth_header = 0x804333e0;
 
-    // init variables
-    mth_header->power = 1; // enable power variable
-    mth_header->play_param = &play_param;
+    // init some stuff
+    orig_tobj->imagedesc = orig_imagedesc; // play static animation on menu
+    mth_data.filename = filename;          // save pointer to this mth filename
 
-    // unknown cache stuff @ 8001eb30
-    void (*MTH_CacheUnk)() = 0x80335c58;
-    MTH_CacheUnk();
-
-    // begin file load
-    int entrynum = DVDConvertPathToEntrynum(filename);
-    mth_header->entrynum = entrynum;
-    File_Read(entrynum, 0, &mth_header->header, sizeof(MTHHeader), 0x21, 1, MTH_HeaderLoadCb, 0);
-
-    // set status to loading header
-    mth_data.status = MTHSTATUS_LOADHEADER;
+    // terminate current operation if running
+    if (mth_data.status != MTHSTATUS_NONE)
+        mth_data.status = MTHSTATUS_TERMINATE; // signal to decode function to stop loading new frames
+    else
+        mth_data.status = MTHSTATUS_LOADHEADER; // begin loading mth header
 
     return;
 }
 void MTH_HeaderLoadCb()
 {
 
-    // finish initializing mth playback
-    MTHPlayback *mth_header = 0x804333e0;
+    OSReport("header loaded\n");
 
-    // copy some info from header @ 8001eb5c
-    play_param.rate = (60 / mth_header->header.framerate); // update framerate based on loaded mth
-    mth_header->numFrames = mth_header->header.numFrames;
-    mth_header->xSize = mth_header->header.xSize;
-    mth_header->ySize = mth_header->header.ySize;
-    mth_header->bufSize = mth_header->header.bufSize;
-    mth_header->x11c = 1;
-    mth_header->x6c = 1;
-    mth_header->x110 = 0;
-    mth_header->x70 = 1;
-    mth_header->x130 = 0;
-    mth_header->x134 = 0;
-    mth_header->loop = 1; // enable mth loop
-
-    // allocate frame buffers @ 8001f480
-    int (*x8001ebf0)() = 0x8001ebf0;
-    int unk_size = x8001ebf0(mth_header);
-    void *buffer = HSD_MemAlloc(unk_size);
-    memset(buffer, 0, unk_size);
-    mth_header->x140 = buffer;
-    mth_header->jpeg_lookup = buffer;
-
-    //void (*MTH_InitFrameBuffers)(MTHHeader * header, void *buffer) = 0x8001ecf4;
-
-    // init frame buffers
-    {
-
-        // begin loading first X frames
-        if ((mth_header->x6c) || (mth_header->x11c))
-        {
-
-            // set first frame pointer (after jpeg lookup)
-            char *jpeg_lookup = mth_header->jpeg_lookup;
-            mth_data.next_frame_ptr = jpeg_lookup + OSRoundUp32B(mth_header->jpeg_cache_num * 4);
-
-            // init frame count
-            mth_data.frame_num = 0;
-            mth_data.next_frame_size = mth_header->header.firstFrameSize;
-            mth_header->next_jpeg_offset = mth_header->header.firstFrame;
-
-            // load frame
-            MTH_LoadFrame();
-
-            mth_data.status = MTHSTATUS_LOADFRAMES;
-        }
-        else
-        {
-            OSReport("how did i get here??? will stall now\n");
-            __asm__("b 0x0");
-        }
-    }
+    // lower header load flag
+    mth_data.is_loading_header = 0;
 
     return;
 }
@@ -800,82 +918,99 @@ void MTH_LoadFrame()
 {
     MTHPlayback *mth_header = 0x804333e0;
 
-    // update next offset and size (except for first)
-    //
-    // weird conditional but i think this is just
-    // a consequence of making this async
-    if (mth_data.frame_num > 0)
-    {
-        // get next jpegs size and file offset
-        mth_header->next_jpeg_offset += mth_data.next_frame_size;
-        JPEGHeader *last_jpeg_header = mth_header->jpeg_lookup[mth_data.frame_num - 1];
-        mth_data.next_frame_size = last_jpeg_header->nextSize; // next size is at 0x0 of the previous jpeg data
-        bp();
-        mth_data.next_frame_ptr += mth_header->bufSize;
-    }
+    // lower is loading flag
+    mth_header->is_loading_frame = 0;
 
-    // check to continue loading
-    if (mth_data.frame_num < mth_header->jpeg_cache_num)
+    // stop loading if a termination is pending
+    if (mth_data.status != MTH_Terminate)
     {
 
-        // store pointer to this frame
-        mth_header->jpeg_lookup[mth_data.frame_num] = mth_data.next_frame_ptr;
-
-        // load this frame
-        File_Read(mth_header->entrynum,
-                  mth_header->next_jpeg_offset,
-                  mth_data.next_frame_ptr,
-                  OSRoundUp32B(mth_data.next_frame_size),
-                  0x21,
-                  1,
-                  MTH_LoadFrame,
-                  0);
-
-        mth_data.frame_num++;
-    }
-    // finished loading, clear buffer caches
-    else
-    {
-
-        // next jpeg size 8001eed4
-        JPEGHeader *last_jpeg_header = mth_header->jpeg_lookup[mth_data.frame_num - 1];
-        mth_header->x124 = last_jpeg_header->nextSize;
-        // total jepg cache? 8001eed0
-        if (mth_header->jpeg_cache_num >= mth_header->numFrames)
-            mth_header->x74 = 0;
-        else
-            mth_header->x74 = mth_header->jpeg_cache_num;
-        mth_header->x8c = 0;
-        mth_header->x108 = mth_header->jpeg_cache_num - 1;
-        mth_header->x10c = mth_header->jpeg_cache_num - 1;
-
-        // init decode buffers
+        // update next offset and size (except for first)
+        //
+        // weird conditional but i think this is just
+        // a consequence of making this async
+        if (mth_data.frame_num > 0)
         {
+            // get next jpegs size and file offset
+            mth_header->next_jpeg_offset += mth_data.next_frame_size;
 
-            // get pointer to decoded frame data
-            char *buffer = mth_data.next_frame_ptr + mth_data.next_frame_size;
-
-            // calculate brightness and chroma data sizes
-            int brightness_size = mth_header->xSize * mth_header->ySize;
-            int chrom_size = brightness_size / 4;
-
-            // invalidate image buffers, these exist in the main buffer after the initial 32 jpeg frames
-            mth_header->decoded_bright = buffer;        // store buffer pointer
-            DCInvalidateRange(buffer, brightness_size); // invalidate cache
-            buffer = buffer + brightness_size;
-            mth_header->decoded_chromeb = buffer;  // store buffer pointer
-            DCInvalidateRange(buffer, chrom_size); // invalidate cache
-            buffer = buffer + chrom_size;
-            mth_header->decoded_chromer = buffer;  // store buffer pointer
-            DCInvalidateRange(buffer, chrom_size); // invalidate cache
-            buffer = buffer + chrom_size;
-            mth_header->x98 = buffer; // store buffer pointer
+            JPEGHeader *last_jpeg_header = mth_header->jpeg_lookup[mth_data.frame_num - 1];
+            if (last_jpeg_header->nextSize != 0)
+            {
+                mth_data.next_frame_size = last_jpeg_header->nextSize; // next size is at 0x0 of the previous jpeg data
+                mth_data.next_frame_ptr += mth_header->bufSize;
+            }
+            else
+            {
+                assert("last_jpeg_header->nextSize == 0\n");
+            }
         }
 
-        // set status to playback
-        mth_data.status = MTHSTATUS_LOADFINALIZE;
-    }
+        // check to continue loading
+        if (mth_data.frame_num < mth_header->jpeg_cache_num)
+        {
 
+            // store pointer to this frame
+            mth_header->jpeg_lookup[mth_data.frame_num] = mth_data.next_frame_ptr;
+
+            // set load flag
+            mth_header->is_loading_frame = 1;
+
+            // load this frame
+            File_Read(mth_header->entrynum,
+                      mth_header->next_jpeg_offset,
+                      mth_data.next_frame_ptr,
+                      OSRoundUp32B(mth_data.next_frame_size),
+                      0x21,
+                      1,
+                      MTH_LoadFrame,
+                      0);
+
+            mth_data.frame_num++;
+        }
+        // finished loading, clear buffer caches
+        else
+        {
+
+            // next jpeg size 8001eed4
+            JPEGHeader *last_jpeg_header = mth_header->jpeg_lookup[mth_data.frame_num - 1];
+            mth_header->x124 = last_jpeg_header->nextSize;
+            // total jepg cache? 8001eed0
+            if (mth_header->jpeg_cache_num >= mth_header->numFrames)
+                mth_header->x74 = 0;
+            else
+                mth_header->x74 = mth_header->jpeg_cache_num;
+            mth_header->x8c = 0;
+            mth_header->x108 = mth_header->jpeg_cache_num - 1;
+            mth_header->x10c = mth_header->jpeg_cache_num - 1;
+
+            // init decode buffers
+            {
+
+                // get pointer to decoded frame data
+                char *buffer = mth_data.next_frame_ptr + mth_data.next_frame_size;
+
+                // calculate brightness and chroma data sizes
+                int brightness_size = mth_header->xSize * mth_header->ySize;
+                int chrom_size = brightness_size / 4;
+
+                // invalidate image buffers, these exist in the main buffer after the initial 32 jpeg frames
+                mth_header->decoded_bright = buffer;        // store buffer pointer
+                DCInvalidateRange(buffer, brightness_size); // invalidate cache
+                buffer = buffer + brightness_size;
+                mth_header->decoded_chromeb = buffer;  // store buffer pointer
+                DCInvalidateRange(buffer, chrom_size); // invalidate cache
+                buffer = buffer + chrom_size;
+                mth_header->decoded_chromer = buffer;  // store buffer pointer
+                DCInvalidateRange(buffer, chrom_size); // invalidate cache
+                buffer = buffer + chrom_size;
+                mth_header->x98 = buffer; // store buffer pointer
+            }
+
+            // set status to playback
+            mth_data.status = MTHSTATUS_LOADFINALIZE;
+        }
+    }
     return;
 }
 void MTH_Think(GOBJ *gobj)
@@ -883,42 +1018,47 @@ void MTH_Think(GOBJ *gobj)
 
     MTHPlayback *mth_header = 0x804333e0;
 
-    // advance MTH logic, load next frame and decode
-    MTH_Advance();
-
-    // Render Frame
+    // skip this logic if terminating mth playback
+    if (mth_data.status == MTHSTATUS_PLAY)
     {
-        // create a dummy cobj
-        //COBJ *cobj = COBJ_LoadDescSetScissor(stc_cobj_desc);
 
-        // set to MTH resolution
-        //CObj_SetOrtho(cobj, 0, mth_header->ySize, 0, mth_header->xSize);
-        //CObj_SetViewport(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
-        //CObj_SetScissor(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
+        // advance MTH logic, load next frame and decode
+        MTH_Advance();
 
-        // render THP frame
-        HSD_StartRender(3);
-        if (CObj_SetCurrent(movie_cobj))
+        // Render Frame
         {
-            // render to framebuffer
-            MTH_Render(gobj, 2);
-            CObj_EndCurrent();
+            // create a dummy cobj
+            //COBJ *cobj = COBJ_LoadDescSetScissor(stc_cobj_desc);
+
+            // set to MTH resolution
+            //CObj_SetOrtho(cobj, 0, mth_header->ySize, 0, mth_header->xSize);
+            //CObj_SetViewport(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
+            //CObj_SetScissor(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
+
+            // render THP frame
+            HSD_StartRender(3);
+            if (CObj_SetCurrent(movie_cobj))
+            {
+                // render to framebuffer
+                MTH_Render(gobj, 2);
+                CObj_EndCurrent();
+            }
+
+            // dump EFB to texture
+            HSD_ImageDescCopyFromEFB(&movie_imagedesc, 0, 0, 1);
+
+            // flush cache on image data
+            int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
+                                              mth_header->header.ySize,
+                                              MNSLEV_IMGFMT,
+                                              0,
+                                              0);
+            DCFlushRange(movie_imagedesc.img_ptr, tex_size);
+
+            // free cobj, i used to do this but idk how to totally
+            // free the cobj, this was causing a memleak
+            //CObj_Release(movie_cobj);
         }
-
-        // dump EFB to texture
-        HSD_ImageDescCopyFromEFB(movie_imagedesc, 0, 0, 1);
-
-        // flush cache on image data
-        int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
-                                          mth_header->header.ySize,
-                                          MNSLEV_IMGFMT,
-                                          0,
-                                          0);
-        DCFlushRange(movie_imagedesc->img_ptr, tex_size);
-
-        // free cobj, i used to do this but idk how to totally
-        // free the cobj, this was causing a memleak
-        //CObj_Release(movie_cobj);
     }
 
     return;

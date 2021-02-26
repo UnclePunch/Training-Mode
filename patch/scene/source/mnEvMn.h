@@ -12,8 +12,11 @@ enum InputKind
 enum MTHStatus
 {
     MTHSTATUS_NONE,
+    MTHSTATUS_TERMINATE,
     MTHSTATUS_LOADHEADER,
+    MTHSTATUS_LOADHEADERWAIT,
     MTHSTATUS_LOADFRAMES,
+    MTHSTATUS_LOADFRAMESWAIT,
     MTHSTATUS_LOADFINALIZE,
     MTHSTATUS_PLAY,
 };
@@ -62,9 +65,11 @@ typedef struct EventSelectData
 typedef struct MTHData
 {
     int status;
-    int frame_num; // number of frames loaded initially
+    int is_loading_header; // waiting for header to finish loading flag
+    int frame_num;         // number of frames loaded initially
     char *next_frame_ptr;
     int next_frame_size;
+    char *filename; // pointer to mth file to play
 } MTHData;
 
 void Menu_Think(GOBJ *menu_gobj);

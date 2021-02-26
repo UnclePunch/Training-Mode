@@ -11,7 +11,7 @@ backup
 #Ensure this is event mode
   load r3,SceneController
   lbz r3,Scene.CurrentMajor(r3)
-  cmpwi r3,Scene.EventMode
+  cmpwi r3,Scene.TM
   bne Original
 
 #Create GObj

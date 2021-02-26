@@ -1375,7 +1375,7 @@ InitSettings:
 .set Scene.BootUp,0x28
 .set Scene.MemcardPropmt,0x29
 .set Scene.FixedCamera,0x2A
-.set Scene.EventMode,0x2B
+.set Scene.TM,0x2B
 .set Scene.SingleButton,0x2C
 
 ####################

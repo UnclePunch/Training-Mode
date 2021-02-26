@@ -4042,7 +4042,6 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     Text *text;
 
     // Update Title
-
     text = menuData->text_title;
     Text_SetText(text, 0, menu->name);
 
