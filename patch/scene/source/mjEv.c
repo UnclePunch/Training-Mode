@@ -93,23 +93,11 @@ void Match_Prep(MinorScene *minor_scene)
 {
 
     MatchInit *minor_data = minor_scene->load_data;
-    int stage_id = 2;
 
     // copy match data to minor data
     //memcpy(&minor_data->vs_data, &major_data, sizeof(major_data));
 
     Match_InitMinorData(minor_scene, &major_data, 0, 0);
-
-    // set stage
-    minor_data->stage = stage_id;
-
-    // preload it
-    Preload *preload = Preload_GetTable();
-    preload->stage = stage_id;
-    Preload_Update();
-
-    // set nametags
-    Match_SetNametags(minor_data);
 
     return;
 }
@@ -141,7 +129,7 @@ static MinorScene minor_scene[] = {
         .minor_id = 2,
         .heap_kind = HEAPKIND_UNK3,
         .minor_prep = SSS_Prep, // 0x801b1514
-        .minor_decide = 0x801b154c,
+        .minor_decide = SSS_Decide,
         .minor_kind = MNRKIND_SSS,
         .load_data = &sss_minor_data,
         .unload_data = &sss_minor_data,
