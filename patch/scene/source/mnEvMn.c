@@ -79,16 +79,13 @@ void Minor_Think()
     HSD_Pad *pads = stc_css_pad;
     HSD_Pad *this_pad = &pads[0];
     if (minor_data->leave_kind)
-    {
         Scene_ExitMinor();
-    }
 
     return;
 }
 void Minor_Exit(VSMinorData *minor_data)
 {
 
-    bp();
     // save event page and id
     stc_minor_data->event = stc_menu_data->cursor.pos + stc_menu_data->cursor.scroll;
     stc_minor_data->page = stc_menu_data->page;
@@ -845,7 +842,6 @@ void Menu_Update(GOBJ *gobj)
     }
     /* 
     // output text stuff
-    bp();
     TextAllocInfo *text_alloc = *stc_textheap_first;
     int alloc_num = 0;
     while (text_alloc != 0)

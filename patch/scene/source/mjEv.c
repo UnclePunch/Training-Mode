@@ -41,8 +41,6 @@ void Menu_Decide(MinorScene *minor_scene)
 
     ESSMinorData *ess_data = minor_scene->load_data;
 
-    bp();
-
     // back to main menu
     if (ess_data->leave_kind == 1)
     {
@@ -63,15 +61,40 @@ void Menu_Decide(MinorScene *minor_scene)
 void CSS_Prep(MinorScene *minor_scene)
 {
 
+    VSMinorData *css_data = minor_scene->load_data;
+
+    int page = ess_minor_data.page;
+    int event = ess_minor_data.event;
+    int is_choose_cpu = tm_function->GetIsChooseCPU(page, event);
+    int is_choose_stage = tm_function->GetIsSelectStage(page, event);
+
     // determine CSS kind based on event
     int css_kind;
-    if (tm_function->GetIsChooseCPU(ess_minor_data.page, ess_minor_data.event))
+    if (is_choose_cpu)
         css_kind = 23; // training CSS
     else
         css_kind = 14; // event CSS
 
-    // copy
+    // init minor
     CSS_InitMinorData(minor_scene, &major_data, css_kind);
+
+    // get CPU and stage from tmFunction
+    Preload *preload = Preload_GetTable();
+    if (is_choose_cpu == 0)
+    {
+        int cpu_kind = tm_function->GetCPUFighter(page, event);
+        css_data->vs_data.match_init.playerData[1].kind = cpu_kind;
+        preload->fighters[1].kind = cpu_kind;
+    }
+    if (is_choose_stage == 0)
+    {
+        int stage_kind = tm_function->GetStage(page, event);
+        bp();
+        css_data->vs_data.match_init.stage = stage_kind;
+        preload->stage = stage_kind;
+    }
+    // not sure if i should force a preload here or if
+    // the game will handle it...
 
     return;
 }
@@ -79,8 +102,6 @@ void CSS_Decide(MinorScene *minor_scene)
 {
 
     VSMinorData *css_data = minor_scene->load_data;
-
-    bp();
 
     // check to return to ESS
     if (css_data->exit_kind == 2)
@@ -93,11 +114,21 @@ void CSS_Decide(MinorScene *minor_scene)
         // copy match data, load ssm's, advance to SSS
         memcpy(&major_data, &css_data->vs_data, sizeof(major_data));
 
-        // load ssms
+        // TODO! load ssms
 
-        // advance to next minor
-        Scene_SetNextMinor(2);
-        Scene_ExitMinor();
+        // check if this event has a stage defined
+        if (tm_function->GetIsSelectStage(ess_minor_data.page, ess_minor_data.event))
+        {
+            // advance to next minor (SSS)
+            Scene_SetNextMinor(2);
+            Scene_ExitMinor();
+        }
+        else
+        {
+            // advance to match scene
+            Scene_SetNextMinor(3);
+            Scene_ExitMinor();
+        }
     }
 
     // copy CSS data to major data, load ssm's, and decide next scene
