@@ -2,6 +2,15 @@
 .include "../Globals.s"
 .include "../../m-ex/Header.s"
 
+backup
+
+#Branch to C function to initialize the event
+  lwz r3,MemcardData(r13)
+  lbz r3,CurrentEventPage(r3)
+  mr	r4,r25									#event
+  mr	r5,r26									#match struct
+  rtocbl	r12,TM_EventInit
+
 # Check if event is legacy (no file)
   lwz r3,MemcardData(r13)
   lbz r3,CurrentEventPage(r3)
@@ -10,21 +19,14 @@
   rtocbl	r12,TM_GetEventFile
   cmpwi r3,0
   beq LegacyEvent
-	
-#Branch to C function to initialize the event
-  lwz r3,MemcardData(r13)
-  lbz r3,CurrentEventPage(r3)
-  mr	r4,r25									#event
-  mr	r5,r26									#match struct
-  rtocbl	r12,TM_EventInit
-  branch	r12,0x801bb738
+
+
+Function_Exit:
+	restore
+	blr
+
 
 LegacyEvent:
-#r25 = event ID
-#r26 = final match struct
-#r28 = same as r26
-#r29 = event struct index (0x0 of this, then 0x8 of that to get the specifics)
-
 #region Event and Menu GObj Data Structs
 #Event GObj Data Struct
 .set EventData_DataSize,0x50

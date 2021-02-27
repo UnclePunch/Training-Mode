@@ -13,6 +13,7 @@ static _HSD_ImageDesc *orig_imagedesc;                             // original s
 static TOBJ *orig_tobj;                                            // original tobj
 static MTHPlayParam play_param = {1048576, (60 / 30)};             //
 static MTHData mth_data;                                           // status of the current mth operation
+static EventSelectData *stc_menu_data;                             // minor_exit needs to save page and event to major data, needs to access this
 
 void Minor_Load(ESSMinorData *minor_data)
 {
@@ -74,17 +75,11 @@ void Minor_Think()
 
     ESSMinorData *minor_data = stc_minor_data;
 
-    // check for P1 B Press
+    // check to exit
     HSD_Pad *pads = stc_css_pad;
     HSD_Pad *this_pad = &pads[0];
-    if (this_pad->down & HSD_BUTTON_A)
+    if (minor_data->leave_kind)
     {
-        minor_data->leave_kind = 1; // advance
-        Scene_ExitMinor();
-    }
-    else if (this_pad->down & HSD_BUTTON_B)
-    {
-        minor_data->leave_kind = 0; // back
         Scene_ExitMinor();
     }
 
@@ -92,7 +87,12 @@ void Minor_Think()
 }
 void Minor_Exit(VSMinorData *minor_data)
 {
-    OSReport("event menu exit!\n");
+
+    bp();
+    // save event page and id
+    stc_minor_data->event = stc_menu_data->cursor.pos + stc_menu_data->cursor.scroll;
+    stc_minor_data->page = stc_menu_data->page;
+
     return;
 }
 
@@ -133,6 +133,7 @@ void Menu_Init()
     GObj_AddProc(menu_gobj, Menu_Think, 5);
     EventSelectData *menu_data = calloc(sizeof(EventSelectData));
     GObj_AddUserData(menu_gobj, 4, HSD_Free, menu_data);
+    stc_menu_data = menu_data;
     menu_data->canvas_id = canvas_id; // save canvas id
     orig_tobj = menu_jobj->child->dobj->next->next->next->next->next->next->next->next->mobj->tobj;
     orig_imagedesc = orig_tobj->imagedesc;
@@ -260,6 +261,7 @@ void Menu_Think(GOBJ *menu_gobj)
     // Inputs Think
     {
         int inputs = Pad_GetRapidHeld(4);
+        int inputs_down = Pad_GetDown(4);
         int input_kind = INPTKIND_NONE;
 
         if (inputs & (HSD_BUTTON_UP | HSD_BUTTON_DPAD_UP))
@@ -325,6 +327,16 @@ void Menu_Think(GOBJ *menu_gobj)
                 input_kind = INPTKIND_CHANGE;
             }
         }
+        else if (inputs_down & (HSD_BUTTON_A | HSD_BUTTON_START))
+        {
+            stc_minor_data->leave_kind = 2; // advance
+            input_kind = INPTKIND_ENTER;
+        }
+        else if (inputs_down & HSD_BUTTON_B)
+        {
+            stc_minor_data->leave_kind = 1; // back
+            input_kind = INPTKIND_EXIT;
+        }
 
         // act on inputs
         switch (input_kind)
@@ -342,7 +354,6 @@ void Menu_Think(GOBJ *menu_gobj)
 
             break;
         }
-
         case (INPTKIND_CHANGE):
         {
 
@@ -358,6 +369,18 @@ void Menu_Think(GOBJ *menu_gobj)
 
             // load mth
             Menu_PlayEventMovie(menu_gobj);
+        }
+        case (INPTKIND_ENTER):
+        {
+
+            // play sfx
+            SFX_PlayCommon(3);
+        }
+        case (INPTKIND_EXIT):
+        {
+
+            // play sfx
+            SFX_PlayCommon(1);
         }
         }
     }

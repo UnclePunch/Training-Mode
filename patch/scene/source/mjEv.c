@@ -1,4 +1,5 @@
 #include "../../../m-ex/MexTK/mex.h"
+#include "../../../patch/tm.h"
 #include "mjEv.h"
 
 // static variables
@@ -27,6 +28,12 @@ void Major_Load()
 // Menu Functions
 void Menu_Prep(MinorScene *minor_scene)
 {
+
+    ESSMinorData *ess_data = minor_scene->load_data;
+
+    // reset leave_kind
+    ess_data->leave_kind = 0;
+
     return;
 }
 void Menu_Decide(MinorScene *minor_scene)
@@ -34,26 +41,37 @@ void Menu_Decide(MinorScene *minor_scene)
 
     ESSMinorData *ess_data = minor_scene->load_data;
 
+    bp();
+
     // back to main menu
-    if (ess_data->leave_kind == 0)
+    if (ess_data->leave_kind == 1)
     {
         Scene_SetNextMajor(1);
         Scene_ExitMajor();
     }
-    // back to main menu
-    if (ess_data->leave_kind == 1)
+    // go to CSS
+    else if (ess_data->leave_kind == 2)
     {
         Scene_SetNextMinor(1);
         Scene_ExitMinor();
     }
+
     return;
 }
 
 // CSS Functions
 void CSS_Prep(MinorScene *minor_scene)
 {
+
+    // determine CSS kind based on event
+    int css_kind;
+    if (tm_function->GetIsChooseCPU(ess_minor_data.page, ess_minor_data.event))
+        css_kind = 23; // training CSS
+    else
+        css_kind = 14; // event CSS
+
     // copy
-    CSS_InitMinorData(minor_scene, &major_data, 14);
+    CSS_InitMinorData(minor_scene, &major_data, css_kind);
 
     return;
 }
@@ -62,8 +80,28 @@ void CSS_Decide(MinorScene *minor_scene)
 
     VSMinorData *css_data = minor_scene->load_data;
 
+    bp();
+
+    // check to return to ESS
+    if (css_data->exit_kind == 2)
+    {
+        Scene_SetNextMinor(0);
+        Scene_ExitMinor();
+    }
+    else
+    {
+        // copy match data, load ssm's, advance to SSS
+        memcpy(&major_data, &css_data->vs_data, sizeof(major_data));
+
+        // load ssms
+
+        // advance to next minor
+        Scene_SetNextMinor(2);
+        Scene_ExitMinor();
+    }
+
     // copy CSS data to major data, load ssm's, and decide next scene
-    CSS_DecideNext(minor_scene, &major_data);
+    //CSS_DecideNext(minor_scene, &major_data);
 
     return;
 }
@@ -94,8 +132,7 @@ void Match_Prep(MinorScene *minor_scene)
 
     MatchInit *minor_data = minor_scene->load_data;
 
-    // copy match data to minor data
-    //memcpy(&minor_data->vs_data, &major_data, sizeof(major_data));
+    // get event callback
 
     Match_InitMinorData(minor_scene, &major_data, 0, 0);
 
