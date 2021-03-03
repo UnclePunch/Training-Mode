@@ -1941,7 +1941,7 @@ GOBJ *InfoDisplay_Init()
     GObj_AddUserData(idGOBJ, 4, HSD_Free, idData);
     infodisp_gobj = idGOBJ;
     // Load jobj
-    evMenu *menuAssets = event_vars->menu_assets;
+    evMenu *menuAssets = evco_data->menu_assets;
     JOBJ *menu = JOBJ_LoadJoint(menuAssets->popup);
     idData->menuModel = menu;
     // Add to gobj
@@ -3991,8 +3991,8 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
 {
     MenuData *menu_data = menu_gobj->userdata;
     EventMenu *curr_menu = menu_data->currMenu;
-    evMenu *menuAssets = event_vars->menu_assets;
-    GOBJ *event_gobj = event_vars->event_gobj;
+    evMenu *menuAssets = evco_data->menu_assets;
+    GOBJ *event_gobj = evco_data->event_gobj;
     LCancelData *event_data = event_gobj->userdata;
     Arch_LabData *LabAssets = stc_lab_data;
 
@@ -4088,7 +4088,7 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     Text_AddSubtext(text_curr, -460, 285, "A = Save Input  X = Delete Input  B = Return");
 
     // hide original menu
-    event_vars->hide_menu = 1;
+    evco_data->hide_menu = 1;
 
     // set pointers to custom gobj
     menu_data->custom_gobj = tdi_gobj;
@@ -4106,8 +4106,8 @@ void CustomTDI_Update(GOBJ *gobj)
 {
     // get data
     TDIData *tdi_data = gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
-    LCancelData *event_data = event_vars->event_gobj->userdata;
+    MenuData *menu_data = evco_data->menu_gobj->userdata;
+    LCancelData *event_data = evco_data->event_gobj->userdata;
 
     // get pausing players inputs
     HSD_Pad *pad = PadGet(menu_data->controller_index, PADGET_MASTER);
@@ -4206,8 +4206,8 @@ void CustomTDI_Destroy(GOBJ *gobj)
 {
     // get data
     TDIData *tdi_data = gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
-    LCancelData *event_data = event_vars->event_gobj->userdata;
+    MenuData *menu_data = evco_data->menu_gobj->userdata;
+    LCancelData *event_data = evco_data->event_gobj->userdata;
 
     // set TDI to custom
     if (stc_tdi_val_num > 0)
@@ -4222,7 +4222,7 @@ void CustomTDI_Destroy(GOBJ *gobj)
     GObj_Destroy(gobj);
 
     // show menu
-    event_vars->hide_menu = 0;
+    evco_data->hide_menu = 0;
     menu_data->custom_gobj = 0;
     menu_data->custom_gobj_think = 0;
     menu_data->custom_gobj_destroy = 0;
@@ -4421,7 +4421,7 @@ GOBJ *Record_Init()
     GOBJ_InitCamera(cam_gobj, Record_CObjThink, RECCAM_GXPRI);
     cam_gobj->cobj_links = RECCAM_COBJGXLINK;
 
-    evMenu *menuAssets = event_vars->menu_assets;
+    evMenu *menuAssets = evco_data->menu_assets;
     JOBJ *playback = JOBJ_LoadJoint(menuAssets->playback);
 
     // save seek jobj
@@ -4676,15 +4676,15 @@ void Record_Think(GOBJ *rec_gobj)
                 // check to auto reset
                 if ((LabOptions_Record[OPTREC_AUTOLOAD].option_val == 1))
                 {
-                    event_vars->Savestate_Load(rec_state);
-                    event_vars->game_timer = rec_state->frame + 1;
+                    evco_data->Savestate_Load(rec_state);
+                    evco_data->game_timer = rec_state->frame + 1;
                     is_loop = 1;
                 }
 
                 // check to loop inputs
                 else if ((LabOptions_Record[OPTREC_LOOP].option_val == 1))
                 {
-                    event_vars->game_timer = rec_state->frame + 1;
+                    evco_data->game_timer = rec_state->frame + 1;
                     is_loop = 1;
                 }
 
@@ -4731,7 +4731,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
     FighterData *fighter_data = fighter->userdata;
 
     // get curr frame (the time since saving positions)
-    int curr_frame = (event_vars->game_timer - rec_state->frame);
+    int curr_frame = (evco_data->game_timer - rec_state->frame);
 
     // get the frame the recording starts on. i actually hate this code and need to change how this works
     int rec_start;
@@ -4768,7 +4768,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
             // recording has started BUT the player has jumped back behind it, move the start frame back
             if ((input_data->start_frame == -1) || (curr_frame < rec_start))
             {
-                input_data->start_frame = (event_vars->game_timer - 1);
+                input_data->start_frame = (evco_data->game_timer - 1);
                 rec_start = curr_frame - 1;
             }
 
@@ -4850,7 +4850,7 @@ void Record_Update(int ply, RecInputData *input_data, int rec_mode)
 }
 void Record_InitState(GOBJ *menu_gobj)
 {
-    if (event_vars->Savestate_Save(rec_state))
+    if (evco_data->Savestate_Save(rec_state))
     {
 
         Record_OnSuccessfulSave();
@@ -4859,7 +4859,7 @@ void Record_InitState(GOBJ *menu_gobj)
 }
 void Record_RestoreState(GOBJ *menu_gobj)
 {
-    event_vars->Savestate_Load(rec_state);
+    evco_data->Savestate_Load(rec_state);
 
     return;
 }
@@ -4883,7 +4883,7 @@ void Record_ChangeHMNSlot(GOBJ *menu_gobj, int value)
     }
 
     // reload save
-    event_vars->Savestate_Load(rec_state);
+    evco_data->Savestate_Load(rec_state);
 
     return;
 }
@@ -4907,7 +4907,7 @@ void Record_ChangeCPUSlot(GOBJ *menu_gobj, int value)
     }
 
     // reload save
-    event_vars->Savestate_Load(rec_state);
+    evco_data->Savestate_Load(rec_state);
 
     return;
 }
@@ -4926,7 +4926,7 @@ void Record_ChangeHMNMode(GOBJ *menu_gobj, int value)
     // upon changing to playback
     if (value == 2)
     {
-        event_vars->Savestate_Load(rec_state);
+        evco_data->Savestate_Load(rec_state);
     }
 
     // disable loop options if recording is in use
@@ -4959,7 +4959,7 @@ void Record_ChangeCPUMode(GOBJ *menu_gobj, int value)
     // upon toggling playback
     if (value == 3)
     {
-        event_vars->Savestate_Load(rec_state);
+        evco_data->Savestate_Load(rec_state);
     }
 
     // disable loop options if recording is in use
@@ -5002,7 +5002,7 @@ int Record_GetRandomSlot(RecInputData **input_data)
 }
 int Record_GetCurrFrame()
 {
-    return (event_vars->game_timer - 1) - rec_state->frame;
+    return (evco_data->game_timer - 1) - rec_state->frame;
 }
 int Record_GetEndFrame()
 {
@@ -5077,7 +5077,7 @@ void Record_OnSuccessfulSave()
     LabOptions_Record[OPTREC_CPUSLOT].option_val = 1; // set cpu to slot 1
 
     // also save to personal savestate
-    event_vars->Savestate_Save(event_vars->savestate);
+    evco_data->Savestate_Save(evco_data->savestate);
 
     // take screenshot
     snap_status = 1;
@@ -5210,7 +5210,7 @@ void Record_MemcardLoad(int slot, int file_no)
             rec_state->ft_state[1].player_block.controller = stc_cpu_controller;
 
             // load state
-            event_vars->Savestate_Load(rec_state);
+            evco_data->Savestate_Load(rec_state);
 
             // copy recordings
             for (int i = 0; i < REC_SLOTS; i++)
@@ -5230,7 +5230,7 @@ void Record_MemcardLoad(int slot, int file_no)
             LabOptions_Record[OPTREC_AUTOLOAD].option_val = menu_settings->auto_restore;
 
             // enter recording menu
-            MenuData *menu_data = event_vars->menu_gobj->userdata;
+            MenuData *menu_data = evco_data->menu_gobj->userdata;
             EventMenu *curr_menu = menu_data->currMenu;
             curr_menu->state = EMSTATE_OPENSUB;
             // update curr_menu
@@ -5241,7 +5241,7 @@ void Record_MemcardLoad(int slot, int file_no)
             menu_data->currMenu = curr_menu;
 
             // save to personal savestate
-            event_vars->Savestate_Save(event_vars->savestate);
+            evco_data->Savestate_Save(evco_data->savestate);
         }
 
         HSD_Free(memcard_save.data);
@@ -5320,12 +5320,12 @@ void Savestates_Update()
                 if (((pad->down & HSD_BUTTON_DPAD_RIGHT) != 0) && ((pad->held & (blacklist)) == 0))
                 {
                     // save state
-                    event_vars->Savestate_Save(event_vars->savestate);
+                    evco_data->Savestate_Save(evco_data->savestate);
                 }
                 else if (((pad->down & HSD_BUTTON_DPAD_LEFT) != 0) && ((pad->held & (blacklist)) == 0))
                 {
                     // load state
-                    event_vars->Savestate_Load(event_vars->savestate);
+                    evco_data->Savestate_Load(evco_data->savestate);
 
                     // re-roll random slot
                     if (LabOptions_Record[OPTREC_HMNSLOT].option_val == 0)
@@ -5393,7 +5393,7 @@ void Export_Init(GOBJ *menu_gobj)
 
     MenuData *menu_data = menu_gobj->userdata;
     EventMenu *curr_menu = menu_data->currMenu;
-    evMenu *menuAssets = event_vars->menu_assets;
+    evMenu *menuAssets = evco_data->menu_assets;
 
     // create gobj
     GOBJ *export_gobj = GObj_Create(0, 0, 0);
@@ -5501,7 +5501,7 @@ void Export_Init(GOBJ *menu_gobj)
     // initialize memcard menu
     Export_SelCardInit(export_gobj);
 
-    event_vars->hide_menu = 1;                       // hide original menu
+    evco_data->hide_menu = 1;                        // hide original menu
     menu_data->custom_gobj = export_gobj;            // set custom gobj
     menu_data->custom_gobj_think = Export_Think;     // set think function
     menu_data->custom_gobj_destroy = Export_Destroy; // set destroy function
@@ -5537,7 +5537,7 @@ int Export_Think(GOBJ *export_gobj)
 void Export_Destroy(GOBJ *export_gobj)
 {
     ExportData *export_data = export_gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
+    MenuData *menu_data = evco_data->menu_gobj->userdata;
 
     switch (export_data->menu_index)
     {
@@ -5562,7 +5562,7 @@ void Export_Destroy(GOBJ *export_gobj)
     GObj_Destroy(export_gobj);
 
     // show menu
-    event_vars->hide_menu = 0;
+    evco_data->hide_menu = 0;
     menu_data->custom_gobj = 0;
     menu_data->custom_gobj_think = 0;
     menu_data->custom_gobj_destroy = 0;
@@ -5572,7 +5572,7 @@ void Export_Destroy(GOBJ *export_gobj)
 void Export_SelCardInit(GOBJ *export_gobj)
 {
     ExportData *export_data = export_gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
+    MenuData *menu_data = evco_data->menu_gobj->userdata;
 
     // show menu jobjs
     JOBJ_ClearFlags(export_data->memcard_jobj[0], JOBJ_HIDDEN);
@@ -5805,7 +5805,7 @@ void Export_SelCardExit(GOBJ *export_gobj)
 void Export_EnterNameInit(GOBJ *export_gobj)
 {
     ExportData *export_data = export_gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
+    MenuData *menu_data = evco_data->menu_gobj->userdata;
 
     // show menu jobjs
     JOBJ_ClearFlags(export_data->screenshot_jobj, JOBJ_HIDDEN);
@@ -6137,7 +6137,7 @@ void Export_EnterNameExit(GOBJ *export_gobj)
 void Export_ConfirmInit(GOBJ *export_gobj)
 {
     ExportData *export_data = export_gobj->userdata;
-    MenuData *menu_data = event_vars->menu_gobj->userdata;
+    MenuData *menu_data = evco_data->menu_gobj->userdata;
 
     // create gobj
     GOBJ *confirm_gobj = GObj_Create(0, 0, 0);
@@ -6235,7 +6235,7 @@ int Export_ConfirmThink(GOBJ *export_gobj)
             if (export_data->confirm_cursor == 0)
             {
 
-                MenuData *menu_data = event_vars->menu_gobj->userdata;
+                MenuData *menu_data = evco_data->menu_gobj->userdata;
 
                 // free current text
                 Text_Destroy(export_data->confirm_text);
@@ -6522,10 +6522,10 @@ void Event_Init(GOBJ *gobj)
     FighterData *cpu_data = cpu->userdata;
 
     // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
+    evco_data = *evco_data_ptr;
 
     // get this events assets
-    stc_lab_data = File_GetSymbol(event_vars->event_archive, "labData");
+    stc_lab_data = File_GetSymbol(evco_data->event_archive, "labData");
 
     // Init Info Display
     InfoDisplay_Init();
@@ -6728,7 +6728,7 @@ void Event_Think(GOBJ *event)
                         eventData->cpu_isactionable = 0;
 
                         // savestate
-                        event_vars->Savestate_Save(event_vars->savestate);
+                        evco_data->Savestate_Save(evco_data->savestate);
                     }
                 }
             }

@@ -1295,30 +1295,18 @@ InitSettings:
 .set TM_GameFrameCounter,-0x49a8
 
 #TM Function
-.set TM_tmFunction,-(50*4)         #offset of rtoc where function pointers are kept, probably temp solution
-.set TM_EventPages, TM_tmFunction + 0x0
-.set TM_GetEventName, TM_EventPages + 0x4
-.set TM_GetEventDesc, TM_GetEventName + 0x4
-.set TM_GetEventTut, TM_GetEventDesc + 0x4
-.set TM_GetPageName, TM_GetEventTut + 0x4
-.set TM_GetPageEventNum, TM_GetPageName + 0x4
-.set TM_GetTMVersShort, TM_GetPageEventNum + 0x4
+.set TM_tmFunction,-(10*4)         #offset of rtoc where function pointers are kept, probably temp solution
+.set TM_GetTMVersShort, TM_tmFunction + 0x0
 .set TM_GetTMVersLong, TM_GetTMVersShort + 0x4
 .set TM_GetTMCompile, TM_GetTMVersLong + 0x4
-.set TM_GetPageNum, TM_GetTMCompile + 0x4
-.set TM_GetIsChooseCPU, TM_GetPageNum + 0x4
-.set TM_GetIsSelectStage, TM_GetIsChooseCPU + 0x4
-.set TM_GetFighter, TM_GetIsSelectStage + 0x4
-.set TM_GetCPUFighter, TM_GetFighter + 0x4
-.set TM_GetStage, TM_GetCPUFighter + 0x4
-.set TM_GetEventFile, TM_GetStage + 0x4
-.set TM_GetCSSFile, TM_GetEventFile + 0x4
-.set TM_EventInit, TM_GetCSSFile + 0x4
-.set TM_OnSceneChange, TM_EventInit + 0x4 
+.set TM_OnSceneChange, TM_GetTMCompile + 0x4 
 .set TM_OnBoot, TM_OnSceneChange + 0x4 
 .set TM_OnStartMelee, TM_OnBoot + 0x4  
 .set TM_OnFileLoad, TM_OnStartMelee + 0x4 
-.set TM_MessageDisplay, TM_OnFileLoad + 0x4
+
+#TM ASM Functions
+.set TM_ASMFuncStart, 0x804df9e0 + TM_tmFunction  # right above tm_function
+.set TM_GetLegacyCallback, TM_ASMFuncStart - 0x4
 
 #TmDt Data Pointers
 .set TM_Data,TM_tmFunction - 0x4
@@ -1377,7 +1365,7 @@ InitSettings:
 .set Scene.FixedCamera,0x2A
 .set Scene.EventMode,0x2B
 .set Scene.SingleButton,0x2C
-.set Scene.TM,60
+.set Scene.TM, 0 #60
 
 ####################
 ## Function Names ##

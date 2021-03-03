@@ -4,11 +4,11 @@
 #define TM_VERSLONG "Training Mode v3.0 Alpha 8"
 #define TM_DEBUG 1 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
-#define TM_DATA -(50 * 4)
+#define TM_DATA -(10 * 4)
 #define MENU_MAXOPTION 9
 #define MENU_POPMAXOPTION 5
 
-#define TMLOG(...) DevelopText_AddString(event_vars->db_console_text, __VA_ARGS__)
+#define TMLOG(...) DevelopText_AddString(evco_data->db_console_text, __VA_ARGS__)
 
 // disable all logs in release mode
 #if TM_DEBUG == 0
@@ -645,6 +645,11 @@ typedef struct Savestate
     u8 event_data[EVENT_DATASIZE];
     FtState ft_state[6];
 } Savestate;
+typedef struct evcoFunction
+{
+    void (*OnLoad)(ArchiveInfo *archive);
+    GOBJ *(*EventMenu_Init)(EventDesc *event_desc, EventMenu *start_menu);
+} evcoFunction;
 typedef struct evFunction
 {
     void (*Event_Init)(GOBJ *event);
@@ -654,15 +659,21 @@ typedef struct evFunction
 } evFunction;
 typedef struct tmFunction
 {
-    EventPage **EventPages;
+    char *(*GetTMVersShort)();
+    char *(*GetTMVersLong)();
+    char *(*GetTMCompile)();
+    void (*OnSceneChange)();
+    void (*OnBoot)();
+    void (*OnStartMelee)();
+    void (*OnFileLoad)(ArchiveInfo *archive);
+} tmFunction;
+typedef struct EventLookup
+{
     char (*GetEventName)(int page, int event);
     char (*GetEventDescription)(int page, int event);
     char *(*GetEventTut)(int page, int event);
     char *(*GetPageName)(int page);
     int (*GetPageEventNum)(int page);
-    char *(*GetTMVersShort)();
-    char *(*GetTMVersLong)();
-    char *(*GetTMCompile)();
     int (*GetPageNum)();
     u8 (*GetIsChooseCPU)(int page, int event);
     u8 (*GetIsSelectStage)(int page, int event);
@@ -671,15 +682,9 @@ typedef struct tmFunction
     s16 (*GetStage)(int page, int event);
     char *(*GetEventFile)(int page, int event);
     char *(*GetCSSFile)(int page, int event);
-    void (*EventInit)(int page, int eventID, MatchInit *matchData);
-    void (*OnSceneChange)();
-    void (*OnBoot)();
-    void (*OnStartMelee)();
-    void (*OnFileLoad)(ArchiveInfo *archive);
-    GOBJ *(*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...);
     EventDesc *(*GetEventDesc)(int page, int event);
-} tmFunction;
-typedef struct EventVars
+} EventLookup;
+typedef struct EventCommonData
 {
     EventDesc *event_desc;                                                                   // event information
     evMenu *menu_assets;                                                                     // menu assets
@@ -696,9 +701,9 @@ typedef struct EventVars
     evFunction evFunction;      // event specific functions
     ArchiveInfo *event_archive; // event archive header
     DevText *db_console_text;
-} EventVars;
-static EventVars **event_vars_ptr = 0x803d7054; //R13 + (-0x4730)
-static EventVars *event_vars;
+} EventCommonData;
+EventCommonData **evco_data_ptr = 0x803d7054; //R13 + (-0x4730)
+static EventCommonData *evco_data;
 static tmFunction *tm_function = (0x804df9e0 + (TM_DATA));
 
 // EventOption option_kind definitions

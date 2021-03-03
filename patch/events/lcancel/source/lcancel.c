@@ -83,10 +83,10 @@ void Event_Init(GOBJ *gobj)
     //FighterData *cpu_data = cpu->userdata;
 
     // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
+    evco_data = *evco_data_ptr;
 
     // get l-cancel assets
-    event_data->lcancel_assets = File_GetSymbol(event_vars->event_archive, "lclData");
+    event_data->lcancel_assets = File_GetSymbol(evco_data->event_archive, "lclData");
 
     // create HUD
     LCancel_Init(event_data);
@@ -200,7 +200,7 @@ void Event_Think(GOBJ *event)
                 if (is_moved == 1)
                 {
                     // savestate
-                    event_vars->Savestate_Save(event_vars->savestate);
+                    evco_data->Savestate_Save(evco_data->savestate);
                 }
             }
         }
@@ -455,7 +455,7 @@ void Tips_Toggle(GOBJ *menu_gobj, int value)
 {
     // destroy existing tips when disabling
     if (value == 1)
-        event_vars->Tip_Destroy();
+        evco_data->Tip_Destroy();
 
     return;
 }
@@ -482,7 +482,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
                 {
                     // display tip
                     char *shield_string = "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after landing.";
-                    if (event_vars->Tip_Display(5 * 60, shield_string))
+                    if (evco_data->Tip_Display(5 * 60, shield_string))
                     {
                         // set as shown
                         //event_data->tip.shield_isdisp = 1;
@@ -527,7 +527,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
                 {
                     // display tip
                     char *hitbox_string = "Tip:\nDon't land too quickly! Make \nsure you land after the \nattack becomes active.";
-                    if (event_vars->Tip_Display(5 * 60, hitbox_string))
+                    if (evco_data->Tip_Display(5 * 60, hitbox_string))
                     {
 
                         // set as shown
@@ -567,7 +567,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
                 {
                     // display tip
                     char *fastfall_string = "Tip:\nDon't forget to fastfall!\nIt will let you act sooner \nand help with your \ntiming.";
-                    if (event_vars->Tip_Display(5 * 60, fastfall_string))
+                    if (evco_data->Tip_Display(5 * 60, fastfall_string))
                     {
 
                         // set as shown
@@ -595,7 +595,7 @@ void Tips_Think(LCancelData *event_data, FighterData *hmn_data)
                 {
                     // display tip
                     char *late_string = "Tip:\nTry pressing the trigger a\nbit earlier, before the\nfighter lands.";
-                    if (event_vars->Tip_Display(5 * 60, late_string))
+                    if (evco_data->Tip_Display(5 * 60, late_string))
                     {
 
                         // set as shown
@@ -711,7 +711,7 @@ void Barrel_Think(LCancelData *event_data)
 GOBJ *Barrel_Spawn(int pos_kind)
 {
 
-    LCancelData *event_data = event_vars->event_gobj->userdata;
+    LCancelData *event_data = evco_data->event_gobj->userdata;
     Vec3 *barrel_lastpos = &event_data->barrel_lastpos;
 
     // determine position to spawn
@@ -844,7 +844,7 @@ int Barrel_OnHurt(GOBJ *barrel_gobj)
 {
 
     // get event data
-    LCancelData *event_data = event_vars->event_gobj->userdata;
+    LCancelData *event_data = evco_data->event_gobj->userdata;
 
     switch (LcOptions_Main[0].option_val)
     {
@@ -875,7 +875,7 @@ int Barrel_OnDestroy(GOBJ *barrel_gobj)
 {
 
     // get event data
-    LCancelData *event_data = event_vars->event_gobj->userdata;
+    LCancelData *event_data = evco_data->event_gobj->userdata;
 
     // if this barrel is still the current barrel
     if (barrel_gobj == event_data->barrel_gobj)

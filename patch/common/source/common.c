@@ -1,1182 +1,10 @@
-#include "events.h"
-#include <stdarg.h>
-
-void Event_Init(GOBJ *gobj)
-{
-    int *EventData = gobj->userdata;
-    EventDesc *event_desc = EventData[0];
-
-    return;
-}
-
-/////////////////////
-// Mod Information //
-/////////////////////
-
-static char TM_VersShort[] = TM_VERSSHORT "\n";
-static char TM_VersLong[] = TM_VERSLONG "\n";
-static char TM_Compile[] = "COMPILED: " __DATE__ " " __TIME__;
-static char nullString[] = " ";
-
-////////////////////////
-/// Event Defintions ///
-////////////////////////
-
-// Lab
-// Match Data
-static EventMatchData Lab_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = false,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = true,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = false,      // 0x10
-    .isCheckForZRetry = false,  // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Lab = {
-    // Event Name
-    .eventName = "Training Lab\n",
-    .eventDescription = "Free practice with\ncomplete control.\n",
-    .eventTutorial = "",
-    .eventFile = "EvLab",
-    .eventCSSFile = "TM/EvLabCSS.dat",
-    .isChooseCPU = true,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Lab_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData LCancel_MatchData = {
-    .timer = MATCH_TIMER_HIDE,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = false,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = false,
-    .isDisablePause = true,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = false,      // 0x10
-    .isCheckForZRetry = false,  // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc LCancel = {
-    // Event Name
-    .eventName = "L-Cancel Training\n",
-    .eventDescription = "Practice L-Cancelling on\na stationary CPU.\n",
-    .eventTutorial = "TvLC",
-    .eventFile = "EvLcl",
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 15,
-    .matchData = &LCancel_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// Ledgedash Training
-// Match Data
-static EventMatchData Ledgedash_MatchData = {
-    .timer = MATCH_TIMER_HIDE,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = false,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = false,
-    .isDisablePause = true,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = false,      // 0x10
-    .isCheckForZRetry = false,  // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Ledgedash = {
-    .eventName = "Ledgedash Training\n",
-    .eventDescription = "Practice Ledgedashes!\nUse D-Pad to change ledge.\n",
-    .eventTutorial = "TvLedDa",
-    .eventFile = "EvLdsh",
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 15,
-    .matchData = &Ledgedash_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// Wavedash Training
-// Match Data
-static EventMatchData Wavedash_MatchData = {
-    .timer = MATCH_TIMER_HIDE,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = false,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = false,
-    .isDisablePause = true,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = false,      // 0x10
-    .isCheckForZRetry = false,  // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Wavedash = {
-    .eventName = "Wavedash Training\n",
-    .eventDescription = "Practice timing your wavedash,\na fundamental movement technique.\n",
-    .eventTutorial = "TvWvDsh",
-    .eventFile = "EvWdsh",
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 15,
-    .matchData = &Wavedash_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// Combo Training
-// Match Data
-static EventMatchData Combo_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Combo = {
-
-    .eventName = "Combo Training\n",
-    .eventDescription = "L+DPad adjusts percent | DPadDown moves CPU\nDPad right/left saves and loads positions.",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Combo_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// Attack On Shield Training
-// Match Data
-static EventMatchData AttackOnShield_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc AttackOnShield = {
-    .eventName = "Attack on Shield\n",
-    .eventDescription = "Practice attacks on a shielding opponent\nPause to change their OoS option\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &AttackOnShield_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// Reversal Training
-// Match Data
-static EventMatchData Reversal_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Reversal = {
-    .eventName = "Reversal Training\n",
-    .eventDescription = "Practice OoS punishes! DPad left/right\nmoves characters close and further apart.",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Reversal_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData SDI_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 2,         // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc SDI = {
-    .eventName = "SDI Training\n",
-    .eventDescription = "Use Smash DI to escape\nFox's up-air attack!",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &SDI_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData Powershield_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 20,        // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Powershield = {
-    .eventName = "Powershield Training\n",
-    .eventDescription = "Powershield Falco's laser!\nPause to change to fire-rate.",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Powershield_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData Ledgetech_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 20,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Ledgetech = {
-    .eventName = "Ledge-Tech Training\n",
-    .eventDescription = "Practice ledge-teching\nFalco's down-smash",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Ledgetech_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData AmsahTech_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 9,         // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc AmsahTech = {
-    .eventName = "Amsah-Tech Training\n",
-    .eventDescription = "Taunt to have Marth Up-B,\nthen ASDI down and tech!\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &AmsahTech_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData ShieldDrop_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc ShieldDrop = {
-    .eventName = "Shield Drop Training\n",
-    .eventDescription = "Counter with a shield-drop aerial!\nDPad left/right moves players apart.",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = true,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &ShieldDrop_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData WaveshineSDI_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 2,         // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc WaveshineSDI = {
-    .eventName = "Waveshine SDI\n",
-    .eventDescription = "Use Smash DI to get out\nof Fox's waveshine!",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &WaveshineSDI_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData SlideOff_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 9,         // 0xFF=
-    .stage = 3,           // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc SlideOff = {
-    .eventName = "Slide-Off Training\n",
-    .eventDescription = "Use Slide-Off DI to slide off\nthe platform and counter attack!\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &SlideOff_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData GrabMash_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 9,         // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc GrabMash = {
-    .eventName = "Grab Mash Training\n",
-    .eventDescription = "Mash buttons to escape the grab\nas quickly as possible!\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &GrabMash_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData TechCounter_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 9,         // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc TechCounter = {
-    .eventName = "Ledgetech Marth Counter\n",
-    .eventDescription = "Practice ledge-teching\nMarth's counter!\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &TechCounter_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData ArmadaShine_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 2,         // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc ArmadaShine = {
-    .eventName = "Armada-Shine Training\n",
-    .eventDescription = "Finish the enemy Fox\nwith an Armada Shine!",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &ArmadaShine_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData SideBSweet_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 9,         // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc SideBSweet = {
-    .eventName = "Side-B Sweetspot\n",
-    .eventDescription = "Use a sweetspot Side-B to avoid Marth's\ndown-tilt and grab the ledge!",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &SideBSweet_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData EscapeSheik_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 19,        // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc EscapeSheik = {
-    .eventName = "Escape Sheik Techchase\n",
-    .eventDescription = "Practice escaping the tech chase with a\nframe perfect shine or jab SDI!\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &EscapeSheik_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData Eggs_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = -1,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Eggs = {
-    .eventName = "Eggs-ercise\n",
-    .eventDescription = "Break the eggs! Only strong hits will\nbreak them. DPad down = free practice.",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = true,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Eggs_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData Multishine_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Multishine = {
-    .eventName = "Shined Blind\n",
-    .eventDescription = "How many shines can you\nperform in 10 seconds?",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Multishine_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData Reaction_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = 2,         // 0xFF=
-    .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Reaction = {
-    .eventName = "Reaction Test\n",
-    .eventDescription = "Test your reaction time by pressing\nany button when you see/hear Fox shine!",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Reaction_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-// L-Cancel Training
-// Match Data
-static EventMatchData Ledgestall_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
-    .matchType = MATCH_MATCHTYPE_TIME,
-    .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
-    .isDisablePause = false,
-    // byte 0x3
-    .timerRunOnPause = false,   // 0x01
-    .isHidePauseHUD = true,     // 0x02
-    .isShowLRAStart = true,     // 0x04
-    .isCheckForLRAStart = true, // 0x08
-    .isShowZRetry = true,       // 0x10
-    .isCheckForZRetry = true,   // 0x20
-    .isShowAnalogStick = true,  // 0x40
-    .isShowScore = false,       // 0x80
-
-    .isRunStockLogic = false, // 0x20
-    .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
-    .playerKind = -1,
-    .cpuKind = -1,        // 0xFF=
-    .stage = 6,           // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
-    .timerSubSeconds = 0, // 0xFF
-    .onCheckPause = 0,
-    .onMatchEnd = 0,
-};
-// Event Struct
-static EventDesc Ledgestall = {
-    .eventName = "Under Fire\n",
-    .eventDescription = "Ledgestall to remain\ninvincible while the lava rises!\n",
-    .eventTutorial = "TvLC",
-    .eventFile = 0,
-    .isChooseCPU = false,
-    .isSelectStage = false,
-    .use_savestates = false,
-    .disable_hazards = true,
-    .scoreType = 0,
-    .callbackPriority = 3,
-    .matchData = &Ledgestall_MatchData,
-    .defaultOSD = 0xFFFFFFFF,
-};
-
-///////////////////////
-/// Page Defintions ///
-///////////////////////
-
-// Minigames
-static EventDesc *Minigames_Events[] = {
-    &Eggs,
-    &Multishine,
-    &Reaction,
-    &Ledgestall,
-};
-static EventPage Minigames_Page = {
-    .name = "Minigames",
-    .eventNum = (sizeof(Minigames_Events) / 4),
-    .events = Minigames_Events,
-};
-
-// Page 2 Events
-static EventDesc *General_Events[] = {
-    &Lab,
-    &LCancel,
-    &Ledgedash,
-    &Wavedash,
-    &Combo,
-    &AttackOnShield,
-    &Reversal,
-    &SDI,
-    &Powershield,
-    &Ledgetech,
-    &AmsahTech,
-    &ShieldDrop,
-    &WaveshineSDI,
-    &SlideOff,
-    &GrabMash,
-};
-static EventPage General_Page = {
-    .name = "General Tech",
-    (sizeof(General_Events) / 4),
-    General_Events,
-};
-
-// Page 3 Events
-static EventDesc *Spacie_Events[] = {
-    &TechCounter,
-    &ArmadaShine,
-    &SideBSweet,
-    &EscapeSheik,
-};
-static EventPage Spacie_Page = {
-    .name = "Spacie Tech",
-    (sizeof(Spacie_Events) / 4),
-    Spacie_Events,
-};
-
-//////////////////
-/// Page Order ///
-//////////////////
-
-static EventPage **EventPages[] = {
-    &Minigames_Page,
-    &General_Page,
-    &Spacie_Page,
-};
+#include "common.h"
 
 ////////////////////////
 /// Static Variables ///
-////////////////////////
+///////////////////////
 
-static EventVars stc_event_vars = {
+static EventCommonData stc_evco_data = {
     .event_desc = 0,
     .menu_assets = 0,
     .event_gobj = 0,
@@ -1190,371 +18,39 @@ static EventVars stc_event_vars = {
     .Tip_Destroy = Tip_Destroy,
     .savestate = 0,
 };
+static int *eventDataBackup;
 static Savestate *stc_savestate;
 static EventDesc *static_eventInfo;
 static MenuData *static_menuData;
-static int show_console = 1;
-static int *eventDataBackup;
 static TipMgr stc_tipmgr;
-
-///////////////////////
-/// Event Functions ///
-///////////////////////
-
-void EventInit(int page, int eventID, MatchInit *matchData)
-{
-
-    /* 
-    This function runs when leaving the main menu/css and handles
-    setting up the match information, such as rules, players, stage.
-    All of this data comes from the EventDesc in events.c
-    */
-
-    // get event pointer
-    EventDesc *event = GetEventDesc(page, eventID);
-
-    //Init default match info
-    matchData->timer_unk2 = 0;
-    matchData->unk2 = 1;
-    matchData->unk7 = 1;
-    matchData->isCheckStockSteal = 1;
-    matchData->unk10 = 3;
-    matchData->isSkipEndCheck = 1;
-    matchData->itemFreq = MATCH_ITEMFREQ_OFF;
-    matchData->onStartMelee = EventLoad;
-
-    //Copy event's match info struct
-    EventMatchData *eventMatchData = event->matchData;
-    matchData->timer = eventMatchData->timer;
-    matchData->matchType = eventMatchData->matchType;
-    matchData->isDisableMusic = eventMatchData->isDisableMusic;
-    matchData->hideGo = eventMatchData->hideGo;
-    matchData->hideReady = eventMatchData->hideReady;
-    matchData->isCreateHUD = eventMatchData->isCreateHUD;
-    matchData->isDisablePause = eventMatchData->isDisablePause;
-    matchData->timerRunOnPause = eventMatchData->timerRunOnPause;
-    matchData->isHidePauseHUD = eventMatchData->isHidePauseHUD;
-    matchData->isShowLRAStart = eventMatchData->isShowLRAStart;
-    matchData->isCheckForLRAStart = eventMatchData->isCheckForLRAStart;
-    matchData->isShowZRetry = eventMatchData->isShowZRetry;
-    matchData->isCheckForZRetry = eventMatchData->isCheckForZRetry;
-    matchData->isShowAnalogStick = eventMatchData->isShowAnalogStick;
-    matchData->isShowScore = eventMatchData->isShowScore;
-    matchData->isRunStockLogic = eventMatchData->isRunStockLogic;
-    matchData->isDisableHit = eventMatchData->isDisableHit;
-    matchData->timerSeconds = eventMatchData->timerSeconds;
-    matchData->timerSubSeconds = eventMatchData->timerSubSeconds;
-    matchData->onCheckPause = eventMatchData->onCheckPause;
-    matchData->onMatchEnd = eventMatchData->onMatchEnd;
-
-    // Initialize all player data
-    Memcard *memcard = R13_PTR(MEMCARD);
-    CSSBackup eventBackup = memcard->EventBackup;
-    for (int i = 0; i < 6; i++)
-    {
-        // initialize data
-        CSS_InitPlayerData(&matchData->playerData[i]);
-
-        // set to enter fall on match start
-        matchData->playerData[i].isEntry = false;
-
-        // copy nametag id for the player
-        if (i == 0)
-        {
-            // Update the player's nametag ID
-            matchData->playerData[i].nametag = eventBackup.nametag;
-
-            // Update the player's rumble setting
-            int tagRumble = CSS_GetNametagRumble(0, matchData->playerData[0].nametag);
-            matchData->playerData[0].isRumble = tagRumble;
-        }
-    }
-
-    // Determine player ports
-    u8 hmn_port = *stc_css_hmnport + 1;
-    u8 cpu_port = *stc_css_cpuport + 1;
-
-    // Determine the Player
-    s32 playerKind;
-    s32 playerCostume;
-    Preload *preload = Preload_GetTable();
-    // If fighter is -1, copy the player from event data
-    if (eventMatchData->playerKind != -1)
-    {
-        playerKind = eventMatchData->playerKind;
-        playerCostume = 0;
-    }
-    // use the fighter chosen on the CSS
-    else
-    {
-        playerKind = preload->fighters[0].kind;
-        playerCostume = preload->fighters[0].costume;
-    }
-
-    // Determine the CPU
-    s32 cpuKind;
-    s32 cpuCostume;
-    // If isChooseCPU is true, use the selected CPU
-    if (event->isChooseCPU == true)
-    {
-        cpuKind = preload->fighters[1].kind;
-        cpuCostume = preload->fighters[1].costume;
-
-        // change zelda to sheik
-        if (cpuKind == 18)
-        {
-            cpuKind = 19;
-            preload->fighters[1].kind = cpuKind;
-        }
-    }
-    // If isChooseCPU is false, copy the CPU from event data
-    else
-    {
-        cpuKind = eventMatchData->cpuKind;
-        cpuCostume = 0;
-        cpuCostume = 0;
-    }
-
-    // Check if CPU is using the same character and color as P1
-    if ((playerKind == cpuKind) && (playerCostume == cpuCostume))
-    {
-        // this doesnt account for if theyre both using the last costume
-        cpuCostume += 1;
-    }
-
-    // Copy player data to match info struct (update their rumble setting 801bb1ec)
-    matchData->playerData[0].kind = playerKind;
-    matchData->playerData[0].costume = playerCostume;
-    matchData->playerData[0].status = 0;
-    matchData->playerData[0].portNumberOverride = hmn_port;
-
-    // Copy CPU if they exist for this event
-    if (cpuKind != -1)
-    {
-        matchData->playerData[1].kind = cpuKind;
-        matchData->playerData[1].costume = cpuCostume;
-        matchData->playerData[1].status = 1;
-        matchData->playerData[1].portNumberOverride = cpu_port;
-    }
-
-    // Determine the correct HUD position for this amount of players
-    int hudPos = 0;
-    for (int i = 0; i < 6; i++)
-    {
-        if (matchData->playerData[i].status != 3)
-            hudPos++;
-    }
-    matchData->hudPos = hudPos;
-
-    // Determine the Stage
-    int stage;
-    // If isSelectStage is true, use the selected stage
-    if (event->isSelectStage == true)
-    {
-        stage = preload->stage;
-    }
-    // If isSelectStage is false, copy the stage from event data
-    else
-    {
-        stage = eventMatchData->stage;
-    }
-    // Update match struct with this stage
-    matchData->stage = stage;
-
-    //Update preload table? (801bb63c)
-
-    return;
-};
-
-void EventLoad()
-{
-    // get this event
-    Memcard *memcard = R13_PTR(MEMCARD);
-    int page = memcard->TM_EventPage;
-    int eventID = memcard->EventBackup.event;
-    EventDesc *event_desc = GetEventDesc(page, eventID);
-    evFunction *evFunction = &stc_event_vars.evFunction;
-
-    // clear evFunction
-    memset(evFunction, 0, sizeof(*evFunction));
-
-    // append extension
-    static char *extension = "TM/%s.dat";
-    char *buffer[20];
-    sprintf(buffer, extension, event_desc->eventFile);
-
-    // load this events file
-    ArchiveInfo *archive = MEX_LoadRelArchive(buffer, evFunction, "evFunction");
-    stc_event_vars.event_archive = archive;
-
-    // Create this event's gobj
-    int pri = event_desc->callbackPriority;
-    void *cb = evFunction->Event_Think;
-    GOBJ *gobj = GObj_Create(0, 7, 0);
-    int *userdata = calloc(EVENT_DATASIZE);
-    GObj_AddUserData(gobj, 4, HSD_Free, userdata);
-    GObj_AddProc(gobj, cb, pri);
-
-    // store pointer to the event's data
-    userdata[0] = event_desc;
-
-    // Create a gobj to track match time
-    stc_event_vars.game_timer = 0;
-    GOBJ *timer_gobj = GObj_Create(0, 7, 0);
-    GObj_AddProc(timer_gobj, Event_IncTimer, 0);
-
-    // init the pause menu
-    GOBJ *menu_gobj = EventMenu_Init(event_desc, *evFunction->menu_start);
-
-    // Init static structure containing event variables
-    stc_event_vars.event_desc = event_desc;
-    stc_event_vars.event_gobj = gobj;
-    stc_event_vars.menu_gobj = menu_gobj;
-
-    // init savestate struct
-    stc_savestate = calloc(sizeof(Savestate));
-    eventDataBackup = calloc(EVENT_DATASIZE);
-    stc_savestate->is_exist = 0;
-    stc_event_vars.savestate = stc_savestate;
-
-    // disable hazards if enabled
-    if (event_desc->disable_hazards == 1)
-        Hazards_Disable();
-
-    // Run this event's init function
-    if (evFunction->Event_Init != 0)
-    {
-        evFunction->Event_Init(gobj);
-    }
-
-    // Store update function
-    HSD_Update *update = HSD_UPDATE;
-    update->onFrame = EventUpdate;
-
-    return;
-};
-
-void EventUpdate()
-{
-
-    // get event info
-    EventDesc *event_desc = stc_event_vars.event_desc;
-    evFunction *evFunction = &stc_event_vars.evFunction;
-    GOBJ *menu_gobj = stc_event_vars.menu_gobj;
-
-    // run savestate logic if enabled
-    if (event_desc->use_savestates == true)
-    {
-        Update_Savestates();
-    }
-
-    // run menu logic if exists
-    if (menu_gobj != 0)
-    {
-        // update menu
-        EventMenu_Update(menu_gobj);
-    }
-
-    // run custom event update function
-    if (evFunction->Event_Update != 0)
-    {
-        evFunction->Event_Update();
-    }
-    else
-        Develop_UpdateMatchHotkeys();
-
-    return;
-}
 
 //////////////////////
 /// Hook Functions ///
 //////////////////////
 
-void TM_ConsoleThink(GOBJ *gobj)
+void OnLoad(ArchiveInfo *archive)
 {
-    // init variables
-    int *data = gobj->userdata;
-    DevText *text = data[0];
 
-    // check to toggle console
-    for (int i = 0; i < 4; i++)
-    {
-        HSD_Pad *pad = PadGet(i, PADGET_MASTER);
-        if (pad->held & (HSD_TRIGGER_L | HSD_TRIGGER_R) && (pad->down & HSD_TRIGGER_Z))
-        {
-            // toggle visibility
-            text->show_text ^= 1;
-            text->show_background ^= 1;
-            show_console ^= 1;
+    // save pointer to stc_evco_data
+    *evco_data_ptr = &stc_evco_data;
 
-            break;
-        }
-    }
+    // Create a gobj to track match time
+    stc_evco_data.game_timer = 0;
+    GOBJ *timer_gobj = GObj_Create(0, 7, 0);
+    GObj_AddProc(timer_gobj, Event_IncTimer, 0);
 
-    // clear text
-    //DevelopText_EraseAllText(text);
-    //DevelopMode_ResetCursorXY(text, 0, 0);
-}
-void TM_CreateConsole()
-{
-    // init dev text
-    GOBJ *gobj = GObj_Create(0, 0, 0);
-    int *data = calloc(32);
-    GObj_AddUserData(gobj, 4, HSD_Free, data);
-    GObj_AddProc(gobj, TM_ConsoleThink, 0);
+    // init savestate struct
+    stc_savestate = calloc(sizeof(Savestate));
+    eventDataBackup = calloc(EVENT_DATASIZE);
+    stc_savestate->is_exist = 0;
+    stc_evco_data.savestate = stc_savestate;
 
-    DevText *text = DevelopText_CreateDataTable(13, 0, 0, 28, 8, HSD_MemAlloc(0x1000));
-    DevelopText_Activate(0, text);
-    text->show_cursor = 0;
-    data[0] = text;
-    GXColor color = {21, 20, 59, 135};
-    DevelopText_StoreBGColor(text, &color);
-    DevelopText_StoreTextScale(text, 10, 12);
-    stc_event_vars.db_console_text = text;
-
-    if (show_console != 1)
-    {
-        // toggle visibility
-        DevelopText_HideBG(text);
-        DevelopText_HideText(text);
-    }
-
-    return;
-}
-
-void OnFileLoad(ArchiveInfo *archive) // this function is run right after TmDt is loaded into memory on boot
-{
     // init event menu assets
-    stc_event_vars.menu_assets = File_GetSymbol(archive, "evMenu");
+    stc_evco_data.menu_assets = File_GetSymbol(archive, "evMenu");
 
-    // store pointer to static variables
-    *event_vars_ptr = &stc_event_vars;
-    event_vars = *event_vars_ptr;
-
-    return;
-}
-
-void OnSceneChange()
-{
-    // Hook exists at 801a4c94
-
-    TM_CreateWatermark();
-
-#if TM_DEBUG == 2
-    TM_CreateConsole();
-#endif
-
-    return;
-};
-
-void OnBoot()
-{
-    // OSReport("hi this is boot\n");
-    return;
-};
-
-void OnStartMelee()
-{
+    // Store update function
+    HSD_Update *update = HSD_UPDATE;
+    update->onFrame = EventUpdate;
 
     Message_Init();
     Tip_Init();
@@ -1611,10 +107,10 @@ int Savestate_Save(Savestate *savestate)
         savestate->is_exist = 1;
 
         // save frame
-        savestate->frame = stc_event_vars.game_timer;
+        savestate->frame = stc_evco_data.game_timer;
 
         // save event data
-        memcpy(&savestate->event_data, stc_event_vars.event_gobj->userdata, sizeof(savestate->event_data));
+        memcpy(&savestate->event_data, stc_evco_data.event_gobj->userdata, sizeof(savestate->event_data));
 
         // backup all players
         for (int i = 0; i < 6; i++)
@@ -2112,7 +608,7 @@ int Savestate_Load(Savestate *savestate)
         // restore frame
         Match *match = stc_match;
         match->time_frames = savestate->frame;
-        stc_event_vars.game_timer = savestate->frame;
+        stc_evco_data.game_timer = savestate->frame;
 
         // update timer
         int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
@@ -2120,7 +616,7 @@ int Savestate_Load(Savestate *savestate)
         match->time_ms = frames % 60;
 
         // restore event data
-        memcpy(stc_event_vars.event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
+        memcpy(stc_evco_data.event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
 
         // remove all particles
         for (int i = 0; i < PTCL_LINKMAX; i++)
@@ -2360,114 +856,8 @@ JOBJ *IDToBone(FighterData *fighter_data, int id)
 
 void Event_IncTimer(GOBJ *gobj)
 {
-    stc_event_vars.game_timer++;
+    stc_evco_data.game_timer++;
     return;
-}
-void TM_CreateWatermark()
-{
-    // create text canvas
-    int canvas = Text_CreateCanvas(10, 0, 9, 13, 0, 14, 0, 19);
-
-    // create text
-    Text *text = Text_CreateText(10, canvas);
-    // enable align and kerning
-    text->align = 2;
-    text->kerning = 1;
-    // scale canvas
-    text->scale.X = 0.4;
-    text->scale.Y = 0.4;
-    text->trans.X = 615;
-    text->trans.Y = 446;
-
-    // print string
-    int shadow = Text_AddSubtext(text, 2, 2, TM_VersShort);
-    GXColor shadow_color = {0, 0, 0, 0};
-    Text_SetColor(text, shadow, &shadow_color);
-
-    int shadow1 = Text_AddSubtext(text, 2, -2, TM_VersShort);
-    Text_SetColor(text, shadow1, &shadow_color);
-
-    int shadow2 = Text_AddSubtext(text, -2, 2, TM_VersShort);
-    Text_SetColor(text, shadow2, &shadow_color);
-
-    int shadow3 = Text_AddSubtext(text, -2, -2, TM_VersShort);
-    Text_SetColor(text, shadow3, &shadow_color);
-
-    Text_AddSubtext(text, 0, 0, TM_VersShort);
-
-    return;
-}
-void Hazards_Disable()
-{
-    // get stage id
-    int stage_internal = Stage_ExternalToInternal(Stage_GetExternalID());
-    int is_fixwind = 0;
-
-    switch (stage_internal)
-    {
-    case (GR_STORY):
-    {
-        // remove shyguy map gobj proc
-        GOBJ *shyguy_gobj = Stage_GetMapGObj(3);
-        GObj_RemoveProc(shyguy_gobj);
-
-        // remove randall
-        GOBJ *randall_gobj = Stage_GetMapGObj(2);
-        Stage_DestroyMapGObj(randall_gobj);
-
-        is_fixwind = 1;
-
-        break;
-    }
-    case (GR_PSTAD):
-    {
-        // remove map gobj proc
-        GOBJ *map_gobj = Stage_GetMapGObj(2);
-        GObj_RemoveProc(map_gobj);
-
-        is_fixwind = 1;
-
-        break;
-    }
-    case (GR_OLDPU):
-    {
-        // remove map gobj proc
-        GOBJ *map_gobj = Stage_GetMapGObj(7);
-        GObj_RemoveProc(map_gobj);
-
-        // remove map gobj proc
-        map_gobj = Stage_GetMapGObj(6);
-        GObj_RemoveProc(map_gobj);
-
-        // set wind hazard num to 0
-        *ftchkdevice_windnum = 0;
-
-        break;
-    }
-    case (GR_FD):
-    {
-        // set bg skip flag
-        GOBJ *map_gobj = Stage_GetMapGObj(3);
-        MapData *map_data = map_gobj->userdata;
-        map_data->xc4 |= 0x40;
-
-        // remove on-go function that changes this flag
-        StageOnGO *on_go = stc_stage->on_go;
-        stc_stage->on_go = on_go->next;
-        HSD_Free(on_go);
-
-        break;
-    }
-    }
-
-    // Certain stages have an essential ragdoll function
-    // in their map_gobj think function. If the think function is removed,
-    // the ragdoll function must be re-scheduled to function properly.
-    if (is_fixwind == 1)
-    {
-        GOBJ *wind_gobj = GObj_Create(3, 5, 0);
-        GObj_AddProc(wind_gobj, Dynamics_DecayWind, 4);
-    }
 }
 
 // Message Functions
@@ -2476,7 +866,7 @@ void Message_Init()
 
     // create cobj
     GOBJ *cam_gobj = GObj_Create(19, 20, 0);
-    COBJDesc *cam_desc = stc_event_vars.menu_assets->hud_cobjdesc;
+    COBJDesc *cam_desc = stc_evco_data.menu_assets->hud_cobjdesc;
     COBJ *cam_cobj = COBJ_LoadDescSetScissor(cam_desc);
     cam_cobj->scissor_bottom = 400;
     // init camera
@@ -2514,7 +904,7 @@ GOBJ *Message_Display(int msg_kind, int queue_num, int msg_color, char *format, 
     MsgData *msg_data = calloc(sizeof(MsgData));
     GObj_AddUserData(msg_gobj, 4, HSD_Free, msg_data);
     GObj_AddGXLink(msg_gobj, GXLink_Common, MSG_GXLINK, MSG_GXPRI);
-    JOBJ *msg_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->message);
+    JOBJ *msg_jobj = JOBJ_LoadJoint(stc_evco_data.menu_assets->message);
     GObj_AddObject(msg_gobj, R13_U8(-0x3E55), msg_jobj);
     msg_data->lifetime = MSG_LIFETIME;
     msg_data->kind = msg_kind;
@@ -2905,7 +1295,7 @@ void Tip_Think(GOBJ *gobj)
 
     GOBJ *tip_gobj = stc_tipmgr.gobj;
 
-    stc_event_vars.menu_assets->tip_jobj;
+    stc_evco_data.menu_assets->tip_jobj;
 
     // update tip
     if (tip_gobj != 0)
@@ -2943,7 +1333,7 @@ void Tip_Think(GOBJ *gobj)
                 // apply exit anim
                 JOBJ *tip_root = tip_gobj->hsd_object;
                 JOBJ_RemoveAnimAll(tip_root);
-                JOBJ_AddAnimAll(tip_root, stc_event_vars.menu_assets->tip_jointanim[1], 0, 0);
+                JOBJ_AddAnimAll(tip_root, stc_evco_data.menu_assets->tip_jointanim[1], 0, 0);
                 JOBJ_ReqAnimAll(tip_root, 0);
 
                 stc_tipmgr.state = 2; // enter wait
@@ -3002,7 +1392,7 @@ int Tip_Display(int lifetime, char *fmt, ...)
     GOBJ *tip_gobj = GObj_Create(0, 0, 0);
     stc_tipmgr.gobj = tip_gobj;
     GObj_AddGXLink(tip_gobj, GXLink_Common, MSG_GXLINK, 80);
-    JOBJ *tip_jobj = JOBJ_LoadJoint(stc_event_vars.menu_assets->tip_jobj);
+    JOBJ *tip_jobj = JOBJ_LoadJoint(stc_evco_data.menu_assets->tip_jobj);
     GObj_AddObject(tip_gobj, R13_U8(-0x3E55), tip_jobj);
 
     // account for widescreen
@@ -3032,7 +1422,7 @@ int Tip_Display(int lifetime, char *fmt, ...)
 
     // apply enter anim
     JOBJ_RemoveAnimAll(tip_jobj);
-    JOBJ_AddAnimAll(tip_jobj, stc_event_vars.menu_assets->tip_jointanim[0], 0, 0);
+    JOBJ_AddAnimAll(tip_jobj, stc_evco_data.menu_assets->tip_jointanim[0], 0, 0);
     JOBJ_ReqAnimAll(tip_jobj, 0);
 
     // build string
@@ -3100,12 +1490,44 @@ void Tip_Destroy()
         // apply exit anim
         JOBJ *tip_root = stc_tipmgr.gobj->hsd_object;
         JOBJ_RemoveAnimAll(tip_root);
-        JOBJ_AddAnimAll(tip_root, stc_event_vars.menu_assets->tip_jointanim[1], 0, 0);
+        JOBJ_AddAnimAll(tip_root, stc_evco_data.menu_assets->tip_jointanim[1], 0, 0);
         JOBJ_ReqAnimAll(tip_root, 0);
         JOBJ_RunAObjCallback(tip_root, 6, 0xfb7f, AOBJ_SetRate, 1, (float)2);
 
         stc_tipmgr.state = 2; // enter wait
     }
+
+    return;
+}
+
+void EventUpdate()
+{
+
+    // get event info
+    EventDesc *event_desc = stc_evco_data.event_desc;
+    evFunction *evFunction = &stc_evco_data.evFunction;
+    GOBJ *menu_gobj = stc_evco_data.menu_gobj;
+
+    // run savestate logic if enabled
+    if (event_desc->use_savestates == true)
+    {
+        Update_Savestates();
+    }
+
+    // run menu logic if exists
+    if (menu_gobj != 0)
+    {
+        // update menu
+        EventMenu_Update(menu_gobj);
+    }
+
+    // run custom event update function
+    if (evFunction->Event_Update != 0)
+    {
+        evFunction->Event_Update();
+    }
+    else
+        Develop_UpdateMatchHotkeys();
 
     return;
 }
@@ -3148,11 +1570,10 @@ GOBJ *EventMenu_Init(EventDesc *event_desc, EventMenu *start_menu)
     menuData->currMenu = start_menu;
 
     // set menu as not hidden
-    stc_event_vars.hide_menu = 0;
+    stc_evco_data.hide_menu = 0;
 
     return gobj;
 };
-
 void EventMenu_Update(GOBJ *gobj)
 {
 
@@ -3259,7 +1680,7 @@ void EventMenu_Update(GOBJ *gobj)
         }
 
         // run menu logic if the menu is shown
-        else if ((menuData->isPaused == 1) && (stc_event_vars.hide_menu == 0))
+        else if ((menuData->isPaused == 1) && (stc_evco_data.hide_menu == 0))
         {
             // Get the current menu
             EventMenu *currMenu = menuData->currMenu;
@@ -3279,22 +1700,19 @@ void EventMenu_Update(GOBJ *gobj)
 
     return;
 }
-
 void EventMenu_MenuGX(GOBJ *gobj, int pass)
 {
-    if (stc_event_vars.hide_menu == 0)
+    if (stc_evco_data.hide_menu == 0)
         GXLink_Common(gobj, pass);
     return;
 }
-
 void EventMenu_TextGX(GOBJ *gobj, int pass)
 {
 
-    if (stc_event_vars.hide_menu == 0)
+    if (stc_evco_data.hide_menu == 0)
         Text_GX(gobj, pass);
     return;
 }
-
 void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 {
 
@@ -3625,7 +2043,6 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu)
 
     return;
 }
-
 void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 {
 
@@ -3772,14 +2189,13 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 
     return;
 }
-
 void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 {
 
     MenuData *menuData = gobj->userdata;
 
     // create options background
-    evMenu *menuAssets = stc_event_vars.menu_assets;
+    evMenu *menuAssets = stc_evco_data.menu_assets;
     JOBJ *jobj_options = JOBJ_LoadJoint(menuAssets->menu);
     // Add to gobj
     GObj_AddObject(gobj, 3, jobj_options);
@@ -3907,7 +2323,6 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 
     return;
 }
-
 void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 {
 
@@ -3958,7 +2373,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
     // output menu title
     float optionX = MENU_TITLEXPOS;
     float optionY = MENU_TITLEYPOS;
-    subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+    subtext = Text_AddSubtext(text, optionX, optionY, "");
     Text_SetScale(text, subtext, MENU_TITLESCALE, MENU_TITLESCALE);
 
     /**************************
@@ -3996,7 +2411,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
         // output option name
         float optionX = MENU_OPTIONNAMEXPOS;
         float optionY = MENU_OPTIONNAMEYPOS + (i * MENU_TEXTYOFFSET);
-        subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+        subtext = Text_AddSubtext(text, optionX, optionY, "");
     }
 
     /********************
@@ -4022,12 +2437,11 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
         // output option value
         float optionX = MENU_OPTIONVALXPOS;
         float optionY = MENU_OPTIONVALYPOS + (i * MENU_TEXTYOFFSET);
-        subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+        subtext = Text_AddSubtext(text, optionX, optionY, "");
     }
 
     return;
 }
-
 void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 {
 
@@ -4194,7 +2608,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         // if this option is a menu or function
         else if ((currOption->option_kind == OPTKIND_MENU) || (currOption->option_kind == OPTKIND_FUNC))
         {
-            Text_SetText(text, i, &nullString);
+            Text_SetText(text, i, "");
 
             // show arrow
             //JOBJ_ClearFlags(menuData->row_joints[i][1], JOBJ_HIDDEN);
@@ -4242,7 +2656,6 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 
     return;
 }
-
 void EventMenu_DestroyMenu(GOBJ *gobj)
 {
     MenuData *menuData = gobj->userdata; // userdata
@@ -4278,7 +2691,7 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
     }
 
     // set menu as visible
-    stc_event_vars.hide_menu = 0;
+    stc_evco_data.hide_menu = 0;
 
     // remove jobj
     GObj_FreeObject(gobj);
@@ -4286,7 +2699,6 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
 
     return;
 }
-
 void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
@@ -4295,7 +2707,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     EventOption *option = &menu->options[cursor];
 
     // create options background
-    evMenu *menuAssets = stc_event_vars.menu_assets;
+    evMenu *menuAssets = stc_evco_data.menu_assets;
 
     // create popup gobj
     GOBJ *popup_gobj = GObj_Create(0, 0, 0);
@@ -4367,7 +2779,6 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
 
     return;
 }
-
 void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
@@ -4404,12 +2815,11 @@ void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
         // output option value
         float optionX = POPUP_OPTIONVALXPOS;
         float optionY = baseYPos + (i * POPUP_TEXTYOFFSET);
-        subtext = Text_AddSubtext(text, optionX, optionY, &nullString);
+        subtext = Text_AddSubtext(text, optionX, optionY, "");
     }
 
     return;
 }
-
 void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
 {
     // init variables
@@ -4455,7 +2865,6 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
 
     return;
 }
-
 void EventMenu_DestroyPopup(GOBJ *gobj)
 {
     MenuData *menuData = gobj->userdata; // userdata
@@ -4471,92 +2880,4 @@ void EventMenu_DestroyPopup(GOBJ *gobj)
     // also change the menus state
     EventMenu *currMenu = menuData->currMenu;
     currMenu->state = EMSTATE_FOCUS;
-}
-
-///////////////////////////////
-/// Member-Access Functions ///
-///////////////////////////////
-
-EventDesc *GetEventDesc(int page, int event)
-{
-    EventPage *thisPage = EventPages[page];
-    EventDesc *thisEvent = thisPage->events[event];
-    return (thisEvent);
-}
-char *GetEventName(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->eventName);
-}
-char *GetEventDescription(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->eventDescription);
-}
-char *GetEventTut(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->eventTutorial);
-}
-char *GetPageName(int page)
-{
-    EventPage *thisPage = EventPages[page];
-    return (thisPage->name);
-}
-char *GetEventFile(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->eventFile);
-}
-char *GetCSSFile(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->eventCSSFile);
-}
-int GetPageEventNum(int page)
-{
-    EventPage *thisPage = EventPages[page];
-    return (thisPage->eventNum);
-}
-char *GetTMVersShort()
-{
-    return (TM_VersShort);
-}
-char *GetTMVersLong()
-{
-    return (TM_VersLong);
-}
-char *GetTMCompile()
-{
-    return (TM_Compile);
-}
-int GetPageNum()
-{
-    int pageNum = (sizeof(EventPages) / 4);
-    return (pageNum);
-}
-u8 GetIsChooseCPU(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->isChooseCPU);
-}
-u8 GetIsSelectStage(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->isSelectStage);
-}
-s8 GetFighter(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->matchData->playerKind);
-}
-s8 GetCPUFighter(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->matchData->cpuKind);
-}
-s16 GetStage(int page, int event)
-{
-    EventDesc *thisEvent = GetEventDesc(page, event);
-    return (thisEvent->matchData->stage);
 }

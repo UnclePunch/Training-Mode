@@ -14,6 +14,7 @@ static TOBJ *orig_tobj;                                            // original t
 static MTHPlayParam play_param = {1048576, (60 / 30)};             //
 static MTHData mth_data;                                           // status of the current mth operation
 static EventSelectData *stc_menu_data;                             // minor_exit needs to save page and event to major data, needs to access this
+static EventLookup *ev_lookup;
 
 void Minor_Load(ESSMinorData *minor_data)
 {
@@ -21,6 +22,7 @@ void Minor_Load(ESSMinorData *minor_data)
     // save pointer to minor data
     // not sure why it doesnt just pass this into the think function...
     stc_minor_data = minor_data;
+    ev_lookup = minor_data->ev_lookup;
 
     Menu_Init();
 
@@ -89,6 +91,8 @@ void Minor_Exit(VSMinorData *minor_data)
     // save event page and id
     stc_minor_data->event = stc_menu_data->cursor.pos + stc_menu_data->cursor.scroll;
     stc_minor_data->page = stc_menu_data->page;
+    stc_minor_data->cursor.pos = stc_menu_data->cursor.pos;
+    stc_minor_data->cursor.scroll = stc_menu_data->cursor.scroll;
 
     return;
 }
@@ -148,6 +152,11 @@ void Menu_Init()
     GOBJ *cursor_gobj = JOBJ_LoadSet(0, menu_assets->cursor, 0, 0, 3, 1, 1, GObj_Anim);
     menu_data->cursor.jobj = cursor_gobj->hsd_object;
 
+    // init page and cursor
+    menu_data->page = stc_minor_data->page;
+    menu_data->cursor.pos = stc_minor_data->cursor.pos;
+    menu_data->cursor.scroll = stc_minor_data->cursor.scroll;
+
     // Create page text
     Vec3 *menu_scale = &menu_jobj->scale;
     {
@@ -181,8 +190,6 @@ void Menu_Init()
         menu_data->text.page_curr->align = 1;
         menu_data->text.page_prev->align = 0;
         menu_data->text.page_next->align = 2;
-
-        menu_data->page = MNSLEV_STARTPAGE;
     }
 
     // Create event name text
@@ -215,7 +222,7 @@ void Menu_Init()
         text->trans.X = text_pos.X;
         text->trans.Y = text_pos.Y;
 
-        int event_num = tm_function->GetPageEventNum(1);
+        int event_num = ev_lookup->GetPageEventNum(1);
         for (int i = 0; i < MNSLEV_MAXEVENT; i++)
         {
             Text_AddSubtext(text, 0, (40 * i), "----------------------------");
@@ -281,12 +288,12 @@ void Menu_Think(GOBJ *menu_gobj)
         {
 
             // get number of events onscreen
-            int event_num = tm_function->GetPageEventNum(menu_data->page);
+            int event_num = ev_lookup->GetPageEventNum(menu_data->page);
             if (event_num > MNSLEV_MAXEVENT)
                 event_num = MNSLEV_MAXEVENT;
 
             // determine max scroll
-            int scroll_max = tm_function->GetPageEventNum(menu_data->page) - MNSLEV_MAXEVENT;
+            int scroll_max = ev_lookup->GetPageEventNum(menu_data->page) - MNSLEV_MAXEVENT;
             if (scroll_max < 0)
                 scroll_max = 0;
 
@@ -315,7 +322,7 @@ void Menu_Think(GOBJ *menu_gobj)
         else if (inputs & HSD_TRIGGER_R)
         {
 
-            int page_num = tm_function->GetPageNum();
+            int page_num = ev_lookup->GetPageNum();
 
             // check to move to next page
             if (menu_data->page < (page_num - 1))
@@ -366,18 +373,24 @@ void Menu_Think(GOBJ *menu_gobj)
 
             // load mth
             Menu_PlayEventMovie(menu_gobj);
+
+            break;
         }
         case (INPTKIND_ENTER):
         {
 
             // play sfx
-            SFX_PlayCommon(3);
+            SFX_PlayCommon(2);
+
+            break;
         }
         case (INPTKIND_EXIT):
         {
 
             // play sfx
-            SFX_PlayCommon(1);
+            SFX_PlayCommon(0);
+
+            break;
         }
         }
     }
@@ -665,12 +678,12 @@ void Menu_Update(GOBJ *gobj)
     {
 
         // determine max scroll
-        int scroll_max = tm_function->GetPageEventNum(menu_data->page) - MNSLEV_MAXEVENT;
+        int scroll_max = ev_lookup->GetPageEventNum(menu_data->page) - MNSLEV_MAXEVENT;
         if (scroll_max < 0)
             scroll_max = 0;
 
         // get events on this page
-        int event_num = tm_function->GetPageEventNum(menu_data->page);
+        int event_num = ev_lookup->GetPageEventNum(menu_data->page);
 
         // hide if less than X events on this page
         if (event_num <= MNSLEV_MAXEVENT)
@@ -688,20 +701,20 @@ void Menu_Update(GOBJ *gobj)
     // Update page text
     {
         // current page
-        Text_SetText(menu_data->text.page_curr, 0, tm_function->GetPageName(menu_data->page));
+        Text_SetText(menu_data->text.page_curr, 0, ev_lookup->GetPageName(menu_data->page));
 
         // previous page
         if (menu_data->page > 0)
         {
-            Text_SetText(menu_data->text.page_prev, 0, tm_function->GetPageName(menu_data->page - 1));
+            Text_SetText(menu_data->text.page_prev, 0, ev_lookup->GetPageName(menu_data->page - 1));
         }
         else
             Text_SetText(menu_data->text.page_prev, 0, "");
 
         // next page
-        if (menu_data->page < (tm_function->GetPageNum() - 1))
+        if (menu_data->page < (ev_lookup->GetPageNum() - 1))
         {
-            Text_SetText(menu_data->text.page_next, 0, tm_function->GetPageName(menu_data->page + 1));
+            Text_SetText(menu_data->text.page_next, 0, ev_lookup->GetPageName(menu_data->page + 1));
         }
         else
             Text_SetText(menu_data->text.page_next, 0, "");
@@ -748,14 +761,14 @@ void Menu_Update(GOBJ *gobj)
         }
 
         // get number of events onscreen
-        int event_num = tm_function->GetPageEventNum(menu_data->page);
+        int event_num = ev_lookup->GetPageEventNum(menu_data->page);
         if (event_num > MNSLEV_MAXEVENT)
             event_num = MNSLEV_MAXEVENT;
 
         // update event text
         for (int i = 0; i < event_num; i++)
         {
-            Text_AddSubtext(menu_data->text.event_name, 0, i * 40, tm_function->GetEventName(menu_data->page, i + menu_data->cursor.scroll));
+            Text_AddSubtext(menu_data->text.event_name, 0, i * 40, ev_lookup->GetEventName(menu_data->page, i + menu_data->cursor.scroll));
         }
     }
 
@@ -790,7 +803,7 @@ void Menu_Update(GOBJ *gobj)
         text->trans.Y = (text_pos.Y * -1) + (-1.6 * (menu_scale->Y / 4.0));
         text->aspect.X = 585;
 
-        char *msg = tm_function->GetEventDescription(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
+        char *msg = ev_lookup->GetEventDescription(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
 
         // count newlines
         int line_num = 1;
@@ -877,7 +890,7 @@ void Menu_PlayEventMovie(GOBJ *gobj)
     EventSelectData *menu_data = gobj->userdata;
 
     // get this events file name
-    char *file = tm_function->GetEventFile(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
+    char *file = ev_lookup->GetEventFile(menu_data->page, menu_data->cursor.pos + menu_data->cursor.scroll);
 
     // play this file
     MTH_Start(gobj, file);

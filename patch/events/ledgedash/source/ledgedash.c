@@ -108,10 +108,10 @@ void Event_Init(GOBJ *gobj)
     LedgedashData *event_data = gobj->userdata;
 
     // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
+    evco_data = *evco_data_ptr;
 
     // get assets
-    event_data->assets = File_GetSymbol(event_vars->event_archive, "ldshData");
+    event_data->assets = File_GetSymbol(evco_data->event_archive, "ldshData");
 
     // standardize camera
     Stage *stage = stc_stage;
@@ -363,7 +363,7 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
             event_data->hud.actionable_frame = event_data->hud.timer;
 
             // destroy any tips
-            event_vars->Tip_Destroy();
+            evco_data->Tip_Destroy();
 
             // update bar colors
             JOBJ *timingbar_jobj;
@@ -527,7 +527,7 @@ void Ledgedash_ToggleStartPosition(GOBJ *menu_gobj, int value)
 
     // get fighter data
     GOBJ *hmn = Fighter_GetGObj(0);
-    LedgedashData *event_data = event_vars->event_gobj->userdata;
+    LedgedashData *event_data = evco_data->event_gobj->userdata;
 
     Fighter_PlaceOnLedge(event_data, hmn, event_data->ledge_line, (float)event_data->ledge_dir);
 
@@ -536,7 +536,7 @@ void Ledgedash_ToggleStartPosition(GOBJ *menu_gobj, int value)
 void Ledgedash_ToggleAutoReset(GOBJ *menu_gobj, int value)
 {
 
-    LedgedashData *event_data = event_vars->event_gobj->userdata;
+    LedgedashData *event_data = evco_data->event_gobj->userdata;
 
     // enable camera
     if (value == 0)
@@ -690,7 +690,7 @@ void Ledgedash_FtInit(LedgedashData *event_data)
     {
         event_data->cam->flags = 0;
         event_data->ledge_line = -1;
-        event_vars->Tip_Display(500 * 60, "Error:\nIt appears there are no \nledges on this stage...");
+        evco_data->Tip_Display(500 * 60, "Error:\nIt appears there are no \nledges on this stage...");
     }
 
     return;
@@ -1158,7 +1158,7 @@ void Tips_Toggle(GOBJ *menu_gobj, int value)
 {
     // destroy existing tips when disabling
     if (value == 1)
-        event_vars->Tip_Destroy();
+        evco_data->Tip_Destroy();
 
     return;
 }
@@ -1172,36 +1172,36 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
         if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFCATCH) && (Fighter_CheckFall(hmn_data) == 1))
         {
             event_data->tip.is_input_release = 1;
-            event_vars->Tip_Destroy();
+            evco_data->Tip_Destroy();
 
             // determine how many frames early
             float *anim_ptr = Animation_GetAddress(hmn_data, hmn_data->anim_id);
             float frame_total = anim_ptr[0x8 / 4];
             float frames_early = frame_total - hmn_data->state.frame;
-            event_vars->Tip_Display(3 * 60, "Misinput:\nFell %d frames early.", (int)frames_early + 1);
+            evco_data->Tip_Display(3 * 60, "Misinput:\nFell %d frames early.", (int)frames_early + 1);
         }
 
         // check for early fall input on cliffwait frame 0
         if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFWAIT) && (hmn_data->TM.state_frame == 1) && (Fighter_CheckFall(hmn_data) == 1))
         {
             event_data->tip.is_input_release = 1;
-            event_vars->Tip_Destroy();
-            event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nFell 1 frame early.");
+            evco_data->Tip_Destroy();
+            evco_data->Tip_Display(LSDH_TIPDURATION, "Misinput:\nFell 1 frame early.");
         }
 
         // check for late fall input
         if ((event_data->tip.is_input_release == 0) && (hmn_data->state_id == ASID_CLIFFJUMPQUICK1) && (Fighter_CheckFall(hmn_data) == 1))
         {
             event_data->tip.is_input_release = 1;
-            event_vars->Tip_Destroy();
+            evco_data->Tip_Destroy();
 
             // jumped and fell on same frame
             if (hmn_data->TM.state_frame == 0)
-                event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nInputted jump and fall \non the same frame.");
+                evco_data->Tip_Display(LSDH_TIPDURATION, "Misinput:\nInputted jump and fall \non the same frame.");
 
             // fell late
             else
-                event_vars->Tip_Display(LSDH_TIPDURATION, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
+                evco_data->Tip_Display(LSDH_TIPDURATION, "Misinput:\nJumped %d frame(s) early.", hmn_data->TM.state_frame);
         }
 
         // check for ledgedash without refreshing
@@ -1217,7 +1217,7 @@ void Tips_Think(LedgedashData *event_data, FighterData *hmn_data)
             if (event_data->tip.refresh_cond_num >= 3)
             {
                 // if tip is displayed, reset cond num
-                if (event_vars->Tip_Display(5 * 60, "Warning:\nIt is higly recommended to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
+                if (evco_data->Tip_Display(5 * 60, "Warning:\nIt is higly recommended to\nre-grab ledge after \nbeing reset to simulate \na realistic scenario!"))
                     event_data->tip.refresh_cond_num = 0;
             }
         }

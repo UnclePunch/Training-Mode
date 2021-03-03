@@ -1,25 +1,74 @@
-#To be inserted at 801bb128
+#To be inserted at 804df9b4
 .include "../Globals.s"
 .include "../../m-ex/Header.s"
 
+#r3 = page
+#r4 = event
+
+.set REG_Page,31
+.set REG_Event,30
+
 backup
 
-#Branch to C function to initialize the event
-  lwz r3,MemcardData(r13)
-  lbz r3,CurrentEventPage(r3)
-  mr	r4,r25									#event
-  mr	r5,r26									#match struct
-  rtocbl	r12,TM_EventInit
+mr REG_Page, r3
+mr REG_Event, r4
 
-# Check if event is legacy (no file)
-  lwz r3,MemcardData(r13)
-  lbz r3,CurrentEventPage(r3)
-  mr	r4,r25									#event
-  mr	r5,r26									#match struct
-  rtocbl	r12,TM_GetEventFile
-  cmpwi r3,0
-  beq LegacyEvent
+#Get Event Code
+  bl  SkipLoadList
 
+##### Page List #######
+	EventJumpTable
+#######################
+Minigames:
+bl	EggsLoad
+bl	MultishineLoad
+bl	ReactionLoad
+bl	LedgeStallLoad
+.long -1
+#######################
+GeneralTech:
+bl	TrainingLabLoad
+bl	LCancelLoad
+bl	LedgedashLoad
+bl	0x0	# wavedashLoad
+bl	ComboTrainingLoad
+bl	AttackOnShieldLoad
+bl	ReversalLoad
+bl	SDITrainingLoad
+bl	PowershieldLoad
+bl	LedgetechLoad
+bl	AmsahTechLoad
+bl	ShieldDropLoad
+bl	WaveshineSDILoad
+bl	SlideOffLoad
+bl	GrabMashOutLoad
+.long -1
+#######################
+SpacieTech:
+bl  LedgetechCounterLoad
+bl	ArmadaShineLoad
+bl	SideBSweetspotLoad
+bl	EscapeSheikLoad
+.long -1
+#######################
+
+SkipLoadList:
+#Get Page Jump Table
+  mflr	r4		#Jump Table Start in r4
+  mulli	r5,REG_Page,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r4,r4,r5		#Gets ASCII Address in r4
+#Get Event Code Pointer
+  mulli	r5,REG_Event,0x4		#Each Pointer is 0x4 Long
+  add	r4,r4,r5		#Get Event's Pointer Address
+  lwz	r5,0x0(r4)		#Get bl Instruction
+  cmpwi r5,-1
+  beq	EventNoExist
+  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
+  add	r3,r4,r5		#Gets Address in r4
+  addi r3,r3,0x4	# skip past blrl lol
 
 Function_Exit:
 	restore
@@ -40,125 +89,6 @@ LegacyEvent:
 .set MenuData_ASCIIStructPointer,0x4
 .set MenuData_OptionMenuMemory,0x8
 .set MenuData_OptionMenuToggled,0x28
-#endregion
-
-#region Init Custom Event
-#################
-## Custom Code ##
-#################
-
-#all registers free
-
-	#1 PLAYER, NO ITEMS, TIME COUNTING UP
-	lwz	r9,0x0(r29)		#get event pointers
-
-	#ZERO OUT p2-p6 STRUCT
-	li	r4,0x0
-	stw	r4,0x18(r9)
-	stw	r4,0x1C(r9)
-	stw	r4,0x20(r9)
-	stw	r4,0x24(r9)
-	stw	r4,0x28(r9)
-
-	#Disable All-Star Flag
-	li	r3,0x0
-	stb	r3,0x0(r9)
-
-	#P1 = Choose Char + Normal Modifiers
-	bl	P1Struct
-	mflr	r3
-	stw	r3,0x14(r9)
-
-	#STORE MATCH SETTINGS
-	load	r3,0x0BB0027C		#HUD and timer behavior
-	stw	r3,0x0(r26)
-	load	r3,0x90800000
-	stw	r3,0x4(r26)		#think functions
-	li	r3,0xFF
-	stb	r3,0xB(r26)		#items to none
-	li	r3,0x0
-	stw	r3,0x10(r26)		#time amount
-
-	#STORE UNLIM STOCKS
-	li	r3,0xFF
-	stb	r3,0x62(r26)		#p1 stocks
-
-	#SET FALL FLAG
-	li	r3,0x0
-	stb	r3,0x6C(r26)
-
-  #SET FFA FLAG
-  li  r3,0
-  stb r3,0x8(r26)
-
-  #Store SSS Stage
-  load	r3,0x80497758
-  lha	r4, 0x001E (r3)
-  sth	r4,0xE(r26)
-
-#Get Event Code
-  bl  SkipPageList
-
-##### Page List #######
-	EventJumpTable
-#######################
-Minigames:
-bl	Eggs
-bl	Multishine
-bl	Reaction
-bl	LedgeStall
-.long -1
-#######################
-GeneralTech:
-bl	TrainingLab
-bl	LCancel
-bl	Ledgedash
-bl	0x0	# wavedash
-bl	ComboTraining
-bl	AttackOnShield
-bl	Reversal
-bl	SDITraining
-bl	Powershield
-bl	Ledgetech
-bl	AmsahTech
-bl	ShieldDrop
-bl	WaveshineSDI
-bl	SlideOff
-bl	GrabMashOut
-.long -1
-#######################
-SpacieTech:
-bl  LedgetechCounter
-bl	ArmadaShine
-bl	SideBSweetspot
-bl	EscapeSheik
-.long -1
-#######################
-
-SkipPageList:
-#Get Page Jump Table
-  mflr	r4		#Jump Table Start in r4
-#Get Current Page
-  lwz r3,MemcardData(r13)
-  lbz r3,CurrentEventPage(r3)
-  mulli	r5,r3,0x4		#Each Pointer is 0x4 Long
-  add	r4,r4,r5		#Get Event's Pointer Address
-  lwz	r5,0x0(r4)		#Get bl Instruction
-  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-  add	r4,r4,r5		#Gets ASCII Address in r4
-#Get Event Code Pointer
-  mulli	r5,r25,0x4		#Each Pointer is 0x4 Long
-  add	r4,r4,r5		#Get Event's Pointer Address
-  lwz	r5,0x0(r4)		#Get bl Instruction
-	cmpwi r5,-1
-	beq	EventNoExist
-  rlwinm	r5,r5,0,6,29		#Mask Bits 6-29 (the offset)
-  add	r4,r4,r5		#Gets ASCII Address in r4
-  mtctr	r4
-  bctr
-
-EventNoExist:
-	b	exit
 #endregion
 
 ###############

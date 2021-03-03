@@ -83,10 +83,10 @@ void Event_Init(GOBJ *gobj)
     //FighterData *cpu_data = cpu->userdata;
 
     // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
+    evco_data = *evco_data_ptr;
 
     // get l-cancel assets
-    event_data->assets = File_GetSymbol(event_vars->event_archive, "wdshData");
+    event_data->assets = File_GetSymbol(evco_data->event_archive, "wdshData");
 
     // create HUD
     Wavedash_Init(event_data);
@@ -423,7 +423,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
                 Text_SetText(event_data->hud.text_succession, 0, "%.2f%", ((float)event_data->wd_succeeded / (float)event_data->wd_attempted) * 100.0);
 
                 // hide tip so bar is unobscured
-                //event_vars->Tip_Destroy();
+                //evco_data->Tip_Destroy();
 
                 // apply HUD animation
                 JOBJ_RemoveAnimAll(hud_jobj);
@@ -670,7 +670,7 @@ void Target_Think(GOBJ *target_gobj)
 {
     JOBJ *target_jobj = target_gobj->hsd_object;
     TargetData *target_data = target_gobj->userdata;
-    WavedashData *event_data = event_vars->event_gobj->userdata;
+    WavedashData *event_data = evco_data->event_gobj->userdata;
 
     // update anim
     JOBJ_AnimAll(target_jobj);
@@ -761,7 +761,7 @@ void Target_Think(GOBJ *target_gobj)
 }
 void Target_ChangeState(GOBJ *target_gobj, int state)
 {
-    WavedashData *event_data = event_vars->event_gobj->userdata;
+    WavedashData *event_data = evco_data->event_gobj->userdata;
     TargetData *target_data = target_gobj->userdata;
     JOBJ *target_jobj = target_gobj->hsd_object;
 
@@ -845,7 +845,7 @@ Tips_Think(WavedashData *event_data, FighterData *hmn_data)
 
                 if (event_data->tip.shield_num >= 3)
                 {
-                    event_vars->Tip_Display(5 * 60, "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after wavedashing.");
+                    evco_data->Tip_Display(5 * 60, "Tip:\nDon't hold the trigger! Quickly \npress and release to prevent \nshielding after wavedashing.");
                     event_data->tip.shield_num = 0;
                 }
             }

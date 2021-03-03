@@ -1,10 +1,6 @@
 #include "../../../m-ex/MexTK/mex.h"
 #include "../../tm.h"
 
-// Function prototypes
-EventDesc *GetEventDesc(int page, int event);
-void EventInit(int page, int eventID, MatchInit *matchData);
-void EventLoad();
 GOBJ *EventMenu_Init(EventDesc *event_desc, EventMenu *start_menu);
 void EventMenu_Think(GOBJ *eventMenu, int pass);
 void EventMenu_COBJThink(GOBJ *gobj);
@@ -25,8 +21,7 @@ void Event_IncTimer(GOBJ *gobj);
 void Test_Think(GOBJ *gobj);
 static EventDesc *static_eventInfo;
 static MenuData *static_menuData;
-static EventVars stc_event_vars;
-static int *eventDataBackup;
+static EventCommonData stc_evco_data;
 
 // Message
 void Message_Init();
