@@ -1,5 +1,3 @@
-#include <stdarg.h>
-
 // Function prototypes
 EventDesc *GetEventDesc(int page, int event);
 void EventInit(int page, int eventID, MatchInit *matchData);

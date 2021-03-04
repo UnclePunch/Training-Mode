@@ -463,7 +463,7 @@ void EventLoad()
     else
     {
         // get legacy onload
-        void *(*Event_GetLegacyCallback)(int page, int event) = 0x804df9b4;
+        void *(*Event_GetLegacyCallback)(int page, int event) = 0x804df9dc;
         void *(*Legacy_OnLoad)() = Event_GetLegacyCallback(page, event);
         Legacy_OnLoad();
     }

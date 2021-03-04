@@ -1294,6 +1294,9 @@ InitSettings:
 .set TM_FrozenToggle,-0x4F8C
 .set TM_GameFrameCounter,-0x49a8
 
+# WARNING
+# this is a mess, i really need to clean this up...
+
 #TM Function
 .set TM_tmFunction,-(10*4)         #offset of rtoc where function pointers are kept, probably temp solution
 .set TM_GetTMVersShort, TM_tmFunction + 0x0
@@ -1305,11 +1308,12 @@ InitSettings:
 .set TM_OnFileLoad, TM_OnStartMelee + 0x4 
 
 #TM ASM Functions
-.set TM_ASMFuncStart, 0x804df9e0 + TM_tmFunction  # right above tm_function
-.set TM_GetLegacyCallback, TM_ASMFuncStart - 0x4
+.set TM_ASMFuncStart, 0x804df9e0 - 0x4  # right above tm_function
+.set TM_GetLegacyCallback, TM_ASMFuncStart - 0x0
 
 #TmDt Data Pointers
 .set TM_Data,TM_tmFunction - 0x4
+.set TM_EvCoData, 0x803d7054  # pointer to stc_evco_data in EvCo.dat 
 
 #Scene Struct
 .set SceneController,0x80479D30
@@ -2109,8 +2113,12 @@ mtlr r0
 
 #Message Display
 .macro Message_Display
+load r12,0x803d7054
+lwz r12,0x0(r12)
+lwz r12, 9 * 4 (r12)
+mtctr r12
 crset 6
-rtocbl r12,TM_MessageDisplay
+bctrl
 .endm
 
 .set MsgData_Text,0x0
