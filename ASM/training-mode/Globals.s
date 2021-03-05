@@ -2115,7 +2115,7 @@ mtlr r0
 .macro Message_Display
 load r12,0x803d7054
 lwz r12,0x0(r12)
-lwz r12, 9 * 4 (r12)
+lwz r12, 8 * 4 (r12)
 mtctr r12
 crset 6
 bctrl
