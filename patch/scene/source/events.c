@@ -952,12 +952,12 @@ static EventDesc Eggs = {
 // L-Cancel Training
 // Match Data
 static EventMatchData Multishine_MatchData = {
-    .timer = MATCH_TIMER_COUNTUP,
+    .timer = MATCH_TIMER_COUNTDOWN,
     .matchType = MATCH_MATCHTYPE_TIME,
     .isDisableMusic = true,
-    .hideGo = true,
-    .hideReady = true,
-    .isCreateHUD = true,
+    .hideGo = false,
+    .hideReady = false,
+    .isCreateHUD = false,
     .isDisablePause = false,
     // byte 0x3
     .timerRunOnPause = false,   // 0x01
@@ -971,11 +971,11 @@ static EventMatchData Multishine_MatchData = {
 
     .isRunStockLogic = false, // 0x20
     .isDisableHit = false,    // 0x20
-    .useKOCounter = false,
+    .useKOCounter = true,
     .playerKind = -1,
     .cpuKind = -1,        // 0xFF=
     .stage = 32,          // 0xFFFF
-    .timerSeconds = 0,    // 0xFFFFFFFF
+    .timerSeconds = 10,   // 0xFFFFFFFF
     .timerSubSeconds = 0, // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
