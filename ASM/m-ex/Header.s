@@ -380,9 +380,11 @@
 #TM
 ## Dedicated ##
 .set TM_FramesinCurrentAS, TM_FighterDataStart + 0x0    #half
-.set TM_ShieldFrames, TM_FramesinCurrentAS + 0x2    #half
+.set TM_FramesinCurrentASWithHitlag, TM_FramesinCurrentAS + 0x2    #half
+.set TM_ShieldFrames, TM_FramesinCurrentASWithHitlag + 0x2    #half
+.set TM_align, TM_ShieldFrames + 0x2    #half
 .set TM_PrevASSlots, 6
-.set TM_PrevASStart, TM_ShieldFrames + 0x2       #halves
+.set TM_PrevASStart, TM_align + 0x2       #halves
   .set CurrentAS,0x10
   .set TM_OneASAgo,TM_PrevASStart+0x0
   .set TM_TwoASAgo,TM_OneASAgo+0x2

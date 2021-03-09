@@ -64,6 +64,7 @@ sth	r4,0x0(r3)
 #lwz	r3,0xC(sp)
 li	r3,0x0
 sth	r3,TM_FramesinCurrentAS(r26)
+sth	r3,TM_FramesinCurrentASWithHitlag(r26)
 
 exit:
 cmplwi	r27, 0

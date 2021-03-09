@@ -7,7 +7,7 @@
 #Don't Run During Hitlag
 lbz	r0, 0x2219 (r31)
 rlwinm.	r0, r0, 30, 31, 31
-bne	exit
+bne	IsHitlag
 
 ########################
 ## Increment AS Frame ##
@@ -47,6 +47,16 @@ addi	r3,r3,0x1
 sth	r3,TM_TangibleFrameCount(r31)
 
 Tangible_End:
+
+IsHitlag:
+
+######################################
+## Increment AS Frame Ignore Hitlag ##
+######################################
+
+lhz	r3,TM_FramesinCurrentASWithHitlag(r31)
+addi	r3,r3,0x1
+sth	r3,TM_FramesinCurrentASWithHitlag(r31)
 
 exit:
 mr	r3, r30

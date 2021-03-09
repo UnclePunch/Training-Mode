@@ -344,8 +344,11 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
     }
 
     // if aerial landing
-    if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame == 0))
+    if (((hmn_data->state_id >= ASID_LANDINGAIRN) && (hmn_data->state_id <= ASID_LANDINGAIRLW)) && (hmn_data->TM.state_frame_hitlag == 0))
     {
+
+        //
+
         // increment total lcls
         event_data->hud.lcl_total++;
 
@@ -833,8 +836,8 @@ void Barrel_Break(GOBJ *barrel_gobj)
     barrel_data->xd0c = 2;
     barrel_data->self_vel.X = 0;
     barrel_data->self_vel.Y = 0;
-    barrel_data->item_var.itemVar1 = 1;
-    barrel_data->item_var.itemVar2 = 40;
+    barrel_data->item_var.var1 = 1;
+    barrel_data->item_var.var2 = 40;
     barrel_data->xdcf3 = 1;
     ItemStateChange(barrel_gobj, 7, 2);
 
