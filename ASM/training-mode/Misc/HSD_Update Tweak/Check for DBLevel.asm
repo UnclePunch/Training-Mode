@@ -12,3 +12,4 @@ branch r12,0x801a4a78
 
 isDebug:
 #Run as normal
+rlwinm	r0, r26, 0, 24, 31
