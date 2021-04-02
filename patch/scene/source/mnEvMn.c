@@ -1054,30 +1054,25 @@ void MTH_Think(GOBJ *gobj)
     if (mth_data.status == MTHSTATUS_PLAY)
     {
 
+        int render_pre_tick = OSGetTick();
+
         // advance MTH logic, load next frame and decode
         MTH_Advance();
 
         // Render Frame
         {
-            // create a dummy cobj
-            //COBJ *cobj = COBJ_LoadDescSetScissor(stc_cobj_desc);
 
-            // set to MTH resolution
-            //CObj_SetOrtho(cobj, 0, mth_header->ySize, 0, mth_header->xSize);
-            //CObj_SetViewport(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
-            //CObj_SetScissor(cobj, 0, mth_header->xSize, 0, mth_header->ySize);
-
-            // render THP frame
+            // decode THP frame
             HSD_StartRender(3);
             if (CObj_SetCurrent(movie_cobj))
             {
-                // render to framebuffer
+                // render to EFB
                 MTH_Render(gobj, 2);
                 CObj_EndCurrent();
             }
 
             // dump EFB to texture
-            HSD_ImageDescCopyFromEFB(&movie_imagedesc, 0, 0, 1);
+            HSD_ImageDescCopyFromEFB(&movie_imagedesc, 0, 0, 0);
 
             // flush cache on image data
             int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
@@ -1091,6 +1086,11 @@ void MTH_Think(GOBJ *gobj)
             // free the cobj, this was causing a memleak
             //CObj_Release(movie_cobj);
         }
+
+        // done saving, output time
+        int render_post_tick = OSGetTick();
+        int save_time = OSTicksToMicroseconds(render_post_tick - render_pre_tick);
+        OSReport("rendered mth frame in %dus\n", save_time);
     }
 
     return;

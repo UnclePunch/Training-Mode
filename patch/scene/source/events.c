@@ -195,6 +195,52 @@ static EventDesc Wavedash = {
     .defaultOSD = 0xFFFFFFFF,
 };
 
+// Meteor Cancel Training
+// Match Data
+static EventMatchData Meteor_MatchData = {
+    .timer = MATCH_TIMER_HIDE,
+    .matchType = MATCH_MATCHTYPE_TIME,
+    .isDisableMusic = false,
+    .hideGo = true,
+    .hideReady = true,
+    .isCreateHUD = false,
+    .isDisablePause = true,
+    // byte 0x3
+    .timerRunOnPause = false,   // 0x01
+    .isHidePauseHUD = true,     // 0x02
+    .isShowLRAStart = true,     // 0x04
+    .isCheckForLRAStart = true, // 0x08
+    .isShowZRetry = false,      // 0x10
+    .isCheckForZRetry = false,  // 0x20
+    .isShowAnalogStick = true,  // 0x40
+    .isShowScore = false,       // 0x80
+
+    .isRunStockLogic = false, // 0x20
+    .isDisableHit = false,    // 0x20
+    .useKOCounter = false,
+    .playerKind = -1,
+    .cpuKind = -1,        // 0xFF=
+    .stage = 32,          // 0xFFFF
+    .timerSeconds = 0,    // 0xFFFFFFFF
+    .timerSubSeconds = 0, // 0xFF
+    .onCheckPause = 0,
+    .onMatchEnd = 0,
+};
+// Event Struct
+static EventDesc Meteor = {
+    .eventName = "Meteor Cancel Training\n",
+    .eventDescription = "Practice timing your wavedash,\na fundamental movement technique.\n",
+    .eventFile = "EvMcl",
+    .isChooseCPU = false,
+    .isSelectStage = false,
+    .use_savestates = false,
+    .disable_hazards = true,
+    .scoreType = 0,
+    .callbackPriority = 15,
+    .matchData = &Meteor_MatchData,
+    .defaultOSD = 0xFFFFFFFF,
+};
+
 // Combo Training
 // Match Data
 static EventMatchData Combo_MatchData = {
@@ -1113,6 +1159,7 @@ static EventDesc *General_Events[] = {
     &LCancel,
     &Ledgedash,
     &Wavedash,
+    &Meteor,
     &Combo,
     &AttackOnShield,
     &Reversal,
