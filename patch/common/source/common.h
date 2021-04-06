@@ -91,6 +91,9 @@ typedef struct DialogueData
 } DialogueData;
 #define DLG_SIS 3
 #define DLG_GXLINK 11
+#define DLG_GXPRI 81
+#define DLG_LINEMAX 3
+#define DLG_CHARMAX 64
 
 // GX stuff
 #define MSG_GXLINK 13

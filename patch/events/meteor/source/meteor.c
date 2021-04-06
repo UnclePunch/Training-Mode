@@ -74,8 +74,9 @@ static EventMenu WdMenu_Main = {
 
 // Dialogue
 static char **Dialogue_Test[] = {
-    "This is one line.",
+    "Hey! It's me Slippy! This is a long line of text.",
     "This is another line.",
+    -1,
 };
 
 // Init Function

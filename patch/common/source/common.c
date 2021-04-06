@@ -1520,7 +1520,7 @@ void Dialogue_Create(char **string_data)
     dialogue_data->string_data = string_data;
 
     // create canvas
-    dialogue_data->canvas = Text_CreateCanvas(DLG_SIS, 0, 14, 15, 0, MSG_GXLINK, MSGTEXT_GXPRI, 19);
+    dialogue_data->canvas = Text_CreateCanvas(DLG_SIS, 0, 14, 15, 0, DLG_GXLINK, DLG_GXPRI, 19);
 
     // static pointer to dialogue gobj
     stc_dialogue = dialogue_gobj;
@@ -1562,11 +1562,6 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
         // check if done scrolling text
         if (display_char_num > dialogue_data->char_num)
         {
-
-            // remove text
-            Text_Destroy(dialogue_data->text);
-            dialogue_data->text = 0;
-
             // change state
             Dialogue_EnterState(dialogue_gobj, DLGSTATE_WAIT);
         }
@@ -1586,15 +1581,18 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             // scale canvas
             text->scale.X = MENU_CANVASSCALE;
             text->scale.Y = MENU_CANVASSCALE;
-            text->trans.X = 0;
-            text->trans.Y = 0;
-            text->trans.Z = MENU_TEXTZ;
-            text->aspect.X = MENU_TITLEASPECT;
+            text->aspect.X = 510;
 
-            bp();
+            // set text position
+            JOBJ *textpos_jobj;
+            Vec3 text_pos;
+            JOBJ_GetChild(dialogue_jobj, &textpos_jobj, 11, -1);
+            JOBJ_GetWorldPosition(textpos_jobj, 0, &text_pos);
+            text->trans.X = text_pos.X + (0 * (dialogue_jobj->scale.X / 4.0));
+            text->trans.Y = (text_pos.Y * -1) + (0 * (dialogue_jobj->scale.Y / 4.0));
 
             // get first X characters
-            char buffer[(MSG_LINEMAX * MSG_CHARMAX) + 1];
+            char buffer[(DLG_LINEMAX * DLG_CHARMAX) + 1];
             char *msg = &buffer;
             {
                 // copy to buffer
@@ -1607,14 +1605,14 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
 
                 // count newlines
                 int line_num = 1;
-                int line_length_arr[TIP_LINEMAX];
+                int line_length_arr[DLG_LINEMAX];
                 char *msg_cursor_prev, *msg_cursor_curr;         // declare char pointers
                 msg_cursor_prev = msg;                           //
                 msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
                 while (msg_cursor_curr != 0)                     // if occurrence found, increment values
                 {
                     // check if exceeds max lines
-                    if (line_num >= TIP_LINEMAX)
+                    if (line_num >= DLG_LINEMAX)
                         assert("TIP_LINEMAX exceeded!");
 
                     // Save information about this line
@@ -1635,11 +1633,11 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
 
                     // check if over char max
                     u8 line_length = line_length_arr[i];
-                    if (line_length > TIP_CHARMAX)
-                        assert("TIP_CHARMAX exceeded!");
+                    if (line_length > DLG_CHARMAX)
+                        assert("DLG_CHARMAX exceeded!");
 
                     // copy char array
-                    char msg_line[TIP_CHARMAX + 1];
+                    char msg_line[DLG_CHARMAX + 1];
                     memcpy(msg_line, msg, line_length);
 
                     // add null terminator
@@ -1666,23 +1664,29 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
     case (DLGSTATE_WAIT):
     {
 
+        HSD_Pad *pad = PadGet(Fighter_GetControllerPort(0), PADGET_ENGINE);
+
         // check for advance input
-        if (1)
+        if (pad->down & HSD_BUTTON_A)
         {
 
             // increment index
             dialogue_data->index++;
 
+            bp();
             // check if another line of dialogue exists
-
-            // if so display it
-            if (0)
+            if (dialogue_data->string_data[dialogue_data->index] != -1)
             {
                 Dialogue_EnterScroll(dialogue_gobj);
             }
             // no more dialogue, exit
             else
             {
+
+                // remove text
+                Text_Destroy(dialogue_data->text);
+                dialogue_data->text = 0;
+
                 // change state
                 Dialogue_EnterState(dialogue_gobj, DLGSTATE_EXIT);
             }
@@ -1727,6 +1731,7 @@ void Dialogue_EnterScroll(GOBJ *dialogue_gobj)
 
     // count characters in the upcoming string
     dialogue_data->char_num = strlen(dialogue_data->string_data[dialogue_data->index]);
+    dialogue_data->scroll_timer = 0;
 
     return;
 }
