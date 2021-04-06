@@ -45,9 +45,7 @@ typedef struct MsgMngrData
 } MsgMngrData;
 
 static float stc_msg_queue_offsets[] = {5.15, 5.15, 5.15, 5.15, 5.15, 5.15, -5.15}; // Y offsets for each message in the queue
-
 static Vec3 stc_msg_queue_general_pos = {-21, 18.5, 0};
-
 static GXColor stc_msg_colors[] = {
     {255, 255, 255, 255},
     {141, 255, 110, 255},
@@ -71,14 +69,43 @@ static GXColor stc_msg_colors[] = {
 #define MSGTEXT_BASEY -1
 #define MSGTEXT_YOFFSET 30
 
+// dialogue stuff
+static GOBJ *stc_dialogue;
+enum DialogueState
+{
+    DLGSTATE_START,  // spawning animation
+    DLGSTATE_SCROLL, // scrolling text
+    DLGSTATE_WAIT,   // wait for input
+    DLGSTATE_EXIT,   // ending animation
+
+};
+typedef struct DialogueData
+{
+    int state;          // box state
+    int index;          // string index currently displaying
+    int canvas;         //
+    char **string_data; // string array for all dialogue
+    int scroll_timer;   // scroll timer
+    Text *text;         // text object pointer
+    int char_num;       // number of characters in the current string
+} DialogueData;
+#define DLG_SIS 3
+#define DLG_GXLINK 11
+
 // GX stuff
 #define MSG_GXLINK 13
 #define MSG_GXPRI 80
 #define MSGTEXT_GXPRI MSG_GXPRI + 1
 #define MSG_COBJLGXLINKS (1 << MSG_GXLINK)
 #define MSG_COBJLGXPRI 8
+
+// misc function declarations
 int Tip_Display(int lifetime, char *fmt, ...);
 void Tip_Destroy(); // 0 = immediately destroy, 1 = force exit
 void Tip_Think(GOBJ *gobj);
+void Dialogue_Create(char **string_data);
+void Dialogue_Think(GOBJ *dialogue_gobj);
+void Dialogue_Destroy(DialogueData *dialogue_data);
+int Dialogue_CheckEnd();
 
 #define TIP_TXTJOINT 2

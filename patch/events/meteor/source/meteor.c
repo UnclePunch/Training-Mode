@@ -72,6 +72,12 @@ static EventMenu WdMenu_Main = {
     .prev = 0,                                                  // pointer to previous menu, used at runtime
 };
 
+// Dialogue
+static char **Dialogue_Test[] = {
+    "This is one line.",
+    "This is another line.",
+};
+
 // Init Function
 void Event_Init(GOBJ *gobj)
 {
@@ -88,6 +94,9 @@ void Event_Init(GOBJ *gobj)
     // init hud
     HUD_Init(gobj);
 
+    // test dialogue
+    evco_data->Dialogue_Display(Dialogue_Test);
+
     return;
 }
 // Think Function
@@ -96,6 +105,10 @@ void Event_Think(GOBJ *event)
 
     //Arrows_Think(event);
     HUD_Think(event);
+
+    // test dialogue
+    if (evco_data->Dialogue_CheckEnd())
+        evco_data->Dialogue_Display(Dialogue_Test);
 
     return;
 }

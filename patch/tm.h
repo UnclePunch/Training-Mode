@@ -40,6 +40,7 @@ typedef struct evMenu
     COBJDesc *hud_cobjdesc;
     JOBJ *tip_jobj;
     void **tip_jointanim; // pointer to array
+    JOBJSet *dialogue;
 } evMenu;
 
 // Structure Definitions
@@ -695,11 +696,13 @@ typedef struct EventCommonData
     int (*Savestate_Save)(Savestate *savestate);                                             // function pointer to save state
     int (*Savestate_Load)(Savestate *savestate);                                             // function pointer to load state
     GOBJ *(*Message_Display)(int msg_kind, int queue_num, int msg_color, char *format, ...); // function pointer to display message
-    int *(*Tip_Display)(int lifetime, char *fmt, ...);
-    void (*Tip_Destroy)();      // function pointer to destroy tip
-    Savestate *savestate;       // points to the events main savestate
-    evFunction evFunction;      // event specific functions
-    ArchiveInfo *event_archive; // event archive header
+    int *(*Tip_Display)(int lifetime, char *fmt, ...);                                       //
+    void (*Tip_Destroy)();                                                                   // function pointer to destroy tip
+    void (*Dialogue_Display)(void *ptr);                                                     //
+    int (*Dialogue_CheckEnd)();                                                              //
+    Savestate *savestate;                                                                    // points to the events main savestate
+    evFunction evFunction;                                                                   // event specific functions
+    ArchiveInfo *event_archive;                                                              // event archive header
     DevText *db_console_text;
 } EventCommonData;
 EventCommonData **evco_data_ptr = 0x803d7054; //R13 + (-0x4730)

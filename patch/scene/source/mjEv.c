@@ -406,7 +406,6 @@ void EventLoad()
     EventDesc *event_desc = GetEventDesc(page, event);
 
     // ensure event has a file
-    bp();
     if (event_desc->eventFile)
     {
 

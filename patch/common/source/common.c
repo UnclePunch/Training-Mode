@@ -17,6 +17,8 @@ static EventCommonData stc_evco_data = {
     .Message_Display = Message_Display,
     .Tip_Display = Tip_Display,
     .Tip_Destroy = Tip_Destroy,
+    .Dialogue_Display = Dialogue_Create,
+    .Dialogue_CheckEnd = Dialogue_CheckEnd,
     .savestate = 0,
 };
 static int *eventDataBackup;
@@ -1499,6 +1501,253 @@ void Tip_Destroy()
     }
 
     return;
+}
+
+// Dialogue Functions
+void Dialogue_Create(char **string_data)
+{
+
+    // create dialogue gobj
+    GOBJ *dialogue_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->dialogue, 0, 0, 7, DLG_GXLINK, 1, 0);
+    DialogueData *dialogue_data = calloc(sizeof(DialogueData));
+    GObj_AddUserData(dialogue_gobj, 4, Dialogue_Destroy, dialogue_data);
+    GObj_AddProc(dialogue_gobj, Dialogue_Think, 18);
+
+    // enter start state
+    Dialogue_EnterState(dialogue_gobj, DLGSTATE_START);
+
+    // init variables
+    dialogue_data->string_data = string_data;
+
+    // create canvas
+    dialogue_data->canvas = Text_CreateCanvas(DLG_SIS, 0, 14, 15, 0, MSG_GXLINK, MSGTEXT_GXPRI, 19);
+
+    // static pointer to dialogue gobj
+    stc_dialogue = dialogue_gobj;
+
+    return;
+}
+void Dialogue_Think(GOBJ *dialogue_gobj)
+{
+
+    // use single player port for inputs
+
+    DialogueData *dialogue_data = dialogue_gobj->userdata;
+    JOBJ *dialogue_jobj = dialogue_gobj->hsd_object;
+
+    // Anim
+    JOBJ_AnimAll(dialogue_jobj);
+
+    // state logic
+    switch (dialogue_data->state)
+    {
+    case (DLGSTATE_START):
+    {
+        // check if anim ended
+        if (JOBJ_CheckAObjEnd(dialogue_jobj) == 0)
+        {
+            Dialogue_EnterScroll(dialogue_gobj);
+        }
+        break;
+    }
+    case (DLGSTATE_SCROLL):
+    {
+
+        // inc timer
+        dialogue_data->scroll_timer++;
+
+        // determine how many characters to display
+        int display_char_num = dialogue_data->scroll_timer / 1;
+
+        // check if done scrolling text
+        if (display_char_num > dialogue_data->char_num)
+        {
+
+            // remove text
+            Text_Destroy(dialogue_data->text);
+            dialogue_data->text = 0;
+
+            // change state
+            Dialogue_EnterState(dialogue_gobj, DLGSTATE_WAIT);
+        }
+        else
+        {
+            // update scroll text
+            if (dialogue_data->text)
+                Text_Destroy(dialogue_data->text);
+
+            Text *text = Text_CreateText(DLG_SIS, dialogue_data->canvas);
+            dialogue_data->text = text;
+
+            // enable align and kerning
+            text->align = 0;
+            text->kerning = 1;
+            text->use_aspect = 1;
+            // scale canvas
+            text->scale.X = MENU_CANVASSCALE;
+            text->scale.Y = MENU_CANVASSCALE;
+            text->trans.X = 0;
+            text->trans.Y = 0;
+            text->trans.Z = MENU_TEXTZ;
+            text->aspect.X = MENU_TITLEASPECT;
+
+            bp();
+
+            // get first X characters
+            char buffer[(MSG_LINEMAX * MSG_CHARMAX) + 1];
+            char *msg = &buffer;
+            {
+                // copy to buffer
+                memcpy(msg, dialogue_data->string_data[dialogue_data->index], display_char_num);
+                msg[display_char_num] = 0;
+            }
+
+            // output text
+            {
+
+                // count newlines
+                int line_num = 1;
+                int line_length_arr[TIP_LINEMAX];
+                char *msg_cursor_prev, *msg_cursor_curr;         // declare char pointers
+                msg_cursor_prev = msg;                           //
+                msg_cursor_curr = strchr(msg_cursor_prev, '\n'); // check for occurrence
+                while (msg_cursor_curr != 0)                     // if occurrence found, increment values
+                {
+                    // check if exceeds max lines
+                    if (line_num >= TIP_LINEMAX)
+                        assert("TIP_LINEMAX exceeded!");
+
+                    // Save information about this line
+                    line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
+                    line_num++;                                                        // increment number of newlines found
+                    msg_cursor_prev = msg_cursor_curr + 1;                             // update prev cursor
+                    msg_cursor_curr = strchr(msg_cursor_prev, '\n');                   // check for another occurrence
+                }
+
+                // get last lines length
+                msg_cursor_curr = strchr(msg_cursor_prev, 0);
+                line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev;
+
+                // copy each line to an individual char array
+                char *msg_cursor = &msg;
+                for (int i = 0; i < line_num; i++)
+                {
+
+                    // check if over char max
+                    u8 line_length = line_length_arr[i];
+                    if (line_length > TIP_CHARMAX)
+                        assert("TIP_CHARMAX exceeded!");
+
+                    // copy char array
+                    char msg_line[TIP_CHARMAX + 1];
+                    memcpy(msg_line, msg, line_length);
+
+                    // add null terminator
+                    msg_line[line_length] = '\0';
+
+                    // increment msg
+                    msg += (line_length + 1); // +1 to skip past newline
+
+                    // print line
+                    int y_delta = (i * MSGTEXT_YOFFSET);
+                    Text_AddSubtext(text, 0, y_delta, msg_line);
+                }
+            }
+
+            // check to skip scroll
+            if (0)
+            {
+                0;
+            }
+        }
+
+        break;
+    }
+    case (DLGSTATE_WAIT):
+    {
+
+        // check for advance input
+        if (1)
+        {
+
+            // increment index
+            dialogue_data->index++;
+
+            // check if another line of dialogue exists
+
+            // if so display it
+            if (0)
+            {
+                Dialogue_EnterScroll(dialogue_gobj);
+            }
+            // no more dialogue, exit
+            else
+            {
+                // change state
+                Dialogue_EnterState(dialogue_gobj, DLGSTATE_EXIT);
+            }
+        }
+
+        break;
+    }
+    case (DLGSTATE_EXIT):
+    {
+        // check if anim ended
+        if (JOBJ_CheckAObjEnd(dialogue_jobj) == 0)
+        {
+            // destroy gobj
+            GObj_Destroy(dialogue_gobj);
+
+            stc_dialogue = 0;
+        }
+
+        break;
+    }
+    }
+
+    return;
+}
+void Dialogue_Destroy(DialogueData *dialogue_data)
+{
+
+    // free entire text canvas
+    Text_DestroySisCanvas(DLG_SIS);
+
+    // free data alloc
+    HSD_Free(dialogue_data);
+
+    return;
+}
+void Dialogue_EnterScroll(GOBJ *dialogue_gobj)
+{
+    DialogueData *dialogue_data = dialogue_gobj->userdata;
+
+    // change state
+    Dialogue_EnterState(dialogue_gobj, DLGSTATE_SCROLL);
+
+    // count characters in the upcoming string
+    dialogue_data->char_num = strlen(dialogue_data->string_data[dialogue_data->index]);
+
+    return;
+}
+void Dialogue_EnterState(GOBJ *dialogue_gobj, int state)
+{
+    DialogueData *dialogue_data = dialogue_gobj->userdata;
+    JOBJ *dialogue_jobj = dialogue_gobj->hsd_object;
+
+    dialogue_data->state = state;
+    JOBJ_AddSetAnim(dialogue_jobj, stc_evco_data.menu_assets->dialogue, state);
+    JOBJ_ReqAnimAll(dialogue_jobj, 0);
+
+    return;
+}
+int Dialogue_CheckEnd()
+{
+
+    if (stc_dialogue)
+        return 0;
+    else
+        return 1;
 }
 
 void EventUpdate()
