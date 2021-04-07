@@ -74,7 +74,7 @@ static EventMenu WdMenu_Main = {
 
 // Dialogue
 static char **Dialogue_Test[] = {
-    "Hey! It's me Slippy! This is a long line of text.\nHere is a newline, cool huh?.\nI can go on forever because this is dynamically allocated!",
+    "Hey! It's me Slippy! This is a long line of text.\nHere is a newline, cool huh?\nI can go on forever because this is dynamically allocated!",
     "This is shorter line.",
     "Okay, time for me to go.\nSee ya later!",
     -1,

@@ -1520,7 +1520,7 @@ void Dialogue_Create(char **string_data)
     dialogue_data->string_data = string_data;
 
     // create canvas
-    dialogue_data->canvas = Text_CreateCanvas(DLG_SIS, 0, 14, 15, 0, DLG_GXLINK, DLG_GXPRI, 19);
+    dialogue_data->canvas = Text_CreateCanvas(DLG_SIS, 1, 14, 15, 0, DLG_GXLINK, DLG_GXPRI, 19);
 
     // static pointer to dialogue gobj
     stc_dialogue = dialogue_gobj;
