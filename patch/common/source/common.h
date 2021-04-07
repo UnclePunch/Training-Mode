@@ -90,7 +90,7 @@ typedef struct DialogueData
     int char_num;       // number of characters in the current string
 } DialogueData;
 #define DLG_SIS 3
-#define DLG_GXLINK 10
+#define DLG_GXLINK 8
 #define DLG_GXPRI 81
 #define DLG_LINEMAX 3
 #define DLG_CHARMAX 64

@@ -1508,7 +1508,8 @@ void Dialogue_Create(char **string_data)
 {
 
     // create dialogue gobj
-    GOBJ *dialogue_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->dialogue, 0, 0, 7, DLG_GXLINK, 1, 0);
+    bp();
+    GOBJ *dialogue_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->dialogue, 0, 0, 0, DLG_GXLINK, 1, 0);
     DialogueData *dialogue_data = calloc(sizeof(DialogueData));
     GObj_AddUserData(dialogue_gobj, 4, Dialogue_Destroy, dialogue_data);
     GObj_AddProc(dialogue_gobj, Dialogue_Think, 18);
@@ -1524,6 +1525,12 @@ void Dialogue_Create(char **string_data)
 
     // static pointer to dialogue gobj
     stc_dialogue = dialogue_gobj;
+
+    // disable inputs
+    GOBJ *hmn_gobj = Fighter_GetGObj(0);
+    FighterData *hmn_data = hmn_gobj->userdata;
+    Fighter_SetSlotType(0, 1);
+    hmn_data->cpu.ai = 0; // noact
 
     return;
 }
@@ -1557,15 +1564,25 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
         dialogue_data->scroll_timer++;
 
         // determine how many characters to display
-        int display_char_num = dialogue_data->scroll_timer / 1;
+        int display_char_num = dialogue_data->scroll_timer * 2;
+        // limit num
+        if (display_char_num > dialogue_data->char_num)
+            display_char_num = dialogue_data->char_num;
+        // update num
+        dialogue_data->text->char_display_num = display_char_num;
+
+        // press A to skip scroll
+        HSD_Pad *pad = PadGet(Fighter_GetControllerPort(0), PADGET_ENGINE);
+        if (pad->down & HSD_BUTTON_A)
+            dialogue_data->text->char_display_num = dialogue_data->char_num + 1;
 
         // check if done scrolling text
-        bp();
         if (dialogue_data->text->char_display_num >= dialogue_data->char_num)
         {
             // change state
             Dialogue_EnterState(dialogue_gobj, DLGSTATE_WAIT);
         }
+
         /*
         else
         {
@@ -1699,6 +1716,11 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             GObj_Destroy(dialogue_gobj);
 
             stc_dialogue = 0;
+
+            // enable inputs
+            GOBJ *hmn_gobj = Fighter_GetGObj(0);
+            FighterData *hmn_data = hmn_gobj->userdata;
+            Fighter_SetSlotType(0, 0);
         }
 
         break;
