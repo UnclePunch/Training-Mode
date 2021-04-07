@@ -428,6 +428,11 @@ void EventLoad()
         ArchiveInfo *archive = MEX_LoadRelArchive(buffer, evFunction, "evFunction");
         evco_data->event_archive = archive;
 
+        // Check to index event file's dialogue data
+        void *sis_dialogue = File_GetSymbol(archive, "SIS_Dialogue");
+        if (sis_dialogue)
+            stc_sis_data[3] = sis_dialogue; // index sis data
+
         // Create this event's gobj
         // TODO: add logic for legacy function
         int pri = event_desc->callbackPriority;

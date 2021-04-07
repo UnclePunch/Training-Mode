@@ -1560,11 +1560,13 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
         int display_char_num = dialogue_data->scroll_timer / 1;
 
         // check if done scrolling text
-        if (display_char_num > dialogue_data->char_num)
+        bp();
+        if (dialogue_data->text->char_display_num >= dialogue_data->char_num)
         {
             // change state
             Dialogue_EnterState(dialogue_gobj, DLGSTATE_WAIT);
         }
+        /*
         else
         {
             // update scroll text
@@ -1592,13 +1594,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             text->trans.Y = (text_pos.Y * -1) + (0 * (dialogue_jobj->scale.Y / 4.0));
 
             // get first X characters
-            char buffer[(DLG_LINEMAX * DLG_CHARMAX) + 1];
-            char *msg = &buffer;
-            {
-                // copy to buffer
-                memcpy(msg, dialogue_data->string_data[dialogue_data->index], display_char_num);
-                msg[display_char_num] = 0;
-            }
+            char *msg = dialogue_data->string_data[dialogue_data->index];
 
             // output text
             {
@@ -1613,7 +1609,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                 {
                     // check if exceeds max lines
                     if (line_num >= DLG_LINEMAX)
-                        assert("TIP_LINEMAX exceeded!");
+                        assert("DLG_LINEMAX exceeded!");
 
                     // Save information about this line
                     line_length_arr[line_num - 1] = msg_cursor_curr - msg_cursor_prev; // determine length of the line
@@ -1658,7 +1654,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                 0;
             }
         }
-
+        */
         break;
     }
     case (DLGSTATE_WAIT):
@@ -1673,12 +1669,12 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             // increment index
             dialogue_data->index++;
 
-            bp();
             // check if another line of dialogue exists
             if (dialogue_data->string_data[dialogue_data->index] != -1)
             {
                 Dialogue_EnterScroll(dialogue_gobj);
             }
+
             // no more dialogue, exit
             else
             {
@@ -1725,6 +1721,14 @@ void Dialogue_Destroy(DialogueData *dialogue_data)
 void Dialogue_EnterScroll(GOBJ *dialogue_gobj)
 {
     DialogueData *dialogue_data = dialogue_gobj->userdata;
+    JOBJ *dialogue_jobj = dialogue_gobj->hsd_object;
+
+    // remove old text if exists text
+    if (dialogue_data->text)
+    {
+        Text_Destroy(dialogue_data->text);
+        dialogue_data->text = 0;
+    }
 
     // change state
     Dialogue_EnterState(dialogue_gobj, DLGSTATE_SCROLL);
@@ -1732,6 +1736,39 @@ void Dialogue_EnterScroll(GOBJ *dialogue_gobj)
     // count characters in the upcoming string
     dialogue_data->char_num = strlen(dialogue_data->string_data[dialogue_data->index]);
     dialogue_data->scroll_timer = 0;
+
+    // get text position
+    JOBJ *textpos_jobj;
+    Vec3 text_pos;
+    JOBJ_GetChild(dialogue_jobj, &textpos_jobj, 11, -1);
+    JOBJ_GetWorldPosition(textpos_jobj, 0, &text_pos);
+    float pos_x = text_pos.X + (0 * (dialogue_jobj->scale.X / 4.0));
+    float pos_y = (text_pos.Y * -1) + (0 * (dialogue_jobj->scale.Y / 4.0));
+
+    // create text
+    Text *text = Text_CreateText2(DLG_SIS, dialogue_data->canvas, pos_x, pos_y, 0, 650, 96);
+    dialogue_data->text = text;
+
+    // scale canvas
+    text->scale.X = 0.04;
+    text->scale.Y = 0.06;
+
+    // init text variables
+    Text_SetSisText(text, 0);
+
+    // convert string to menu text
+    static u8 text_header[] = {0x01, 0x06, 0x00, 0x01, 0x00, 0x00, 0x18, 0x16};
+    static u8 text_terminator[] = {0x17, 0x05, 0x64, 0x19, 0x00};
+    char *orig_string = dialogue_data->string_data[dialogue_data->index];
+    int length = strlen(orig_string);
+    u8 *text_alloc = Text_Alloc(length * 3 + sizeof(text_header) + sizeof(text_terminator));
+    // build text data
+    memcpy(text_alloc, &text_header, sizeof(text_header));                                                // copy header data
+    int converted_size = Text_ConvertToMenuText(text_alloc + sizeof(text_header), orig_string);           // convert string to text data
+    memcpy(text_alloc + sizeof(text_header) + converted_size, &text_terminator, sizeof(text_terminator)); // copy ternimator data
+    text->text_start = text_alloc;
+
+    // try setting the text to init scroll with opcode 01, running the gxlink to init it, then disable the scroll flag in the text struct
 
     return;
 }

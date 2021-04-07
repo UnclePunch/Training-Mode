@@ -74,8 +74,9 @@ static EventMenu WdMenu_Main = {
 
 // Dialogue
 static char **Dialogue_Test[] = {
-    "Hey! It's me Slippy! This is a long line of text.",
-    "This is another line.",
+    "Hey! It's me Slippy! This is a long line of text.\nHere is a newline, cool huh?.\nI can go on forever because this is dynamically allocated!",
+    "This is shorter line.",
+    "Okay, time for me to go.\nSee ya later!",
     -1,
 };
 
@@ -95,20 +96,20 @@ void Event_Init(GOBJ *gobj)
     // init hud
     HUD_Init(gobj);
 
-    // test dialogue
-    evco_data->Dialogue_Display(Dialogue_Test);
-
     return;
 }
 // Think Function
 void Event_Think(GOBJ *event)
 {
 
+    GOBJ *hmn_gobj = Fighter_GetGObj(0);
+    FighterData *hmn_data = hmn_gobj->userdata;
+
     //Arrows_Think(event);
     HUD_Think(event);
 
     // test dialogue
-    if (evco_data->Dialogue_CheckEnd())
+    if ((hmn_data->input.down & PAD_BUTTON_DPAD_DOWN) && (evco_data->Dialogue_CheckEnd()))
         evco_data->Dialogue_Display(Dialogue_Test);
 
     return;
