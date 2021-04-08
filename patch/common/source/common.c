@@ -1508,13 +1508,13 @@ void Dialogue_Create(char **string_data)
 {
 
     // create dialogue gobj
-    bp();
     GOBJ *dialogue_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->dialogue, 0, 0, 0, DLG_GXLINK, 1, 0);
     DialogueData *dialogue_data = calloc(sizeof(DialogueData));
     GObj_AddUserData(dialogue_gobj, 4, Dialogue_Destroy, dialogue_data);
     GObj_AddProc(dialogue_gobj, Dialogue_Think, 18);
 
     // enter start state
+    SFX_Play(560000);
     Dialogue_EnterState(dialogue_gobj, DLGSTATE_START);
 
     // init variables
@@ -1560,16 +1560,48 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
     case (DLGSTATE_SCROLL):
     {
 
-        // inc timer
-        dialogue_data->scroll_timer++;
+        // check to delay
+        if (dialogue_data->delay_timer > 0)
+            dialogue_data->delay_timer--;
+        else
+        {
+
+            // inc timer
+            dialogue_data->scroll_timer++;
+
+            // check to play sfx every X frames
+            if ((int)(dialogue_data->scroll_timer % DLG_CHARPERSFX) == 0)
+                SFX_Play(560002);
+
+            // check for delay char every X frames
+            if (dialogue_data->scroll_timer % (int)(1 / DLG_CHARPERSEC) == 0)
+            {
+                // check if next character is a delay character
+                static char *delay_chars[] = {',', '.', '!', '>'};
+                if ((int)(dialogue_data->scroll_timer * DLG_CHARPERSEC) > 0)
+                {
+                    char next_char = dialogue_data->string_data[dialogue_data->index][(int)(dialogue_data->scroll_timer * DLG_CHARPERSEC) - 1];
+                    for (int i = 0; i < sizeof(delay_chars); i++)
+                    {
+                        if (next_char == delay_chars[i])
+                        {
+                            dialogue_data->delay_timer = 10;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         // determine how many characters to display
-        int display_char_num = dialogue_data->scroll_timer * 2;
+        int display_char_num = (int)(dialogue_data->scroll_timer * DLG_CHARPERSEC);
         // limit num
         if (display_char_num > dialogue_data->char_num)
             display_char_num = dialogue_data->char_num;
         // update num
-        dialogue_data->text->char_display_num = display_char_num;
+        if (display_char_num > 0)
+            display_char_num--; // gx cb adds 1, this is a hack to make it be what we want
+        dialogue_data->text->char_display_num = (display_char_num);
 
         // press A to skip scroll
         HSD_Pad *pad = PadGet(Fighter_GetControllerPort(0), PADGET_ENGINE);
@@ -1577,7 +1609,8 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             dialogue_data->text->char_display_num = dialogue_data->char_num + 1;
 
         // check if done scrolling text
-        if (dialogue_data->text->char_display_num >= dialogue_data->char_num)
+        bp();
+        if ((dialogue_data->text->char_display_num + 1) >= (dialogue_data->char_num))
         {
             // change state
             Dialogue_EnterState(dialogue_gobj, DLGSTATE_WAIT);
@@ -1701,6 +1734,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                 dialogue_data->text = 0;
 
                 // change state
+                SFX_Play(560001);
                 Dialogue_EnterState(dialogue_gobj, DLGSTATE_EXIT);
             }
         }
@@ -1758,6 +1792,7 @@ void Dialogue_EnterScroll(GOBJ *dialogue_gobj)
     // count characters in the upcoming string
     dialogue_data->char_num = strlen(dialogue_data->string_data[dialogue_data->index]);
     dialogue_data->scroll_timer = 0;
+    dialogue_data->delay_timer = 0;
 
     // get text position
     JOBJ *textpos_jobj;

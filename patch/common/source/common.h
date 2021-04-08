@@ -86,6 +86,7 @@ typedef struct DialogueData
     int canvas;         //
     char **string_data; // string array for all dialogue
     int scroll_timer;   // scroll timer
+    int delay_timer;    // delay timer to not scroll
     Text *text;         // text object pointer
     int char_num;       // number of characters in the current string
 } DialogueData;
@@ -94,6 +95,8 @@ typedef struct DialogueData
 #define DLG_GXPRI 81
 #define DLG_LINEMAX 3
 #define DLG_CHARMAX 64
+#define DLG_CHARPERSEC 0.5 // display 1 char every 2 seconds
+#define DLG_CHARPERSFX 4   // every 4 chars play sfx
 
 // GX stuff
 #define MSG_GXLINK 13

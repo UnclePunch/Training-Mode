@@ -414,10 +414,14 @@ void EventLoad()
         ArchiveInfo *evco_archive = MEX_LoadRelArchive("TM/EvCo.dat", &evcoFunction, "evcoFunction");
         evcoFunction.OnLoad(evco_archive); // execute onload function
         evco_data = *evco_data_ptr;        // get event common data pointer
-
         // init evFunction
         evFunction *evFunction = &evco_data->evFunction;
         memset(evFunction, 0, sizeof(*evFunction)); // clear evFunction
+
+        // load evcommon.ssm
+        Audio_RequestSSMLoad(56);
+        Audio_UpdateCache();
+        Audio_SyncLoadAll();
 
         // append extension
         static char *extension = "TM/%s.dat";

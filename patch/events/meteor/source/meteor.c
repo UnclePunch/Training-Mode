@@ -74,8 +74,11 @@ static EventMenu WdMenu_Main = {
 
 // Dialogue
 static char **Dialogue_Test[] = {
-    "Hey! It's me Slippy! This is a long line of text.\nHere is a newline, cool huh?\nI can go on forever because this is dynamically allocated!",
-    "This is shorter line.",
+    "Hi, I'm Yaru! I'm here to\nhelp you train!",
+    "Melee has 2 types of spikes,\nmeteor spikes and true spikes.",
+    "A true spike is a spike\nthat sends you down and diagonal.",
+    "A meteor spike is a spike\nthat sends you straight down.",
+    "If you find yourself being meteor spiked,\nyou can cancel it and get a second chance!",
     "Okay, time for me to go.\nSee ya later!",
     -1,
 };
