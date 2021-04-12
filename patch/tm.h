@@ -2,7 +2,7 @@
 
 #define TM_VERSSHORT "TM v3.0-a8"
 #define TM_VERSLONG "Training Mode v3.0 Alpha 8"
-#define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
+#define TM_DEBUG 1 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_DATA -(10 * 4)
 #define MENU_MAXOPTION 9
@@ -26,6 +26,9 @@
 #if TM_DEBUG == 2
 #define OSReport TMLOG
 #endif
+
+// typedef
+typedef struct DlgScnTest DlgScnTest;
 
 // Custom File Structs
 typedef struct evMenu
@@ -700,6 +703,7 @@ typedef struct EventCommonData
     void (*Tip_Destroy)();                                                                   // function pointer to destroy tip
     void (*Dialogue_Display)(void *ptr);                                                     //
     int (*Dialogue_CheckEnd)();                                                              //
+    void (*Scenario_Exec)(DlgScnTest *scn);                                                  //
     Savestate *savestate;                                                                    // points to the events main savestate
     evFunction evFunction;                                                                   // event specific functions
     ArchiveInfo *event_archive;                                                              // event archive header
@@ -769,6 +773,194 @@ typedef struct TipMgr
     int state;    // state this tip is in. 0 = in, 1 = wait, 2 = out
     int lifetime; // tips time spent onscreen
 } TipMgr;
+
+// dialogue scenario stuff
+enum DlgScn
+{
+    DLGSCN_END,
+    DLGSCN_TEXT,
+    DLGSCN_FREEZE,
+    DLGSCN_UNFREEZE,
+    DLGSCN_MOVE,
+    DLGSCN_WAITFRAME,
+    DLGSCN_WAITTEXT,
+    DLGSCN_ENTERSTATE,
+    DLGSCN_INPUTS,
+    DLGSCN_CAMNORMAL,
+    DLGSCN_CAMZOOM,
+    DLGSCN_CAMCORRECT,
+};
+enum DlgScnStates
+{
+    DLGSCNSTATES_REBIRTHWAIT,
+    DLGSCNSTATES_SLEEP,
+};
+struct DlgScnTest
+{
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x0;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x4;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x8;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } xc;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x10;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x14;
+};
+typedef struct DlgScnText
+{
+    int kind;
+    char **text;
+    int disable_inputs;
+} DlgScnText;
+typedef struct DlgScnFreeze
+{
+    int kind;
+    void *x4;
+    void *x8;
+    void *xc;
+    void *x10;
+    void *x14;
+} DlgScnFreeze;
+typedef struct DlgScnUnfreeze
+{
+    int kind;
+    void *x4;
+    void *x8;
+    void *xc;
+    void *x10;
+    void *x14;
+} DlgScnUnfreeze;
+typedef struct DlgScnMove
+{
+    int kind;
+    int ft_index;
+    Vec2 pos;
+    float facing_direction;
+    int check_ground;
+} DlgScnMove;
+typedef struct DlgScnWaitFrame
+{
+    int kind;
+    int frames;
+} DlgScnWaitFrame;
+typedef struct DlgScnWaitText
+{
+    int kind;
+} DlgScnWaitText;
+typedef struct DlgScnEnterState
+{
+    int kind;
+    int ft_index;
+    int state;
+} DlgScnEnterState;
+typedef struct DlgScnPlayInputs
+{
+    int kind;
+    int ft_index;
+    void *inputs;
+} DlgScnPlayInputs;
+typedef struct DlgScnCamNormal
+{
+    int kind;
+} DlgScnCamNormal;
+typedef struct DlgScnCamZoom
+{
+    int kind;
+    int ft_index;
+} DlgScnCamZoom;
+typedef struct DlgScnCamCorrect
+{
+    int kind;
+} DlgScnCamCorrect;
+#define DlgScnEnd()         \
+    {                       \
+        .x0.i = DLGSCN_END, \
+    }
+#define DlgScnText(text, disable_inputs) \
+    {                                    \
+        .x0.i = DLGSCN_TEXT,             \
+        .x4.ptr = Dialogue_Test,         \
+        .x8.i = disable_inputs,          \
+    }
+#define DlgScnFreeze(text)     \
+    {                          \
+        .x0.i = DLGSCN_FREEZE, \
+    }
+#define DlgScnUnfreeze(text)     \
+    {                            \
+        .x0.i = DLGSCN_UNFREEZE, \
+    }
+#define DlgScnMove(ft_index, x, y, facing, check_ground) \
+    {                                                    \
+        .x0.i = DLGSCN_MOVE,                             \
+        .x4.i = ft_index,                                \
+        .x8.f = x,                                       \
+        .xc.f = y,                                       \
+        .x10.f = facing,                                 \
+        .x14.i = check_ground,                           \
+    }
+#define DlgScnWaitFrame(frames)   \
+    {                             \
+        .x0.i = DLGSCN_WAITFRAME, \
+        .x4.i = frames,           \
+    }
+#define DlgScnWaitText(frames)   \
+    {                            \
+        .x0.i = DLGSCN_WAITTEXT, \
+    }
+#define DlgScnEnterState(ft_index, state) \
+    {                                     \
+        .x0.i = DLGSCN_ENTERSTATE,        \
+        .x4.i = ft_index,                 \
+        .x8.i = state,                    \
+    }
+#define DlgScnPlayInputs(ft_index, inputs) \
+    {                                      \
+        .x0.i = DLGSCN_INPUTS,             \
+        .x4.i = ft_index,                  \
+        .x8.ptr = inputs,                  \
+    }
+#define DlgScnCamNormal()         \
+    {                             \
+        .x0.i = DLGSCN_CAMNORMAL, \
+    }
+#define DlgScnCamZoom(ft_index) \
+    {                           \
+        .x0.i = DLGSCN_CAMZOOM, \
+        .x4.i = ft_index,       \
+    }
+#define DlgScnCamCorrect(ft_index) \
+    {                              \
+        .x0.i = DLGSCN_CAMCORRECT, \
+    }
 
 // INCOMING BUNCH OF MENU CONSTANTS
 // pretty gross but some events need to use the same

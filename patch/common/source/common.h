@@ -71,13 +71,13 @@ static GXColor stc_msg_colors[] = {
 
 // dialogue stuff
 static GOBJ *stc_dialogue;
+static GOBJ *stc_scenario;
 enum DialogueState
 {
     DLGSTATE_START,  // spawning animation
     DLGSTATE_SCROLL, // scrolling text
     DLGSTATE_WAIT,   // wait for input
     DLGSTATE_EXIT,   // ending animation
-
 };
 typedef struct DialogueData
 {
@@ -90,6 +90,11 @@ typedef struct DialogueData
     Text *text;         // text object pointer
     int char_num;       // number of characters in the current string
 } DialogueData;
+typedef struct ScenarioData
+{
+    void *cur; // current script
+    int timer; // wait timer
+} ScenarioData;
 #define DLG_SIS 3
 #define DLG_GXLINK 8
 #define DLG_GXPRI 81
@@ -97,6 +102,7 @@ typedef struct DialogueData
 #define DLG_CHARMAX 64
 #define DLG_CHARPERSEC 0.5 // display 1 char every 2 seconds
 #define DLG_CHARPERSFX 4   // every 4 chars play sfx
+#define TIP_TXTJOINT 2
 
 // GX stuff
 #define MSG_GXLINK 13
@@ -113,5 +119,7 @@ void Dialogue_Create(char **string_data);
 void Dialogue_Think(GOBJ *dialogue_gobj);
 void Dialogue_Destroy(DialogueData *dialogue_data);
 int Dialogue_CheckEnd();
-
-#define TIP_TXTJOINT 2
+void Scenario_Think(GOBJ *gobj);
+void Scenario_Exec(DlgScnTest *scn);
+void RebirthWait_Phys(GOBJ *fighter);
+int RebirthWait_IASA(GOBJ *fighter);

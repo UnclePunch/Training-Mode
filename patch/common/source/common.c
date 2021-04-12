@@ -19,6 +19,7 @@ static EventCommonData stc_evco_data = {
     .Tip_Destroy = Tip_Destroy,
     .Dialogue_Display = Dialogue_Create,
     .Dialogue_CheckEnd = Dialogue_CheckEnd,
+    .Scenario_Exec = Scenario_Exec,
     .savestate = 0,
 };
 static int *eventDataBackup;
@@ -57,6 +58,7 @@ void OnLoad(ArchiveInfo *archive)
 
     Message_Init();
     Tip_Init();
+    Scenario_Init();
 
     return;
 }
@@ -1504,8 +1506,309 @@ void Tip_Destroy()
 }
 
 // Dialogue Functions
+void Scenario_Init()
+{
+    GOBJ *scenario_gobj = GObj_Create(0, 0, 0);
+    ScenarioData *scenario_data = calloc(sizeof(ScenarioData));
+    GObj_AddUserData(scenario_gobj, 4, HSD_Free, scenario_data);
+    GObj_AddProc(scenario_gobj, Scenario_Think, 18);
+
+    stc_scenario = scenario_gobj;
+
+    return;
+}
+void Scenario_Think(GOBJ *gobj)
+{
+    ScenarioData *scn_data = gobj->userdata;
+
+    // if script exists
+    if (scn_data->cur)
+    {
+
+        // wait a frame if timer is set
+        if (scn_data->timer > 0)
+            scn_data->timer--;
+
+        // update script
+        else
+        {
+
+            DlgScnTest *script = scn_data->cur;
+            int command_kind = script->x0.i;
+
+            while (1)
+            {
+
+                switch (command_kind)
+                {
+                case (DLGSCN_END):
+                {
+                    scn_data->cur = 0;
+                    goto EXIT;
+                    break;
+                }
+                case (DLGSCN_TEXT):
+                {
+                    DlgScnText *text = script;
+
+                    // disable inputs
+                    if (text->disable_inputs == 1)
+                    {
+                        GOBJ *hmn_gobj = Fighter_GetGObj(0);
+                        FighterData *hmn_data = hmn_gobj->userdata;
+                        Fighter_InitInputs(hmn_gobj); // disables and clears inputs
+                        //Fighter_SetSlotType(0, 1);
+                        //hmn_data->cpu.ai = 0; // noact
+                    }
+
+                    Dialogue_Create(text->text);
+
+                    break;
+                }
+                case (DLGSCN_FREEZE):
+                {
+                    DlgScnFreeze *freeze = script;
+
+                    Match_FreezeGame(1);
+
+                    break;
+                }
+                case (DLGSCN_UNFREEZE):
+                {
+
+                    DlgScnUnfreeze *unfreeze = script;
+
+                    Match_UnfreezeGame(1);
+
+                    break;
+                }
+                case (DLGSCN_MOVE):
+                {
+
+                    DlgScnMove *move = script;
+                    GOBJ *this_fighter = Fighter_GetGObj(move->ft_index);
+                    FighterData *this_fighter_data = this_fighter->userdata;
+
+                    // Sleep first
+                    Fighter_EnterSleep(this_fighter, 0);
+                    Fighter_EnterRebirth(this_fighter);
+
+                    // place CPU here
+                    this_fighter_data->phys.pos.X = move->pos.X;
+                    this_fighter_data->phys.pos.Y = move->pos.Y;
+                    this_fighter_data->phys.pos.Z = 0;
+
+                    // facing player
+                    this_fighter_data->facing_direction = move->facing_direction;
+
+                    // grounded logic
+                    int is_ground = 0;
+                    if (move->check_ground)
+                    {
+
+                        // check for ground below fighter
+                        Vec3 coll_pos;
+                        int line_index;
+                        int line_kind;
+                        Vec3 line_unk;
+                        float fromX = (this_fighter_data->phys.pos.X);
+                        float toX = fromX;
+                        float fromY = (this_fighter_data->phys.pos.Y + 7);
+                        float toY = (this_fighter_data->phys.pos.Y - 7);
+                        is_ground = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+                        if (is_ground == 1)
+                        {
+
+                            // place them here
+                            this_fighter_data->phys.pos = coll_pos;
+                            this_fighter_data->coll_data.ground_index = line_index;
+
+                            // set grounded
+                            this_fighter_data->phys.air_state = 0;
+
+                            // enter wait
+                            ActionStateChange(0, 1, -1, this_fighter, ASID_WAIT, 0, 0);
+                        }
+                    }
+
+                    // airborne logic
+                    if (is_ground == 0)
+                    {
+                        // set airborne
+                        this_fighter_data->phys.air_state = 0;
+
+                        // enter fall
+                        ActionStateChange(0, 1, -1, this_fighter, ASID_FALL, 0, 0);
+                    }
+
+                    // generic logic
+                    {
+                        // kill velocity
+                        Fighter_KillAllVelocity(this_fighter);
+
+                        // update ECB
+                        this_fighter_data->coll_data.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
+                        Coll_ECBCurrToPrev(&this_fighter_data->coll_data);
+                        this_fighter_data->cb.Coll(this_fighter);
+
+                        // update camera box
+                        JOBJ_SetMtxDirtySub(this_fighter->hsd_object);
+                        Fighter_UpdateCameraBox(this_fighter);
+                        this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
+                        this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
+                        Match_CorrectCamera();
+
+                        // init CPU logic (for nana's popo position history...)
+                        int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
+                        int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
+                        Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
+
+                        // place subfighter in the Z axis
+                        if (this_fighter_data->flags.ms == 1)
+                        {
+                            ftCommonData *ft_common = *stc_ftcommon;
+                            this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+                        }
+                    }
+
+                    break;
+                }
+                case (DLGSCN_WAITFRAME):
+                {
+
+                    DlgScnWaitFrame *wait = script;
+                    scn_data->timer = wait->frames;
+
+                    // get next
+                    script = &script[1];    // get next command
+                    scn_data->cur = script; // update cur ptr
+
+                    goto EXIT;
+                    break;
+                }
+                case (DLGSCN_WAITTEXT):
+                {
+
+                    DlgScnWaitText *wait = script;
+
+                    // is dialogue finished?
+                    if (Dialogue_CheckEnd())
+                        break;
+                    else
+                        goto EXIT;
+                }
+                case (DLGSCN_ENTERSTATE):
+                {
+                    DlgScnEnterState *state = script;
+                    GOBJ *this_fighter = Fighter_GetGObj(state->ft_index);
+                    FighterData *this_fighter_data = this_fighter->userdata;
+
+                    switch (state->state)
+                    {
+                    case (DLGSCNSTATES_REBIRTHWAIT):
+                    {
+
+                        // create respawn platform model
+                        void ***respawn_desc = (R13 + -0x516C);
+                        JOBJ *respawn_jobj = JOBJ_LoadJoint(**respawn_desc);
+                        this_fighter_data->accessory = respawn_jobj;
+                        respawn_jobj->scale.X *= this_fighter_data->attr.respawn_platform_scale;
+                        respawn_jobj->scale.Y *= this_fighter_data->attr.respawn_platform_scale;
+                        respawn_jobj->scale.Z *= this_fighter_data->attr.respawn_platform_scale;
+                        // anim model
+                        void **anim = *respawn_desc;
+                        JOBJ_AddAnimAll(respawn_jobj, anim[1], 0, 0);
+                        JOBJ_ReqAnimAll(respawn_jobj, 0);
+                        // colanim
+                        Fighter_ApplyColAnim(this_fighter_data, 10, 0);
+
+                        this_fighter_data->phys.air_state = 1;
+                        ActionStateChange(0, 1, -1, this_fighter, ASID_REBIRTHWAIT, 0xb002, 0);
+                        this_fighter_data->cb.Accessory1 = Fighter_UpdateRebirthPlatformPos;
+                        this_fighter_data->cb.Phys = RebirthWait_Phys;
+                        this_fighter_data->cb.IASA = RebirthWait_IASA;
+                        Fighter_UpdateRebirthPlatformPos(this_fighter);
+
+                        break;
+                    }
+                    case (DLGSCNSTATES_SLEEP):
+                    {
+
+                        Fighter_EnterSleep(this_fighter, 0);
+
+                        break;
+                    }
+                    }
+
+                    Match_CorrectCamera();
+
+                    break;
+                }
+                case (DLGSCN_INPUTS):
+                {
+
+                    DlgScnPlayInputs *inputs = script;
+
+                    break;
+                }
+                case (DLGSCN_CAMNORMAL):
+                {
+
+                    DlgScnCamNormal *cam = script;
+
+                    Match_SetNormalCamera();
+
+                    break;
+                }
+                case (DLGSCN_CAMZOOM):
+                {
+
+                    DlgScnCamZoom *cam = script;
+
+                    Match_SetFreeCamera(cam->ft_index, 3);
+                    stc_matchcam->freecam_fov.X = 140;
+                    stc_matchcam->freecam_rotate.Y = 10;
+
+                    break;
+                }
+                case (DLGSCN_CAMCORRECT):
+                {
+
+                    Match_CorrectCamera();
+
+                    break;
+                }
+                }
+
+                // get next
+                script = &script[1];         // get next command
+                scn_data->cur = script;      // update cur ptr
+                command_kind = script->x0.i; // get next command opcode
+            }
+
+        EXIT:;
+        }
+    }
+    return;
+}
+void Scenario_Exec(DlgScnTest *scn)
+{
+    ScenarioData *scn_data = stc_scenario->userdata;
+
+    scn_data->cur = scn;
+    scn_data->timer = 0;
+
+    return;
+}
 void Dialogue_Create(char **string_data)
 {
+
+    // check if a dialogue box exists already
+    if (stc_dialogue)
+    {
+        GObj_Destroy(stc_dialogue);
+        stc_dialogue = 0;
+    }
 
     // create dialogue gobj
     GOBJ *dialogue_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->dialogue, 0, 0, 0, DLG_GXLINK, 1, 0);
@@ -1525,12 +1828,6 @@ void Dialogue_Create(char **string_data)
 
     // static pointer to dialogue gobj
     stc_dialogue = dialogue_gobj;
-
-    // disable inputs
-    GOBJ *hmn_gobj = Fighter_GetGObj(0);
-    FighterData *hmn_data = hmn_gobj->userdata;
-    Fighter_SetSlotType(0, 1);
-    hmn_data->cpu.ai = 0; // noact
 
     return;
 }
@@ -1609,7 +1906,6 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             dialogue_data->text->char_display_num = dialogue_data->char_num + 1;
 
         // check if done scrolling text
-        bp();
         if ((dialogue_data->text->char_display_num + 1) >= (dialogue_data->char_num))
         {
             // change state
@@ -1745,17 +2041,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
     {
         // check if anim ended
         if (JOBJ_CheckAObjEnd(dialogue_jobj) == 0)
-        {
-            // destroy gobj
-            GObj_Destroy(dialogue_gobj);
-
-            stc_dialogue = 0;
-
-            // enable inputs
-            GOBJ *hmn_gobj = Fighter_GetGObj(0);
-            FighterData *hmn_data = hmn_gobj->userdata;
-            Fighter_SetSlotType(0, 0);
-        }
+            GObj_Destroy(dialogue_gobj); // destroy gobj
 
         break;
     }
@@ -1771,6 +2057,14 @@ void Dialogue_Destroy(DialogueData *dialogue_data)
 
     // free data alloc
     HSD_Free(dialogue_data);
+
+    stc_dialogue = 0;
+
+    // enable inputs
+    GOBJ *hmn_gobj = Fighter_GetGObj(0);
+    FighterData *hmn_data = hmn_gobj->userdata;
+    hmn_data->flags.x221d_5 = 0;
+    //Fighter_SetSlotType(0, 0);
 
     return;
 }
@@ -1847,6 +2141,41 @@ int Dialogue_CheckEnd()
         return 0;
     else
         return 1;
+}
+void RebirthWait_Phys(GOBJ *fighter)
+{
+
+    FighterData *fighter_data = fighter->userdata;
+
+    // infinite time
+    fighter_data->state_var.state_var1 = 2;
+
+    return;
+}
+int RebirthWait_IASA(GOBJ *fighter)
+{
+
+    FighterData *fighter_data = fighter->userdata;
+
+    if (Fighter_IASACheck_JumpAerial(fighter))
+    {
+    }
+    else
+    {
+        ftCommonData *ftcommon = *stc_ftcommon;
+
+        // check for lstick movement
+        float stick_x = fabs(fighter_data->input.lstick.X);
+        float stick_y = fighter_data->input.lstick.Y;
+        if ((stick_x > 0.2875) && (fighter_data->input.timer_lstick_tilt_x < 2) ||
+            (stick_y < (ftcommon->lstick_rebirthfall * -1)) && (fighter_data->input.timer_lstick_tilt_y < 4))
+        {
+            Fighter_EnterFall(fighter);
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 void EventUpdate()

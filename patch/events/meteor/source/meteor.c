@@ -74,13 +74,23 @@ static EventMenu WdMenu_Main = {
 
 // Dialogue
 static char **Dialogue_Test[] = {
-    "Hi, I'm Yaru! I'm here to\nhelp you train!",
+    "Hi, I'm Yaru! I'm here to\nhelp you train.",
     "Melee has 2 types of spikes,\nmeteor spikes and true spikes.",
     "A true spike is a spike\nthat sends you down and diagonal.",
     "A meteor spike is a spike\nthat sends you straight down.",
-    "If you find yourself being meteor spiked,\nyou can cancel it and get a second chance!",
+    "If you find yourself being \nmeteor spiked, you can cancel \nit and get a second chance!",
     "Okay, time for me to go.\nSee ya later!",
     -1,
+};
+
+static DlgScnTest test_arr[] = {
+    DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
+    DlgScnText(Dialogue_Test, 1),
+    DlgScnWaitText(),
+    DlgScnMove(0, 145, 0, -1.0, 0),
+    DlgScnEnterState(0, DLGSCNSTATES_REBIRTHWAIT),
+    DlgScnCamNormal(),
+    DlgScnEnd(),
 };
 
 // Init Function
@@ -99,6 +109,8 @@ void Event_Init(GOBJ *gobj)
     // init hud
     HUD_Init(gobj);
 
+    evco_data->Scenario_Exec(&test_arr);
+
     return;
 }
 // Think Function
@@ -111,9 +123,13 @@ void Event_Think(GOBJ *event)
     //Arrows_Think(event);
     HUD_Think(event);
 
-    // test dialogue
+    // test script
     if ((hmn_data->input.down & PAD_BUTTON_DPAD_DOWN) && (evco_data->Dialogue_CheckEnd()))
-        evco_data->Dialogue_Display(Dialogue_Test);
+        evco_data->Scenario_Exec(&test_arr);
+
+    // test dialogue
+    //if ((hmn_data->input.down & PAD_BUTTON_DPAD_DOWN) && (evco_data->Dialogue_CheckEnd()))
+    //evco_data->Dialogue_Display(Dialogue_Test);
 
     return;
 }

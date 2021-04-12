@@ -3610,7 +3610,7 @@ void DIDraw_Update()
                 int air_state = fighter_data->phys.air_state;
                 float gravity = 0;
                 Vec3 pos = fighter_data->phys.pos;
-                ftCommonData *ftCommon = R13_PTR(-0x514C);
+                ftCommonData *ftCommon = *stc_ftcommon;
                 float decay = ftCommon->kb_frameDecay;
                 int hitstun_frames = AS_FLOAT(fighter_data->state_var.state_var1);
                 int vertices_num = 0;    // used to track how many vertices will be needed
