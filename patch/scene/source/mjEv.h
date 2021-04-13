@@ -10,3 +10,5 @@ typedef struct ESSMinorData
     } cursor;
     EventLookup *ev_lookup;
 } ESSMinorData;
+
+#define ALT_SONG 98

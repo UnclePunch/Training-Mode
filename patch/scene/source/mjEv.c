@@ -8,6 +8,7 @@ static ScDataVS major_data = {0};         // final VS data. each scene adds its 
 static ESSMinorData ess_minor_data = {0}; // event select screen minor scene data
 static VSMinorData css_minor_data = {0};  // css minor scene data
 static SSSMinorData sss_minor_data = {0}; // sss minor scene data
+static int stc_play_song;                 // bool to play alt song
 
 // Major onload
 void Major_Load()
@@ -180,8 +181,6 @@ void Match_Prep(MinorScene *minor_scene)
     // copy to match data
     Match_InitMinorData(minor_scene, &major_data, 0, 0);
 
-    EventInit(page, event, minor_data);
-
     return;
 }
 
@@ -278,6 +277,15 @@ void EventInit(int page, int eventID, MatchInit *match_data)
     match_data->timerSubSeconds = ev_matchdata->timerSubSeconds;
     match_data->onCheckPause = ev_matchdata->onCheckPause;
     match_data->onMatchEnd = ev_matchdata->onMatchEnd;
+
+    // check to play alt song
+    if (Pad_GetHeld(*stc_css_singeplyport) & PAD_TRIGGER_L)
+    {
+        match_data->isDisableMusic = 1;
+        stc_play_song = 1;
+    }
+    else
+        stc_play_song = 0;
 
     // Initialize all player data
     Memcard *memcard = R13_PTR(MEMCARD);
@@ -475,6 +483,9 @@ void EventLoad()
         void *(*Legacy_OnLoad)() = Event_GetLegacyCallback(page, event);
         Legacy_OnLoad();
     }
+
+    if (stc_play_song)
+        BGM_Play(ALT_SONG);
 
     return;
 };
