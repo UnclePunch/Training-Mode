@@ -83,13 +83,21 @@ static char **Dialogue_Test[] = {
     -1,
 };
 
+static InpSeqTest input_seq[] = {
+    InpSeqInput(PAD_BUTTON_X, 0, 0, 0, 0, 1),
+    InpSeqWait(20),
+    InpSeqInput(PAD_TRIGGER_R, 0, 127, 0, 0, 1),
+    InpSeqEnd(),
+};
+
 static DlgScnTest test_arr[] = {
-    DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
-    DlgScnText(Dialogue_Test, 1),
-    DlgScnWaitText(),
     DlgScnMove(0, 145, 0, -1.0, 0),
+    //DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
     DlgScnEnterState(0, DLGSCNSTATES_REBIRTHWAIT),
-    DlgScnCamNormal(),
+    DlgScnPlayInputs(0, input_seq),
+    //DlgScnText(Dialogue_Test, 1),
+    //DlgScnWaitText(),
+    //DlgScnCamNormal(),
     DlgScnEnd(),
 };
 
@@ -226,7 +234,9 @@ void Arrows_Think(GOBJ *arrow_gobj)
         {
             FighterData *fd = f->userdata;
 
-            if ((fd->phys.pos.X < (pos.X + (22))) &&
+            if ((fd->flags.sleep == 0) &&
+                (fd->flags.dead == 0) &&
+                (fd->phys.pos.X < (pos.X + (22))) &&
                 (fd->phys.pos.X > (pos.X + (-22))) &&
                 (fd->phys.pos.Y < (pos.Y + (0))) &&
                 (fd->phys.pos.Y > (pos.Y + (-65))))

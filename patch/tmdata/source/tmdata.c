@@ -81,7 +81,7 @@ void OnSceneChange()
 {
     // Hook exists at 801a4c94
 
-    //TM_CreateWatermark();
+    TM_CreateWatermark();
 
 #if TM_DEBUG == 2
     TM_CreateConsole();

@@ -90,10 +90,24 @@ typedef struct DialogueData
     Text *text;         // text object pointer
     int char_num;       // number of characters in the current string
 } DialogueData;
+typedef struct InpSeqData
+{
+    void *cur;      // current script ptr
+    u16 slot;       // slot to restore to
+    u16 cpu_ai;     // cpu ai to restore
+    int wait_timer; // wait timer
+    int hold_timer; // hold timer
+    int buttons;    // button input to hold
+    s8 lstick_x;    // stick input to hold
+    s8 lstick_y;    // stick input to hold
+    s8 rstick_x;    // stick input to hold
+    s8 rstick_y;    // stick input to hold
+} InpSeqData;
 typedef struct ScenarioData
 {
-    void *cur; // current script
-    int timer; // wait timer
+    void *cur;           // current script
+    int timer;           // wait timer
+    InpSeqData input[6]; // input sequence data
 } ScenarioData;
 #define DLG_SIS 3
 #define DLG_GXLINK 8

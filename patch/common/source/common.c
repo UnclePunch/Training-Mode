@@ -1586,91 +1586,100 @@ void Scenario_Think(GOBJ *gobj)
                 {
 
                     DlgScnMove *move = script;
-                    GOBJ *this_fighter = Fighter_GetGObj(move->ft_index);
-                    FighterData *this_fighter_data = this_fighter->userdata;
 
-                    // Sleep first
-                    Fighter_EnterSleep(this_fighter, 0);
-                    Fighter_EnterRebirth(this_fighter);
-
-                    // place CPU here
-                    this_fighter_data->phys.pos.X = move->pos.X;
-                    this_fighter_data->phys.pos.Y = move->pos.Y;
-                    this_fighter_data->phys.pos.Z = 0;
-
-                    // facing player
-                    this_fighter_data->facing_direction = move->facing_direction;
-
-                    // grounded logic
-                    int is_ground = 0;
-                    if (move->check_ground)
+                    // run on each subchar
+                    for (int i = 0; i < 2; i++)
                     {
+                        GOBJ *this_fighter = Fighter_GetSubcharGObj(move->ft_index, i);
 
-                        // check for ground below fighter
-                        Vec3 coll_pos;
-                        int line_index;
-                        int line_kind;
-                        Vec3 line_unk;
-                        float fromX = (this_fighter_data->phys.pos.X);
-                        float toX = fromX;
-                        float fromY = (this_fighter_data->phys.pos.Y + 7);
-                        float toY = (this_fighter_data->phys.pos.Y - 7);
-                        is_ground = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
-                        if (is_ground == 1)
+                        if (this_fighter)
                         {
 
-                            // place them here
-                            this_fighter_data->phys.pos = coll_pos;
-                            this_fighter_data->coll_data.ground_index = line_index;
+                            FighterData *this_fighter_data = this_fighter->userdata;
 
-                            // set grounded
-                            this_fighter_data->phys.air_state = 0;
+                            // Sleep first
+                            Fighter_EnterSleep(this_fighter, 0);
+                            Fighter_EnterRebirth(this_fighter);
 
-                            // enter wait
-                            ActionStateChange(0, 1, -1, this_fighter, ASID_WAIT, 0, 0);
+                            // place CPU here
+                            this_fighter_data->phys.pos.X = move->pos.X;
+                            this_fighter_data->phys.pos.Y = move->pos.Y;
+                            this_fighter_data->phys.pos.Z = 0;
+
+                            // facing player
+                            this_fighter_data->facing_direction = move->facing_direction;
+
+                            // grounded logic
+                            int is_ground = 0;
+                            if (move->check_ground)
+                            {
+
+                                // check for ground below fighter
+                                Vec3 coll_pos;
+                                int line_index;
+                                int line_kind;
+                                Vec3 line_unk;
+                                float fromX = (this_fighter_data->phys.pos.X);
+                                float toX = fromX;
+                                float fromY = (this_fighter_data->phys.pos.Y + 7);
+                                float toY = (this_fighter_data->phys.pos.Y - 7);
+                                is_ground = GrColl_RaycastGround(&coll_pos, &line_index, &line_kind, &line_unk, -1, -1, -1, 0, fromX, fromY, toX, toY, 0);
+                                if (is_ground == 1)
+                                {
+
+                                    // place them here
+                                    this_fighter_data->phys.pos = coll_pos;
+                                    this_fighter_data->coll_data.ground_index = line_index;
+
+                                    // set grounded
+                                    this_fighter_data->phys.air_state = 0;
+
+                                    // enter wait
+                                    ActionStateChange(0, 1, -1, this_fighter, ASID_WAIT, 0, 0);
+                                }
+                            }
+
+                            // airborne logic
+                            if (is_ground == 0)
+                            {
+                                // set airborne
+                                this_fighter_data->phys.air_state = 0;
+
+                                // enter fall
+                                ActionStateChange(0, 1, -1, this_fighter, ASID_FALL, 0, 0);
+                            }
+
+                            // generic logic
+                            {
+                                // kill velocity
+                                Fighter_KillAllVelocity(this_fighter);
+
+                                // update ECB
+                                this_fighter_data->coll_data.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
+                                Coll_ECBCurrToPrev(&this_fighter_data->coll_data);
+                                this_fighter_data->cb.Coll(this_fighter);
+
+                                // update camera box
+                                JOBJ_SetMtxDirtySub(this_fighter->hsd_object);
+                                Fighter_UpdateCameraBox(this_fighter);
+                                this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
+                                this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
+                                Match_CorrectCamera();
+
+                                // init CPU logic (for nana's popo position history...)
+                                int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
+                                int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
+                                Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
+
+                                // place subfighter in the Z axis
+                                if (this_fighter_data->flags.ms == 1)
+                                {
+                                    ftCommonData *ft_common = *stc_ftcommon;
+                                    this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
+                                }
+                            }
                         }
                     }
-
-                    // airborne logic
-                    if (is_ground == 0)
-                    {
-                        // set airborne
-                        this_fighter_data->phys.air_state = 0;
-
-                        // enter fall
-                        ActionStateChange(0, 1, -1, this_fighter, ASID_FALL, 0, 0);
-                    }
-
-                    // generic logic
-                    {
-                        // kill velocity
-                        Fighter_KillAllVelocity(this_fighter);
-
-                        // update ECB
-                        this_fighter_data->coll_data.topN_Curr = this_fighter_data->phys.pos; // move current ECB location to new position
-                        Coll_ECBCurrToPrev(&this_fighter_data->coll_data);
-                        this_fighter_data->cb.Coll(this_fighter);
-
-                        // update camera box
-                        JOBJ_SetMtxDirtySub(this_fighter->hsd_object);
-                        Fighter_UpdateCameraBox(this_fighter);
-                        this_fighter_data->cameraBox->boundleft_curr = this_fighter_data->cameraBox->boundleft_proj;
-                        this_fighter_data->cameraBox->boundright_curr = this_fighter_data->cameraBox->boundright_proj;
-                        Match_CorrectCamera();
-
-                        // init CPU logic (for nana's popo position history...)
-                        int cpu_kind = Fighter_GetCPUKind(this_fighter_data->ply);
-                        int cpu_level = Fighter_GetCPULevel(this_fighter_data->ply);
-                        Fighter_CPUInitialize(this_fighter_data, cpu_kind, cpu_level, 0);
-
-                        // place subfighter in the Z axis
-                        if (this_fighter_data->flags.ms == 1)
-                        {
-                            ftCommonData *ft_common = *stc_ftcommon;
-                            this_fighter_data->phys.pos.Z = ft_common->ms_zjostle_max * -1;
-                        }
-                    }
-
                     break;
                 }
                 case (DLGSCN_WAITFRAME):
@@ -1700,41 +1709,74 @@ void Scenario_Think(GOBJ *gobj)
                 case (DLGSCN_ENTERSTATE):
                 {
                     DlgScnEnterState *state = script;
-                    GOBJ *this_fighter = Fighter_GetGObj(state->ft_index);
-                    FighterData *this_fighter_data = this_fighter->userdata;
 
                     switch (state->state)
                     {
                     case (DLGSCNSTATES_REBIRTHWAIT):
                     {
 
-                        // create respawn platform model
-                        void ***respawn_desc = (R13 + -0x516C);
-                        JOBJ *respawn_jobj = JOBJ_LoadJoint(**respawn_desc);
-                        this_fighter_data->accessory = respawn_jobj;
-                        respawn_jobj->scale.X *= this_fighter_data->attr.respawn_platform_scale;
-                        respawn_jobj->scale.Y *= this_fighter_data->attr.respawn_platform_scale;
-                        respawn_jobj->scale.Z *= this_fighter_data->attr.respawn_platform_scale;
-                        // anim model
-                        void **anim = *respawn_desc;
-                        JOBJ_AddAnimAll(respawn_jobj, anim[1], 0, 0);
-                        JOBJ_ReqAnimAll(respawn_jobj, 0);
-                        // colanim
-                        Fighter_ApplyColAnim(this_fighter_data, 10, 0);
+                        // run on each subchar
+                        for (int i = 0; i < 2; i++)
+                        {
+                            GOBJ *this_fighter = Fighter_GetSubcharGObj(state->ft_index, i);
 
-                        this_fighter_data->phys.air_state = 1;
-                        ActionStateChange(0, 1, -1, this_fighter, ASID_REBIRTHWAIT, 0xb002, 0);
-                        this_fighter_data->cb.Accessory1 = Fighter_UpdateRebirthPlatformPos;
-                        this_fighter_data->cb.Phys = RebirthWait_Phys;
-                        this_fighter_data->cb.IASA = RebirthWait_IASA;
-                        Fighter_UpdateRebirthPlatformPos(this_fighter);
+                            if (this_fighter)
+                            {
+
+                                FighterData *this_fighter_data = this_fighter->userdata;
+
+                                // enter state
+                                this_fighter_data->phys.air_state = 1;
+                                ActionStateChange(0, 1, -1, this_fighter, ASID_REBIRTHWAIT, 0xb002, 0);
+                                this_fighter_data->cb.Phys = RebirthWait_Phys;
+                                this_fighter_data->cb.IASA = RebirthWait_IASA;
+                                Fighter_ApplyColAnim(this_fighter_data, 10, 0); // colanim
+
+                                // create respawn platform model
+                                if (this_fighter_data->flags.ms == 0)
+                                {
+                                    void ***respawn_desc = (R13 + -0x516C);
+                                    JOBJ *respawn_jobj = JOBJ_LoadJoint(**respawn_desc);
+                                    this_fighter_data->accessory = respawn_jobj;
+                                    respawn_jobj->scale.X *= this_fighter_data->attr.respawn_platform_scale;
+                                    respawn_jobj->scale.Y *= this_fighter_data->attr.respawn_platform_scale;
+                                    respawn_jobj->scale.Z *= this_fighter_data->attr.respawn_platform_scale;
+                                    // anim model
+                                    void **anim = *respawn_desc;
+                                    JOBJ_AddAnimAll(respawn_jobj, anim[1], 0, 0);
+                                    JOBJ_ReqAnimAll(respawn_jobj, 0);
+
+                                    this_fighter_data->cb.Accessory1 = Fighter_UpdateRebirthPlatformPos;
+                                    Fighter_UpdateRebirthPlatformPos(this_fighter);
+                                }
+                                else
+                                {
+                                    this_fighter_data->cb.Accessory1 = 0x800d55b4; // follower update func
+
+                                    // fuck it just move the follower behind 11 units i guess
+                                    GOBJ *main_fighter = Fighter_GetSubcharGObj(state->ft_index, 0);
+                                    FighterData *main_fighter_data = main_fighter->userdata;
+                                    this_fighter_data->phys.pos.X = main_fighter_data->phys.pos.X - (main_fighter_data->facing_direction * 11);
+                                }
+                            }
+                        }
 
                         break;
                     }
                     case (DLGSCNSTATES_SLEEP):
                     {
+                        // run on each subchar
+                        for (int i = 0; i < 2; i++)
+                        {
+                            GOBJ *this_fighter = Fighter_GetSubcharGObj(state->ft_index, i);
 
-                        Fighter_EnterSleep(this_fighter, 0);
+                            if (this_fighter)
+                            {
+
+                                FighterData *this_fighter_data = this_fighter->userdata;
+                                Fighter_EnterSleep(this_fighter, 0);
+                            }
+                        }
 
                         break;
                     }
@@ -1748,6 +1790,18 @@ void Scenario_Think(GOBJ *gobj)
                 {
 
                     DlgScnPlayInputs *inputs = script;
+                    InpSeqData *seq = &scn_data->input[inputs->ft_index];
+                    seq->cur = inputs->inputs;
+
+                    // make this fighter a CPU and puppet it using cpu inputs
+                    seq->slot = Fighter_GetSlotType(inputs->ft_index);
+                    Fighter_SetSlotType(inputs->ft_index, 1);
+
+                    // set cpu to noact
+                    GOBJ *this_fighter = Fighter_GetGObj(inputs->ft_index);
+                    FighterData *this_fighter_data = this_fighter->userdata;
+                    seq->cpu_ai = this_fighter_data->cpu.ai;
+                    this_fighter_data->cpu.ai = 0; // noact
 
                     break;
                 }
@@ -1789,6 +1843,10 @@ void Scenario_Think(GOBJ *gobj)
         EXIT:;
         }
     }
+
+    // update input sequence
+    InputSeq_Think(gobj);
+
     return;
 }
 void Scenario_Exec(DlgScnTest *scn)
@@ -1797,6 +1855,127 @@ void Scenario_Exec(DlgScnTest *scn)
 
     scn_data->cur = scn;
     scn_data->timer = 0;
+
+    return;
+}
+void InputSeq_Think(GOBJ *gobj)
+{
+
+    ScenarioData *scn_data = gobj->userdata;
+
+    // loop through all input sequence structs
+    for (int i = 0; i < sizeof(scn_data->input) / sizeof(scn_data->input[0]); i++)
+    {
+
+        InpSeqData *input_data = &scn_data->input[i];
+
+        // if sequence exists
+        if (input_data->cur)
+        {
+
+            GOBJ *this_fighter = Fighter_GetGObj(i);
+            FighterData *this_fighter_data = this_fighter->userdata;
+
+            Fighter_ZeroCPUInputs(this_fighter_data);
+
+            bp();
+
+            // check if not already pressing something this frame
+            if (input_data->hold_timer == 0)
+            {
+
+                // wait a frame if timer is set
+                if (input_data->wait_timer > 0)
+                    input_data->wait_timer--;
+
+                // update script
+                else
+                {
+
+                    InpSeqTest *seq = input_data->cur;
+                    int command_kind = seq->x0.i;
+
+                    while (1)
+                    {
+                        switch (command_kind)
+                        {
+                        case (INPSEQ_END):
+                        {
+                            // clear script ptr
+                            input_data->cur = 0;
+
+                            // restore the slot type
+                            Fighter_SetSlotType(i, input_data->slot);
+
+                            // restore ai type
+                            this_fighter_data->cpu.ai = input_data->cpu_ai;
+
+                            goto EXIT;
+                            break;
+                        }
+                        case (INPSEQ_INPUT):
+                        {
+
+                            InpSeqInput *input = seq;
+
+                            // remember these inputs
+                            input_data->hold_timer = input->hold_timer;
+                            input_data->buttons = input->buttons;
+                            input_data->lstick_x = input->lstick_x;
+                            input_data->lstick_y = input->lstick_y;
+                            input_data->rstick_x = input->rstick_x;
+                            input_data->rstick_y = input->rstick_y;
+
+                            // get next
+                            seq = &seq[1];            // get next command
+                            input_data->cur = seq;    // update cur ptr
+                            command_kind = seq->x0.i; // get next command opcode
+                            goto EXIT;
+
+                            break;
+                        }
+                        case (INPSEQ_WAIT):
+                        {
+                            InpSeqWait *wait = seq;
+
+                            input_data->wait_timer = wait->frames;
+
+                            // get next
+                            seq = &seq[1];            // get next command
+                            input_data->cur = seq;    // update cur ptr
+                            command_kind = seq->x0.i; // get next command opcode
+
+                            goto EXIT;
+
+                            break;
+                        }
+                        }
+
+                        // get next
+                        seq = &seq[1];            // get next command
+                        input_data->cur = seq;    // update cur ptr
+                        command_kind = seq->x0.i; // get next command opcode
+                    }
+
+                EXIT:;
+                }
+            }
+
+            // if any inputs are being held, input them
+            if (input_data->hold_timer > 0)
+            {
+
+                input_data->hold_timer--;
+
+                // input buttons
+                this_fighter_data->cpu.held = input_data->buttons;
+                this_fighter_data->cpu.lstickX = input_data->lstick_x;
+                this_fighter_data->cpu.lstickY = input_data->lstick_y;
+                this_fighter_data->cpu.cstickX = input_data->rstick_x;
+                this_fighter_data->cpu.cstickY = input_data->rstick_y;
+            }
+        }
+    }
 
     return;
 }
@@ -2156,6 +2335,19 @@ int RebirthWait_IASA(GOBJ *fighter)
 {
 
     FighterData *fighter_data = fighter->userdata;
+
+    // subchars can only interrupt if mainchar left rebirth
+    if (fighter_data->flags.ms)
+    {
+        GOBJ *main_fighter = Fighter_GetSubcharGObj(fighter_data->ply, 0);
+        if (main_fighter)
+        {
+            FighterData *main_fighter_data = main_fighter->userdata;
+            if ((main_fighter_data->state_id == ASID_REBIRTH) ||
+                (main_fighter_data->state_id == ASID_REBIRTHWAIT))
+                return 0;
+        }
+    }
 
     if (Fighter_IASACheck_JumpAerial(fighter))
     {

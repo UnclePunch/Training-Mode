@@ -6,6 +6,7 @@
 static u8 leave_kind;
 static ESSMinorData *stc_minor_data;
 static ArchiveInfo *stc_menu_archive;
+static MnSlEvData *stc_menu_assets;
 static HSD_Fog *stc_fog;                                           // fog pointer, used for cobj erase color
 static COBJ *movie_cobj;                                           // "dummy" live cobj pointer used for rendering mth frame
 static _HSD_ImageDesc movie_imagedesc = {.format = MNSLEV_IMGFMT}; // movie imagedesc
@@ -103,6 +104,7 @@ void Menu_Init()
     // load menu asset file
     stc_menu_archive = File_Load("TM/MnSlEv.dat");
     MnSlEvData *menu_assets = File_GetSymbol(stc_menu_archive, "MnEvSlData");
+    stc_menu_assets = menu_assets;
 
     // create camera
     GOBJ *cam_gobj = GObj_Create(2, 3, 128);
@@ -139,8 +141,7 @@ void Menu_Init()
     orig_tobj = menu_jobj->child->dobj->next->next->next->next->next->next->next->next->mobj->tobj;
     orig_imagedesc = orig_tobj->imagedesc;
 
-    // alloc movie camera
-    movie_cobj = COBJ_LoadDescSetScissor(menu_assets->movie_cobj);
+    // init movie status
     mth_data.status = MTHSTATUS_NONE;
 
     // save scroll bar jobj
@@ -252,6 +253,10 @@ void Menu_Init()
         text->aspect.X = 585;
         Text_AddSubtext(text, 0, 0, "");
     }
+
+    // set and play new menu music
+    stc_memcard->menu_bgm = MNSLEV_BGM;
+    BGM_Play(BGM_GetMenuBGM());
 
     Menu_Update(menu_gobj);
     Menu_PlayEventMovie(menu_gobj);
@@ -389,6 +394,9 @@ void Menu_Think(GOBJ *menu_gobj)
 
             // play sfx
             SFX_PlayCommon(0);
+
+            // roll menus theme
+            BGM_DecideMenuBGM();
 
             break;
         }
@@ -1062,17 +1070,20 @@ void MTH_Think(GOBJ *gobj)
         // Render Frame
         {
 
+            // alloc movie camera
+            movie_cobj = COBJ_LoadDescSetScissor(stc_menu_assets->movie_cobj);
+
             // decode THP frame
             HSD_StartRender(3);
             if (CObj_SetCurrent(movie_cobj))
             {
                 // render to EFB
-                MTH_Render(gobj, 2);
+                MTH_Render(gobj, 3);
                 CObj_EndCurrent();
             }
 
             // dump EFB to texture
-            HSD_ImageDescCopyFromEFB(&movie_imagedesc, 0, 0, 0);
+            HSD_ImageDescCopyFromEFB(&movie_imagedesc, 0, 0, 1);
 
             // flush cache on image data
             int tex_size = GXGetTexBufferSize(mth_header->header.xSize,
@@ -1082,9 +1093,8 @@ void MTH_Think(GOBJ *gobj)
                                               0);
             DCFlushRange(movie_imagedesc.img_ptr, tex_size);
 
-            // free cobj, i used to do this but idk how to totally
-            // free the cobj, this was causing a memleak
-            //CObj_Release(movie_cobj);
+            // free the cobj
+            CObj_Destroy(movie_cobj);
         }
 
         // done saving, output time

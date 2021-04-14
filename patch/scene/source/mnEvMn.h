@@ -27,6 +27,7 @@ enum MTHStatus
 #define MNSLEV_DESCLINEMAX 6
 #define MNSLEV_DESCLINEOFFSET 30
 #define MNSLEV_IMGFMT 4
+#define MNSLEV_BGM 98
 
 typedef struct MnSlEvData
 {

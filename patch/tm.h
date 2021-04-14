@@ -2,7 +2,7 @@
 
 #define TM_VERSSHORT "TM v3.0-a8"
 #define TM_VERSLONG "Training Mode v3.0 Alpha 8"
-#define TM_DEBUG 1 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
+#define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_DATA -(10 * 4)
 #define MENU_MAXOPTION 9
@@ -960,6 +960,93 @@ typedef struct DlgScnCamCorrect
 #define DlgScnCamCorrect(ft_index) \
     {                              \
         .x0.i = DLGSCN_CAMCORRECT, \
+    }
+
+// Input Sequence
+enum InputSeq
+{
+    INPSEQ_END,
+    INPSEQ_INPUT,
+    INPSEQ_WAIT,
+};
+typedef struct InpSeqTest
+{
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x0;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x4;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x8;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } xc;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x10;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x14;
+    union
+    {
+        int i;
+        float f;
+        void *ptr;
+    } x18;
+} InpSeqTest;
+typedef struct InpSeqInput
+{
+    int kind;
+    int buttons;
+    int lstick_x;
+    int lstick_y;
+    int rstick_x;
+    int rstick_y;
+    int hold_timer;
+} InpSeqInput;
+typedef struct InpSeqWait
+{
+    int kind;
+    int frames;
+} InpSeqWait;
+#define InpSeqEnd()         \
+    {                       \
+        .x0.i = INPSEQ_END, \
+    }
+#define InpSeqInput(buttons, lstick_x, lstick_y, rstick_x, rstick_y, hold_timer) \
+    {                                                                            \
+        .x0.i = INPSEQ_INPUT,                                                    \
+        .x4.i = buttons,                                                         \
+        .x8.i = lstick_x,                                                        \
+        .xc.i = lstick_y,                                                        \
+        .x10.i = rstick_x,                                                       \
+        .x14.i = rstick_y,                                                       \
+        .x18.i = hold_timer,                                                     \
+    }
+#define InpSeqWait(frames)   \
+    {                        \
+        .x0.i = INPSEQ_WAIT, \
+        .x4.i = frames,      \
     }
 
 // INCOMING BUNCH OF MENU CONSTANTS
