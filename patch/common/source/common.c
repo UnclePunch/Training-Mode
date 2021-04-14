@@ -1511,7 +1511,7 @@ void Scenario_Init()
     GOBJ *scenario_gobj = GObj_Create(0, 0, 0);
     ScenarioData *scenario_data = calloc(sizeof(ScenarioData));
     GObj_AddUserData(scenario_gobj, 4, HSD_Free, scenario_data);
-    GObj_AddProc(scenario_gobj, Scenario_Think, 18);
+    GObj_AddProc(scenario_gobj, Scenario_Think, 3); // was 18
 
     stc_scenario = scenario_gobj;
 
@@ -1801,7 +1801,7 @@ void Scenario_Think(GOBJ *gobj)
                     GOBJ *this_fighter = Fighter_GetGObj(inputs->ft_index);
                     FighterData *this_fighter_data = this_fighter->userdata;
                     seq->cpu_ai = this_fighter_data->cpu.ai;
-                    this_fighter_data->cpu.ai = 0; // noact
+                    this_fighter_data->cpu.ai = 15; // noact
 
                     break;
                 }
@@ -1878,9 +1878,7 @@ void InputSeq_Think(GOBJ *gobj)
 
             Fighter_ZeroCPUInputs(this_fighter_data);
 
-            bp();
-
-            // check if not already pressing something this frame
+            // update script if not holding anything
             if (input_data->hold_timer == 0)
             {
 
@@ -1915,6 +1913,8 @@ void InputSeq_Think(GOBJ *gobj)
                         }
                         case (INPSEQ_INPUT):
                         {
+
+                            bp();
 
                             InpSeqInput *input = seq;
 

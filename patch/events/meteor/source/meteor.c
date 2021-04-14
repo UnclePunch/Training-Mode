@@ -84,9 +84,13 @@ static char **Dialogue_Test[] = {
 };
 
 static InpSeqTest input_seq[] = {
-    InpSeqInput(PAD_BUTTON_X, 0, 0, 0, 0, 1),
-    InpSeqWait(20),
-    InpSeqInput(PAD_TRIGGER_R, 0, 127, 0, 0, 1),
+    InpSeqWait(25),
+    InpSeqInput(0, -127, 0, 0, 0, 20),
+    InpSeqInput(PAD_BUTTON_X, -127, 0, 0, 0, 1),
+    InpSeqInput(0, -127, 0, 0, 0, 25),
+    InpSeqWait(10),
+    InpSeqInput(PAD_BUTTON_B, 0, 127, 0, 0, 1),
+    InpSeqInput(PAD_BUTTON_B, -127, 58, 0, 0, 75),
     InpSeqEnd(),
 };
 
