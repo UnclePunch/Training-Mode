@@ -375,6 +375,7 @@ void EventInit(int page, int eventID, MatchInit *match_data)
         match_data->playerData[1].costume = cpuCostume;
         match_data->playerData[1].status = 1;
         match_data->playerData[1].portNumberOverride = cpu_port;
+        match_data->playerData[1].cpuKind = 5; // set to manual AI?
     }
 
     // Determine the correct HUD position for this amount of players
@@ -498,7 +499,7 @@ void Hazards_Disable()
 
     switch (stage_internal)
     {
-    case (GR_STORY):
+    case (GRKIND_STORY):
     {
         // remove shyguy map gobj proc
         GOBJ *shyguy_gobj = Stage_GetMapGObj(3);
@@ -512,7 +513,7 @@ void Hazards_Disable()
 
         break;
     }
-    case (GR_PSTAD):
+    case (GRKIND_PSTAD):
     {
         // remove map gobj proc
         GOBJ *map_gobj = Stage_GetMapGObj(2);
@@ -522,7 +523,7 @@ void Hazards_Disable()
 
         break;
     }
-    case (GR_OLDPU):
+    case (GRKIND_OLDPU):
     {
         // remove map gobj proc
         GOBJ *map_gobj = Stage_GetMapGObj(7);
@@ -537,7 +538,7 @@ void Hazards_Disable()
 
         break;
     }
-    case (GR_FD):
+    case (GRKIND_FD):
     {
         // set bg skip flag
         GOBJ *map_gobj = Stage_GetMapGObj(3);

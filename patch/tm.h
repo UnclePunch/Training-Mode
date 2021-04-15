@@ -784,6 +784,7 @@ enum DlgScn
     DLGSCN_MOVE,
     DLGSCN_WAITFRAME,
     DLGSCN_WAITTEXT,
+    DLGSCN_WAITINPUTS,
     DLGSCN_ENTERSTATE,
     DLGSCN_INPUTS,
     DLGSCN_CAMNORMAL,
@@ -843,20 +844,10 @@ typedef struct DlgScnText
 typedef struct DlgScnFreeze
 {
     int kind;
-    void *x4;
-    void *x8;
-    void *xc;
-    void *x10;
-    void *x14;
 } DlgScnFreeze;
 typedef struct DlgScnUnfreeze
 {
     int kind;
-    void *x4;
-    void *x8;
-    void *xc;
-    void *x10;
-    void *x14;
 } DlgScnUnfreeze;
 typedef struct DlgScnMove
 {
@@ -875,6 +866,11 @@ typedef struct DlgScnWaitText
 {
     int kind;
 } DlgScnWaitText;
+typedef struct DlgScnWaitInputs
+{
+    int kind;
+    int ft_index;
+} DlgScnWaitInputs;
 typedef struct DlgScnEnterState
 {
     int kind;
@@ -907,14 +903,14 @@ typedef struct DlgScnCamCorrect
 #define DlgScnText(text, disable_inputs) \
     {                                    \
         .x0.i = DLGSCN_TEXT,             \
-        .x4.ptr = Dialogue_Test,         \
+        .x4.ptr = text,                  \
         .x8.i = disable_inputs,          \
     }
-#define DlgScnFreeze(text)     \
+#define DlgScnFreeze()         \
     {                          \
         .x0.i = DLGSCN_FREEZE, \
     }
-#define DlgScnUnfreeze(text)     \
+#define DlgScnUnfreeze()         \
     {                            \
         .x0.i = DLGSCN_UNFREEZE, \
     }
@@ -935,6 +931,11 @@ typedef struct DlgScnCamCorrect
 #define DlgScnWaitText(frames)   \
     {                            \
         .x0.i = DLGSCN_WAITTEXT, \
+    }
+#define DlgScnWaitInputs(ft_index) \
+    {                              \
+        .x0.i = DLGSCN_WAITINPUTS, \
+        .x4.i = ft_index,          \
     }
 #define DlgScnEnterState(ft_index, state) \
     {                                     \

@@ -1740,7 +1740,7 @@ void Lab_ChangeCPUIntang(GOBJ *menu_gobj, int value)
         Fighter_ColorRemove(fighter_data, INTANG_COLANIM);
     // apply colanim
     else
-        Fighter_ApplyOverlay(fighter_data, INTANG_COLANIM, 0);
+        Fighter_ApplyColAnim(fighter_data, INTANG_COLANIM, 0);
 
     return;
 }
@@ -6621,7 +6621,7 @@ void Event_Think(GOBJ *event)
         // if new state, apply colanim
         if (cpu_data->TM.state_frame <= 1)
         {
-            Fighter_ApplyOverlay(cpu_data, INTANG_COLANIM, 0);
+            Fighter_ApplyColAnim(cpu_data, INTANG_COLANIM, 0);
         }
     }
     else

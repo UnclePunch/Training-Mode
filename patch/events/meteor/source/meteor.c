@@ -1,5 +1,4 @@
 #include "meteor.h"
-static char nullString[] = " ";
 
 // Main Menu
 static char **WdOptions_Target[] = {"Off", "On"};
@@ -73,13 +72,25 @@ static EventMenu WdMenu_Main = {
 };
 
 // Dialogue
-static char **Dialogue_Test[] = {
-    "Hi, I'm Yaru! I'm here to\nhelp you train.",
-    "Melee has 2 types of spikes,\nmeteor spikes and true spikes.",
-    "A true spike is a spike\nthat sends you down and diagonal.",
-    "A meteor spike is a spike\nthat sends you straight down.",
+static char **Dialogue_Intro[] = {
+    "Melee has 2 types of spikes,\ntrue spikes and meteor spikes.",
+    "A true spike will send you\ndownwards and diagonal.",
+    "A meteor spike will send you\nstraight down.",
     "If you find yourself being \nmeteor spiked, you can cancel \nit and get a second chance!",
-    "Okay, time for me to go.\nSee ya later!",
+    "You can cancel it with either\na double jump or an up-b.",
+    -1,
+};
+static char **Dialogue_MLock[] = {
+    "There is a short amount of time\nafter getting spiked where it is \nimpossible to meteor cancel.",
+    "You must wait until 8 frames pass\n(approx 1/10 of a second) before \ncancelling.",
+    "This is referred to as the \n\"meteor lockout\"",
+    -1,
+};
+static char **Dialogue_ILock[] = {
+    "This is the earliest Fox can cancel\nhis knockback with a meteor cancel.\nBut there is one more rule.",
+    "You must wait 40 frames since the\nlast time you inputted \ndouble jump/up-b.",
+    "This is referred to as the \n\"input lockout\".",
+    "Fox hasn't up-b'd recently,\nso he is able to use it right now.",
     -1,
 };
 
@@ -95,13 +106,32 @@ static InpSeqTest input_seq[] = {
 };
 
 static DlgScnTest test_arr[] = {
+    // init
+    DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
+    DlgScnMove(1, 145, 0, -1.0, 0),
+    DlgScnEnterState(1, DLGSCNSTATES_REBIRTHWAIT),
+    DlgScnText(Dialogue_Intro, 1),
+    DlgScnWaitText(),
+    // start main input sequence
+    DlgScnPlayInputs(1, input_seq),
+    // explain meteor lockout
+    DlgScnWaitFrame(67),
+    DlgScnFreeze(),
+    DlgScnText(Dialogue_MLock, 1),
+    DlgScnWaitText(),
+    DlgScnUnfreeze(),
+    // explain input lockout
+    DlgScnWaitFrame(10),
+    DlgScnFreeze(),
+    DlgScnText(Dialogue_ILock, 1),
+    DlgScnWaitText(),
+    DlgScnUnfreeze(),
+    // play out remaining inputs
+    DlgScnWaitInputs(1),
+    // give control back to hmn
+    DlgScnEnterState(1, DLGSCNSTATES_SLEEP),
     DlgScnMove(0, 145, 0, -1.0, 0),
-    //DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
     DlgScnEnterState(0, DLGSCNSTATES_REBIRTHWAIT),
-    DlgScnPlayInputs(0, input_seq),
-    //DlgScnText(Dialogue_Test, 1),
-    //DlgScnWaitText(),
-    //DlgScnCamNormal(),
     DlgScnEnd(),
 };
 

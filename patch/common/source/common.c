@@ -1706,6 +1706,35 @@ void Scenario_Think(GOBJ *gobj)
                     else
                         goto EXIT;
                 }
+                case (DLGSCN_WAITINPUTS):
+                {
+
+                    DlgScnWaitInputs *wait = script;
+                    int ft_index = wait->ft_index;
+
+                    // check everyones inputs?
+                    if (ft_index >= 6)
+                    {
+                        // loop through all input sequence structs
+                        for (int i = 0; i < sizeof(scn_data->input) / sizeof(scn_data->input[0]); i++)
+                        {
+
+                            InpSeqData *input_data = &scn_data->input[i];
+
+                            // if sequence exists
+                            if (input_data->cur)
+                                goto EXIT;
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        if (scn_data->input[ft_index].cur == 0)
+                            break;
+                        else
+                            goto EXIT;
+                    }
+                }
                 case (DLGSCN_ENTERSTATE):
                 {
                     DlgScnEnterState *state = script;
@@ -1844,8 +1873,9 @@ void Scenario_Think(GOBJ *gobj)
         }
     }
 
-    // update input sequence
-    InputSeq_Think(gobj);
+    // update input sequence when game engine is running
+    if (Pause_CheckStatus(1) != 2)
+        InputSeq_Think(gobj);
 
     return;
 }
@@ -1913,8 +1943,6 @@ void InputSeq_Think(GOBJ *gobj)
                         }
                         case (INPSEQ_INPUT):
                         {
-
-                            bp();
 
                             InpSeqInput *input = seq;
 

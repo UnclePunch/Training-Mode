@@ -112,7 +112,7 @@ void Event_Think(GOBJ *event)
     // give intangibility to cpu
     cpu_data->flags.no_reaction_always = 1;
     cpu_data->flags.nudge_disable = 1;
-    Fighter_ApplyOverlay(cpu_data, 9, 0);
+    Fighter_ApplyColAnim(cpu_data, 9, 0);
     Fighter_UpdateOverlay(cpu);
     cpu_data->dmg.percent = 0;
     Fighter_SetHUDDamage(cpu_data->ply, 0);
