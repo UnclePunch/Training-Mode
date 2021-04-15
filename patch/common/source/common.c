@@ -61,6 +61,26 @@ void OnLoad(ArchiveInfo *archive)
     Tip_Init();
     Scenario_Init();
 
+    // disable player inputs for 1f (avoid instant buffer attacks)
+    // this is a mess so im gonna deal with it later...
+    // inputs are enabled by the game after startmelee is called
+    // unless the READY graphic is being shown...
+    // i would have to schedule a gobj to run after this happens and
+    // disable inputs for 1f, then re-enable next frame =/
+    /*
+    GOBJList *gobj_list;
+    GOBJ *ft_gobj = gobj_list->fighter;
+    while (ft_gobj)
+    {
+        FighterData *ft_data = ft_gobj->userdata;
+        ft_data->flags.x221d_5 = 1;
+    }
+
+    // gobj to re-enable inputs after processed once
+    GOBJ *input_gobj = GObj_Create(0, 7, 0);
+    GObj_AddProc(input_gobj, Event_InputEnable, 0);
+    */
+
     return;
 }
 
@@ -865,6 +885,24 @@ void Event_IncTimer(GOBJ *gobj)
     stc_evco_data.game_timer++;
     return;
 }
+/*
+void Event_InputEnable(GOBJ *gobj)
+{
+
+    // re-enable inputs for all players
+    GOBJList *gobj_list;
+    GOBJ *ft_gobj = gobj_list->fighter;
+    while (ft_gobj)
+    {
+        FighterData *ft_data = ft_gobj->userdata;
+        ft_data->flags.x221d_5 = 0;
+    }
+    // self destruct
+    GObj_Destroy(gobj);
+
+    return;
+}
+*/
 
 // Message Functions
 void Message_Init()
@@ -2234,9 +2272,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
 
             // check if another line of dialogue exists
             if (dialogue_data->string_data[dialogue_data->index] != -1)
-            {
                 Dialogue_EnterScroll(dialogue_gobj);
-            }
 
             // no more dialogue, exit
             else

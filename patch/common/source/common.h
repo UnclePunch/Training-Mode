@@ -139,3 +139,4 @@ void Scenario_Think(GOBJ *gobj);
 void Scenario_Exec(DlgScnTest *scn);
 void RebirthWait_Phys(GOBJ *fighter);
 int RebirthWait_IASA(GOBJ *fighter);
+//void Event_InputEnable(GOBJ *gobj);

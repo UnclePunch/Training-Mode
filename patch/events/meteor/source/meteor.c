@@ -53,7 +53,7 @@ static char **Dialogue_ILock[] = {
 };
 static char **Dialogue_ILock2[] = {
     "Oh, this is unfortunate...",
-    "Now Fox has no double jump and must\nwait around half a second to up-b\nagain because he just used it.",
+    "Now Fox has no double jump and must\nwait almost a second to up-b\nagain because he just used it.",
     "Let's see if he can make it back.",
     -1,
 };
@@ -180,7 +180,6 @@ void Event_Think(GOBJ *event)
     HUD_Think(event);
 
     // wait for tut to end
-    bp();
     if (meteor_data->is_tutorial)
     {
         if ((evco_data->Scenario_CheckEnd()))
@@ -191,7 +190,7 @@ void Event_Think(GOBJ *event)
         // reset
         if ((hmn_data->flags.dead) ||
             (hmn_data->phys.air_state == 0) ||
-            (hmn_data->state_id == ASID_CLIFFCATCH))
+            (hmn_data->state_id == ASID_CLIFFWAIT))
             evco_data->Scenario_Exec(&reset_scn);
     }
 
