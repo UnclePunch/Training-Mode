@@ -20,6 +20,7 @@ static EventCommonData stc_evco_data = {
     .Dialogue_Display = Dialogue_Create,
     .Dialogue_CheckEnd = Dialogue_CheckEnd,
     .Scenario_Exec = Scenario_Exec,
+    .Scenario_CheckEnd = Scenario_CheckEnd,
     .savestate = 0,
 };
 static int *eventDataBackup;
@@ -1521,6 +1522,10 @@ void Scenario_Think(GOBJ *gobj)
 {
     ScenarioData *scn_data = gobj->userdata;
 
+    // update input sequence when game engine is running
+    if (Pause_CheckStatus(1) != 2)
+        InputSeq_Think(gobj);
+
     // if script exists
     if (scn_data->cur)
     {
@@ -1873,10 +1878,6 @@ void Scenario_Think(GOBJ *gobj)
         }
     }
 
-    // update input sequence when game engine is running
-    if (Pause_CheckStatus(1) != 2)
-        InputSeq_Think(gobj);
-
     return;
 }
 void Scenario_Exec(DlgScnTest *scn)
@@ -1887,6 +1888,15 @@ void Scenario_Exec(DlgScnTest *scn)
     scn_data->timer = 0;
 
     return;
+}
+int Scenario_CheckEnd()
+{
+    ScenarioData *scn_data = stc_scenario->userdata;
+
+    if (scn_data->cur)
+        return 0;
+    else
+        return 1;
 }
 void InputSeq_Think(GOBJ *gobj)
 {
@@ -2089,7 +2099,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                     {
                         if (next_char == delay_chars[i])
                         {
-                            dialogue_data->delay_timer = 10;
+                            dialogue_data->delay_timer = DLG_PUNCDELAY;
                             break;
                         }
                     }

@@ -704,6 +704,7 @@ typedef struct EventCommonData
     void (*Dialogue_Display)(void *ptr);                                                     //
     int (*Dialogue_CheckEnd)();                                                              //
     void (*Scenario_Exec)(DlgScnTest *scn);                                                  //
+    int (*Scenario_CheckEnd)();                                                              //
     Savestate *savestate;                                                                    // points to the events main savestate
     evFunction evFunction;                                                                   // event specific functions
     ArchiveInfo *event_archive;                                                              // event archive header

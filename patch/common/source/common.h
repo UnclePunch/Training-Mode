@@ -116,6 +116,7 @@ typedef struct ScenarioData
 #define DLG_CHARMAX 64
 #define DLG_CHARPERSEC 0.5 // display 1 char every 2 seconds
 #define DLG_CHARPERSFX 4   // every 4 chars play sfx
+#define DLG_PUNCDELAY 15   // pause for x frames for punctuation
 #define TIP_TXTJOINT 2
 
 // GX stuff
@@ -133,6 +134,7 @@ void Dialogue_Create(char **string_data);
 void Dialogue_Think(GOBJ *dialogue_gobj);
 void Dialogue_Destroy(DialogueData *dialogue_data);
 int Dialogue_CheckEnd();
+int Scenario_CheckEnd();
 void Scenario_Think(GOBJ *gobj);
 void Scenario_Exec(DlgScnTest *scn);
 void RebirthWait_Phys(GOBJ *fighter);

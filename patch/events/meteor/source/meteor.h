@@ -32,6 +32,7 @@ struct MeteorData
         float left;
         float right;
     } hud;
+    u16 is_tutorial;  // whether or not tutorial is active
     u16 state;        // state of the event
     u16 timer;        // increments for each frame in damaged state
     u16 lockout_jump; // value of the jump lockout timer when entering damage

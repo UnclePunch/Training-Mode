@@ -4,50 +4,6 @@
 static char **WdOptions_Target[] = {"Off", "On"};
 static char **WdOptions_HUD[] = {"On", "Off"};
 static EventOption WdOptions_Main[] = {
-    // Target
-    {
-        .option_kind = OPTKIND_STRING,                                 // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(WdOptions_Target) / 4,                     // number of values for this option
-        .option_val = 0,                                               // value of this option
-        .menu = 0,                                                     // pointer to the menu that pressing A opens
-        .option_name = "Target",                                       // pointer to a string
-        .desc = "Highlight an area of the stage to wavedash towards.", // string describing what this option does
-        .option_values = WdOptions_Target,                             // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    // HUD
-    {
-        .option_kind = OPTKIND_STRING,           // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(WdOptions_HUD) / 4,  // number of values for this option
-        .option_val = 0,                         // value of this option
-        .menu = 0,                               // pointer to the menu that pressing A opens
-        .option_name = "HUD",                    // pointer to a string
-        .desc = "Toggle visibility of the HUD.", // string describing what this option does
-        .option_values = WdOptions_HUD,          // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    // Tips
-    {
-        .option_kind = OPTKIND_STRING,                  // the type of option this is; menu, string list, integers list, etc
-        .value_num = sizeof(WdOptions_HUD) / 4,         // number of values for this option
-        .option_val = 0,                                // value of this option
-        .menu = 0,                                      // pointer to the menu that pressing A opens
-        .option_name = "Tips",                          // pointer to a string
-        .desc = "Toggle the onscreen display of tips.", // string describing what this option does
-        .option_values = WdOptions_HUD,                 // pointer to an array of strings
-        .onOptionChange = 0,
-    },
-    // Help
-    {
-        .option_kind = OPTKIND_FUNC,                                                                                                                                                                                                                               // the type of option this is; menu, string list, integers list, etc
-        .value_num = 0,                                                                                                                                                                                                                                            // number of values for this option
-        .option_val = 0,                                                                                                                                                                                                                                           // value of this option
-        .menu = 0,                                                                                                                                                                                                                                                 // pointer to the menu that pressing A opens
-        .option_name = "Help",                                                                                                                                                                                                                                     // pointer to a string
-        .desc = "A wavedash is performed by air-dodging diagonally down\nas soon you leave the ground from a jump, causing the fighter\nto slide a short distance. This technique will allow you to quickly\nadjust your position and even attack while sliding.", // string describing what this option does
-        .option_values = 0,                                                                                                                                                                                                                                        // pointer to an array of strings
-        .onOptionChange = 0,
-    },
     // Exit
     {
         .option_kind = OPTKIND_FUNC,                     // the type of option this is; menu, string list, integers list, etc
@@ -62,7 +18,7 @@ static EventOption WdOptions_Main[] = {
     },
 };
 static EventMenu WdMenu_Main = {
-    .name = "Wavedash Training",                                // the name of this menu
+    .name = "",                                                 // the name of this menu
     .option_num = sizeof(WdOptions_Main) / sizeof(EventOption), // number of options this menu contains
     .scroll = 0,                                                // runtime variable used for how far down in the menu to start
     .state = 0,                                                 // bool used to know if this menu is focused, used at runtime
@@ -73,42 +29,63 @@ static EventMenu WdMenu_Main = {
 
 // Dialogue
 static char **Dialogue_Intro[] = {
+    "Hello! Today I'll be teaching\nyou about meteor cancelling.",
     "Melee has 2 types of spikes,\ntrue spikes and meteor spikes.",
-    "A true spike will send you\ndownwards and diagonal.",
-    "A meteor spike will send you\nstraight down.",
+    "A true spike will send you\ndownwards and diagonal. These\ncannot be cancelled.",
+    "A meteor spike will send you\nstraight down. These CAN be cancelled.",
     "If you find yourself being \nmeteor spiked, you can cancel \nit and get a second chance!",
     "You can cancel it with either\na double jump or an up-b.",
     -1,
 };
 static char **Dialogue_MLock[] = {
-    "There is a short amount of time\nafter getting spiked where it is \nimpossible to meteor cancel.",
-    "You must wait until 8 frames pass\n(approx 1/10 of a second) before \ncancelling.",
-    "This is referred to as the \n\"meteor lockout\"",
+    "There is a short amount of time\nafter getting spiked where it's \nimpossible to meteor cancel.",
+    "You must wait 8 frames\n(0.15 seconds) before cancelling.",
+    "This is called the\n\"meteor lockout\".",
     -1,
 };
 static char **Dialogue_ILock[] = {
     "This is the earliest Fox can cancel\nhis knockback with a meteor cancel.\nBut there is one more rule.",
-    "You must wait 40 frames since the\nlast time you inputted \ndouble jump/up-b.",
-    "This is referred to as the \n\"input lockout\".",
-    "Fox hasn't up-b'd recently,\nso he is able to use it right now.",
+    "You must wait 40 frames (0.7 seconds)\nsince the last time you inputted\nadouble jump or up-b.",
+    "This is referred to as the\n\"input lockout\".",
+    "This means you shouldn't mash your\nrecovery! If you do, you will find yourself\nalways being locked out.",
+    "Anyway, Fox hasn't up-b'd recently,\nso he is able to use it right now.",
+    -1,
+};
+static char **Dialogue_ILock2[] = {
+    "Oh, this is unfortunate...",
+    "Now Fox has no double jump and must\nwait around half a second to up-b\nagain because he just used it.",
+    "Let's see if he can make it back.",
+    -1,
+};
+static char **Dialogue_End[] = {
+    "Looks like Fox was too\nfar to recover...",
+    "Try not to get hit directly after\nup-b'ing! You'll have to wait a while\nbefore up-b'ing again.",
+    "Okay, now you can try for yourself.\nUse the bar along the top of the screen\nto see how well you timed your input.",
+    "Good luck!",
     -1,
 };
 
 static InpSeqTest input_seq[] = {
+    // wait to get off respawn plat
     InpSeqWait(25),
-    InpSeqInput(0, -127, 0, 0, 0, 20),
+    // drift towards respawn for a bit
+    InpSeqInput(0, -127, 0, 0, 0, 10),
+    // jump into arrows and drift towards
     InpSeqInput(PAD_BUTTON_X, -127, 0, 0, 0, 1),
     InpSeqInput(0, -127, 0, 0, 0, 25),
-    InpSeqWait(10),
+    InpSeqWait(15),
+    // after getting hit, input up b
     InpSeqInput(PAD_BUTTON_B, 0, 127, 0, 0, 1),
-    InpSeqInput(PAD_BUTTON_B, -127, 58, 0, 0, 75),
+    InpSeqWait(47),
+    InpSeqInput(PAD_BUTTON_B, 0, 127, 0, 0, 1),
+    InpSeqInput(PAD_BUTTON_B, -36, 127, 0, 0, 60),
     InpSeqEnd(),
 };
 
-static DlgScnTest test_arr[] = {
+static DlgScnTest tut_scn[] = {
     // init
     DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
-    DlgScnMove(1, 145, 0, -1.0, 0),
+    DlgScnMove(1, 160, 0, -1.0, 0),
     DlgScnEnterState(1, DLGSCNSTATES_REBIRTHWAIT),
     DlgScnText(Dialogue_Intro, 1),
     DlgScnWaitText(),
@@ -121,12 +98,46 @@ static DlgScnTest test_arr[] = {
     DlgScnWaitText(),
     DlgScnUnfreeze(),
     // explain input lockout
-    DlgScnWaitFrame(10),
+    DlgScnWaitFrame(9),
     DlgScnFreeze(),
     DlgScnText(Dialogue_ILock, 1),
     DlgScnWaitText(),
     DlgScnUnfreeze(),
+    // get hit immediately and demonstrate input lockout
+    DlgScnWaitFrame(18),
+    DlgScnFreeze(),
+    DlgScnText(Dialogue_ILock2, 1),
+    DlgScnWaitText(),
+    DlgScnUnfreeze(),
+    // wait for fox to miss the stage and explain
+    DlgScnWaitFrame(115),
+    DlgScnFreeze(),
+    DlgScnText(Dialogue_End, 1),
+    DlgScnWaitText(),
+    DlgScnUnfreeze(),
     // play out remaining inputs
+    DlgScnWaitInputs(1),
+    // give control back to hmn
+    DlgScnEnterState(1, DLGSCNSTATES_SLEEP),
+    DlgScnMove(0, 160, 0, -1.0, 0),
+    DlgScnEnterState(0, DLGSCNSTATES_REBIRTHWAIT),
+    DlgScnEnd(),
+};
+static DlgScnTest reset_scn[] = {
+    // give control back to hmn
+    DlgScnEnterState(1, DLGSCNSTATES_SLEEP),
+    DlgScnMove(0, 160, 0, -1.0, 0),
+    DlgScnEnterState(0, DLGSCNSTATES_REBIRTHWAIT),
+    DlgScnEnd(),
+};
+
+static DlgScnTest tut_test[] = {
+    // init
+    DlgScnEnterState(0, DLGSCNSTATES_SLEEP),
+    DlgScnMove(1, 145, 0, -1.0, 0),
+    DlgScnEnterState(1, DLGSCNSTATES_REBIRTHWAIT),
+    // start main input sequence
+    DlgScnPlayInputs(1, input_seq),
     DlgScnWaitInputs(1),
     // give control back to hmn
     DlgScnEnterState(1, DLGSCNSTATES_SLEEP),
@@ -151,7 +162,8 @@ void Event_Init(GOBJ *gobj)
     // init hud
     HUD_Init(gobj);
 
-    evco_data->Scenario_Exec(&test_arr);
+    evco_data->Scenario_Exec(&tut_scn);
+    meteor_data->is_tutorial = 1;
 
     return;
 }
@@ -159,19 +171,29 @@ void Event_Init(GOBJ *gobj)
 void Event_Think(GOBJ *event)
 {
 
+    MeteorData *meteor_data = event->userdata;
+
     GOBJ *hmn_gobj = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn_gobj->userdata;
 
     //Arrows_Think(event);
     HUD_Think(event);
 
-    // test script
-    if ((hmn_data->input.down & PAD_BUTTON_DPAD_DOWN) && (evco_data->Dialogue_CheckEnd()))
-        evco_data->Scenario_Exec(&test_arr);
-
-    // test dialogue
-    //if ((hmn_data->input.down & PAD_BUTTON_DPAD_DOWN) && (evco_data->Dialogue_CheckEnd()))
-    //evco_data->Dialogue_Display(Dialogue_Test);
+    // wait for tut to end
+    bp();
+    if (meteor_data->is_tutorial)
+    {
+        if ((evco_data->Scenario_CheckEnd()))
+            meteor_data->is_tutorial = 0;
+    }
+    else
+    {
+        // reset
+        if ((hmn_data->flags.dead) ||
+            (hmn_data->phys.air_state == 0) ||
+            (hmn_data->state_id == ASID_CLIFFCATCH))
+            evco_data->Scenario_Exec(&reset_scn);
+    }
 
     return;
 }
@@ -227,7 +249,7 @@ void Arrows_Init(GOBJ *event)
 
     // move arrow
     JOBJ *arrow_jobj = arrow_gobj->hsd_object;
-    arrow_jobj->trans.X = 100;
+    arrow_jobj->trans.X = 115;
     arrow_jobj->trans.Y = 55;
     JOBJ_SetMtxDirtySub(arrow_jobj);
 
@@ -536,7 +558,6 @@ void HUD_UpdateLockout(GOBJ *event, int timer)
 
     return;
 }
-
 int Fighter_CheckJump(GOBJ *hmn)
 {
 
