@@ -101,6 +101,7 @@ void OnStartMelee()
 
 void TM_CreateWatermark()
 {
+
     // create text canvas
     int canvas = Text_CreateCanvas(10, 0, 9, 13, 0, 14, 0, 19);
 
@@ -109,15 +110,18 @@ void TM_CreateWatermark()
     // enable align and kerning
     text->align = 2;
     text->kerning = 1;
-    // scale canvas
+    // scale text
     text->scale.X = 0.4;
     text->scale.Y = 0.4;
+    // move text
     text->trans.X = 615;
     text->trans.Y = 446;
 
-    // print string
+    // static shadow color
+    static GXColor shadow_color = {0, 0, 0, 0};
+
+    // instantiate text
     int shadow = Text_AddSubtext(text, 2, 2, TM_VersShort);
-    GXColor shadow_color = {0, 0, 0, 0};
     Text_SetColor(text, shadow, &shadow_color);
 
     int shadow1 = Text_AddSubtext(text, 2, -2, TM_VersShort);
