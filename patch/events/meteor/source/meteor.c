@@ -18,7 +18,7 @@ static EventOption WdOptions_Main[] = {
     },
 };
 static EventMenu WdMenu_Main = {
-    .name = "",                                                 // the name of this menu
+    .name = "Meteor Cancel Training",                           // the name of this menu
     .option_num = sizeof(WdOptions_Main) / sizeof(EventOption), // number of options this menu contains
     .scroll = 0,                                                // runtime variable used for how far down in the menu to start
     .state = 0,                                                 // bool used to know if this menu is focused, used at runtime
@@ -45,7 +45,7 @@ static char **Dialogue_MLock[] = {
 };
 static char **Dialogue_ILock[] = {
     "This is the earliest Fox can cancel\nhis knockback with a meteor cancel.\nBut there is one more rule.",
-    "You must wait 40 frames (0.7 seconds)\nsince the last time you inputted\nadouble jump or up-b.",
+    "You must wait 40 frames (0.7 seconds)\nsince the last time you inputted\na double jump or up-b.",
     "This is referred to as the\n\"input lockout\".",
     "This means you shouldn't mash your\nrecovery! If you do, you will find yourself\nalways being locked out.",
     "Anyway, Fox hasn't up-b'd recently,\nso he is able to use it right now.",
@@ -162,8 +162,15 @@ void Event_Init(GOBJ *gobj)
     // init hud
     HUD_Init(gobj);
 
-    evco_data->Scenario_Exec(&tut_scn);
+    // start tutorial
+    evco_data->Scenario_Exec(&tut_scn, &reset_scn);
     meteor_data->is_tutorial = 1;
+
+    // hide hud during tutorial
+    JOBJ *hud_jobj = meteor_data->hud.gobj->hsd_object;
+    JOBJ_AddSetAnim(hud_jobj, meteor_data->assets->time_bar, 1);
+    JOBJ_ReqAnimAll(hud_jobj, 0);
+    JOBJ_AnimAll(hud_jobj);
 
     return;
 }
@@ -183,7 +190,19 @@ void Event_Think(GOBJ *event)
     if (meteor_data->is_tutorial)
     {
         if ((evco_data->Scenario_CheckEnd()))
+        {
             meteor_data->is_tutorial = 0;
+
+            // show hud after tutorial
+            JOBJ *hud_jobj = meteor_data->hud.gobj->hsd_object;
+            JOBJ_AddSetAnim(hud_jobj, meteor_data->assets->time_bar, 0);
+            JOBJ_ReqAnimAll(hud_jobj, 0);
+            JOBJ_AnimAll(hud_jobj);
+
+            // hide arrow and input text
+            JOBJ_SetFlags(meteor_data->hud.input_text, JOBJ_HIDDEN);
+            JOBJ_SetFlags(meteor_data->hud.input_arrow, JOBJ_HIDDEN);
+        }
     }
     else
     {
@@ -191,7 +210,7 @@ void Event_Think(GOBJ *event)
         if ((hmn_data->flags.dead) ||
             (hmn_data->phys.air_state == 0) ||
             (hmn_data->state_id == ASID_CLIFFWAIT))
-            evco_data->Scenario_Exec(&reset_scn);
+            evco_data->Scenario_Exec(&reset_scn, 0);
     }
 
     return;
@@ -351,7 +370,7 @@ void HUD_Init(GOBJ *event)
     MeteorData *meteor_data = event->userdata;
 
     // create HUD
-    GOBJ *hud_gobj = JOBJ_LoadSet(0, meteor_data->assets->time_bar, 0, 0, 11, 10, 1, 0);
+    GOBJ *hud_gobj = JOBJ_LoadSet(0, meteor_data->assets->time_bar, 0, 0, 11, 8, 1, 0);
     JOBJ *hud_jobj = hud_gobj->hsd_object;
     hud_gobj->gx_cb = HUD_GX;         // swap out GX callback (hides on pause)
     meteor_data->hud.gobj = hud_gobj; // save gobj
@@ -371,9 +390,6 @@ void HUD_Init(GOBJ *event)
     JOBJ_GetChild(hud_jobj, &left_jobj, HUD_LEFTJOINT, -1);
     meteor_data->hud.left = left_jobj->trans.X;
 
-    // hide stuff
-    JOBJ_SetFlags(meteor_data->hud.input_text, JOBJ_HIDDEN);
-    JOBJ_SetFlags(meteor_data->hud.input_arrow, JOBJ_HIDDEN);
     meteor_data->hud.slider->trans.X = meteor_data->hud.meteor_slider->trans.X;
     JOBJ_SetMtxDirtySub(hud_jobj);
 
@@ -433,16 +449,18 @@ void HUD_Think(GOBJ *event)
                     // update lockout bar
                     HUD_UpdateLockout(event, meteor_data->lockout_upb);
 
-                    // check if outside of meteor cancel window
-                    if (hmn_data->input.timer_specialhi_lockout >= (ftcommon->meteor_lockout))
-                    {
-                        // ok i up b'd
-                        SFX_PlayCommon(1);
-                    }
-                    else
+                    // check if failed
+                    bp();
+                    if (hmn_data->input.timer_specialhi_lockout < (ftcommon->meteor_lockout) || // less than 40 frames since last input
+                        (meteor_data->timer < ftcommon->meteor_delay))                          // within first X frames of meteor
                     {
                         // failed up b
                         SFX_PlayCommon(3);
+                    }
+                    else if (hmn_data->input.timer_specialhi_lockout >= (ftcommon->meteor_lockout))
+                    {
+                        // ok i up b'd
+                        SFX_PlayCommon(1);
                     }
 
                     // stop checking

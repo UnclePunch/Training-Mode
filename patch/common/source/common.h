@@ -107,10 +107,11 @@ typedef struct ScenarioData
 {
     void *cur;           // current script
     int timer;           // wait timer
+    void *skip_scn;      // script to run on skip
     InpSeqData input[6]; // input sequence data
 } ScenarioData;
 #define DLG_SIS 3
-#define DLG_GXLINK 8
+#define DLG_GXLINK 10 //8
 #define DLG_GXPRI 81
 #define DLG_LINEMAX 3
 #define DLG_CHARMAX 64
@@ -136,7 +137,7 @@ void Dialogue_Destroy(DialogueData *dialogue_data);
 int Dialogue_CheckEnd();
 int Scenario_CheckEnd();
 void Scenario_Think(GOBJ *gobj);
-void Scenario_Exec(DlgScnTest *scn);
+void Scenario_Exec(DlgScnTest *scn, DlgScnTest *skip_scn);
 void RebirthWait_Phys(GOBJ *fighter);
 int RebirthWait_IASA(GOBJ *fighter);
 //void Event_InputEnable(GOBJ *gobj);

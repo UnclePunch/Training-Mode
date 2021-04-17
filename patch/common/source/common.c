@@ -1544,10 +1544,11 @@ void Tip_Destroy()
     return;
 }
 
-// Dialogue Functions
+// Scenario Functions
 void Scenario_Init()
 {
-    GOBJ *scenario_gobj = GObj_Create(0, 0, 0);
+    //GOBJ *scenario_gobj = GObj_Create(0, 0, 0);
+    GOBJ *scenario_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->scenario, 0, 0, 0, DLG_GXLINK, 1, 0);
     ScenarioData *scenario_data = calloc(sizeof(ScenarioData));
     GObj_AddUserData(scenario_gobj, 4, HSD_Free, scenario_data);
     GObj_AddProc(scenario_gobj, Scenario_Think, 3); // was 18
@@ -1559,6 +1560,10 @@ void Scenario_Init()
 void Scenario_Think(GOBJ *gobj)
 {
     ScenarioData *scn_data = gobj->userdata;
+    JOBJ *scn_jobj = gobj->hsd_object;
+
+    // update graphic animation
+    JOBJ_AnimAll(scn_jobj);
 
     // update input sequence when game engine is running
     if (Pause_CheckStatus(1) != 2)
@@ -1567,6 +1572,50 @@ void Scenario_Think(GOBJ *gobj)
     // if script exists
     if (scn_data->cur)
     {
+
+        // check to skip the scenario
+        {
+            HSD_Pad *pad = PadGet(Fighter_GetControllerPort(0), PADGET_MASTER);
+            if ((pad->down & HSD_BUTTON_START) && (scn_data->skip_scn != 0))
+            {
+
+                // sfx
+                SFX_PlayCommon(0);
+
+                // init new script
+                scn_data->cur = scn_data->skip_scn;
+                scn_data->timer = 0;
+
+                // stop input sequences
+                for (int i = 0; i < sizeof(scn_data->input) / sizeof(scn_data->input[0]); i++)
+                {
+
+                    InpSeqData *input_data = &scn_data->input[i];
+
+                    // if sequence exists
+                    if (input_data->cur)
+                    {
+
+                        // get fighter
+                        GOBJ *this_fighter = Fighter_GetGObj(i);
+                        FighterData *this_fighter_data = this_fighter->userdata;
+
+                        // clear script ptr
+                        input_data->cur = 0;
+
+                        // restore the slot type
+                        Fighter_SetSlotType(i, input_data->slot);
+
+                        // restore ai type
+                        this_fighter_data->cpu.ai = input_data->cpu_ai;
+                    }
+                }
+
+                // end dialogue if it exists
+                if (stc_dialogue)
+                    GObj_Destroy(stc_dialogue);
+            }
+        }
 
         // wait a frame if timer is set
         if (scn_data->timer > 0)
@@ -1587,6 +1636,11 @@ void Scenario_Think(GOBJ *gobj)
                 case (DLGSCN_END):
                 {
                     scn_data->cur = 0;
+
+                    // hide prompt
+                    JOBJ_AddSetAnim(scn_jobj, stc_evco_data.menu_assets->scenario, 0);
+                    JOBJ_ReqAnimAll(scn_jobj, 0);
+
                     goto EXIT;
                     break;
                 }
@@ -1918,12 +1972,21 @@ void Scenario_Think(GOBJ *gobj)
 
     return;
 }
-void Scenario_Exec(DlgScnTest *scn)
+void Scenario_Exec(DlgScnTest *scn, DlgScnTest *skip_scn)
 {
     ScenarioData *scn_data = stc_scenario->userdata;
+    JOBJ *scn_jobj = stc_scenario->hsd_object;
 
     scn_data->cur = scn;
     scn_data->timer = 0;
+    scn_data->skip_scn = skip_scn;
+
+    // display prompt
+    if (scn_data->skip_scn != 0)
+    {
+        JOBJ_AddSetAnim(scn_jobj, stc_evco_data.menu_assets->scenario, 1);
+        JOBJ_ReqAnimAll(scn_jobj, 0);
+    }
 
     return;
 }
@@ -2055,6 +2118,8 @@ void InputSeq_Think(GOBJ *gobj)
 
     return;
 }
+
+// Dialogue Functions
 void Dialogue_Create(char **string_data)
 {
 
@@ -2129,16 +2194,22 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             if (dialogue_data->scroll_timer % (int)(1 / DLG_CHARPERSEC) == 0)
             {
                 // check if next character is a delay character
-                static char *delay_chars[] = {',', '.', '!', '>'};
+                static char delay_chars[] = {',', '.', '!', '?'};
                 if ((int)(dialogue_data->scroll_timer * DLG_CHARPERSEC) > 0)
                 {
-                    char next_char = dialogue_data->string_data[dialogue_data->index][(int)(dialogue_data->scroll_timer * DLG_CHARPERSEC) - 1];
+                    char *cur = &dialogue_data->string_data[dialogue_data->index][(int)(dialogue_data->scroll_timer * DLG_CHARPERSEC) - 1];
+                    char next_char = cur[0];
+                    char second_char = cur[1];
+                    OSReport("cur: %x\nnext_char: %c\nsecond_char: %c\n", cur, next_char, second_char);
                     for (int i = 0; i < sizeof(delay_chars); i++)
                     {
-                        if (next_char == delay_chars[i])
+                        if (next_char == delay_chars[i]) // if next char is a delay char
                         {
-                            dialogue_data->delay_timer = DLG_PUNCDELAY;
-                            break;
+                            if ((second_char == ' ') || (second_char == '\n')) // if there is another sentence after it
+                            {
+                                dialogue_data->delay_timer = DLG_PUNCDELAY;
+                                break;
+                            }
                         }
                     }
                 }
@@ -2579,9 +2650,8 @@ void EventMenu_Update(GOBJ *gobj)
         }
 
         // change pause state
-        if (isPress != 0)
+        if ((isPress != 0) && (Scenario_CheckEnd() == 1))
         {
-
             // pause game
             if (menuData->isPaused == 0)
             {

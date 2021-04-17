@@ -44,6 +44,7 @@ typedef struct evMenu
     JOBJ *tip_jobj;
     void **tip_jointanim; // pointer to array
     JOBJSet *dialogue;
+    JOBJSet *scenario;
 } evMenu;
 
 // Structure Definitions
@@ -703,7 +704,7 @@ typedef struct EventCommonData
     void (*Tip_Destroy)();                                                                   // function pointer to destroy tip
     void (*Dialogue_Display)(void *ptr);                                                     //
     int (*Dialogue_CheckEnd)();                                                              //
-    void (*Scenario_Exec)(DlgScnTest *scn);                                                  //
+    void (*Scenario_Exec)(DlgScnTest *scn, DlgScnTest *skip_scn);                            //
     int (*Scenario_CheckEnd)();                                                              //
     Savestate *savestate;                                                                    // points to the events main savestate
     evFunction evFunction;                                                                   // event specific functions
