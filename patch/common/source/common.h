@@ -85,6 +85,8 @@ typedef struct DialogueData
     int index;          // string index currently displaying
     int canvas;         //
     char **string_data; // string array for all dialogue
+    int sfx_id;         // id of the currently playing sfx
+    int sfx_timer;      // frames until next speech sfx
     int scroll_timer;   // scroll timer
     int delay_timer;    // delay timer to not scroll
     Text *text;         // text object pointer

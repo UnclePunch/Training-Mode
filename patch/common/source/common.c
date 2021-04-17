@@ -2187,8 +2187,26 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
             dialogue_data->scroll_timer++;
 
             // check to play sfx every X frames
-            if ((int)(dialogue_data->scroll_timer % DLG_CHARPERSFX) == 0)
-                SFX_Play(560002);
+            {
+                //if ((int)(dialogue_data->scroll_timer % DLG_CHARPERSFX) == 0)
+                //SFX_Play(560002);
+
+                // decrement timer
+                dialogue_data->sfx_timer--;
+                if (dialogue_data->sfx_timer <= 0)
+                {
+
+                    // destroy old sfx
+                    if (dialogue_data->sfx_id != -1)
+                        FGM_Stop(dialogue_data->sfx_id);
+
+                    // play new sfx
+                    dialogue_data->sfx_id = SFX_Play(560002 + HSD_Randi(5));
+
+                    // randomize next sfx timer
+                    dialogue_data->sfx_timer = 7 + HSD_Randi(6);
+                }
+            }
 
             // check for delay char every X frames
             if (dialogue_data->scroll_timer % (int)(1 / DLG_CHARPERSEC) == 0)
@@ -2406,6 +2424,10 @@ void Dialogue_EnterScroll(GOBJ *dialogue_gobj)
 
     // change state
     Dialogue_EnterState(dialogue_gobj, DLGSTATE_SCROLL);
+
+    // init speech variables
+    dialogue_data->sfx_timer = 0;
+    dialogue_data->sfx_id = -1;
 
     // count characters in the upcoming string
     dialogue_data->char_num = strlen(dialogue_data->string_data[dialogue_data->index]);
