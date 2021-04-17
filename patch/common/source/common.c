@@ -2204,7 +2204,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                     dialogue_data->sfx_id = SFX_Play(560002 + HSD_Randi(5));
 
                     // randomize next sfx timer
-                    dialogue_data->sfx_timer = 7 + HSD_Randi(6);
+                    dialogue_data->sfx_timer = 7 + HSD_Randi(5);
                 }
             }
 
@@ -2223,7 +2223,7 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                     {
                         if (next_char == delay_chars[i]) // if next char is a delay char
                         {
-                            if ((second_char == ' ') || (second_char == '\n')) // if there is another sentence after it
+                            if ((second_char == ' ') || (second_char == 0x00)) // if there is another sentence after it
                             {
                                 dialogue_data->delay_timer = DLG_PUNCDELAY;
                                 break;
