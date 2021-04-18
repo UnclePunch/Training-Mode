@@ -183,6 +183,11 @@ void Match_Prep(MinorScene *minor_scene)
 
     return;
 }
+void Match_Decide(MinorScene *minor_scene)
+{
+    Scene_SetNextMinor(0);
+    Scene_ExitMinor();
+}
 
 // Minor scene table
 static MinorScene minor_scene[] = {
@@ -220,8 +225,8 @@ static MinorScene minor_scene[] = {
     {
         .minor_id = 3,
         .heap_kind = HEAPKIND_UNK3,
-        .minor_prep = Match_Prep, // 0x801b1588,
-        .minor_decide = 0x801b15c8,
+        .minor_prep = Match_Prep,     // 0x801b1588,
+        .minor_decide = Match_Decide, // 0x801b15c8,
         .minor_kind = MNRKIND_MATCH,
         .load_data = 0x80480530,   // is a matchinit pointer
         .unload_data = 0x80479d98, // os a rstdata pointer

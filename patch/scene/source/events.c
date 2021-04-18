@@ -219,10 +219,10 @@ static EventMatchData Meteor_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = CKIND_FOX,     // 0xFF=
-    .stage = GRKINDEXT_OLDPU, // 0xFFFF
-    .timerSeconds = 0,        // 0xFFFFFFFF
-    .timerSubSeconds = 0,     // 0xFF
+    .cpuKind = CKIND_FOX,  // 0xFF=
+    .stage = GRKINDEXT_FD, // 0xFFFF
+    .timerSeconds = 0,     // 0xFFFFFFFF
+    .timerSubSeconds = 0,  // 0xFF
     .onCheckPause = 0,
     .onMatchEnd = 0,
 };

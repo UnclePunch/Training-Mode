@@ -2668,6 +2668,9 @@ GOBJ *EventMenu_Init(EventDesc *event_desc, EventMenu *start_menu)
     if (start_menu == 0)
         return 0;
 
+    // disable vanilla pause
+    stc_match->match.isDisablePause = 1;
+
     // Create a cobj for the event menu
     COBJDesc ***dmgScnMdls = File_GetSymbol(ACCESS_PTR(0x804d6d5c), 0x803f94d0);
     COBJDesc *cam_desc = dmgScnMdls[1][0];
