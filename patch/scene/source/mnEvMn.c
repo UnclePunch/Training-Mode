@@ -128,7 +128,6 @@ void Menu_Init()
     GObj_AddGXLink(fog_gobj, GXLink_Fog, 0, 128);
 
     // create lobjs
-    bp();
     GOBJ *light_gobj = GObj_Create(3, 4, 128);
     LOBJ *lobj = LObj_LoadAll(menu_assets->lights);
     GObj_AddObject(light_gobj, 2, lobj);
