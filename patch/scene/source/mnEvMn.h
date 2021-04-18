@@ -37,6 +37,7 @@ typedef struct MnSlEvData
     void *fog;
     JOBJDesc *cursor;
     COBJDesc *movie_cobj;
+    void **lights;
 } MnSlEvData;
 
 typedef struct EventSelectData
