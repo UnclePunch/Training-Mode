@@ -111,15 +111,24 @@ typedef struct ScenarioData
     int timer;           // wait timer
     void *skip_scn;      // script to run on skip
     InpSeqData input[6]; // input sequence data
+    struct
+    {
+        GOBJ *gobj; // asset gobj pointer
+        int index;  // which index is in use
+    } asset;
 } ScenarioData;
 #define DLG_SIS 3
 #define DLG_GXLINK 10 //8
 #define DLG_GXPRI 81
 #define DLG_LINEMAX 3
 #define DLG_CHARMAX 64
-#define DLG_CHARPERSEC 0.5 // display 1 char every 2 seconds
-#define DLG_CHARPERSFX 4   // every 4 chars play sfx
-#define DLG_PUNCDELAY 15   // pause for x frames for punctuation
+#define DLG_CHARPERSEC 0.5  // display 1 char every 2 seconds
+#define DLG_CHARPERSFX 4    // every 4 chars play sfx
+#define DLG_PUNCDELAY 15    // pause for x frames for punctuation
+#define DLG_SFXFREQMIN 7    // minimum time between dialogue sfx
+#define DLG_SFXFREQMAX 12   // maximum time between dialogue sfx
+#define DLG_SFXSTART 560002 // first sfx id for dialogue
+#define DLG_SFXNUM 5        // number of different sfx pitches
 #define TIP_TXTJOINT 2
 
 // GX stuff

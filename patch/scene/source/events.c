@@ -219,8 +219,8 @@ static EventMatchData Meteor_MatchData = {
     .isDisableHit = false,    // 0x20
     .useKOCounter = false,
     .playerKind = -1,
-    .cpuKind = FTKINDEXT_FOX, // 0xFF=
-    .stage = GRKINDEXT_FD,    // 0xFFFF
+    .cpuKind = CKIND_FOX,     // 0xFF=
+    .stage = GRKINDEXT_OLDPU, // 0xFFFF
     .timerSeconds = 0,        // 0xFFFFFFFF
     .timerSubSeconds = 0,     // 0xFF
     .onCheckPause = 0,

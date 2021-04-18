@@ -709,6 +709,7 @@ typedef struct EventCommonData
     Savestate *savestate;                                                                    // points to the events main savestate
     evFunction evFunction;                                                                   // event specific functions
     ArchiveInfo *event_archive;                                                              // event archive header
+    JOBJSet **scn_assets;
     DevText *db_console_text;
 } EventCommonData;
 EventCommonData **evco_data_ptr = 0x803d7054; //R13 + (-0x4730)
@@ -792,6 +793,9 @@ enum DlgScn
     DLGSCN_CAMNORMAL,
     DLGSCN_CAMZOOM,
     DLGSCN_CAMCORRECT,
+    DLGSCN_ASSETCREATE,
+    DLGSCN_ASSETCHANGE,
+    DLGSCN_ASSETDESTROY,
 };
 enum DlgScnStates
 {
@@ -898,6 +902,20 @@ typedef struct DlgScnCamCorrect
 {
     int kind;
 } DlgScnCamCorrect;
+typedef struct DlgScnAssetCreate
+{
+    int kind;
+    int index;
+} DlgScnAssetCreate;
+typedef struct DlgScnAssetChange
+{
+    int kind;
+    int index;
+} DlgScnAssetChange;
+typedef struct DlgScnAssetDestroy
+{
+    int kind;
+} DlgScnAssetDestroy;
 #define DlgScnEnd()         \
     {                       \
         .x0.i = DLGSCN_END, \
@@ -963,6 +981,20 @@ typedef struct DlgScnCamCorrect
 #define DlgScnCamCorrect(ft_index) \
     {                              \
         .x0.i = DLGSCN_CAMCORRECT, \
+    }
+#define DlgScnAssetCreate(index)    \
+    {                               \
+        .x0.i = DLGSCN_ASSETCREATE, \
+        .x4.i = index,              \
+    }
+#define DlgScnAssetChange(index)    \
+    {                               \
+        .x0.i = DLGSCN_ASSETCHANGE, \
+        .x4.i = index,              \
+    }
+#define DlgScnAssetDestroy()         \
+    {                                \
+        .x0.i = DLGSCN_ASSETDESTROY, \
     }
 
 // Input Sequence

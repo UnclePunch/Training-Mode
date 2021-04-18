@@ -89,16 +89,20 @@ static DlgScnTest tut_scn[] = {
     DlgScnEnterState(1, DLGSCNSTATES_REBIRTHWAIT),
     DlgScnText(Dialogue_Intro, 1),
     DlgScnWaitText(),
+    DlgScnAssetCreate(1),
+    DlgScnAssetChange(0),
     // start main input sequence
     DlgScnPlayInputs(1, input_seq),
     // explain meteor lockout
     DlgScnWaitFrame(67),
+    DlgScnAssetChange(0),
     DlgScnFreeze(),
     DlgScnText(Dialogue_MLock, 1),
     DlgScnWaitText(),
     DlgScnUnfreeze(),
     // explain input lockout
     DlgScnWaitFrame(9),
+    DlgScnAssetDestroy(),
     DlgScnFreeze(),
     DlgScnText(Dialogue_ILock, 1),
     DlgScnWaitText(),

@@ -441,13 +441,10 @@ void EventLoad()
         ArchiveInfo *archive = MEX_LoadRelArchive(buffer, evFunction, "evFunction");
         evco_data->event_archive = archive;
 
-        // Check to index event file's dialogue data
-        void *sis_dialogue = File_GetSymbol(archive, "SIS_Dialogue");
-        if (sis_dialogue)
-            stc_sis_data[3] = sis_dialogue; // index sis data
+        // Store ptr to events scenario assets if exists
+        evco_data->scn_assets = File_GetSymbol(archive, "scnData");
 
         // Create this event's gobj
-        // TODO: add logic for legacy function
         int pri = event_desc->callbackPriority;
         void *cb = evFunction->Event_Think;
         GOBJ *gobj = GObj_Create(0, 7, 0);

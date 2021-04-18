@@ -59,7 +59,7 @@ void OnLoad(ArchiveInfo *archive)
 
     Message_Init();
     Tip_Init();
-    Scenario_Init();
+    Scenario_Init(archive);
 
     // disable player inputs for 1f (avoid instant buffer attacks)
     // this is a mess so im gonna deal with it later...
@@ -1545,7 +1545,7 @@ void Tip_Destroy()
 }
 
 // Scenario Functions
-void Scenario_Init()
+void Scenario_Init(ArchiveInfo *archive)
 {
     //GOBJ *scenario_gobj = GObj_Create(0, 0, 0);
     GOBJ *scenario_gobj = JOBJ_LoadSet(0, stc_evco_data.menu_assets->scenario, 0, 0, 0, DLG_GXLINK, 1, 0);
@@ -1553,6 +1553,7 @@ void Scenario_Init()
     GObj_AddUserData(scenario_gobj, 4, HSD_Free, scenario_data);
     GObj_AddProc(scenario_gobj, Scenario_Think, 3); // was 18
 
+    // store static pointer
     stc_scenario = scenario_gobj;
 
     return;
@@ -1611,6 +1612,13 @@ void Scenario_Think(GOBJ *gobj)
                     }
                 }
 
+                // destroy asset if it exists
+                if (scn_data->asset.gobj)
+                {
+                    GObj_Destroy(scn_data->asset.gobj);
+                    scn_data->asset.gobj = 0;
+                }
+
                 // end dialogue if it exists
                 if (stc_dialogue)
                     GObj_Destroy(stc_dialogue);
@@ -1640,6 +1648,42 @@ void Scenario_Think(GOBJ *gobj)
                     // hide prompt
                     JOBJ_AddSetAnim(scn_jobj, stc_evco_data.menu_assets->scenario, 0);
                     JOBJ_ReqAnimAll(scn_jobj, 0);
+
+                    // stop input sequences
+                    for (int i = 0; i < sizeof(scn_data->input) / sizeof(scn_data->input[0]); i++)
+                    {
+
+                        InpSeqData *input_data = &scn_data->input[i];
+
+                        // if sequence exists
+                        if (input_data->cur)
+                        {
+
+                            // get fighter
+                            GOBJ *this_fighter = Fighter_GetGObj(i);
+                            FighterData *this_fighter_data = this_fighter->userdata;
+
+                            // clear script ptr
+                            input_data->cur = 0;
+
+                            // restore the slot type
+                            Fighter_SetSlotType(i, input_data->slot);
+
+                            // restore ai type
+                            this_fighter_data->cpu.ai = input_data->cpu_ai;
+                        }
+                    }
+
+                    // destroy asset if it exists
+                    if (scn_data->asset.gobj)
+                    {
+                        GObj_Destroy(scn_data->asset.gobj);
+                        scn_data->asset.gobj = 0;
+                    }
+
+                    // end dialogue if it exists
+                    if (stc_dialogue)
+                        GObj_Destroy(stc_dialogue);
 
                     goto EXIT;
                     break;
@@ -1958,6 +2002,54 @@ void Scenario_Think(GOBJ *gobj)
 
                     break;
                 }
+                case (DLGSCN_ASSETCREATE):
+                {
+
+                    DlgScnAssetCreate *asset = script;
+
+                    // destroy previous if it exists
+                    if (scn_data->asset.gobj)
+                    {
+                        GObj_Destroy(scn_data->asset.gobj);
+                        scn_data->asset.gobj = 0;
+                    }
+
+                    // create this asset
+                    scn_data->asset.gobj = JOBJ_LoadSet(0, stc_evco_data.scn_assets[asset->index], 0, 0, 0, DLG_GXLINK, 1, GObj_Anim);
+                    scn_data->asset.index = asset->index; // save index to lookup later
+
+                    break;
+                }
+                case (DLGSCN_ASSETCHANGE):
+                {
+
+                    DlgScnAssetChange *asset = script;
+
+                    // if it exists
+                    if (scn_data->asset.gobj)
+                    {
+                        // add new animation
+                        JOBJ *jobj = scn_data->asset.gobj->hsd_object;
+                        JOBJ_AddSetAnim(jobj, stc_evco_data.scn_assets[scn_data->asset.index], asset->index);
+                        JOBJ_ReqAnimAll(jobj, 0);
+                    }
+
+                    break;
+                }
+                case (DLGSCN_ASSETDESTROY):
+                {
+
+                    DlgScnAssetDestroy *asset = script;
+
+                    // destroy previous if it exists
+                    if (scn_data->asset.gobj)
+                    {
+                        GObj_Destroy(scn_data->asset.gobj);
+                        scn_data->asset.gobj = 0;
+                    }
+
+                    break;
+                }
                 }
 
                 // get next
@@ -2188,9 +2280,6 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
 
             // check to play sfx every X frames
             {
-                //if ((int)(dialogue_data->scroll_timer % DLG_CHARPERSFX) == 0)
-                //SFX_Play(560002);
-
                 // decrement timer
                 dialogue_data->sfx_timer--;
                 if (dialogue_data->sfx_timer <= 0)
@@ -2201,10 +2290,10 @@ void Dialogue_Think(GOBJ *dialogue_gobj)
                         FGM_Stop(dialogue_data->sfx_id);
 
                     // play new sfx
-                    dialogue_data->sfx_id = SFX_Play(560002 + HSD_Randi(5));
+                    dialogue_data->sfx_id = SFX_Play(DLG_SFXSTART + HSD_Randi(DLG_SFXNUM));
 
                     // randomize next sfx timer
-                    dialogue_data->sfx_timer = 7 + HSD_Randi(5);
+                    dialogue_data->sfx_timer = DLG_SFXFREQMIN + HSD_Randi(DLG_SFXFREQMAX - DLG_SFXFREQMIN);
                 }
             }
 
