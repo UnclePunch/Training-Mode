@@ -385,7 +385,7 @@ void Menu_Think(GOBJ *menu_gobj)
         {
 
             // play sfx
-            SFX_PlayCommon(2);
+            SFX_PlayCommon(1);
 
             break;
         }
