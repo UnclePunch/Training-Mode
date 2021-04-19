@@ -30,6 +30,11 @@ void Major_Load()
     ess_minor_data.cursor.pos = 0;
     ess_minor_data.cursor.scroll = 0;
 
+    // hacky but set main menu cursor values for returning to it
+    u8 *menu_data = 0x804a04f0;
+    menu_data[0] = 1; // 1p menu
+    menu_data[3] = 4; // training option
+
     return;
 };
 
